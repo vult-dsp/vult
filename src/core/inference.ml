@@ -183,7 +183,7 @@ let unifyRaise ?(bind = false) (loc : Loc.t) (t1 : type_) (t2 : type_) : unit =
       print_endline msg)
 
 
-let rec type_in_m (env : in_module) (t : Syntax.type_) =
+let rec type_in_m (env : env) (t : Syntax.type_) =
   match t with
   | { t = STUnbound; loc } -> { tx = TEUnbound None; loc; const = C.const () }
   | { t = STId path; loc } ->
@@ -210,9 +210,9 @@ let rec checkArrayDimensions (t : type_) =
   | _ -> ()
 
 
-let type_in_c (env : Env.in_context) (t : Syntax.type_) = type_in_m (Env.exitContext env) t
+let type_in_c (env : env) (t : Syntax.type_) = type_in_m (Env.exitContext env) t
 
-let type_in_f (env : Env.in_func) (t : Syntax.type_) = type_in_c (Env.exitFunction env) t
+let type_in_f (env : env) (t : Syntax.type_) = type_in_c (Env.exitFunction env) t
 
 let applyFunction loc (args_t_in : type_ list) (ret : type_) (args_in : exp list) =
   let rec loop (args_t : type_ list) args =
@@ -260,13 +260,14 @@ let propagateVariability env loc (args : Typed.arg list option) (exp_args : exp 
       exp_args
 
 
-let rec addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
+let rec addContextArg (env : env) instance (f : Env.f) args loc =
   if Env.isFunctionActive f then (
     let cpath = Env.getContext env in
     let fpath = Env.getFunctionContext f in
     (* get the context type of the current function *)
     let ctx_t =
-      match Env.lookVarInScopes env.f.locals context_name with
+      let f = Env.getCurrentFunction env in
+      match Env.lookVarInScopes f.locals context_name with
       | Some var -> var.t
       | None -> failwith "context var not declared"
     in
@@ -340,7 +341,7 @@ let rec addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
     env, args
 
 
-and call (env : Env.in_func) instance path args loc eloc =
+and call (env : env) instance path args loc eloc =
   let env, args = exp_list env args in
   let f = Env.lookFunctionCall env path loc in
   let args_t, ret = f.t in
@@ -350,7 +351,7 @@ and call (env : Env.in_func) instance path args loc eloc =
   env, { e = ECall { instance = None; path = f.path; args }; t; loc }
 
 
-and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
+and exp ?(in_constant_context = false) (env : env) (e : Syntax.exp) : env * exp =
   match e with
   | { e = SEBool value; loc } ->
     let t = C.bool ~loc in
@@ -368,39 +369,47 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
   | { e = SEString value; loc } ->
     let t = C.string ~loc in
     env, { e = EString value; t; loc }
-  | { e = SEGroup e; _ } -> exp env e
+  | { e = SEGroup e; _ } -> exp ~in_constant_context env e
   | { e = SEId name; loc } when not (String.equal (String.capitalize_ascii name) name) ->
-    let var = Env.lookVar env name loc in
-    let t = var.t in
-    let e =
-      match var.kind with
-      | Val -> { e = EId name; t; loc }
-      | Const -> { e = EConst { id = name; n = Some env.m.name; loc }; t; loc }
-      | Mem _ | Inst ->
-        let ctx = Env.getContext env in
-        let ctx_t = C.path_t loc ctx in
-        { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); t; loc }
-    in
-    env, e
+    if in_constant_context then
+      let var = Env.lookConstant env name loc in
+      let t = var.t in
+      let m = Env.getCurrentModule env in
+      env, { e = EConst { id = name; n = Some m.name; loc }; t; loc }
+    else
+      let var = Env.lookVar env name loc in
+      let t = var.t in
+      let e =
+        match var.kind with
+        | Val -> { e = EId name; t; loc }
+        | Const ->
+          let m = Env.getCurrentModule env in
+          { e = EConst { id = name; n = Some m.name; loc }; t; loc }
+        | Mem _ | Inst ->
+          let ctx = Env.getContext env in
+          let ctx_t = C.path_t loc ctx in
+          { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); t; loc }
+      in
+      env, e
   | { e = SEIndex { e; index }; loc } ->
-    let env, e = exp env e in
-    let env, index = exp env index in
+    let env, e = exp ~in_constant_context env e in
+    let env, index = exp ~in_constant_context env index in
     let t = C.unbound Loc.default in
     unifyRaise e.loc (C.array ~fixed:false t) e.t;
     unifyRaise index.loc (C.int ~loc:Loc.default) index.t;
     (* if the type is a builtin (a value) do not unify the constness *)
     let () =
-      if not (Env.isBuiltinType t) then
+      if (not in_constant_context) && not (Env.isBuiltinType t) then
         unifyConstness t e.t
     in
     env, { e = EIndex { e; index }; t; loc }
   | { e = SEArray []; loc } -> Error.raiseError "Empty arrays are not supported." loc
   | { e = SEArray (h :: t); loc } ->
-    let env, h = exp env h in
+    let env, h = exp ~in_constant_context env h in
     let env, t_rev, size =
       CCList.fold_left
         (fun (env, acc, size) e ->
-          let env, e = exp env e in
+          let env, e = exp ~in_constant_context env e in
           unifyRaise e.loc h.t e.t;
           env, e :: acc, size + 1)
         (env, [], 1)
@@ -409,20 +418,21 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
     let t = C.array ~size:(C.size ~loc size) h.t in
     env, { e = EArray (h :: CCList.rev t_rev); t; loc }
   | { e = SETuple l; loc } ->
-    let env, l = exp_list env l in
+    let env, l = exp_list ~in_constant_context env l in
     let t = C.tuple ~loc (CCList.map (fun (e : exp) -> e.t) l) in
     env, { e = ETuple l; t; loc }
   | { e = SEIf { cond; then_; else_ }; loc } ->
-    let env, cond = exp env cond in
-    let env, then_ = exp env then_ in
-    let env, else_ = exp env else_ in
+    let env, cond = exp ~in_constant_context env cond in
+    let env, then_ = exp ~in_constant_context env then_ in
+    let env, else_ = exp ~in_constant_context env else_ in
     let t = then_.t in
     unifyRaise cond.loc (C.bool ~loc) cond.t;
     unifyRaise else_.loc then_.t else_.t;
     env, { e = EIf { cond; then_; else_ }; t; loc }
   (* we need to add a special case for int() in order to support conversion of enumerations *)
-  | { e = SECall { instance = None; path = { id = "int"; n = None; _ } as path; args = [ arg ] as args }; loc } -> (
-    let env, arg = exp env arg in
+  | { e = SECall { instance = None; path = { id = "int"; n = None; _ } as path; args = [ arg ] as args }; loc }
+    when not in_constant_context -> (
+    let env, arg = exp ~in_constant_context env arg in
     match arg with
     | { e = EInt n; loc; _ } -> env, { e = EInt n; t = Typed.C.int ~loc; loc }
     | { e = EId _; loc; t = { tx = TEId tpath; _ } } -> (
@@ -435,32 +445,58 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
           ( { e = SEIndex { e = { e = SEId instance; _ }; index }; _ }
           , { e = SECall { instance = None; path; args }; loc } )
     ; _
-    } -> call env (Some (instance, Some index)) path args loc e.loc
-  | { e = SENamed ({ e = SEId instance; _ }, { e = SECall { instance = None; path; args }; loc }); _ } ->
-    call env (Some (instance, None)) path args loc e.loc
+    }
+    when not in_constant_context -> call env (Some (instance, Some index)) path args loc e.loc
+  | { e = SENamed ({ e = SEId instance; _ }, { e = SECall { instance = None; path; args }; loc }); _ }
+    when not in_constant_context -> call env (Some (instance, None)) path args loc e.loc
+  | { e = SENamed (_e1, _e2); _ } when in_constant_context -> failwith "top_exp: Inference SENamed"
   | { e = SENamed (e1, e2); _ } ->
     let e1 = Pla.print (Syntax.Print.exp e1) in
     let e2 = Pla.print (Syntax.Print.exp e2) in
     failwith ("Inference SENamed: " ^ e1 ^ " : " ^ e2)
+  | { e = SECall { instance; path; args }; loc } when in_constant_context ->
+    (* Check if the function has memory declarations *)
+    let f = Env.lookFunctionCall env path loc in
+    let function_has_mem = Env.isFunctionActive f in
+    if function_has_mem then
+      Error.raiseError "Function calls with memory declarations are not supported in constants." loc
+    else
+      call env instance path args loc e.loc
   | { e = SECall { instance; path; args }; loc } -> call env instance path args loc e.loc
   | { e = SEOp (op, e1, e2); loc } ->
-    let env, e1 = exp env e1 in
-    let env, e2 = exp env e2 in
-    let f = Env.lookOperator env op in
+    let env, e1 = exp ~in_constant_context env e1 in
+    let env, e2 = exp ~in_constant_context env e2 in
+    let f =
+      if in_constant_context then
+        Env.lookOperatorInModule env op
+      else
+        Env.lookOperator env op
+    in
     let args_t, ret = f.t in
     let t = applyFunction e.loc args_t ret [ e1; e2 ] in
     env, { e = EOp (op, e1, e2); t; loc }
   | { e = SEUnOp (op, e); loc } ->
-    let env, e = exp env e in
-    let f = Env.lookOperator env ("u" ^ op) in
+    let env, e = exp ~in_constant_context env e in
+    let f =
+      if in_constant_context then
+        Env.lookOperatorInModule env ("u" ^ op)
+      else
+        Env.lookOperator env ("u" ^ op)
+    in
     let args_t, ret = f.t in
     let t = applyFunction e.loc args_t ret [ e ] in
     env, { e = EUnOp (op, e); t; loc }
   | { e = SEMember (e1, m); loc } -> (
-    let env, e1 = exp env e1 in
+    let env, e1 = exp ~in_constant_context env e1 in
     match (unlink e1.t).tx with
     | TEId path -> (
-      match Env.lookType env path loc with
+      let type_lookup =
+        if in_constant_context then
+          Env.lookTypeInModule
+        else
+          Env.lookType
+      in
+      match type_lookup env path loc with
       | { path; descr = Record members; _ } -> (
         match Map.find m members with
         | None -> Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
@@ -468,7 +504,7 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
           let t = refreshConstness t in
           (* if the type is a builtin (a value) do not unify the constness *)
           let () =
-            if not (Env.isBuiltinType t) then
+            if (not in_constant_context) && not (Env.isBuiltinType t) then
               unifyConstness t e1.t
           in
           env, { e = EMember (e1, m); t; loc })
@@ -481,21 +517,39 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
       let e = Pla.print (Typed.print_exp e1) in
       Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
   | { e = SEEnum path; loc } ->
-    let type_path, tloc, index = Env.lookEnum env path loc in
+    let enum_lookup =
+      if in_constant_context then
+        Env.lookEnumInModule
+      else
+        Env.lookEnum
+    in
+    let type_path, tloc, index = enum_lookup env path loc in
     let t = C.path_t tloc type_path in
     env, { e = EInt index; t; loc }
   | { e = SEId id; loc } ->
-    let type_path, tloc, index = Env.lookEnum env { id; n = None; loc } loc in
+    let enum_lookup =
+      if in_constant_context then
+        Env.lookEnumInModule
+      else
+        Env.lookEnum
+    in
+    let type_path, tloc, index = enum_lookup env { id; n = None; loc } loc in
     let t = C.path_t tloc type_path in
     env, { e = EInt index; t; loc }
   | { e = SERecord { path; elems }; loc } -> (
-    let t = Env.lookType env path loc in
+    let type_lookup =
+      if in_constant_context then
+        Env.lookTypeInModule
+      else
+        Env.lookType
+    in
+    let t = type_lookup env path loc in
     match t with
     | { descr = Record members; _ } ->
       let env, elems_rev =
         CCList.fold_left
           (fun (env, acc) (id, v) ->
-            let env, v = exp env v in
+            let env, v = exp ~in_constant_context env v in
             let id, id_loc =
               match id with
               | Syntax.{ id; n = None; loc } -> id, loc
@@ -516,11 +570,11 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
     | _ -> Error.raiseError ("The path '" ^ path_string path ^ "' is not a type.") loc)
 
 
-and exp_list (env : Env.in_func) (l : Syntax.exp list) : Env.in_func * exp list =
+and exp_list ?(in_constant_context = false) (env : env) (l : Syntax.exp list) : env * exp list =
   let env, rev_l =
     CCList.fold_left
       (fun (env, acc) e ->
-        let env, e = exp env e in
+        let env, e = exp ~in_constant_context env e in
         env, e :: acc)
       (env, [])
       l
@@ -528,7 +582,7 @@ and exp_list (env : Env.in_func) (l : Syntax.exp list) : Env.in_func * exp list 
   env, CCList.rev rev_l
 
 
-and lexp ?(const = false) (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
+and lexp ?(const = false) (env : env) (e : Syntax.lexp) : env * lexp =
   match e with
   | { l = SLWild; loc } ->
     let t = C.noreturn loc in
@@ -596,7 +650,7 @@ and lexp ?(const = false) (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * 
       Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
 
 
-and dexp (env : Env.in_func) (e : Syntax.dexp) (kind : var_kind) : Env.in_func * dexp =
+and dexp (env : env) (e : Syntax.dexp) (kind : var_kind) : env * dexp =
   match e with
   | { d = SDWild; loc } ->
     let t = C.noreturn loc in
@@ -647,7 +701,7 @@ let stmt_block (stmts : stmt list) =
   | _ -> { s = StmtBlock stmts; loc = Loc.default }
 
 
-let makeIterWhile (env : Env.in_func) name id_loc value body loc =
+let makeIterWhile (env : env) name id_loc value body loc =
   let tick = Env.getFunctionTick env in
   let itname = name ^ "__" ^ string_of_int tick in
   let open Syntax in
@@ -712,7 +766,7 @@ let makeIfOfMatch e cases =
   | Some stmt -> stmt
 
 
-let rec stmt (env : Env.in_func) (return : type_) (s : Syntax.stmt) : Env.in_func * stmt list =
+let rec stmt (env : env) (return : type_) (s : Syntax.stmt) : env * stmt list =
   match s with
   | { s = SStmtError; _ } -> env, []
   | { s = SStmtBlock stmts; loc } ->
@@ -820,7 +874,7 @@ let convertArguments env (args : Syntax.arg list) : arg list =
   CCList.map (fun (name, t, loc) -> { name; t = getOptType env loc t; loc }) args
 
 
-let registerMultiReturnMem (env : Env.in_context) name t loc =
+let registerMultiReturnMem (env : env) name t loc =
   let _, ret = t in
   match unlink ret with
   | { tx = TEComposed ("tuple", elems); _ } ->
@@ -834,7 +888,7 @@ let isRoot (args : Args.args) path =
   CCList.mem s_path args.roots
 
 
-let customInitializer (env : Env.in_context) tags name =
+let customInitializer (env : env) tags name =
   if Ptags.has tags "init" then
     Env.addCustomInitFunction env name
   else
@@ -856,8 +910,7 @@ let reportReturnTypeMismatch is_placeholder loc (specified_ret : type_ option) (
   | Some t1, t2 -> unifyRaise loc t1 t2
 
 
-let rec function_def (iargs : Args.args) (env : Env.in_context) (def : Syntax.function_def) :
-    Env.in_context * (function_def * stmt) =
+let rec function_def (iargs : Args.args) (env : env) (def : Syntax.function_def) : env * (function_def * stmt) =
   let specified_ret = getReturnType env def.t in
   let inferred_ret = C.noreturn def.loc in
   let args = convertArguments env def.args in
@@ -874,7 +927,7 @@ let rec function_def (iargs : Args.args) (env : Env.in_context) (def : Syntax.fu
   env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next; is_root }, stmt_block body)
 
 
-and function_def_opt (iargs : Args.args) (env : Env.in_context) def_opt =
+and function_def_opt (iargs : Args.args) (env : env) def_opt =
   match def_opt with
   | None -> env, None
   | Some def ->
@@ -898,7 +951,7 @@ let applyMutableTag (args : Typed.arg list) (tags : Typed.tag list) =
       args
 
 
-let ext_function (iargs : Args.args) (env : Env.in_context) (def : Syntax.ext_def) : Env.in_context * function_def =
+let ext_function (iargs : Args.args) (env : env) (def : Syntax.ext_def) : env * function_def =
   let ret = getOptType env def.loc def.t in
   let args = convertArguments env def.args in
   let args = applyMutableTag args def.tags in
@@ -909,14 +962,15 @@ let ext_function (iargs : Args.args) (env : Env.in_context) (def : Syntax.ext_de
   env, { name = path; args; t; loc = def.loc; tags = def.tags; next; is_root = false }
 
 
-let getContextArgument (env : Env.in_context) (path : path) loc : arg option =
-  match env.context with
+let getContextArgument (env : env) (path : path) loc : arg option =
+  match Env.getCurrentContext env with
   | Some (_, { descr = Record members; _ }) ->
     if Map.is_empty members then
       None
     else
       let ctx_t =
-        match Map.find path.id env.m.functions with
+        let m = Env.getCurrentModule env in
+        match Map.find path.id m.functions with
         | Some f -> (
           match Env.lookVarInScopes f.locals context_name with
           | Some var -> var.t
@@ -928,7 +982,7 @@ let getContextArgument (env : Env.in_context) (path : path) loc : arg option =
   | _ -> None
 
 
-let insertContextArgument (env : Env.in_context) (def : function_def) : function_def =
+let insertContextArgument (env : env) (def : function_def) : function_def =
   match getContextArgument env def.name def.loc with
   | None -> def
   | Some arg ->
@@ -943,7 +997,7 @@ let insertContextArgument (env : Env.in_context) (def : function_def) : function
     { def with args = arg :: def.args; next }
 
 
-let top_dexp (env : Env.in_module) (d : Syntax.dexp) =
+let top_dexp (env : env) (d : Syntax.dexp) =
   match d with
   | { d = SDId (name, dims); loc } ->
     let t =
@@ -956,139 +1010,7 @@ let top_dexp (env : Env.in_module) (d : Syntax.dexp) =
   | _ -> failwith "invalid constant"
 
 
-let rec top_exp (env : Env.in_module) (e : Syntax.exp) : Env.in_module * exp =
-  match e with
-  | { e = SEBool value; loc } ->
-    let t = C.bool ~loc in
-    env, { e = EBool value; t; loc }
-  | { e = SEInt value; loc } ->
-    let t = C.int ~loc in
-    env, { e = EInt (int_of_string value); t; loc }
-  | { e = SEReal value; loc } ->
-    let t = C.real ~loc in
-    env, { e = EReal (float_of_string value); t; loc }
-  | { e = SEFixed value; loc } ->
-    let t = C.fix16 ~loc in
-    let value = String.sub value 0 (String.length value - 1) in
-    env, { e = EFixed (float_of_string value); t; loc }
-  | { e = SEString value; loc } ->
-    let t = C.string ~loc in
-    env, { e = EString value; t; loc }
-  | { e = SEGroup e; _ } -> top_exp env e
-  | { e = SEId name; loc } ->
-    let var = Env.lookConstant env name loc in
-    let t = var.t in
-    env, { e = EConst { id = name; n = Some env.m.name; loc }; t; loc }
-  | { e = SEIndex { e; index }; loc } ->
-    let env, e = top_exp env e in
-    let env, index = top_exp env index in
-    let t = C.unbound Loc.default in
-    unifyRaise e.loc (C.array ~fixed:false t) e.t;
-    unifyRaise index.loc (C.int ~loc:Loc.default) index.t;
-    env, { e = EIndex { e; index }; t; loc }
-  | { e = SEArray []; loc } -> Error.raiseError "Empty arrays are not supported." loc
-  | { e = SEArray (h :: t); loc } ->
-    let env, h = top_exp env h in
-    let env, t_rev, size =
-      CCList.fold_left
-        (fun (env, acc, size) e ->
-          let env, e = top_exp env e in
-          unifyRaise e.loc h.t e.t;
-          env, e :: acc, size + 1)
-        (env, [], 1)
-        t
-    in
-    let t = C.array ~size:(C.size ~loc size) h.t in
-    env, { e = EArray (h :: CCList.rev t_rev); t; loc }
-  | { e = SENamed _; _ } -> failwith "top_exp: Inference SENamed"
-  | { e = SETuple l; loc } ->
-    let env, l = top_exp_list env l in
-    let t = C.tuple ~loc (CCList.map (fun (e : exp) -> e.t) l) in
-    env, { e = ETuple l; t; loc }
-  | { e = SEIf { cond; then_; else_ }; loc } ->
-    let env, cond = top_exp env cond in
-    let env, then_ = top_exp env then_ in
-    let env, else_ = top_exp env else_ in
-    let t = then_.t in
-    unifyRaise cond.loc (C.bool ~loc) cond.t;
-    unifyRaise else_.loc then_.t else_.t;
-    env, { e = EIf { cond; then_; else_ }; t; loc }
-  | { e = SECall _; loc } -> Error.raiseError "Function calls are currently not supported in constants." loc
-  | { e = SEOp (op, e1, e2); loc } ->
-    let env, e1 = top_exp env e1 in
-    let env, e2 = top_exp env e2 in
-    let f = Env.lookOperatorInModule env op in
-    let args_t, ret = f.t in
-    let t = applyFunction e.loc args_t ret [ e1; e2 ] in
-    env, { e = EOp (op, e1, e2); t; loc }
-  | { e = SEUnOp (op, e); loc } ->
-    let env, e = top_exp env e in
-    let f = Env.lookOperatorInModule env ("u" ^ op) in
-    let args_t, ret = f.t in
-    let t = applyFunction e.loc args_t ret [ e ] in
-    env, { e = EUnOp (op, e); t; loc }
-  | { e = SEMember (e, m); loc } -> (
-    let env, e = top_exp env e in
-    match (unlink e.t).tx with
-    | TEId path -> (
-      match Env.lookTypeInModule env path loc with
-      | { path; descr = Record members; _ } -> (
-        match Map.find m members with
-        | None -> Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
-        | Some { t; _ } -> env, { e = EMember (e, m); t; loc })
-      | _ ->
-        let t = Pla.print (Typed.print_type_ e.t) in
-        let e = Pla.print (Typed.print_exp e) in
-        Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
-    | _ ->
-      let t = Pla.print (Typed.print_type_ e.t) in
-      let e = Pla.print (Typed.print_exp e) in
-      Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
-  | { e = SEEnum path; loc } ->
-    let type_path, tloc, index = Env.lookEnumInModule env path loc in
-    let t = C.path_t tloc type_path in
-    env, { e = EInt index; t; loc }
-  | { e = SERecord { path; elems }; loc } -> (
-    let t = Env.lookTypeInModule env path loc in
-    match t with
-    | { descr = Record members; _ } ->
-      let env, elems_rev =
-        CCList.fold_left
-          (fun (env, acc) (id, v) ->
-            let env, v = top_exp env v in
-            let id, id_loc =
-              match id with
-              | Syntax.{ id; n = None; loc } -> id, loc
-              | { loc; _ } ->
-                Error.raiseError ("The name '" ^ path_string id ^ "' is not a valid member of a data type.") loc
-            in
-            match Env.Map.find id members with
-            | None ->
-              Error.raiseError ("The name '" ^ id ^ "' does not belong to type '" ^ path_string path ^ "'.") id_loc
-            | Some var ->
-              unifyRaise v.loc var.t v.t;
-              env, (id, v) :: acc)
-          (env, [])
-          elems
-      in
-      let elems = CCList.sort (fun (id1, _) (id2, _) -> String.compare id1 id2) elems_rev in
-      env, { e = ERecord { path; elems }; t = Typed.C.path_t loc t.path; loc }
-    | _ -> Error.raiseError ("The path '" ^ path_string path ^ "' is not a type.") loc)
-
-
-and top_exp_list (env : Env.in_module) (l : Syntax.exp list) : Env.in_module * exp list =
-  let env, rev_l =
-    CCList.fold_left
-      (fun (env, acc) e ->
-        let env, e = top_exp env e in
-        env, e :: acc)
-      (env, [])
-      l
-  in
-  env, CCList.rev rev_l
-
-
-let rec top_stmt (iargs : Args.args) (env : Env.in_module) (s : Syntax.top_stmt) : Env.in_module * top_stmt =
+let rec top_stmt (iargs : Args.args) (env : env) (s : Syntax.top_stmt) : env * top_stmt =
   match s with
   | { top = STopError; _ } -> failwith "Parser error"
   | { top = STopFunction def; _ } ->
@@ -1106,23 +1028,26 @@ let rec top_stmt (iargs : Args.args) (env : Env.in_module) (s : Syntax.top_stmt)
     let members = CCList.map (fun (name, t, tags, loc) -> name, type_in_m env t, tags, loc) members in
     let members = CCList.sort (fun (n1, _, _, _) (n2, _, _, _) -> compare n1 n2) members in
     let env = Env.addType env name members loc in
-    let path = Env.getPath env.m name loc in
+    let m = Env.getCurrentModule env in
+    let path = Env.getPath m name loc in
     env, { top = TopType { path; members }; loc }
   | { top = STopEnum { name; members }; loc } ->
     let env = Env.addEnum env name members loc in
-    let path = Env.getPath env.m name loc in
+    let m = Env.getCurrentModule env in
+    let path = Env.getPath m name loc in
     env, { top = TopEnum { path; members }; loc }
   | { top = STopConstant (({ d = SDId (name, dim); _ } as d), e); loc } ->
     let env, d = top_dexp env d in
-    let env, e = top_exp env e in
+    let env, e = exp ~in_constant_context:true env e in
     unifyRaise e.loc d.t e.t;
-    let path = Env.getPath env.m name loc in
+    let m = Env.getCurrentModule env in
+    let path = Env.getPath m name loc in
     let env = Env.addConstant env unify name d.t loc in
     env, { top = TopConstant (path, dim, d.t, e); loc }
   | { top = STopConstant _; _ } -> failwith ""
 
 
-and top_stmt_list (iargs : Args.args) (env : Env.in_module) (s : Syntax.top_stmt list) : Env.in_module * top_stmt list =
+and top_stmt_list (iargs : Args.args) (env : env) (s : Syntax.top_stmt list) : env * top_stmt list =
   let env, rev_s =
     CCList.fold_left
       (fun (env, acc) s ->
@@ -1146,7 +1071,7 @@ let getTypesFromModule m =
     m.Env.types
 
 
-let createTypes (env : Env.in_top) =
+let createTypes (env : env) =
   let types =
     Map.fold
       (fun _ m s ->
@@ -1195,7 +1120,7 @@ let removeExistingTypes set types =
   CCList.filter f types
 
 
-let infer_single (iargs : Args.args) (env : Env.in_top) (h : Parse.parsed_file) : Env.in_top * top_stmt list =
+let infer_single (iargs : Args.args) (env : env) (h : Parse.parsed_file) : env * top_stmt list =
   let set = createExistingTypeSet (createTypes env) in
   let env = Env.enterModule env h.name in
   let env, stmt = top_stmt_list iargs env h.stmts in
@@ -1204,7 +1129,7 @@ let infer_single (iargs : Args.args) (env : Env.in_top) (h : Parse.parsed_file) 
   env, stmt @ types
 
 
-let infer (iargs : Args.args) (parsed : Parse.parsed_file list) : Env.in_top * top_stmt list =
+let infer (iargs : Args.args) (parsed : Parse.parsed_file list) : env * top_stmt list =
   let env, stmts =
     CCList.fold_left
       (fun (env, acc) (h : Parse.parsed_file) ->

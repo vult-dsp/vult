@@ -1,0 +1,88 @@
+// Test function calls in constants with lazy evaluation
+
+// Pure functions - should work in constants
+fun pure_add(a : int, b : int) : int {
+    return a + b;
+}
+
+fun pure_multiply(x : real, y : real) : real {
+    return x * y;
+}
+
+fun pure_max(a : int, b : int) : int {
+    if (a > b)
+        return a;
+    else
+        return b;
+}
+
+// Nested pure function calls
+fun pure_complex(a : int, b : int, c : int) : int {
+    return pure_add(pure_max(a, b), c);
+}
+
+// Function with memory - should NOT work in constants
+fun stateful_counter() : int {
+    mem count;  // Memory declaration makes this stateful
+    count = count + 1;
+    return count;
+}
+
+// Constants using pure function calls - these should work
+constant simple_sum = pure_add(10, 5);
+constant product = pure_multiply(3.0, 4.0);
+constant maximum = pure_max(8, 12);
+constant nested_result = pure_complex(1, 2, 3);
+
+// Constants using literals for comparison
+constant literal_sum = 15;
+constant literal_product = 12.0;
+
+// Main function to test the constants
+fun main() : int {
+    // Test that lazy-evaluated constants work correctly
+    val sum_test = simple_sum;           // Should be 15
+    val product_test = int(product);     // Should be 12 (converted from 12.0)
+    val max_test = maximum;              // Should be 12
+    val nested_test = nested_result;     // Should be 5 (max(1,2) + 3 = 2 + 3 = 5)
+    
+    // Verify results match expected values
+    val sum_ok = sum_test == literal_sum;                    // 15 == 15
+    val product_ok = product_test == int(literal_product);   // 12 == 12
+    val max_ok = max_test == 12;                             // 12 == 12
+    val nested_ok = nested_test == 5;                        // 5 == 5
+    
+    // Return 1 if all tests pass, 0 otherwise
+    if (sum_ok && product_ok && max_ok && nested_ok)
+        return 1;
+    else
+        return 0;
+}
+
+// Test function to verify constants are actually constant
+// (same value returned each time)
+fun test_constant_consistency() : int {
+    val first_access = simple_sum;
+    val second_access = simple_sum;
+    val third_access = simple_sum;
+    
+    if (first_access == second_access && second_access == third_access)
+        return 1;
+    else
+        return 0;
+}
+
+// Additional test for edge cases
+fun test_edge_cases() : int {
+    // Test with zero
+    val zero_sum = pure_add(0, 0);
+    if (zero_sum <> 0)
+        return 0;
+        
+    // Test with negative numbers
+    val neg_result = pure_add(-5, 10);
+    if (neg_result <> 5)
+        return 0;
+        
+    return 1;
+}

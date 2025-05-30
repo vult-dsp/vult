@@ -25,10 +25,11 @@ open Util
 open Pparser
 open Prog
 module T = Typed
-open Util.Maps
+module Maps = Util.Maps
+open Env
 
 type state =
-  { types : type_ Map.t
+  { types : type_ Maps.Map.t
   ; dummy : int
   }
 
@@ -38,7 +39,7 @@ let path (p : Syntax.path) : string =
   | { id; n = Some n; _ } -> n ^ "_" ^ id
 
 
-let list mapper (env : Env.in_top) (state : state) (l : 'a list) =
+let list mapper (env : env) (state : state) (l : 'a list) =
   let state, rev =
     CCList.fold_left
       (fun (state, acc) e ->
@@ -57,7 +58,7 @@ let rec getDim (t : Typed.type_) =
   | _ -> Error.raiseError "The size of the array could not be inferred. Please add a type annotation." t.loc
 
 
-let rec type_ ?(const = false) (env : Env.in_top) (state : state) (t : Typed.type_) =
+let rec type_ ?(const = false) (env : env) (state : state) (t : Typed.type_) =
   let const = const || Typed.isTypeConst t in
   let loc = t.loc in
   match t.tx with
@@ -72,13 +73,13 @@ let rec type_ ?(const = false) (env : Env.in_top) (state : state) (t : Typed.typ
   | T.TEId { id = "bool"; n = None; _ } -> state, { t = TBool; const; loc }
   | T.TEId p -> (
     let ps = path p in
-    match Map.find_opt ps state.types with
+    match Maps.Map.find_opt ps state.types with
     | Some t -> state, { t with const }
     | None -> (
       match Env.getType env p with
       | None -> failwith "unknown type"
       | Some { descr = Enum _; _ } -> state, { t = TInt; const; loc }
-      | Some { descr = Record members; _ } when Map.is_empty !members -> state, { t = TEmptyType; const; loc }
+      | Some { descr = Record members; _ } when Maps.Map.is_empty !members -> state, { t = TEmptyType; const; loc }
       | Some { descr = Record members; _ } ->
         let members =
           CCList.map (fun (name, (var : Env.var)) -> name, var.t, var.tags, var.loc) (Env.Map.to_list members)
@@ -86,7 +87,7 @@ let rec type_ ?(const = false) (env : Env.in_top) (state : state) (t : Typed.typ
         in
         let state, members = type_list env state members in
         let t = { t = TStruct { path = ps; members }; loc; const = true } in
-        let types = Map.add ps t state.types in
+        let types = Maps.Map.add ps t state.types in
         { state with types }, t
       | Some { descr = Simple; _ } -> failwith "Type does not have members"
       | Some { descr = Alias _; _ } -> failwith ""))
@@ -106,7 +107,7 @@ let rec type_ ?(const = false) (env : Env.in_top) (state : state) (t : Typed.typ
   | T.TEFunction _ -> failwith "function type not implemented"
 
 
-and type_list (env : Env.in_top) (state : state) (l : (string * Typed.type_ * Ptags.tags * Loc.t) list) =
+and type_list (env : env) (state : state) (l : (string * Typed.type_ * Ptags.tags * Loc.t) list) =
   let mapper env state ((n : string), (t : Typed.type_), (tags : Ptags.tags), (loc : Loc.t)) =
     let state, t = type_ env state t in
     state, (n, t, tags, loc)
@@ -144,7 +145,7 @@ let uoperator op =
   | _ -> failwith "unknown uoperator"
 
 
-let rec exp (env : Env.in_top) (state : state) (e : Typed.exp) : state * Prog.exp =
+let rec exp (env : env) (state : state) (e : Typed.exp) : state * Prog.exp =
   let loc = e.loc in
   let state, t = type_ env state e.t in
   match e.e with
@@ -209,7 +210,7 @@ let rec exp (env : Env.in_top) (state : state) (e : Typed.exp) : state * Prog.ex
     state, { e = ERecord { path = p; elems = sorted }; t; loc }
 
 
-let rec lexp (env : Env.in_top) (state : state) (e : Typed.lexp) =
+let rec lexp (env : env) (state : state) (e : Typed.lexp) =
   let loc = e.loc in
   let state, t = type_ env state e.t in
   match e.l with
@@ -227,7 +228,7 @@ let rec lexp (env : Env.in_top) (state : state) (e : Typed.lexp) =
     state, { l = LTuple l; t; loc }
 
 
-let dexp (env : Env.in_top) (state : state) id dims t loc =
+let dexp (env : env) (state : state) id dims t loc =
   let state, t = type_ env state t in
   match id, dims with
   | id, None -> state, { d = DId (id, None); t; loc }
@@ -259,7 +260,7 @@ let rec flattenTupleDeclarations env state (l : T.dexp list) =
   state, CCList.rev l
 
 
-let rec stmt (env : Env.in_top) (state : state) (s : Typed.stmt) =
+let rec stmt (env : env) (state : state) (s : Typed.stmt) =
   let loc = s.loc in
   match s.s with
   | StmtVal { d = DWild; _ } -> state, []
@@ -300,7 +301,7 @@ let rec stmt (env : Env.in_top) (state : state) (s : Typed.stmt) =
     | subs -> state, [ { s = StmtBlock subs; loc } ])
 
 
-let arg (env : Env.in_top) (state : state) ({ name; t; loc } : Typed.arg) =
+let arg (env : env) (state : state) ({ name; t; loc } : Typed.arg) =
   let const = Typed.isTypeConst t = true in
   let state, t = type_ env state t in
   state, { name; t; const; loc }
@@ -314,7 +315,7 @@ let function_type env state t =
     state, (args, ret)
 
 
-let rec function_def (env : Env.in_top) (state : state) (def : Typed.function_def) body =
+let rec function_def (env : env) (state : state) (def : Typed.function_def) body =
   let name = path def.name in
   let state, args = list arg env state def.args in
   let state, t = function_type env state def.t in
@@ -333,7 +334,7 @@ and next_def env state def_opt =
   | Some (def, body) -> function_def env state def body
 
 
-let ext_function_def (env : Env.in_top) (state : state) (def : Typed.function_def) (linkname : string option) =
+let ext_function_def (env : env) (state : state) (def : Typed.function_def) (linkname : string option) =
   let name = path def.name in
   let state, args = list arg env state def.args in
   let state, t = function_type env state def.t in
@@ -344,7 +345,7 @@ let ext_function_def (env : Env.in_top) (state : state) (def : Typed.function_de
   state, stmt :: next
 
 
-let top_stmt (env : Env.in_top) (state : state) (t : Typed.top_stmt) =
+let top_stmt (env : env) (state : state) (t : Typed.top_stmt) =
   match t.top with
   | TopFunction (def, body) ->
     let state, functions = function_def env state def body in
@@ -358,7 +359,7 @@ let top_stmt (env : Env.in_top) (state : state) (t : Typed.top_stmt) =
     let state, members = type_list env state members in
     let struct_descr = { path = p; members } in
     let t = { t = TStruct struct_descr; loc = t.loc; const = false } in
-    let types = Map.add p t state.types in
+    let types = Maps.Map.add p t state.types in
     { state with types }, [ { top = TopType struct_descr; loc = t.loc } ]
   | TopEnum _ -> state, []
   | TopAlias { path = p; alias_of } ->
@@ -372,10 +373,10 @@ let top_stmt (env : Env.in_top) (state : state) (t : Typed.top_stmt) =
     state, [ { top = TopConstant (p, dim, t, e); loc = t.loc } ]
 
 
-let top_stmt_list (env : Env.in_top) (state : state) (t : Typed.top_stmt list) = list top_stmt env state t
+let top_stmt_list (env : env) (state : state) (t : Typed.top_stmt list) = list top_stmt env state t
 
 let main env stmts =
-  let state = { types = Map.empty; dummy = 0 } in
+  let state = { types = Maps.Map.empty; dummy = 0 } in
   let _, t = top_stmt_list env state stmts in
   CCList.flatten t
 
@@ -388,11 +389,11 @@ let isType s =
 
 
 let getInitializersFromModule table m =
-  CCList.fold_left (fun s (key, t) -> Map.add (path key) (path t) s) table m.Env.init
+  CCList.fold_left (fun s (key, t) -> Maps.Map.add (path key) (path t) s) table m.Env.init
 
 
-let createInitizerTable (env : Env.in_top) =
-  Env.Map.fold (fun _ m s -> getInitializersFromModule s m) Map.empty env.modules
+let createInitizerTable (env : env) =
+  Env.Map.fold (fun _ m s -> getInitializersFromModule s m) Maps.Map.empty env.modules
 
 
 let convert (iargs : Args.args) env stmts =

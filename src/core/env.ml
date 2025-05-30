@@ -130,28 +130,29 @@ type m =
   ; mutable constants : var Map.t
   }
 
-type in_top =
+(* Location within the environment hierarchy *)
+type location =
+  | Top
+  | InModule of string
+  | InContext of string * context
+  | InFunction of string * f
+
+(* Unified environment type that tracks current location internally *)
+type env =
   { modules : m Map.t
   ; builtin_functions : (unit -> Typed.fun_type) Map.t
   ; builtin_types : t Map.t
+  ; location : location
   }
 
-type in_module =
-  { top : in_top
-  ; m : m
-  }
+(* Legacy type aliases for backward compatibility during transition *)
+type in_top = env
 
-type in_context =
-  { top : in_top
-  ; m : m
-  ; context : context
-  }
+type in_module = env
 
-type in_func =
-  { top : in_top
-  ; m : m
-  ; f : f
-  }
+type in_context = env
+
+type in_func = env
 
 let builtin_functions =
   Typed.
@@ -229,6 +230,29 @@ let makeFunctionForBuiltin name t : f =
   { path = { id = name; n = None; loc = Loc.default }; t; context = None; locals = []; tick = 0; args = None }
 
 
+(* Helper functions to extract current state *)
+let getCurrentModule (env : env) : m =
+  match env.location with
+  | InModule name | InContext (name, _) | InFunction (name, _) -> (
+    match Map.find name env.modules with
+    | Some m -> m
+    | None -> failwith ("Module " ^ name ^ " not found"))
+  | Top -> failwith "Not currently in a module"
+
+
+let getCurrentContext (env : env) : context =
+  match env.location with
+  | InContext (_, context) -> context
+  | InFunction (_, f) -> f.context
+  | _ -> None
+
+
+let getCurrentFunction (env : env) : f =
+  match env.location with
+  | InFunction (_, f) -> f
+  | _ -> failwith "Not currently in a function"
+
+
 let rec lookVarInScopes (scopes : var Map.t list) name : var option =
   match scopes with
   | [] -> None
@@ -244,27 +268,30 @@ let lookVarInContext (context : context) name : var option =
   | _ -> None
 
 
-let lookVar (env : in_func) (name : string) (loc : Loc.t) : var =
-  match lookVarInContext env.f.context name with
+let lookVar (env : env) (name : string) (loc : Loc.t) : var =
+  let f = getCurrentFunction env in
+  let m = getCurrentModule env in
+  match lookVarInContext f.context name with
   | Some found -> found
   | None -> (
-    match lookVarInScopes env.f.locals name with
+    match lookVarInScopes f.locals name with
     | Some found -> found
     | None -> (
-      match Map.find name env.m.constants with
+      match Map.find name m.constants with
       | Some var -> var
       | None -> Error.raiseError ("The variable '" ^ name ^ "' could not be found") loc))
 
 
-let lookConstant (env : in_module) (name : string) (loc : Loc.t) : var =
-  match Map.find name env.m.constants with
+let lookConstant (env : env) (name : string) (loc : Loc.t) : var =
+  let m = getCurrentModule env in
+  match Map.find name m.constants with
   | None -> Error.raiseError ("A constant with the name '" ^ name ^ "' could not be found") loc
   | Some var -> var
 
 
 let reportModuleNotFound n loc = Error.raiseError ("The module named '" ^ n ^ "' could not be found") loc
 
-let lookEnum (env : in_func) (path : path) (loc : Loc.t) =
+let lookEnum (env : env) (path : path) (loc : Loc.t) =
   let error () = Error.raiseError ("An enumeration with the name '" ^ pathString path ^ "' could not be found") loc in
   let findEnumInModule enums id =
     match Map.find id enums with
@@ -275,15 +302,16 @@ let lookEnum (env : in_func) (path : path) (loc : Loc.t) =
     | _ -> error ()
   in
   match path with
-  | { id; n = None; _ } -> findEnumInModule env.m.enums id
+  | { id; n = None; _ } ->
+    let m = getCurrentModule env in
+    findEnumInModule m.enums id
   | { id; n = Some n; loc } -> (
-    match Map.find n env.top.modules with
+    match Map.find n env.modules with
     | Some m -> findEnumInModule m.enums id
     | None -> reportModuleNotFound n loc)
 
 
-(* TODO: this function is exactly the same as lookEnum. Refactor to use the same code. *)
-let lookEnumInModule (env : in_module) (path : path) (loc : Loc.t) =
+let lookEnumInModule (env : env) (path : path) (loc : Loc.t) =
   let error () = Error.raiseError ("An enumeration with the name '" ^ pathString path ^ "' could not be found") loc in
   let findEnumInModule enums id =
     match Map.find id enums with
@@ -294,14 +322,16 @@ let lookEnumInModule (env : in_module) (path : path) (loc : Loc.t) =
     | _ -> error ()
   in
   match path with
-  | { id; n = None; _ } -> findEnumInModule env.m.enums id
+  | { id; n = None; _ } ->
+    let m = getCurrentModule env in
+    findEnumInModule m.enums id
   | { id; n = Some n; loc } -> (
-    match Map.find n env.top.modules with
+    match Map.find n env.modules with
     | Some m -> findEnumInModule m.enums id
     | None -> reportModuleNotFound n loc)
 
 
-let lookFunctionCall (env : in_func) (path : path) (loc : Loc.t) : f =
+let lookFunctionCall (env : env) (path : path) (loc : Loc.t) : f =
   let reportNotFound result =
     match result with
     | Some found -> found
@@ -309,31 +339,32 @@ let lookFunctionCall (env : in_func) (path : path) (loc : Loc.t) : f =
   in
   match path with
   | { id; n = Some n; _ } -> (
-    match Map.find n env.top.modules with
+    match Map.find n env.modules with
     | None -> reportModuleNotFound n loc
     | Some m -> reportNotFound (Map.find id m.functions))
   | { id; _ } -> (
-    match Map.find id env.m.functions with
+    let m = getCurrentModule env in
+    match Map.find id m.functions with
     | Some found -> found
     | None -> (
-      match Map.find id env.top.builtin_functions with
+      match Map.find id env.builtin_functions with
       | Some f -> makeFunctionForBuiltin id (f ())
       | None -> reportNotFound None))
 
 
-let lookOperator (env : in_func) (op : string) : f =
-  match Map.find op env.top.builtin_functions with
+let lookOperator (env : env) (op : string) : f =
+  match Map.find op env.builtin_functions with
   | Some found -> makeFunctionForBuiltin op (found ())
   | None -> failwith ("operator not found " ^ op)
 
 
-let lookOperatorInModule (env : in_module) (op : string) : f =
-  match Map.find op env.top.builtin_functions with
+let lookOperatorInModule (env : env) (op : string) : f =
+  match Map.find op env.builtin_functions with
   | Some found -> makeFunctionForBuiltin op (found ())
   | None -> failwith ("operator not found " ^ op)
 
 
-let getType (env : in_top) (path : path) : t option =
+let getType (env : env) (path : path) : t option =
   match path with
   | { id; n = Some n; loc } -> (
     match Map.find n env.modules with
@@ -342,7 +373,7 @@ let getType (env : in_top) (path : path) : t option =
   | _ -> None
 
 
-let lookType (env : in_func) (path : path) (loc : Loc.t) : t =
+let lookType (env : env) (path : path) (loc : Loc.t) : t =
   let reportNotFound result =
     match result with
     | Some found -> found
@@ -350,16 +381,17 @@ let lookType (env : in_func) (path : path) (loc : Loc.t) : t =
   in
   match path with
   | { id; n = Some n; loc } -> (
-    match Map.find n env.top.modules with
+    match Map.find n env.modules with
     | None -> reportModuleNotFound n loc
     | Some m -> reportNotFound (Map.find id m.types))
   | { id; _ } -> (
-    match Map.find id env.m.types with
+    let m = getCurrentModule env in
+    match Map.find id m.types with
     | Some _ as found -> reportNotFound found
-    | None -> reportNotFound (Map.find id env.top.builtin_types))
+    | None -> reportNotFound (Map.find id env.builtin_types))
 
 
-let lookTypeInModule (env : in_module) (path : path) (loc : Loc.t) : t =
+let lookTypeInModule (env : env) (path : path) (loc : Loc.t) : t =
   let reportNotFound result =
     match result with
     | Some found -> found
@@ -367,26 +399,30 @@ let lookTypeInModule (env : in_module) (path : path) (loc : Loc.t) : t =
   in
   match path with
   | { id; n = Some n; _ } -> (
-    match Map.find n env.top.modules with
+    match Map.find n env.modules with
     | None -> reportModuleNotFound n loc
     | Some m -> reportNotFound (Map.find id m.types))
   | { id; _ } -> (
-    match Map.find id env.m.types with
+    let m = getCurrentModule env in
+    match Map.find id m.types with
     | Some _ as found -> reportNotFound found
-    | None -> reportNotFound (Map.find id env.top.builtin_types))
+    | None -> reportNotFound (Map.find id env.builtin_types))
 
 
-let addConstant (env : in_module) _unify (name : string) (t : Typed.type_) loc : in_module =
+let addConstant (env : env) _unify (name : string) (t : Typed.type_) loc : env =
+  let m = getCurrentModule env in
   let report (found : var) =
     Error.raiseError
       ("A constant with the name '" ^ found.name ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
       loc
   in
-  Map.update report name { name; t; kind = Const; tags = []; loc } env.m.constants;
+  Map.update report name { name; t; kind = Const; tags = []; loc } m.constants;
   env
 
 
-let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_kind) loc : in_func =
+let addVar (env : env) unify (name : string) (t : Typed.type_) (kind : var_kind) loc : env =
+  let f = getCurrentFunction env in
+  let context = getCurrentContext env in
   let report_mem (found : var) (value : var) =
     if unify found.t t then
       let tags = Pparser.Ptags.mergeTags found.tags value.tags in
@@ -432,13 +468,13 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
             loc)
       locals
   in
-  match kind, env.f.context with
+  match kind, context with
   | Inst, Some (_, { descr = Record members; _ }) ->
-    let () = checkDuplicatedVal env.f.locals name in
+    let () = checkDuplicatedVal f.locals name in
     Map.update report_mem name { name; t; kind; tags = []; loc } members;
     env
   | Mem tags, Some (_, { descr = Record members; _ }) ->
-    let () = checkDuplicatedVal env.f.locals name in
+    let () = checkDuplicatedVal f.locals name in
     Map.update report_mem name { name; t; kind; tags; loc } members;
     env
   | (Mem _ | Inst), None -> failwith "Internal error: cannot add mem to functions with no context"
@@ -452,7 +488,7 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
         loc
     in
     let () = checkDuplicatedMem context name in
-    match env.f.locals with
+    match f.locals with
     | [] -> failwith "no local scope"
     | h :: _ ->
       Map.update report name { name; t; kind; tags = []; loc } h;
@@ -461,8 +497,9 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
   | _, Some _ -> failwith "Not a record"
 
 
-let checkMemExists (env : in_func) name =
-  match env.f.context with
+let checkMemExists (env : env) name =
+  let f = getCurrentFunction env in
+  match f.context with
   | Some (_, { descr = Record members; _ }) -> (
     match Map.find name members with
     | None -> false
@@ -470,10 +507,10 @@ let checkMemExists (env : in_func) name =
   | _ -> false
 
 
-let addReturnVar (env : in_context) (name : string) (t : Typed.type_) loc : in_context =
+let addReturnVar (env : env) (name : string) (t : Typed.type_) loc : env =
   let report_mem found _ = found in
   let () = Typed.setTypeMut t in
-  match env.context with
+  match getCurrentContext env with
   | Some (_, { descr = Record members; _ }) ->
     Map.update report_mem name { name; t; kind = Mem []; tags = []; loc } members;
     env
@@ -481,16 +518,18 @@ let addReturnVar (env : in_context) (name : string) (t : Typed.type_) loc : in_c
   | Some _ -> failwith "Not a record"
 
 
-let pushScope (env : in_func) : in_func =
-  env.f.locals <- Map.empty () :: env.f.locals;
+let pushScope (env : env) : env =
+  let f = getCurrentFunction env in
+  f.locals <- Map.empty () :: f.locals;
   env
 
 
-let popScope (env : in_func) : in_func =
-  match env.f.locals with
+let popScope (env : env) : env =
+  let f = getCurrentFunction env in
+  match f.locals with
   | [] -> failwith "invalid scope"
   | _ :: t ->
-    env.f.locals <- t;
+    f.locals <- t;
     env
 
 
@@ -525,31 +564,33 @@ let registerContextLocal loc locals (context : context) =
 
 let getPath m name loc : path = { id = name; n = Some m.name; loc }
 
-let createContextForFunction (env : in_module) name loc : in_context =
+let createContextForFunction (env : env) name loc : env =
+  let m = getCurrentModule env in
   let report name (found : t) =
     Error.raiseError
       ("A function with the name '" ^ name ^ "' already exists at " ^ Loc.to_string_readable found.loc)
       loc
   in
   let type_name = name ^ "_type" in
-  let path = getPath env.m type_name loc in
+  let path = getPath m type_name loc in
   let index = getGlobalTick () in
   let t = { descr = Record (Map.empty ()); path; index; loc; generated = true } in
-  let _ = Map.update (report name) type_name t env.m.types in
-  { top = env.top; m = env.m; context = Some (path, t) }
+  let _ = Map.update (report name) type_name t m.types in
+  { env with location = InContext (m.name, Some (path, t)) }
 
 
-let addAliasToContext (env : in_context) name loc : in_context =
-  match env.context with
+let addAliasToContext (env : env) name loc : env =
+  match getCurrentContext env with
   | Some (ctx, { descr = Record members; _ }) when not (Map.is_empty members) ->
+    let m = getCurrentModule env in
     let report found =
       Error.raiseError ("A context with the same name already exists at " ^ Loc.to_string_readable found.loc) loc
     in
     let type_name = name ^ "_type" in
-    let path = getPath env.m type_name loc in
+    let path = getPath m type_name loc in
     let index = getGlobalTick () in
     let t = { descr = Alias (path, ctx); path; index; loc; generated = true } in
-    let _ = Map.update report type_name t env.m.types in
+    let _ = Map.update report type_name t m.types in
     env
   | _ -> env
 
@@ -571,17 +612,18 @@ let addRecordMember members =
   Record members
 
 
-let addType (env : in_module) type_name members loc : in_module =
+let addType (env : env) type_name members loc : env =
+  let m = getCurrentModule env in
   let report (found : t) =
     Error.raiseError
       ("A type with the name '" ^ found.path.id ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
       loc
   in
   let index = getGlobalTick () in
-  let path = getPath env.m type_name loc in
+  let path = getPath m type_name loc in
   let descr = addRecordMember members in
   let t = { path; descr; loc; index; generated = false } in
-  let _ = Map.update report type_name t env.m.types in
+  let _ = Map.update report type_name t m.types in
   env
 
 
@@ -602,43 +644,52 @@ let addEnumMember members =
   Enum members
 
 
-let addEnumToModule (env : in_module) members t =
+let addEnumToModule (env : env) members t =
+  let m = getCurrentModule env in
   let report loc name (found : t) =
     Error.raiseError
       ("A enum value with the name '" ^ name ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
       loc
   in
-  let () = CCList.iter (fun (name, loc) -> Map.update (report loc name) name t env.m.enums) members in
+  let () = CCList.iter (fun (name, loc) -> Map.update (report loc name) name t m.enums) members in
   env
 
 
-let addEnum (env : in_module) type_name members loc : in_module =
+let addEnum (env : env) type_name members loc : env =
+  let m = getCurrentModule env in
   let report (found : t) =
     Error.raiseError
       ("A enum with the name '" ^ found.path.id ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
       loc
   in
   let index = getGlobalTick () in
-  let path = getPath env.m type_name loc in
+  let path = getPath m type_name loc in
   let descr = addEnumMember members in
   let t = { path; descr; loc; index; generated = false } in
-  let _ = Map.update report type_name t env.m.types in
+  let _ = Map.update report type_name t m.types in
   let env = addEnumToModule env members t in
   env
 
 
-let createContextForExternal (env : in_module) : in_context = { top = env.top; m = env.m; context = None }
+let createContextForExternal (env : env) : env =
+  let m = getCurrentModule env in
+  { env with location = InContext (m.name, None) }
 
-let exitContext (env : in_context) : in_module = { top = env.top; m = env.m }
 
-let getFunctionTick (env : in_func) : int =
-  let n = env.f.tick + 1 in
-  env.f.tick <- n;
+let exitContext (env : env) : env =
+  let m = getCurrentModule env in
+  { env with location = InModule m.name }
+
+
+let getFunctionTick (env : env) : int =
+  let f = getCurrentFunction env in
+  let n = f.tick + 1 in
+  f.tick <- n;
   n
 
 
-let getContext (env : in_func) : path =
-  match env.f.context with
+let getContext (env : env) : path =
+  match getCurrentContext env with
   | Some (p, _) -> p
   | None -> failwith "trying to get the context of a function without one"
 
@@ -649,18 +700,20 @@ let getFunctionContext (f : f) : path =
   | None -> failwith "trying to get the context of a function without one"
 
 
-let enterFunction (env : in_context) (name : string) (args : Typed.arg list) (ret : Typed.type_) loc :
-    in_func * path * 'a =
+let enterFunction (env : env) (name : string) (args : Typed.arg list) (ret : Typed.type_) loc :
+    env * path * (Typed.type_ list * Typed.type_) =
+  let m = getCurrentModule env in
+  let context = getCurrentContext env in
   let report (found : f) =
     Error.raiseError ("A function with the name '" ^ found.path.id ^ "' has already been declared.") loc
   in
-  let path = getPath env.m name loc in
+  let path = getPath m name loc in
   let locals, args_t = registerArguments args in
-  let locals = registerContextLocal loc locals env.context in
+  let locals = registerContextLocal loc locals context in
   let t = args_t, ret in
-  let f : f = { path; t; context = env.context; locals = [ locals ]; tick = 0; args = Some args } in
-  let _ = Map.update report name f env.m.functions in
-  { top = env.top; m = env.m; f }, path, t
+  let f : f = { path; t; context; locals = [ locals ]; tick = 0; args = Some args } in
+  let _ = Map.update report name f m.functions in
+  { env with location = InFunction (m.name, f) }, path, t
 
 
 let isFunctionActive (f : f) =
@@ -669,19 +722,24 @@ let isFunctionActive (f : f) =
   | _ -> false
 
 
-let exitFunction (env : in_func) : in_context = { top = env.top; m = env.m; context = env.f.context }
+let exitFunction (env : env) : env =
+  let m = getCurrentModule env in
+  let f = getCurrentFunction env in
+  { env with location = InContext (m.name, f.context) }
 
-let addCustomInitFunction (env : in_context) name =
-  match env.context with
+
+let addCustomInitFunction (env : env) name =
+  match getCurrentContext env with
   | Some (p, _) ->
-    env.m.init <- (p, name) :: env.m.init;
+    let m = getCurrentModule env in
+    m.init <- (p, name) :: m.init;
     env
   | _ -> env
 
 
-let enterModule (env : in_top) (name : string) : in_module =
+let enterModule (env : env) (name : string) : env =
   match Map.find name env.modules with
-  | Some m -> { top = env; m }
+  | Some _ -> { env with location = InModule name }
   | None ->
     let report _ = failwith ("duplicate module: " ^ name) in
     let m : m =
@@ -694,9 +752,9 @@ let enterModule (env : in_top) (name : string) : in_module =
       }
     in
     let () = Map.update report name m env.modules in
-    { top = env; m }
+    { env with location = InModule name }
 
 
-let exitModule (env : in_module) : in_top = env.top
+let exitModule (env : env) : env = { env with location = Top }
 
-let empty () = { modules = Map.empty (); builtin_functions; builtin_types }
+let empty () = { modules = Map.empty (); builtin_functions; builtin_types; location = Top }

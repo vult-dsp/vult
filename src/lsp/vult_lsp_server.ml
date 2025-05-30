@@ -482,7 +482,7 @@ module Communication = struct
     in
     let headers = read_headers [] in
     let content_length =
-      match CCList.assoc_opt "Content-Length" headers with
+      match CCList.assoc_opt ~eq:String.equal "Content-Length" headers with
       | Some len -> int_of_string len
       | None -> failwith "Missing Content-Length header"
     in

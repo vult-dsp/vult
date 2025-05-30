@@ -65,7 +65,7 @@ VERSION:=$(shell git describe --tags --abbrev=0)
 version :
 	@echo "let version = String.trim \"" $(VERSION) "\"" > src/core/version.ml
 
-all: version compiler #js test web jscompiler
+all: version compiler lsp jscompiler test perf
 
 clean:
 	dune clean

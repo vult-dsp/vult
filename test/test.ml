@@ -165,6 +165,7 @@ let interpreter =
   ; "constant.vult"
   ; "control_flow.vult"
   ; "edge_cases.vult"
+  ; "function_calls_in_constants.vult"
   ; "functions.vult"
   ; "instance_state.vult"
   ; "memory_state.vult"

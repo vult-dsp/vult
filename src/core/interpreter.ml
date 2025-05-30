@@ -132,12 +132,24 @@ type ifunc_def =
   ; ibody : istmt
   }
 
+(* Forward declaration for lazy evaluation *)
+type constant_value =
+  | Evaluated of dvalue
+  | Unevaluated of iexp * eval_context (* Expression and minimal evaluation context *)
+
+(* Evaluation context for lazy constants *)
+and eval_context =
+  { ifunctions_array : ifunc_def array
+  ; ifunction_names : int Map.t
+  ; iconstants_ref : constant_value array ref (* Reference to allow mutation *)
+  }
+
 (* Program *)
 type iprog =
   { ifunctions : ifunc_def Map.t (* Immutable map for function definitions *)
   ; ifunctions_array : ifunc_def array (* Function array for O(1) access by index *)
   ; ifunction_names : int Map.t (* Function name to index mapping *)
-  ; iconstants : dvalue array (* Global constants array for O(1) access *)
+  ; iconstants : constant_value array (* Global constants array with lazy evaluation *)
   }
 
 (* Variable resolution context for transformation *)
@@ -645,19 +657,41 @@ let transformProgram (print_constants : bool) (prog : top_stmt list) : iprog =
     ; external_functions = !external_functions
     }
   in
-  let constants_array = Array.make !const_index DVoid in
+  let constants_array = Array.make !const_index (Evaluated DVoid) in
+  let constants_ref = ref constants_array in
   CCList.iter
     (fun stmt ->
       match stmt.top with
-      | TopConstant (name, _, _, exp) ->
+      | TopConstant (name, _, _, exp) -> (
         let ctx = createConstCtx () in
         let iexp = transformExp ctx exp in
-        let value = evalConstantExpression constants_array iexp in
         let idx = Map.find name !constant_names in
-        constants_array.(idx) <- value;
-        (* Print constant if requested *)
-        if print_constants then
-          Printf.printf "%s = %s\n" name (printDvalue value)
+        (* Try to evaluate immediately, fall back to lazy evaluation for function calls *)
+        try
+          let value =
+            evalConstantExpression
+              (Array.map
+                 (function
+                   | Evaluated v -> v
+                   | Unevaluated _ -> DVoid)
+                 constants_array)
+              iexp
+          in
+          constants_array.(idx) <- Evaluated value;
+          (* Print constant if requested *)
+          if print_constants then
+            Printf.printf "%s = %s\n" name (printDvalue value)
+        with
+        | _ ->
+          (* Store as unevaluated for lazy evaluation later *)
+          let eval_ctx =
+            { ifunctions_array = [||]
+            ; (* Will be filled after function processing *)
+              ifunction_names = !function_names
+            ; iconstants_ref = constants_ref
+            }
+          in
+          constants_array.(idx) <- Unevaluated (iexp, eval_ctx))
       | _ -> ())
     prog;
   let function_array =
@@ -671,6 +705,15 @@ let transformProgram (print_constants : bool) (prog : top_stmt list) : iprog =
       functions := Map.add def.name ifunc !functions;
       function_array.(idx) <- ifunc)
     (CCList.rev !function_defs);
+  (* Update lazy evaluation contexts with the completed function array *)
+  Array.iteri
+    (fun idx const_val ->
+      match const_val with
+      | Unevaluated (iexp, eval_ctx) ->
+        let updated_ctx = { eval_ctx with ifunctions_array = function_array } in
+        constants_array.(idx) <- Unevaluated (iexp, updated_ctx)
+      | Evaluated _ -> ())
+    constants_array;
   { ifunctions = !functions
   ; ifunctions_array = function_array
   ; ifunction_names = !function_names
@@ -925,6 +968,27 @@ and assignIlvalue : iprog -> runtime_stack -> int -> ilexp -> dvalue -> unit =
     | _ -> error "Tuple assignment type mismatch")
 
 
+(* Evaluates a lazy constant, caching the result *)
+and evaluateLazyConstant (constants : constant_value array) (idx : int) : dvalue =
+  match constants.(idx) with
+  | Evaluated value -> value
+  | Unevaluated (exp, ctx) ->
+    (* Create a temporary program for evaluation *)
+    let temp_prog =
+      { ifunctions = Map.empty
+      ; ifunctions_array = ctx.ifunctions_array
+      ; ifunction_names = ctx.ifunction_names
+      ; iconstants = !(ctx.iconstants_ref)
+      }
+    in
+    (* Create a minimal stack for pure function evaluation *)
+    let temp_stack = createStack 100 in
+    let value = evalIexp temp_prog temp_stack 0 exp in
+    (* Cache the evaluated value *)
+    constants.(idx) <- Evaluated value;
+    value
+
+
 (* Evaluates expressions *)
 and evalIexp (prog : iprog) (stack : runtime_stack) (frame_start : int) (exp : iexp) : dvalue =
   match exp with
@@ -936,7 +1000,7 @@ and evalIexp (prog : iprog) (stack : runtime_stack) (frame_start : int) (exp : i
   | IEFixed f -> DReal f
   | IEString s -> DString s
   | IEVar idx -> stack.stack.(frame_start + idx)
-  | IEConstant idx -> prog.iconstants.(idx)
+  | IEConstant idx -> evaluateLazyConstant prog.iconstants idx
   | IEUnOp (op, e) ->
     let v = evalIexp prog stack frame_start e in
     evalUnop op v
