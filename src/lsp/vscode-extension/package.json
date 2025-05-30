@@ -1,0 +1,102 @@
+{
+  "name": "vult-language-server",
+  "displayName": "Vult Language Support",
+  "description": "Language support for Vult DSP language with diagnostics and syntax highlighting",
+  "version": "0.1.0",
+  "publisher": "vult-dsp",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": ["Programming Languages"],
+  "keywords": ["vult", "dsp", "audio", "language-server"],
+  "activationEvents": [
+    "onLanguage:vult"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "vult",
+        "aliases": ["Vult", "vult"],
+        "extensions": [".vult"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Vult Language Server",
+      "properties": {
+        "vult.languageServer.path": {
+          "type": "string",
+          "default": "",
+          "description": "Path to Vult language server executable"
+        },
+        "vult.trace.server": {
+          "type": "string",
+          "enum": ["off", "messages", "verbose"],
+          "default": "off",
+          "description": "Traces the communication between VS Code and the language server"
+        }
+      }
+    },
+    "configurationDefaults": {
+      "[vult]": {
+        "editor.semanticHighlighting.enabled": true
+      },
+      "editor.semanticTokenColorCustomizations": {
+        "enabled": true,
+        "[Default Dark+]": {
+          "rules": {
+            "keyword": "#C586C0",
+            "variable": "#9CDCFE", 
+            "number": "#B5CEA8",
+            "string": "#CE9178",
+            "comment": "#6A9955",
+            "operator": "#D4D4D4",
+            "type": "#4EC9B0",
+            "function": "#DCDCAA",
+            "punctuation": "#D4D4D4"
+          }
+        },
+        "[Default Light+]": {
+          "rules": {
+            "keyword": "#AF00DB",
+            "variable": "#001080", 
+            "number": "#098658",
+            "string": "#A31515",
+            "comment": "#008000",
+            "operator": "#000000",
+            "type": "#267F99",
+            "function": "#795E26",
+            "punctuation": "#000000"
+          }
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "vult.restartLanguageServer",
+        "title": "Restart Vult Language Server",
+        "category": "Vult"
+      },
+      {
+        "command": "vult.showServerOutput",
+        "title": "Show Vult Language Server Output",
+        "category": "Vult"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "16.x",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.1.0"
+  }
+}

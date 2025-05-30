@@ -1,0 +1,21 @@
+(library
+ (name vult_lsp_server)
+ (modules vult_lsp vult_lsp_server)
+ (libraries core util driver mparser yojson unix containers))
+
+(executable
+ (public_name vult_lsp_exe)
+ (name vult_lsp_exe)
+ (modules vult_lsp_exe)
+ (modes byte exe)
+ (libraries vult_lsp_server yojson)
+ (flags -w -32))
+
+(executable
+ (name vult_lsp_js)
+ (modules vult_lsp_js)
+ (modes byte)
+ (libraries vult_lsp_server yojson node)
+ (flags -w -32)
+ (preprocess
+  (pps js_of_ocaml-ppx)))

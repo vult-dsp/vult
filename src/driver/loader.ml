@@ -211,12 +211,12 @@ let rec loadFiles_loop use_menhir (includes : string list) file_deps dependencie
         match input with
         | File _ ->
           if use_menhir then
-            Mparser.parseFile h
+            Mparser.Parser.parseFile h
           else
             Parse.parseFile h
         | Code (file, txt) ->
           if use_menhir then
-            Mparser.parseString (Some file) txt
+            Mparser.Parser.parseString (Some file) txt
           else
             Parse.parseString (Some file) txt
       in

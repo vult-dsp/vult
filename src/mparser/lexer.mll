@@ -28,11 +28,17 @@ let xint = '0' 'x' ['0'-'9' 'a'-'f' 'A'-'F' 'd' 'D']+
 let whitespace = [' ' '\t']
 let newline = '\r' | '\n' | "\r\n"
 
-rule token = parse
-  | whitespace+        { token lexbuf }
-  | newline            { update_loc lexbuf; token lexbuf }
-  | "/*"               { block_comment lexbuf }
-  | "//"               { line_comment lexbuf }
+rule token emit_comment = parse
+  | whitespace+        { token emit_comment lexbuf }
+  | newline            { update_loc lexbuf; token emit_comment lexbuf }
+  | "/*"               {
+      let start_pos = lexbuf.lex_start_p in
+      block_comment emit_comment (Buffer.create 32) start_pos lexbuf
+    }
+  | "//"               {
+      let start_pos = lexbuf.lex_start_p in
+      line_comment emit_comment (Buffer.create 32) start_pos lexbuf
+    }
   | "type"             { TYPE }
   | "val"              { VAL }
   | "fun"              { FUN }
@@ -87,30 +93,51 @@ rule token = parse
   | real as s          { REAL s }
   | fixed as s         { FIXED s }
   | xint as s          { XINT s }
-  | '"'                { read_string (Buffer.create 17) lexbuf }
+  | '"'                {
+      let start_pos = lexbuf.lex_start_p in
+      read_string (Buffer.create 32) start_pos lexbuf
+    }
   | eof                { EOF }
   | _ as c             { raise (LexError ("Unexpected character: " ^ String.make 1 c)) }
 
-and read_string buf = parse
-  | '"'                { STRING (Buffer.contents buf) }
-  | '\\' '/'           { Buffer.add_char buf '/'; read_string buf lexbuf }
-  | '\\' '\\'          { Buffer.add_char buf '\\'; read_string buf lexbuf }
-  | '\\' 'b'           { Buffer.add_char buf '\b'; read_string buf lexbuf }
-  | '\\' 'f'           { Buffer.add_char buf '\012'; read_string buf lexbuf }
-  | '\\' 'n'           { Buffer.add_char buf '\n'; read_string buf lexbuf }
-  | '\\' 'r'           { Buffer.add_char buf '\r'; read_string buf lexbuf }
-  | '\\' 't'           { Buffer.add_char buf '\t'; read_string buf lexbuf }
-  | '\\' _ as s        { Buffer.add_string buf s; read_string buf lexbuf }
-  | [^ '"' '\\']+ as s { Buffer.add_string buf s; read_string buf lexbuf }
+and read_string buf start_pos = parse
+  | '"'                {
+      lexbuf.lex_start_p <- start_pos;
+      STRING (Buffer.contents buf)
+    }
+  | '\\' '/'           { Buffer.add_char buf '/'; read_string buf start_pos lexbuf }
+  | '\\' '\\'          { Buffer.add_char buf '\\'; read_string buf start_pos lexbuf }
+  | '\\' 'b'           { Buffer.add_char buf '\b'; read_string buf start_pos lexbuf }
+  | '\\' 'f'           { Buffer.add_char buf '\012'; read_string buf start_pos lexbuf }
+  | '\\' 'n'           { Buffer.add_char buf '\n'; read_string buf start_pos lexbuf }
+  | '\\' 'r'           { Buffer.add_char buf '\r'; read_string buf start_pos lexbuf }
+  | '\\' 't'           { Buffer.add_char buf '\t'; read_string buf start_pos lexbuf }
+  | '\\' _ as s        { Buffer.add_string buf s; read_string buf start_pos lexbuf }
+  | newline            { raise (LexError "Unterminated string literal (newline not allowed)") }
+  | [^ '"' '\\' '\r' '\n']+ as s { Buffer.add_string buf s; read_string buf start_pos lexbuf }
   | eof                { raise (LexError "String is not terminated") }
 
-and block_comment = parse
-  | "*/"               { token lexbuf }
-  | newline            { update_loc lexbuf; block_comment lexbuf }
-  | _                  { block_comment lexbuf }
+and block_comment emit_comment buf start_pos = parse
+  | "*/" as s          {
+      if emit_comment then (
+        Buffer.add_string buf s;
+        lexbuf.lex_start_p <- start_pos;
+        BLOCK_COMMENT (Buffer.contents buf))
+      else token emit_comment lexbuf
+    }
+  | newline as s       { Buffer.add_string buf s; update_loc lexbuf; block_comment emit_comment buf start_pos lexbuf }
+  | _ as s             { Buffer.add_char buf s; block_comment emit_comment buf start_pos lexbuf }
   | eof                { raise (LexError "Comment is not terminated") }
 
-and line_comment = parse
-  | newline            { update_loc lexbuf; token lexbuf }
-  | _                  { line_comment lexbuf }
+and line_comment emit_comment buf start_pos = parse
+  | newline as s       {
+    update_loc lexbuf;
+    if emit_comment then (
+      Buffer.add_string buf s;
+      lexbuf.lex_start_p <- start_pos;
+      LINE_COMMENT (Buffer.contents buf))
+    else
+      token emit_comment lexbuf
+    }
+  | _ as s             { Buffer.add_char buf s; line_comment emit_comment buf start_pos lexbuf }
   | eof                { EOF }

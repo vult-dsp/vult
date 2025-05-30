@@ -15,7 +15,7 @@
 (package
  (name vult)
  (synopsis "Transcompiler for DSP audio")
- (depends ocaml dune containers pla js_of_ocaml js_of_ocaml-ppx ounit)
+ (depends ocaml dune containers pla js_of_ocaml js_of_ocaml-ppx ounit yojson)
 )
 
 ; removes the Dune__exe prefix

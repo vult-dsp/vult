@@ -16,7 +16,7 @@ let rec loop lexbuf (checkpoint : (Bast.state -> Bast.state * Pparser.Syntax.stm
     Bast.state -> Bast.state * Pparser.Syntax.stmts =
   match checkpoint with
   | I.InputNeeded _env ->
-    let token = Lexer.token lexbuf in
+    let token = Lexer.token false lexbuf in
     let startp = lexbuf.lex_start_p and endp = lexbuf.lex_curr_p in
     let checkpoint = I.offer checkpoint (token, startp, endp) in
     loop lexbuf checkpoint

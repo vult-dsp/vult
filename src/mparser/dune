@@ -40,5 +40,6 @@
 
 (library
  (name mparser)
- (modules Mparser Grammar Grammar_msg Lexer Bast)
+ (public_name vult.mparser)
+ (modules Parser Grammar Grammar_msg Lexer Bast)
  (libraries menhirLib pparser util))

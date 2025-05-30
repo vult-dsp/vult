@@ -1,16 +1,82 @@
+# OCaml/Dune build artifacts
 _build/*
 *.byte
 *.native
 *.d.byte
 *.top
-.DS_Store
+*.merlin
+_coverage
+
+# Generated JS files
 vultweb.js
 vultc.js
-.vscode/.browse.VC.db
-.vscode/launch.json
 /vultlib.js
-*.merlin
+/vult.js
+
+# Temporary/test files
 /out.vult
 /test.vult
-/vult.js
-_coverage
+test_*.ml
+test_*.vult
+verify_*.vult
+debug_*/
+
+# System files
+.DS_Store
+*~
+*.bak
+*.tmp
+
+# Editor/IDE files
+.vscode/.browse.VC.db
+.vscode/launch.json
+.vscode/settings.json
+*.swp
+*.swo
+*~
+
+# Node.js (for VS Code extension)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# VS Code extension build artifacts
+src/lsp/vscode-extension/out/
+src/lsp/vscode-extension/node_modules/
+*.vsix
+
+# TextMate grammars (not needed with LSP semantic highlighting)
+*.tmLanguage
+*.tmLanguage.json
+
+# Python artifacts (if any utility scripts)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# LSP development artifacts
+*.log
+.lsp/
+lsp-*.log
+
+# Emacs files
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Vim files
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]

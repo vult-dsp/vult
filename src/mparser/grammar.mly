@@ -23,6 +23,8 @@ open Bast (* Builder functions for AST nodes *)
 %token <string> OP_LEVEL_0 OP_LEVEL_1 OP_LEVEL_2 OP_LEVEL_3
 %token MINUS
 %token TRUE FALSE
+%token <string> BLOCK_COMMENT
+%token <string> LINE_COMMENT
 
 (* Start symbol *)
 %start <Bast.state -> Bast.state * Pparser.Syntax.stmts> program
