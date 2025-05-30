@@ -110,8 +110,8 @@ module Common = struct
         (* No complete token found, fall back to string processing for partial words *)
         (* This handles cases like typing "SA" when "SAMPLE_RATE" exists *)
         let lines = String.split_on_char '\n' content in
-        if line >= 0 && line < List.length lines then
-          let line_text = List.nth lines line in
+        if line >= 0 && line < CCList.length lines then
+          let line_text = CCList.nth lines line in
           let line_length = String.length line_text in
           if character >= 0 && character <= line_length then
             (* Find start of current word (go backwards from cursor) *)
@@ -151,7 +151,7 @@ module Common = struct
       let tokens = ref [] in
       let rec collect_tokens () =
         match Mparser.Lexer.token true lexbuf with
-        | EOF -> List.rev !tokens
+        | EOF -> CCList.rev !tokens
         | token ->
           let start_pos = lexbuf.lex_start_p in
           let end_pos = lexbuf.lex_curr_p in
@@ -688,8 +688,8 @@ module SemanticTokens = struct
   let is_function_call (content : string) (line : int) (start_char : int) (length : int) : bool =
     try
       let lines = String.split_on_char '\n' content in
-      if line >= 0 && line < List.length lines then
-        let line_text = List.nth lines line in
+      if line >= 0 && line < CCList.length lines then
+        let line_text = CCList.nth lines line in
         let end_pos = start_char + length in
         let rec skip_whitespace pos =
           if pos < String.length line_text && (line_text.[pos] = ' ' || line_text.[pos] = '\t') then
@@ -711,7 +711,7 @@ module SemanticTokens = struct
     let lines = String.split_on_char '\n' content in
     try
       (* Calculate which lines this token spans *)
-      let start_line_text = List.nth lines start_line in
+      let start_line_text = CCList.nth lines start_line in
       let chars_on_first_line = String.length start_line_text - start_char in
       if length <= chars_on_first_line then
         (* Single line token *)
@@ -722,8 +722,8 @@ module SemanticTokens = struct
         let current_line = ref start_line in
         let remaining_chars = ref length in
         (* Use iterative loop instead of recursive to avoid stack overflow *)
-        while !remaining_chars > 0 && !current_line < List.length lines do
-          let line_text = List.nth lines !current_line in
+        while !remaining_chars > 0 && !current_line < CCList.length lines do
+          let line_text = CCList.nth lines !current_line in
           let line_start =
             if !current_line = start_line then
               start_char
@@ -739,7 +739,7 @@ module SemanticTokens = struct
             let chars_consumed =
               chars_to_take
               +
-              if !current_line < List.length lines - 1 then
+              if !current_line < CCList.length lines - 1 then
                 1
               else
                 0
@@ -791,7 +791,7 @@ module SemanticTokens = struct
               let actual_token_content =
                 try
                   let lines = String.split_on_char '\n' content in
-                  let start_line_text = List.nth lines line in
+                  let start_line_text = CCList.nth lines line in
                   let remaining_on_first_line = String.length start_line_text - start_char in
                   if length <= remaining_on_first_line then
                     (* Single line - extract from current line *)
@@ -802,8 +802,8 @@ module SemanticTokens = struct
                     let current_line = ref line in
                     let remaining_chars = ref length in
                     (* Use iterative loop instead of recursive to avoid stack overflow *)
-                    while !remaining_chars > 0 && !current_line < List.length lines do
-                      let line_text = List.nth lines !current_line in
+                    while !remaining_chars > 0 && !current_line < CCList.length lines do
+                      let line_text = CCList.nth lines !current_line in
                       let line_start =
                         if !current_line = line then
                           start_char
@@ -814,7 +814,7 @@ module SemanticTokens = struct
                       let chars_to_take = min !remaining_chars available_chars in
                       if chars_to_take > 0 then
                         Buffer.add_substring buffer line_text line_start chars_to_take;
-                      if !current_line < List.length lines - 1 && !remaining_chars > chars_to_take then
+                      if !current_line < CCList.length lines - 1 && !remaining_chars > chars_to_take then
                         Buffer.add_char buffer '\n';
                       current_line := !current_line + 1;
                       remaining_chars := !remaining_chars - chars_to_take - 1

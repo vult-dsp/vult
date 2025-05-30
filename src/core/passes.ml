@@ -430,17 +430,19 @@ module Tuples = struct
     (* bind multi-return function calls *)
     | { e = ECall _; t = { t = TTuple elems; _ } as t; loc } when (not env.bound_call) && not env.in_if_exp ->
       let temp =
-        List.map
+        CCList.map
           (fun (t : type_) ->
             let tick = getTick env state in
             "_call_temp_" ^ string_of_int tick, t)
           elems
       in
-      let decl_stmt = List.map (fun (name, t) -> { s = StmtDecl ({ d = DId (name, None); t; loc }, None); loc }) temp in
-      let temp_l = List.map (fun (name, t) -> { l = LId name; t; loc }) temp in
+      let decl_stmt =
+        CCList.map (fun (name, t) -> { s = StmtDecl ({ d = DId (name, None); t; loc }, None); loc }) temp
+      in
+      let temp_l = CCList.map (fun (name, t) -> { l = LId name; t; loc }) temp in
       let bind_stmt = { s = StmtBind ({ l = LTuple temp_l; t; loc }, e); loc } in
       let state = Mapper.pushStmts state (decl_stmt @ [ bind_stmt ]) in
-      let temp_e = List.map (fun (name, t) -> { e = EId name; t; loc }) temp in
+      let temp_e = CCList.map (fun (name, t) -> { e = EId name; t; loc }) temp in
       reapply state, { e = ETuple temp_e; t; loc }
     | _ -> state, e
 
@@ -455,19 +457,19 @@ module Tuples = struct
       let r = GetVariables.in_exp rhs in
       let d = Set.inter l r in
       if Set.is_empty d then
-        let bindings = List.map2 (fun l r -> { s = StmtBind (l, r); loc }) l_elems r_elems in
+        let bindings = CCList.map2 (fun l r -> { s = StmtBind (l, r); loc }) l_elems r_elems in
         reapply state, bindings
       else
-        let temp_list = List.map (fun (l : lexp) -> "_t_temp_" ^ string_of_int (getTick env state), l.t) l_elems in
-        let decl = List.map (fun (n, t) -> { s = StmtDecl ({ d = DId (n, None); loc; t }, None); loc }) temp_list in
+        let temp_list = CCList.map (fun (l : lexp) -> "_t_temp_" ^ string_of_int (getTick env state), l.t) l_elems in
+        let decl = CCList.map (fun (n, t) -> { s = StmtDecl ({ d = DId (n, None); loc; t }, None); loc }) temp_list in
         let bindings1 =
-          List.map2
+          CCList.map2
             (fun (l, _) (r : exp) -> { s = StmtBind ({ l = LId l; t = r.t; loc = r.loc }, r); loc })
             temp_list
             r_elems
         in
         let bindings2 =
-          List.map2
+          CCList.map2
             (fun (l : lexp) (r, _) -> { s = StmtBind (l, { e = EId r; t = l.t; loc = l.loc }); loc })
             l_elems
             temp_list
@@ -478,7 +480,7 @@ module Tuples = struct
       ; loc
       } ->
       let bindings =
-        List.mapi
+        CCList.mapi
           (fun i (l : lexp) ->
             let r = { e = EMember (ctx, path ^ "_ret_" ^ string_of_int i); t = l.t; loc = l.loc } in
             { s = StmtBind (l, r); loc })
@@ -496,7 +498,7 @@ module Tuples = struct
       ; loc
       } ->
       let tuple_elems =
-        List.mapi (fun i (t : type_) -> { e = EMember (ctx, path ^ "_ret_" ^ string_of_int i); t; loc }) types
+        CCList.mapi (fun i (t : type_) -> { e = EMember (ctx, path ^ "_ret_" ^ string_of_int i); t; loc }) types
       in
       let s =
         { s = StmtBind ({ lhs with l = LWild }, { rhs with t = { t = TVoid None; const = false; loc = rloc } }); loc }
@@ -518,7 +520,7 @@ module Tuples = struct
       let name, ctx_name, ctx_t = currentFunction env in
       let ctx = { l = LId ctx_name; t = ctx_t; loc } in
       let bindings =
-        List.mapi
+        CCList.mapi
           (fun i (r : exp) ->
             let l = { l = LMember (ctx, name ^ "_ret_" ^ string_of_int i); t = r.t; loc = r.loc } in
             { s = StmtBind (l, r); loc })
@@ -531,7 +533,7 @@ module Tuples = struct
       let name, ctx_name, ctx_t = currentFunction env in
       let ctx = { l = LId ctx_name; t = ctx_t; loc } in
       let bindings =
-        List.mapi
+        CCList.mapi
           (fun i (t : type_) ->
             let l = { l = LMember (ctx, name ^ "_ret_" ^ string_of_int i); t; loc } in
             { s = StmtBind (l, { ret with e = ETMember (ret, i) }); loc })
@@ -868,7 +870,7 @@ module Sort = struct
 
   let rec split types functions externals constants stmts =
     match stmts with
-    | [] -> List.rev types, List.rev functions, List.rev externals, List.rev constants
+    | [] -> CCList.rev types, CCList.rev functions, CCList.rev externals, CCList.rev constants
     | ({ top = TopType { path; _ }; _ } as h) :: t -> split ((path, h) :: types) functions externals constants t
     | ({ top = TopAlias { path; _ }; _ } as h) :: t -> split ((path, h) :: types) functions externals constants t
     | ({ top = TopFunction ({ name; _ }, _); _ } as h) :: t ->
@@ -879,7 +881,7 @@ module Sort = struct
 
   let rec sort deps table visited sorted stmts =
     match stmts with
-    | [] -> List.rev sorted
+    | [] -> CCList.rev sorted
     | { top = TopType { path = name; _ }; _ } :: t
      |{ top = TopAlias { path = name; _ }; _ } :: t
      |{ top = TopFunction ({ name; _ }, _); _ } :: t
@@ -920,8 +922,8 @@ module Sort = struct
     let types, functions, externals, constants = split [] [] [] [] prog in
     let type_table = Map.of_list types in
     let functions_table = Map.of_list functions in
-    let types = sort type_deps type_table Set.empty [] (List.map snd types) in
-    let functions = sort function_deps functions_table Set.empty [] (List.map snd functions) in
+    let types = sort type_deps type_table Set.empty [] (CCList.map snd types) in
+    let functions = sort function_deps functions_table Set.empty [] (CCList.map snd functions) in
     types @ constants @ externals @ functions
 end
 

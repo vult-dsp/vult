@@ -89,10 +89,10 @@ module G (T : GESig) = struct
   let make (e : (T.data * T.data list) list) : g =
     let g = empty () in
     let () =
-      List.iter
+      CCList.iter
         (fun (v, deps) ->
           addVertex g v;
-          List.iter (addEdge g v) deps)
+          CCList.iter (addEdge g v) deps)
         e
     in
     g
@@ -149,7 +149,7 @@ module Make (T : GESig) = struct
     if not (V.contains visited v) then
       let () = V.add visited v in
       let children = G.getDependencies g v in
-      let () = List.iter (pass1 g stack visited) children in
+      let () = CCList.iter (pass1 g stack visited) children in
       S.push stack v
 
 
@@ -158,7 +158,7 @@ module Make (T : GESig) = struct
       let deps = G.getRevDependencies g v in
       let () = V.add visited v in
       let () = S.push comp v in
-      List.iter (pass2_part g visited comp) deps
+      CCList.iter (pass2_part g visited comp) deps
 
 
   let rec pass2 g comps stack visited =
@@ -180,7 +180,7 @@ module Make (T : GESig) = struct
     (* creates a set of visited vertex *)
     let visited = V.empty () in
     (* performs the first pass *)
-    let () = List.iter (fun v -> pass1 g stack visited v) (G.getVertices g) in
+    let () = CCList.iter (fun v -> pass1 g stack visited v) (G.getVertices g) in
     (* creates a stack to hold the components *)
     let comps = S.empty () in
     (* creates a new set of visited vertex *)
@@ -188,5 +188,5 @@ module Make (T : GESig) = struct
     (* performs the second pass *)
     pass2 g comps stack visited;
     (* returns the components as a list of lists *)
-    comps |> S.toList |> List.map S.toList
+    comps |> S.toList |> CCList.map S.toList
 end

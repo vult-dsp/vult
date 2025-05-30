@@ -33,7 +33,7 @@ open Args
 module Dependencies = struct
   module Set = CCSet.Make (String)
 
-  let list f set l = List.fold_left f set l
+  let list f set l = CCList.fold_left f set l
 
   let option f set e =
     match e with
@@ -178,7 +178,7 @@ let getIncludes (arguments : args) (files : input list) : string list =
   let current = FileIO.cwd () in
   (* the directories of the input files are considered include paths *)
   let implicit_dirs =
-    List.map
+    CCList.map
       (fun input ->
         match input with
         | File f | Code (f, _) -> Filename.dirname f)
@@ -186,7 +186,7 @@ let getIncludes (arguments : args) (files : input list) : string list =
   in
   (* these are the extra include paths passed in the arguments *)
   let explicit_dir =
-    List.map
+    CCList.map
       (fun a ->
         if Filename.is_relative a then
           Filename.concat current a
@@ -194,7 +194,7 @@ let getIncludes (arguments : args) (files : input list) : string list =
           a)
       arguments.includes
   in
-  List.sort_uniq compare ((current :: implicit_dirs) @ explicit_dir)
+  CCList.sort_uniq ~cmp:compare ((current :: implicit_dirs) @ explicit_dir)
 
 
 (* main function that iterates the input files, gets the dependencies and searchs for the dependencies locations *)
@@ -224,11 +224,11 @@ let rec loadFiles_loop use_menhir (includes : string list) file_deps dependencie
       (* gets the depencies based on the modules used *)
       let h_deps = Dependencies.get h_parsed.stmts in
       (* finds all the files for the used modules *)
-      let h_dep_files = CCList.filter_map (findModule includes) h_deps |> List.filter (fun a -> a <> h) in
-      let h_dep_files_input = List.map (fun a -> File a) h_dep_files in
+      let h_dep_files = CCList.filter_map (findModule includes) h_deps |> CCList.filter (fun a -> a <> h) in
+      let h_dep_files_input = CCList.map (fun a -> File a) h_dep_files in
       (* updates the tables *)
       let () = Hashtbl.add dependencies h_module h_deps in
-      let () = Hashtbl.add file_deps (basename h) (List.map basename h_dep_files) in
+      let () = Hashtbl.add file_deps (basename h) (CCList.map basename h_dep_files) in
       loadFiles_loop use_menhir includes file_deps dependencies parsed visited (t @ h_dep_files_input)
     else
       loadFiles_loop use_menhir includes file_deps dependencies parsed visited t
@@ -270,7 +270,7 @@ let loadFiles (arguments : args) (files : input list) =
   let dep_list = Hashtbl.fold (fun a b acc -> (a, b) :: acc) dependencies [] in
   let comps = C.calculate dep_list in
   let () = checkComponents comps in
-  let sorted_deps = List.map List.hd comps in
+  let sorted_deps = CCList.map CCList.hd comps in
   let sorted_files =
     CCList.filter_map
       (fun module_name ->

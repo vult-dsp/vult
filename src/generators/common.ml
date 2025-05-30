@@ -37,9 +37,9 @@ let setExt ext output =
 let splitArray into elems =
   let rec loop current acc count elems =
     match elems with
-    | [] -> List.rev (List.rev current :: acc)
+    | [] -> CCList.rev (CCList.rev current :: acc)
     | h :: t when count < into -> loop (h :: current) acc (count + 1) t
-    | h :: t -> loop [ h ] (List.rev current :: acc) 0 t
+    | h :: t -> loop [ h ] (CCList.rev current :: acc) 0 t
   in
   loop [] [] 0 elems
 
@@ -93,7 +93,7 @@ let splitByFile (stmts : top_stmt list) =
     | File file -> file |> Filename.basename |> Filename.chop_extension
   in
   let index = ref 0 in
-  List.fold_left
+  CCList.fold_left
     (fun map (stmt : top_stmt) ->
       Util.Maps.Map.update
         (getFile stmt.loc)
@@ -107,5 +107,5 @@ let splitByFile (stmts : top_stmt list) =
     Util.Maps.Map.empty
     stmts
   |> Util.Maps.Map.to_list
-  |> List.sort (fun (_, (a, _)) (_, (b, _)) -> compare a b)
-  |> List.map (fun (file, (_, stmts)) -> file, List.rev stmts)
+  |> CCList.sort (fun (_, (a, _)) (_, (b, _)) -> compare a b)
+  |> CCList.map (fun (file, (_, stmts)) -> file, CCList.rev stmts)

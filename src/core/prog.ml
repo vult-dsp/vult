@@ -565,12 +565,12 @@ module Compare = struct
       | 0 -> exp index1 index2
       | n -> n)
     | { e = EIndex _; _ }, _ -> compare e1 e2
-    | { e = EArray elems1; _ }, { e = EArray elems2; _ } -> List.compare exp elems1 elems2
+    | { e = EArray elems1; _ }, { e = EArray elems2; _ } -> CCList.compare exp elems1 elems2
     | { e = EArray _; _ }, _ -> compare e1 e2
     | { e = ECall { path = path1; args = args1 }; _ }, { e = ECall { path = path2; args = args2 }; _ }
-      when path1 = path2 -> List.compare exp args1 args2
+      when path1 = path2 -> CCList.compare exp args1 args2
     | { e = ECall _; _ }, _ -> compare e1 e2
-    | { e = ETuple elems1; _ }, { e = ETuple elems2; _ } -> List.compare exp elems1 elems2
+    | { e = ETuple elems1; _ }, { e = ETuple elems2; _ } -> CCList.compare exp elems1 elems2
     | { e = ETuple _; _ }, _ -> compare e1 e2
     | { e = EMember (e1, member1); _ }, { e = EMember (e2, member2); _ } -> (
       match exp e1 e2 with
@@ -593,7 +593,7 @@ module Compare = struct
     | { e = EIf _; _ }, _ -> compare e1 e2
     | { e = ERecord { path = path1; elems = elems1 }; _ }, { e = ERecord { path = path2; elems = elems2 }; _ }
       when path1 = path2 ->
-      List.compare
+      CCList.compare
         (fun (id1, v1) (id2, v2) ->
           match String.compare id1 id2 with
           | 0 -> exp v1 v2

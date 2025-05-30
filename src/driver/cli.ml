@@ -37,7 +37,7 @@ let showResult (args : args) (output : output) =
   | Typed v -> print_endline v
   | Prog v -> print_endline v
   | GeneratedCode files when args.output <> None ->
-    List.iter
+    CCList.iter
       (fun (text, filename) ->
         let code = Pla.print text in
         if args.force_write then
@@ -45,7 +45,7 @@ let showResult (args : args) (output : output) =
         else
           FileIO.writeIfDifferent filename code |> ignore)
       files
-  | GeneratedCode files -> List.iter (fun (text, _) -> print_endline (Pla.print text)) files
+  | GeneratedCode files -> CCList.iter (fun (text, _) -> print_endline (Pla.print text)) files
   | Interpret v -> print_endline v
   | CheckOk -> ()
   | Errors errors ->
@@ -112,9 +112,9 @@ let driver (args : args) : output list =
       | _ ->
         let parsed, file_deps = Util.Profile.time "Load files" (fun () -> Loader.loadFiles args args.files) in
         if args.deps then
-          List.map (fun r -> r.Parse.file) parsed |> fun s -> [ Dependencies s ]
+          CCList.map (fun r -> r.Parse.file) parsed |> fun s -> [ Dependencies s ]
         else if args.dparse then
-          List.map (fun (r : Parse.parsed_file) -> ParsedCode (Syntax.Print.print r.stmts)) parsed
+          CCList.map (fun (r : Parse.parsed_file) -> ParsedCode (Syntax.Print.print r.stmts)) parsed
         else
           let env, stmts = Util.Profile.time "Inference" (fun () -> Inference.infer args parsed) in
           if args.dtyped then
@@ -128,7 +128,7 @@ let driver (args : args) : output list =
 let main () =
   let args = processArguments () in
   let results = driver args in
-  List.iter (showResult args) results;
+  CCList.iter (showResult args) results;
   if args.profile then
     Util.Profile.show ();
   exit 0

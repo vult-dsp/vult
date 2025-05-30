@@ -119,7 +119,7 @@ let printStack (vm : t) =
   loop 0
 
 
-let pushValues (vm : t) (args : rvalue list) : t = List.fold_left (fun vm v -> push vm v) vm args
+let pushValues (vm : t) (args : rvalue list) : t = CCList.fold_left (fun vm v -> push vm v) vm args
 
 let[@inline always] numeric i f e1 e2 : rvalue =
   match e1, e2 with
@@ -174,7 +174,7 @@ let eval_array f (vm : t) (a : 'b array) : t * 'value array =
       (vm, [])
       a
   in
-  vm, Array.of_list (List.rev a)
+  vm, Array.of_list (CCList.rev a)
 
 
 let eval_op (op : op) =
@@ -253,14 +253,14 @@ let rec eval_rvalue (vm : t) (r : rvalue) : t * rvalue =
 
 and eval_rvalue_list vm a =
   let vm, a =
-    List.fold_left
+    CCList.fold_left
       (fun (vm, acc) a ->
         let vm, a = eval_rvalue vm a in
         vm, a :: acc)
       (vm, [])
       a
   in
-  vm, List.rev a
+  vm, CCList.rev a
 
 
 and eval_lvalue (vm : t) (l : lvalue) : t * lvalue =
@@ -439,7 +439,7 @@ and store (vm : t) (l : lvalue) (r : rvalue) : t =
   | LMember (LRef (n, _), m, _), _ -> storeRefObject vm n [ m ] r
   | LIndex (LRef (n, _), RInt i), _ -> storeRefObject vm n [ i ] r
   | LTuple l_elems, RObject r_elems ->
-    List.fold_left2 (fun vm l r -> store vm l r) vm (Array.to_list l_elems) (Array.to_list r_elems)
+    CCList.fold_left2 (fun vm l r -> store vm l r) vm (Array.to_list l_elems) (Array.to_list r_elems)
   | _ ->
     let n, i = getIndirectAccess vm l in
     storeRefObject vm n i r
@@ -465,9 +465,9 @@ type bytecode = Compile.bytecode
 
 let getConstants (env : env) =
   Map.to_list env.constants.c
-  |> List.map snd
-  |> List.sort (fun (_, a) (_, b) -> compare a b)
-  |> List.map fst
+  |> CCList.map snd
+  |> CCList.sort (fun (_, a) (_, b) -> compare a b)
+  |> CCList.map fst
   |> Array.of_list
 
 
@@ -487,7 +487,7 @@ let rec getTypes stmts =
 
 
 let rec valueOfDescr (d : struct_descr) : rvalue =
-  let elems = List.map (fun (_, t, _, _) -> valueOfType t) d.members in
+  let elems = CCList.map (fun (_, t, _, _) -> valueOfType t) d.members in
   RObject (Array.of_list elems)
 
 
@@ -504,7 +504,7 @@ and valueOfType (t : type_) : rvalue =
     let elems = Array.init dim (fun _ -> valueOfType t) in
     RObject elems
   | TTuple elems ->
-    let elems = List.map valueOfType elems in
+    let elems = CCList.map valueOfType elems in
     RObject (Array.of_list elems)
   | TStruct descr -> valueOfDescr descr
   | TArray (None, _) -> failwith "valueOfType: array with no dimensions"
@@ -512,7 +512,7 @@ and valueOfType (t : type_) : rvalue =
 
 let createArgument stmts =
   let types = getTypes stmts in
-  match List.find_opt (fun (s : struct_descr) -> s.path = main_path) types with
+  match CCList.find_opt (fun (s : struct_descr) -> s.path = main_path) types with
   | Some d -> [ valueOfDescr d ]
   | None -> []
 

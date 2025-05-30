@@ -47,7 +47,7 @@ let rec getInitRHS (t : type_) =
   | { t = TStruct { path; _ }; loc; _ } -> C.ecall ~loc (path ^ "_init") [] t
   | { t = TArray (Some size, at); loc; _ } ->
     let v = getInitRHS at in
-    let elems = List.init size (fun _ -> v) in
+    let elems = CCList.init size (fun _ -> v) in
     C.earray ~loc elems t
   | _ -> failwith "Not a simple type"
 
@@ -160,7 +160,7 @@ let createInitFunction custom_initializers (iargs : Args.args) stmt =
     let lctx = { l = LId "_ctx"; t = this_type; loc } in
     let ectx = { e = EId "_ctx"; t = this_type; loc } in
     let stmts =
-      List.map
+      CCList.map
         (fun (var, (t : type_), _, _) ->
           let lhs = { l = LMember (lctx, var); t; loc = t.loc } in
           let rhs = { e = EMember (ectx, var); t; loc = t.loc } in
@@ -191,7 +191,7 @@ let createInitFunction custom_initializers (iargs : Args.args) stmt =
     let lctx = { l = LId "_ctx"; t = this_type; loc } in
     let ectx = { e = EId "_ctx"; t = this_type; loc } in
     let stmts =
-      List.map
+      CCList.map
         (fun (var, (t : type_), _, _) ->
           let lhs = { l = LMember (lctx, var); t; loc = t.loc } in
           let rhs = { e = EMember (ectx, var); t; loc = t.loc } in

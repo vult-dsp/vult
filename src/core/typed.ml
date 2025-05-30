@@ -652,8 +652,8 @@ let rec refreshConstness (t : type_) =
   let t =
     match t.tx with
     | TELink t -> refreshConstness t
-    | TEOption options -> { t with tx = TEOption (List.map refreshConstness options) }
-    | TEComposed (name, subs) -> { t with tx = TEComposed (name, List.map refreshConstness subs) }
+    | TEOption options -> { t with tx = TEOption (CCList.map refreshConstness options) }
+    | TEComposed (name, subs) -> { t with tx = TEComposed (name, CCList.map refreshConstness subs) }
     | _ -> t
   in
   { t with const = C.const () }

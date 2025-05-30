@@ -58,7 +58,7 @@ let rec pushTypeToSet (set : (type_ * int) list) (elem : type_) =
   match set, elem with
   | [], _ -> [ elem, 1 ]
   | (({ tx = TEComposed (n1, e1); _ } as h), count) :: t, { tx = TEComposed (n2, e2); _ }
-    when n2 = n1 && List.length e1 = List.length e2 ->
+    when n2 = n1 && CCList.length e1 = CCList.length e2 ->
     if unify h elem then
       (h, count + 1) :: t
     else
@@ -74,9 +74,9 @@ let rec pushTypeToSet (set : (type_ * int) list) (elem : type_) =
 
 
 and constrainOption loc l1 l2 =
-  let set = List.fold_left pushTypeToSet (List.map (fun e -> e, 1) l1) l2 in
+  let set = CCList.fold_left pushTypeToSet (CCList.map (fun e -> e, 1) l1) l2 in
   let final_set =
-    List.filter_map
+    CCList.filter_map
       (fun (e, n) ->
         if n > 1 then
           Some e
@@ -137,14 +137,14 @@ and unify ?(bind = false) (t1 : type_) (t2 : type_) =
     match t1.tx, t2.tx with
     | TEId t1, TEId t2 -> Pparser.Syntax.compare_path t1 t2 = 0
     | TESize t1, TESize t2 -> t1 = t2
-    | TEFunction (arg1, ret1), TEFunction (arg2, ret2) -> List.for_all2 unify arg1 arg2 && unify ret1 ret2
+    | TEFunction (arg1, ret1), TEFunction (arg2, ret2) -> CCList.for_all2 unify arg1 arg2 && unify ret1 ret2
     | TEFunction _, _ -> false
     | _, TEFunction _ -> false
     (* special case for arrays without dimensions *)
     | TEComposed ("array", [ e1; _ ]), TEComposed ("array", [ e2 ])
      |TEComposed ("array", [ e1 ]), TEComposed ("array", [ e2; _ ]) -> unify e1 e2
-    | TEComposed (n1, e1), TEComposed (n2, e2) when n1 = n2 && List.length e1 = List.length e2 ->
-      List.for_all2 unify e1 e2
+    | TEComposed (n1, e1), TEComposed (n2, e2) when n1 = n2 && CCList.length e1 = CCList.length e2 ->
+      CCList.for_all2 unify e1 e2
     (* follow the links *)
     | TELink tlink, _ -> unify tlink t2
     | _, TELink tlink -> unify t1 tlink
@@ -197,7 +197,7 @@ let rec type_in_m (env : in_module) (t : Syntax.type_) =
     in
     { tx = TESize n; loc; const = C.const () }
   | { t = STComposed (name, l); loc } ->
-    let l = List.map (type_in_m env) l in
+    let l = CCList.map (type_in_m env) l in
     { tx = TEComposed (name, l); loc; const = C.const () }
 
 
@@ -218,15 +218,15 @@ let applyFunction loc (args_t_in : type_ list) (ret : type_) (args_in : exp list
   let rec loop (args_t : type_ list) args =
     match args_t, args with
     | [], _ :: _ ->
-      let required_n = List.length args_t_in in
-      let got_n = List.length args_in in
-      let loc = Loc.mergeList loc (List.map (fun (e : exp) -> e.loc) args_in) in
+      let required_n = CCList.length args_t_in in
+      let got_n = CCList.length args_in in
+      let loc = Loc.mergeList loc (CCList.map (fun (e : exp) -> e.loc) args_in) in
       let msg = Pla.print {%pla|Extra arguments in function call. Expecting <#required_n#i> but got <#got_n#i>.|} in
       Error.raiseError msg loc
     | _ :: _, [] ->
-      let required_n = List.length args_t_in in
-      let got_n = List.length args_in in
-      let loc = Loc.mergeList loc (List.map (fun (e : exp) -> e.loc) args_in) in
+      let required_n = CCList.length args_t_in in
+      let got_n = CCList.length args_in in
+      let loc = Loc.mergeList loc (CCList.map (fun (e : exp) -> e.loc) args_in) in
       let msg = Pla.print {%pla|Missing arguments in function call. Expecting <#required_n#i> but got <#got_n#i>.|} in
       Error.raiseError msg loc
     | [], [] -> ret
@@ -252,7 +252,7 @@ let propagateVariability env loc (args : Typed.arg list option) (exp_args : exp 
   match args with
   | None -> ()
   | Some args ->
-    List.iter2
+    CCList.iter2
       (fun (arg : arg) (exp : exp) ->
         if isTypeConst arg.t = false then
           markExpMutable env exp loc)
@@ -398,7 +398,7 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
   | { e = SEArray (h :: t); loc } ->
     let env, h = exp env h in
     let env, t_rev, size =
-      List.fold_left
+      CCList.fold_left
         (fun (env, acc, size) e ->
           let env, e = exp env e in
           unifyRaise e.loc h.t e.t;
@@ -407,10 +407,10 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
         t
     in
     let t = C.array ~size:(C.size ~loc size) h.t in
-    env, { e = EArray (h :: List.rev t_rev); t; loc }
+    env, { e = EArray (h :: CCList.rev t_rev); t; loc }
   | { e = SETuple l; loc } ->
     let env, l = exp_list env l in
-    let t = C.tuple ~loc (List.map (fun (e : exp) -> e.t) l) in
+    let t = C.tuple ~loc (CCList.map (fun (e : exp) -> e.t) l) in
     env, { e = ETuple l; t; loc }
   | { e = SEIf { cond; then_; else_ }; loc } ->
     let env, cond = exp env cond in
@@ -493,7 +493,7 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
     match t with
     | { descr = Record members; _ } ->
       let env, elems_rev =
-        List.fold_left
+        CCList.fold_left
           (fun (env, acc) (id, v) ->
             let env, v = exp env v in
             let id, id_loc =
@@ -511,21 +511,21 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
           (env, [])
           elems
       in
-      let elems = List.sort (fun (id1, _) (id2, _) -> String.compare id1 id2) elems_rev in
+      let elems = CCList.sort (fun (id1, _) (id2, _) -> String.compare id1 id2) elems_rev in
       env, { e = ERecord { path = t.path; elems }; t = Typed.C.path_t loc t.path; loc }
     | _ -> Error.raiseError ("The path '" ^ path_string path ^ "' is not a type.") loc)
 
 
 and exp_list (env : Env.in_func) (l : Syntax.exp list) : Env.in_func * exp list =
   let env, rev_l =
-    List.fold_left
+    CCList.fold_left
       (fun (env, acc) e ->
         let env, e = exp env e in
         env, e :: acc)
       (env, [])
       l
   in
-  env, List.rev rev_l
+  env, CCList.rev rev_l
 
 
 and lexp ?(const = false) (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
@@ -551,14 +551,14 @@ and lexp ?(const = false) (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * 
   | { l = SLGroup e; _ } -> lexp ~const env e
   | { l = SLTuple elems; loc } ->
     let env, elems =
-      List.fold_left
+      CCList.fold_left
         (fun (env, acc) e ->
           let env, e = lexp ~const env e in
           env, e :: acc)
         (env, [])
-        (List.rev elems)
+        (CCList.rev elems)
     in
-    let t_elems = List.map (fun (e : lexp) -> e.t) elems in
+    let t_elems = CCList.map (fun (e : lexp) -> e.t) elems in
     let t = C.tuple ~loc t_elems in
     env, { l = LTuple elems; t; loc }
   | { l = SLIndex { e; index }; loc } ->
@@ -603,14 +603,14 @@ and dexp (env : Env.in_func) (e : Syntax.dexp) (kind : var_kind) : Env.in_func *
     env, { d = DWild; t; loc }
   | { d = SDTuple l; loc } ->
     let env, l =
-      List.fold_left
+      CCList.fold_left
         (fun (env, acc) e ->
           let env, e = dexp env e kind in
           env, e :: acc)
         (env, [])
-        (List.rev l)
+        (CCList.rev l)
     in
-    let t = C.tuple ~loc (List.map (fun (e : dexp) -> e.t) l) in
+    let t = C.tuple ~loc (CCList.map (fun (e : dexp) -> e.t) l) in
     env, { d = DTuple l; t; loc }
   | { d = SDGroup e; _ } -> dexp env e kind
   | { d = SDTyped (e, t); _ } ->
@@ -633,7 +633,7 @@ let rec dexp_to_lexp (d : Syntax.dexp) : Syntax.lexp =
   let loc = d.loc in
   match d.d with
   | SDTuple l ->
-    let l = List.map dexp_to_lexp l in
+    let l = CCList.map dexp_to_lexp l in
     { l = SLTuple l; loc }
   | SDWild -> { l = SLWild; loc }
   | SDId (name, _) -> { l = SLId name; loc }
@@ -672,14 +672,14 @@ let makeIfOfMatch e cases =
     | { e = SEGroup e; _ }, _ -> makeComparison e p
     | e, { p = SPGroup p; _ } -> makeComparison e p
     | { e = SETuple elems; _ }, { p = SPTuple patterns; loc } ->
-      if List.length elems = List.length patterns then
-        let conds = List.map2 (fun e p -> makeComparison e p) elems patterns in
-        List.fold_right makeAnd conds Syntax.{ e = SEBool true; loc }
+      if CCList.length elems = CCList.length patterns then
+        let conds = CCList.map2 (fun e p -> makeComparison e p) elems patterns in
+        CCList.fold_right makeAnd conds Syntax.{ e = SEBool true; loc }
       else
         let msg =
           "The pattern cannot be matched with the input expression because it has different number of elements."
         in
-        let loc = Loc.mergeList Loc.default @@ List.map (fun (p : Syntax.pattern) -> p.loc) patterns in
+        let loc = Loc.mergeList Loc.default @@ CCList.map (fun (p : Syntax.pattern) -> p.loc) patterns in
         Error.raiseError msg loc
     | { e = SETuple _; _ }, { loc; _ } ->
       let msg =
@@ -687,7 +687,7 @@ let makeIfOfMatch e cases =
       in
       Error.raiseError msg loc
     | _, { p = SPTuple patterns; _ } ->
-      let loc = Loc.mergeList Loc.default @@ List.map (fun (p : Syntax.pattern) -> p.loc) patterns in
+      let loc = Loc.mergeList Loc.default @@ CCList.map (fun (p : Syntax.pattern) -> p.loc) patterns in
       let msg =
         "The pattern cannot be matched with the input expression because it has different number of elements."
       in
@@ -700,7 +700,7 @@ let makeIfOfMatch e cases =
     | _, { p = SPEnum p; loc } -> makeEq e Syntax.{ e = SEEnum p; loc }
   in
   let if_stmt =
-    List.fold_right
+    CCList.fold_right
       (fun (p, case) else_ ->
         let cond = makeComparison e p in
         Some Syntax.{ s = SStmtIf (cond, case, else_); loc = cond.loc })
@@ -777,14 +777,14 @@ and stmt_opt env return s =
 
 and stmt_list env return l =
   let env, l_rev =
-    List.fold_left
+    CCList.fold_left
       (fun (env, acc) s ->
         let env, s = stmt env return s in
         env, s :: acc)
       (env, [])
       l
   in
-  env, List.flatten (List.rev l_rev)
+  env, CCList.flatten (CCList.rev l_rev)
 
 
 let addGeneratedFunctions tags name next =
@@ -817,21 +817,21 @@ let getReturnType env (t : Syntax.type_ option) =
 
 
 let convertArguments env (args : Syntax.arg list) : arg list =
-  List.map (fun (name, t, loc) -> { name; t = getOptType env loc t; loc }) args
+  CCList.map (fun (name, t, loc) -> { name; t = getOptType env loc t; loc }) args
 
 
 let registerMultiReturnMem (env : Env.in_context) name t loc =
   let _, ret = t in
   match unlink ret with
   | { tx = TEComposed ("tuple", elems); _ } ->
-    let names = List.mapi (fun i t -> path_string name ^ "_ret_" ^ string_of_int i, t) elems in
-    List.fold_left (fun env (name, t) -> Env.addReturnVar env name t loc) env names
+    let names = CCList.mapi (fun i t -> path_string name ^ "_ret_" ^ string_of_int i, t) elems in
+    CCList.fold_left (fun env (name, t) -> Env.addReturnVar env name t loc) env names
   | _ -> env
 
 
 let isRoot (args : Args.args) path =
   let s_path = Pla.print (Syntax.print_path path) in
-  List.mem s_path args.roots
+  CCList.mem s_path args.roots
 
 
 let customInitializer (env : Env.in_context) tags name =
@@ -888,9 +888,9 @@ let applyMutableTag (args : Typed.arg list) (tags : Typed.tag list) =
   | None -> args
   | Some [] -> args
   | Some vars ->
-    List.map
+    CCList.map
       (fun (arg : arg) ->
-        match List.find_opt (fun (n, _, _) -> String.compare n arg.name = 0) vars with
+        match CCList.find_opt (fun (n, _, _) -> String.compare n arg.name = 0) vars with
         | Some (_, { g = TagBool mut; _ }, _) ->
           setTypeConstness arg.t (not mut);
           arg
@@ -990,7 +990,7 @@ let rec top_exp (env : Env.in_module) (e : Syntax.exp) : Env.in_module * exp =
   | { e = SEArray (h :: t); loc } ->
     let env, h = top_exp env h in
     let env, t_rev, size =
-      List.fold_left
+      CCList.fold_left
         (fun (env, acc, size) e ->
           let env, e = top_exp env e in
           unifyRaise e.loc h.t e.t;
@@ -999,11 +999,11 @@ let rec top_exp (env : Env.in_module) (e : Syntax.exp) : Env.in_module * exp =
         t
     in
     let t = C.array ~size:(C.size ~loc size) h.t in
-    env, { e = EArray (h :: List.rev t_rev); t; loc }
+    env, { e = EArray (h :: CCList.rev t_rev); t; loc }
   | { e = SENamed _; _ } -> failwith "top_exp: Inference SENamed"
   | { e = SETuple l; loc } ->
     let env, l = top_exp_list env l in
-    let t = C.tuple ~loc (List.map (fun (e : exp) -> e.t) l) in
+    let t = C.tuple ~loc (CCList.map (fun (e : exp) -> e.t) l) in
     env, { e = ETuple l; t; loc }
   | { e = SEIf { cond; then_; else_ }; loc } ->
     let env, cond = top_exp env cond in
@@ -1053,7 +1053,7 @@ let rec top_exp (env : Env.in_module) (e : Syntax.exp) : Env.in_module * exp =
     match t with
     | { descr = Record members; _ } ->
       let env, elems_rev =
-        List.fold_left
+        CCList.fold_left
           (fun (env, acc) (id, v) ->
             let env, v = top_exp env v in
             let id, id_loc =
@@ -1071,21 +1071,21 @@ let rec top_exp (env : Env.in_module) (e : Syntax.exp) : Env.in_module * exp =
           (env, [])
           elems
       in
-      let elems = List.sort (fun (id1, _) (id2, _) -> String.compare id1 id2) elems_rev in
+      let elems = CCList.sort (fun (id1, _) (id2, _) -> String.compare id1 id2) elems_rev in
       env, { e = ERecord { path; elems }; t = Typed.C.path_t loc t.path; loc }
     | _ -> Error.raiseError ("The path '" ^ path_string path ^ "' is not a type.") loc)
 
 
 and top_exp_list (env : Env.in_module) (l : Syntax.exp list) : Env.in_module * exp list =
   let env, rev_l =
-    List.fold_left
+    CCList.fold_left
       (fun (env, acc) e ->
         let env, e = top_exp env e in
         env, e :: acc)
       (env, [])
       l
   in
-  env, List.rev rev_l
+  env, CCList.rev rev_l
 
 
 let rec top_stmt (iargs : Args.args) (env : Env.in_module) (s : Syntax.top_stmt) : Env.in_module * top_stmt =
@@ -1103,8 +1103,8 @@ let rec top_stmt (iargs : Args.args) (env : Env.in_module) (s : Syntax.top_stmt)
     let env = Env.exitContext env in
     env, { top = TopExternal (def, link_name); loc = def.loc }
   | { top = STopType { name; members }; loc } ->
-    let members = List.map (fun (name, t, tags, loc) -> name, type_in_m env t, tags, loc) members in
-    let members = List.sort (fun (n1, _, _, _) (n2, _, _, _) -> compare n1 n2) members in
+    let members = CCList.map (fun (name, t, tags, loc) -> name, type_in_m env t, tags, loc) members in
+    let members = CCList.sort (fun (n1, _, _, _) (n2, _, _, _) -> compare n1 n2) members in
     let env = Env.addType env name members loc in
     let path = Env.getPath env.m name loc in
     env, { top = TopType { path; members }; loc }
@@ -1124,7 +1124,7 @@ let rec top_stmt (iargs : Args.args) (env : Env.in_module) (s : Syntax.top_stmt)
 
 and top_stmt_list (iargs : Args.args) (env : Env.in_module) (s : Syntax.top_stmt list) : Env.in_module * top_stmt list =
   let env, rev_s =
-    List.fold_left
+    CCList.fold_left
       (fun (env, acc) s ->
         let env, s = top_stmt iargs env s in
         env, s :: acc)
@@ -1157,14 +1157,16 @@ let createTypes (env : Env.in_top) =
   in
   (* sort the types *)
   let types =
-    types |> List.filter (fun (t : Env.t) -> t.generated) |> List.sort (fun (a : Env.t) b -> compare a.index b.index)
+    types
+    |> CCList.filter (fun (t : Env.t) -> t.generated)
+    |> CCList.sort (fun (a : Env.t) b -> compare a.index b.index)
   in
-  List.map
+  CCList.map
     (fun (t : Env.t) ->
       match t.descr with
       | Record members ->
         let members = Map.fold (fun _ (var : Env.var) s -> (var.name, var.t, var.tags, var.loc) :: s) [] members in
-        let members = List.sort (fun (n1, _, _, _) (n2, _, _, _) -> compare n1 n2) members in
+        let members = CCList.sort (fun (n1, _, _, _) (n2, _, _, _) -> compare n1 n2) members in
         { top = TopType { path = t.path; members }; loc = t.loc }
       | Alias (path, alias_of) -> { top = TopAlias { path; alias_of }; loc = t.loc }
       | Enum _ | Simple -> failwith "There should not be other than records here")
@@ -1190,7 +1192,7 @@ let removeExistingTypes set types =
     | { top = TopType { path; _ }; _ } when Set.mem path set -> false
     | _ -> true
   in
-  List.filter f types
+  CCList.filter f types
 
 
 let infer_single (iargs : Args.args) (env : Env.in_top) (h : Parse.parsed_file) : Env.in_top * top_stmt list =
@@ -1204,7 +1206,7 @@ let infer_single (iargs : Args.args) (env : Env.in_top) (h : Parse.parsed_file) 
 
 let infer (iargs : Args.args) (parsed : Parse.parsed_file list) : Env.in_top * top_stmt list =
   let env, stmts =
-    List.fold_left
+    CCList.fold_left
       (fun (env, acc) (h : Parse.parsed_file) ->
         let env = Env.enterModule env h.name in
         let env, stmt = top_stmt_list iargs env h.stmts in
@@ -1214,4 +1216,4 @@ let infer (iargs : Args.args) (parsed : Parse.parsed_file list) : Env.in_top * t
       parsed
   in
   let types = createTypes env in
-  env, types @ List.rev stmts
+  env, types @ CCList.rev stmts

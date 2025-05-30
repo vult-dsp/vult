@@ -214,7 +214,7 @@ let rec print_stmt (s : stmt) =
     {%pla|{<#stmt#+>}|}
   | StmtSwitch (e1, cases, default) -> (
     let if_ =
-      List.fold_right
+      CCList.fold_right
         (fun (e2, body) else_ ->
           let cond = C.eeq e1 e2 in
           Some (C.sif cond body else_))

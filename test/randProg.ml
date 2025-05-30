@@ -71,7 +71,7 @@ let rec filter_count state acc l =
   match l with
   | [] ->
     let n, e = acc in
-    n, List.rev e
+    n, CCList.rev e
   | ((c, p, _) as h) :: t ->
     let n, e = acc in
     if c state then
@@ -87,7 +87,7 @@ let rec filter_count state acc l =
 let pick_one state (elems : (condition * probability * 'a creator) list) : 'a =
   let total, elems' = filter_count state (0.0, []) elems in
   let n = Random.float total in
-  let _, first_p, _ = List.hd elems' in
+  let _, first_p, _ = CCList.hd elems' in
   let _, _, f = get_elem state 0.0 (first_p state) n elems' in
   f state
 
@@ -203,9 +203,9 @@ let tupleTypes (typ : type_) =
 
 let pickVar state typ =
   let elems = TypeMap.find typ state.vars in
-  let size = List.length elems in
+  let size = CCList.length elems in
   let n = Random.int size in
-  List.nth elems n
+  CCList.nth elems n
 
 
 let hasType typ state = TypeMap.mem typ state.vars
@@ -214,14 +214,14 @@ let hasArrayType typ state = TypeMap.exists (fun key _ -> isArrayOfType typ key)
 
 let pickArrayVar state typ =
   TypeMap.bindings state.vars
-  |> List.filter (fun (key, _) -> isArrayOfType typ key)
-  |> List.map (fun (key, names) -> List.map (fun n -> key, n) names)
-  |> List.flatten
-  |> List.map (fun x -> always, normal_p, fun _ -> x)
+  |> CCList.filter (fun (key, _) -> isArrayOfType typ key)
+  |> CCList.map (fun (key, names) -> CCList.map (fun n -> key, n) names)
+  |> CCList.flatten
+  |> CCList.map (fun x -> always, normal_p, fun _ -> x)
   |> pick_one state
 
 
-let hasVar state name = TypeMap.exists (fun _ names -> List.exists (fun n -> n = name) names) state.vars
+let hasVar state name = TypeMap.exists (fun _ names -> CCList.exists (fun n -> n = name) names) state.vars
 
 let addVar state var typ =
   match TypeMap.find typ state.vars with
@@ -320,7 +320,7 @@ let rec newExp state typ : exp =
       , low_p
       , fun state ->
           let types = tupleTypes typ in
-          let elems = List.map (newExp state) types in
+          let elems = CCList.map (newExp state) types in
           { e = SEGroup { e = SETuple elems; loc }; loc } )
     ; (* operators *)
       ( isNum typ
@@ -401,14 +401,14 @@ let rec newDExpDecl state typ =
       , fun state ->
           let types = tupleTypes typ in
           let state', lhs_elems =
-            List.fold_left
+            CCList.fold_left
               (fun (s, acc) t ->
                 let t', s' = newDExpDecl s t in
                 s', t' :: acc)
               (state, [])
               types
           in
-          { d = SDGroup { d = SDTuple (List.rev lhs_elems); loc }; loc }, state' )
+          { d = SDGroup { d = SDTuple (CCList.rev lhs_elems); loc }; loc }, state' )
     ]
 
 
@@ -429,14 +429,14 @@ let rec newLExpBind state typ =
       , fun state ->
           let types = tupleTypes typ in
           let state', lhs_elems =
-            List.fold_left
+            CCList.fold_left
               (fun (s, acc) t ->
                 let t', s' = newLExpBind s t in
                 s', t' :: acc)
               (state, [])
               types
           in
-          { l = SLGroup { l = SLTuple (List.rev lhs_elems); loc }; loc }, state' )
+          { l = SLGroup { l = SLTuple (CCList.rev lhs_elems); loc }; loc }, state' )
     ]
 
 

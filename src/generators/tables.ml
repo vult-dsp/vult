@@ -36,7 +36,7 @@ let makeArrayType precision dim : type_ = C.array_t ~dim precision
 
 let makeRealTableDecl loc fname name precision data =
   let varname = fname ^ "_" ^ name in
-  let size = List.length data in
+  let size = CCList.length data in
   let t = makeArrayType precision size in
   let elems = CCList.map (makeFloat precision) data in
   { top = TopConstant (varname, Some size, t, C.earray elems t); loc }
@@ -44,7 +44,7 @@ let makeRealTableDecl loc fname name precision data =
 
 let makeIntTableDecl loc fname name data =
   let varname = fname ^ "_" ^ name in
-  let size = List.length data in
+  let size = CCList.length data in
   let t = makeArrayType C.int_t size in
   let elems = CCList.map C.eint data in
   { top = TopConstant (varname, Some size, t, C.earray elems t); loc }
@@ -116,7 +116,7 @@ let calculateIntRealTables loc iprog name min max precision =
   let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
   let stack = Core.Interpreter.createStack 256 in
   let data =
-    List.init (size + 1) (fun i ->
+    CCList.init (size + 1) (fun i ->
         let x = min + i in
         getRealResult (Core.Interpreter.callFunction iprog stack fun_index [ DInt x ]))
   in
@@ -128,7 +128,7 @@ let calculateIntIntTables loc iprog name min max =
   let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
   let stack = Core.Interpreter.createStack 256 in
   let data =
-    List.init (size + 1) (fun i ->
+    CCList.init (size + 1) (fun i ->
         let x = min + i in
         getIntResult (Core.Interpreter.callFunction iprog stack fun_index [ DInt x ]))
   in
@@ -155,7 +155,7 @@ let calculateTablesOrder1Fixed loc iprog name size min max precision =
   let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
   let stack = Core.Interpreter.createStack 256 in
   let data =
-    List.init (size + 1) (fun i ->
+    CCList.init (size + 1) (fun i ->
         let x = map_x (float_of_int i) in
         x, getRealResult (Core.Interpreter.callFunction iprog stack fun_index [ DReal x ]))
   in
@@ -165,7 +165,7 @@ let calculateTablesOrder1Fixed loc iprog name size min max precision =
     | [ _ ] -> [ 0.0 ]
     | (_, y1) :: ((_, y2) :: _ as t) -> (y2 -. y1) :: increments t
   in
-  let acc0 = List.map snd data in
+  let acc0 = CCList.map snd data in
   let acc1 = increments data in
   [ makeRealTableDecl loc name "c0" precision acc0; makeRealTableDecl loc name "c1" precision acc1 ]
 

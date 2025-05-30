@@ -247,7 +247,7 @@ let all_files =
 
 let includes =
   [ "effects"; "env"; "filters"; "midi"; "osc"; "unit"; "util" ]
-  |> List.map (fun dir -> in_test_directory ("../examples/" ^ dir))
+  |> CCList.map (fun dir -> in_test_directory ("../examples/" ^ dir))
 
 
 let test_random_code =
@@ -344,7 +344,7 @@ module ParserTest = struct
       current
 
 
-  let get files = "parser" >::: List.map (fun file -> Filename.basename file >:: run file) files
+  let get files = "parser" >::: CCList.map (fun file -> Filename.basename file >:: run file) files
 end
 
 module ErrorTest = struct
@@ -353,11 +353,11 @@ module ErrorTest = struct
     let args = Args.{ default_arguments with includes; check = true } in
     let args = { args with output = Some basefile; files = [ File fullfile ] } in
     let results = Driver.Cli.driver args in
-    List.fold_left
+    CCList.fold_left
       (fun s a ->
         match a with
         | Args.Errors e ->
-          List.map
+          CCList.map
             (fun a ->
               let msg, _, _, _ = Error.reportErrorStringNoLoc a in
               msg)
@@ -382,7 +382,7 @@ module ErrorTest = struct
       current
 
 
-  let get files = "errors" >::: List.map (fun file -> Filename.basename file >:: run file) files
+  let get files = "errors" >::: CCList.map (fun file -> Filename.basename file >:: run file) files
 end
 
 (** Module to perform transformation tests *)
@@ -395,7 +395,7 @@ module PassesTest = struct
 
   let process (fullfile : string) : string =
     let args = Args.{ default_arguments with dprog = true; files = [ File fullfile ] } in
-    Driver.Cli.driver args |> List.map show |> String.concat "\n"
+    Driver.Cli.driver args |> CCList.map show |> String.concat "\n"
 
 
   let run (file : string) context =
@@ -411,7 +411,7 @@ module PassesTest = struct
       current
 
 
-  let get files = "passes" >::: List.map (fun file -> Filename.basename file >:: run file) files
+  let get files = "passes" >::: CCList.map (fun file -> Filename.basename file >:: run file) files
 end
 
 (** Tries to compile all the examples *)
@@ -457,7 +457,7 @@ module RandomCompileTest = struct
     Sys.chdir initial_dir
 
 
-  let get files = "compile" >::: List.map (fun file -> Filename.basename file ^ ".float" >:: run file) files
+  let get files = "compile" >::: CCList.map (fun file -> Filename.basename file ^ ".float" >:: run file) files
 end
 
 type compiler =
@@ -534,7 +534,7 @@ module CliTest = struct
   let callVultCli (compiler : compiler) (fullfile : string) code_type =
     let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
     let flags, ext = getFlags code_type in
-    let includes_flags = List.map (fun a -> "-i " ^ a) includes |> String.concat " " in
+    let includes_flags = CCList.map (fun a -> "-i " ^ a) includes |> String.concat " " in
     let flags = flags ^ " " ^ includes_flags in
     let vultc =
       if compiler = Node then
@@ -545,7 +545,7 @@ module CliTest = struct
     let cmd = vultc ^ " -test " ^ flags ^ " -o " ^ basefile ^ " " ^ fullfile in
     let generated_files =
       match Sys.command cmd with
-      | 0 -> List.map (fun e -> basefile ^ fst e, basefile ^ snd e) ext
+      | 0 -> CCList.map (fun e -> basefile ^ fst e, basefile ^ snd e) ext
       | _ -> assert_failure "failed to call the compiler"
       | exception _ -> assert_failure "failed to call the compiler in a bad way"
     in
@@ -581,8 +581,8 @@ module CliTest = struct
     in
     let args = { args with output = Some basefile; files = [ File fullfile ] } in
     let results = Driver.Cli.driver args in
-    let () = List.iter (Driver.Cli.showResult args) results in
-    let generated_files = List.map (fun e -> basefile ^ fst e, basefile ^ snd e) ext in
+    let () = CCList.iter (Driver.Cli.showResult args) results in
+    let generated_files = CCList.map (fun e -> basefile ^ fst e, basefile ^ snd e) ext in
     generated_files
 
 
@@ -605,10 +605,10 @@ module CliTest = struct
     let fullfile = checkFile (in_test_directory ("../examples/" ^ file)) in
     let generated_files = process context use_node fullfile real_type in
     let files_content =
-      List.map (readOutputAndReference (update_test context) (in_test_directory "code")) generated_files
+      CCList.map (readOutputAndReference (update_test context) (in_test_directory "code")) generated_files
     in
     assert_bool "No code generated" (files_content <> []);
-    List.iter
+    CCList.iter
       (fun (current, reference) ->
         assert_equal
           ~cmp:Diff.compare
@@ -620,7 +620,7 @@ module CliTest = struct
 
 
   let get files use_node real_type =
-    "cli" >::: List.map (fun file -> Filename.basename file ^ "." ^ real_type >:: run file use_node real_type) files
+    "cli" >::: CCList.map (fun file -> Filename.basename file ^ "." ^ real_type >:: run file use_node real_type) files
 end
 
 module Templates = struct
@@ -652,8 +652,8 @@ module Templates = struct
     in
     let args = { args with output = Some output; files = [ File fullfile ] } in
     let results = Driver.Cli.driver args in
-    let () = List.iter (Driver.Cli.showResult args) results in
-    let generated_files = List.map (fun e -> output ^ fst e, output ^ snd e) ext in
+    let () = CCList.iter (Driver.Cli.showResult args) results in
+    let generated_files = CCList.map (fun e -> output ^ fst e, output ^ snd e) ext in
     let () = tryCompile args generated_files in
     generated_files
 
@@ -670,10 +670,10 @@ module Templates = struct
     let fullfile = checkFile (in_test_directory ("templates/" ^ file)) in
     let generated_files = process context template fullfile real_type in
     let files_content =
-      List.map (readOutputAndReference (update_test context) (in_test_directory "code")) generated_files
+      CCList.map (readOutputAndReference (update_test context) (in_test_directory "code")) generated_files
     in
     assert_bool "No code generated" (files_content <> []);
-    List.iter
+    CCList.iter
       (fun (current, reference) ->
         assert_equal
           ~cmp:Diff.compare
@@ -686,7 +686,7 @@ module Templates = struct
 
   let get files template real_type =
     "template"
-    >::: List.map
+    >::: CCList.map
            (fun file -> Filename.basename file ^ "." ^ real_type ^ "_" ^ template >:: run file template real_type)
            files
 end
@@ -717,7 +717,7 @@ module InterpretPerf = struct
         }
     in
     let results = Driver.Cli.driver args in
-    List.iter
+    CCList.iter
       (fun result ->
         match result with
         | Args.Errors errors -> assert_failure (Error.reportErrors errors)
@@ -725,7 +725,7 @@ module InterpretPerf = struct
       results
 
 
-  let get files = "run" >::: List.map (fun file -> Filename.basename file >:: run file) files
+  let get files = "run" >::: CCList.map (fun file -> Filename.basename file >:: run file) files
 end
 
 module Interpret = struct
@@ -740,7 +740,7 @@ module Interpret = struct
         }
     in
     let results = Driver.Cli.driver args in
-    List.iter
+    CCList.iter
       (fun result ->
         match result with
         | Args.Errors errors -> assert_failure (Error.reportErrors errors)
@@ -753,7 +753,7 @@ module Interpret = struct
       results
 
 
-  let get files = "run" >::: List.map (fun file -> Filename.basename file >:: run file) files
+  let get files = "run" >::: CCList.map (fun file -> Filename.basename file >:: run file) files
 end
 
 let suite =

@@ -593,14 +593,14 @@ module Mapper = struct
 
   let mapper_list mapper_app mapper (context : 'ctx context) (state : 'data state) (el : 'kind list) =
     let state', rev_el =
-      List.fold_left
+      CCList.fold_left
         (fun (state, acc) e ->
           let state', e' = mapper_app mapper context state e in
           state', e' :: acc)
         (state, [])
         el
     in
-    state', List.rev rev_el
+    state', CCList.rev rev_el
 
 
   let bypass _ (_ : 'ctx context) (state : 'data state) a = state, a

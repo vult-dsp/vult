@@ -172,7 +172,7 @@ let commaSepList parser buffer =
     | COMMA ->
       let _ = Stream.skip buffer in
       loop (e :: acc)
-    | _ -> List.rev (e :: acc)
+    | _ -> CCList.rev (e :: acc)
   in
   loop []
 
@@ -764,7 +764,7 @@ and stmtMatch (buffer : Stream.stream) : stmt =
     let _ = Stream.consume buffer ARROW in
     let case = stmtList buffer in
     match Stream.peek buffer with
-    | RBRACE -> List.rev ((m, case) :: cases)
+    | RBRACE -> CCList.rev ((m, case) :: cases)
     | _ -> loop ((m, case) :: cases)
   in
   let cases = loop [] in
@@ -896,7 +896,7 @@ and type_member_list (buffer : Stream.stream) =
         let decl = type_elem buffer in
         let _ = Stream.consume buffer SEMI in
         loop (decl :: acc)
-      | _ -> List.rev acc
+      | _ -> CCList.rev acc
     in
     loop []
   | _ ->
@@ -941,9 +941,9 @@ and enum_member_type (buffer : Stream.stream) =
         | COMMA ->
           let _ = Stream.consume buffer COMMA in
           loop (decl :: acc)
-        | RBRACE -> List.rev (decl :: acc)
+        | RBRACE -> CCList.rev (decl :: acc)
         | _ -> raise (ParserError (Stream.makeError buffer "Expecting more enumeration elements")))
-      | _ -> List.rev acc
+      | _ -> CCList.rev acc
     in
     loop []
   | _ ->
@@ -1024,7 +1024,7 @@ and stmtList (buffer : Stream.stream) : stmt =
       let end_loc = Stream.location buffer in
       let loc = Loc.merge start_loc end_loc in
       let _ = Stream.skip buffer in
-      { s = SStmtBlock (List.rev acc); loc }
+      { s = SStmtBlock (CCList.rev acc); loc }
     | EOF ->
       let _ = Stream.expect buffer RBRACE in
       { s = SStmtBlock []; loc = start_loc }
@@ -1078,7 +1078,7 @@ and topstmtList (buffer : Stream.stream) : top_stmt list =
       let s = topStmt buffer in
       loop (s :: acc)
   in
-  List.rev (loop [])
+  CCList.rev (loop [])
 
 
 let parseDExp (s : string) : dexp = dexp_expression 0 (Stream.fromString s)
@@ -1130,12 +1130,12 @@ let parseBuffer (file : string) (buffer : Stream.stream) =
   try
     let rec loop acc =
       match Stream.peek buffer with
-      | EOF -> List.rev acc
+      | EOF -> CCList.rev acc
       | _ -> loop (topStmt buffer :: acc)
     in
     let stmts = loop [] in
     if Stream.hasErrors buffer then
-      raise (Error.Errors (List.rev (Stream.getErrors buffer)))
+      raise (Error.Errors (CCList.rev (Stream.getErrors buffer)))
     else
       let name = moduleName file in
       { stmts; file; name }

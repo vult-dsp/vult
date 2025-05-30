@@ -70,7 +70,7 @@ let addInlets (inputs : param list) =
   match inputs with
   | [] | [ _ ] -> Pla.unit
   | _ :: t ->
-    List.map (fun _ -> Pla.string "inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);") t
+    CCList.map (fun _ -> Pla.string "inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);") t
     |> Pla.join_sep Pla.newline
     |> Pla.indent
 
@@ -79,7 +79,7 @@ let addNormalInlets (inputs : param list) =
   match inputs with
   | [] -> Pla.unit
   | _ :: t ->
-    List.map (fun ({ name; _ } : param) -> {%pla|floatinlet_new(&x->x_obj, &x-><#name#s>);|}) t
+    CCList.map (fun ({ name; _ } : param) -> {%pla|floatinlet_new(&x->x_obj, &x-><#name#s>);|}) t
     |> Pla.join_sep Pla.newline
     |> Pla.indent
 
@@ -88,32 +88,32 @@ let addInletsVars (inputs : param list) =
   match inputs with
   | [] -> Pla.unit
   | _ ->
-    List.map (fun ({ name; _ } : param) -> {%pla|float <#name#s>;|}) inputs |> Pla.join_sep Pla.newline |> Pla.indent
+    CCList.map (fun ({ name; _ } : param) -> {%pla|float <#name#s>;|}) inputs |> Pla.join_sep Pla.newline |> Pla.indent
 
 
 let addOutletsVars (outputs : type_ list) =
   match outputs with
   | [] -> Pla.unit
-  | _ -> List.mapi (fun i _ -> {%pla|t_outlet *out_<#i#i>;|}) outputs |> Pla.join_sep Pla.newline |> Pla.indent
+  | _ -> CCList.mapi (fun i _ -> {%pla|t_outlet *out_<#i#i>;|}) outputs |> Pla.join_sep Pla.newline |> Pla.indent
 
 
 (** Add the outlets *)
 let addOutlets (f : function_info) =
   f.outputs
-  |> List.map (fun _ -> Pla.string "outlet_new(&x->x_obj, &s_signal);")
+  |> CCList.map (fun _ -> Pla.string "outlet_new(&x->x_obj, &s_signal);")
   |> Pla.join_sep Pla.newline
   |> Pla.indent
 
 
 let addNormalOutlets (f : function_info) =
   f.outputs
-  |> List.mapi (fun i _ -> {%pla|x->out_<#i#i> = outlet_new(&x->x_obj, &s_float);|})
+  |> CCList.mapi (fun i _ -> {%pla|x->out_<#i#i> = outlet_new(&x->x_obj, &s_float);|})
   |> Pla.join_sep Pla.newline
   |> Pla.indent
 
 
 let tildeNewFunction (f : function_info) : int * Pla.t =
-  let dsp_nargs = List.length f.inputs + List.length f.outputs in
+  let dsp_nargs = CCList.length f.inputs + CCList.length f.outputs in
   let vec_decl =
     CCList.init dsp_nargs (fun i -> {%pla|sp[<#i#i>]->s_vec|}) |> Pla.join_sep_all {%pla|,<#>|} |> Pla.indent
   in
@@ -129,7 +129,7 @@ let inputName (i, acc) (p : param) = i + 1, castInput p.t {%pla|*(in_<#i#i>++)|}
 let tildePerformFunctionCall (f : function_info) =
   let fname = f.name in
   (* generates the aguments for the process call *)
-  let args = List.fold_left inputName (0, []) f.inputs |> snd |> List.rev in
+  let args = CCList.fold_left inputName (0, []) f.inputs |> snd |> CCList.rev in
   let args =
     Pla.join_sep
       Pla.commaspace
@@ -150,7 +150,7 @@ let tildePerformFunctionCall (f : function_info) =
       decl, copy
     | o ->
       let copy =
-        List.mapi
+        CCList.mapi
           (fun i o ->
             let value = castOutput o {%pla|x->data.<#fname#s>_ret_<#i#i>|} in
             {%pla|*(out_<#i#i>++) = <#value#>;|})
@@ -167,12 +167,12 @@ let normalInputName (i, acc) ({ name; t; _ } : param) = i + 1, castInput t {%pla
 let normalPerformFunctionCall (f : function_info) =
   let fname = f.name in
   (* generates the aguments for the process call *)
-  let args = List.fold_left normalInputName (0, []) f.inputs |> snd |> List.rev in
+  let args = CCList.fold_left normalInputName (0, []) f.inputs |> snd |> CCList.rev in
   let args =
     if args = [] then
       []
     else
-      Pla.string "in1" :: List.tl args
+      Pla.string "in1" :: CCList.tl args
   in
   let args =
     Pla.join_sep
@@ -194,7 +194,7 @@ let normalPerformFunctionCall (f : function_info) =
       decl, copy
     | o ->
       let copy =
-        List.mapi
+        CCList.mapi
           (fun i o ->
             let value = castOutput o {%pla|x->data.<#fname#s>_ret_<#i#i>|} in
             {%pla|   outlet_float(x->out_<#i#i>, <#value#>);|})
@@ -212,7 +212,7 @@ let tildePerformFunctionVector (f : function_info) : int * Pla.t =
   let decl_templ io index count = {%pla|t_sample *<#io#s>_<#index#i> = (t_sample *)(w[<#count#i>]);|} in
   (* First the inputs. We start with count=2 for accessing the vector 'w' *)
   let decl1, count, _ =
-    List.fold_left
+    CCList.fold_left
       (fun (s, count, index) _ ->
         let t = decl_templ "in" index count in
         t :: s, count + 1, index + 1)
@@ -221,7 +221,7 @@ let tildePerformFunctionVector (f : function_info) : int * Pla.t =
   in
   (* now for the outputs, we continue counting with the last value of count *)
   let decl2, count, _ =
-    List.fold_left
+    CCList.fold_left
       (fun (s, count, index) _ ->
         let t = decl_templ "out" index count in
         t :: s, count + 1, index + 1)
@@ -231,7 +231,7 @@ let tildePerformFunctionVector (f : function_info) : int * Pla.t =
   (* the number of samples is in the next index *)
   let n = {%pla|<#>int n = (int)(w[<#count#i>]);|} in
   (* appends all the declarations *)
-  let decl = List.rev (n :: decl2) |> Pla.join_sep Pla.newline |> Pla.indent in
+  let decl = CCList.rev (n :: decl2) |> Pla.join_sep Pla.newline |> Pla.indent in
   (* we return the number of buffers used *)
   count + 1, decl
 
@@ -437,9 +437,9 @@ let getStmtInfo (s : top_stmt) =
 
 
 let generate prefix (stmts : top_stmt list) =
-  let functions = List.filter_map getStmtInfo stmts in
-  let impl = List.map func_imp functions in
-  let headers = List.map func_header functions in
+  let functions = CCList.filter_map getStmtInfo stmts in
+  let impl = CCList.map func_imp functions in
+  let headers = CCList.map func_header functions in
   let f_impl = Pla.join_sep_all Pla.newline impl in
   let f_header = Pla.join_sep_all Pla.newline headers in
   let header = lib_header prefix in

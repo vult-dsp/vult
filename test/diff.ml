@@ -49,7 +49,7 @@ let stringSplit (sep : string) (s : string) : string list = Str.split (Str.regex
 (** Longest Common Sequence *)
 let lcs xs' ys' =
   let longest xs ys =
-    if List.length xs > List.length ys then
+    if CCList.length xs > CCList.length ys then
       xs
     else
       ys
@@ -71,7 +71,7 @@ let lcs xs' ys' =
 
 let rec interleaveLineDiff file i a b l =
   match a, b, l with
-  | _, _, [] -> List.map (fun x -> "- " ^ x) a @ List.map (fun x -> "+ " ^ x) b
+  | _, _, [] -> CCList.map (fun x -> "- " ^ x) a @ CCList.map (fun x -> "+ " ^ x) b
   | [], _, _ :: _ | _, [], _ :: _ ->
     failwith "Diff.interleaveLineDiff: The results obtained from 'Diff.lcs' function are incorrect"
   | ah :: at, bh :: bt, lh :: lt -> (
@@ -119,7 +119,7 @@ let tokenizeLine line =
     in
     loop ()
   in
-  List.rev !tokens
+  CCList.rev !tokens
 
 
 let equalToken t1 t2 =
@@ -153,12 +153,12 @@ let equalToken t1 t2 =
 let compareLine line1 line2 =
   let s1 = tokenizeLine line1 in
   let s2 = tokenizeLine line2 in
-  try List.for_all2 equalToken s1 s2 with
+  try CCList.for_all2 equalToken s1 s2 with
   | Invalid_argument _ -> false
 
 
 let compare str1 str2 =
   let lines1 = stringSplit "\n" str1 in
   let lines2 = stringSplit "\n" str2 in
-  try List.for_all2 compareLine lines1 lines2 with
+  try CCList.for_all2 compareLine lines1 lines2 with
   | Invalid_argument _ -> false

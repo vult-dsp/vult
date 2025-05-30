@@ -53,7 +53,7 @@ module Map = struct
 
 
   let of_list elems : 'a t =
-    let m = List.fold_left (fun m (key, value) -> Map.add key value m) Map.empty elems in
+    let m = CCList.fold_left (fun m (key, value) -> Map.add key value m) Map.empty elems in
     ref m
 
 
@@ -207,7 +207,7 @@ let builtin_functions =
 
 let builtin_types =
   [ "int"; "real"; "fix16"; "bool"; "string"; "unit" ]
-  |> List.map (fun n ->
+  |> CCList.map (fun n ->
          ( n
          , { path = Pparser.Syntax.{ id = n; n = None; loc = Loc.default }
            ; descr = Simple
@@ -419,7 +419,7 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
     | _ -> ()
   in
   let checkDuplicatedVal locals name =
-    List.iter
+    CCList.iter
       (fun (scope : var Map.t) ->
         match Map.find name scope with
         | None -> ()
@@ -502,14 +502,14 @@ let registerArguments (args : Typed.arg list) =
       loc
   in
   let rev_args =
-    List.fold_left
+    CCList.fold_left
       (fun acc ({ name; t; loc } : Typed.arg) ->
         let () = Map.update (report loc) name { name; t; kind = Val; tags = []; loc } locals in
         t :: acc)
       []
       args
   in
-  locals, List.rev rev_args
+  locals, CCList.rev rev_args
 
 
 let registerContextLocal loc locals (context : context) =
@@ -561,7 +561,7 @@ let addRecordMember members =
       loc
   in
   let members =
-    List.fold_left
+    CCList.fold_left
       (fun m (name, t, tags, loc) ->
         Map.update (report loc) name { name; t; kind = Val; tags; loc } m;
         m)
@@ -592,7 +592,7 @@ let addEnumMember members =
       loc
   in
   let members, _ =
-    List.fold_left
+    CCList.fold_left
       (fun (m, i) (name, loc) ->
         Map.update (report loc) name (name, i, loc) m;
         m, i + 1)
@@ -608,7 +608,7 @@ let addEnumToModule (env : in_module) members t =
       ("A enum value with the name '" ^ name ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
       loc
   in
-  let () = List.iter (fun (name, loc) -> Map.update (report loc name) name t env.m.enums) members in
+  let () = CCList.iter (fun (name, loc) -> Map.update (report loc name) name t env.m.enums) members in
   env
 
 

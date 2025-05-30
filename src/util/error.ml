@@ -69,8 +69,8 @@ let getErrorLines (location : Loc.t) : string =
   let result =
     match Loc.line location, lines with
     | _, [] -> ""
-    | (0 | 1), _ -> List.nth lines 0
-    | n, _ -> List.nth lines (n - 2) ^ "\n" ^ List.nth lines (n - 1)
+    | (0 | 1), _ -> CCList.nth lines 0
+    | n, _ -> CCList.nth lines (n - 2) ^ "\n" ^ CCList.nth lines (n - 1)
   in
   CCString.replace ~sub:"\t" ~by:" " result
 
@@ -86,7 +86,7 @@ let reportErrorString (error : t) : string =
     loc ^ msg ^ "\n" ^ indicator
 
 
-let reportErrors (errors : t list) : string = List.map reportErrorString errors |> String.concat "\n"
+let reportErrors (errors : t list) : string = CCList.map reportErrorString errors |> String.concat "\n"
 
 (** Returns a tuple with the error an all its information *)
 let reportErrorStringNoLoc (error : t) : string * string * int * int =
@@ -101,7 +101,7 @@ let reportErrorStringNoLoc (error : t) : string * string * int * int =
 
 
 (** Joins two errors *)
-let joinErrors : t list -> t list -> t list = List.append
+let joinErrors : t list -> t list -> t list = CCList.append
 
 (** Joins two optional errors *)
 let joinErrorOptions : t list option -> t list option -> t list option =
@@ -114,7 +114,7 @@ let joinErrorOptions : t list option -> t list option -> t list option =
 
 
 (** Joins a list of optional errors *)
-let joinErrorOptionsList : t list option list -> t list option = List.fold_left joinErrorOptions None
+let joinErrorOptionsList : t list option list -> t list option = CCList.fold_left joinErrorOptions None
 
 let makeError (msg : string) (loc : Loc.t) = PointedError (loc, msg)
 

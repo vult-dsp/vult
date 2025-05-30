@@ -137,7 +137,7 @@ let getMinMaxPositions (pos_list : Lexing.position list) =
   match pos_list with
   | [] -> failwith "getMinMaxPositions: No positions passed"
   | [ h ] -> h, h
-  | h :: _ -> List.fold_left (fun (min, max) a -> getMinPosition a min, getMaxPosition a max) (h, h) pos_list
+  | h :: _ -> CCList.fold_left (fun (min, max) a -> getMinPosition a min, getMaxPosition a max) (h, h) pos_list
 
 
 (** Returns a new location with the start and end positions updated *)
@@ -156,7 +156,7 @@ let merge3 (loc1 : t) (loc2 : t) (loc3 : t) : t = merge (merge loc1 loc2) loc3
 let mergeList default loc =
   match loc with
   | [] -> default
-  | h :: t -> List.fold_left merge h t
+  | h :: t -> CCList.fold_left merge h t
 
 
 let hashString (t : t) =

@@ -255,9 +255,9 @@ let flags result =
 (** Returns a 'arguments' type containing the options passed in the command line *)
 let processArguments () : args =
   let result = { default_arguments with files = [] } in
-  let opts = List.map (fun f -> f.flag, f.action, f.comment) (flags result) |> Arg.align in
+  let opts = CCList.map (fun f -> f.flag, f.action, f.comment) (flags result) |> Arg.align in
   let _ =
     Arg.parse opts (fun a -> result.files <- File a :: result.files) "Usage: vult file.vult [options]\noptions:"
   in
-  let () = result.files <- List.rev result.files in
+  let () = result.files <- CCList.rev result.files in
   result

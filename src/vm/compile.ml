@@ -187,14 +187,14 @@ let addConstant env name value =
 
 let list f (env : 'env) (l : 'e) =
   let env, i_rev =
-    List.fold_left
+    CCList.fold_left
       (fun (env, instr) d ->
         let env, i = f env d in
         env, i :: instr)
       (env, [])
       l
   in
-  env, List.flatten (List.rev i_rev)
+  env, CCList.flatten (CCList.rev i_rev)
 
 
 let getIndex name elems =
@@ -230,7 +230,7 @@ let rec compile_lexp (env : env) (l : lexp) : lvalue =
     in
     LRef (index, name)
   | LTuple l ->
-    let l = List.map (compile_lexp env) l |> Array.of_list in
+    let l = CCList.map (compile_lexp env) l |> Array.of_list in
     LTuple l
   | LMember (e, s) -> (
     match e.t.t with
@@ -281,10 +281,10 @@ and compile_exp (env : env) e : rvalue =
     let else_ = compile_exp env else_ in
     RIf (cond, then_, else_)
   | ETuple elems ->
-    let elems = List.map (compile_exp env) elems in
+    let elems = CCList.map (compile_exp env) elems in
     RObject (Array.of_list elems)
   | EArray elems ->
-    let elems = List.map (compile_exp env) elems in
+    let elems = CCList.map (compile_exp env) elems in
     RObject (Array.of_list elems)
   | EMember (e, m) -> (
     match e.t.t with
@@ -297,7 +297,7 @@ and compile_exp (env : env) e : rvalue =
     let e = compile_exp env e in
     RTMember (e, index)
   | ECall { path; args } -> (
-    let args = List.map (compile_exp env) args in
+    let args = CCList.map (compile_exp env) args in
     match Map.find_opt path env.functions with
     | Some index -> RCall (index, path, args)
     | None ->
@@ -370,7 +370,7 @@ let rec compile_stmt (env : env) (stmt : stmt) =
       | None -> env, []
       | Some stmt -> compile_stmt env stmt
     in
-    List.fold_left
+    CCList.fold_left
       (fun (env, else_) (case, stmt) ->
         let case = compile_exp env case in
         let comp = makeOp OpEq e case in
@@ -378,13 +378,13 @@ let rec compile_stmt (env : env) (stmt : stmt) =
         let if_ = [ If (comp, stmt, else_) ] in
         env, if_)
       (env, default)
-      (List.rev cases)
+      (CCList.rev cases)
 
 
 let getNOutputs (t : type_) =
   match t.t with
   | TEmptyType | TVoid _ | TInt | TReal | TString | TBool | TFix16 | TArray _ | TStruct _ -> 1
-  | TTuple elems -> List.length elems
+  | TTuple elems -> CCList.length elems
 
 
 let compile_top (env : env) (s : top_stmt) =
@@ -400,9 +400,9 @@ let compile_top (env : env) (s : top_stmt) =
     let index = env.fcount in
     let functions = Map.add name (F index) env.functions in
     let env = { env with locals = Map.empty; lcount = 0; functions; fcount = env.fcount + 1 } in
-    let env = List.fold_left (fun env (p : param) -> addLocal env p.name) env args in
+    let env = CCList.fold_left (fun env (p : param) -> addLocal env p.name) env args in
     let env, body = compile_stmt env body in
-    let n_args = List.length args in
+    let n_args = CCList.length args in
     env, [ Function { name; body; locals = env.lcount - n_args; n_args } ]
   | TopConstant (name, _, _, e) ->
     let e = compile_exp env e in
@@ -574,7 +574,7 @@ let print_table t =
     let i = f i in
     {%pla|<#i#>: <#n#s>|}
   in
-  let elems = List.sort (fun (_, n1) (_, n2) -> compare n1 n2) (Map.to_list t) in
+  let elems = CCList.sort (fun (_, n1) (_, n2) -> compare n1 n2) (Map.to_list t) in
   Pla.map_sep_all Pla.newline f elems
 
 

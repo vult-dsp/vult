@@ -8,14 +8,14 @@ type state = string
 let list : ('state -> 'state * 'value) list -> 'state -> 'state * 'value list =
  fun elems state ->
   let state, r =
-    List.fold_left
+    CCList.fold_left
       (fun (state, acc) e ->
         let state, v = e state in
         state, v :: acc)
       (state, [])
       elems
   in
-  state, List.rev r
+  state, CCList.rev r
 
 
 let olist : ('state -> 'state * 'value) list option -> 'state -> 'state * 'value list =
@@ -24,14 +24,14 @@ let olist : ('state -> 'state * 'value) list option -> 'state -> 'state * 'value
   | None -> state, []
   | Some elems ->
     let state, r =
-      List.fold_left
+      CCList.fold_left
         (fun (state, acc) e ->
           let state, v = e state in
           state, v :: acc)
         (state, [])
         elems
     in
-    state, List.rev r
+    state, CCList.rev r
 
 
 let option : ('state -> 'state * 'value) option -> 'state -> 'state * 'value option =
@@ -305,7 +305,7 @@ let exp_ExpRecord (loc : Lexing.position * Lexing.position) (record : 'state -> 
     (fields : (string * ('state -> 'state * exp)) list) (state : 'state) : 'state * exp =
   let state, record = record state in
   let state, fields =
-    List.fold_left
+    CCList.fold_left
       (fun (state, acc) (s, v) ->
         let state, v = v state in
         let path = { id = s; n = None; loc = mk_loc state loc } in
@@ -318,7 +318,7 @@ let exp_ExpRecord (loc : Lexing.position * Lexing.position) (record : 'state -> 
     | { e = SEId id; _ } -> { id; n = None; loc = mk_loc state loc }
     | _ -> { id = "unknown"; n = None; loc = mk_loc state loc }
   in
-  state, { e = SERecord { path; elems = List.rev fields }; loc = mk_loc state loc }
+  state, { e = SERecord { path; elems = CCList.rev fields }; loc = mk_loc state loc }
 
 
 let exp_ExpCons (loc : Lexing.position * Lexing.position) (left : 'state -> 'state * exp)
@@ -578,7 +578,7 @@ let top_stmt_Fun (loc : Lexing.position * Lexing.position) (main : 'state -> 'st
   let state, main = main state in
   let state, alts = list alts state in
   (* Convert alternatives to linked function definitions *)
-  let main_with_next = List.fold_left (fun next def -> Some { def with next }) None (List.rev (main :: alts)) in
+  let main_with_next = CCList.fold_left (fun next def -> Some { def with next }) None (CCList.rev (main :: alts)) in
   let def = CCOption.get_exn_or "Empty functions. This should not happen" main_with_next in
   (* placeholder body *)
   state, { top = STopFunction def; loc = mk_loc state loc }
@@ -619,7 +619,7 @@ let top_stmt_TypeDefEmpty (loc : Lexing.position * Lexing.position) (name : stri
 
 let top_stmt_Enum (loc : Lexing.position * Lexing.position) (name : string) (values : string list) (state : 'state) :
     'state * top_stmt =
-  let members = List.map (fun v -> v, mk_loc state loc) values in
+  let members = CCList.map (fun v -> v, mk_loc state loc) values in
   state, { top = STopEnum { name; members }; loc = mk_loc state loc }
 
 

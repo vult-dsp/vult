@@ -41,5 +41,5 @@ let time label f =
 
 let show () =
   let elems = Hashtbl.fold (fun key value acc -> (key, value) :: acc) table [] in
-  let sorted = List.sort (fun (_, a) (_, b) -> compare b a) elems in
-  List.iter (fun (label, value) -> prerr_endline (label ^ ": " ^ string_of_float value)) sorted
+  let sorted = CCList.sort (fun (_, a) (_, b) -> compare b a) elems in
+  CCList.iter (fun (label, value) -> prerr_endline (label ^ ": " ^ string_of_float value)) sorted

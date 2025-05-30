@@ -71,10 +71,10 @@ let files =
   ; "test/perf/clipper_perf.vult"
   ; "test/perf/short_delay_perf.vult"
   ]
-  |> List.map in_proj_dir
+  |> CCList.map in_proj_dir
 
 
-let includes = [ "examples/util"; "examples/osc"; "examples/filters"; "examples/effects" ] |> List.map in_proj_dir
+let includes = [ "examples/util"; "examples/osc"; "examples/filters"; "examples/effects" ] |> CCList.map in_proj_dir
 
 let showError e =
   match e with
@@ -117,7 +117,7 @@ let generateC (filename : string) (output : string) real : unit =
     }
   in
   let output = Driver.Cli.driver args in
-  List.iter (Driver.Cli.showResult args) output
+  CCList.iter (Driver.Cli.showResult args) output
 
 
 let generateJs (filename : string) (output : string) : unit =
@@ -132,7 +132,7 @@ let generateJs (filename : string) (output : string) : unit =
     }
   in
   let output = Driver.Cli.driver args in
-  List.iter (Driver.Cli.showResult args) output
+  CCList.iter (Driver.Cli.showResult args) output
 
 
 let generateLua (filename : string) (output : string) : unit =
@@ -147,7 +147,7 @@ let generateLua (filename : string) (output : string) : unit =
     }
   in
   let output = Driver.Cli.driver args in
-  List.iter (Driver.Cli.showResult args) output
+  CCList.iter (Driver.Cli.showResult args) output
 
 
 let realString f =
@@ -216,7 +216,7 @@ let runInterpreter vultfile =
 
 
 let main () =
-  List.iter
+  CCList.iter
     (fun f ->
       runC Float f;
       runC Fixed f;

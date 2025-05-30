@@ -297,15 +297,15 @@ let rec printIexp (ie : iexp) : string =
   | IEBuiltinSize e -> "size(" ^ printIexp e ^ ")"
   | IEBuiltinLength e -> "length(" ^ printIexp e ^ ")"
   | IEIndex (arr, idx) -> printIexp arr ^ "[" ^ printIexp idx ^ "]"
-  | IEArray exprs -> "[" ^ String.concat "; " (List.map printIexp exprs) ^ "]"
+  | IEArray exprs -> "[" ^ String.concat "; " (CCList.map printIexp exprs) ^ "]"
   | IECall (func_idx, args) ->
-    "func[" ^ string_of_int func_idx ^ "](" ^ String.concat ", " (List.map printIexp args) ^ ")"
-  | IECallExt (func_name, args) -> "external_" ^ func_name ^ "(" ^ String.concat ", " (List.map printIexp args) ^ ")"
+    "func[" ^ string_of_int func_idx ^ "](" ^ String.concat ", " (CCList.map printIexp args) ^ ")"
+  | IECallExt (func_name, args) -> "external_" ^ func_name ^ "(" ^ String.concat ", " (CCList.map printIexp args) ^ ")"
   | IEIf (cond, then_e, else_e) -> "if " ^ printIexp cond ^ " then " ^ printIexp then_e ^ " else " ^ printIexp else_e
-  | IETuple exprs -> "(" ^ String.concat ", " (List.map printIexp exprs) ^ ")"
+  | IETuple exprs -> "(" ^ String.concat ", " (CCList.map printIexp exprs) ^ ")"
   | IEMember (e, idx) -> printIexp e ^ ".field[" ^ string_of_int idx ^ "]"
   | IERecord (_, members) ->
-    "{" ^ String.concat "; " (List.map (fun (idx, e) -> string_of_int idx ^ ":" ^ printIexp e) members) ^ "}"
+    "{" ^ String.concat "; " (CCList.map (fun (idx, e) -> string_of_int idx ^ ":" ^ printIexp e) members) ^ "}"
 
 
 (* Converts an interpreter left-value expression to its string representation *)
@@ -315,7 +315,7 @@ let rec printIlexp (il : ilexp) : string =
   | ILVar idx -> "var[" ^ string_of_int idx ^ "]"
   | ILMember (lv, idx) -> printIlexp lv ^ ".field[" ^ string_of_int idx ^ "]"
   | ILIndex (lv, e) -> printIlexp lv ^ "[" ^ printIexp e ^ "]"
-  | ILTuple lvs -> "(" ^ String.concat ", " (List.map printIlexp lvs) ^ ")"
+  | ILTuple lvs -> "(" ^ String.concat ", " (CCList.map printIlexp lvs) ^ ")"
 
 
 (* Converts an interpreter statement to its string representation *)
@@ -326,13 +326,13 @@ let rec printIstmt (is : istmt) : string =
     "var[" ^ string_of_int idx ^ "] : " ^ Pla.print (Prog.Print.print_type_ typ) ^ " = " ^ printIexp init
   | IStmtBind (lv, e) -> printIlexp lv ^ " = " ^ printIexp e
   | IStmtReturn e -> "return " ^ printIexp e
-  | IStmtBlock stmts -> "{\n" ^ String.concat ";\n" (List.map printIstmt stmts) ^ "\n}"
+  | IStmtBlock stmts -> "{\n" ^ String.concat ";\n" (CCList.map printIstmt stmts) ^ "\n}"
   | IStmtIf (cond, then_s, None) -> "if " ^ printIexp cond ^ " " ^ printIstmt then_s
   | IStmtIf (cond, then_s, Some else_s) ->
     "if " ^ printIexp cond ^ " " ^ printIstmt then_s ^ " else " ^ printIstmt else_s
   | IStmtWhile (cond, body) -> "while " ^ printIexp cond ^ " " ^ printIstmt body
   | IStmtSwitch (e, cases, default) ->
-    let case_strs = List.map (fun (pattern, stmt) -> printIexp pattern ^ " -> " ^ printIstmt stmt) cases in
+    let case_strs = CCList.map (fun (pattern, stmt) -> printIexp pattern ^ " -> " ^ printIstmt stmt) cases in
     let default_str =
       match default with
       | None -> ""
@@ -346,7 +346,7 @@ let printIfuncDef (fd : ifunc_def) : string =
   "function "
   ^ fd.iname
   ^ "("
-  ^ String.concat ", " (List.map string_of_int fd.iargs)
+  ^ String.concat ", " (CCList.map string_of_int fd.iargs)
   ^ ") : "
   ^ Pla.print (Prog.Print.print_type_ fd.iret_type)
   ^ " [locals:"
@@ -415,9 +415,9 @@ let rec transformExp (ctx : transform_ctx) (exp : exp) : iexp =
     | _ -> IEOp (op, te1, te2)
     (* Fall back to generic for other ops *))
   | EIndex { e; index } -> IEIndex (transformExp ctx e, transformExp ctx index)
-  | EArray elems -> IEArray (List.map (transformExp ctx) elems)
+  | EArray elems -> IEArray (CCList.map (transformExp ctx) elems)
   | ECall { path; args } -> (
-    let args' = List.map (transformExp ctx) args in
+    let args' = CCList.map (transformExp ctx) args in
     (* Inline built-in functions for performance *)
     match path, args' with
     (* Math functions *)
@@ -487,7 +487,7 @@ let rec transformExp (ctx : transform_ctx) (exp : exp) : iexp =
           Set.iter (fun name -> Printf.eprintf "  %s (external)\n" name) ctx.external_functions;
           error ("Function not found during transformation: " ^ path))))
   | EIf { cond; then_; else_ } -> IEIf (transformExp ctx cond, transformExp ctx then_, transformExp ctx else_)
-  | ETuple elems -> IETuple (List.map (transformExp ctx) elems)
+  | ETuple elems -> IETuple (CCList.map (transformExp ctx) elems)
   | EMember (e, member_name) -> (
     match e.t.t with
     | TStruct descr ->
@@ -499,7 +499,7 @@ let rec transformExp (ctx : transform_ctx) (exp : exp) : iexp =
     match Map.find_opt path ctx.struct_types with
     | Some descr ->
       let elems' =
-        List.map
+        CCList.map
           (fun (name, exp) ->
             let idx = getMemberIndex descr name in
             idx, transformExp ctx exp)
@@ -524,7 +524,7 @@ and transformLexp (ctx : transform_ctx) (lexp : lexp) : ilexp =
       ILMember (transformLexp ctx e, member_idx)
     | _ -> error "Member access on non-struct type")
   | LIndex { e; index } -> ILIndex (transformLexp ctx e, transformExp ctx index)
-  | LTuple lexps -> ILTuple (List.map (transformLexp ctx) lexps)
+  | LTuple lexps -> ILTuple (CCList.map (transformLexp ctx) lexps)
 
 
 (* Transforms an original Prog statement into an interpreter statement *)
@@ -538,7 +538,7 @@ and transformStmt (ctx : transform_ctx) (stmt : stmt) : istmt =
       IStmtDecl (var_idx, dexp.t, init_exp'))
   | StmtBind (lexp, exp) -> IStmtBind (transformLexp ctx lexp, transformExp ctx exp)
   | StmtReturn exp -> IStmtReturn (transformExp ctx exp)
-  | StmtBlock stmts -> IStmtBlock (List.map (transformStmt ctx) stmts)
+  | StmtBlock stmts -> IStmtBlock (CCList.map (transformStmt ctx) stmts)
   | StmtIf (cond, then_stmt, else_stmt) ->
     let cond' = transformExp ctx cond in
     let then_stmt' = transformStmt ctx then_stmt in
@@ -547,7 +547,9 @@ and transformStmt (ctx : transform_ctx) (stmt : stmt) : istmt =
   | StmtWhile (cond, body) -> IStmtWhile (transformExp ctx cond, transformStmt ctx body)
   | StmtSwitch (exp, cases, default) ->
     let exp' = transformExp ctx exp in
-    let cases' = List.map (fun (case_exp, case_stmt) -> transformExp ctx case_exp, transformStmt ctx case_stmt) cases in
+    let cases' =
+      CCList.map (fun (case_exp, case_stmt) -> transformExp ctx case_exp, transformStmt ctx case_stmt) cases
+    in
     let default' = Option.map (transformStmt ctx) default in
     IStmtSwitch (exp', cases', default')
 
@@ -565,7 +567,7 @@ let transformFunction (global_types : struct_descr Map.t) (constant_names : int 
     ; external_functions
     }
   in
-  let param_indices = List.map (fun (param : param) -> addVar ctx param.name) def.args in
+  let param_indices = CCList.map (fun (param : param) -> addVar ctx param.name) def.args in
   let body' = transformStmt ctx body in
   (* Get return type *)
   let ret_type = snd def.t in
@@ -599,11 +601,11 @@ let rec evalConstantExpression (constants : dvalue array) (exp : iexp) : dvalue 
     | _ -> error "Type mismatch in constant real addition")
   (* Add more arithmetic operations as needed *)
   | IEArray elems ->
-    let values = Array.of_list (List.map (evalConstantExpression constants) elems) in
+    let values = Array.of_list (CCList.map (evalConstantExpression constants) elems) in
     DArray values
   | IERecord (descr, elems) ->
-    let member_vals = Array.make (List.length descr.members) DVoid in
-    List.iter
+    let member_vals = Array.make (CCList.length descr.members) DVoid in
+    CCList.iter
       (fun (idx, exp) ->
         let val_ = evalConstantExpression constants exp in
         member_vals.(idx) <- val_)
@@ -621,7 +623,7 @@ let transformProgram (print_constants : bool) (prog : top_stmt list) : iprog =
   let function_defs = ref [] in
   let external_functions = ref Set.empty in
   let const_index = ref 0 in
-  List.iter
+  CCList.iter
     (fun stmt ->
       match stmt.top with
       | TopType descr -> types := Map.add descr.path descr !types
@@ -633,7 +635,7 @@ let transformProgram (print_constants : bool) (prog : top_stmt list) : iprog =
       | _ -> ())
     prog;
   let function_names = ref Map.empty in
-  List.iteri (fun idx (def, _) -> function_names := Map.add def.name idx !function_names) (List.rev !function_defs);
+  CCList.iteri (fun idx (def, _) -> function_names := Map.add def.name idx !function_names) (CCList.rev !function_defs);
   let createConstCtx () =
     { var_to_index = Hashtbl.create 32
     ; next_index = 0
@@ -644,7 +646,7 @@ let transformProgram (print_constants : bool) (prog : top_stmt list) : iprog =
     }
   in
   let constants_array = Array.make !const_index DVoid in
-  List.iter
+  CCList.iter
     (fun stmt ->
       match stmt.top with
       | TopConstant (name, _, _, exp) ->
@@ -660,15 +662,15 @@ let transformProgram (print_constants : bool) (prog : top_stmt list) : iprog =
     prog;
   let function_array =
     Array.make
-      (List.length !function_defs)
+      (CCList.length !function_defs)
       { iname = ""; iargs = []; iret_type = Prog.C.void_t; ilocals = 0; ibody = IStmtBlock [] }
   in
-  List.iteri
+  CCList.iteri
     (fun idx (def, body) ->
       let ifunc = transformFunction !types !constant_names !function_names !external_functions def body in
       functions := Map.add def.name ifunc !functions;
       function_array.(idx) <- ifunc)
-    (List.rev !function_defs);
+    (CCList.rev !function_defs);
   { ifunctions = !functions
   ; ifunctions_array = function_array
   ; ifunction_names = !function_names
@@ -696,8 +698,8 @@ let rec defaultValue (typ : type_) : dvalue =
   | TBool -> DBool false
   | TString -> DString ""
   | TArray (Some size, elem_type) -> DArray (Array.init size (fun _ -> defaultValue elem_type))
-  | TStruct descr -> DStruct (Array.of_list (List.map (fun (_, typ, _, _) -> defaultValue typ) descr.members))
-  | TTuple types -> DArray (Array.of_list (List.map defaultValue types))
+  | TStruct descr -> DStruct (Array.of_list (CCList.map (fun (_, typ, _, _) -> defaultValue typ) descr.members))
+  | TTuple types -> DArray (Array.of_list (CCList.map defaultValue types))
   | TEmptyType -> DVoid
   | TArray (None, _) -> error "Cannot create default value for unsized array"
 
@@ -713,7 +715,7 @@ let setupFunctionCall (stack : runtime_stack) (ifunc : ifunc_def) (args : dvalue
     stack.stack.(stack.sp + i) <- DVoid
   done;
   (* Initialize parameters *)
-  List.iter2 (fun param_idx arg_val -> stack.stack.(frame_start + param_idx) <- arg_val) ifunc.iargs args;
+  CCList.iter2 (fun param_idx arg_val -> stack.stack.(frame_start + param_idx) <- arg_val) ifunc.iargs args;
   (* Move stack pointer *)
   stack.sp <- stack.sp + ifunc.ilocals;
   frame_start
@@ -918,8 +920,8 @@ and assignIlvalue : iprog -> runtime_stack -> int -> ilexp -> dvalue -> unit =
     | _ -> error "Invalid array assignment")
   | ILTuple lexps -> (
     match val_ with
-    | DArray vals when Array.length vals = List.length lexps ->
-      List.iteri (fun i lexp -> assignIlvalue prog stack frame_start lexp vals.(i)) lexps
+    | DArray vals when Array.length vals = CCList.length lexps ->
+      CCList.iteri (fun i lexp -> assignIlvalue prog stack frame_start lexp vals.(i)) lexps
     | _ -> error "Tuple assignment type mismatch")
 
 
@@ -1128,10 +1130,10 @@ and evalIexp (prog : iprog) (stack : runtime_stack) (frame_start : int) (exp : i
     let idx_val = evalIexp prog stack frame_start index in
     getArrayElement arr_val idx_val
   | IEArray elems ->
-    let values = Array.of_list (List.map (evalIexp prog stack frame_start) elems) in
+    let values = Array.of_list (CCList.map (evalIexp prog stack frame_start) elems) in
     DArray values
   | IECall (func_idx, args) ->
-    let arg_vals = List.map (evalIexp prog stack frame_start) args in
+    let arg_vals = CCList.map (evalIexp prog stack frame_start) args in
     callFunction prog stack func_idx arg_vals
   | IECallExt _ -> error "Extenal evaluations are not possible"
   | IEIf (cond, then_, else_) -> (
@@ -1140,14 +1142,14 @@ and evalIexp (prog : iprog) (stack : runtime_stack) (frame_start : int) (exp : i
     | DBool false -> evalIexp prog stack frame_start else_
     | _ -> error "Invalid condition")
   | IETuple elems ->
-    let values = Array.of_list (List.map (evalIexp prog stack frame_start) elems) in
+    let values = Array.of_list (CCList.map (evalIexp prog stack frame_start) elems) in
     DArray values
   | IEMember (e, member_idx) ->
     let struct_val = evalIexp prog stack frame_start e in
     getStructMember struct_val member_idx
   | IERecord (descr, elems) ->
-    let member_vals = Array.make (List.length descr.members) DVoid in
-    List.iter
+    let member_vals = Array.make (CCList.length descr.members) DVoid in
+    CCList.iter
       (fun (idx, exp) ->
         let val_ = evalIexp prog stack frame_start exp in
         member_vals.(idx) <- val_)
@@ -1160,8 +1162,8 @@ let evalProgram iprog (main_func_name_original : string) (args : dvalue list) : 
   let main_func_name = CCString.replace ~sub:"." ~by:"_" main_func_name_original in
   match Map.find_opt main_func_name iprog.ifunctions with
   | Some ifunc -> (
-    let expected_args = List.length ifunc.iargs in
-    let provided_args = List.length args in
+    let expected_args = CCList.length ifunc.iargs in
+    let provided_args = CCList.length args in
     if expected_args = 1 && provided_args = 0 then (
       (* Try to find allocation function *)
       let alloc_func_name = main_func_name ^ "_type_alloc" in

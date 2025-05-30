@@ -47,11 +47,11 @@ let rec getTypeDep (t : type_) =
   match t with
   | { t = TStruct { path; _ }; _ } -> [ path ]
   | { t = TArray (_, t); _ } -> getTypeDep t
-  | { t = TTuple elems; _ } -> List.flatten (List.map getTypeDep elems)
+  | { t = TTuple elems; _ } -> CCList.flatten (CCList.map getTypeDep elems)
   | _ -> []
 
 
-let saveAnyMember members = List.exists (fun (_, _, tags, _) -> Pparser.Ptags.has tags "save") members
+let saveAnyMember members = CCList.exists (fun (_, _, tags, _) -> Pparser.Ptags.has tags "save") members
 
 let typeDependencyTable (prog : prog) =
   let rec loop table visited prog =
@@ -70,8 +70,8 @@ let typeDependencyTable (prog : prog) =
       else
         let deps =
           members
-          |> List.map (fun (_, (t : type_), _, _) -> getTypeDep t)
-          |> List.flatten
+          |> CCList.map (fun (_, (t : type_), _, _) -> getTypeDep t)
+          |> CCList.flatten
           |> TypeSet.of_list
           |> TypeSet.to_list
         in
@@ -92,10 +92,10 @@ let rec shoulSave table path =
     if save then
       save
     else
-      List.exists (shoulSave table) deps
+      CCList.exists (shoulSave table) deps
 
 
-let shouldSaveType table t = getTypeDep t |> List.exists (shoulSave table)
+let shouldSaveType table t = getTypeDep t |> CCList.exists (shoulSave table)
 
 let propagateSaveTag (table : (struct_descr option * bool * string list) TypeTable.t) =
   let tick = ref 0 in
@@ -112,11 +112,11 @@ let propagateSaveTag (table : (struct_descr option * bool * string list) TypeTab
       match s with
       (* type alias, check if the alias type needs to be saved *)
       | None ->
-        let save = List.exists (shoulSave table) deps in
+        let save = CCList.exists (shoulSave table) deps in
         None, save, deps, nextTick save
       | Some s ->
         let save, members_rev =
-          List.fold_left
+          CCList.fold_left
             (fun (save, members) (name, t, tags, loc) ->
               match Pparser.Ptags.getArguments tags "save" with
               | None ->
@@ -140,7 +140,7 @@ let propagateSaveTag (table : (struct_descr option * bool * string list) TypeTab
             (save, [])
             s.members
         in
-        let members = List.rev members_rev in
+        let members = CCList.rev members_rev in
         Some { s with members }, save, deps, nextTick save)
     table
 
@@ -168,14 +168,14 @@ let getTypeNameStringExp (t : type_) =
 let collectFullySavedTypes (stmts : top_stmt list) =
   let rec loop set =
     let new_set =
-      List.fold_left
+      CCList.fold_left
         (fun set stmt ->
           match stmt with
           | { top = TopType { members; _ }; _ } ->
             TypeSet.add_list
               set
-              (List.flatten
-              @@ List.filter_map
+              (CCList.flatten
+              @@ CCList.filter_map
                    (fun (_, (t : type_), tags, _) ->
                      if Pparser.Ptags.has tags "save" then
                        Some (getAllStructTypes t)
@@ -195,12 +195,12 @@ let collectFullySavedTypes (stmts : top_stmt list) =
 
 
 let tagAllMembers fully_saved (stmts : top_stmt list) =
-  List.map
+  CCList.map
     (fun stmt ->
       match stmt with
       | { top = TopType { path; members }; _ } when TypeSet.mem path fully_saved ->
         let members =
-          List.map
+          CCList.map
             (fun (name, t, tags, loc) ->
               if Pparser.Ptags.has tags "save" then
                 name, t, tags, loc
@@ -578,7 +578,7 @@ let createTypeDescriptor n_types table (stmt : top_stmt) =
       let marks_type = C.array_t ~dim:n_types C.bool_t in
       let marks = C.eid "marks" marks_type in
       (* mark/ serialize all the dependencies all*)
-      let n = List.length members in
+      let n = CCList.length members in
       let members = { e = EArray members; t = string_array_type n; loc } in
       let type_name = { e = EString path; t = string_type; loc } in
       let call = C.ecall "serialize_type_descr" [ buffer; index; type_name; members ] C.int_t in
@@ -586,7 +586,7 @@ let createTypeDescriptor n_types table (stmt : top_stmt) =
       let mark_me = C.sbind (C.lindex (C.lid "marks" marks_type) (C.eint n_type) C.bool_t) (C.ebool true) in
       let shortcut = C.sif (C.eindex marks (C.eint n_type) C.bool_t) (C.sreturn index) None in
       let call_deps =
-        List.filter_map
+        CCList.filter_map
           (fun name ->
             match TypeTable.find_opt name table with
             | Some (_, true, _, _) ->

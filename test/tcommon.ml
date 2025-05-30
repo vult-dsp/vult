@@ -66,9 +66,9 @@ let getFile (args : args) ext : string =
 
 
 let writeFiles (_args : args) (files : output list) =
-  List.iter
+  CCList.iter
     (fun output ->
       match output with
-      | GeneratedCode files -> List.iter (fun (text, ext) -> Util.FileIO.write ext (Pla.print text) |> ignore) files
+      | GeneratedCode files -> CCList.iter (fun (text, ext) -> Util.FileIO.write ext (Pla.print text) |> ignore) files
       | _ -> ())
     files

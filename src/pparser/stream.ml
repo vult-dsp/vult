@@ -142,7 +142,7 @@ module TokenStream (S : TokenKindSig) = struct
   let rec consumeLexbuf source lexbuf tokens =
     let token = S.next source lexbuf in
     if S.isEOF token.kind then
-      List.rev (token :: tokens)
+      CCList.rev (token :: tokens)
     else
       consumeLexbuf source lexbuf (token :: tokens)
 

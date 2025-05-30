@@ -61,7 +61,7 @@ let isSmall stmts =
         loop size t
       | { s = StmtBind _; _ } :: t -> loop (size + 1) t
       | { s = StmtSwitch (_, cases, _); _ } :: t ->
-        let n = List.fold_left (fun n (_, body) -> n + loop 0 [ body ]) 0 cases in
+        let n = CCList.fold_left (fun n (_, body) -> n + loop 0 [ body ]) 0 cases in
         loop (size + 1 + n) t
   in
   let size = loop 0 stmts in
@@ -81,7 +81,7 @@ let rec isBuiltinType (t : type_) =
   match t.t with
   | TStruct _ -> false
   | TArray (_, t) -> isBuiltinType t
-  | TTuple l -> List.for_all isBuiltinType l
+  | TTuple l -> CCList.for_all isBuiltinType l
   | _ -> true
 
 
@@ -463,7 +463,7 @@ and print_block state body =
 
 
 let isTemplate (args : param list) =
-  List.exists
+  CCList.exists
     (fun (a : param) ->
       match a.t with
       | { t = TArray (None, _); _ } -> true
@@ -473,14 +473,14 @@ let isTemplate (args : param list) =
 
 let print_function_def state (def : function_def) =
   let name = Pla.string (registerPrefix state def.name) in
-  let args = List.mapi (print_arg state) def.args |> Pla.join_sep Pla.commaspace in
+  let args = CCList.mapi (print_arg state) def.args |> Pla.join_sep Pla.commaspace in
   let template_args =
     def.args
-    |> List.mapi (fun i (arg : param) ->
+    |> CCList.mapi (fun i (arg : param) ->
            match arg.t with
            | { t = TArray (None, _); _ } -> Some ("std::size_t SIZE_" ^ string_of_int i)
            | _ -> None)
-    |> List.filter_map (fun v -> v)
+    |> CCList.filter_map (fun v -> v)
   in
   let template_decl =
     match template_args with
@@ -516,7 +516,7 @@ let print_top_stmt state ~allow_inline (target : target) t =
     let template, def = print_function_def state def in
     {%pla|<#template#>extern <#def#>;<#>|}
   | TopExternal (def, Some link_name), Header ->
-    let args = List.mapi (print_arg state) def.args |> Pla.join_sep Pla.commaspace in
+    let args = CCList.mapi (print_arg state) def.args |> Pla.join_sep Pla.commaspace in
     let ret = print_type_ state (snd def.t) in
     {%pla|extern <#ret#> <#link_name#s>(<#args#>);<#>|}
   | TopExternal _, _ -> Pla.unit

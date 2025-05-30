@@ -88,7 +88,7 @@ let print_tags tags =
 
 
 let has (tags : tag list) n =
-  List.exists
+  CCList.exists
     (fun t ->
       match t.g with
       | TagCall { name; _ } -> name = n
@@ -153,13 +153,13 @@ let getArguments tags n =
 
 
 let setArgument tags tag_name arg_name arg_value =
-  List.map
+  CCList.map
     (fun (t : tag) ->
       match t.g with
       | TagId name when name = tag_name -> { t with g = TagCall { name; args = [ arg_name, arg_value, t.loc ] } }
       | TagCall { name; args } when name = tag_name ->
         let found, args_rev =
-          List.fold_left
+          CCList.fold_left
             (fun (found, acc) (name, value, loc) ->
               let value =
                 if name = arg_name then
@@ -173,9 +173,9 @@ let setArgument tags tag_name arg_name arg_value =
         in
         let args =
           if found then
-            List.rev args_rev
+            CCList.rev args_rev
           else
-            List.rev ((arg_name, arg_value, t.loc) :: args_rev)
+            CCList.rev ((arg_name, arg_value, t.loc) :: args_rev)
         in
         { t with g = TagCall { name; args } }
       | _ -> t)
@@ -185,7 +185,7 @@ let setArgument tags tag_name arg_name arg_value =
 let getParameterList tags name (params : (string * tag_type) list) : value option list =
   let rec loop remaning found params =
     match params with
-    | [] -> List.rev found
+    | [] -> CCList.rev found
     | h :: t ->
       let remaining, value = getTypedParam remaning h in
       loop remaining (value :: found) t

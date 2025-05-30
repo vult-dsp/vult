@@ -142,7 +142,7 @@ module State = struct
   (** Get all statements from cached parse result *)
   let get_parsed_statements state uri content filename =
     let parsed_files = get_parsed_files state uri content filename in
-    List.flatten @@ List.map (fun (p : Pparser.Parse.parsed_file) -> p.stmts) parsed_files
+    CCList.flatten @@ CCList.map (fun (p : Pparser.Parse.parsed_file) -> p.stmts) parsed_files
 end
 
 (** LSP Protocol Constants *)
@@ -195,7 +195,7 @@ module RequestHandlers = struct
     let root_uri =
       try Some (params |> member "rootUri" |> to_string) with
       | _ -> (
-        try Some (params |> member "workspaceFolders" |> to_list |> List.hd |> member "uri" |> to_string) with
+        try Some (params |> member "workspaceFolders" |> to_list |> CCList.hd |> member "uri" |> to_string) with
         | _ -> None)
     in
     Printf.eprintf "✅ Initialize request handled\n";
@@ -231,11 +231,14 @@ module RequestHandlers = struct
     let completions = Vult_lsp.Completion.get_completions parsed_stmts in
     (* Extract prefix for debugging *)
     let prefix = Vult_lsp.Common.get_word_at_position content line character in
-    Printf.eprintf "   Generated %d completions (editor will filter by prefix '%s')\n" (List.length completions) prefix;
+    Printf.eprintf
+      "   Generated %d completions (editor will filter by prefix '%s')\n"
+      (CCList.length completions)
+      prefix;
     flush stderr;
     (* Convert completion_item list to LSP JSON format *)
     let completion_items =
-      List.map
+      CCList.map
         (fun (completion : Vult_lsp.Completion.completion_item) ->
           let detail_str =
             match completion.detail with
@@ -302,7 +305,7 @@ module RequestHandlers = struct
     in
     (* Get semantic tokens from Vult lexer *)
     let tokens = Vult_lsp.SemanticTokens.get_semantic_tokens content in
-    Printf.eprintf "   Generated %d semantic token values\n" (List.length tokens);
+    Printf.eprintf "   Generated %d semantic token values\n" (CCList.length tokens);
     flush stderr;
     `Assoc
       [ "jsonrpc", `String "2.0"; "id", id; "result", `Assoc [ "data", `List (CCList.map (fun i -> `Int i) tokens) ] ]
@@ -327,7 +330,7 @@ module RequestHandlers = struct
     (* Extract symbols from parsed AST using cached parsing *)
     let parsed_stmts = State.get_parsed_statements state uri content filename in
     let symbols = Vult_lsp.DocumentSymbols.get_document_symbols parsed_stmts in
-    Printf.eprintf "   Found %d symbols\n" (List.length symbols);
+    Printf.eprintf "   Found %d symbols\n" (CCList.length symbols);
     flush stderr;
     (* Symbols are already JSON objects *)
     `Assoc [ "jsonrpc", `String "2.0"; "id", id; "result", `List symbols ]
@@ -407,7 +410,7 @@ module NotificationHandlers = struct
     (* Generate diagnostics using workspace context *)
     let filename = Vult_lsp.Workspace.uri_to_path uri in
     let diagnostics = Vult_lsp.Diagnostics.get_diagnostics_with_workspace state.workspace content filename in
-    Printf.eprintf "   Generated %d diagnostics\n" (List.length diagnostics);
+    Printf.eprintf "   Generated %d diagnostics\n" (CCList.length diagnostics);
     flush stderr;
     (* Diagnostics are already in JSON format *)
     let diagnostics_json = diagnostics in
@@ -436,7 +439,7 @@ module NotificationHandlers = struct
       (* Generate updated diagnostics using workspace context *)
       let filename = Vult_lsp.Workspace.uri_to_path uri in
       let diagnostics = Vult_lsp.Diagnostics.get_diagnostics_with_workspace new_state.workspace content filename in
-      Printf.eprintf "   Generated %d diagnostics\n" (List.length diagnostics);
+      Printf.eprintf "   Generated %d diagnostics\n" (CCList.length diagnostics);
       flush stderr;
       (* Diagnostics are already in JSON format *)
       let diagnostics_json = diagnostics in
@@ -479,7 +482,7 @@ module Communication = struct
     in
     let headers = read_headers [] in
     let content_length =
-      match List.assoc_opt "Content-Length" headers with
+      match CCList.assoc_opt "Content-Length" headers with
       | Some len -> int_of_string len
       | None -> failwith "Missing Content-Length header"
     in
@@ -550,7 +553,7 @@ let run () =
            let root_uri =
              try Some (params |> member "rootUri" |> to_string) with
              | _ -> (
-               try Some (params |> member "workspaceFolders" |> to_list |> List.hd |> member "uri" |> to_string) with
+               try Some (params |> member "workspaceFolders" |> to_list |> CCList.hd |> member "uri" |> to_string) with
                | _ -> None)
            in
            state := State.create ?root_uri () |> State.set_initialized)
@@ -576,7 +579,7 @@ let run () =
          in
          state := new_state;
          (* Send any resulting notifications *)
-         List.iter (Communication.write_lsp_response oc) notifications);
+         CCList.iter (Communication.write_lsp_response oc) notifications);
       (* Continue loop *)
       loop ()
     with

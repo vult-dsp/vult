@@ -75,7 +75,7 @@ let rec getInitRHS (t : type_) =
 
 let generateInitializations env vars =
   let decl, env =
-    List.fold_left
+    CCList.fold_left
       (fun (acc, env) var ->
         match findRemove env var with
         | env, None -> acc, env
@@ -83,7 +83,7 @@ let generateInitializations env vars =
       ([], env)
       vars
   in
-  let stmts = List.fold_left (fun acc (n, size, t) -> C.sdecl_init ~size n (getInitRHS t) t :: acc) [] decl in
+  let stmts = CCList.fold_left (fun acc (n, size, t) -> C.sdecl_init ~size n (getInitRHS t) t :: acc) [] decl in
   env, stmts
 
 
@@ -117,7 +117,7 @@ let rec getLDecl (env : env) (l : lexp) =
 
 module ApplyReplacements = struct
   let getReplacement code name (args : exp list) ret =
-    let args_t = List.map (fun (e : exp) -> e.t) args in
+    let args_t = CCList.map (fun (e : exp) -> e.t) args in
     match Replacements.fun_to_fun code name args_t ret with
     | Some path -> path
     | None -> Replacements.keyword code name
@@ -211,18 +211,18 @@ let rec stmt (context : context) (env : env) (s : stmt) : 'a * stmt list =
     env, stmts @ [ C.swhile cond (makeBlock body) ]
   | { s = StmtBlock body; _ } ->
     let env, stmts =
-      List.fold_left
+      CCList.fold_left
         (fun (env, acc) s ->
           let env, stmts = stmt context env s in
           env, stmts :: acc)
         (env, [])
         body
     in
-    env, List.flatten (List.rev stmts)
+    env, CCList.flatten (CCList.rev stmts)
   | { s = StmtSwitch (cond, cases, default); _ } ->
     let env, stmts = getPendingDeclarations env in
     let env, cases_rev =
-      List.fold_left
+      CCList.fold_left
         (fun (env, acc) (e, case) ->
           let env, case = stmt context env case in
           env, (e, makeBlock case) :: acc)
@@ -236,30 +236,30 @@ let rec stmt (context : context) (env : env) (s : stmt) : 'a * stmt list =
         let env, default = stmt context env default in
         env, Some (makeBlock default)
     in
-    env, stmts @ [ C.sswitch cond (List.rev cases_rev) default ]
+    env, stmts @ [ C.sswitch cond (CCList.rev cases_rev) default ]
 
 
 and stmt_list (context : context) (env : env) stmts =
   let env, stmts_rev =
-    List.fold_left
+    CCList.fold_left
       (fun (env, acc) s ->
         let env, stmts = stmt context env s in
         env, stmts :: acc)
       (env, [])
       stmts
   in
-  env, List.rev stmts_rev
+  env, CCList.rev stmts_rev
 
 
 let rec tryCreateSwitchLoop id cases (next : stmt option) =
   match next with
-  | None -> Some (List.rev cases, None)
+  | None -> Some (CCList.rev cases, None)
   | Some { s = StmtIf ({ e = EOp (OpEq, nid, ({ e = EInt _; _ } as i)); _ }, stmt, next); _ } ->
     if Compare.exp id nid = 0 then
       tryCreateSwitchLoop id ((i, stmt) :: cases) next
     else
       None
-  | Some def -> Some (List.rev cases, Some def)
+  | Some def -> Some (CCList.rev cases, Some def)
 
 
 let tryCreateSwitch e =
@@ -288,7 +288,7 @@ let rec createSwitch (block : stmt) =
     match tryCreateSwitch block with
     | { s = StmtIf (cond, then_, Some else_); _ } -> C.sif cond then_ (Some (createSwitch else_))
     | { s = StmtSwitch (e, cases, def); _ } ->
-      C.sswitch e (List.map (fun (cond, body) -> cond, createSwitch body) cases) (Option.map createSwitch def)
+      C.sswitch e (CCList.map (fun (cond, body) -> cond, createSwitch body) cases) (Option.map createSwitch def)
     | result -> result)
   | StmtWhile (cond, body) -> C.swhile cond (createSwitch body)
   | _ -> block
@@ -329,7 +329,7 @@ let top_stmt (context : context) (top : Core.Prog.top_stmt) : top_stmt option =
 
 
 let registerExternalNames (stmts : Core.Prog.top_stmt list) =
-  List.fold_left
+  CCList.fold_left
     (fun acc s ->
       match s with
       | Core.Prog.{ top = TopExternal (def, Some name); _ } -> Map.add def.name name acc
@@ -342,5 +342,5 @@ let prog args stmts =
   let ext_names = registerExternalNames stmts in
   let context = { args; ext_names } in
   let _, stmts = (Mapper.mapper_list Mapper.top_stmt) ApplyReplacements.mapper context (Mapper.defaultState ()) stmts in
-  let stmts = List.flatten stmts in
-  List.filter_map (top_stmt context) stmts
+  let stmts = CCList.flatten stmts in
+  CCList.filter_map (top_stmt context) stmts

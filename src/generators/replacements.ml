@@ -100,7 +100,7 @@ module Cpp = struct
 
 
   let fun_to_fun (path : string) (args : type_ list) (ret : type_) =
-    let args = List.map (fun (t : type_) -> t.t) args in
+    let args = CCList.map (fun (t : type_) -> t.t) args in
     match path, args, (getReturnType ret).t with
     (* builtins *)
     | "samplerate", [], TReal -> Some "float_samplerate"
@@ -204,7 +204,7 @@ module Lua = struct
 
 
   let fun_to_fun (path : string) (args : type_ list) (ret : type_) =
-    let args = List.map (fun (t : type_) -> t.t) args in
+    let args = CCList.map (fun (t : type_) -> t.t) args in
     match path, args, (getReturnType ret).t with
     (* builtins *)
     | "float_to_int", [ TReal ], TInt -> Some "math.floor"
@@ -287,7 +287,7 @@ module Js = struct
 
 
   let fun_to_fun (path : string) (args : type_ list) (ret : type_) =
-    let args = List.map (fun (t : type_) -> t.t) args in
+    let args = CCList.map (fun (t : type_) -> t.t) args in
     match path, args, (getReturnType ret).t with
     | _ -> None
 end

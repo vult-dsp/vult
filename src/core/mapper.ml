@@ -67,14 +67,14 @@ let applyExpander (mapper : ('env, 'data, 'kind) expand_func) (env : 'env) (data
 let applyExpanderList (mapper : ('env, 'datas, 'kind) expand_func) (env : 'env) (data : 'data) (kind_list : 'kind list)
     : 'data * 'kind list =
   let state', rev_exp_list =
-    List.fold_left
+    CCList.fold_left
       (fun (s, acc) k ->
         let s', kl = applyExpander mapper env s k in
         s', kl :: acc)
       (data, [])
       kind_list
   in
-  state', rev_exp_list |> List.rev |> List.flatten
+  state', rev_exp_list |> CCList.rev |> CCList.flatten
 
 
 let enter (env_func : ('env, 'kind) env_func) (env : 'env) (kind : 'kind) : 'env =
@@ -94,14 +94,14 @@ let makeEnv (f : 'env -> 'kind -> 'env) : ('env, 'kind) env_func = Some f
 
 let mapper_list mapper_app mapper env state el =
   let state', rev_el =
-    List.fold_left
+    CCList.fold_left
       (fun (s, acc) e ->
         let s', e' = mapper_app mapper env s e in
         s', e' :: acc)
       (state, [])
       el
   in
-  state', List.rev rev_el
+  state', CCList.rev rev_el
 
 
 let mapper_opt mapper_app mapper env state e_opt =
@@ -317,14 +317,14 @@ let rec exp (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (
     apply mapper.exp env state { e = ETMember (e1, n); t; loc }
   | { e = ERecord { path; elems }; _ } ->
     let state, elems_rev =
-      List.fold_left
+      CCList.fold_left
         (fun (state, acc) (n, e) ->
           let state, e = exp mapper sub_env state e in
           state, (n, e) :: acc)
         (state, [])
         elems
     in
-    apply mapper.exp env state { e = ERecord { path; elems = List.rev elems_rev }; t; loc }
+    apply mapper.exp env state { e = ERecord { path; elems = CCList.rev elems_rev }; t; loc }
 
 
 let rec lexp (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (e : lexp) : 'data state * lexp =
@@ -404,7 +404,7 @@ let rec stmt (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) 
     applyStmtExpander mapper.stmt env state pre { s = StmtIf (cond, then_, Some else_); loc }
   | { s = StmtBlock stmts; _ } ->
     let state, stmts = mapper_list stmt mapper sub_env state stmts in
-    applyExpander mapper.stmt env state { s = StmtBlock (List.flatten stmts); loc }
+    applyExpander mapper.stmt env state { s = StmtBlock (CCList.flatten stmts); loc }
   | { s = StmtSwitch (cond, cases, default); _ } ->
     let state, cond = exp mapper sub_env state cond in
     let state, pre = getStmts state in
@@ -437,14 +437,14 @@ let function_def (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data sta
 
 let applyTopStmtExpander mapper env state pre s =
   let state, stmts_rev =
-    List.fold_left
+    CCList.fold_left
       (fun (state, acc) s ->
         let state, stmts = applyExpander mapper env state s in
         state, stmts :: acc)
       (state, [])
       (pre @ [ s ])
   in
-  let stmts = List.flatten (List.rev stmts_rev) in
+  let stmts = CCList.flatten (CCList.rev stmts_rev) in
   state, stmts
 
 
@@ -478,4 +478,4 @@ let top_stmt (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) 
 
 let prog (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (p : prog) : 'data state * prog =
   let state, p = mapper_list top_stmt mapper env state p in
-  state, List.flatten p
+  state, CCList.flatten p

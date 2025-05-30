@@ -40,14 +40,14 @@ let path (p : Syntax.path) : string =
 
 let list mapper (env : Env.in_top) (state : state) (l : 'a list) =
   let state, rev =
-    List.fold_left
+    CCList.fold_left
       (fun (state, acc) e ->
         let state, e = mapper env state e in
         state, e :: acc)
       (state, [])
       l
   in
-  state, List.rev rev
+  state, CCList.rev rev
 
 
 let rec getDim (t : Typed.type_) =
@@ -81,8 +81,8 @@ let rec type_ ?(const = false) (env : Env.in_top) (state : state) (t : Typed.typ
       | Some { descr = Record members; _ } when Map.is_empty !members -> state, { t = TEmptyType; const; loc }
       | Some { descr = Record members; _ } ->
         let members =
-          List.map (fun (name, (var : Env.var)) -> name, var.t, var.tags, var.loc) (Env.Map.to_list members)
-          |> List.sort (fun (n1, _, _, _) (n2, _, _, _) -> String.compare n1 n2)
+          CCList.map (fun (name, (var : Env.var)) -> name, var.t, var.tags, var.loc) (Env.Map.to_list members)
+          |> CCList.sort (fun (n1, _, _, _) (n2, _, _, _) -> String.compare n1 n2)
         in
         let state, members = type_list env state members in
         let t = { t = TStruct { path = ps; members }; loc; const = true } in
@@ -192,7 +192,7 @@ let rec exp (env : Env.in_top) (state : state) (e : Typed.exp) : state * Prog.ex
   | ERecord { path = p; elems } ->
     let p = path p in
     let state, elems_rev =
-      List.fold_left
+      CCList.fold_left
         (fun (state, acc) (n, v) ->
           let state, v = exp env state v in
           state, (n, v) :: acc)
@@ -201,11 +201,11 @@ let rec exp (env : Env.in_top) (state : state) (e : Typed.exp) : state * Prog.ex
     in
     let sorting =
       match t with
-      | { t = TStruct { members; _ }; _ } -> List.mapi (fun i (name, _, _, _) -> name, i) members
+      | { t = TStruct { members; _ }; _ } -> CCList.mapi (fun i (name, _, _, _) -> name, i) members
       | _ -> failwith "This should be a record"
     in
-    let numbered = List.map (fun (n, v) -> snd (List.find (fun (id, _) -> id = n) sorting), (n, v)) elems_rev in
-    let sorted = List.sort (fun (i1, _) (i2, _) -> compare i1 i2) numbered |> List.map snd in
+    let numbered = CCList.map (fun (n, v) -> snd (CCList.find (fun (id, _) -> id = n) sorting), (n, v)) elems_rev in
+    let sorted = CCList.sort (fun (i1, _) (i2, _) -> compare i1 i2) numbered |> CCList.map snd in
     state, { e = ERecord { path = p; elems = sorted }; t; loc }
 
 
@@ -243,20 +243,20 @@ let block (stmts : stmt list) : stmt =
 
 let rec flattenTupleDeclarations env state (l : T.dexp list) =
   let state, l =
-    List.fold_left
+    CCList.fold_left
       (fun (state, acc) (d : T.dexp) ->
         match d.d with
         | DWild -> state, acc
         | DTuple elems ->
           let state, inner = flattenTupleDeclarations env state elems in
-          state, List.rev inner @ acc
+          state, CCList.rev inner @ acc
         | DId (id, dims) ->
           let state, d = dexp env state id dims d.t d.loc in
           state, d :: acc)
       (state, [])
       l
   in
-  state, List.rev l
+  state, CCList.rev l
 
 
 let rec stmt (env : Env.in_top) (state : state) (s : Typed.stmt) =
@@ -265,7 +265,7 @@ let rec stmt (env : Env.in_top) (state : state) (s : Typed.stmt) =
   | StmtVal { d = DWild; _ } -> state, []
   | StmtVal { d = DTuple elems; _ } ->
     let state, dexp_elems = flattenTupleDeclarations env state elems in
-    let decls = List.map (fun lhs -> { s = StmtDecl (lhs, None); loc }) dexp_elems in
+    let decls = CCList.map (fun lhs -> { s = StmtDecl (lhs, None); loc }) dexp_elems in
     state, decls
   | StmtVal { d = DId (id, dims); t; loc } ->
     let state, lhs = dexp env state id dims t loc in
@@ -293,7 +293,7 @@ let rec stmt (env : Env.in_top) (state : state) (s : Typed.stmt) =
     state, [ { s = StmtWhile (cond, block s); loc } ]
   | StmtBlock stmts -> (
     let state, stmts = list stmt env state stmts in
-    match List.flatten stmts with
+    match CCList.flatten stmts with
     | [] -> state, [ { s = StmtBlock []; loc } ]
     | [ { s = StmtBlock subs; _ } ] -> state, [ { s = StmtBlock subs; loc } ]
     | [ s ] -> state, [ s ]
@@ -377,7 +377,7 @@ let top_stmt_list (env : Env.in_top) (state : state) (t : Typed.top_stmt list) =
 let main env stmts =
   let state = { types = Map.empty; dummy = 0 } in
   let _, t = top_stmt_list env state stmts in
-  List.flatten t
+  CCList.flatten t
 
 
 let isType s =
@@ -388,7 +388,7 @@ let isType s =
 
 
 let getInitializersFromModule table m =
-  List.fold_left (fun s (key, t) -> Map.add (path key) (path t) s) table m.Env.init
+  CCList.fold_left (fun s (key, t) -> Map.add (path key) (path t) s) table m.Env.init
 
 
 let createInitizerTable (env : Env.in_top) =
@@ -397,7 +397,7 @@ let createInitizerTable (env : Env.in_top) =
 
 let convert (iargs : Args.args) env stmts =
   let stmts = main env stmts in
-  let types, functions = List.partition isType stmts in
+  let types, functions = CCList.partition isType stmts in
   let custom_initializers = createInitizerTable env in
   let initializers = CCList.map Initializer.(createInitFunction custom_initializers iargs) types in
   let serializers = Serializer.createSerializers types in
