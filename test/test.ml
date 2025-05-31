@@ -26,9 +26,10 @@ open OUnit2
 (*open Core.Prog*)
 
 open Util
-open Tcommon;;
+open Tcommon
+module Diff = Util.Diff
 
-Util.Vfloat.reduce_precision := true
+let () = Util.Vfloat.reduce_precision := true
 
 let test_directory = Filename.concat initial_dir "test"
 

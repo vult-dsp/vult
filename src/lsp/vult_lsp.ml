@@ -78,7 +78,7 @@ module Common = struct
       (* Lexer uses 1-based line numbers *)
       let lexbuf = Lexing.from_string content in
       let rec loop () =
-        match Mparser.Lexer.token true lexbuf with
+        match Mparser.Lexer.token Mparser.Lexer.comment_config lexbuf with
         | EOF -> None
         | token ->
           let start_pos = lexbuf.lex_start_p in
@@ -150,7 +150,7 @@ module Common = struct
       (* Collect all tokens with their positions *)
       let tokens = ref [] in
       let rec collect_tokens () =
-        match Mparser.Lexer.token true lexbuf with
+        match Mparser.Lexer.token Mparser.Lexer.comment_config lexbuf with
         | EOF -> CCList.rev !tokens
         | token ->
           let start_pos = lexbuf.lex_start_p in
@@ -681,6 +681,8 @@ module SemanticTokens = struct
      |DOT
      |ASSIGN
      |WILDCARD
+     |WHITESPACE _
+     |NEWLINE
      |EOF -> VPunctuation
 
 
@@ -766,7 +768,7 @@ module SemanticTokens = struct
       (* Use iterative loop instead of recursive to avoid stack overflow in JavaScript *)
       let continue = ref true in
       while !continue do
-        match Mparser.Lexer.token true lexbuf with
+        match Mparser.Lexer.token Mparser.Lexer.comment_config lexbuf with
         | EOF -> continue := false
         | token ->
           let start_pos = lexbuf.lex_start_p in

@@ -1,3 +1,5 @@
+(ocamllex baseTok)
+
 (library
  (name util)
  (public_name vult.util)
@@ -11,8 +13,10 @@
   Maps
   Fitting
   WaveFile
-  Profile)
- (libraries containers pla)
+  Profile
+  Diff
+  BaseTok)
+ (libraries containers pla str)
  (preprocess
   (pps pla.ppx))
  (ocamlopt_flags -O3 -unbox-closures)

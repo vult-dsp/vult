@@ -25,6 +25,8 @@ open Bast (* Builder functions for AST nodes *)
 %token TRUE FALSE
 %token <string> BLOCK_COMMENT
 %token <string> LINE_COMMENT
+%token <string> WHITESPACE
+%token NEWLINE
 
 (* Start symbol *)
 %start <Bast.state -> Bast.state * Pparser.Syntax.stmts> program

@@ -6,6 +6,21 @@
 open Grammar (* Reference to the parser module that Menhir will generate *)
 open Lexing
 
+(* Tokenizer configuration for controlling emission of different token types *)
+type tokenizer_config = {
+  emit_comments : bool;
+  emit_whitespace : bool;
+}
+
+(* Default configuration for backward compatibility *)
+let default_config = { emit_comments = false; emit_whitespace = false }
+
+(* Create config with only comments enabled (backward compatibility) *)
+let comment_config = { emit_comments = true; emit_whitespace = false }
+
+(* Create config with both comments and whitespace enabled *)
+let full_config = { emit_comments = true; emit_whitespace = true }
+
 (* Helper function to update the current position for error reporting *)
 let update_loc lexbuf =
   let pos = lexbuf.lex_curr_p in
@@ -28,16 +43,29 @@ let xint = '0' 'x' ['0'-'9' 'a'-'f' 'A'-'F' 'd' 'D']+
 let whitespace = [' ' '\t']
 let newline = '\r' | '\n' | "\r\n"
 
-rule token emit_comment = parse
-  | whitespace+        { token emit_comment lexbuf }
-  | newline            { update_loc lexbuf; token emit_comment lexbuf }
+rule token config = parse
+  | whitespace+ as s   {
+      if config.emit_whitespace then (
+        WHITESPACE s
+      ) else (
+        token config lexbuf
+      )
+    }
+  | newline            {
+      update_loc lexbuf;
+      if config.emit_whitespace then (
+        NEWLINE
+      ) else (
+        token config lexbuf
+      )
+    }
   | "/*"               {
       let start_pos = lexbuf.lex_start_p in
-      block_comment emit_comment (Buffer.create 32) start_pos lexbuf
+      block_comment config (Buffer.create 32) start_pos lexbuf
     }
   | "//"               {
       let start_pos = lexbuf.lex_start_p in
-      line_comment emit_comment (Buffer.create 32) start_pos lexbuf
+      line_comment config (Buffer.create 32) start_pos lexbuf
     }
   | "type"             { TYPE }
   | "val"              { VAL }
@@ -117,27 +145,27 @@ and read_string buf start_pos = parse
   | [^ '"' '\\' '\r' '\n']+ as s { Buffer.add_string buf s; read_string buf start_pos lexbuf }
   | eof                { raise (LexError "String is not terminated") }
 
-and block_comment emit_comment buf start_pos = parse
+and block_comment config buf start_pos = parse
   | "*/" as s          {
-      if emit_comment then (
+      if config.emit_comments then (
         Buffer.add_string buf s;
         lexbuf.lex_start_p <- start_pos;
         BLOCK_COMMENT (Buffer.contents buf))
-      else token emit_comment lexbuf
+      else token config lexbuf
     }
-  | newline as s       { Buffer.add_string buf s; update_loc lexbuf; block_comment emit_comment buf start_pos lexbuf }
-  | _ as s             { Buffer.add_char buf s; block_comment emit_comment buf start_pos lexbuf }
+  | newline as s       { Buffer.add_string buf s; update_loc lexbuf; block_comment config buf start_pos lexbuf }
+  | _ as s             { Buffer.add_char buf s; block_comment config buf start_pos lexbuf }
   | eof                { raise (LexError "Comment is not terminated") }
 
-and line_comment emit_comment buf start_pos = parse
+and line_comment config buf start_pos = parse
   | newline as s       {
     update_loc lexbuf;
-    if emit_comment then (
+    if config.emit_comments then (
       Buffer.add_string buf s;
       lexbuf.lex_start_p <- start_pos;
       LINE_COMMENT (Buffer.contents buf))
     else
-      token emit_comment lexbuf
+      token config lexbuf
     }
-  | _ as s             { Buffer.add_char buf s; line_comment emit_comment buf start_pos lexbuf }
+  | _ as s             { Buffer.add_char buf s; line_comment config buf start_pos lexbuf }
   | eof                { EOF }
