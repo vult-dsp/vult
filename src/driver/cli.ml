@@ -115,6 +115,11 @@ let driver (args : args) : output list =
           CCList.map (fun r -> r.Parse.file) parsed |> fun s -> [ Dependencies s ]
         else if args.dparse then
           CCList.map (fun (r : Parse.parsed_file) -> ParsedCode (Syntax.Print.print r.stmts)) parsed
+        else if args.dump_sexpr then
+          CCList.map
+            (fun (r : Parse.parsed_file) ->
+              ParsedCode (String.concat "\n" (CCList.map Syntax.SExpr.print_top_stmt r.stmts)))
+            parsed
         else
           let env, stmts = Util.Profile.time "Inference" (fun () -> Inference.infer args parsed) in
           if args.dtyped then

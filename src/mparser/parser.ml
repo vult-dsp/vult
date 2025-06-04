@@ -34,13 +34,7 @@ let rec loop lexbuf (checkpoint : (Bast.state -> Bast.state * Pparser.Syntax.stm
   | I.Rejected -> assert false
 
 
-let parseBuffer lexbuf =
-  try loop lexbuf (Grammar.Incremental.program lexbuf.lex_curr_p) with
-  | Lexer.LexError msg ->
-    let pos = lexbuf.lex_curr_p in
-    Printf.eprintf "Lexical error at %s:%d:%d: %s\n" pos.pos_fname pos.pos_lnum (pos.pos_cnum - pos.pos_bol + 1) msg;
-    exit 1
-
+let parseBuffer lexbuf = loop lexbuf (Grammar.Incremental.program lexbuf.lex_curr_p)
 
 let parseFile (file : string) =
   let p =

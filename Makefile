@@ -26,10 +26,13 @@ jscompiler:
 	chmod +x vult.js
 
 lsp:
-	dune build src/lsp/vult_lsp_exe.exe src/lsp/vult_lsp_js.bc
+	dune build src/lsp/vult_lsp_exe.exe src/lsp/vult_lsp_js.bc $(FORMAT)
 	js_of_ocaml --custom-header="#!/usr/bin/env node" --disable use-js-string _build/default/src/lsp/vult_lsp_js.bc -o vult_lsp_js.js
 	chmod +x vult_lsp_js.js
 	cp vult_lsp_js.js src/lsp/vscode-extension/
+
+lsp-install:
+	cp ./_build/default/src/lsp/vult_lsp_exe.exe $(PREFIX)/vult-lsp
 
 #web:
 #	$(OCB) src/js/vultweb.byte

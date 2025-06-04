@@ -247,7 +247,7 @@ module Diagnostics = struct
           files = [ Args.Code (filename, content) ]
         ; includes
         ; check = true
-        ; use_menhir = true
+        ; use_menhir = false
         }
       in
       let result =

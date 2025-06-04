@@ -130,6 +130,16 @@ type m =
   ; mutable constants : var Map.t
   }
 
+(* Generic lookup result variant *)
+type lookup_result =
+  | LookupVar of var
+  | LookupFunction of f
+  | LookupType of t
+  | LookupEnum of (path * Loc.t * int) (* path, location, index *)
+  | LookupConstant of var
+  | LookupBuiltinFunction of f
+  | LookupNotFound
+
 (* Location within the environment hierarchy *)
 type location =
   | Top
@@ -253,6 +263,7 @@ let getCurrentFunction (env : env) : f =
   | _ -> failwith "Not currently in a function"
 
 
+(* Private helper functions for internal use only *)
 let rec lookVarInScopes (scopes : var Map.t list) name : var option =
   match scopes with
   | [] -> None
@@ -268,6 +279,35 @@ let lookVarInContext (context : context) name : var option =
   | _ -> None
 
 
+let registerArguments (args : Typed.arg list) =
+  let locals = Map.empty () in
+  let report loc (found : var) =
+    Error.raiseError
+      ("A variable with the name '" ^ found.name ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
+      loc
+  in
+  let rev_args =
+    CCList.fold_left
+      (fun acc ({ name; t; loc } : Typed.arg) ->
+        let () = Map.update (report loc) name { name; t; kind = Val; tags = []; loc } locals in
+        t :: acc)
+      []
+      args
+  in
+  locals, CCList.rev rev_args
+
+
+let registerContextLocal loc locals (context : context) =
+  let report loc (found : var) = Error.raiseError ("The name '" ^ found.name ^ "' is reserved.") loc in
+  match context with
+  | Some (p, _) ->
+    let name = "_ctx" in
+    let t = Typed.C.path_t loc p in
+    Map.update (report loc) name { name; t; kind = Val; tags = []; loc } locals;
+    locals
+  | None -> locals
+
+
 let lookVar (env : env) (name : string) (loc : Loc.t) : var =
   let f = getCurrentFunction env in
   let m = getCurrentModule env in
@@ -280,13 +320,6 @@ let lookVar (env : env) (name : string) (loc : Loc.t) : var =
       match Map.find name m.constants with
       | Some var -> var
       | None -> Error.raiseError ("The variable '" ^ name ^ "' could not be found") loc))
-
-
-let lookConstant (env : env) (name : string) (loc : Loc.t) : var =
-  let m = getCurrentModule env in
-  match Map.find name m.constants with
-  | None -> Error.raiseError ("A constant with the name '" ^ name ^ "' could not be found") loc
-  | Some var -> var
 
 
 let reportModuleNotFound n loc = Error.raiseError ("The module named '" ^ n ^ "' could not be found") loc
@@ -311,59 +344,6 @@ let lookEnum (env : env) (path : path) (loc : Loc.t) =
     | None -> reportModuleNotFound n loc)
 
 
-let lookEnumInModule (env : env) (path : path) (loc : Loc.t) =
-  let error () = Error.raiseError ("An enumeration with the name '" ^ pathString path ^ "' could not be found") loc in
-  let findEnumInModule enums id =
-    match Map.find id enums with
-    | Some ({ descr = Enum members; _ } as t) -> (
-      match Map.find id members with
-      | Some (_, index, _) -> t.path, t.loc, index
-      | None -> error ())
-    | _ -> error ()
-  in
-  match path with
-  | { id; n = None; _ } ->
-    let m = getCurrentModule env in
-    findEnumInModule m.enums id
-  | { id; n = Some n; loc } -> (
-    match Map.find n env.modules with
-    | Some m -> findEnumInModule m.enums id
-    | None -> reportModuleNotFound n loc)
-
-
-let lookFunctionCall (env : env) (path : path) (loc : Loc.t) : f =
-  let reportNotFound result =
-    match result with
-    | Some found -> found
-    | None -> Error.raiseError ("A function with the name '" ^ pathString path ^ "' could not be found") loc
-  in
-  match path with
-  | { id; n = Some n; _ } -> (
-    match Map.find n env.modules with
-    | None -> reportModuleNotFound n loc
-    | Some m -> reportNotFound (Map.find id m.functions))
-  | { id; _ } -> (
-    let m = getCurrentModule env in
-    match Map.find id m.functions with
-    | Some found -> found
-    | None -> (
-      match Map.find id env.builtin_functions with
-      | Some f -> makeFunctionForBuiltin id (f ())
-      | None -> reportNotFound None))
-
-
-let lookOperator (env : env) (op : string) : f =
-  match Map.find op env.builtin_functions with
-  | Some found -> makeFunctionForBuiltin op (found ())
-  | None -> failwith ("operator not found " ^ op)
-
-
-let lookOperatorInModule (env : env) (op : string) : f =
-  match Map.find op env.builtin_functions with
-  | Some found -> makeFunctionForBuiltin op (found ())
-  | None -> failwith ("operator not found " ^ op)
-
-
 let getType (env : env) (path : path) : t option =
   match path with
   | { id; n = Some n; loc } -> (
@@ -371,42 +351,6 @@ let getType (env : env) (path : path) : t option =
     | None -> reportModuleNotFound n loc
     | Some m -> Map.find id m.types)
   | _ -> None
-
-
-let lookType (env : env) (path : path) (loc : Loc.t) : t =
-  let reportNotFound result =
-    match result with
-    | Some found -> found
-    | None -> Error.raiseError ("A type with the name '" ^ pathString path ^ "' could not be found") loc
-  in
-  match path with
-  | { id; n = Some n; loc } -> (
-    match Map.find n env.modules with
-    | None -> reportModuleNotFound n loc
-    | Some m -> reportNotFound (Map.find id m.types))
-  | { id; _ } -> (
-    let m = getCurrentModule env in
-    match Map.find id m.types with
-    | Some _ as found -> reportNotFound found
-    | None -> reportNotFound (Map.find id env.builtin_types))
-
-
-let lookTypeInModule (env : env) (path : path) (loc : Loc.t) : t =
-  let reportNotFound result =
-    match result with
-    | Some found -> found
-    | None -> Error.raiseError ("A type with the name '" ^ pathString path ^ "' could not be found") loc
-  in
-  match path with
-  | { id; n = Some n; _ } -> (
-    match Map.find n env.modules with
-    | None -> reportModuleNotFound n loc
-    | Some m -> reportNotFound (Map.find id m.types))
-  | { id; _ } -> (
-    let m = getCurrentModule env in
-    match Map.find id m.types with
-    | Some _ as found -> reportNotFound found
-    | None -> reportNotFound (Map.find id env.builtin_types))
 
 
 let addConstant (env : env) _unify (name : string) (t : Typed.type_) loc : env =
@@ -531,35 +475,6 @@ let popScope (env : env) : env =
   | _ :: t ->
     f.locals <- t;
     env
-
-
-let registerArguments (args : Typed.arg list) =
-  let locals = Map.empty () in
-  let report loc (found : var) =
-    Error.raiseError
-      ("A variable with the name '" ^ found.name ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
-      loc
-  in
-  let rev_args =
-    CCList.fold_left
-      (fun acc ({ name; t; loc } : Typed.arg) ->
-        let () = Map.update (report loc) name { name; t; kind = Val; tags = []; loc } locals in
-        t :: acc)
-      []
-      args
-  in
-  locals, CCList.rev rev_args
-
-
-let registerContextLocal loc locals (context : context) =
-  let report loc (found : var) = Error.raiseError ("The name '" ^ found.name ^ "' is reserved.") loc in
-  match context with
-  | Some (p, _) ->
-    let name = "_ctx" in
-    let t = Typed.C.path_t loc p in
-    Map.update (report loc) name { name; t; kind = Val; tags = []; loc } locals;
-    locals
-  | None -> locals
 
 
 let getPath m name loc : path = { id = name; n = Some m.name; loc }
@@ -756,5 +671,184 @@ let enterModule (env : env) (name : string) : env =
 
 
 let exitModule (env : env) : env = { env with location = Top }
+
+(* Generic lookup function for paths - returns list of all possible meanings *)
+let lookupPath (env : env) (path : path) : lookup_result list =
+  let lookupInModule (m : m) (id : string) : lookup_result list =
+    let results = [] in
+    (* Find all meanings in module *)
+    let results =
+      match Map.find id m.functions with
+      | Some f -> LookupFunction f :: results
+      | None -> results
+    in
+    let results =
+      match Map.find id m.types with
+      | Some t -> LookupType t :: results
+      | None -> results
+    in
+    let results =
+      match Map.find id m.constants with
+      | Some var -> LookupConstant var :: results
+      | None -> results
+    in
+    let results =
+      match Map.find id m.enums with
+      | Some ({ descr = Enum members; _ } as t) -> (
+        match Map.find id members with
+        | Some (_, index, loc) -> LookupEnum (t.path, loc, index) :: results
+        | None -> results)
+      | _ -> results
+    in
+    results
+  in
+  match path with
+  | { id; n = Some module_name; _ } -> (
+    (* Module-qualified path: Module.name *)
+    match Map.find module_name env.modules with
+    | Some m -> lookupInModule m id
+    | None -> [])
+  | { id; n = None; _ } ->
+    (* Local path: name - collect all possible meanings *)
+    let results = [] in
+    (* Check local scope first (variables have priority) *)
+    let results =
+      match env.location with
+      | InFunction (_, f) -> (
+        match lookVarInContext f.context id with
+        | Some var -> LookupVar var :: results
+        | None -> (
+          match lookVarInScopes f.locals id with
+          | Some var -> LookupVar var :: results
+          | None -> results))
+      | _ -> results
+    in
+    (* Add module-level symbols *)
+    let results =
+      match env.location with
+      | InFunction (_, _) | InModule _ | InContext (_, _) ->
+        let m = getCurrentModule env in
+        lookupInModule m id @ results
+      | Top -> results
+    in
+    (* Add builtin functions *)
+    let results =
+      match Map.find id env.builtin_functions with
+      | Some f -> LookupBuiltinFunction (makeFunctionForBuiltin id (f ())) :: results
+      | None -> results
+    in
+    (* Add builtin types *)
+    let results =
+      match Map.find id env.builtin_types with
+      | Some t -> LookupType t :: results
+      | None -> results
+    in
+    results
+
+
+(* Helper functions to find specific lookup result types from a list *)
+let findType (results : lookup_result list) : t option =
+  let rec find = function
+    | [] -> None
+    | LookupType t :: _ -> Some t
+    | _ :: rest -> find rest
+  in
+  find results
+
+
+let findFunction (results : lookup_result list) : f option =
+  let rec findLocal = function
+    | [] -> None
+    | LookupFunction f :: _ -> Some f
+    | _ :: rest -> findLocal rest
+  in
+  let rec findBuiltin = function
+    | [] -> None
+    | LookupBuiltinFunction f :: _ -> Some f
+    | _ :: rest -> findBuiltin rest
+  in
+  match findLocal results with
+  | Some f -> Some f
+  | None -> findBuiltin results
+
+
+let findVar (results : lookup_result list) : var option =
+  let rec find = function
+    | [] -> None
+    | LookupVar var :: _ -> Some var
+    | LookupConstant var :: _ -> Some var
+    | _ :: rest -> find rest
+  in
+  find results
+
+
+let findEnum (results : lookup_result list) : (path * Loc.t * int) option =
+  let rec find = function
+    | [] -> None
+    | LookupEnum (path, loc, index) :: _ -> Some (path, loc, index)
+    | _ :: rest -> find rest
+  in
+  find results
+
+
+(* Function lookup using the new generic lookup system *)
+let lookFunctionCall (env : env) (path : path) (loc : Loc.t) : f =
+  match findFunction (lookupPath env path) with
+  | Some f -> f
+  | None -> Error.raiseError ("A function with the name '" ^ pathString path ^ "' could not be found") loc
+
+
+(* Operator lookup using the new generic lookup system *)
+let lookOperator (env : env) (op : string) : f =
+  let op_path : path = { id = op; n = None; loc = Loc.default } in
+  match findFunction (lookupPath env op_path) with
+  | Some f -> f
+  | None -> failwith ("operator not found " ^ op)
+
+
+(* Since operators are only builtins, this behaves the same as lookOperator *)
+let lookOperatorInModule (env : env) (op : string) : f = lookOperator env op
+
+(* Unified expression lookup for handling ambiguous symbols *)
+type expression_symbol =
+  | ExprVariable of var
+  | ExprFunction of f
+  | ExprType of t
+  | ExprEnum of (path * Loc.t * int)
+  | ExprNotFound
+
+let lookupExpressionSymbol (env : env) (name : string) (loc : Loc.t) (in_constant_context : bool) : expression_symbol =
+  let name_path : path = { id = name; n = None; loc } in
+  let results = lookupPath env name_path in
+  if in_constant_context then
+    (* In constant context: constants first, then enums, then types *)
+    match findVar results with
+    | Some var when var.kind = Const -> ExprVariable var
+    | _ -> (
+      match findEnum results with
+      | Some enum_data -> ExprEnum enum_data
+      | None -> (
+        match findType results with
+        | Some t -> ExprType t
+        | None -> ExprNotFound))
+  else
+    (* In regular context: variables first, then functions, then enums *)
+    match findVar results with
+    | Some var -> ExprVariable var
+    | None -> (
+      match findFunction results with
+      | Some f -> ExprFunction f
+      | None -> (
+        match findEnum results with
+        | Some enum_data -> ExprEnum enum_data
+        | None -> ExprNotFound))
+
+
+(* Unified type lookup function using the new lookup system *)
+let lookType (env : env) (path : path) (loc : Loc.t) : t =
+  match findType (lookupPath env path) with
+  | Some t -> t
+  | None -> Error.raiseError ("A type with the name '" ^ pathString path ^ "' could not be found") loc
+
 
 let empty () = { modules = Map.empty (); builtin_functions; builtin_types; location = Top }

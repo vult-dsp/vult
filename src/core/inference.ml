@@ -187,7 +187,7 @@ let rec type_in_m (env : env) (t : Syntax.type_) =
   match t with
   | { t = STUnbound; loc } -> { tx = TEUnbound None; loc; const = C.const () }
   | { t = STId path; loc } ->
-    let found = Env.lookTypeInModule env path loc in
+    let found = Env.lookType env path loc in
     { tx = TEId found.path; loc; const = C.const () }
   | { t = STSize n; loc } ->
     let () =
@@ -370,14 +370,9 @@ and exp ?(in_constant_context = false) (env : env) (e : Syntax.exp) : env * exp 
     let t = C.string ~loc in
     env, { e = EString value; t; loc }
   | { e = SEGroup e; _ } -> exp ~in_constant_context env e
-  | { e = SEId name; loc } when not (String.equal (String.capitalize_ascii name) name) ->
-    if in_constant_context then
-      let var = Env.lookConstant env name loc in
-      let t = var.t in
-      let m = Env.getCurrentModule env in
-      env, { e = EConst { id = name; n = Some m.name; loc }; t; loc }
-    else
-      let var = Env.lookVar env name loc in
+  | { e = SEId name; loc } when not (String.equal (String.capitalize_ascii name) name) -> (
+    match Env.lookupExpressionSymbol env name loc in_constant_context with
+    | ExprVariable var ->
       let t = var.t in
       let e =
         match var.kind with
@@ -391,6 +386,16 @@ and exp ?(in_constant_context = false) (env : env) (e : Syntax.exp) : env * exp 
           { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); t; loc }
       in
       env, e
+    | ExprEnum (type_path, tloc, index) ->
+      let t = C.path_t tloc type_path in
+      env, { e = EInt index; t; loc }
+    | ExprFunction _ ->
+      (* Functions in expression context are not directly supported - treat as error *)
+      Error.raiseError ("Function '" ^ name ^ "' cannot be used in expression context without call") loc
+    | ExprType _ ->
+      (* Types in expression context are not directly supported - treat as error *)
+      Error.raiseError ("Type '" ^ name ^ "' cannot be used in expression context") loc
+    | ExprNotFound -> Error.raiseError ("The symbol '" ^ name ^ "' could not be found") loc)
   | { e = SEIndex { e; index }; loc } ->
     let env, e = exp ~in_constant_context env e in
     let env, index = exp ~in_constant_context env index in
@@ -450,10 +455,13 @@ and exp ?(in_constant_context = false) (env : env) (e : Syntax.exp) : env * exp 
   | { e = SENamed ({ e = SEId instance; _ }, { e = SECall { instance = None; path; args }; loc }); _ }
     when not in_constant_context -> call env (Some (instance, None)) path args loc e.loc
   | { e = SENamed (_e1, _e2); _ } when in_constant_context -> failwith "top_exp: Inference SENamed"
-  | { e = SENamed (e1, e2); _ } ->
+  | { e = SENamed (e1, ({ e = SECall _; _ } as e2)); _ } ->
     let e1 = Pla.print (Syntax.Print.exp e1) in
     let e2 = Pla.print (Syntax.Print.exp e2) in
     failwith ("Inference SENamed: " ^ e1 ^ " : " ^ e2)
+  | { e = SENamed (_, _); loc } ->
+    (* Handle case where second part is not a function call *)
+    Error.raiseError "After ':' you can only have a function call e.g. name:foo()" loc
   | { e = SECall { instance; path; args }; loc } when in_constant_context ->
     (* Check if the function has memory declarations *)
     let f = Env.lookFunctionCall env path loc in
@@ -487,63 +495,80 @@ and exp ?(in_constant_context = false) (env : env) (e : Syntax.exp) : env * exp 
     let t = applyFunction e.loc args_t ret [ e ] in
     env, { e = EUnOp (op, e); t; loc }
   | { e = SEMember (e1, m); loc } -> (
-    let env, e1 = exp ~in_constant_context env e1 in
-    match (unlink e1.t).tx with
-    | TEId path -> (
-      let type_lookup =
-        if in_constant_context then
-          Env.lookTypeInModule
-        else
-          Env.lookType
-      in
-      match type_lookup env path loc with
-      | { path; descr = Record members; _ } -> (
-        match Map.find m members with
-        | None -> Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
-        | Some { t; _ } ->
-          let t = refreshConstness t in
-          (* if the type is a builtin (a value) do not unify the constness *)
-          let () =
-            if (not in_constant_context) && not (Env.isBuiltinType t) then
-              unifyConstness t e1.t
-          in
-          env, { e = EMember (e1, m); t; loc })
+    (* First, try to interpret this as an enum reference if e1 is an SEId *)
+    match e1 with
+    | { e = SEId module_name; _ } -> (
+      (* Try to lookup as enum: module_name.m *)
+      let enum_path = Syntax.{ id = m; n = Some module_name; loc } in
+      try
+        let type_path, tloc, index = Env.lookEnum env enum_path loc in
+        let t = C.path_t tloc type_path in
+        env, { e = EInt index; t; loc }
+      with
+      | _ -> (
+        (* If enum lookup fails, fall back to normal member access *)
+        let env, e1 = exp ~in_constant_context env e1 in
+        match (unlink e1.t).tx with
+        | TEId path -> (
+          match Env.lookType env path loc with
+          | { path; descr = Record members; _ } -> (
+            match Map.find m members with
+            | None -> Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
+            | Some { t; _ } ->
+              let t = refreshConstness t in
+              (* if the type is a builtin (a value) do not unify the constness *)
+              let () =
+                if (not in_constant_context) && not (Env.isBuiltinType t) then
+                  unifyConstness t e1.t
+              in
+              env, { e = EMember (e1, m); t; loc })
+          | _ ->
+            let t = Pla.print (Typed.print_type_ e1.t) in
+            let e = Pla.print (Typed.print_exp e1) in
+            Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
+        | _ ->
+          let t = Pla.print (Typed.print_type_ e1.t) in
+          let e = Pla.print (Typed.print_exp e1) in
+          Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc))
+    | _ -> (
+      (* For non-SEId expressions, use normal member access *)
+      let env, e1 = exp ~in_constant_context env e1 in
+      match (unlink e1.t).tx with
+      | TEId path -> (
+        match Env.lookType env path loc with
+        | { path; descr = Record members; _ } -> (
+          match Map.find m members with
+          | None -> Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
+          | Some { t; _ } ->
+            let t = refreshConstness t in
+            (* if the type is a builtin (a value) do not unify the constness *)
+            let () =
+              if (not in_constant_context) && not (Env.isBuiltinType t) then
+                unifyConstness t e1.t
+            in
+            env, { e = EMember (e1, m); t; loc })
+        | _ ->
+          let t = Pla.print (Typed.print_type_ e1.t) in
+          let e = Pla.print (Typed.print_exp e1) in
+          Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
       | _ ->
         let t = Pla.print (Typed.print_type_ e1.t) in
         let e = Pla.print (Typed.print_exp e1) in
-        Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
-    | _ ->
-      let t = Pla.print (Typed.print_type_ e1.t) in
-      let e = Pla.print (Typed.print_exp e1) in
-      Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
+        Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc))
   | { e = SEEnum path; loc } ->
-    let enum_lookup =
-      if in_constant_context then
-        Env.lookEnumInModule
-      else
-        Env.lookEnum
-    in
-    let type_path, tloc, index = enum_lookup env path loc in
+    let type_path, tloc, index = Env.lookEnum env path loc in
     let t = C.path_t tloc type_path in
     env, { e = EInt index; t; loc }
-  | { e = SEId id; loc } ->
-    let enum_lookup =
-      if in_constant_context then
-        Env.lookEnumInModule
-      else
-        Env.lookEnum
-    in
-    let type_path, tloc, index = enum_lookup env { id; n = None; loc } loc in
-    let t = C.path_t tloc type_path in
-    env, { e = EInt index; t; loc }
+  | { e = SEId id; loc } -> (
+    (* This case handles uppercase identifiers (enum constructors) *)
+    match Env.lookupExpressionSymbol env id loc in_constant_context with
+    | ExprEnum (type_path, tloc, index) ->
+      let t = C.path_t tloc type_path in
+      env, { e = EInt index; t; loc }
+    | ExprNotFound -> Error.raiseError ("The symbol '" ^ id ^ "' could not be found") loc
+    | _ -> Error.raiseError ("The symbol '" ^ id ^ "' is not an enumeration value") loc)
   | { e = SERecord { path; elems }; loc } -> (
-    let type_lookup =
-      if in_constant_context then
-        Env.lookTypeInModule
-      else
-        Env.lookType
-    in
-    let t = type_lookup env path loc in
+    let t = Env.lookType env path loc in
     match t with
     | { descr = Record members; _ } ->
       let env, elems_rev =

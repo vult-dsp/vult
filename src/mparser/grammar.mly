@@ -39,8 +39,9 @@ open Bast (* Builder functions for AST nodes *)
 %left OP_LEVEL_1 MINUS
 %left OP_LEVEL_0
 %right UMINUS
-%left DOT LBRACKET
+%left LBRACKET
 %left LPAREN
+%left DOT
 %right COLON
 
 %on_error_reduce exp
@@ -232,13 +233,13 @@ tag:
 stmt:
   | stmt_val    { $1 }
   | stmt_mem    { $1 }
+  | stmt_call   { $1 }
   | stmt_bind   { $1 }
   | stmt_block  { $1 }
   | stmt_return { $1 }
   | stmt_if     { $1 }
   | stmt_while  { $1 }
   | stmt_iter   { $1 }
-  | stmt_call   { $1 }
   | stmt_match  { $1 }
   ;
 

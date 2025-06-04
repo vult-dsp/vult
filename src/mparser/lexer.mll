@@ -29,7 +29,12 @@ let update_loc lexbuf =
     pos_bol = pos.pos_cnum;
   }
 
-exception LexError of string
+let mk_loc lexbuf =
+  Util.Loc.{ 
+    start_pos = Lexing.lexeme_start_p lexbuf;
+    end_pos = Lexing.lexeme_end_p lexbuf;
+    source = File ""
+  }
 
 }
 
@@ -126,7 +131,7 @@ rule token config = parse
       read_string (Buffer.create 32) start_pos lexbuf
     }
   | eof                { EOF }
-  | _ as c             { raise (LexError ("Unexpected character: " ^ String.make 1 c)) }
+  | _ as c             { Util.Error.raiseError (Printf.sprintf "Invalid character '%c' " c) (mk_loc lexbuf) }
 
 and read_string buf start_pos = parse
   | '"'                {
@@ -141,9 +146,9 @@ and read_string buf start_pos = parse
   | '\\' 'r'           { Buffer.add_char buf '\r'; read_string buf start_pos lexbuf }
   | '\\' 't'           { Buffer.add_char buf '\t'; read_string buf start_pos lexbuf }
   | '\\' _ as s        { Buffer.add_string buf s; read_string buf start_pos lexbuf }
-  | newline            { raise (LexError "Unterminated string literal (newline not allowed)") }
+  | newline            { Util.Error.raiseError "Unterminated string literal (newline not allowed)" (mk_loc lexbuf) }
   | [^ '"' '\\' '\r' '\n']+ as s { Buffer.add_string buf s; read_string buf start_pos lexbuf }
-  | eof                { raise (LexError "String is not terminated") }
+  | eof                { Util.Error.raiseError "String is not terminated" (mk_loc lexbuf) }
 
 and block_comment config buf start_pos = parse
   | "*/" as s          {
@@ -155,7 +160,7 @@ and block_comment config buf start_pos = parse
     }
   | newline as s       { Buffer.add_string buf s; update_loc lexbuf; block_comment config buf start_pos lexbuf }
   | _ as s             { Buffer.add_char buf s; block_comment config buf start_pos lexbuf }
-  | eof                { raise (LexError "Comment is not terminated") }
+  | eof                { Util.Error.raiseError "Comment is not terminated" (mk_loc lexbuf) }
 
 and line_comment config buf start_pos = parse
   | newline as s       {

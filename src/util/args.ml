@@ -82,6 +82,7 @@ type args =
   ; mutable split : bool
   ; mutable test_mode : bool
   ; mutable use_menhir : bool
+  ; mutable dump_sexpr : bool
   }
 
 let default_arguments : args =
@@ -115,6 +116,7 @@ let default_arguments : args =
   ; split = false
   ; test_mode = false
   ; use_menhir = false
+  ; dump_sexpr = false
   }
 
 
@@ -249,6 +251,14 @@ let flags result =
     }
   ; { flag = "-debug"; action = Arg.Unit (fun () -> result.debug <- true); comment = "" }
   ; { flag = "-profile"; action = Arg.Unit (fun () -> result.profile <- true); comment = "" }
+  ; { flag = "-use-menhir"
+    ; action = Arg.Unit (fun () -> result.use_menhir <- true)
+    ; comment = " Use the menhir parser instead of the default parser (default: off)"
+    }
+  ; { flag = "-dump-sexpr"
+    ; action = Arg.Unit (fun () -> result.dump_sexpr <- true)
+    ; comment = " Dump the parsed syntax tree as S-expressions for debugging (default: off)"
+    }
   ]
 
 

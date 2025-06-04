@@ -1406,3 +1406,150 @@ module ReaplaceId = struct
     let _, stmt = Mapper.map_stmt mapper context state stmt in
     stmt
 end
+
+(* S-expression printer for debugging parser differences *)
+module SExpr = struct
+  let print_list (f : 'a -> string) (lst : 'a list) : string = "(" ^ String.concat " " (List.map f lst) ^ ")"
+
+  let print_option (f : 'a -> string) : 'a option -> string = function
+    | None -> "None"
+    | Some x -> "(Some " ^ f x ^ ")"
+
+
+  let print_path (p : path) : string = "(path " ^ p.id ^ " " ^ print_option (fun x -> x) p.n ^ ")"
+
+  let rec print_type (t : type_) : string =
+    let t_str = print_type_d t.t in
+    "(type " ^ t_str ^ ")"
+
+
+  and print_type_d (type_data : type_d) : string =
+    match type_data with
+    | STUnbound -> "STUnbound"
+    | STId p -> "(STId " ^ print_path p ^ ")"
+    | STSize n -> "(STSize " ^ string_of_int n ^ ")"
+    | STComposed (name, types) -> "(STComposed " ^ name ^ " " ^ print_list print_type types ^ ")"
+
+
+  let rec print_exp (e : exp) : string =
+    let e_str =
+      match e.e with
+      | SEBool b -> "(SEBool " ^ string_of_bool b ^ ")"
+      | SEInt s -> "(SEInt " ^ s ^ ")"
+      | SEReal s -> "(SEReal " ^ s ^ ")"
+      | SEFixed s -> "(SEFixed " ^ s ^ ")"
+      | SEString s -> "(SEString \"" ^ s ^ "\")"
+      | SEId s -> "(SEId " ^ s ^ ")"
+      | SEEnum p -> "(SEEnum " ^ print_path p ^ ")"
+      | SEIndex { e; index } -> "(SEIndex " ^ print_exp e ^ " " ^ print_exp index ^ ")"
+      | SENamed (e1, e2) -> "(SENamed " ^ print_exp e1 ^ " " ^ print_exp e2 ^ ")"
+      | SEArray lst -> "(SEArray " ^ print_list print_exp lst ^ ")"
+      | SECall { instance; path; args } ->
+        let inst_str =
+          print_option (fun (name, idx) -> "(instance " ^ name ^ " " ^ print_option print_exp idx ^ ")") instance
+        in
+        "(SECall " ^ inst_str ^ " " ^ print_path path ^ " " ^ print_list print_exp args ^ ")"
+      | SEUnOp (op, e) -> "(SEUnOp " ^ op ^ " " ^ print_exp e ^ ")"
+      | SEOp (op, e1, e2) -> "(SEOp " ^ op ^ " " ^ print_exp e1 ^ " " ^ print_exp e2 ^ ")"
+      | SEIf { cond; then_; else_ } -> "(SEIf " ^ print_exp cond ^ " " ^ print_exp then_ ^ " " ^ print_exp else_ ^ ")"
+      | SETuple lst -> "(SETuple " ^ print_list print_exp lst ^ ")"
+      | SEMember (e, name) -> "(SEMember " ^ print_exp e ^ " " ^ name ^ ")"
+      | SEGroup e -> "(SEGroup " ^ print_exp e ^ ")"
+      | SERecord { path; elems } ->
+        let elem_str = print_list (fun (p, e) -> "(" ^ print_path p ^ " " ^ print_exp e ^ ")") elems in
+        "(SERecord " ^ print_path path ^ " " ^ elem_str ^ ")"
+    in
+    "(exp " ^ e_str ^ ")"
+
+
+  let rec print_pattern (p : pattern) : string =
+    let p_str =
+      match p.p with
+      | SPWild -> "SPWild"
+      | SPBool b -> "(SPBool " ^ string_of_bool b ^ ")"
+      | SPInt s -> "(SPInt " ^ s ^ ")"
+      | SPReal s -> "(SPReal " ^ s ^ ")"
+      | SPFixed s -> "(SPFixed " ^ s ^ ")"
+      | SPString s -> "(SPString \"" ^ s ^ "\")"
+      | SPTuple lst -> "(SPTuple " ^ print_list print_pattern lst ^ ")"
+      | SPGroup p -> "(SPGroup " ^ print_pattern p ^ ")"
+      | SPEnum path -> "(SPEnum " ^ print_path path ^ ")"
+    in
+    "(pattern " ^ p_str ^ ")"
+
+
+  let rec print_dexp (d : dexp) : string =
+    let d_str =
+      match d.d with
+      | SDWild -> "SDWild"
+      | SDId (name, dims) ->
+        let dims_str = print_option string_of_int dims in
+        "(SDId " ^ name ^ " " ^ dims_str ^ ")"
+      | SDTuple lst -> "(SDTuple " ^ print_list print_dexp lst ^ ")"
+      | SDGroup d -> "(SDGroup " ^ print_dexp d ^ ")"
+      | SDTyped (d, t) -> "(SDTyped " ^ print_dexp d ^ " " ^ print_type t ^ ")"
+    in
+    "(dexp " ^ d_str ^ ")"
+
+
+  let print_arg ((name, typ, _loc) : arg) : string = "(arg " ^ name ^ " " ^ print_option print_type typ ^ ")"
+
+  let rec print_stmt (s : stmt) : string =
+    let s_str =
+      match s.s with
+      | SStmtError -> "SStmtError"
+      | SStmtVal (d, e) -> "(SStmtVal " ^ print_dexp d ^ " " ^ print_option print_exp e ^ ")"
+      | SStmtMem (d, e, _tags) -> "(SStmtMem " ^ print_dexp d ^ " " ^ print_option print_exp e ^ ")"
+      | SStmtBind (lexp, e) -> "(SStmtBind " ^ print_lexp lexp ^ " " ^ print_exp e ^ ")"
+      | SStmtReturn e -> "(SStmtReturn " ^ print_exp e ^ ")"
+      | SStmtBlock lst -> "(SStmtBlock " ^ print_list print_stmt lst ^ ")"
+      | SStmtIf (cond, then_, else_) ->
+        "(SStmtIf " ^ print_exp cond ^ " " ^ print_stmt then_ ^ " " ^ print_option print_stmt else_ ^ ")"
+      | SStmtWhile (cond, body) -> "(SStmtWhile " ^ print_exp cond ^ " " ^ print_stmt body ^ ")"
+      | SStmtIter { id = name, _loc; value; body } ->
+        "(SStmtIter " ^ name ^ " " ^ print_exp value ^ " " ^ print_stmt body ^ ")"
+      | SStmtMatch { e; cases } ->
+        let case_str = print_list (fun (p, s) -> "(" ^ print_pattern p ^ " " ^ print_stmt s ^ ")") cases in
+        "(SStmtMatch " ^ print_exp e ^ " " ^ case_str ^ ")"
+    in
+    "(stmt " ^ s_str ^ ")"
+
+
+  and print_lexp (l : lexp) : string =
+    let l_str =
+      match l.l with
+      | SLWild -> "SLWild"
+      | SLId name -> "(SLId " ^ name ^ ")"
+      | SLTuple lst -> "(SLTuple " ^ print_list print_lexp lst ^ ")"
+      | SLGroup l -> "(SLGroup " ^ print_lexp l ^ ")"
+      | SLIndex { e; index } -> "(SLIndex " ^ print_lexp e ^ " " ^ print_exp index ^ ")"
+      | SLMember (l, name) -> "(SLMember " ^ print_lexp l ^ " " ^ name ^ ")"
+    in
+    "(lexp " ^ l_str ^ ")"
+
+
+  let rec print_function_def (def : function_def) : string =
+    let args_str = print_list print_arg def.args in
+    let ret_str = print_option print_type def.t in
+    let body_str = print_stmt def.body in
+    let next_str = print_option print_function_def def.next in
+    "(function_def " ^ def.name ^ " " ^ args_str ^ " " ^ ret_str ^ " " ^ body_str ^ " " ^ next_str ^ ")"
+
+
+  let print_top_stmt (ts : top_stmt) : string =
+    let ts_str =
+      match ts.top with
+      | STopError -> "STopError"
+      | STopFunction def -> "(STopFunction " ^ print_function_def def ^ ")"
+      | STopExternal (def, _impl) ->
+        "(STopExternal " ^ def.name ^ " " ^ print_list print_arg def.args ^ " " ^ print_option print_type def.t ^ ")"
+      | STopType { name; members } ->
+        let member_str = print_list (fun (n, t, _tags, _loc) -> "(" ^ n ^ " " ^ print_type t ^ ")") members in
+        "(STopType " ^ name ^ " " ^ member_str ^ ")"
+      | STopEnum { name; members } ->
+        let member_str = print_list (fun (n, _loc) -> n) members in
+        "(STopEnum " ^ name ^ " " ^ member_str ^ ")"
+      | STopConstant (d, e) -> "(STopConstant " ^ print_dexp d ^ " " ^ print_exp e ^ ")"
+    in
+    "(top_stmt " ^ ts_str ^ ")"
+end

@@ -52,7 +52,7 @@ let mk_loc file (start_pos, end_pos) = { Util.Loc.start_pos; end_pos; source = U
 let path_Path (loc : Lexing.position * Lexing.position) (ids : string list) (state : 'state) : 'state * path =
   match ids with
   | [ single_id ] -> state, { id = single_id; n = None; loc = mk_loc state loc }
-  | [ first; second ] -> state, { id = first; n = Some second; loc = mk_loc state loc }
+  | [ first; second ] -> state, { id = second; n = Some first; loc = mk_loc state loc }
   | _ -> failwith "path_Path"
 
 
