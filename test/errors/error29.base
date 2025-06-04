@@ -1,4 +1,4 @@
-Empty arrays are not supported.
+Empty array literal '[]' is not supported. Specify array elements or use array type declaration
 fun foo() {
   val x = [];
           ^

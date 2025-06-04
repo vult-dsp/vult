@@ -42,7 +42,9 @@ let parseFile (file : string) =
     | Some contents ->
       let lexbuf = Lexing.from_string contents in
       parseBuffer lexbuf
-    | None -> Util.Error.raiseErrorMsg ("Could not open the file " ^ file)
+    | None ->
+      Util.Error.raiseErrorMsg
+        ("Cannot read file '" ^ file ^ "'. Check if the file exists and you have read permissions")
   in
   let stmts = snd (p file) in
   let name = Pparser.Parse.moduleName file in

@@ -1,4 +1,4 @@
-Invalid left hand side of assignment
+Invalid assignment target. Expected a variable name, wildcard '_', or grouped expression
 fun foo() {
    1 = 1;
    ^

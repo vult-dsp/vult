@@ -241,7 +241,7 @@ let rec checkComponents (comps : string list list) : unit =
   | [ _ ] :: t -> checkComponents t
   | h :: _ ->
     (* in this case one of the components has more than one module *)
-    let msg = "The following modules have circular dependencies: " ^ String.concat ", " h in
+    let msg = "Circular dependency detected between modules: " ^ String.concat ", " h ^ ". Check your module imports" in
     Error.raiseErrorMsg msg
 
 

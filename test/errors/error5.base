@@ -1,4 +1,4 @@
-Invalid expression
+Unexpected token in expression. Expected a value, variable, or operator
 fun foo() {
    _ = *1;
        ^

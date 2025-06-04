@@ -1,3 +1,3 @@
-Expecting a ')' but got '*'
+Expecting a ')' but got '*' in function parameter list
 fun foo(*) {
          ^ 

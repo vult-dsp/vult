@@ -1,4 +1,4 @@
-Invalid left hand side of assignment
+Empty parentheses are not allowed on left side of assignment. Use variable names or patterns
 fun foo() {
    () = 1;
    ^

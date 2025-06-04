@@ -1,4 +1,4 @@
-After ':' you can only have a function call e.g. name:foo()
+Invalid instance call syntax. Expected a function call after ':' (e.g., name:foo())
 fun foo() {
    _ = foo:foo;
            ^ 

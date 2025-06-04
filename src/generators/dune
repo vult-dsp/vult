@@ -1,6 +1,16 @@
 (library
  (name generators)
- (modules Lua Js Cpp Common Tocode Tables T_pd T_performance Replacements)
+ (modules
+  Lua
+  Js
+  Cpp
+  Java
+  Common
+  Tocode
+  Tables
+  T_pd
+  T_performance
+  Replacements)
  (libraries core pparser pla vm str util)
  (flags
   (:standard -w -30))

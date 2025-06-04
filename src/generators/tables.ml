@@ -325,7 +325,9 @@ let checkInputVariables (loc : Loc.t) (args : param list) : exp =
   match args with
   | [ { name; t; _ } ] -> C.eid name t
   | _ ->
-    let msg = "This attribute requires the function to have only one argument:\n\"fun foo(x:real) : real\"" in
+    let msg =
+      "Table generation attribute requires a function with exactly one parameter (e.g., 'fun foo(x:real) : real')"
+    in
     Error.raiseError msg loc
 
 

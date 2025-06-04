@@ -204,7 +204,9 @@ let rec type_in_m (env : env) (t : Syntax.type_) =
 let rec checkArrayDimensions (t : type_) =
   match t.tx with
   | TEComposed ("array", [ _ ]) ->
-    Error.raiseError "Array declarations should provide dimensions in the form array(type, size)" t.loc
+    Error.raiseError
+      "Array type declaration missing size. Use 'array(type, size)' format (e.g., 'array(real, 10)')"
+      t.loc
   | TEComposed ("array", [ _; _ ]) -> ()
   | TELink t -> checkArrayDimensions t
   | _ -> ()
@@ -391,11 +393,14 @@ and exp ?(in_constant_context = false) (env : env) (e : Syntax.exp) : env * exp 
       env, { e = EInt index; t; loc }
     | ExprFunction _ ->
       (* Functions in expression context are not directly supported - treat as error *)
-      Error.raiseError ("Function '" ^ name ^ "' cannot be used in expression context without call") loc
+      Error.raiseError ("Function '" ^ name ^ "' must be called with parentheses (e.g., '" ^ name ^ "()')") loc
     | ExprType _ ->
       (* Types in expression context are not directly supported - treat as error *)
-      Error.raiseError ("Type '" ^ name ^ "' cannot be used in expression context") loc
-    | ExprNotFound -> Error.raiseError ("The symbol '" ^ name ^ "' could not be found") loc)
+      Error.raiseError
+        ("Type '" ^ name ^ "' cannot be used as a value. Use it in variable declarations or type annotations")
+        loc
+    | ExprNotFound ->
+      Error.raiseError ("Undefined symbol '" ^ name ^ "'. Check spelling or ensure it's declared before use") loc)
   | { e = SEIndex { e; index }; loc } ->
     let env, e = exp ~in_constant_context env e in
     let env, index = exp ~in_constant_context env index in
@@ -408,7 +413,10 @@ and exp ?(in_constant_context = false) (env : env) (e : Syntax.exp) : env * exp 
         unifyConstness t e.t
     in
     env, { e = EIndex { e; index }; t; loc }
-  | { e = SEArray []; loc } -> Error.raiseError "Empty arrays are not supported." loc
+  | { e = SEArray []; loc } ->
+    Error.raiseError
+      "Empty array literal '[]' is not supported. Specify array elements or use array type declaration"
+      loc
   | { e = SEArray (h :: t); loc } ->
     let env, h = exp ~in_constant_context env h in
     let env, t_rev, size =
@@ -461,13 +469,13 @@ and exp ?(in_constant_context = false) (env : env) (e : Syntax.exp) : env * exp 
     failwith ("Inference SENamed: " ^ e1 ^ " : " ^ e2)
   | { e = SENamed (_, _); loc } ->
     (* Handle case where second part is not a function call *)
-    Error.raiseError "After ':' you can only have a function call e.g. name:foo()" loc
+    Error.raiseError "Invalid instance call syntax. After ':' you must have a function call (e.g., 'name:foo()')" loc
   | { e = SECall { instance; path; args }; loc } when in_constant_context ->
     (* Check if the function has memory declarations *)
     let f = Env.lookFunctionCall env path loc in
     let function_has_mem = Env.isFunctionActive f in
     if function_has_mem then
-      Error.raiseError "Function calls with memory declarations are not supported in constants." loc
+      Error.raiseError "Functions with memory variables cannot be called in constant expressions" loc
     else
       call env instance path args loc e.loc
   | { e = SECall { instance; path; args }; loc } -> call env instance path args loc e.loc
@@ -565,8 +573,12 @@ and exp ?(in_constant_context = false) (env : env) (e : Syntax.exp) : env * exp 
     | ExprEnum (type_path, tloc, index) ->
       let t = C.path_t tloc type_path in
       env, { e = EInt index; t; loc }
-    | ExprNotFound -> Error.raiseError ("The symbol '" ^ id ^ "' could not be found") loc
-    | _ -> Error.raiseError ("The symbol '" ^ id ^ "' is not an enumeration value") loc)
+    | ExprNotFound ->
+      Error.raiseError ("Undefined symbol '" ^ id ^ "'. Check spelling or ensure it's declared before use") loc
+    | _ ->
+      Error.raiseError
+        ("Symbol '" ^ id ^ "' is not an enumeration value. Use enumeration constructors like 'MyEnum.Value'")
+        loc)
   | { e = SERecord { path; elems }; loc } -> (
     let t = Env.lookType env path loc in
     match t with
@@ -624,7 +636,8 @@ and lexp ?(const = false) (env : env) (e : Syntax.lexp) : env * lexp =
         let ctx = Env.getContext env in
         let ctx_t = C.path_t loc ctx in
         { l = LMember ({ l = LId context_name; t = ctx_t; loc }, name); t; loc }
-      | Const -> Error.raiseError ("The constant '" ^ name ^ "' cannot be assigned") loc
+      | Const ->
+        Error.raiseError ("Cannot assign to constant '" ^ name ^ "'. Constants are read-only after declaration") loc
     in
     env, e
   | { l = SLGroup e; _ } -> lexp ~const env e

@@ -1,4 +1,4 @@
-Invalid type specification
+Expected a type name for generic type parameters
 fun foo() {
   val a : 1();
            ^

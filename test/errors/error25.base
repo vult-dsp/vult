@@ -1,4 +1,4 @@
-Invalid array declaration
+Array declaration syntax error. Expected 'variable_name[size]'
 fun foo() {
   val (y)[2];
          ^

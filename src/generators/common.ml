@@ -69,7 +69,9 @@ let cast ~(from : type_) ~(to_ : type_) (value : Pla.t) =
 let toFixed ?(comment = true) (n : float) : string =
   let () =
     if n > 32767.0 || n < -32768.0 then
-      let msg = Printf.sprintf "This value '%f' cannot be represented with fixed-point numbers" n in
+      let msg =
+        Printf.sprintf "Value '%f' is out of range for fixed-point numbers. Must be between -32768 and 32767" n
+      in
       Util.Error.raiseErrorMsg msg
   in
   if n < 0.0 then

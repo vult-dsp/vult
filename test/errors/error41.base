@@ -1,4 +1,4 @@
-Array declarations should provide dimensions in the form array(type, size)
+Array type declaration missing size. Use 'array(type, size)' format (e.g., 'array(real, 10)')
 fun main() {
   val kk : array(real);
                 ^
