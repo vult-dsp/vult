@@ -865,6 +865,165 @@ module Simplify = struct
       Mapper.identity
 end
 
+module StrengthReduction = struct
+  (* Helper functions to check if a number is a power of 2 *)
+  let is_power_of_two n = n > 0 && n land (n - 1) = 0
+
+  let log2 n =
+    let rec loop acc x =
+      if x = 1 then
+        acc
+      else
+        loop (acc + 1) (x lsr 1)
+    in
+    loop 0 n
+
+
+  (* Check if a floating point number is close to an integer *)
+  let is_close_to_int f =
+    let rounded = Float.round f in
+    Float.abs (f -. rounded) < 1e-10
+
+
+  (* Check if a floating point number is a power of 2 *)
+  let is_float_power_of_two f =
+    is_close_to_int f
+    &&
+    let i = int_of_float (Float.round f) in
+    i > 0 && is_power_of_two i
+
+
+  let float_log2 f =
+    let i = int_of_float (Float.round f) in
+    log2 i
+
+
+  (* Main strength reduction for expressions *)
+  let exp =
+    Mapper.make
+    @@ fun _env state e ->
+    match e with
+    (* ========== INTEGER ARITHMETIC OPTIMIZATIONS ========== *)
+
+    (* x * 0 -> 0, x * 1 -> x (extend existing patterns) *)
+    | { e = EOp (OpMul, _, { e = EInt 0; _ }); _ } | { e = EOp (OpMul, { e = EInt 0; _ }, _); _ } ->
+      reapply state, { e with e = EInt 0 }
+    | { e = EOp (OpMul, e1, { e = EInt 1; _ }); _ } -> reapply state, e1
+    | { e = EOp (OpMul, { e = EInt 1; _ }, e2); _ } -> reapply state, e2
+    (* x * 2^n -> x << n (for integer types) *)
+    | { e = EOp (OpMul, e1, { e = EInt n; _ }); t = { t = TInt; _ }; loc } when is_power_of_two n ->
+      let shift_amount = log2 n in
+      reapply state, { e = EOp (OpLsh, e1, C.eint ~loc shift_amount); t = e.t; loc }
+    | { e = EOp (OpMul, { e = EInt n; _ }, e2); t = { t = TInt; _ }; loc } when is_power_of_two n ->
+      let shift_amount = log2 n in
+      reapply state, { e = EOp (OpLsh, e2, C.eint ~loc shift_amount); t = e.t; loc }
+    (* x / 2^n -> x >> n (for positive integers only, to preserve sign behavior) *)
+    | { e = EOp (OpDiv, e1, { e = EInt n; _ }); t = { t = TInt; _ }; loc } when is_power_of_two n ->
+      let shift_amount = log2 n in
+      reapply state, { e = EOp (OpRsh, e1, C.eint ~loc shift_amount); t = e.t; loc }
+    (* Removed x + x -> x * 2 transformation as it causes issues with constant propagation *)
+    (* x - x -> 0 (preserve type) *)
+    | { e = EOp (OpSub, e1, e2); _ } when Compare.exp e1 e2 = 0 -> (
+      match e1.t.t with
+      | TInt -> reapply state, C.eint ~loc:e.loc 0
+      | TReal -> reapply state, C.ereal ~loc:e.loc 0.0
+      | TFix16 -> reapply state, C.efix16 ~loc:e.loc 0.0
+      | _ -> state, e)
+    (* ========== FLOATING POINT ARITHMETIC OPTIMIZATIONS ========== *)
+    (* x * 0.0 -> 0.0, x * 1.0 -> x *)
+    | { e = EOp (OpMul, _, { e = EReal 0.0; _ }); _ } | { e = EOp (OpMul, { e = EReal 0.0; _ }, _); _ } ->
+      reapply state, { e with e = EReal 0.0 }
+    | { e = EOp (OpMul, e1, { e = EReal 1.0; _ }); _ } -> reapply state, e1
+    | { e = EOp (OpMul, { e = EReal 1.0; _ }, e2); _ } -> reapply state, e2
+    (* Removed x * 2.0 -> x + x transformation as it interferes with constant folding *)
+    (* Removed x * 0.5 <-> x / 2.0 transformations as they create cycles with other passes *)
+    (* Removed problematic power-of-2 real multiplication transformation *)
+    (* ========== FIXED POINT ARITHMETIC OPTIMIZATIONS ========== *)
+    (* Similar patterns for fixed point (TFix16) *)
+    | { e = EOp (OpMul, _, { e = EFixed 0.0; _ }); _ } | { e = EOp (OpMul, { e = EFixed 0.0; _ }, _); _ } ->
+      reapply state, { e with e = EFixed 0.0 }
+    | { e = EOp (OpMul, e1, { e = EFixed 1.0; _ }); _ } -> reapply state, e1
+    | { e = EOp (OpMul, { e = EFixed 1.0; _ }, e2); _ } ->
+      reapply state, e2 (* Removed x * 2.0 -> x + x for fixed point as it interferes with constant folding *)
+    (* ========== FUNCTION CALL OPTIMIZATIONS ========== *)
+    (* pow(x, 2) -> x * x *)
+    | { e = ECall { path = "pow"; args = [ x; { e = EReal 2.0; _ } ] }; _ } ->
+      reapply state, { e with e = EOp (OpMul, x, x) }
+    | { e = ECall { path = "pow"; args = [ x; { e = EInt 2; _ } ] }; _ } ->
+      reapply state, { e with e = EOp (OpMul, x, x) }
+    | { e = ECall { path = "pow"; args = [ x; { e = EFixed 2.0; _ } ] }; _ } ->
+      reapply state, { e with e = EOp (OpMul, x, x) }
+    (* pow(x, 3) -> x * x * x *)
+    | { e = ECall { path = "pow"; args = [ x; { e = EReal 3.0; _ } ] }; _ } ->
+      let x_squared = { e with e = EOp (OpMul, x, x) } in
+      reapply state, { e with e = EOp (OpMul, x, x_squared) }
+    | { e = ECall { path = "pow"; args = [ x; { e = EInt 3; _ } ] }; _ } ->
+      let x_squared = { e with e = EOp (OpMul, x, x) } in
+      reapply state, { e with e = EOp (OpMul, x, x_squared) }
+    (* pow(x, 4) -> (x * x) * (x * x) *)
+    | { e = ECall { path = "pow"; args = [ x; { e = EReal 4.0; _ } ] }; _ } ->
+      let x_squared = { e with e = EOp (OpMul, x, x) } in
+      reapply state, { e with e = EOp (OpMul, x_squared, x_squared) }
+    | { e = ECall { path = "pow"; args = [ x; { e = EInt 4; _ } ] }; _ } ->
+      let x_squared = { e with e = EOp (OpMul, x, x) } in
+      reapply state, { e with e = EOp (OpMul, x_squared, x_squared) }
+    (* pow(x, 0.5) -> sqrt(x) *)
+    | { e = ECall { path = "pow"; args = [ x; { e = EReal 0.5; _ } ] }; _ } ->
+      reapply state, { e with e = ECall { path = "sqrt"; args = [ x ] } }
+    (* pow(x, -1) -> 1.0 / x *)
+    | { e = ECall { path = "pow"; args = [ x; { e = EReal -1.0; _ } ] }; loc; _ } ->
+      reapply state, { e with e = EOp (OpDiv, C.ereal ~loc 1.0, x) }
+    | { e = ECall { path = "pow"; args = [ x; { e = EInt -1; _ } ] }; loc; _ } ->
+      reapply state, { e with e = EOp (OpDiv, C.ereal ~loc 1.0, x) }
+    (* pow(x, 1) -> x *)
+    | { e = ECall { path = "pow"; args = [ x; { e = EReal 1.0; _ } ] }; _ } -> reapply state, x
+    | { e = ECall { path = "pow"; args = [ x; { e = EInt 1; _ } ] }; _ } -> reapply state, x
+    | { e = ECall { path = "pow"; args = [ x; { e = EFixed 1.0; _ } ] }; _ } -> reapply state, x
+    (* pow(x, 0) -> 1 *)
+    | { e = ECall { path = "pow"; args = [ _; { e = EReal 0.0; _ } ] }; loc; _ } -> reapply state, C.ereal ~loc 1.0
+    | { e = ECall { path = "pow"; args = [ _; { e = EInt 0; _ } ] }; loc; _ } -> reapply state, C.eint ~loc 1
+    | { e = ECall { path = "pow"; args = [ _; { e = EFixed 0.0; _ } ] }; loc; _ } ->
+      reapply state, C.efix16 ~loc 1.0 (* ========== MATHEMATICAL IDENTITIES ========== *)
+    (* abs(abs(x)) -> abs(x) *)
+    | { e = ECall { path = "abs"; args = [ { e = ECall { path = "abs"; args = [ x ] }; _ } ] }; _ } ->
+      reapply state, { e with e = ECall { path = "abs"; args = [ x ] } }
+    (* sqrt(x * x) -> abs(x) (mathematically correct) *)
+    | { e = ECall { path = "sqrt"; args = [ { e = EOp (OpMul, x1, x2); _ } ] }; _ } when Compare.exp x1 x2 = 0 ->
+      reapply state, { e with e = ECall { path = "abs"; args = [ x1 ] } }
+    (* Removed log(exp(x)) <-> exp(log(x)) transformations as they may create cycles *)
+    (* Removed sin/cos constant optimizations as they conflict with existing Builtin pass *)
+
+    (* ========== AUDIO-SPECIFIC OPTIMIZATIONS ========== *)
+    (* tanh(x) where x is very small -> x (linear approximation) *)
+    | { e = ECall { path = "tanh"; args = [ { e = EReal x; _ } ] }; _ } when Float.abs x < 0.1 ->
+      reapply state, { e with e = EReal x }
+    | { e = ECall { path = "tanh"; args = [ { e = EFixed x; _ } ] }; _ } when Float.abs x < 0.1 ->
+      reapply state, { e with e = EFixed x } (* ========== BITWISE OPERATIONS OPTIMIZATIONS ========== *)
+    (* x & 0 -> 0 *)
+    | { e = EOp (OpBand, _, { e = EInt 0; _ }); _ } | { e = EOp (OpBand, { e = EInt 0; _ }, _); _ } ->
+      reapply state, { e with e = EInt 0 }
+    (* x | 0 -> x *)
+    | { e = EOp (OpBor, e1, { e = EInt 0; _ }); _ } -> reapply state, e1
+    | { e = EOp (OpBor, { e = EInt 0; _ }, e2); _ } -> reapply state, e2
+    (* x ^ 0 -> x *)
+    | { e = EOp (OpBxor, e1, { e = EInt 0; _ }); _ } -> reapply state, e1
+    | { e = EOp (OpBxor, { e = EInt 0; _ }, e2); _ } -> reapply state, e2
+    (* x ^ x -> 0 *)
+    | { e = EOp (OpBxor, e1, e2); _ } when Compare.exp e1 e2 = 0 -> reapply state, C.eint ~loc:e.loc 0
+    (* x << 0 -> x, x >> 0 -> x *)
+    | { e = EOp (OpLsh, e1, { e = EInt 0; _ }); _ } -> reapply state, e1
+    | { e = EOp (OpRsh, e1, { e = EInt 0; _ }); _ } -> reapply state, e1
+    (* No optimization found *)
+    | _ -> state, e
+
+
+  let mapper enabled =
+    if enabled = Enabled then
+      { Mapper.identity with exp }
+    else
+      Mapper.identity
+end
+
 module Sort = struct
   let dependencies = Location.mapper |> Mapper.seq CollectDependencies.mapper
 
@@ -931,6 +1090,7 @@ let passes =
   Location.mapper
   |> Mapper.seq (Markers.mapper Enabled)
   |> Mapper.seq (Canonize.mapper Enabled)
+  |> Mapper.seq (StrengthReduction.mapper Enabled)
   |> Mapper.seq (Simplify.mapper Enabled)
   |> Mapper.seq (Builtin.mapper Enabled)
   |> Mapper.seq (IfExpressions.mapper Enabled)

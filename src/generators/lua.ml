@@ -51,6 +51,8 @@ function sqrt(x)            return x end
 function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
+function lshift(a, b)       return a * (2 ^ b) end
+function rshift(a, b)       return math.floor(a / (2 ^ b)) end
 function initializeArray(v, n) local a = {} for i=1, n do a[i] = 0 end return a end
 
 |}
@@ -123,11 +125,32 @@ let rec print_exp e =
     let e = print_exp e in
     let op = uoperator op in
     {%pla|(<#op#><#e#>)|}
-  | EOp (op, e1, e2) ->
+  | EOp (op, e1, e2) -> (
     let se1 = print_exp e1 in
     let se2 = print_exp e2 in
-    let op = operator op in
-    {%pla|(<#se1#> <#op#> <#se2#>)|}
+    match op with
+    (* Convert bit shifts to arithmetic operations for better Lua performance *)
+    | OpLsh -> (
+      match e2.e with
+      | EInt n when n >= 0 && n <= 10 ->
+        (* Small shifts: x << 1 → x * 2 *)
+        let multiplier = 1 lsl n in
+        {%pla|(<#se1#> * <#multiplier#i>)|}
+      | _ ->
+        (* Variable shifts: x << y → x * (2 ^ y) *)
+        {%pla|(<#se1#> * (2 ^ <#se2#>))|})
+    | OpRsh -> (
+      match e2.e with
+      | EInt n when n >= 0 && n <= 10 ->
+        (* Small shifts: x >> 1 → x / 2 *)
+        let divisor = 1 lsl n in
+        {%pla|math.floor(<#se1#> / <#divisor#i>)|}
+      | _ ->
+        (* Variable shifts: x >> y → floor(x / (2 ^ y)) *)
+        {%pla|math.floor(<#se1#> / (2 ^ <#se2#>))|})
+    | _ ->
+      let op = operator op in
+      {%pla|(<#se1#> <#op#> <#se2#>)|})
   | EIf { cond; then_; else_ } when isValueOrIf then_ && isValueOrIf else_ ->
     let cond = print_exp cond in
     let then_ = print_exp then_ in

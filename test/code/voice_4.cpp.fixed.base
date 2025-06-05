@@ -265,7 +265,7 @@ fix16_t Phase_process(Phase_process_type& _ctx, fix16_t cv, fix16_t reset) {
 
 fix16_t Blit_pulse_train(Blit_pulse_train_type& _ctx, fix16_t cv, fix16_t phase) {
    if (Util_change(_ctx.inst_1b05e, cv)) {
-      _ctx.m = 1 + 2 * fix_to_int(Util_cvToperiod(cv));
+      _ctx.m = 1 + (fix_to_int(Util_cvToperiod(cv)) << 1);
       _ctx.scale = (Util_cvToperiod(cv) << 1);
    }
    fix16_t pi_phase = (phase >> 1);
@@ -432,7 +432,7 @@ void Voice_4_controlChange(Voice_4_process_type& _ctx, int32_t control, int32_t 
       _ctx.flt_res = fix_mul(0x204 /* 0.007874 */, int_to_fix(value));
    }
    if (control == 46) {
-      _ctx.flt_shape = (4 * value) / 127;
+      _ctx.flt_shape = (value << 2) / 127;
    }
    if (control == 47) {
       _ctx.attack = fix_mul(0x204 /* 0.007874 */, int_to_fix(value));

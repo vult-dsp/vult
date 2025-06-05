@@ -1,0 +1,160 @@
+// Test file for strength reduction optimizations
+
+// Test integer power-of-2 multiplication to left shift
+fun test_int_mul_power2() : int {
+    val x = 5;
+    val result1 = x * 2;   // Should become x << 1
+    val result2 = x * 4;   // Should become x << 2
+    val result3 = x * 8;   // Should become x << 3
+    val result4 = x * 16;  // Should become x << 4
+    return result1 + result2 + result3 + result4; // 10 + 20 + 40 + 80 = 150
+}
+
+// Test integer power-of-2 division to right shift
+fun test_int_div_power2() : int {
+    val x = 80;
+    val result1 = x / 2;   // Should become x >> 1
+    val result2 = x / 4;   // Should become x >> 2
+    val result3 = x / 8;   // Should become x >> 3
+    return result1 + result2 + result3; // 40 + 20 + 10 = 70
+}
+
+// Test multiplication by 0 and 1 optimizations
+fun test_mul_identity() : int {
+    val x = 42;
+    val zero_result = x * 0;  // Should become 0
+    val one_result = x * 1;   // Should become x
+    return zero_result + one_result; // 0 + 42 = 42
+}
+
+// Test real number multiplication by 0 and 1
+fun test_real_mul_identity() : real {
+    val x = 3.14;
+    val zero_result = x * 0.0;  // Should become 0.0
+    val one_result = x * 1.0;   // Should become x
+    return zero_result + one_result; // 0.0 + 3.14 = 3.14
+}
+
+// Test fixed point multiplication by 0 and 1
+fun test_fixed_mul_identity() : real {
+    val x = 2.5;
+    val zero_result = fix16(x) * fix16(0.0);  // Should become 0.0 (fixed)
+    val one_result = fix16(x) * fix16(1.0);   // Should become x (fixed)
+    return real(zero_result) + real(one_result); // 0.0 + 2.5 = 2.5
+}
+
+// Test subtraction x - x = 0
+fun test_sub_self() : int {
+    val x = 123;
+    val result = x - x;  // Should become 0
+    return result; // 0
+}
+
+// Test real subtraction x - x = 0.0
+fun test_real_sub_self() : real {
+    val x = 7.5;
+    val result = x - x;  // Should become 0.0
+    return result; // 0.0
+}
+
+// Test pow(x, 2) to x * x optimization
+fun test_pow_square() : real {
+    val x = 3.0;
+    val result = pow(x, 2.0);  // Should become x * x
+    return result; // 9.0
+}
+
+// Test pow(x, 3) to x * x * x optimization
+fun test_pow_cube() : real {
+    val x = 2.0;
+    val result = pow(x, 3.0);  // Should become x * x * x
+    return result; // 8.0
+}
+
+// Test pow(x, 4) to (x * x) * (x * x) optimization
+fun test_pow_fourth() : real {
+    val x = 2.0;
+    val result = pow(x, 4.0);  // Should become (x * x) * (x * x)
+    return result; // 16.0
+}
+
+// Test pow(x, 0.5) to sqrt(x) optimization
+fun test_pow_sqrt() : real {
+    val x = 9.0;
+    val result = pow(x, 0.5);  // Should become sqrt(x)
+    return result; // 3.0
+}
+
+// Test pow(x, 1) to x optimization
+fun test_pow_one() : real {
+    val x = 42.0;
+    val result = pow(x, 1.0);  // Should become x
+    return result; // 42.0
+}
+
+// Test pow(x, 0) to 1 optimization
+fun test_pow_zero() : real {
+    val x = 999.0;
+    val result = pow(x, 0.0);  // Should become 1.0
+    return result; // 1.0
+}
+
+// Test pow(x, -1) to 1.0 / x optimization
+fun test_pow_inverse() : real {
+    val x = 4.0;
+    val result = pow(x, -1.0);  // Should become 1.0 / x
+    return result; // 0.25
+}
+
+// Test abs(abs(x)) to abs(x) optimization
+fun test_abs_abs() : real {
+    val x = -5.0;
+    val result = abs(abs(x));  // Should become abs(x)
+    return result; // 5.0
+}
+
+// Test sqrt(x * x) to abs(x) optimization
+fun test_sqrt_square() : real {
+    val x = -3.0;
+    val result = sqrt(x * x);  // Should become abs(x)
+    return result; // 3.0
+}
+
+// Test bitwise operations
+fun test_bitwise_identity() : int {
+    val x = 42;
+    val and_zero = x & 0;     // Should become 0
+    val or_zero = x | 0;      // Should become x
+    val xor_zero = x ^ 0;     // Should become x
+    val xor_self = x ^ x;     // Should become 0
+    val lshift_zero = x << 0; // Should become x
+    val rshift_zero = x >> 0; // Should become x
+    
+    return and_zero + or_zero + xor_zero + xor_self + lshift_zero + rshift_zero;
+    // 0 + 42 + 42 + 0 + 42 + 42 = 168
+}
+
+// Main test function that calls all strength reduction tests
+fun main() : int {
+    val test1 = test_int_mul_power2();      // 150
+    val test2 = test_int_div_power2();      // 70
+    val test3 = test_mul_identity();        // 42
+    val test4 = int(test_real_mul_identity()); // 3 (truncated from 3.14)
+    val test5 = int(test_fixed_mul_identity()); // 2 (truncated from 2.5)
+    val test6 = test_sub_self();            // 0
+    val test7 = int(test_real_sub_self());  // 0
+    val test8 = int(test_pow_square());     // 9
+    val test9 = int(test_pow_cube());       // 8
+    val test10 = int(test_pow_fourth());    // 16
+    val test11 = int(test_pow_sqrt());      // 3
+    val test12 = int(test_pow_one());       // 42
+    val test13 = int(test_pow_zero());      // 1
+    val test14 = int(test_pow_inverse() * 4.0); // 1 (0.25 * 4 = 1)
+    val test15 = int(test_abs_abs());       // 5
+    val test16 = int(test_sqrt_square());   // 3
+    val test17 = test_bitwise_identity();   // 168
+    
+    // Sum all test results
+    // 150 + 70 + 42 + 3 + 2 + 0 + 0 + 9 + 8 + 16 + 3 + 42 + 1 + 1 + 5 + 3 + 168 = 523
+    return test1 + test2 + test3 + test4 + test5 + test6 + test7 + test8 + test9 + test10 + test11 + test12 + test13 + test14 + test15 + test16 + test17;
+}

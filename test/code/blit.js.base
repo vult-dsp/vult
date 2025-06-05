@@ -145,7 +145,7 @@ this.Util_cvToperiod = function (cv) {
 };
 
 this.Blit_pulse_start = function (_ctx) {
-   _ctx.m = ((1|0) + ((2|0) * this.int_(this.Util_cvToperiod(0.0))));
+   _ctx.m = ((1|0) + (this.int_(this.Util_cvToperiod(0.0)) << (1|0)));
    _ctx.scale = (1.0 + (2.0 * this.Util_cvToperiod(0.0)));
 };
 
@@ -366,7 +366,7 @@ this.Tables_nsine = function (x) {
 this.Blit_pulse_train = function (_ctx, cv, phase) {
    if (this.Util_change(_ctx.inst_1b05e, cv)) {
       {
-         _ctx.m = ((1|0) + ((2|0) * this.int_(this.Util_cvToperiod(cv))));
+         _ctx.m = ((1|0) + (this.int_(this.Util_cvToperiod(cv)) << (1|0)));
          _ctx.scale = (2.0 * this.Util_cvToperiod(cv));
       }
    }

@@ -265,7 +265,7 @@ float Phase_process(Phase_process_type& _ctx, float cv, float reset) {
 
 float Blit_pulse_train(Blit_pulse_train_type& _ctx, float cv, float phase) {
    if (Util_change(_ctx.inst_1b05e, cv)) {
-      _ctx.m = 1 + 2 * float_to_int(Util_cvToperiod(cv));
+      _ctx.m = 1 + (float_to_int(Util_cvToperiod(cv)) << 1);
       _ctx.scale = 2.0f * Util_cvToperiod(cv);
    }
    float pi_phase = 0.5f * phase;
@@ -432,7 +432,7 @@ void Voice_4_controlChange(Voice_4_process_type& _ctx, int32_t control, int32_t 
       _ctx.flt_res = 0.007874f * int_to_float(value);
    }
    if (control == 46) {
-      _ctx.flt_shape = (4 * value) / 127;
+      _ctx.flt_shape = (value << 2) / 127;
    }
    if (control == 47) {
       _ctx.attack = 0.007874f * int_to_float(value);

@@ -200,6 +200,7 @@ let builtin_functions =
     ; "<=", C.a_a_bool
     ; "|", C.int_int_int
     ; "&", C.int_int_int
+    ; "^", C.int_int_int
     ; ">>", C.int_int_int
     ; "<<", C.int_int_int
     ; "not", C.bool_bool

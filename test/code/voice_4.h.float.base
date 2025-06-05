@@ -385,7 +385,7 @@ static_inline float Util_cvToperiod(float cv) {
 }
 
 static_inline void Blit_pulse_start(Blit_pulse_train_type& _ctx) {
-   _ctx.m = 1 + 2 * float_to_int(Util_cvToperiod(0.0f));
+   _ctx.m = 1 + (float_to_int(Util_cvToperiod(0.0f)) << 1);
    _ctx.scale = 1.0f + 2.0f * Util_cvToperiod(0.0f);
 }
 

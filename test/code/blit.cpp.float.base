@@ -44,7 +44,7 @@ float Phase_process(Phase_process_type& _ctx, float cv, float reset) {
 
 float Blit_pulse_train(Blit_pulse_train_type& _ctx, float cv, float phase) {
    if (Util_change(_ctx.inst_1b05e, cv)) {
-      _ctx.m = 1 + 2 * float_to_int(Util_cvToperiod(cv));
+      _ctx.m = 1 + (float_to_int(Util_cvToperiod(cv)) << 1);
       _ctx.scale = 2.0f * Util_cvToperiod(cv);
    }
    float pi_phase = 0.5f * phase;

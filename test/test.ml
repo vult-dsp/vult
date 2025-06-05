@@ -170,6 +170,7 @@ let interpreter =
   ; "functions.vult"
   ; "instance_state.vult"
   ; "memory_state.vult"
+  ; "strength_reduction.vult"
   ]
 
 
