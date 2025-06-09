@@ -32,11 +32,11 @@ NOTE: The code for the fixed-point operations is based on the project:
 
 fix16_t fix_exp(fix16_t inValue) {
   if (inValue == 0)
-    return 0x00010000;
-  if (inValue == 0x00010000)
+    return FIX16_ONE;
+  if (inValue == FIX16_ONE)
     return 178145;
   if (inValue >= 681391)
-    return 0x7FFFFFFF;
+    return FIX16_MAX;
   if (inValue <= -772243)
     return 0;
   // The power-series converges much faster on positive values
@@ -223,44 +223,41 @@ int32_t push_array(CustomBuffer &buffer, int32_t index, int32_t size) {
 }
 
 void update_size(CustomBuffer &buffer, int32_t index, int32_t size) {
-  uint32_t *ptr = (uint32_t *)&size;
-  uint8_t b0 = (*ptr) & 0xFF;
-  uint8_t b1 = ((*ptr) >> 8) & 0xFF;
-  uint8_t b2 = ((*ptr) >> 16) & 0xFF;
+  uint32_bytes_union converter;
+  converter.u = static_cast<uint32_t>(size);
 
-  modify_byte(buffer, index + 1, b0);
-  modify_byte(buffer, index + 2, b1);
-  modify_byte(buffer, index + 3, b2);
+  modify_byte(buffer, index + 1, converter.bytes[0]);
+  modify_byte(buffer, index + 2, converter.bytes[1]);
+  modify_byte(buffer, index + 3, converter.bytes[2]);
 }
 
 int32_t push_float(CustomBuffer &buffer, int32_t index, float value) {
-  uint8_t data[4];
-  float *ptr = (float *)&data;
-  *ptr = value;
+  float_bytes_union converter;
+  converter.f = value;
+  
   push_byte(buffer, FLOAT_TAG);
-  push_byte(buffer, data[0]);
-  push_byte(buffer, data[1]);
-  push_byte(buffer, data[2]);
-  push_byte(buffer, data[3]);
+  push_byte(buffer, converter.bytes[0]);
+  push_byte(buffer, converter.bytes[1]);
+  push_byte(buffer, converter.bytes[2]);
+  push_byte(buffer, converter.bytes[3]);
   return index + 5;
 }
 
 int32_t push_int(CustomBuffer &buffer, int32_t index, int32_t value) {
   if (value <= 127 && value >= -128) {
-    int8_t svalue = (int8_t)value;
-    uint8_t *ptr = (uint8_t *)&svalue;
+    int8_bytes_union converter;
+    converter.i = static_cast<int8_t>(value);
     push_byte(buffer, SMALL_INT_TAG);
-    push_byte(buffer, *ptr);
+    push_byte(buffer, converter.byte);
     return index + 2;
   } else {
-    uint8_t data[4];
-    int32_t *ptr = (int32_t *)&data;
-    *ptr = value;
+    int32_bytes_union converter;
+    converter.i = value;
     push_byte(buffer, INT_TAG);
-    push_byte(buffer, data[0]);
-    push_byte(buffer, data[1]);
-    push_byte(buffer, data[2]);
-    push_byte(buffer, data[3]);
+    push_byte(buffer, converter.bytes[0]);
+    push_byte(buffer, converter.bytes[1]);
+    push_byte(buffer, converter.bytes[2]);
+    push_byte(buffer, converter.bytes[3]);
     return index + 5;
   }
 }
@@ -382,17 +379,16 @@ int32_t goto_data(CustomBuffer &buffer) {
 int32_t deserialize_int(CustomBuffer &buffer, int32_t index) {
   // Check the tag
   if (read_byte(buffer, index) == SMALL_INT_TAG) {
-    uint8_t svalue = read_byte(buffer, index + 1);
-    int8_t *ptr = (int8_t *)&svalue;
-    return *ptr;
+    int8_bytes_union converter;
+    converter.byte = read_byte(buffer, index + 1);
+    return static_cast<int32_t>(converter.i);
   } else if (read_byte(buffer, index) == INT_TAG) {
-    uint8_t data[4];
-    int32_t *ptr = (int32_t *)&data;
-    data[0] = read_byte(buffer, index + 1);
-    data[1] = read_byte(buffer, index + 2);
-    data[2] = read_byte(buffer, index + 3);
-    data[3] = read_byte(buffer, index + 4);
-    return *ptr;
+    int32_bytes_union converter;
+    converter.bytes[0] = read_byte(buffer, index + 1);
+    converter.bytes[1] = read_byte(buffer, index + 2);
+    converter.bytes[2] = read_byte(buffer, index + 3);
+    converter.bytes[3] = read_byte(buffer, index + 4);
+    return converter.i;
   } else {
     buffer.error = true;
     return 0;
@@ -402,8 +398,12 @@ int32_t deserialize_int(CustomBuffer &buffer, int32_t index) {
 float deserialize_float(CustomBuffer &buffer, int32_t index) {
   // Check the tag
   if (read_byte(buffer, index) == FLOAT_TAG) {
-    float *ptr = (float *)&(buffer.data[static_cast<uint32_t>(index + 1)]);
-    return *ptr;
+    float_bytes_union converter;
+    converter.bytes[0] = read_byte(buffer, index + 1);
+    converter.bytes[1] = read_byte(buffer, index + 2);
+    converter.bytes[2] = read_byte(buffer, index + 3);
+    converter.bytes[3] = read_byte(buffer, index + 4);
+    return converter.f;
   } else {
     buffer.error = true;
     return 0.0f;
@@ -413,14 +413,31 @@ float deserialize_float(CustomBuffer &buffer, int32_t index) {
 std::string deserialize_string(CustomBuffer &buffer, int32_t index) {
   // Check the tag
   if (read_byte(buffer, index) == STRING_TAG) {
-    int32_t size = block_size(buffer, index) - 5 + 1;
+    int32_t total_size = block_size(buffer, index);
+    // String size = total_size - header(4) - tag(1) = total_size - 5
+    // But we need to account for null terminator, so actual string length = total_size - 5 - 1
+    int32_t string_length = total_size - 5 - 1;
+    
+    if (string_length < 0) {
+      buffer.error = true;
+      return "";
+    }
 
     index = index + 4; // move to the first characters
     std::string str;
-    str.resize(static_cast<size_t>(size));
-    for (int i = 0; i < size; i++) {
-      str[static_cast<size_t>(i)] = (char)read_byte(buffer, index++);
+    str.reserve(static_cast<size_t>(string_length));
+    
+    for (int i = 0; i < string_length; i++) {
+      char c = static_cast<char>(read_byte(buffer, index++));
+      if (buffer.error) {
+        return "";
+      }
+      str.push_back(c);
     }
+    
+    // Skip the null terminator
+    index++;
+    
     return str;
   } else {
     buffer.error = true;

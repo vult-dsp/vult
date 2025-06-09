@@ -47,14 +47,19 @@ NOTE: The code for the fixed-point operations is based on the project:
 
 typedef int32_t fix16_t;
 
+// Fixed-point constants
+static const fix16_t FIX16_ONE = 0x00010000;  // 1.0 in fixed-point
+static const fix16_t FIX16_MAX = 0x7FFFFFFF;  // Maximum fixed-point value
+static const fix16_t FIX16_MIN = INT32_MIN;     // Minimum fixed-point value
+
 extern float float_samplerate();
 extern fix16_t fix_samplerate();
 
 // Type conversion
-static_inline float fix_to_float(fix16_t a) { return (float)a / 0x00010000; }
+static_inline float fix_to_float(fix16_t a) { return (float)a / FIX16_ONE; }
 static_inline bool fix_to_bool(fix16_t a) { return a != 0; }
 static_inline fix16_t float_to_fix(float a) {
-  float temp = a * 0x00010000;
+  float temp = a * FIX16_ONE;
   return (fix16_t)temp;
 }
 static_inline bool float_to_bool(float a) { return a != 0.0f; }
@@ -86,9 +91,9 @@ static_inline fix16_t bool_to_fix(bool a) { return a ? float_to_fix(1.0) : float
 
 static_inline int float_to_int(float a) { return (int)a; }
 
-static_inline fix16_t int_to_fix(int a) { return a * 0x00010000; }
+static_inline fix16_t int_to_fix(int a) { return a * FIX16_ONE; }
 
-static_inline fix16_t fix_to_fix(fix16_t a) { return a * 0x00010000; }
+static_inline fix16_t fix_to_fix(fix16_t a) { return a; }
 
 static_inline int fix_to_int(fix16_t a) { return (a >> 16); }
 
@@ -202,6 +207,27 @@ typedef struct CustomBuffer {
 typedef struct CustomTypeDescr {
   int32_t position;
 } CustomTypeDescr;
+
+// Safe type conversion unions to avoid type punning
+union float_bytes_union {
+  float f;
+  uint8_t bytes[4];
+};
+
+union int32_bytes_union {
+  int32_t i;
+  uint8_t bytes[4];
+};
+
+union uint32_bytes_union {
+  uint32_t u;
+  uint8_t bytes[4];
+};
+
+union int8_bytes_union {
+  int8_t i;
+  uint8_t byte;
+};
 
 int32_t search_field_name(CustomBuffer &buffer, CustomTypeDescr &descr, int32_t index, std::string name);
 
