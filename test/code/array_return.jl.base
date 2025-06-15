@@ -1,0 +1,162 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct Array_return_foo3_type
+       y::Int32
+end
+
+# Default constructor for Array_return_foo3_type
+function Array_return_foo3_type()
+    return Array_return_foo3_type(Int32(0))
+end
+
+mutable struct Array_return_foo4_type
+       y::Int32
+end
+
+# Default constructor for Array_return_foo4_type
+function Array_return_foo4_type()
+    return Array_return_foo4_type(Int32(0))
+end
+
+mutable struct Array_return_foo5_type
+       Array_return_foo5_ret_0::Int32
+       Array_return_foo5_ret_1::Vector{Int32}
+end
+
+# Default constructor for Array_return_foo5_type
+function Array_return_foo5_type()
+    return Array_return_foo5_type(Int32(0), fill(Int32(0), 3))
+end
+
+mutable struct Array_return_foo6_type
+       Array_return_foo6_ret_0::Int32
+       Array_return_foo6_ret_1::Vector{Int32}
+end
+
+# Default constructor for Array_return_foo6_type
+function Array_return_foo6_type()
+    return Array_return_foo6_type(Int32(0), fill(Int32(0), 3))
+end
+
+mutable struct Array_return_s1
+       x::Int32
+       y::Int32
+end
+
+# Default constructor for Array_return_s1
+function Array_return_s1()
+    return Array_return_s1(Int32(0), Int32(0))
+end
+
+mutable struct Array_return_foo7_type
+       Array_return_foo7_ret_0::Int32
+       Array_return_foo7_ret_1::Array_return_s1
+end
+
+# Default constructor for Array_return_foo7_type
+function Array_return_foo7_type()
+    return Array_return_foo7_type(Int32(0), Array_return_s1())
+end
+
+function Array_return_foo3_type_alloc()
+   _ctx = Array_return_foo3_type()
+   _ctx.y = Int32(0)
+   return _ctx
+end
+
+function Array_return_foo4_type_alloc()
+   _ctx = Array_return_foo4_type()
+   _ctx.y = Int32(0)
+   return _ctx
+end
+
+function Array_return_foo5_type_alloc()
+   _ctx = Array_return_foo5_type()
+   _ctx.Array_return_foo5_ret_0 = Int32(0)
+   i_0 = Int32(0)
+   temp = fill(Int32(0), Int32(3))
+   while (i_0 < Int32(3))
+      begin
+         @inbounds temp[i_0 + 1] = Int32(0)
+         i_0 = (Int32(1) + i_0)
+      end
+   end
+   _ctx.Array_return_foo5_ret_1 = temp
+   return _ctx
+end
+
+function Array_return_foo6_type_alloc()
+   _ctx = Array_return_foo6_type()
+   _ctx.Array_return_foo6_ret_0 = Int32(0)
+   i_0 = Int32(0)
+   temp = fill(Int32(0), Int32(3))
+   while (i_0 < Int32(3))
+      begin
+         @inbounds temp[i_0 + 1] = Int32(0)
+         i_0 = (Int32(1) + i_0)
+      end
+   end
+   _ctx.Array_return_foo6_ret_1 = temp
+   return _ctx
+end
+
+function Array_return_s1_alloc()
+   _ctx = Array_return_s1()
+   _ctx.x = Int32(0)
+   _ctx.y = Int32(0)
+   return _ctx
+end
+
+function Array_return_foo7_type_alloc()
+   _ctx = Array_return_foo7_type()
+   _ctx.Array_return_foo7_ret_0 = Int32(0)
+   _ctx.Array_return_foo7_ret_1 = Array_return_s1_alloc()
+   return _ctx
+end
+
+function Array_return_foo1()
+   _array_0 = [Int32(1), Int32(2), Int32(3)]
+   return _array_0
+end
+
+function Array_return_foo2()
+   x = [Int32(1), Int32(2), Int32(3)]
+   return x
+end
+
+function Array_return_foo3(_ctx)
+   _ctx.y = Int32(0)
+   _array_0 = [Int32(1), Int32(2), Int32(3)]
+   return _array_0
+end
+
+function Array_return_foo4(_ctx)
+   _ctx.y = Int32(0)
+   x = [Int32(1), Int32(2), Int32(3)]
+   return x
+end
+
+function Array_return_foo5(_ctx)
+   _array_0 = [Int32(1), Int32(2), Int32(3)]
+   _ctx.Array_return_foo5_ret_0 = Int32(1)
+   _ctx.Array_return_foo5_ret_1 = _array_0
+   return 
+end
+
+function Array_return_foo6(_ctx)
+   y = Int32(1)
+   x = [Int32(1), Int32(2), Int32(3)]
+   _ctx.Array_return_foo6_ret_0 = y
+   _ctx.Array_return_foo6_ret_1 = x
+   return 
+end
+
+function Array_return_foo7(_ctx)
+   d = fill(Int32(0), Int32(4))
+   _ctx.Array_return_foo7_ret_0 = @inbounds d[1]
+   s = nothing
+   _ctx.Array_return_foo7_ret_1 = @inbounds s[1]
+   return 
+end
+

@@ -1,0 +1,80 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+function FixedAndFloat_test1()
+   fixed_value = Float32(0.0)
+   real_value = Float32(0.0)
+   int_value = Int32(0)
+   bool_value = false
+   result = (fixed_value + fix16(real_value))
+   from_int = fix16(int_value)
+   from_real = fix16(real_value)
+   from_bool = fix16(bool_value)
+   to_int = trunc(Int32, fixed_value)
+   to_real = Float32(fixed_value)
+   to_bool = Bool(fixed_value)
+   from_int = Float32(0.0)
+   from_real = Float32(0.0)
+   from_bool = Float32(0.0)
+   to_int = Int32(0)
+   to_real = Float32(0.0)
+   to_bool = false
+end
+
+FixedAndFloat_take_fix_return_fixed_c0 = nothing
+FixedAndFloat_take_fix_return_fixed_c1 = nothing
+function FixedAndFloat_take_fix_return_fixed_raw_c0(index)
+   return @inbounds FixedAndFloat_take_fix_return_fixed_c0[index + 1]
+end
+
+function FixedAndFloat_take_fix_return_fixed_raw_c1(index)
+   return @inbounds FixedAndFloat_take_fix_return_fixed_c1[index + 1]
+end
+
+function FixedAndFloat_take_fix_return_fixed(x)
+   value = clip((x * Float32(32.0)), Float32(0.0), Float32(32.0))
+   index = trunc(Int32, value)
+   decimal = (value - floor(value))
+   return (@inbounds FixedAndFloat_take_fix_return_fixed_c0[index + 1] + (@inbounds FixedAndFloat_take_fix_return_fixed_c1[index + 1] * decimal))
+end
+
+FixedAndFloat_take_fix_return_real_c0 = nothing
+FixedAndFloat_take_fix_return_real_c1 = nothing
+FixedAndFloat_take_fix_return_real_c2 = nothing
+function FixedAndFloat_take_fix_return_real_raw_c0(index)
+   return @inbounds FixedAndFloat_take_fix_return_real_c0[index + 1]
+end
+
+function FixedAndFloat_take_fix_return_real_raw_c1(index)
+   return @inbounds FixedAndFloat_take_fix_return_real_c1[index + 1]
+end
+
+function FixedAndFloat_take_fix_return_real_raw_c2(index)
+   return @inbounds FixedAndFloat_take_fix_return_real_c2[index + 1]
+end
+
+function FixedAndFloat_take_fix_return_real(x)
+   index = clamp(fix_to_int((x * Float32(31.0))), Int32(0), Int32(31))
+   return (@inbounds FixedAndFloat_take_fix_return_real_c0[index + 1] + (fix_to_float(x) * (@inbounds FixedAndFloat_take_fix_return_real_c1[index + 1] + (@inbounds FixedAndFloat_take_fix_return_real_c2[index + 1] * fix_to_float(x)))))
+end
+
+FixedAndFloat_take_real_return_fixed_c0 = nothing
+FixedAndFloat_take_real_return_fixed_c1 = nothing
+FixedAndFloat_take_real_return_fixed_c2 = nothing
+function FixedAndFloat_take_real_return_fixed_raw_c0(index)
+   return @inbounds FixedAndFloat_take_real_return_fixed_c0[index + 1]
+end
+
+function FixedAndFloat_take_real_return_fixed_raw_c1(index)
+   return @inbounds FixedAndFloat_take_real_return_fixed_c1[index + 1]
+end
+
+function FixedAndFloat_take_real_return_fixed_raw_c2(index)
+   return @inbounds FixedAndFloat_take_real_return_fixed_c2[index + 1]
+end
+
+function FixedAndFloat_take_real_return_fixed(x)
+   index = clamp(trunc(Int32, (x * Float32(31.0))), Int32(0), Int32(31))
+   return (@inbounds FixedAndFloat_take_real_return_fixed_c0[index + 1] + (float_to_fix(x) * (@inbounds FixedAndFloat_take_real_return_fixed_c1[index + 1] + (@inbounds FixedAndFloat_take_real_return_fixed_c2[index + 1] * float_to_fix(x)))))
+end
+

@@ -1,0 +1,41 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct EmptyTypes_foo_type
+       screen::Any
+       settings::Any
+end
+
+# Default constructor for EmptyTypes_foo_type
+function EmptyTypes_foo_type()
+    return EmptyTypes_foo_type(nothing, nothing)
+end
+
+function EmptyTypes_foo_type_alloc()
+   _ctx = EmptyTypes_foo_type()
+   _ctx.screen = nothing
+   _ctx.settings = nothing
+   return _ctx
+end
+
+function EmptyTypes_setSettings_type_alloc(_ctx)
+   return EmptyTypes_foo_type_alloc()
+end
+
+function EmptyTypes_setScreen_type_alloc(_ctx)
+   return EmptyTypes_foo_type_alloc()
+end
+
+function EmptyTypes_foo(_ctx)
+   setSomething(_ctx.settings)
+   drawSomething(_ctx.screen)
+end
+
+function EmptyTypes_setSettings(_ctx, s)
+   _ctx.settings = s
+end
+
+function EmptyTypes_setScreen(_ctx, s)
+   _ctx.settings = s
+end
+

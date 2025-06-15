@@ -1,0 +1,27 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+function StringType_test1()
+   str1 = "first"
+   str2 = "second"
+   str3 = ((str1 + ", ") + str2)
+   return str3
+end
+
+function StringType_test2()
+   str1 = string(Int32(1))
+   str2 = string(Float32(1.0))
+   str3 = string(Float32(1.0))
+   str4 = string(true)
+end
+
+function StringType_test3(a, b)
+   return (a + b)
+end
+
+function StringType_test4()
+   str = "text"
+   StringType_test3("first", "second")
+   i = (Int32(6) + length(str))
+end
+

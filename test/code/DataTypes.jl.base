@@ -1,0 +1,61 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct DataTypes_point
+       x::Float32
+       y::Float32
+end
+
+# Default constructor for DataTypes_point
+function DataTypes_point()
+    return DataTypes_point(Float32(0.0), Float32(0.0))
+end
+
+mutable struct DataTypes_test2_type
+       p2::DataTypes_point
+       result::DataTypes_point
+end
+
+# Default constructor for DataTypes_test2_type
+function DataTypes_test2_type()
+    return DataTypes_test2_type(DataTypes_point(), DataTypes_point())
+end
+
+function DataTypes_point_alloc()
+   _ctx = DataTypes_point()
+   _ctx.x = Float32(0.0)
+   _ctx.y = Float32(0.0)
+   return _ctx
+end
+
+function DataTypes_test2_type_alloc()
+   _ctx = DataTypes_test2_type()
+   _ctx.p2 = DataTypes_point_alloc()
+   _ctx.result = DataTypes_point_alloc()
+   return _ctx
+end
+
+function DataTypes_addPoint1(p1, p2)
+   p3 = DataTypes_point_alloc()
+   p3.x = (p1.x + p2.x)
+   p3.y = (p1.y + p2.y)
+   return p3
+end
+
+function DataTypes_addPoint2(p1, p2, result)
+   result.x = (p1.x + p2.x)
+   result.y = (p1.y + p2.y)
+end
+
+function DataTypes_test1()
+   p1 = DataTypes_point_alloc()
+   p2 = DataTypes_point_alloc()
+   result = DataTypes_addPoint1(p1, p2)
+   DataTypes_addPoint2(p1, p2, result)
+end
+
+function DataTypes_test2(_ctx)
+   p1 = DataTypes_point_alloc()
+   _ctx.result = DataTypes_addPoint1(p1, _ctx.p2)
+end
+

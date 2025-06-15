@@ -57,6 +57,16 @@ let has_lua =
     false
 
 
+(** checks if julia can be called *)
+let has_julia =
+  if tryToRun "julia --check-bounds=no --compile=min --optimize=0 -e 'exit(0)' > out 2>&1" then
+    let () = print_endline "Julia syntax will be checked" in
+    true
+  else
+    let () = print_endline "Julia syntax will not be checked" in
+    false
+
+
 let has_wl = false
 (*
    if tryToRun "wolframscript --version > out" then (
@@ -512,6 +522,17 @@ module CliTest = struct
     Sys.chdir initial_dir
 
 
+  let checkJuliaFile (file : string) : unit =
+    let output = Filename.chop_extension (Filename.basename file) in
+    Sys.chdir tmp_dir;
+    assert_bool "No code generated" (Sys.file_exists (output ^ ".jl"));
+    let cmd = "julia --check-bounds=no --compile=min --optimize=0 " ^ output ^ ".jl > " ^ output ^ ".out 2>&1" in
+    if Sys.command cmd <> 0 then
+      assert_failure ("Failed to check " ^ file);
+    Sys.remove (output ^ ".out");
+    Sys.chdir initial_dir
+
+
   let checkWLFile (file : string) : unit =
     let output = Filename.chop_extension (Filename.basename file) in
     Sys.chdir tmp_dir;
@@ -529,6 +550,7 @@ module CliTest = struct
     | "c" -> "-code c", [ ".c", ".c.float.base"; ".h", ".h.float.base" ]
     | "js" -> "-code js", [ ".js", ".js.base" ]
     | "lua" -> "-code lua", [ ".lua", ".lua.base" ]
+    | "julia" -> "-code julia", [ ".jl", ".jl.base" ]
     | "wl" -> "-code wl", [ ".wl", ".wl.base" ]
     | "java" -> "-code java -prefix vult.com", [ ".java", ".java.base" ]
     | _ -> failwith "Unknown target to run test"
@@ -562,6 +584,9 @@ module CliTest = struct
       | "lua" ->
         if has_lua then
           checkLuaFile fullfile
+      | "julia" ->
+        if has_julia then
+          checkJuliaFile fullfile
       | "wl" ->
         if has_wl then
           checkWLFile fullfile
@@ -579,6 +604,7 @@ module CliTest = struct
       | "float" -> { args with code = CppCode }, [ ".cpp", ".cpp.float.base"; ".h", ".h.float.base" ]
       | "js" -> { args with code = JSCode }, [ ".js", ".js.base" ]
       | "lua" -> { args with code = LuaCode }, [ ".lua", ".lua.base" ]
+      | "julia" -> { args with code = JuliaCode }, [ ".jl", ".jl.base" ]
       | "java" -> { args with code = JavaCode; prefix = Some "vult.com" }, [ ".java", ".java.base" ]
       | _ -> failwith "Unknown target to run test"
     in
@@ -651,6 +677,7 @@ module Templates = struct
         , [ ".java", ".java.base." ^ template ] )
       | "js" -> { args with template = Some template; code = JSCode }, [ ".js", ".js.base." ^ template ]
       | "lua" -> { args with template = Some template; code = LuaCode }, [ ".lua", ".lua.base." ^ template ]
+      | "julia" -> { args with template = Some template; code = JuliaCode }, [ ".jl", ".jl.base." ^ template ]
       | _ -> failwith "Unknown target to run test"
     in
     let args = { args with output = Some output; files = [ File fullfile ] } in
@@ -777,9 +804,11 @@ let suite =
        ; CliTest.get all_files Native "fixed"
        ; CliTest.get all_files Native "lua"
        ; CliTest.get all_files Native "js"
+       ; CliTest.get all_files Native "julia"
        ; CliTest.get all_files Node "float"
        ; CliTest.get all_files Node "fixed"
        ; CliTest.get all_files Node "lua"
+       ; CliTest.get all_files Node "julia"
        ; RandomCompileTest.get test_random_code
        ; InterpretPerf.get perf_files
        ; Interpret.get interpreter

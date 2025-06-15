@@ -1,0 +1,1249 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct Util_edge_type
+       pre::Bool
+end
+
+# Default constructor for Util_edge_type
+function Util_edge_type()
+    return Util_edge_type(false)
+end
+
+mutable struct Util_change_type
+       pre_x::Float32
+end
+
+# Default constructor for Util_change_type
+function Util_change_type()
+    return Util_change_type(Float32(0.0))
+end
+
+mutable struct Util_dcblock_type
+       x1::Float32
+       y1::Float32
+end
+
+# Default constructor for Util_dcblock_type
+function Util_dcblock_type()
+    return Util_dcblock_type(Float32(0.0), Float32(0.0))
+end
+
+mutable struct Util_smooth_type
+       x::Float32
+end
+
+# Default constructor for Util_smooth_type
+function Util_smooth_type()
+    return Util_smooth_type(Float32(0.0))
+end
+
+mutable struct Util_average2_type
+       x0::Float32
+end
+
+# Default constructor for Util_average2_type
+function Util_average2_type()
+    return Util_average2_type(Float32(0.0))
+end
+
+mutable struct Tricore_process_type
+       direction::Bool
+       inst_1b03c::Util_change_type
+       inst_2043c::Util_edge_type
+       inst_3043c::Util_edge_type
+       phase::Float32
+       rate::Float32
+       reset_phase::Float32
+       reset_state::Bool
+end
+
+# Default constructor for Tricore_process_type
+function Tricore_process_type()
+    return Tricore_process_type(false, Util_change_type(), Util_edge_type(), Util_edge_type(), Float32(0.0), Float32(0.0), Float32(0.0), false)
+end
+
+mutable struct Svf_process_type
+       g::Float32
+       inst_1b0a2::Util_change_type
+       inst_2b0a2::Util_change_type
+       inv_den::Float32
+       r::Float32
+       z1::Float32
+       z2::Float32
+end
+
+# Default constructor for Svf_process_type
+function Svf_process_type()
+    return Svf_process_type(Float32(0.0), Util_change_type(), Util_change_type(), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0))
+end
+
+mutable struct Lfo_soft_type
+       x2::Float32
+       x3::Float32
+       x4::Float32
+end
+
+# Default constructor for Lfo_soft_type
+function Lfo_soft_type()
+    return Lfo_soft_type(Float32(0.0), Float32(0.0), Float32(0.0))
+end
+
+mutable struct Lfo_process_type
+       inst_1b0d6::Util_change_type
+       inst_204d6::Util_edge_type
+       inst_337d6::Lfo_soft_type
+       phase::Float32
+       rate::Float32
+end
+
+# Default constructor for Lfo_process_type
+function Lfo_process_type()
+    return Lfo_process_type(Util_change_type(), Util_edge_type(), Lfo_soft_type(), Float32(0.0), Float32(0.0))
+end
+
+mutable struct Phase_process_type
+       inst_1b08a::Util_change_type
+       inst_2048a::Util_edge_type
+       phase::Float32
+       rate::Float32
+end
+
+# Default constructor for Phase_process_type
+function Phase_process_type()
+    return Phase_process_type(Util_change_type(), Util_edge_type(), Float32(0.0), Float32(0.0))
+end
+
+mutable struct Blit_pulse_train_type
+       inst_1b05e::Util_change_type
+       m::Int32
+       scale::Float32
+end
+
+# Default constructor for Blit_pulse_train_type
+function Blit_pulse_train_type()
+    return Blit_pulse_train_type(Util_change_type(), Int32(0), Float32(0.0))
+end
+
+mutable struct Blit_osc_blit_type
+       inst_1b026::Util_change_type
+       inst_28a26::Phase_process_type
+       inst_35e26::Blit_pulse_train_type
+       inst_45e26::Blit_pulse_train_type
+       inst_56426::Util_dcblock_type
+       output::Float32
+       rate::Float32
+       state_pulse::Float32
+       state_saw::Float32
+end
+
+# Default constructor for Blit_osc_blit_type
+function Blit_osc_blit_type()
+    return Blit_osc_blit_type(Util_change_type(), Phase_process_type(), Blit_pulse_train_type(), Blit_pulse_train_type(), Util_dcblock_type(), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0))
+end
+
+mutable struct Blit_process_type
+       inst_1268b::Blit_osc_blit_type
+end
+
+# Default constructor for Blit_process_type
+function Blit_process_type()
+    return Blit_process_type(Blit_osc_blit_type())
+end
+
+mutable struct Adsr_do_type
+       inst_104a0::Util_edge_type
+       inst_295a0::Util_smooth_type
+       out::Float32
+       rate::Float32
+       scale::Float32
+       state::Int32
+       target::Float32
+end
+
+# Default constructor for Adsr_do_type
+function Adsr_do_type()
+    return Adsr_do_type(Util_edge_type(), Util_smooth_type(), Float32(0.0), Float32(0.0), Float32(0.0), Int32(0), Float32(0.0))
+end
+
+mutable struct Adsr_process_type
+       inst_1a025::Adsr_do_type
+       knob1::Float32
+       knob2::Float32
+       knob3::Float32
+       knob4::Float32
+end
+
+# Default constructor for Adsr_process_type
+function Adsr_process_type()
+    return Adsr_process_type(Adsr_do_type(), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0))
+end
+
+mutable struct Voice_4_process_type
+       attack::Float32
+       decay::Float32
+       flt_cut::Float32
+       flt_res::Float32
+       flt_shape::Int32
+       inst_1d695::Lfo_process_type
+       inst_28b95::Blit_process_type
+       inst_38b95::Blit_process_type
+       inst_48b95::Blit_process_type
+       inst_53c95::Tricore_process_type
+       inst_6a295::Svf_process_type
+       inst_7a095::Adsr_do_type
+       level1::Float32
+       level2::Float32
+       level3::Float32
+       level4::Float32
+       lfo_cv::Float32
+       lfo_flt::Float32
+       lfo_pw::Float32
+       lfo_rate::Float32
+       lfo_reset::Float32
+       lfo_shape::Float32
+       pw1::Float32
+       pw2::Float32
+       pw3::Float32
+       pw4::Float32
+       release::Float32
+       sustain::Float32
+end
+
+# Default constructor for Voice_4_process_type
+function Voice_4_process_type()
+    return Voice_4_process_type(Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Int32(0), Lfo_process_type(), Blit_process_type(), Blit_process_type(), Blit_process_type(), Tricore_process_type(), Svf_process_type(), Adsr_do_type(), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0))
+end
+
+function Util_edge_type_alloc()
+   _ctx = Util_edge_type()
+   _ctx.pre = false
+   return _ctx
+end
+
+function Util_change_type_alloc()
+   _ctx = Util_change_type()
+   _ctx.pre_x = Float32(0.0)
+   return _ctx
+end
+
+function Util_dcblock_type_alloc()
+   _ctx = Util_dcblock_type()
+   _ctx.x1 = Float32(0.0)
+   _ctx.y1 = Float32(0.0)
+   return _ctx
+end
+
+function Util_smooth_type_alloc()
+   _ctx = Util_smooth_type()
+   _ctx.x = Float32(0.0)
+   return _ctx
+end
+
+function Util_average2_type_alloc()
+   _ctx = Util_average2_type()
+   _ctx.x0 = Float32(0.0)
+   return _ctx
+end
+
+function Util_cvToPitch(cv)
+   return (Float32(24.0) + (Float32(120.0) * cv))
+end
+
+Util_pitchToRate_1024_c0 = nothing
+Util_pitchToRate_1024_c1 = nothing
+Util_pitchToRate_1024_c2 = nothing
+function Util_pitchToRate_1024_raw_c0(index)
+   return @inbounds Util_pitchToRate_1024_c0[index + 1]
+end
+
+function Util_pitchToRate_1024_raw_c1(index)
+   return @inbounds Util_pitchToRate_1024_c1[index + 1]
+end
+
+function Util_pitchToRate_1024_raw_c2(index)
+   return @inbounds Util_pitchToRate_1024_c2[index + 1]
+end
+
+function Util_pitchToRate_1024(pitch)
+   index = clamp(trunc(Int32, (pitch * Float32(0.244094))), Int32(0), Int32(31))
+   return (@inbounds Util_pitchToRate_1024_c0[index + 1] + (pitch * (@inbounds Util_pitchToRate_1024_c1[index + 1] + (@inbounds Util_pitchToRate_1024_c2[index + 1] * pitch))))
+end
+
+Util_cvToRate_1024_c0 = nothing
+Util_cvToRate_1024_c1 = nothing
+Util_cvToRate_1024_c2 = nothing
+function Util_cvToRate_1024_raw_c0(index)
+   return @inbounds Util_cvToRate_1024_c0[index + 1]
+end
+
+function Util_cvToRate_1024_raw_c1(index)
+   return @inbounds Util_cvToRate_1024_c1[index + 1]
+end
+
+function Util_cvToRate_1024_raw_c2(index)
+   return @inbounds Util_cvToRate_1024_c2[index + 1]
+end
+
+function Util_cvToRate_1024(cv)
+   index = clamp(trunc(Int32, (cv * Float32(34.444444))), Int32(0), Int32(31))
+   return (@inbounds Util_cvToRate_1024_c0[index + 1] + (cv * (@inbounds Util_cvToRate_1024_c1[index + 1] + (@inbounds Util_cvToRate_1024_c2[index + 1] * cv))))
+end
+
+function Tricore_default(_ctx)
+   _ctx.rate = Util_cvToRate_1024(Float32(0.0))
+end
+
+function Tricore_process_type_alloc()
+   _ctx = Tricore_process_type()
+   _ctx.direction = false
+   _ctx.inst_1b03c = Util_change_type_alloc()
+   _ctx.inst_2043c = Util_edge_type_alloc()
+   _ctx.inst_3043c = Util_edge_type_alloc()
+   _ctx.phase = Float32(0.0)
+   _ctx.rate = Float32(0.0)
+   _ctx.reset_phase = Float32(0.0)
+   _ctx.reset_state = false
+   Tricore_default(_ctx)
+   return _ctx
+end
+
+function Tricore_noteOn_type_alloc(_ctx)
+   return Tricore_process_type_alloc()
+end
+
+function Tricore_noteOff_type_alloc(_ctx)
+   return Tricore_process_type_alloc()
+end
+
+function Tricore_controlChange_type_alloc(_ctx)
+   return Tricore_process_type_alloc()
+end
+
+function Tricore_default_type_alloc(_ctx)
+   return Tricore_process_type_alloc()
+end
+
+Svf_calc_g_c0 = nothing
+Svf_calc_g_c1 = nothing
+Svf_calc_g_c2 = nothing
+function Svf_calc_g_raw_c0(index)
+   return @inbounds Svf_calc_g_c0[index + 1]
+end
+
+function Svf_calc_g_raw_c1(index)
+   return @inbounds Svf_calc_g_c1[index + 1]
+end
+
+function Svf_calc_g_raw_c2(index)
+   return @inbounds Svf_calc_g_c2[index + 1]
+end
+
+function Svf_calc_g(cv)
+   index = clamp(trunc(Int32, (cv * Float32(141.111111))), Int32(0), Int32(127))
+   return (@inbounds Svf_calc_g_c0[index + 1] + (cv * (@inbounds Svf_calc_g_c1[index + 1] + (@inbounds Svf_calc_g_c2[index + 1] * cv))))
+end
+
+function Svf_default(_ctx)
+   _ctx.g = Svf_calc_g(Float32(0.0))
+   _ctx.r = Float32(1.0)
+   _ctx.inv_den = (Float32(1.0) / (Float32(1.0) + (_ctx.g * _ctx.g)))
+end
+
+function Svf_process_type_alloc()
+   _ctx = Svf_process_type()
+   _ctx.g = Float32(0.0)
+   _ctx.inst_1b0a2 = Util_change_type_alloc()
+   _ctx.inst_2b0a2 = Util_change_type_alloc()
+   _ctx.inv_den = Float32(0.0)
+   _ctx.r = Float32(0.0)
+   _ctx.z1 = Float32(0.0)
+   _ctx.z2 = Float32(0.0)
+   Svf_default(_ctx)
+   return _ctx
+end
+
+function Svf_noteOn_type_alloc(_ctx)
+   return Svf_process_type_alloc()
+end
+
+function Svf_noteOff_type_alloc(_ctx)
+   return Svf_process_type_alloc()
+end
+
+function Svf_controlChange_type_alloc(_ctx)
+   return Svf_process_type_alloc()
+end
+
+function Svf_default_type_alloc(_ctx)
+   return Svf_process_type_alloc()
+end
+
+function Lfo_soft_type_alloc()
+   _ctx = Lfo_soft_type()
+   _ctx.x2 = Float32(0.0)
+   _ctx.x3 = Float32(0.0)
+   _ctx.x4 = Float32(0.0)
+   return _ctx
+end
+
+function Lfo_process_type_alloc()
+   _ctx = Lfo_process_type()
+   _ctx.inst_1b0d6 = Util_change_type_alloc()
+   _ctx.inst_204d6 = Util_edge_type_alloc()
+   _ctx.inst_337d6 = Lfo_soft_type_alloc()
+   _ctx.phase = Float32(0.0)
+   _ctx.rate = Float32(0.0)
+   return _ctx
+end
+
+function Lfo_noteOn_type_alloc(_ctx)
+   return Lfo_process_type_alloc()
+end
+
+function Lfo_noteOff_type_alloc(_ctx)
+   return Lfo_process_type_alloc()
+end
+
+function Lfo_controlChange_type_alloc(_ctx)
+   return Lfo_process_type_alloc()
+end
+
+function Lfo_default_type_alloc(_ctx)
+   return Lfo_process_type_alloc()
+end
+
+function Phase_default(_ctx)
+   _ctx.rate = Util_cvToRate_1024(Float32(0.0))
+end
+
+function Phase_process_type_alloc()
+   _ctx = Phase_process_type()
+   _ctx.inst_1b08a = Util_change_type_alloc()
+   _ctx.inst_2048a = Util_edge_type_alloc()
+   _ctx.phase = Float32(0.0)
+   _ctx.rate = Float32(0.0)
+   Phase_default(_ctx)
+   return _ctx
+end
+
+function Phase_noteOn_type_alloc(_ctx)
+   return Phase_process_type_alloc()
+end
+
+function Phase_noteOff_type_alloc(_ctx)
+   return Phase_process_type_alloc()
+end
+
+function Phase_controlChange_type_alloc(_ctx)
+   return Phase_process_type_alloc()
+end
+
+function Phase_default_type_alloc(_ctx)
+   return Phase_process_type_alloc()
+end
+
+Util_cvToperiod_c0 = nothing
+Util_cvToperiod_c1 = nothing
+Util_cvToperiod_c2 = nothing
+function Util_cvToperiod_raw_c0(index)
+   return @inbounds Util_cvToperiod_c0[index + 1]
+end
+
+function Util_cvToperiod_raw_c1(index)
+   return @inbounds Util_cvToperiod_c1[index + 1]
+end
+
+function Util_cvToperiod_raw_c2(index)
+   return @inbounds Util_cvToperiod_c2[index + 1]
+end
+
+function Util_cvToperiod(cv)
+   index = clamp(trunc(Int32, (cv * Float32(31.0))), Int32(0), Int32(31))
+   return (@inbounds Util_cvToperiod_c0[index + 1] + (cv * (@inbounds Util_cvToperiod_c1[index + 1] + (@inbounds Util_cvToperiod_c2[index + 1] * cv))))
+end
+
+function Blit_pulse_start(_ctx)
+   _ctx.m = (Int32(1) + (trunc(Int32, Util_cvToperiod(Float32(0.0))) * 2))
+   _ctx.scale = (Float32(1.0) + (Float32(2.0) * Util_cvToperiod(Float32(0.0))))
+end
+
+function Blit_pulse_train_type_alloc()
+   _ctx = Blit_pulse_train_type()
+   _ctx.inst_1b05e = Util_change_type_alloc()
+   _ctx.m = Int32(0)
+   _ctx.scale = Float32(0.0)
+   Blit_pulse_start(_ctx)
+   return _ctx
+end
+
+function Blit_pulse_start_type_alloc(_ctx)
+   return Blit_pulse_train_type_alloc()
+end
+
+Util_pitchToRate_c0 = nothing
+Util_pitchToRate_c1 = nothing
+Util_pitchToRate_c2 = nothing
+function Util_pitchToRate_raw_c0(index)
+   return @inbounds Util_pitchToRate_c0[index + 1]
+end
+
+function Util_pitchToRate_raw_c1(index)
+   return @inbounds Util_pitchToRate_c1[index + 1]
+end
+
+function Util_pitchToRate_raw_c2(index)
+   return @inbounds Util_pitchToRate_c2[index + 1]
+end
+
+function Util_pitchToRate(pitch)
+   index = clamp(trunc(Int32, (pitch * Float32(0.244094))), Int32(0), Int32(31))
+   return (@inbounds Util_pitchToRate_c0[index + 1] + (pitch * (@inbounds Util_pitchToRate_c1[index + 1] + (@inbounds Util_pitchToRate_c2[index + 1] * pitch))))
+end
+
+Util_cvToRate_c0 = nothing
+Util_cvToRate_c1 = nothing
+Util_cvToRate_c2 = nothing
+function Util_cvToRate_raw_c0(index)
+   return @inbounds Util_cvToRate_c0[index + 1]
+end
+
+function Util_cvToRate_raw_c1(index)
+   return @inbounds Util_cvToRate_c1[index + 1]
+end
+
+function Util_cvToRate_raw_c2(index)
+   return @inbounds Util_cvToRate_c2[index + 1]
+end
+
+function Util_cvToRate(cv)
+   index = clamp(trunc(Int32, (cv * Float32(141.111111))), Int32(0), Int32(127))
+   return (@inbounds Util_cvToRate_c0[index + 1] + (cv * (@inbounds Util_cvToRate_c1[index + 1] + (@inbounds Util_cvToRate_c2[index + 1] * cv))))
+end
+
+function Blit_init(_ctx)
+   _ctx.rate = Util_cvToRate(Float32(0.0))
+end
+
+function Blit_osc_blit_type_alloc()
+   _ctx = Blit_osc_blit_type()
+   _ctx.inst_1b026 = Util_change_type_alloc()
+   _ctx.inst_28a26 = Phase_process_type_alloc()
+   _ctx.inst_35e26 = Blit_pulse_train_type_alloc()
+   _ctx.inst_45e26 = Blit_pulse_train_type_alloc()
+   _ctx.inst_56426 = Util_dcblock_type_alloc()
+   _ctx.output = Float32(0.0)
+   _ctx.rate = Float32(0.0)
+   _ctx.state_pulse = Float32(0.0)
+   _ctx.state_saw = Float32(0.0)
+   Blit_init(_ctx)
+   return _ctx
+end
+
+function Blit_init_type_alloc(_ctx)
+   return Blit_osc_blit_type_alloc()
+end
+
+function Blit_process_type_alloc()
+   _ctx = Blit_process_type()
+   _ctx.inst_1268b = Blit_osc_blit_type_alloc()
+   return _ctx
+end
+
+function Blit_noteOn_type_alloc(_ctx)
+   return Blit_process_type_alloc()
+end
+
+function Blit_noteOff_type_alloc(_ctx)
+   return Blit_process_type_alloc()
+end
+
+function Blit_controlChange_type_alloc(_ctx)
+   return Blit_process_type_alloc()
+end
+
+function Blit_default_type_alloc(_ctx)
+   return Blit_process_type_alloc()
+end
+
+function Adsr_do_type_alloc()
+   _ctx = Adsr_do_type()
+   _ctx.inst_104a0 = Util_edge_type_alloc()
+   _ctx.inst_295a0 = Util_smooth_type_alloc()
+   _ctx.out = Float32(0.0)
+   _ctx.rate = Float32(0.0)
+   _ctx.scale = Float32(0.0)
+   _ctx.state = Int32(0)
+   _ctx.target = Float32(0.0)
+   return _ctx
+end
+
+function Adsr_process_type_alloc()
+   _ctx = Adsr_process_type()
+   _ctx.inst_1a025 = Adsr_do_type_alloc()
+   _ctx.knob1 = Float32(0.0)
+   _ctx.knob2 = Float32(0.0)
+   _ctx.knob3 = Float32(0.0)
+   _ctx.knob4 = Float32(0.0)
+   return _ctx
+end
+
+function Adsr_noteOn_type_alloc(_ctx)
+   return Adsr_process_type_alloc()
+end
+
+function Adsr_noteOff_type_alloc(_ctx)
+   return Adsr_process_type_alloc()
+end
+
+function Adsr_controlChange_type_alloc(_ctx)
+   return Adsr_process_type_alloc()
+end
+
+function Adsr_default_type_alloc(_ctx)
+   return Adsr_process_type_alloc()
+end
+
+function Voice_4_process_type_alloc()
+   _ctx = Voice_4_process_type()
+   _ctx.attack = Float32(0.0)
+   _ctx.decay = Float32(0.0)
+   _ctx.flt_cut = Float32(0.0)
+   _ctx.flt_res = Float32(0.0)
+   _ctx.flt_shape = Int32(0)
+   _ctx.inst_1d695 = Lfo_process_type_alloc()
+   _ctx.inst_28b95 = Blit_process_type_alloc()
+   _ctx.inst_38b95 = Blit_process_type_alloc()
+   _ctx.inst_48b95 = Blit_process_type_alloc()
+   _ctx.inst_53c95 = Tricore_process_type_alloc()
+   _ctx.inst_6a295 = Svf_process_type_alloc()
+   _ctx.inst_7a095 = Adsr_do_type_alloc()
+   _ctx.level1 = Float32(0.0)
+   _ctx.level2 = Float32(0.0)
+   _ctx.level3 = Float32(0.0)
+   _ctx.level4 = Float32(0.0)
+   _ctx.lfo_cv = Float32(0.0)
+   _ctx.lfo_flt = Float32(0.0)
+   _ctx.lfo_pw = Float32(0.0)
+   _ctx.lfo_rate = Float32(0.0)
+   _ctx.lfo_reset = Float32(0.0)
+   _ctx.lfo_shape = Float32(0.0)
+   _ctx.pw1 = Float32(0.0)
+   _ctx.pw2 = Float32(0.0)
+   _ctx.pw3 = Float32(0.0)
+   _ctx.pw4 = Float32(0.0)
+   _ctx.release = Float32(0.0)
+   _ctx.sustain = Float32(0.0)
+   return _ctx
+end
+
+function Voice_4_noteOn_type_alloc(_ctx)
+   return Voice_4_process_type_alloc()
+end
+
+function Voice_4_noteOff_type_alloc(_ctx)
+   return Voice_4_process_type_alloc()
+end
+
+function Voice_4_controlChange_type_alloc(_ctx)
+   return Voice_4_process_type_alloc()
+end
+
+function Voice_4_default_type_alloc(_ctx)
+   return Voice_4_process_type_alloc()
+end
+
+function Util_edge(_ctx, x)
+   ret = (x && (_ctx.pre == false))
+   _ctx.pre = x
+   return ret
+end
+
+function Util_change(_ctx, x)
+   v = (_ctx.pre_x != x)
+   _ctx.pre_x = x
+   return v
+end
+
+function Util_map(x, x0, x1, y0, y1)
+   return (y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))))
+end
+
+function Util_dcblock(_ctx, x0)
+   y0 = (x0 + ((-_ctx.x1) + (Float32(0.995) * _ctx.y1)))
+   _ctx.x1 = x0
+   _ctx.y1 = y0
+   return y0
+end
+
+function Util_smooth(_ctx, input)
+   _ctx.x = ((Float32(0.005) * (input + (-_ctx.x))) + _ctx.x)
+   return _ctx.x
+end
+
+function Util_average2(_ctx, x1)
+   result = (Float32(0.5) * (x1 + _ctx.x0))
+   _ctx.x0 = x1
+   return result
+end
+
+function Util_cubic_clipper(x)
+   if (x <= Float32(-0.666667))
+      return Float32(-0.666667)
+   else
+      if (x >= Float32(0.666666))
+         return Float32(0.666666)
+      else
+         return (x + (Float32(-0.333334) * (x * (x * x))))
+      end
+   end
+end
+
+function Util_pitchToCv(pitch)
+   return (Float32(-0.2) + (Float32(0.008333) * pitch))
+end
+
+Util_cvTokHz_c0 = nothing
+Util_cvTokHz_c1 = nothing
+Util_cvTokHz_c2 = nothing
+function Util_cvTokHz_raw_c0(index)
+   return @inbounds Util_cvTokHz_c0[index + 1]
+end
+
+function Util_cvTokHz_raw_c1(index)
+   return @inbounds Util_cvTokHz_c1[index + 1]
+end
+
+function Util_cvTokHz_raw_c2(index)
+   return @inbounds Util_cvTokHz_c2[index + 1]
+end
+
+function Util_cvTokHz(cv)
+   index = clamp(trunc(Int32, (cv * Float32(31.0))), Int32(0), Int32(31))
+   return (@inbounds Util_cvTokHz_c0[index + 1] + (cv * (@inbounds Util_cvTokHz_c1[index + 1] + (@inbounds Util_cvTokHz_c2[index + 1] * cv))))
+end
+
+function Tricore_process(_ctx, cv, reset, disable)
+   out = Float32(0.0)
+   if Util_change(_ctx.inst_1b03c, cv)
+      _ctx.rate = (Float32(4.0) * Util_cvToRate_1024(cv))
+   end
+   new_phase = Float32(0.0)
+   _if_temp_0 = Float32(0.0)
+   if _ctx.direction
+      _if_temp_0 = _ctx.rate
+   else
+      _if_temp_0 = (-_ctx.rate)
+   end
+   new_phase = (_if_temp_0 + _ctx.phase)
+   bdisable = (disable > Float32(0.5))
+   if (Util_edge(_ctx.inst_2043c, (reset > Float32(0.0))) || Util_edge(_ctx.inst_3043c, bdisable))
+      begin
+         _ctx.reset_phase = _ctx.phase
+         _ctx.reset_state = true
+         new_phase = Float32(0.0)
+      end
+   end
+   if (new_phase > Float32(1024.0))
+      begin
+         new_phase = (Float32(2048.0) + (-new_phase))
+         _ctx.direction = false
+      end
+   else
+      if (new_phase < Float32(-1024.0))
+         _ctx.direction = true
+      end
+   end
+   if bdisable
+      _ctx.phase = Float32(0.0)
+   else
+      _ctx.phase = new_phase
+   end
+   if _ctx.reset_state
+      begin
+         if ((abs(_ctx.reset_phase) > Float32(10.0)) || bdisable)
+            begin
+               reset_speed = Float32(0.0)
+               if bdisable
+                  reset_speed = Float32(0.01)
+               else
+                  reset_speed = Float32(0.5)
+               end
+               _ctx.reset_phase = ((-(reset_speed * _ctx.reset_phase)) + _ctx.reset_phase)
+            end
+         else
+            begin
+               if (_ctx.reset_phase > Float32(10.0))
+                  _ctx.reset_phase = _ctx.reset_phase
+               else
+                  _ctx.reset_phase = Float32(0.0)
+               end
+               _ctx.reset_state = false
+               _ctx.direction = true
+            end
+         end
+         out = _ctx.reset_phase
+      end
+   end
+   out = (out + _ctx.phase)
+   return (Float32(0.000976) * out)
+end
+
+function Tricore_noteOn(_ctx, note, velocity, channel)
+end
+
+function Tricore_noteOff(_ctx, note, channel)
+end
+
+function Tricore_controlChange(_ctx, control, value, channel)
+end
+
+Saturate_soft_tanh_table_c0 = nothing
+Saturate_soft_tanh_table_c1 = nothing
+Saturate_soft_tanh_table_c2 = nothing
+function Saturate_soft_tanh_table_raw_c0(index)
+   return @inbounds Saturate_soft_tanh_table_c0[index + 1]
+end
+
+function Saturate_soft_tanh_table_raw_c1(index)
+   return @inbounds Saturate_soft_tanh_table_c1[index + 1]
+end
+
+function Saturate_soft_tanh_table_raw_c2(index)
+   return @inbounds Saturate_soft_tanh_table_c2[index + 1]
+end
+
+function Saturate_soft_tanh_table(x)
+   index = clamp(trunc(Int32, ((x + Float32(24.0)) * Float32(5.0))), Int32(0), Int32(240))
+   return (@inbounds Saturate_soft_tanh_table_c0[index + 1] + (x * (@inbounds Saturate_soft_tanh_table_c1[index + 1] + (@inbounds Saturate_soft_tanh_table_c2[index + 1] * x))))
+end
+
+function Saturate_soft_process(x)
+   return Saturate_soft_tanh_table(x)
+end
+
+function Saturate_soft_noteOn(note, velocity, channel)
+end
+
+function Saturate_soft_noteOff(note, channel)
+end
+
+function Saturate_soft_controlChange(control, value, channel)
+end
+
+function Saturate_soft_default()
+end
+
+function Svf_process(_ctx, x, cv, q, sel)
+   q = (Float32(0.5) + q)
+   if (Util_change(_ctx.inst_1b0a2, cv) || Util_change(_ctx.inst_2b0a2, q))
+      begin
+         _ctx.g = Svf_calc_g(cv)
+         _ctx.r = (Float32(1.0) / (Float32(2.0) * (q + eps(Float32))))
+         _ctx.inv_den = (Float32(1.0) / (Float32(1.0) + ((Float32(2.0) * (_ctx.r * _ctx.g)) + (_ctx.g * _ctx.g))))
+      end
+   end
+   high = ((x + ((-(((Float32(2.0) * _ctx.r) + _ctx.g) * _ctx.z1)) + (-_ctx.z2))) * _ctx.inv_den)
+   band = ((high * _ctx.g) + _ctx.z1)
+   low = ((band * _ctx.g) + _ctx.z2)
+   notch = (high + low)
+   _ctx.z1 = (band + (high * _ctx.g))
+   _ctx.z2 = (low + (band * _ctx.g))
+   output = Float32(0.0)
+   if (sel == Int32(0))
+      output = low
+   else
+      if (sel == Int32(1))
+         output = high
+      else
+         if (sel == Int32(2))
+            output = band
+         else
+            output = notch
+         end
+      end
+   end
+   return Saturate_soft_process(output)
+end
+
+function Svf_noteOn(_ctx, note, velocity, channel)
+end
+
+function Svf_noteOff(_ctx, note, channel)
+end
+
+function Svf_controlChange(_ctx, control, value, channel)
+end
+
+Saturate_tanh_table_c0 = nothing
+Saturate_tanh_table_c1 = nothing
+Saturate_tanh_table_c2 = nothing
+function Saturate_tanh_table_raw_c0(index)
+   return @inbounds Saturate_tanh_table_c0[index + 1]
+end
+
+function Saturate_tanh_table_raw_c1(index)
+   return @inbounds Saturate_tanh_table_c1[index + 1]
+end
+
+function Saturate_tanh_table_raw_c2(index)
+   return @inbounds Saturate_tanh_table_c2[index + 1]
+end
+
+function Saturate_tanh_table(x)
+   index = clamp(trunc(Int32, ((x + Float32(24.0)) * Float32(5.0))), Int32(0), Int32(240))
+   return (@inbounds Saturate_tanh_table_c0[index + 1] + (x * (@inbounds Saturate_tanh_table_c1[index + 1] + (@inbounds Saturate_tanh_table_c2[index + 1] * x))))
+end
+
+function Saturate_process(x)
+   return Saturate_tanh_table(x)
+end
+
+function Saturate_noteOn(note, velocity, channel)
+end
+
+function Saturate_noteOff(note, channel)
+end
+
+function Saturate_controlChange(control, value, channel)
+end
+
+function Saturate_default()
+end
+
+function Lfo_soft(_ctx, x1)
+   o = (Float32(0.25) * (x1 + (_ctx.x2 + (_ctx.x3 + _ctx.x4))))
+   _t_temp_0 = x1
+   _t_temp_1 = _ctx.x2
+   _t_temp_2 = _ctx.x3
+   _ctx.x2 = _t_temp_0
+   _ctx.x3 = _t_temp_1
+   _ctx.x4 = _t_temp_2
+   return o
+end
+
+function Lfo_process(_ctx, cv, shape, reset)
+   if Util_change(_ctx.inst_1b0d6, cv)
+      _ctx.rate = Util_cvToRate((Float32(-0.3) + cv))
+   end
+   _ctx.phase = (_ctx.phase + _ctx.rate)
+   if (_ctx.phase > Float32(2.0))
+      _ctx.phase = (Float32(-2.0) + _ctx.phase)
+   else
+      _ctx.phase = _ctx.phase
+   end
+   breset = (reset > Float32(0.0))
+   if Util_edge(_ctx.inst_204d6, breset)
+      _ctx.phase = Float32(0.0)
+   end
+   tmp = (Float32(-1.0) + _ctx.phase)
+   o = Float32(0.0)
+   if (shape < Float32(1.0))
+      o = tmp
+   else
+      if (shape < Float32(2.0))
+         o = (Float32(-1.0) + (Float32(2.0) * abs(tmp)))
+      else
+         if (tmp > Float32(0.0))
+            o = Float32(1.0)
+         else
+            o = Float32(0.0)
+         end
+      end
+   end
+   return Lfo_soft(_ctx.inst_337d6, o)
+end
+
+function Lfo_noteOn(_ctx, note, velocity, channel)
+end
+
+function Lfo_noteOff(_ctx, note, channel)
+end
+
+function Lfo_controlChange(_ctx, control, value, channel)
+end
+
+function Lfo_default(_ctx)
+end
+
+Tables_nsine_c0 = nothing
+Tables_nsine_c1 = nothing
+Tables_nsine_c2 = nothing
+function Tables_nsine_raw_c0(index)
+   return @inbounds Tables_nsine_c0[index + 1]
+end
+
+function Tables_nsine_raw_c1(index)
+   return @inbounds Tables_nsine_c1[index + 1]
+end
+
+function Tables_nsine_raw_c2(index)
+   return @inbounds Tables_nsine_c2[index + 1]
+end
+
+function Tables_nsine(x)
+   index = clamp(trunc(Int32, (x * Float32(127.0))), Int32(0), Int32(127))
+   return (@inbounds Tables_nsine_c0[index + 1] + (x * (@inbounds Tables_nsine_c1[index + 1] + (@inbounds Tables_nsine_c2[index + 1] * x))))
+end
+
+function Phase_process(_ctx, cv, reset)
+   if Util_change(_ctx.inst_1b08a, cv)
+      _ctx.rate = Util_cvToRate_1024(cv)
+   end
+   if Util_edge(_ctx.inst_2048a, (reset > Float32(0.5)))
+      _ctx.phase = Float32(0.0)
+   else
+      _ctx.phase = (_ctx.phase + _ctx.rate)
+   end
+   if (_ctx.phase > Float32(1024.0))
+      _ctx.phase = (Float32(-1024.0) + _ctx.phase)
+   else
+      _ctx.phase = _ctx.phase
+   end
+   return (Float32(0.000976) * _ctx.phase)
+end
+
+function Phase_noteOn(_ctx, note, velocity, channel)
+end
+
+function Phase_noteOff(_ctx, note, channel)
+end
+
+function Phase_controlChange(_ctx, control, value, channel)
+end
+
+function Blit_pulse_train(_ctx, cv, phase)
+   if Util_change(_ctx.inst_1b05e, cv)
+      begin
+         _ctx.m = (Int32(1) + (trunc(Int32, Util_cvToperiod(cv)) * 2))
+         _ctx.scale = (Float32(2.0) * Util_cvToperiod(cv))
+      end
+   end
+   pi_phase = (Float32(0.5) * phase)
+   denominator = Tables_nsine(pi_phase)
+   out = Float32(0.0)
+   if (denominator <= eps(Float32))
+      out = Float32(1.0)
+   else
+      begin
+         m_phase = mod((pi_phase * Float32(_ctx.m)), Float32(1.0))
+         numerator = Tables_nsine(m_phase)
+         out = (numerator / (denominator * _ctx.scale))
+      end
+   end
+   return out
+end
+
+function Blit_osc_blit(_ctx, cv, pw, wave)
+   fixed_cv = Float32(0.0)
+   if (wave < Float32(1.0))
+      fixed_cv = cv
+   else
+      fixed_cv = (Float32(-0.1) + cv)
+   end
+   if Util_change(_ctx.inst_1b026, fixed_cv)
+      _ctx.rate = Util_cvToRate(fixed_cv)
+   end
+   phase = Phase_process(_ctx.inst_28a26, fixed_cv, Float32(0.0))
+   shift05 = (Float32(0.5) + (Float32(0.49) * pw))
+   shift = (phase + shift05)
+   if (shift > Float32(1.0))
+      shift = (Float32(-1.0) + shift)
+   end
+   pulse1 = Blit_pulse_train(_ctx.inst_35e26, fixed_cv, phase)
+   pulse2 = Blit_pulse_train(_ctx.inst_45e26, fixed_cv, shift)
+   _ctx.state_pulse = (pulse1 + ((-pulse2) + (Float32(0.9995) * _ctx.state_pulse)))
+   _ctx.state_saw = ((Float32(0.5) * ((pulse1 + (pulse2 + (Float32(-2.0) * _ctx.rate))) / shift05)) + (Float32(0.9995) * _ctx.state_saw))
+   if (wave < Float32(1.0))
+      _ctx.output = _ctx.state_pulse
+   else
+      _ctx.output = (Float32(2.0) * _ctx.state_saw)
+   end
+   _ctx.output = Util_dcblock(_ctx.inst_56426, _ctx.output)
+   return _ctx.output
+end
+
+function Blit_process(_ctx, cv, pw, wave)
+   return Blit_osc_blit(_ctx.inst_1268b, cv, pw, wave)
+end
+
+function Blit_noteOn(_ctx, note, velocity, channel)
+end
+
+function Blit_noteOff(_ctx, note, channel)
+end
+
+function Blit_controlChange(_ctx, control, value, channel)
+end
+
+function Blit_default(_ctx)
+end
+
+function Adsr_do(_ctx, gate, a, d, s, r)
+   a_rate = (Float32(1.0) / (Float32(0.01) + (Float32(100.0) * a)))
+   d_rate = (Float32(1.0) / (Float32(0.01) + (Float32(100.0) * d)))
+   r_rate = (Float32(1.0) / (Float32(0.01) + (Float32(100.0) * r)))
+   _ctx.out = ((Float32(0.004) * (((-_ctx.out) + _ctx.target) * _ctx.rate)) + _ctx.out)
+   bgate = (gate > Float32(0.0))
+   if (_ctx.state == Int32(0))
+      begin
+         if Util_edge(_ctx.inst_104a0, bgate)
+            begin
+               _ctx.state = Int32(1)
+               _ctx.scale = (Float32(0.2) * gate)
+            end
+         end
+         _ctx.rate = r_rate
+         _ctx.target = Float32(0.0)
+      end
+   end
+   if (_ctx.state == Int32(1))
+      begin
+         if (bgate == false)
+            _ctx.state = Int32(0)
+         end
+         if (_ctx.out > Float32(1024.0))
+            _ctx.state = Int32(2)
+         end
+         _ctx.rate = a_rate
+         _ctx.target = Float32(1228.8)
+      end
+   end
+   if (_ctx.state == Int32(2))
+      begin
+         if (bgate == false)
+            _ctx.state = Int32(0)
+         end
+         _ctx.rate = d_rate
+         _ctx.target = (Float32(1024.0) * s)
+      end
+   end
+   return (Util_smooth(_ctx.inst_295a0, _ctx.scale) * clamp((Float32(0.000976) * _ctx.out), Float32(0.0), Float32(1.0)))
+end
+
+function Adsr_process(_ctx, gate)
+   return Adsr_do(_ctx.inst_1a025, gate, _ctx.knob1, _ctx.knob2, _ctx.knob3, _ctx.knob4)
+end
+
+function Adsr_noteOn(_ctx, note, velocity, channel)
+end
+
+function Adsr_noteOff(_ctx, note, channel)
+end
+
+function Adsr_controlChange(_ctx, control, value, channel)
+   if (control == Int32(1))
+      _ctx.knob1 = (Float32(0.007874) * Float32(value))
+   end
+   if (control == Int32(2))
+      _ctx.knob2 = (Float32(0.007874) * Float32(value))
+   end
+   if (control == Int32(3))
+      _ctx.knob3 = (Float32(0.007874) * Float32(value))
+   end
+   if (control == Int32(4))
+      _ctx.knob4 = (Float32(0.007874) * Float32(value))
+   end
+end
+
+function Adsr_default(_ctx)
+   _ctx.knob1 = Float32(0.0)
+   _ctx.knob2 = Float32(0.5)
+   _ctx.knob3 = Float32(1.0)
+   _ctx.knob4 = Float32(0.5)
+end
+
+function Voice_4_process(_ctx, cv, vel, gate)
+   lfo = Lfo_process(_ctx.inst_1d695, _ctx.lfo_rate, _ctx.lfo_shape, (gate * _ctx.lfo_reset))
+   mod_pw = (lfo * _ctx.lfo_pw)
+   mod_cv = (lfo * _ctx.lfo_cv)
+   mod_flt = (lfo * _ctx.lfo_flt)
+   o1 = Blit_process(_ctx.inst_28b95, (Float32(0.0001) + (cv + mod_cv)), (mod_pw + _ctx.pw1), Float32(0.0))
+   o2 = Blit_process(_ctx.inst_38b95, (Float32(0.0002) + (cv + mod_cv)), (mod_pw + _ctx.pw2), Float32(1.0))
+   o3 = Blit_process(_ctx.inst_48b95, (cv + (mod_cv + _ctx.pw3)), (mod_pw + _ctx.pw1), Float32(0.0))
+   sub = Saturate_process(((Float32(2.0) + (Float32(5.0) * _ctx.pw4)) * Tricore_process(_ctx.inst_53c95, (cv + mod_cv), Float32(0.0), Float32(1.0))))
+   o = ((o1 * _ctx.level1) + ((o2 * _ctx.level2) + ((o3 * _ctx.level3) + (sub * _ctx.level4))))
+   f = Svf_process(_ctx.inst_6a295, o, (mod_flt + _ctx.flt_cut), _ctx.flt_res, _ctx.flt_shape)
+   env = Adsr_do(_ctx.inst_7a095, gate, _ctx.attack, _ctx.decay, _ctx.sustain, _ctx.release)
+   return (env * f)
+end
+
+function Voice_4_noteOn(_ctx, note, velocity, channel)
+end
+
+function Voice_4_noteOff(_ctx, note, channel)
+end
+
+function Voice_4_controlChange(_ctx, control, value, channel)
+   if (control == Int32(30))
+      _ctx.level1 = (Float32(0.007874) * Float32(value))
+   end
+   if (control == Int32(31))
+      _ctx.level2 = (Float32(0.007874) * Float32(value))
+   end
+   if (control == Int32(32))
+      _ctx.level3 = (Float32(0.007874) * Float32(value))
+   end
+   if (control == Int32(33))
+      _ctx.level4 = (Float32(0.007874) * Float32(value))
+   end
+   if (control == Int32(34))
+      _ctx.pw1 = (Float32(0.007874) * Float32(value))
+   end
+   if (control == Int32(35))
+      _ctx.pw2 = (Float32(0.007874) * Float32(value))
+   end
+   if (control == Int32(36))
+      _ctx.pw3 = (Float32(0.000787) * Float32(value))
+   end
+   if (control == Int32(37))
+      _ctx.pw4 = (Float32(0.007874) * Float32(value))
+   end
+   if (control == Int32(38))
+      _ctx.lfo_rate = Util_map(Float32(value), Float32(0.0), Float32(127.0), Float32(-0.4), Float32(0.1))
+   end
+   if (control == Int32(39))
+      _ctx.lfo_shape = (Float32(0.023622) * Float32(value))
+   end
+   if (control == Int32(40))
+      _ctx.lfo_pw = Util_map(Float32(value), Float32(0.0), Float32(127.0), Float32(-1.0), Float32(1.0))
+   end
+   if (control == Int32(41))
+      _ctx.lfo_cv = Util_map(Float32(value), Float32(0.0), Float32(127.0), Float32(-0.1), Float32(0.1))
+   end
+   if (control == Int32(42))
+      _ctx.lfo_flt = Util_map(Float32(value), Float32(0.0), Float32(127.0), Float32(-0.3), Float32(0.3))
+   end
+   if (control == Int32(43))
+      if (value > Int32(0))
+         _ctx.lfo_reset = Float32(1.0)
+      else
+         _ctx.lfo_reset = Float32(0.0)
+      end
+   end
+   if (control == Int32(44))
+      _ctx.flt_cut = Util_map(Float32(value), Float32(0.0), Float32(127.0), Float32(-0.2), Float32(0.5))
+   end
+   if (control == Int32(45))
+      _ctx.flt_res = (Float32(0.007874) * Float32(value))
+   end
+   if (control == Int32(46))
+      _ctx.flt_shape = div((value * 4), Int32(127))
+   end
+   if (control == Int32(47))
+      _ctx.attack = (Float32(0.007874) * Float32(value))
+   end
+   if (control == Int32(48))
+      _ctx.decay = (Float32(0.007874) * Float32(value))
+   end
+   if (control == Int32(49))
+      _ctx.sustain = (Float32(0.007874) * Float32(value))
+   end
+   if (control == Int32(50))
+      _ctx.release = (Float32(0.007874) * Float32(value))
+   end
+end
+
+function Voice_4_default(_ctx)
+end
+

@@ -1,0 +1,63 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct Multi_return_foo_type
+       Multi_return_foo_ret_0::Float32
+       Multi_return_foo_ret_1::Float32
+end
+
+# Default constructor for Multi_return_foo_type
+function Multi_return_foo_type()
+    return Multi_return_foo_type(Float32(0.0), Float32(0.0))
+end
+
+mutable struct Multi_return_bar_type
+       Multi_return_bar_ret_0::Float32
+       Multi_return_bar_ret_1::Float32
+       inst_16585::Multi_return_foo_type
+end
+
+# Default constructor for Multi_return_bar_type
+function Multi_return_bar_type()
+    return Multi_return_bar_type(Float32(0.0), Float32(0.0), Multi_return_foo_type())
+end
+
+function Multi_return_foo_type_alloc()
+   _ctx = Multi_return_foo_type()
+   _ctx.Multi_return_foo_ret_0 = Float32(0.0)
+   _ctx.Multi_return_foo_ret_1 = Float32(0.0)
+   return _ctx
+end
+
+function Multi_return_bar_type_alloc()
+   _ctx = Multi_return_bar_type()
+   _ctx.Multi_return_bar_ret_0 = Float32(0.0)
+   _ctx.Multi_return_bar_ret_1 = Float32(0.0)
+   _ctx.inst_16585 = Multi_return_foo_type_alloc()
+   return _ctx
+end
+
+function Multi_return_foo(_ctx, x)
+   if (x > Int32(0))
+      begin
+         _ctx.Multi_return_foo_ret_0 = Float32(0.0)
+         _ctx.Multi_return_foo_ret_1 = Float32(0.0)
+         return 
+      end
+   else
+      begin
+         _ctx.Multi_return_foo_ret_0 = Float32(1.0)
+         _ctx.Multi_return_foo_ret_1 = Float32(1.0)
+         return 
+      end
+   end
+end
+
+function Multi_return_bar(_ctx)
+   Multi_return_foo(_ctx.inst_16585, Int32(1))
+   x = (_ctx.inst_16585.Multi_return_foo_ret_0, _ctx.inst_16585.Multi_return_foo_ret_1,)
+   _ctx.Multi_return_bar_ret_0 = x[1]
+   _ctx.Multi_return_bar_ret_1 = x[2]
+   return 
+end
+

@@ -1,0 +1,101 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct Wav_file_index_type
+       i::Int32
+end
+
+# Default constructor for Wav_file_index_type
+function Wav_file_index_type()
+    return Wav_file_index_type(Int32(0))
+end
+
+mutable struct Wav_file_osc_wave_type
+       inst_1e19a::Wav_file_index_type
+end
+
+# Default constructor for Wav_file_osc_wave_type
+function Wav_file_osc_wave_type()
+    return Wav_file_osc_wave_type(Wav_file_index_type())
+end
+
+mutable struct Wav_file_process_type
+       inst_19a53::Wav_file_osc_wave_type
+end
+
+# Default constructor for Wav_file_process_type
+function Wav_file_process_type()
+    return Wav_file_process_type(Wav_file_osc_wave_type())
+end
+
+Wav_file_ext_wave_chan_0 = nothing
+function Wav_file_ext_wave_samples()
+   return Int32(600)
+end
+
+function Wav_file_ext_wave(channel, index)
+   if (channel == Int32(0))
+      return @inbounds Wav_file_ext_wave_chan_0[(index % Int32(600)) + 1]
+   end
+   return Float32(0.0)
+end
+
+function Wav_file_index_type_alloc()
+   _ctx = Wav_file_index_type()
+   _ctx.i = Int32(0)
+   return _ctx
+end
+
+function Wav_file_osc_wave_type_alloc()
+   _ctx = Wav_file_osc_wave_type()
+   _ctx.inst_1e19a = Wav_file_index_type_alloc()
+   return _ctx
+end
+
+function Wav_file_process_type_alloc()
+   _ctx = Wav_file_process_type()
+   _ctx.inst_19a53 = Wav_file_osc_wave_type_alloc()
+   return _ctx
+end
+
+function Wav_file_noteOn_type_alloc(_ctx)
+   return Wav_file_process_type_alloc()
+end
+
+function Wav_file_noteOff_type_alloc(_ctx)
+   return Wav_file_process_type_alloc()
+end
+
+function Wav_file_controlChange_type_alloc(_ctx)
+   return Wav_file_process_type_alloc()
+end
+
+function Wav_file_default_type_alloc(_ctx)
+   return Wav_file_process_type_alloc()
+end
+
+function Wav_file_index(_ctx)
+   _ctx.i = ((Int32(1) + _ctx.i) % Wav_file_ext_wave_samples())
+   return _ctx.i
+end
+
+function Wav_file_osc_wave(_ctx, cv)
+   return Wav_file_ext_wave(Int32(0), Wav_file_index(_ctx.inst_1e19a))
+end
+
+function Wav_file_process(_ctx, cv)
+   return Wav_file_osc_wave(_ctx.inst_19a53, cv)
+end
+
+function Wav_file_noteOn(_ctx, note, velocity, channel)
+end
+
+function Wav_file_noteOff(_ctx, note, channel)
+end
+
+function Wav_file_controlChange(_ctx, control, value, channel)
+end
+
+function Wav_file_default(_ctx)
+end
+

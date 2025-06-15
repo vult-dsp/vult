@@ -1,0 +1,62 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct Array_instance_counter_type
+       x::Int32
+end
+
+# Default constructor for Array_instance_counter_type
+function Array_instance_counter_type()
+    return Array_instance_counter_type(Int32(0))
+end
+
+mutable struct Array_instance_foo_type
+       x::Vector{Any}
+end
+
+# Default constructor for Array_instance_foo_type
+function Array_instance_foo_type()
+    return Array_instance_foo_type(fill(nothing, 2))
+end
+
+function Array_instance_counter_type_alloc()
+   _ctx = Array_instance_counter_type()
+   _ctx.x = Int32(0)
+   return _ctx
+end
+
+function Array_instance_foo_type_alloc()
+   i_0 = Int32(0)
+   temp = nothing
+   _ctx = Array_instance_foo_type()
+   while (i_0 < Int32(2))
+      begin
+         @inbounds temp[i_0 + 1] = Array_instance_counter_type_alloc()
+         i_0 = (Int32(1) + i_0)
+      end
+   end
+   _ctx.x = temp
+   return _ctx
+end
+
+function Array_instance_counter(_ctx)
+   _ctx.x = (Int32(1) + _ctx.x)
+   return _ctx.x
+end
+
+function Array_instance_incr(ctx)
+   ctx.x = (Int32(1) + ctx.x)
+   return ctx.x
+end
+
+function Array_instance_foo(_ctx)
+   i__1 = Int32(0)
+   while (i__1 < Int32(2))
+      begin
+         Array_instance_counter(@inbounds _ctx.x[i__1 + 1])
+         i__1 = (Int32(1) + i__1)
+      end
+   end
+   return @inbounds _ctx.x[2].x
+end
+

@@ -1,0 +1,103 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct Defined_types_dot
+       x::Float32
+       y::Float32
+end
+
+# Default constructor for Defined_types_dot
+function Defined_types_dot()
+    return Defined_types_dot(Float32(0.0), Float32(0.0))
+end
+
+mutable struct Defined_types_foo_type
+       p1::Defined_types_dot
+end
+
+# Default constructor for Defined_types_foo_type
+function Defined_types_foo_type()
+    return Defined_types_foo_type(Defined_types_dot())
+end
+
+mutable struct Defined_types_process_type
+       inst_1a5d1::Defined_types_foo_type
+end
+
+# Default constructor for Defined_types_process_type
+function Defined_types_process_type()
+    return Defined_types_process_type(Defined_types_foo_type())
+end
+
+mutable struct Defined_types_micro
+       dot_0::Defined_types_dot
+       dot_1::Defined_types_dot
+end
+
+# Default constructor for Defined_types_micro
+function Defined_types_micro()
+    return Defined_types_micro(Defined_types_dot(), Defined_types_dot())
+end
+
+function Defined_types_dot_alloc()
+   _ctx = Defined_types_dot()
+   _ctx.x = Float32(0.0)
+   _ctx.y = Float32(0.0)
+   return _ctx
+end
+
+function Defined_types_foo_type_alloc()
+   _ctx = Defined_types_foo_type()
+   _ctx.p1 = Defined_types_dot_alloc()
+   return _ctx
+end
+
+function Defined_types_process_type_alloc()
+   _ctx = Defined_types_process_type()
+   _ctx.inst_1a5d1 = Defined_types_foo_type_alloc()
+   return _ctx
+end
+
+function Defined_types_noteOn_type_alloc(_ctx)
+   return Defined_types_process_type_alloc()
+end
+
+function Defined_types_noteOff_type_alloc(_ctx)
+   return Defined_types_process_type_alloc()
+end
+
+function Defined_types_controlChange_type_alloc(_ctx)
+   return Defined_types_process_type_alloc()
+end
+
+function Defined_types_default_type_alloc(_ctx)
+   return Defined_types_process_type_alloc()
+end
+
+function Defined_types_micro_alloc()
+   _ctx = Defined_types_micro()
+   _ctx.dot_0 = Defined_types_dot_alloc()
+   _ctx.dot_1 = Defined_types_dot_alloc()
+   return _ctx
+end
+
+function Defined_types_foo(_ctx)
+end
+
+function Defined_types_process(_ctx, input)
+   Defined_types_foo(_ctx.inst_1a5d1)
+   return input
+end
+
+function Defined_types_noteOn(_ctx, note, velocity, channel)
+end
+
+function Defined_types_noteOff(_ctx, note, channel)
+end
+
+function Defined_types_controlChange(_ctx, control, value, channel)
+end
+
+function Defined_types_default(_ctx)
+end
+

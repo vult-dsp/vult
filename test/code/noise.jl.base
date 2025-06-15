@@ -1,0 +1,89 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct Noise_pinker_type
+       w1::Float32
+end
+
+# Default constructor for Noise_pinker_type
+function Noise_pinker_type()
+    return Noise_pinker_type(Float32(0.0))
+end
+
+mutable struct Noise_process_type
+       inst_16d3d::Noise_pinker_type
+       x1::Int32
+       x2::Int32
+end
+
+# Default constructor for Noise_process_type
+function Noise_process_type()
+    return Noise_process_type(Noise_pinker_type(), Int32(0), Int32(0))
+end
+
+function Noise_pinker_type_alloc()
+   _ctx = Noise_pinker_type()
+   _ctx.w1 = Float32(0.0)
+   return _ctx
+end
+
+function Noise_process_type_alloc()
+   _ctx = Noise_process_type()
+   _ctx.inst_16d3d = Noise_pinker_type_alloc()
+   _ctx.x1 = Int32(0)
+   _ctx.x2 = Int32(0)
+   return _ctx
+end
+
+function Noise_noteOn_type_alloc(_ctx)
+   return Noise_process_type_alloc()
+end
+
+function Noise_noteOff_type_alloc(_ctx)
+   return Noise_process_type_alloc()
+end
+
+function Noise_controlChange_type_alloc(_ctx)
+   return Noise_process_type_alloc()
+end
+
+function Noise_default_type_alloc(_ctx)
+   return Noise_process_type_alloc()
+end
+
+function Noise_pinker(_ctx, x)
+   b0 = Float32(0.027712)
+   b1 = Float32(0.027712)
+   a1 = Float32(-0.944575)
+   w0 = (x + (-(a1 * _ctx.w1)))
+   y0 = ((b0 * w0) + (b1 * _ctx.w1))
+   _ctx.w1 = w0
+   return y0
+end
+
+function Noise_process(_ctx, color)
+   _ctx.x1 = ((Int32(7919) + (Int32(17389) * _ctx.x1)) % Int32(32768))
+   y1 = (Float32(3e-05) * Float32(_ctx.x1))
+   _ctx.x2 = ((Int32(12553) + (Int32(27449) * _ctx.x2)) % Int32(32768))
+   y2 = (Float32(3e-05) * Float32(_ctx.x2))
+   out = Float32(0.0)
+   if (color > Float32(0.5))
+      out = Noise_pinker(_ctx.inst_16d3d, (y1 + (-y2)))
+   else
+      out = (y1 + (-y2))
+   end
+   return (Float32(2.0) * out)
+end
+
+function Noise_noteOn(_ctx, note, velocity, channel)
+end
+
+function Noise_noteOff(_ctx, note, channel)
+end
+
+function Noise_controlChange(_ctx, control, value, channel)
+end
+
+function Noise_default(_ctx)
+end
+

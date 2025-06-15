@@ -1,0 +1,80 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct InstanceArray_counter_type
+       total::Float32
+end
+
+# Default constructor for InstanceArray_counter_type
+function InstanceArray_counter_type()
+    return InstanceArray_counter_type(Float32(0.0))
+end
+
+mutable struct InstanceArray_test1_type
+       instances::Vector{Any}
+end
+
+# Default constructor for InstanceArray_test1_type
+function InstanceArray_test1_type()
+    return InstanceArray_test1_type(fill(nothing, 4))
+end
+
+mutable struct InstanceArray_test2_type
+       case1::InstanceArray_counter_type
+       case2::InstanceArray_counter_type
+end
+
+# Default constructor for InstanceArray_test2_type
+function InstanceArray_test2_type()
+    return InstanceArray_test2_type(InstanceArray_counter_type(), InstanceArray_counter_type())
+end
+
+function InstanceArray_counter_type_alloc()
+   _ctx = InstanceArray_counter_type()
+   _ctx.total = Float32(0.0)
+   return _ctx
+end
+
+function InstanceArray_test1_type_alloc()
+   i_0 = Int32(0)
+   temp = nothing
+   _ctx = InstanceArray_test1_type()
+   while (i_0 < Int32(4))
+      begin
+         @inbounds temp[i_0 + 1] = InstanceArray_counter_type_alloc()
+         i_0 = (Int32(1) + i_0)
+      end
+   end
+   _ctx.instances = temp
+   return _ctx
+end
+
+function InstanceArray_test2_type_alloc()
+   _ctx = InstanceArray_test2_type()
+   _ctx.case1 = InstanceArray_counter_type_alloc()
+   _ctx.case2 = InstanceArray_counter_type_alloc()
+   return _ctx
+end
+
+function InstanceArray_counter(_ctx)
+   _ctx.total = (Float32(1.0) + _ctx.total)
+   return _ctx.total
+end
+
+function InstanceArray_test1(_ctx)
+   sum = Float32(0.0)
+   i__1 = Int32(0)
+   while (i__1 < Int32(4))
+      begin
+         sum = (sum + InstanceArray_counter(@inbounds _ctx.instances[i__1 + 1]))
+         i__1 = (Int32(1) + i__1)
+      end
+   end
+   return sum
+end
+
+function InstanceArray_test2(_ctx)
+   InstanceArray_counter(_ctx.case1)
+   InstanceArray_counter(_ctx.case2)
+end
+

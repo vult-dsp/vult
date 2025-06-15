@@ -1,0 +1,430 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct Delay_smooth_type
+       x::Float32
+end
+
+# Default constructor for Delay_smooth_type
+function Delay_smooth_type()
+    return Delay_smooth_type(Float32(0.0))
+end
+
+mutable struct Delay_change_type
+       pre_x::Float32
+end
+
+# Default constructor for Delay_change_type
+function Delay_change_type()
+    return Delay_change_type(Float32(0.0))
+end
+
+mutable struct Delay_edge_type
+       pre_x::Bool
+end
+
+# Default constructor for Delay_edge_type
+function Delay_edge_type()
+    return Delay_edge_type(false)
+end
+
+mutable struct Delay_each_type
+       count::Int32
+end
+
+# Default constructor for Delay_each_type
+function Delay_each_type()
+    return Delay_each_type(Int32(0))
+end
+
+mutable struct Delay_phasor_type
+       inst_18071::Delay_change_type
+       phase::Float32
+       rate::Float32
+end
+
+# Default constructor for Delay_phasor_type
+function Delay_phasor_type()
+    return Delay_phasor_type(Delay_change_type(), Float32(0.0), Float32(0.0))
+end
+
+mutable struct Delay_lfo_type
+       inst_11461::Delay_edge_type
+       phase::Float32
+end
+
+# Default constructor for Delay_lfo_type
+function Delay_lfo_type()
+    return Delay_lfo_type(Delay_edge_type(), Float32(0.0))
+end
+
+mutable struct Delay_phd_osc_type
+       inst_171c4::Delay_phasor_type
+       inst_277c4::Delay_smooth_type
+       inst_371c4::Delay_phasor_type
+       pre_phase1::Float32
+end
+
+# Default constructor for Delay_phd_osc_type
+function Delay_phd_osc_type()
+    return Delay_phd_osc_type(Delay_phasor_type(), Delay_smooth_type(), Delay_phasor_type(), Float32(0.0))
+end
+
+mutable struct Delay_delay_type
+       buffer::Vector{Float32}
+       write_pos::Int32
+end
+
+# Default constructor for Delay_delay_type
+function Delay_delay_type()
+    return Delay_delay_type(fill(Float32(0.0), 30000), Int32(0))
+end
+
+mutable struct Delay_mono_noteOn_type
+       count::Int32
+       notes::Vector{Int32}
+       pre::Int32
+end
+
+# Default constructor for Delay_mono_noteOn_type
+function Delay_mono_noteOn_type()
+    return Delay_mono_noteOn_type(Int32(0), fill(Int32(0), 4), Int32(0))
+end
+
+mutable struct Delay_process_type
+       detune::Float32
+       feedback::Float32
+       inst_16101::Delay_lfo_type
+       inst_2c401::Delay_phd_osc_type
+       inst_37701::Delay_smooth_type
+       inst_47701::Delay_smooth_type
+       inst_57701::Delay_smooth_type
+       inst_68e01::Delay_delay_type
+       lfo_amt::Float32
+       lfo_rate::Float32
+       notes::Delay_mono_noteOn_type
+       pitch::Float32
+       time::Float32
+       volume::Float32
+end
+
+# Default constructor for Delay_process_type
+function Delay_process_type()
+    return Delay_process_type(Float32(0.0), Float32(0.0), Delay_lfo_type(), Delay_phd_osc_type(), Delay_smooth_type(), Delay_smooth_type(), Delay_smooth_type(), Delay_delay_type(), Float32(0.0), Float32(0.0), Delay_mono_noteOn_type(), Float32(0.0), Float32(0.0), Float32(0.0))
+end
+
+function Delay_smooth_type_alloc()
+   _ctx = Delay_smooth_type()
+   _ctx.x = Float32(0.0)
+   return _ctx
+end
+
+function Delay_change_type_alloc()
+   _ctx = Delay_change_type()
+   _ctx.pre_x = Float32(0.0)
+   return _ctx
+end
+
+function Delay_edge_type_alloc()
+   _ctx = Delay_edge_type()
+   _ctx.pre_x = false
+   return _ctx
+end
+
+function Delay_each_type_alloc()
+   _ctx = Delay_each_type()
+   _ctx.count = Int32(0)
+   return _ctx
+end
+
+function Delay_phasor_type_alloc()
+   _ctx = Delay_phasor_type()
+   _ctx.inst_18071 = Delay_change_type_alloc()
+   _ctx.phase = Float32(0.0)
+   _ctx.rate = Float32(0.0)
+   return _ctx
+end
+
+function Delay_lfo_type_alloc()
+   _ctx = Delay_lfo_type()
+   _ctx.inst_11461 = Delay_edge_type_alloc()
+   _ctx.phase = Float32(0.0)
+   return _ctx
+end
+
+function Delay_phd_osc_type_alloc()
+   _ctx = Delay_phd_osc_type()
+   _ctx.inst_171c4 = Delay_phasor_type_alloc()
+   _ctx.inst_277c4 = Delay_smooth_type_alloc()
+   _ctx.inst_371c4 = Delay_phasor_type_alloc()
+   _ctx.pre_phase1 = Float32(0.0)
+   return _ctx
+end
+
+function Delay_delay_type_alloc()
+   i_0 = Int32(0)
+   temp = fill(Float32(0.0), Int32(30000))
+   _ctx = Delay_delay_type()
+   while (i_0 < Int32(30000))
+      begin
+         @inbounds temp[i_0 + 1] = Float32(0.0)
+         i_0 = (Int32(1) + i_0)
+      end
+   end
+   _ctx.buffer = temp
+   _ctx.write_pos = Int32(0)
+   return _ctx
+end
+
+function Delay_mono_noteOn_type_alloc()
+   _ctx = Delay_mono_noteOn_type()
+   _ctx.count = Int32(0)
+   i_0 = Int32(0)
+   temp = fill(Int32(0), Int32(4))
+   while (i_0 < Int32(4))
+      begin
+         @inbounds temp[i_0 + 1] = Int32(0)
+         i_0 = (Int32(1) + i_0)
+      end
+   end
+   _ctx.notes = temp
+   _ctx.pre = Int32(0)
+   return _ctx
+end
+
+function Delay_mono_noteOff_type_alloc(_ctx)
+   return Delay_mono_noteOn_type_alloc()
+end
+
+function Delay_mono_isGateOn_type_alloc(_ctx)
+   return Delay_mono_noteOn_type_alloc()
+end
+
+function Delay_process_type_alloc()
+   _ctx = Delay_process_type()
+   _ctx.detune = Float32(0.0)
+   _ctx.feedback = Float32(0.0)
+   _ctx.inst_16101 = Delay_lfo_type_alloc()
+   _ctx.inst_2c401 = Delay_phd_osc_type_alloc()
+   _ctx.inst_37701 = Delay_smooth_type_alloc()
+   _ctx.inst_47701 = Delay_smooth_type_alloc()
+   _ctx.inst_57701 = Delay_smooth_type_alloc()
+   _ctx.inst_68e01 = Delay_delay_type_alloc()
+   _ctx.lfo_amt = Float32(0.0)
+   _ctx.lfo_rate = Float32(0.0)
+   _ctx.notes = Delay_mono_noteOn_type_alloc()
+   _ctx.pitch = Float32(0.0)
+   _ctx.time = Float32(0.0)
+   _ctx.volume = Float32(0.0)
+   return _ctx
+end
+
+function Delay_noteOn_type_alloc(_ctx)
+   return Delay_process_type_alloc()
+end
+
+function Delay_noteOff_type_alloc(_ctx)
+   return Delay_process_type_alloc()
+end
+
+function Delay_controlChange_type_alloc(_ctx)
+   return Delay_process_type_alloc()
+end
+
+function Delay_default_type_alloc(_ctx)
+   return Delay_process_type_alloc()
+end
+
+function Delay_smooth(_ctx, input)
+   _ctx.x = ((Float32(0.005) * (input + (-_ctx.x))) + _ctx.x)
+   return _ctx.x
+end
+
+function Delay_change(_ctx, x)
+   v = (_ctx.pre_x != x)
+   _ctx.pre_x = x
+   return v
+end
+
+function Delay_edge(_ctx, x)
+   v = ((_ctx.pre_x != x) && (_ctx.pre_x == false))
+   _ctx.pre_x = x
+   return v
+end
+
+function Delay_each(_ctx, n)
+   ret = (_ctx.count == Int32(0))
+   _ctx.count = ((Int32(1) + _ctx.count) % n)
+   return ret
+end
+
+function Delay_pitchToRate(d)
+   return (Float32(0.000185) * exp((Float32(0.057762) * d)))
+end
+
+function Delay_phasor(_ctx, pitch, reset)
+   if Delay_change(_ctx.inst_18071, pitch)
+      _ctx.rate = Delay_pitchToRate(pitch)
+   end
+   if reset
+      _ctx.phase = Float32(0.0)
+   else
+      _ctx.phase = mod((_ctx.phase + _ctx.rate), Float32(1.0))
+   end
+   return _ctx.phase
+end
+
+function Delay_lfo(_ctx, f, gate)
+   rate = (Float32(0.000226) * f)
+   if Delay_edge(_ctx.inst_11461, gate)
+      _ctx.phase = Float32(0.0)
+   end
+   _ctx.phase = (rate + _ctx.phase)
+   if (_ctx.phase > Float32(1.0))
+      _ctx.phase = (Float32(-1.0) + _ctx.phase)
+   end
+   return (Float32(-0.5) + sin((Float32(6.283185) * _ctx.phase)))
+end
+
+function Delay_phd_osc(_ctx, pitch, detune)
+   phase1 = Delay_phasor(_ctx.inst_171c4, pitch, false)
+   comp = (Float32(1.0) + (-phase1))
+   reset = (((-phase1) + _ctx.pre_phase1) > Float32(0.5))
+   _ctx.pre_phase1 = phase1
+   phase2 = Delay_phasor(_ctx.inst_371c4, (pitch + (Float32(32.0) * Delay_smooth(_ctx.inst_277c4, detune))), reset)
+   sine = sin((Float32(6.283185) * phase2))
+   return (comp * sine)
+end
+
+function Delay_delay(_ctx, x, time, feedback)
+   time = clamp(time, Float32(0.0), Float32(1.0))
+   feedback = clamp(feedback, Float32(0.0), Float32(1.0))
+   index_r = (Float32(30000.0) * time)
+   index_i = trunc(Int32, floor(index_r))
+   delta = ((-index_i) + _ctx.write_pos)
+   read_pos = Int32(0)
+   if (delta < Int32(0))
+      read_pos = (Int32(30000) + delta)
+   else
+      read_pos = delta
+   end
+   decimal = (index_r + (-Float32(index_i)))
+   x1 = @inbounds _ctx.buffer[read_pos + 1]
+   x2 = @inbounds _ctx.buffer[((Int32(1) + read_pos) % Int32(30000)) + 1]
+   ret = (x1 + (decimal * (x2 + (-x1))))
+   _ctx.write_pos = ((Int32(1) + _ctx.write_pos) % Int32(30000))
+   @inbounds _ctx.buffer[_ctx.write_pos + 1] = clamp((x + (feedback * ret)), Float32(-1.0), Float32(1.0))
+   return ret
+end
+
+function Delay_mono_noteOn(_ctx, n)
+   if (_ctx.count < Int32(4))
+      begin
+         @inbounds _ctx.notes[_ctx.count + 1] = n
+         _ctx.pre = n
+         if (_ctx.count < Int32(4))
+            _ctx.count = (Int32(1) + _ctx.count)
+         end
+      end
+   end
+   return _ctx.pre
+end
+
+function Delay_mono_noteOff(_ctx, n)
+   found = false
+   i = Int32(0)
+   pos = Int32(0)
+   if (_ctx.count == Int32(0))
+      return _ctx.pre
+   end
+   while ((i < Int32(4)) && (found == false))
+      begin
+         if (@inbounds _ctx.notes[i + 1] == n)
+            begin
+               pos = i
+               found = true
+            end
+         end
+         i = (Int32(1) + i)
+      end
+   end
+   if found
+      begin
+         k = (Int32(1) + pos)
+         while (k < Int32(4))
+            begin
+               @inbounds _ctx.notes[(Int32(-1) + k) + 1] = @inbounds _ctx.notes[k + 1]
+               k = (Int32(1) + k)
+            end
+         end
+         if (found && (_ctx.count > Int32(0)))
+            begin
+               _ctx.count = (Int32(-1) + _ctx.count)
+               _ctx.pre = @inbounds _ctx.notes[(Int32(-1) + _ctx.count) + 1]
+            end
+         end
+      end
+   end
+   return _ctx.pre
+end
+
+function Delay_mono_isGateOn(_ctx)
+   return (_ctx.count > Int32(0))
+end
+
+function Delay_process(_ctx, input)
+   gate = Delay_mono_isGateOn(_ctx.notes)
+   lfo_val = (Delay_lfo(_ctx.inst_16101, _ctx.lfo_rate, gate) * _ctx.lfo_amt)
+   o1 = Delay_phd_osc(_ctx.inst_2c401, _ctx.pitch, (lfo_val + _ctx.detune))
+   amp = Float32(0.0)
+   _if_temp_0 = Float32(0.0)
+   if gate
+      _if_temp_0 = Float32(1.0)
+   else
+      _if_temp_0 = Float32(0.0)
+   end
+   amp = Delay_smooth(_ctx.inst_37701, _if_temp_0)
+   osc_out = (amp * o1)
+   delay_out = Delay_delay(_ctx.inst_68e01, osc_out, Delay_smooth(_ctx.inst_47701, _ctx.time), Delay_smooth(_ctx.inst_57701, _ctx.feedback))
+   return (Float32(0.5) * ((delay_out + osc_out) * _ctx.volume))
+end
+
+function Delay_noteOn(_ctx, note, velocity, channel)
+   _ctx.pitch = Float32(Delay_mono_noteOn(_ctx.notes, note))
+end
+
+function Delay_noteOff(_ctx, note, channel)
+   _ctx.pitch = Float32(Delay_mono_noteOff(_ctx.notes, note))
+end
+
+function Delay_controlChange(_ctx, control, value, channel)
+   if (control == Int32(30))
+      _ctx.volume = (Float32(0.007874) * value)
+   end
+   if (control == Int32(31))
+      _ctx.detune = (Float32(0.007874) * value)
+   end
+   if (control == Int32(32))
+      _ctx.lfo_rate = (Float32(0.007874) * value)
+   end
+   if (control == Int32(33))
+      _ctx.lfo_amt = (Float32(-1.0) + (Float32(0.015748) * value))
+   end
+   if (control == Int32(34))
+      _ctx.time = (Float32(0.007874) * value)
+   end
+   if (control == Int32(35))
+      _ctx.feedback = (Float32(0.007874) * value)
+   end
+end
+
+function Delay_default(_ctx)
+   _ctx.volume = Float32(1.0)
+   _ctx.pitch = Float32(45.0)
+   _ctx.detune = Float32(0.8)
+   _ctx.lfo_rate = Float32(0.07)
+   _ctx.lfo_amt = Float32(-0.8)
+   _ctx.time = Float32(0.5)
+   _ctx.feedback = Float32(0.5)
+end
+

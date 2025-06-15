@@ -1,0 +1,21 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+function Multi_iter_test()
+   acc = Int32(0)
+   x__1 = Int32(0)
+   while (x__1 < Int32(2))
+      begin
+         acc = (acc + x__1)
+         x__1 = (Int32(1) + x__1)
+      end
+   end
+   x__2 = Int32(0)
+   while (x__2 < Int32(2))
+      begin
+         acc = (acc + x__2)
+         x__2 = (Int32(1) + x__2)
+      end
+   end
+end
+

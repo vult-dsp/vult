@@ -1,0 +1,65 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+Tables_sineTable1_c0 = nothing
+Tables_sineTable1_c1 = nothing
+Tables_sineTable1_c2 = nothing
+function Tables_sineTable1_raw_c0(index)
+   return @inbounds Tables_sineTable1_c0[index + 1]
+end
+
+function Tables_sineTable1_raw_c1(index)
+   return @inbounds Tables_sineTable1_c1[index + 1]
+end
+
+function Tables_sineTable1_raw_c2(index)
+   return @inbounds Tables_sineTable1_c2[index + 1]
+end
+
+function Tables_sineTable1(x)
+   index = clamp(trunc(Int32, (x * Float32(31.0))), Int32(0), Int32(31))
+   return (@inbounds Tables_sineTable1_c0[index + 1] + (x * (@inbounds Tables_sineTable1_c1[index + 1] + (@inbounds Tables_sineTable1_c2[index + 1] * x))))
+end
+
+Tables_sineTable2_c0 = nothing
+Tables_sineTable2_c1 = nothing
+function Tables_sineTable2_raw_c0(index)
+   return @inbounds Tables_sineTable2_c0[index + 1]
+end
+
+function Tables_sineTable2_raw_c1(index)
+   return @inbounds Tables_sineTable2_c1[index + 1]
+end
+
+function Tables_sineTable2(x)
+   index = clamp(trunc(Int32, (x * Float32(31.0))), Int32(0), Int32(31))
+   return (@inbounds Tables_sineTable2_c0[index + 1] + (x * @inbounds Tables_sineTable2_c1[index + 1]))
+end
+
+Tables_sineTable3_c0 = nothing
+Tables_sineTable3_c1 = nothing
+function Tables_sineTable3_raw_c0(index)
+   return @inbounds Tables_sineTable3_c0[index + 1]
+end
+
+function Tables_sineTable3_raw_c1(index)
+   return @inbounds Tables_sineTable3_c1[index + 1]
+end
+
+function Tables_sineTable3(x)
+   value = clip((x * Float32(32.0)), Float32(0.0), Float32(32.0))
+   index = trunc(Int32, value)
+   decimal = (value - floor(value))
+   return (@inbounds Tables_sineTable3_c0[index + 1] + (@inbounds Tables_sineTable3_c1[index + 1] * decimal))
+end
+
+Tables_power2_table = nothing
+function Tables_power2(x)
+   return @inbounds Tables_power2_table[(int_clip(x, Int32(-4), Int32(4)) + Int32(4)) + 1]
+end
+
+Tables_square_table = nothing
+function Tables_square(x)
+   return @inbounds Tables_square_table[(int_clip(x, Int32(-4), Int32(4)) + Int32(4)) + 1]
+end
+

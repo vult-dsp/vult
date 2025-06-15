@@ -1,0 +1,14 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+function IterLoop_test()
+   total = Int32(0)
+   i__1 = Int32(0)
+   while (i__1 < Int32(2))
+      begin
+         total = (i__1 + total)
+         i__1 = (Int32(1) + i__1)
+      end
+   end
+end
+

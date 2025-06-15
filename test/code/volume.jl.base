@@ -1,0 +1,76 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct Volume_smooth_type
+       x::Float32
+end
+
+# Default constructor for Volume_smooth_type
+function Volume_smooth_type()
+    return Volume_smooth_type(Float32(0.0))
+end
+
+mutable struct Volume_process_type
+       inst_1d7d3::Volume_smooth_type
+       volume::Float32
+end
+
+# Default constructor for Volume_process_type
+function Volume_process_type()
+    return Volume_process_type(Volume_smooth_type(), Float32(0.0))
+end
+
+function Volume_smooth_type_alloc()
+   _ctx = Volume_smooth_type()
+   _ctx.x = Float32(0.0)
+   return _ctx
+end
+
+function Volume_process_type_alloc()
+   _ctx = Volume_process_type()
+   _ctx.inst_1d7d3 = Volume_smooth_type_alloc()
+   _ctx.volume = Float32(0.0)
+   return _ctx
+end
+
+function Volume_noteOn_type_alloc(_ctx)
+   return Volume_process_type_alloc()
+end
+
+function Volume_noteOff_type_alloc(_ctx)
+   return Volume_process_type_alloc()
+end
+
+function Volume_controlChange_type_alloc(_ctx)
+   return Volume_process_type_alloc()
+end
+
+function Volume_default_type_alloc(_ctx)
+   return Volume_process_type_alloc()
+end
+
+function Volume_smooth(_ctx, input)
+   _ctx.x = ((Float32(0.005) * (input + (-_ctx.x))) + _ctx.x)
+   return _ctx.x
+end
+
+function Volume_process(_ctx, input)
+   return (input * Volume_smooth(_ctx.inst_1d7d3, _ctx.volume))
+end
+
+function Volume_noteOn(_ctx, note, velocity, channel)
+end
+
+function Volume_noteOff(_ctx, note, channel)
+end
+
+function Volume_controlChange(_ctx, control, value, channel)
+   if (control == Int32(30))
+      _ctx.volume = (Float32(0.007874) * Float32(value))
+   end
+end
+
+function Volume_default(_ctx)
+   _ctx.volume = Float32(0.0)
+end
+

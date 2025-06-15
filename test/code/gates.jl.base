@@ -1,0 +1,181 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct Gates_gates_noteOn_type
+       Gates_gates_state_ret_0::Float32
+       Gates_gates_state_ret_1::Float32
+       Gates_gates_state_ret_2::Float32
+       Gates_gates_state_ret_3::Float32
+       Gates_gates_state_ret_4::Float32
+       Gates_gates_state_ret_5::Float32
+       Gates_gates_state_ret_6::Float32
+       Gates_gates_state_ret_7::Float32
+       vel::Vector{Int32}
+end
+
+# Default constructor for Gates_gates_noteOn_type
+function Gates_gates_noteOn_type()
+    return Gates_gates_noteOn_type(Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), fill(Int32(0), 8))
+end
+
+mutable struct Gates_process_type
+       Gates_process_ret_0::Float32
+       Gates_process_ret_1::Float32
+       Gates_process_ret_2::Float32
+       Gates_process_ret_3::Float32
+       Gates_process_ret_4::Float32
+       Gates_process_ret_5::Float32
+       Gates_process_ret_6::Float32
+       Gates_process_ret_7::Float32
+       channel_in::Int32
+       gates::Gates_gates_noteOn_type
+end
+
+# Default constructor for Gates_process_type
+function Gates_process_type()
+    return Gates_process_type(Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0), Int32(0), Gates_gates_noteOn_type())
+end
+
+function Gates_gates_noteOn_type_alloc()
+   _ctx = Gates_gates_noteOn_type()
+   _ctx.Gates_gates_state_ret_0 = Float32(0.0)
+   _ctx.Gates_gates_state_ret_1 = Float32(0.0)
+   _ctx.Gates_gates_state_ret_2 = Float32(0.0)
+   _ctx.Gates_gates_state_ret_3 = Float32(0.0)
+   _ctx.Gates_gates_state_ret_4 = Float32(0.0)
+   _ctx.Gates_gates_state_ret_5 = Float32(0.0)
+   _ctx.Gates_gates_state_ret_6 = Float32(0.0)
+   _ctx.Gates_gates_state_ret_7 = Float32(0.0)
+   i_0 = Int32(0)
+   temp = fill(Int32(0), Int32(8))
+   while (i_0 < Int32(8))
+      begin
+         @inbounds temp[i_0 + 1] = Int32(0)
+         i_0 = (Int32(1) + i_0)
+      end
+   end
+   _ctx.vel = temp
+   return _ctx
+end
+
+function Gates_gates_noteOff_type_alloc(_ctx)
+   return Gates_gates_noteOn_type_alloc()
+end
+
+function Gates_gates_state_type_alloc(_ctx)
+   return Gates_gates_noteOn_type_alloc()
+end
+
+function Gates_process_type_alloc()
+   _ctx = Gates_process_type()
+   _ctx.Gates_process_ret_0 = Float32(0.0)
+   _ctx.Gates_process_ret_1 = Float32(0.0)
+   _ctx.Gates_process_ret_2 = Float32(0.0)
+   _ctx.Gates_process_ret_3 = Float32(0.0)
+   _ctx.Gates_process_ret_4 = Float32(0.0)
+   _ctx.Gates_process_ret_5 = Float32(0.0)
+   _ctx.Gates_process_ret_6 = Float32(0.0)
+   _ctx.Gates_process_ret_7 = Float32(0.0)
+   _ctx.channel_in = Int32(0)
+   _ctx.gates = Gates_gates_noteOn_type_alloc()
+   return _ctx
+end
+
+function Gates_noteOn_type_alloc(_ctx)
+   return Gates_process_type_alloc()
+end
+
+function Gates_noteOff_type_alloc(_ctx)
+   return Gates_process_type_alloc()
+end
+
+function Gates_controlChange_type_alloc(_ctx)
+   return Gates_process_type_alloc()
+end
+
+function Gates_default_type_alloc(_ctx)
+   return Gates_process_type_alloc()
+end
+
+function Gates_velToCV(vel)
+   return (Float32(0.007874) * Float32(vel))
+end
+
+function Gates_gates_noteOn(_ctx, note, velocity)
+   if ((note >= Int32(36)) && (note <= Int32(43)))
+      begin
+         n = (Int32(-36) + note)
+         @inbounds _ctx.vel[n + 1] = velocity
+      end
+   end
+end
+
+function Gates_gates_noteOff(_ctx, note)
+   if ((note >= Int32(36)) && (note <= Int32(43)))
+      begin
+         n = (Int32(-36) + note)
+         @inbounds _ctx.vel[n + 1] = Int32(0)
+      end
+   end
+end
+
+function Gates_gates_state(_ctx)
+   vel1 = Gates_velToCV(@inbounds _ctx.vel[1])
+   vel2 = Gates_velToCV(@inbounds _ctx.vel[2])
+   vel3 = Gates_velToCV(@inbounds _ctx.vel[3])
+   vel4 = Gates_velToCV(@inbounds _ctx.vel[4])
+   vel5 = Gates_velToCV(@inbounds _ctx.vel[5])
+   vel6 = Gates_velToCV(@inbounds _ctx.vel[6])
+   vel7 = Gates_velToCV(@inbounds _ctx.vel[7])
+   vel8 = Gates_velToCV(@inbounds _ctx.vel[8])
+   _ctx.Gates_gates_state_ret_0 = vel1
+   _ctx.Gates_gates_state_ret_1 = vel2
+   _ctx.Gates_gates_state_ret_2 = vel3
+   _ctx.Gates_gates_state_ret_3 = vel4
+   _ctx.Gates_gates_state_ret_4 = vel5
+   _ctx.Gates_gates_state_ret_5 = vel6
+   _ctx.Gates_gates_state_ret_6 = vel7
+   _ctx.Gates_gates_state_ret_7 = vel8
+   return 
+end
+
+function Gates_process(_ctx, c)
+   _ctx.channel_in = c
+   Gates_gates_state(_ctx.gates)
+   _call_temp_0 = _ctx.gates.Gates_gates_state_ret_0
+   _call_temp_1 = _ctx.gates.Gates_gates_state_ret_1
+   _call_temp_2 = _ctx.gates.Gates_gates_state_ret_2
+   _call_temp_3 = _ctx.gates.Gates_gates_state_ret_3
+   _call_temp_4 = _ctx.gates.Gates_gates_state_ret_4
+   _call_temp_5 = _ctx.gates.Gates_gates_state_ret_5
+   _call_temp_6 = _ctx.gates.Gates_gates_state_ret_6
+   _call_temp_7 = _ctx.gates.Gates_gates_state_ret_7
+   _ctx.Gates_process_ret_0 = _call_temp_0
+   _ctx.Gates_process_ret_1 = _call_temp_1
+   _ctx.Gates_process_ret_2 = _call_temp_2
+   _ctx.Gates_process_ret_3 = _call_temp_3
+   _ctx.Gates_process_ret_4 = _call_temp_4
+   _ctx.Gates_process_ret_5 = _call_temp_5
+   _ctx.Gates_process_ret_6 = _call_temp_6
+   _ctx.Gates_process_ret_7 = _call_temp_7
+   return 
+end
+
+function Gates_noteOn(_ctx, note, velocity, channel)
+   if (_ctx.channel_in == channel)
+      Gates_gates_noteOn(_ctx.gates, note, velocity)
+   end
+end
+
+function Gates_noteOff(_ctx, note, channel)
+   if (_ctx.channel_in == channel)
+      Gates_gates_noteOff(_ctx.gates, note)
+   end
+end
+
+function Gates_controlChange(_ctx, control, value, channel)
+end
+
+function Gates_default(_ctx)
+end
+

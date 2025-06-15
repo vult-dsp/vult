@@ -1,0 +1,94 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct Array_defined_type_dot
+       x::Float32
+       y::Float32
+end
+
+# Default constructor for Array_defined_type_dot
+function Array_defined_type_dot()
+    return Array_defined_type_dot(Float32(0.0), Float32(0.0))
+end
+
+mutable struct Array_defined_type_foo_type
+       p1::Vector{Any}
+end
+
+# Default constructor for Array_defined_type_foo_type
+function Array_defined_type_foo_type()
+    return Array_defined_type_foo_type(fill(nothing, 12))
+end
+
+mutable struct Array_defined_type_process_type
+       inst_1c76a::Array_defined_type_foo_type
+end
+
+# Default constructor for Array_defined_type_process_type
+function Array_defined_type_process_type()
+    return Array_defined_type_process_type(Array_defined_type_foo_type())
+end
+
+function Array_defined_type_dot_alloc()
+   _ctx = Array_defined_type_dot()
+   _ctx.x = Float32(0.0)
+   _ctx.y = Float32(0.0)
+   return _ctx
+end
+
+function Array_defined_type_foo_type_alloc()
+   i_0 = Int32(0)
+   temp = nothing
+   _ctx = Array_defined_type_foo_type()
+   while (i_0 < Int32(12))
+      begin
+         @inbounds temp[i_0 + 1] = Array_defined_type_dot_alloc()
+         i_0 = (Int32(1) + i_0)
+      end
+   end
+   _ctx.p1 = temp
+   return _ctx
+end
+
+function Array_defined_type_process_type_alloc()
+   _ctx = Array_defined_type_process_type()
+   _ctx.inst_1c76a = Array_defined_type_foo_type_alloc()
+   return _ctx
+end
+
+function Array_defined_type_noteOn_type_alloc(_ctx)
+   return Array_defined_type_process_type_alloc()
+end
+
+function Array_defined_type_noteOff_type_alloc(_ctx)
+   return Array_defined_type_process_type_alloc()
+end
+
+function Array_defined_type_controlChange_type_alloc(_ctx)
+   return Array_defined_type_process_type_alloc()
+end
+
+function Array_defined_type_default_type_alloc(_ctx)
+   return Array_defined_type_process_type_alloc()
+end
+
+function Array_defined_type_foo(_ctx)
+end
+
+function Array_defined_type_process(_ctx, input)
+   Array_defined_type_foo(_ctx.inst_1c76a)
+   return input
+end
+
+function Array_defined_type_noteOn(_ctx, note, velocity, channel)
+end
+
+function Array_defined_type_noteOff(_ctx, note, channel)
+end
+
+function Array_defined_type_controlChange(_ctx, control, value, channel)
+end
+
+function Array_defined_type_default(_ctx)
+end
+

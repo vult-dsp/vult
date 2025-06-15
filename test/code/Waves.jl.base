@@ -1,0 +1,54 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+Waves_sineTable1_chan_0 = nothing
+function Waves_sineTable1_samples()
+   return Int32(256)
+end
+
+function Waves_sineTable1(channel, index)
+   if (channel == Int32(0))
+      return @inbounds Waves_sineTable1_chan_0[(index % Int32(256)) + 1]
+   end
+   return Float32(0.0)
+end
+
+Waves_sineTable2_c0 = nothing
+Waves_sineTable2_c1 = nothing
+Waves_sineTable2_c2 = nothing
+function Waves_sineTable2_samples()
+   return Int32(256)
+end
+
+function Waves_sineTable2_raw_c0(index)
+   return @inbounds Waves_sineTable2_c0[index + 1]
+end
+
+function Waves_sineTable2_raw_c1(index)
+   return @inbounds Waves_sineTable2_c1[index + 1]
+end
+
+function Waves_sineTable2_raw_c2(index)
+   return @inbounds Waves_sineTable2_c2[index + 1]
+end
+
+function Waves_sineTable2(position)
+   index = clamp(trunc(Int32, (position * Float32(255.0))), Int32(0), Int32(255))
+   return (@inbounds Waves_sineTable2_c0[index + 1] + (position * (@inbounds Waves_sineTable2_c1[index + 1] + (@inbounds Waves_sineTable2_c2[index + 1] * position))))
+end
+
+function Waves_test1()
+   n = Waves_sineTable1_samples()
+   i__1 = Int32(0)
+   while (i__1 < n)
+      begin
+         Waves_sineTable1(Int32(0), i__1)
+         i__1 = (Int32(1) + i__1)
+      end
+   end
+end
+
+function Waves_test2()
+   result = Waves_sineTable2(Float32(0.5))
+end
+

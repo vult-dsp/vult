@@ -1,0 +1,19 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+function Template_process(input)
+   return input
+end
+
+function Template_noteOn(note, velocity, channel)
+end
+
+function Template_noteOff(note, channel)
+end
+
+function Template_controlChange(control, value, channel)
+end
+
+function Template_default()
+end
+

@@ -1,0 +1,12 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+Constants_str = nothing
+Constants_num = nothing
+Constants_some_array = nothing
+function Constants_foo()
+   i = Constants_num
+   s = Constants_str
+   x = @inbounds Constants_some_array[1]
+end
+

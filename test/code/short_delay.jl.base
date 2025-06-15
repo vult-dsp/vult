@@ -1,0 +1,164 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct Short_delay_soft_type
+       x2::Float32
+       x3::Float32
+       x4::Float32
+end
+
+# Default constructor for Short_delay_soft_type
+function Short_delay_soft_type()
+    return Short_delay_soft_type(Float32(0.0), Float32(0.0), Float32(0.0))
+end
+
+mutable struct Short_delay_do_type
+       buffer::Vector{Float32}
+       write_pos::Int32
+end
+
+# Default constructor for Short_delay_do_type
+function Short_delay_do_type()
+    return Short_delay_do_type(fill(Float32(0.0), 22050), Int32(0))
+end
+
+mutable struct Short_delay_process_type
+       inst_1593b::Short_delay_soft_type
+       inst_2ba3b::Short_delay_do_type
+end
+
+# Default constructor for Short_delay_process_type
+function Short_delay_process_type()
+    return Short_delay_process_type(Short_delay_soft_type(), Short_delay_do_type())
+end
+
+function Short_delay_soft_type_alloc()
+   _ctx = Short_delay_soft_type()
+   _ctx.x2 = Float32(0.0)
+   _ctx.x3 = Float32(0.0)
+   _ctx.x4 = Float32(0.0)
+   return _ctx
+end
+
+function Short_delay_do_type_alloc()
+   i_0 = Int32(0)
+   temp = fill(Float32(0.0), Int32(22050))
+   _ctx = Short_delay_do_type()
+   while (i_0 < Int32(22050))
+      begin
+         @inbounds temp[i_0 + 1] = Float32(0.0)
+         i_0 = (Int32(1) + i_0)
+      end
+   end
+   _ctx.buffer = temp
+   _ctx.write_pos = Int32(0)
+   return _ctx
+end
+
+function Short_delay_process_type_alloc()
+   _ctx = Short_delay_process_type()
+   _ctx.inst_1593b = Short_delay_soft_type_alloc()
+   _ctx.inst_2ba3b = Short_delay_do_type_alloc()
+   return _ctx
+end
+
+function Short_delay_noteOn_type_alloc(_ctx)
+   return Short_delay_process_type_alloc()
+end
+
+function Short_delay_noteOff_type_alloc(_ctx)
+   return Short_delay_process_type_alloc()
+end
+
+function Short_delay_controlChange_type_alloc(_ctx)
+   return Short_delay_process_type_alloc()
+end
+
+function Short_delay_default_type_alloc(_ctx)
+   return Short_delay_process_type_alloc()
+end
+
+Saturate_tanh_table_c0 = nothing
+Saturate_tanh_table_c1 = nothing
+Saturate_tanh_table_c2 = nothing
+function Saturate_tanh_table_raw_c0(index)
+   return @inbounds Saturate_tanh_table_c0[index + 1]
+end
+
+function Saturate_tanh_table_raw_c1(index)
+   return @inbounds Saturate_tanh_table_c1[index + 1]
+end
+
+function Saturate_tanh_table_raw_c2(index)
+   return @inbounds Saturate_tanh_table_c2[index + 1]
+end
+
+function Saturate_tanh_table(x)
+   index = clamp(trunc(Int32, ((x + Float32(24.0)) * Float32(5.0))), Int32(0), Int32(240))
+   return (@inbounds Saturate_tanh_table_c0[index + 1] + (x * (@inbounds Saturate_tanh_table_c1[index + 1] + (@inbounds Saturate_tanh_table_c2[index + 1] * x))))
+end
+
+function Saturate_process(x)
+   return Saturate_tanh_table(x)
+end
+
+function Saturate_noteOn(note, velocity, channel)
+end
+
+function Saturate_noteOff(note, channel)
+end
+
+function Saturate_controlChange(control, value, channel)
+end
+
+function Saturate_default()
+end
+
+function Short_delay_soft(_ctx, x1)
+   o = (Float32(0.25) * (x1 + (_ctx.x2 + (_ctx.x3 + _ctx.x4))))
+   _t_temp_0 = x1
+   _t_temp_1 = _ctx.x2
+   _t_temp_2 = _ctx.x3
+   _ctx.x2 = _t_temp_0
+   _ctx.x3 = _t_temp_1
+   _ctx.x4 = _t_temp_2
+   return o
+end
+
+function Short_delay_do(_ctx, x, time_in, feedback_in)
+   time = clamp(time_in, Float32(0.0), Float32(1.0))
+   feedback = clamp(feedback_in, Float32(0.0), Float32(1.0))
+   index_r = (Float32(22050.0) * time)
+   index_i = trunc(Int32, floor(index_r))
+   delta = ((-index_i) + _ctx.write_pos)
+   read_pos = Int32(0)
+   if (delta < Int32(0))
+      read_pos = (Int32(22050) + delta)
+   else
+      read_pos = delta
+   end
+   decimal = (index_r + (-Float32(index_i)))
+   x1 = @inbounds _ctx.buffer[read_pos + 1]
+   x2 = @inbounds _ctx.buffer[((Int32(1) + read_pos) % Int32(22050)) + 1]
+   ret = (x1 + (decimal * (x2 + (-x1))))
+   _ctx.write_pos = ((Int32(1) + _ctx.write_pos) % Int32(22050))
+   @inbounds _ctx.buffer[_ctx.write_pos + 1] = Saturate_process((x + (feedback * ret)))
+   return ret
+end
+
+function Short_delay_process(_ctx, x, time, feedback)
+   return Short_delay_do(_ctx.inst_2ba3b, x, Short_delay_soft(_ctx.inst_1593b, time), feedback)
+end
+
+function Short_delay_noteOn(_ctx, note, velocity, channel)
+end
+
+function Short_delay_noteOff(_ctx, note, channel)
+end
+
+function Short_delay_controlChange(_ctx, control, value, channel)
+end
+
+function Short_delay_default(_ctx)
+end
+

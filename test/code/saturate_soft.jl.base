@@ -1,0 +1,39 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+Saturate_soft_tanh_table_c0 = nothing
+Saturate_soft_tanh_table_c1 = nothing
+Saturate_soft_tanh_table_c2 = nothing
+function Saturate_soft_tanh_table_raw_c0(index)
+   return @inbounds Saturate_soft_tanh_table_c0[index + 1]
+end
+
+function Saturate_soft_tanh_table_raw_c1(index)
+   return @inbounds Saturate_soft_tanh_table_c1[index + 1]
+end
+
+function Saturate_soft_tanh_table_raw_c2(index)
+   return @inbounds Saturate_soft_tanh_table_c2[index + 1]
+end
+
+function Saturate_soft_tanh_table(x)
+   index = clamp(trunc(Int32, ((x + Float32(24.0)) * Float32(5.0))), Int32(0), Int32(240))
+   return (@inbounds Saturate_soft_tanh_table_c0[index + 1] + (x * (@inbounds Saturate_soft_tanh_table_c1[index + 1] + (@inbounds Saturate_soft_tanh_table_c2[index + 1] * x))))
+end
+
+function Saturate_soft_process(x)
+   return Saturate_soft_tanh_table(x)
+end
+
+function Saturate_soft_noteOn(note, velocity, channel)
+end
+
+function Saturate_soft_noteOff(note, channel)
+end
+
+function Saturate_soft_controlChange(control, value, channel)
+end
+
+function Saturate_soft_default()
+end
+

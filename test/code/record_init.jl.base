@@ -1,0 +1,25 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct Record_init_point
+       x::Float32
+       y::Float32
+end
+
+# Default constructor for Record_init_point
+function Record_init_point()
+    return Record_init_point(Float32(0.0), Float32(0.0))
+end
+
+function Record_init_point_alloc()
+   _ctx = Record_init_point()
+   _ctx.x = Float32(0.0)
+   _ctx.y = Float32(0.0)
+   return _ctx
+end
+
+function Record_init_foo()
+   _record_0 = (; x = Float32(0.0), y = Float32(0.0) )
+   p1 = _record_0.x
+end
+

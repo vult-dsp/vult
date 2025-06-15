@@ -1,0 +1,161 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct Phasedist_smooth_type
+       x::Float32
+end
+
+# Default constructor for Phasedist_smooth_type
+function Phasedist_smooth_type()
+    return Phasedist_smooth_type(Float32(0.0))
+end
+
+mutable struct Phasedist_change_type
+       pre_x::Float32
+end
+
+# Default constructor for Phasedist_change_type
+function Phasedist_change_type()
+    return Phasedist_change_type(Float32(0.0))
+end
+
+mutable struct Phasedist_phasor_type
+       inst_1e817::Phasedist_change_type
+       phase::Float32
+       rate::Float32
+end
+
+# Default constructor for Phasedist_phasor_type
+function Phasedist_phasor_type()
+    return Phasedist_phasor_type(Phasedist_change_type(), Float32(0.0), Float32(0.0))
+end
+
+mutable struct Phasedist_process_type
+       detune::Float32
+       inst_117e9::Phasedist_phasor_type
+       inst_275e9::Phasedist_smooth_type
+       inst_317e9::Phasedist_phasor_type
+       inst_475e9::Phasedist_smooth_type
+       pitch::Float32
+       pre_phase1::Float32
+       volume::Float32
+end
+
+# Default constructor for Phasedist_process_type
+function Phasedist_process_type()
+    return Phasedist_process_type(Float32(0.0), Phasedist_phasor_type(), Phasedist_smooth_type(), Phasedist_phasor_type(), Phasedist_smooth_type(), Float32(0.0), Float32(0.0), Float32(0.0))
+end
+
+function Phasedist_smooth_type_alloc()
+   _ctx = Phasedist_smooth_type()
+   _ctx.x = Float32(0.0)
+   return _ctx
+end
+
+function Phasedist_change_type_alloc()
+   _ctx = Phasedist_change_type()
+   _ctx.pre_x = Float32(0.0)
+   return _ctx
+end
+
+function Phasedist_phasor_type_alloc()
+   _ctx = Phasedist_phasor_type()
+   _ctx.inst_1e817 = Phasedist_change_type_alloc()
+   _ctx.phase = Float32(0.0)
+   _ctx.rate = Float32(0.0)
+   return _ctx
+end
+
+function Phasedist_process_type_alloc()
+   _ctx = Phasedist_process_type()
+   _ctx.detune = Float32(0.0)
+   _ctx.inst_117e9 = Phasedist_phasor_type_alloc()
+   _ctx.inst_275e9 = Phasedist_smooth_type_alloc()
+   _ctx.inst_317e9 = Phasedist_phasor_type_alloc()
+   _ctx.inst_475e9 = Phasedist_smooth_type_alloc()
+   _ctx.pitch = Float32(0.0)
+   _ctx.pre_phase1 = Float32(0.0)
+   _ctx.volume = Float32(0.0)
+   return _ctx
+end
+
+function Phasedist_noteOn_type_alloc(_ctx)
+   return Phasedist_process_type_alloc()
+end
+
+function Phasedist_noteOff_type_alloc(_ctx)
+   return Phasedist_process_type_alloc()
+end
+
+function Phasedist_controlChange_type_alloc(_ctx)
+   return Phasedist_process_type_alloc()
+end
+
+function Phasedist_default_type_alloc(_ctx)
+   return Phasedist_process_type_alloc()
+end
+
+function Phasedist_smooth(_ctx, input)
+   _ctx.x = ((Float32(0.005) * (input + (-_ctx.x))) + _ctx.x)
+   return _ctx.x
+end
+
+function Phasedist_change(_ctx, x)
+   v = (_ctx.pre_x != x)
+   _ctx.pre_x = x
+   return v
+end
+
+function Phasedist_pitchToRate(d)
+   return (Float32(0.000185) * exp((Float32(0.057762) * d)))
+end
+
+function Phasedist_phasor(_ctx, pitch, reset)
+   if Phasedist_change(_ctx.inst_1e817, pitch)
+      _ctx.rate = Phasedist_pitchToRate(pitch)
+   end
+   if reset
+      _ctx.phase = Float32(0.0)
+   else
+      _ctx.phase = (_ctx.phase + _ctx.rate)
+   end
+   if (_ctx.phase > Float32(1.0))
+      _ctx.phase = (Float32(-1.0) + _ctx.phase)
+   else
+      _ctx.phase = _ctx.phase
+   end
+   return _ctx.phase
+end
+
+function Phasedist_process(_ctx, input)
+   phase1 = Phasedist_phasor(_ctx.inst_117e9, _ctx.pitch, false)
+   comp = (Float32(1.0) + (-phase1))
+   reset = (((-phase1) + _ctx.pre_phase1) > Float32(0.5))
+   _ctx.pre_phase1 = phase1
+   phase2 = Phasedist_phasor(_ctx.inst_317e9, ((Float32(32.0) * Phasedist_smooth(_ctx.inst_275e9, _ctx.detune)) + _ctx.pitch), reset)
+   sine = sin((Float32(6.283185) * phase2))
+   return (comp * (sine * Phasedist_smooth(_ctx.inst_475e9, _ctx.volume)))
+end
+
+function Phasedist_noteOn(_ctx, note, velocity, channel)
+   _ctx.pitch = Float32(note)
+end
+
+function Phasedist_noteOff(_ctx, note, channel)
+end
+
+function Phasedist_controlChange(_ctx, control, value, channel)
+   if (control == Int32(30))
+      _ctx.volume = (Float32(0.007874) * Float32(value))
+   end
+   if (control == Int32(31))
+      _ctx.detune = (Float32(0.007874) * Float32(value))
+   end
+end
+
+function Phasedist_default(_ctx)
+   _ctx.volume = Float32(1.0)
+   _ctx.pitch = Float32(45.0)
+   _ctx.detune = Float32(0.0)
+end
+

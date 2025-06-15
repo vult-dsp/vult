@@ -1,0 +1,339 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct Util_edge_type
+       pre::Bool
+end
+
+# Default constructor for Util_edge_type
+function Util_edge_type()
+    return Util_edge_type(false)
+end
+
+mutable struct Util_change_type
+       pre_x::Float32
+end
+
+# Default constructor for Util_change_type
+function Util_change_type()
+    return Util_change_type(Float32(0.0))
+end
+
+mutable struct Util_dcblock_type
+       x1::Float32
+       y1::Float32
+end
+
+# Default constructor for Util_dcblock_type
+function Util_dcblock_type()
+    return Util_dcblock_type(Float32(0.0), Float32(0.0))
+end
+
+mutable struct Util_smooth_type
+       x::Float32
+end
+
+# Default constructor for Util_smooth_type
+function Util_smooth_type()
+    return Util_smooth_type(Float32(0.0))
+end
+
+mutable struct Util_average2_type
+       x0::Float32
+end
+
+# Default constructor for Util_average2_type
+function Util_average2_type()
+    return Util_average2_type(Float32(0.0))
+end
+
+mutable struct Saw_r_process_type
+       inc::Float32
+       inst_1b040::Util_change_type
+       phase::Float32
+end
+
+# Default constructor for Saw_r_process_type
+function Saw_r_process_type()
+    return Saw_r_process_type(Float32(0.0), Util_change_type(), Float32(0.0))
+end
+
+function Util_edge_type_alloc()
+   _ctx = Util_edge_type()
+   _ctx.pre = false
+   return _ctx
+end
+
+function Util_change_type_alloc()
+   _ctx = Util_change_type()
+   _ctx.pre_x = Float32(0.0)
+   return _ctx
+end
+
+function Util_dcblock_type_alloc()
+   _ctx = Util_dcblock_type()
+   _ctx.x1 = Float32(0.0)
+   _ctx.y1 = Float32(0.0)
+   return _ctx
+end
+
+function Util_smooth_type_alloc()
+   _ctx = Util_smooth_type()
+   _ctx.x = Float32(0.0)
+   return _ctx
+end
+
+function Util_average2_type_alloc()
+   _ctx = Util_average2_type()
+   _ctx.x0 = Float32(0.0)
+   return _ctx
+end
+
+function Util_cvToPitch(cv)
+   return (Float32(24.0) + (Float32(120.0) * cv))
+end
+
+Util_pitchToRate_c0 = nothing
+Util_pitchToRate_c1 = nothing
+Util_pitchToRate_c2 = nothing
+function Util_pitchToRate_raw_c0(index)
+   return @inbounds Util_pitchToRate_c0[index + 1]
+end
+
+function Util_pitchToRate_raw_c1(index)
+   return @inbounds Util_pitchToRate_c1[index + 1]
+end
+
+function Util_pitchToRate_raw_c2(index)
+   return @inbounds Util_pitchToRate_c2[index + 1]
+end
+
+function Util_pitchToRate(pitch)
+   index = clamp(trunc(Int32, (pitch * Float32(0.244094))), Int32(0), Int32(31))
+   return (@inbounds Util_pitchToRate_c0[index + 1] + (pitch * (@inbounds Util_pitchToRate_c1[index + 1] + (@inbounds Util_pitchToRate_c2[index + 1] * pitch))))
+end
+
+Util_cvToRate_c0 = nothing
+Util_cvToRate_c1 = nothing
+Util_cvToRate_c2 = nothing
+function Util_cvToRate_raw_c0(index)
+   return @inbounds Util_cvToRate_c0[index + 1]
+end
+
+function Util_cvToRate_raw_c1(index)
+   return @inbounds Util_cvToRate_c1[index + 1]
+end
+
+function Util_cvToRate_raw_c2(index)
+   return @inbounds Util_cvToRate_c2[index + 1]
+end
+
+function Util_cvToRate(cv)
+   index = clamp(trunc(Int32, (cv * Float32(141.111111))), Int32(0), Int32(127))
+   return (@inbounds Util_cvToRate_c0[index + 1] + (cv * (@inbounds Util_cvToRate_c1[index + 1] + (@inbounds Util_cvToRate_c2[index + 1] * cv))))
+end
+
+function Saw_r_default(_ctx)
+   _ctx.inc = Util_cvToRate(Float32(0.0))
+end
+
+function Saw_r_process_type_alloc()
+   _ctx = Saw_r_process_type()
+   _ctx.inc = Float32(0.0)
+   _ctx.inst_1b040 = Util_change_type_alloc()
+   _ctx.phase = Float32(0.0)
+   Saw_r_default(_ctx)
+   return _ctx
+end
+
+function Saw_r_noteOn_type_alloc(_ctx)
+   return Saw_r_process_type_alloc()
+end
+
+function Saw_r_noteOff_type_alloc(_ctx)
+   return Saw_r_process_type_alloc()
+end
+
+function Saw_r_controlChange_type_alloc(_ctx)
+   return Saw_r_process_type_alloc()
+end
+
+function Saw_r_default_type_alloc(_ctx)
+   return Saw_r_process_type_alloc()
+end
+
+function Util_edge(_ctx, x)
+   ret = (x && (_ctx.pre == false))
+   _ctx.pre = x
+   return ret
+end
+
+function Util_change(_ctx, x)
+   v = (_ctx.pre_x != x)
+   _ctx.pre_x = x
+   return v
+end
+
+function Util_map(x, x0, x1, y0, y1)
+   return (y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))))
+end
+
+function Util_dcblock(_ctx, x0)
+   y0 = (x0 + ((-_ctx.x1) + (Float32(0.995) * _ctx.y1)))
+   _ctx.x1 = x0
+   _ctx.y1 = y0
+   return y0
+end
+
+function Util_smooth(_ctx, input)
+   _ctx.x = ((Float32(0.005) * (input + (-_ctx.x))) + _ctx.x)
+   return _ctx.x
+end
+
+function Util_average2(_ctx, x1)
+   result = (Float32(0.5) * (x1 + _ctx.x0))
+   _ctx.x0 = x1
+   return result
+end
+
+function Util_cubic_clipper(x)
+   if (x <= Float32(-0.666667))
+      return Float32(-0.666667)
+   else
+      if (x >= Float32(0.666666))
+         return Float32(0.666666)
+      else
+         return (x + (Float32(-0.333334) * (x * (x * x))))
+      end
+   end
+end
+
+Util_pitchToRate_1024_c0 = nothing
+Util_pitchToRate_1024_c1 = nothing
+Util_pitchToRate_1024_c2 = nothing
+function Util_pitchToRate_1024_raw_c0(index)
+   return @inbounds Util_pitchToRate_1024_c0[index + 1]
+end
+
+function Util_pitchToRate_1024_raw_c1(index)
+   return @inbounds Util_pitchToRate_1024_c1[index + 1]
+end
+
+function Util_pitchToRate_1024_raw_c2(index)
+   return @inbounds Util_pitchToRate_1024_c2[index + 1]
+end
+
+function Util_pitchToRate_1024(pitch)
+   index = clamp(trunc(Int32, (pitch * Float32(0.244094))), Int32(0), Int32(31))
+   return (@inbounds Util_pitchToRate_1024_c0[index + 1] + (pitch * (@inbounds Util_pitchToRate_1024_c1[index + 1] + (@inbounds Util_pitchToRate_1024_c2[index + 1] * pitch))))
+end
+
+Util_cvToRate_1024_c0 = nothing
+Util_cvToRate_1024_c1 = nothing
+Util_cvToRate_1024_c2 = nothing
+function Util_cvToRate_1024_raw_c0(index)
+   return @inbounds Util_cvToRate_1024_c0[index + 1]
+end
+
+function Util_cvToRate_1024_raw_c1(index)
+   return @inbounds Util_cvToRate_1024_c1[index + 1]
+end
+
+function Util_cvToRate_1024_raw_c2(index)
+   return @inbounds Util_cvToRate_1024_c2[index + 1]
+end
+
+function Util_cvToRate_1024(cv)
+   index = clamp(trunc(Int32, (cv * Float32(34.444444))), Int32(0), Int32(31))
+   return (@inbounds Util_cvToRate_1024_c0[index + 1] + (cv * (@inbounds Util_cvToRate_1024_c1[index + 1] + (@inbounds Util_cvToRate_1024_c2[index + 1] * cv))))
+end
+
+function Util_pitchToCv(pitch)
+   return (Float32(-0.2) + (Float32(0.008333) * pitch))
+end
+
+Util_cvToperiod_c0 = nothing
+Util_cvToperiod_c1 = nothing
+Util_cvToperiod_c2 = nothing
+function Util_cvToperiod_raw_c0(index)
+   return @inbounds Util_cvToperiod_c0[index + 1]
+end
+
+function Util_cvToperiod_raw_c1(index)
+   return @inbounds Util_cvToperiod_c1[index + 1]
+end
+
+function Util_cvToperiod_raw_c2(index)
+   return @inbounds Util_cvToperiod_c2[index + 1]
+end
+
+function Util_cvToperiod(cv)
+   index = clamp(trunc(Int32, (cv * Float32(31.0))), Int32(0), Int32(31))
+   return (@inbounds Util_cvToperiod_c0[index + 1] + (cv * (@inbounds Util_cvToperiod_c1[index + 1] + (@inbounds Util_cvToperiod_c2[index + 1] * cv))))
+end
+
+Util_cvTokHz_c0 = nothing
+Util_cvTokHz_c1 = nothing
+Util_cvTokHz_c2 = nothing
+function Util_cvTokHz_raw_c0(index)
+   return @inbounds Util_cvTokHz_c0[index + 1]
+end
+
+function Util_cvTokHz_raw_c1(index)
+   return @inbounds Util_cvTokHz_c1[index + 1]
+end
+
+function Util_cvTokHz_raw_c2(index)
+   return @inbounds Util_cvTokHz_c2[index + 1]
+end
+
+function Util_cvTokHz(cv)
+   index = clamp(trunc(Int32, (cv * Float32(31.0))), Int32(0), Int32(31))
+   return (@inbounds Util_cvTokHz_c0[index + 1] + (cv * (@inbounds Util_cvTokHz_c1[index + 1] + (@inbounds Util_cvTokHz_c2[index + 1] * cv))))
+end
+
+function Saw_r_process(_ctx, cv)
+   if Util_change(_ctx.inst_1b040, cv)
+      _ctx.inc = Util_cvToRate(cv)
+   end
+   i = Float32(0.0)
+   if (_ctx.inc < eps(Float32))
+      i = eps(Float32)
+   else
+      i = _ctx.inc
+   end
+   _ctx.phase = ((Float32(2.0) * _ctx.inc) + _ctx.phase)
+   if (_ctx.phase > Float32(2.0))
+      _ctx.phase = (Float32(-2.0) + _ctx.phase)
+   else
+      _ctx.phase = _ctx.phase
+   end
+   ph = (Float32(-1.0) + _ctx.phase)
+   o = Float32(0.0)
+   if (ph >= (Float32(1.0) + (-i)))
+      begin
+         b = ((Float32(1.0) + ((-i) + (-ph))) / i)
+         o = (ph + (b * abs(b)))
+      end
+   else
+      if (ph <= (Float32(-1.0) + i))
+         begin
+            b = ((Float32(-1.0) + (i + (-ph))) / i)
+            o = (ph + (b * abs(b)))
+         end
+      else
+         o = ph
+      end
+   end
+   return o
+end
+
+function Saw_r_noteOn(_ctx, note, velocity, channel)
+end
+
+function Saw_r_noteOff(_ctx, note, channel)
+end
+
+function Saw_r_controlChange(_ctx, control, value, channel)
+end
+

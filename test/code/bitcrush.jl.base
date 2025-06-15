@@ -1,0 +1,49 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+Bitcrush_factor_c0 = nothing
+Bitcrush_factor_c1 = nothing
+Bitcrush_factor_c2 = nothing
+function Bitcrush_factor_raw_c0(index)
+   return @inbounds Bitcrush_factor_c0[index + 1]
+end
+
+function Bitcrush_factor_raw_c1(index)
+   return @inbounds Bitcrush_factor_c1[index + 1]
+end
+
+function Bitcrush_factor_raw_c2(index)
+   return @inbounds Bitcrush_factor_c2[index + 1]
+end
+
+function Bitcrush_factor(cv)
+   index = clamp(trunc(Int32, (cv * Float32(127.0))), Int32(0), Int32(127))
+   return (@inbounds Bitcrush_factor_c0[index + 1] + (cv * (@inbounds Bitcrush_factor_c1[index + 1] + (@inbounds Bitcrush_factor_c2[index + 1] * cv))))
+end
+
+function Bitcrush_process(i, cv)
+   out = i
+   if (cv == Float32(0.0))
+      out = i
+   else
+      begin
+         b = Bitcrush_factor(cv)
+         x = trunc(Int32, (b * i))
+         out = (Float32(x) / b)
+      end
+   end
+   return out
+end
+
+function Bitcrush_noteOn(note, velocity, channel)
+end
+
+function Bitcrush_noteOff(note, channel)
+end
+
+function Bitcrush_controlChange(control, value, channel)
+end
+
+function Bitcrush_default()
+end
+
