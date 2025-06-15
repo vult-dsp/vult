@@ -24,102 +24,10 @@
 
 open Core.Prog
 
-(* TODO:
-   - Runtime cleanup: generate only the required functions
-   - String support: conversions and concatenation
-*)
-
-let runtime =
-  {%pla|
--- LuaJIT detection and optimization
-local isLuaJIT = type(jit) == "table" and jit.version
-
--- Optimized array creation for LuaJIT using FFI
-local initializeArray
-if isLuaJIT then
-    local ffi = require("ffi")
-    ffi.cdef[[
-        typedef struct { double data[1]; } vult_array_t;
-    ]]
-    
-    function initializeArray(v, n) 
-        if type(v) == "number" then
-            -- Use FFI for numeric arrays in LuaJIT
-            local arr = ffi.new("double[?]", n)
-            for i = 0, n-1 do arr[i] = v end
-            return setmetatable({}, {
-                __index = function(t, k) return arr[k-1] end,
-                __newindex = function(t, k, v) arr[k-1] = v end,
-                __len = function() return n end
-            })
-        else
-            -- Fallback for non-numeric values
-            local a = {} 
-            for i=1, n do a[i] = v end 
-            return a 
-        end
-    end
-else
-    -- Standard Lua implementation
-    function initializeArray(v, n) 
-        local a = {} 
-        for i=1, n do a[i] = v end 
-        return a 
-    end
-end
-
--- Math functions with LuaJIT optimizations
-local sin, cos, abs, exp, floor, tan, tanh, sqrt
-if isLuaJIT then
-    -- LuaJIT has faster math operations
-    sin = math.sin
-    cos = math.cos
-    abs = math.abs
-    exp = math.exp
-    floor = math.floor
-    tan = math.tan
-    tanh = math.tanh
-    sqrt = math.sqrt
-else
-    -- Standard Lua (same functions but explicit for potential future optimizations)
-    sin = math.sin
-    cos = math.cos
-    abs = math.abs
-    exp = math.exp
-    floor = math.floor
-    tan = math.tan
-    tanh = math.tanh
-    sqrt = math.sqrt
-end
-
--- Bit operations optimized for LuaJIT
-local lshift, rshift
-if isLuaJIT then
-    local bit = require("bit")
-    lshift = bit.lshift
-    rshift = bit.rshift
-else
-    -- Fallback to arithmetic operations for standard Lua
-    function lshift(a, b) return a * (2 ^ b) end
-    function rshift(a, b) return math.floor(a / (2 ^ b)) end
-end
-
--- Core runtime functions
-function ifExpressionValue(cond,then_,else_) if cond then return then_ else return else_ end end
-function ifExpression(cond,then_,else_) if cond then return then_() else return else_() end end
-function eps()              return 1e-18 end
-function pi()               return 3.1415926535897932384 end
-function random()           return math.random() end
-function irandom()          return math.floor(math.random() * 4294967296) end
-function clip(x,low,high)   if x > high then return high else if x < low then return low else return x end end end
-function real(x)            return x end
-function int(x)             local int_part,_ = math.modf(x) return int_part end
-function set(a, i, v)       a[i+1]=v end
-function get(a, i)          return a[i+1] end
-function intDiv(a, b)       return math.floor(a / b) end
+let runtime = {%pla|
+# High-performance Vult Runtime for Julia with typed arrays
 
 |}
-
 
 let rec isValueOrIf (e : exp) =
   match e.e with
@@ -136,15 +44,15 @@ let operator (op : operator) =
   | OpMul -> Pla.string "*"
   | OpDiv -> Pla.string "/"
   | OpMod -> Pla.string "%"
-  | OpLand -> Pla.string "and"
-  | OpLor -> Pla.string "or"
+  | OpLand -> Pla.string "&&"
+  | OpLor -> Pla.string "||"
   | OpBor -> Pla.string "|"
   | OpBand -> Pla.string "&"
-  | OpBxor -> Pla.string "^"
+  | OpBxor -> Pla.string "⊻" (* Julia XOR operator *)
   | OpLsh -> Pla.string "<<"
   | OpRsh -> Pla.string ">>"
   | OpEq -> Pla.string "=="
-  | OpNe -> Pla.string "~="
+  | OpNe -> Pla.string "!="
   | OpLt -> Pla.string "<"
   | OpLe -> Pla.string "<="
   | OpGt -> Pla.string ">"
@@ -154,12 +62,12 @@ let operator (op : operator) =
 let uoperator (op : uoperator) =
   match op with
   | UOpNeg -> Pla.string "-"
-  | UOpNot -> Pla.string "not"
+  | UOpNot -> Pla.string "!"
 
 
 let rec print_exp e =
   match e.e with
-  | EEmptyValue -> Pla.string "{}"
+  | EEmptyValue -> Pla.string "nothing"
   | EUnit -> Pla.string ""
   | EBool v ->
     Pla.string
@@ -167,35 +75,65 @@ let rec print_exp e =
          "true"
        else
          "false")
-  | EInt n -> Pla.int n
-  | EReal n -> Pla.string (Util.Vfloat.to_string n)
-  | EFixed n -> Pla.string (Util.Vfloat.to_string n)
+  | EInt n ->
+    let n_str = string_of_int n in
+    {%pla|Int32(<#n_str#s>)|}
+  | EReal n ->
+    let n_str = Util.Vfloat.to_string n in
+    {%pla|Float32(<#n_str#s>)|}
+  | EFixed n ->
+    let n_str = Util.Vfloat.to_string n in
+    {%pla|Float32(<#n_str#s>)|}
   | EString s -> Pla.string_quoted s
   | EId id -> Pla.string id
   | EIndex { e; index = { e = EInt i; _ } } ->
     let e = print_exp e in
     let index = i + 1 in
-    {%pla|<#e#>[<#index#i>]|}
+    {%pla|@inbounds <#e#>[<#index#i>]|}
   | EIndex { e; index } ->
     let e = print_exp e in
     let index = print_exp index in
-    {%pla|<#e#>[<#index#> + 1]|}
-  | EArray l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
+    {%pla|@inbounds <#e#>[<#index#> + 1]|}
+  | EArray l ->
+    let l = Pla.map_sep Pla.commaspace print_exp l in
+    {%pla|[<#l#>]|}
   | ECall { path; args } -> (
-    (* Use optimized functions when available *)
+    (* Special cases for functions that need argument transformation *)
     match path, args with
+    | "eps", [] -> Pla.string "eps(Float32)"
+    | "irandom", [] -> Pla.string "rand(Int32)"
+    | "int", [ arg ] ->
+      let arg = print_exp arg in
+      {%pla|trunc(Int32, <#arg#>)|}
+    | "real", [ arg ] ->
+      let arg = print_exp arg in
+      {%pla|Float32(<#arg#>)|}
+    | "bool", [ arg ] ->
+      let arg = print_exp arg in
+      {%pla|Bool(<#arg#>)|}
+    | "float_to_int", [ arg ] ->
+      let arg = print_exp arg in
+      {%pla|trunc(Int32, <#arg#>)|}
+    | "initializeArray", [ value; size ] ->
+      let value = print_exp value in
+      let size = print_exp size in
+      {%pla|fill(<#value#>, <#size#>)|}
+    (* Bit shift operations - only for integers *)
     | "lshift", [ a; b ] ->
       let a = print_exp a in
       let b = print_exp b in
-      {%pla|lshift(<#a#>, <#b#>)|}
+      {%pla|<#a#> << <#b#>|}
     | "rshift", [ a; b ] ->
       let a = print_exp a in
       let b = print_exp b in
-      {%pla|rshift(<#a#>, <#b#>)|}
-    | ("sin" | "cos" | "abs" | "exp" | "floor" | "tan" | "tanh" | "sqrt"), _ ->
-      let args = Pla.map_sep Pla.commaspace print_exp args in
-      {%pla|<#path#s>(<#args#>)|}
+      {%pla|<#a#> >> <#b#>|}
+    (* Integer division for Vult semantics *)
+    | "intDiv", [ a; b ] ->
+      let a = print_exp a in
+      let b = print_exp b in
+      {%pla|div(trunc(Int32, <#a#>), trunc(Int32, <#b#>))|}
     | _ ->
+      (* Default case - use replacements system or original name *)
       let args = Pla.map_sep Pla.commaspace print_exp args in
       {%pla|<#path#s>(<#args#>)|})
   | EUnOp (op, e) ->
@@ -206,9 +144,25 @@ let rec print_exp e =
     let se1 = print_exp e1 in
     let se2 = print_exp e2 in
     match op with
-    (* Use optimized bit shift functions (LuaJIT uses bit library, standard Lua uses arithmetic) *)
-    | OpLsh -> {%pla|lshift(<#se1#>, <#se2#>)|}
-    | OpRsh -> {%pla|rshift(<#se1#>, <#se2#>)|}
+    (* Handle bit shifts for integers *)
+    | OpLsh -> (
+      match e2.e with
+      | EInt n when n >= 0 && n <= 63 ->
+        (* Small shifts: convert to multiplication for clarity *)
+        let multiplier = 1 lsl n in
+        {%pla|(<#se1#> * <#multiplier#i>)|}
+      | _ ->
+        (* Variable shifts *)
+        {%pla|(<#se1#> << <#se2#>)|})
+    | OpRsh -> (
+      match e2.e with
+      | EInt n when n >= 0 && n <= 63 ->
+        (* Small shifts: use div for integer division *)
+        let divisor = 1 lsl n in
+        {%pla|div(<#se1#>, <#divisor#i>)|}
+      | _ ->
+        (* Variable shifts *)
+        {%pla|(<#se1#> >> <#se2#>)|})
     | _ ->
       let op = operator op in
       {%pla|(<#se1#> <#op#> <#se2#>)|})
@@ -216,15 +170,15 @@ let rec print_exp e =
     let cond = print_exp cond in
     let then_ = print_exp then_ in
     let else_ = print_exp else_ in
-    {%pla|ifExpressionValue(<#cond#>, <#then_#>, <#else_#>)|}
+    {%pla|(<#cond#> ? <#then_#> : <#else_#>)|}
   | EIf { cond; then_; else_ } ->
     let cond = print_exp cond in
     let then_ = print_exp then_ in
     let else_ = print_exp else_ in
-    {%pla|ifExpression(<#cond#>, (function () return <#then_#> end), (function () return <#else_#> end))|}
+    {%pla|(<#cond#> ? <#then_#> : <#else_#>)|}
   | ETuple l ->
     let l = Pla.map_sep Pla.commaspace print_exp l in
-    {%pla|{ <#l#> }|}
+    {%pla|(<#l#>,)|}
   | EMember (e, m) ->
     let e = print_exp e in
     {%pla|<#e#>.<#m#s>|}
@@ -238,12 +192,12 @@ let rec print_exp e =
       {%pla|<#n#s> = <#v#>|}
     in
     let elems = Pla.map_sep Pla.commaspace printElem elems in
-    {%pla|{ <#elems#> }|}
+    {%pla|(; <#elems#> )|}
 
 
 let rec print_lexp e =
   match e.l with
-  | LWild -> Pla.string "_wild"
+  | LWild -> Pla.string "_"
   | LId s -> Pla.string s
   | LMember (e, m) ->
     let e = print_lexp e in
@@ -251,12 +205,12 @@ let rec print_lexp e =
   | LIndex { e; index = { e = EInt i; _ } } ->
     let e = print_lexp e in
     let index = i + 1 in
-    {%pla|<#e#>[<#index#i>]|}
+    {%pla|@inbounds <#e#>[<#index#i>]|}
   | LIndex { e; index } ->
     let e = print_lexp e in
     let index = print_exp index in
-    {%pla|<#e#>[<#index#> + 1]|}
-  | _ -> failwith "Lua:print_lexp LTuple"
+    {%pla|@inbounds <#e#>[<#index#> + 1]|}
+  | _ -> failwith "Julia:print_lexp LTuple"
 
 
 let print_dexp (e : dexp) =
@@ -267,21 +221,21 @@ let print_dexp (e : dexp) =
 
 let rec print_stmt (s : stmt) =
   match s.s with
-  (* if the name is _ctx, do not call the allocator*)
-  | StmtDecl (({ d = DId ("_ctx", _); t = { t = TStruct _; _ }; _ } as lhs), None) ->
+  (* Needs allocation for structs *)
+  (* Use constructor directly for _ctx *)
+  | StmtDecl (({ d = DId ("_ctx", _); t = { t = TStruct { path; _ }; _ }; _ } as lhs), None) ->
     let lhs = print_dexp lhs in
-    {%pla|local <#lhs#> = {};|}
-  (* needs allocation *)
+    {%pla|<#lhs#> = <#path#s>()|}
   | StmtDecl (({ t = { t = TStruct { path; _ }; _ }; _ } as lhs), None) ->
     let lhs = print_dexp lhs in
-    {%pla|local <#lhs#> = <#path#s>_alloc();|}
+    {%pla|<#lhs#> = <#path#s>_alloc()|}
   | StmtDecl (lhs, None) ->
     let lhs = print_dexp lhs in
-    {%pla|local <#lhs#>|}
+    {%pla|<#lhs#> = nothing|}
   | StmtDecl (lhs, Some rhs) ->
     let lhs = print_dexp lhs in
     let rhs = print_exp rhs in
-    {%pla|local <#lhs#> = <#rhs#>|}
+    {%pla|<#lhs#> = <#rhs#>|}
   | StmtBind ({ l = LWild; _ }, rhs) ->
     let rhs = print_exp rhs in
     {%pla|<#rhs#>|}
@@ -295,19 +249,19 @@ let rec print_stmt (s : stmt) =
   | StmtIf (cond, then_, None) ->
     let e = print_exp cond in
     let then_ = print_stmt then_ in
-    {%pla|if <#e#> then<#then_#+><#>end|}
+    {%pla|if <#e#><#then_#+><#>end|}
   | StmtIf (cond, then_, Some else_) ->
     let cond = print_exp cond in
     let then_ = print_stmt then_ in
     let else_ = print_stmt else_ in
-    {%pla|if <#cond#> then<#then_#+><#>else<#else_#+><#>end|}
+    {%pla|if <#cond#><#then_#+><#>else<#else_#+><#>end|}
   | StmtWhile (cond, stmt) ->
     let cond = print_exp cond in
     let stmt = print_stmt stmt in
-    {%pla|while <#cond#> do<#stmt#+><#>end|}
+    {%pla|while <#cond#><#stmt#+><#>end|}
   | StmtBlock stmts ->
     let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
-    {%pla|do<#stmt#+>end|}
+    {%pla|begin<#stmt#+>end|}
   | StmtSwitch (e1, cases, default) -> (
     let if_ =
       CCList.fold_right
@@ -347,12 +301,54 @@ let print_top_stmt (args : Util.Args.args) t =
     let body = print_body body in
     {%pla|<#def#><#body#><#><#>|}
   | TopExternal _ -> Pla.unit
-  | TopType _ -> Pla.unit
+  | TopType { path; members } ->
+    let printMember (n, (t : type_), _, _) =
+      let jtype =
+        match t.t with
+        | TInt -> "Int32"
+        | TReal -> "Float32"
+        | TBool -> "Bool"
+        | TString -> "String"
+        | TStruct { path; _ } -> path
+        | TArray (_, elem_type) -> (
+          match elem_type.t with
+          | TInt -> "Vector{Int32}"
+          | TReal -> "Vector{Float32}"
+          | TBool -> "Vector{Bool}"
+          | _ -> "Vector{Any}")
+        | _ -> "Any"
+      in
+      {%pla|    <#n#s>::<#jtype#s>|}
+    in
+    let members_typed = Pla.map_sep Pla.newline printMember members in
+    let getDefaultValue (_n, (t : type_), _, _) =
+      match t.t with
+      | TInt -> "Int32(0)"
+      | TReal -> "Float32(0.0)"
+      | TBool -> "false"
+      | TString -> "\"\""
+      | TStruct { path; _ } -> path ^ "()"
+      | TArray (size_opt, elem_type) -> (
+        match size_opt with
+        | Some size ->
+          let elem_default =
+            match elem_type.t with
+            | TInt -> "Int32(0)"
+            | TReal -> "Float32(0.0)"
+            | TBool -> "false"
+            | _ -> "nothing"
+          in
+          "fill(" ^ elem_default ^ ", " ^ string_of_int size ^ ")"
+        | None -> "[]")
+      | _ -> "nothing"
+    in
+    let default_values = CCList.map getDefaultValue members |> String.concat ", " in
+    {%pla|mutable struct <#path#s><#members_typed#+><#>end<#><#># Default constructor for <#path#s><#>function <#path#s>()<#>    return <#path#s>(<#default_values#s>)<#>end<#><#>|}
   | TopAlias _ -> Pla.unit
-  | TopConstant (name, _, _, _) when args.test_mode -> {%pla|<#name#s> = {};<#>|}
+  | TopConstant (name, _, _, _) when args.test_mode -> {%pla|<#name#s> = nothing<#>|}
   | TopConstant (name, _, _, rhs) ->
     let rhs = print_exp rhs in
-    {%pla|local <#name#s> = <#rhs#><#>|}
+    {%pla|const <#name#s> = <#rhs#><#>|}
 
 
 let print_prog args t = Pla.map_join (print_top_stmt args) t
@@ -360,12 +356,12 @@ let print_prog args t = Pla.map_join (print_top_stmt args) t
 let getTemplateCode (args : Util.Args.args) =
   match args.template with
   | None -> Pla.unit, Pla.unit
-  | Some "performance" -> T_performance.generateLua args
+  | Some "performance" -> T_performance.generateJulia args
   | Some name -> Util.Error.raiseErrorMsg ("Unknown template '" ^ name ^ "'")
 
 
 let generate (args : Util.Args.args) (stmts : top_stmt list) =
-  let file = Common.setExt ".lua" args.output in
+  let file = Common.setExt ".jl" args.output in
   let code = print_prog args stmts in
   let pre, post = getTemplateCode args in
   [ {%pla|<#runtime#><#pre#><#code#><#post#>|}, file ]

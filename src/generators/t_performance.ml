@@ -85,17 +85,31 @@ let luaPost (args : Util.Args.args) =
     | _ -> "Top"
   in
   {%pla|
+     -- Performance measurement with LuaJIT detection
+     local engine = isLuaJIT and "LuaJIT" or "Lua"
+     
      data = <#module_name#s>_process_type_alloc()
      <#module_name#s>_default(data)
      time = <#time#f>
      samples = 44100 * time
+     
+     -- Warm up - run more iterations for LuaJIT to allow proper compilation
+     local warmup_iterations = isLuaJIT and 5000 or 1000
+     for i = 1, warmup_iterations do
+        <#module_name#s>_process(data, 0.0, 0.5, 0.5)
+     end
+     
      local start = os.clock()
+     local ramp = 0.0
+     local acc = 0.0
      while samples > 0 do
-        <#module_name#s>_process(data, 0.0)
+        ramp = ramp + 0.001
+        if ramp > 1.0 then ramp = ramp - 1.0 end
+        acc = acc + <#module_name#s>_process(data, ramp, 0.5, 0.5)
         samples = samples -1
      end
      local finish = (os.clock() - start) * 1000.0
-     print("<#module_name#s>\tLua", finish / time, "ms/s")
+     print(string.format("<#module_name#s>\t%s\t%.2f ms/s", engine, finish / time))
      |}
 
 
@@ -112,6 +126,12 @@ var data = this.<#module_name#s>_process_type_alloc();
 this.<#module_name#s>_default(data);
 var time = <#time#f>;
 var samples = 44100 * time;
+
+// Warm up - run a few iterations to allow V8 JIT compilation
+for (var i = 0; i < 1000; i++) {
+  this.<#module_name#s>_process(data, 0.0);
+}
+
 var start = process.hrtime.bigint();
 while (samples > 0) {
   this.<#module_name#s>_process(data, 0.0);
@@ -123,3 +143,55 @@ console.log(`<#module_name#s>\tJs\t${finish.toFixed(2)} ms/s`)
 
 
 let generateJs (args : Util.Args.args) = Pla.unit, jsPost args
+
+let juliaPost (args : Util.Args.args) =
+  let module_name =
+    match args.files with
+    | Util.Args.File s :: _ -> Pparser.Parse.moduleName s
+    | _ -> "Top"
+  in
+  {%pla|
+# Performance measurement for <#module_name#s>
+function measure_performance()
+    # Initialize the process state
+    data = <#module_name#s>_process_type_alloc()
+    
+    # Setup timing parameters
+    time_seconds = <#time#f>
+    sample_rate = 44100
+    samples = Int(sample_rate * time_seconds)
+    
+    # Warm up - run a few iterations to allow Julia JIT compilation
+    for i in 1:1000
+        result = <#module_name#s>_process(data, 0.0)
+    end
+    
+    # Actual performance measurement
+    start_time = time_ns()
+    acc = 0.0
+    ramp = 0.0
+    
+    for i in 1:samples
+        ramp += 0.001
+        if ramp > 1.0
+            ramp = ramp - 1.0
+        end
+        acc += <#module_name#s>_process(data, ramp)
+    end
+    
+    elapsed_ns = time_ns() - start_time
+    elapsed_seconds = elapsed_ns / 1_000_000_000
+    ms_per_second = (elapsed_seconds / time_seconds) * 1000.0
+    
+    println("<#module_name#s>\tJulia\t$(round(ms_per_second, digits=2)) ms/s")
+    
+    # Return accumulated value to prevent dead code elimination
+    return acc
+end
+
+# Run the performance measurement
+measure_performance()
+|}
+
+
+let generateJulia (args : Util.Args.args) = Pla.unit, juliaPost args

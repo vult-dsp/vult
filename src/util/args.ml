@@ -45,6 +45,7 @@ type code =
   | JSCode
   | LuaCode
   | JavaCode
+  | JuliaCode
 
 type real_format =
   | Float
@@ -137,10 +138,11 @@ let flags result =
               | "lua" -> LuaCode
               | "java" -> JavaCode
               | "js" -> JSCode
+              | "julia" -> JuliaCode
               | _ ->
-                print_endline ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js, wl");
+                print_endline ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js, julia");
                 exit (-1)))
-    ; comment = "language Generate code for the specified language (cpp, lua, java, js)"
+    ; comment = "language Generate code for the specified language (cpp, lua, java, js, julia)"
     }
   ; { flag = "-prefix"
     ; action = Arg.String (fun prefix -> result.prefix <- Some prefix)

@@ -292,11 +292,90 @@ module Js = struct
     | _ -> None
 end
 
+module Julia = struct
+  let keywords =
+    [ "abstract"
+    ; "baremodule"
+    ; "begin"
+    ; "break"
+    ; "catch"
+    ; "const"
+    ; "continue"
+    ; "do"
+    ; "else"
+    ; "elseif"
+    ; "end"
+    ; "export"
+    ; "false"
+    ; "finally"
+    ; "for"
+    ; "function"
+    ; "global"
+    ; "if"
+    ; "import"
+    ; "let"
+    ; "local"
+    ; "macro"
+    ; "module"
+    ; "mutable"
+    ; "primitive"
+    ; "quote"
+    ; "return"
+    ; "struct"
+    ; "true"
+    ; "try"
+    ; "type"
+    ; "using"
+    ; "while"
+    ]
+    |> Util.Maps.Set.of_list
+
+
+  let op_to_fun (op : Core.Prog.operator) (e1 : type_) (e2 : type_) (ret : type_) =
+    match op, e1.t, e2.t, ret.t with
+    | OpDiv, TInt, TInt, TInt -> Some "div"
+    | OpMod, TReal, TReal, TReal -> Some "mod"
+    | _ -> None
+
+
+  let fun_to_fun (path : string) (args : type_ list) (ret : type_) =
+    let args = CCList.map (fun (t : type_) -> t.t) args in
+    match path, args, (getReturnType ret).t with
+    (* Math functions - Julia has these built-in *)
+    | "sin", [ TReal ], TReal -> Some "sin"
+    | "cos", [ TReal ], TReal -> Some "cos"
+    | "tan", [ TReal ], TReal -> Some "tan"
+    | "sinh", [ TReal ], TReal -> Some "sinh"
+    | "cosh", [ TReal ], TReal -> Some "cosh"
+    | "tanh", [ TReal ], TReal -> Some "tanh"
+    | "exp", [ TReal ], TReal -> Some "exp"
+    | "floor", [ TReal ], TReal -> Some "floor"
+    | "abs", [ TReal ], TReal -> Some "abs"
+    | "sqrt", [ TReal ], TReal -> Some "sqrt"
+    | "log", [ TReal ], TReal -> Some "log"
+    | "log10", [ TReal ], TReal -> Some "log10"
+    | "pow", [ TReal; TReal ], TReal -> Some "^"
+    (* Math constants *)
+    | "pi", [], TReal -> Some "π"
+    (* Random functions *)
+    | "random", [], TReal -> Some "rand"
+    (* Clipping functions *)
+    | "clip", [ TReal; TReal; TReal ], TReal -> Some "clamp"
+    | "clip", [ TInt; TInt; TInt ], TInt -> Some "clamp"
+    (* Array functions *)
+    | "size", [ TArray (_, _) ], TInt -> Some "length"
+    | "length", [ TString ], TInt -> Some "length"
+    (* Logical operations *)
+    | "not", [ TBool ], TBool -> Some "!"
+    | _ -> None
+end
+
 let fun_to_fun (lang : Util.Args.code) (path : string) (args : type_ list) (ret : type_) =
   match lang with
   | CppCode -> Cpp.fun_to_fun path args ret
   | LuaCode -> Lua.fun_to_fun path args ret
   | JSCode -> Js.fun_to_fun path args ret
+  | JuliaCode -> Julia.fun_to_fun path args ret
   | _ -> None
 
 
@@ -305,6 +384,7 @@ let op_to_fun (lang : Util.Args.code) (op : Core.Prog.operator) (e1 : type_) (e2
   | CppCode -> Cpp.op_to_fun op e1 e2 ret
   | LuaCode -> Lua.op_to_fun op e1 e2 ret
   | JSCode -> Js.op_to_fun op e1 e2 ret
+  | JuliaCode -> Julia.op_to_fun op e1 e2 ret
   | _ -> None
 
 
@@ -322,6 +402,11 @@ let keyword (lang : Util.Args.code) id =
       id
   | JSCode ->
     if Util.Maps.Set.mem id Js.keywords then
+      id ^ "_"
+    else
+      id
+  | JuliaCode ->
+    if Util.Maps.Set.mem id Julia.keywords then
       id ^ "_"
     else
       id

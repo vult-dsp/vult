@@ -150,6 +150,21 @@ let generateLua (filename : string) (output : string) : unit =
   CCList.iter (Driver.Cli.showResult args) output
 
 
+let generateJulia (filename : string) (output : string) : unit =
+  let args =
+    { default_arguments with
+      files = [ File filename ]
+    ; code = JuliaCode
+    ; output = Some output
+    ; real = Float
+    ; template = Some "performance"
+    ; includes
+    }
+  in
+  let output = Driver.Cli.driver args in
+  CCList.iter (Driver.Cli.showResult args) output
+
+
 let realString f =
   match f with
   | Fixed -> "fixed"
@@ -194,6 +209,28 @@ let runLua vultfile =
   | e -> showError e
 
 
+let runStandardLua vultfile =
+  try
+    let output = Filename.chop_extension (Filename.basename vultfile) in
+    Sys.chdir tmp_dir;
+    generateLua vultfile output;
+    ignore (Sys.command ("lua " ^ output ^ ".lua"));
+    Sys.chdir init_dir
+  with
+  | e -> showError e
+
+
+let runJulia vultfile =
+  try
+    let output = Filename.chop_extension (Filename.basename vultfile) in
+    Sys.chdir tmp_dir;
+    generateJulia vultfile output;
+    ignore (Sys.command ("julia -O3 " ^ output ^ ".jl"));
+    Sys.chdir init_dir
+  with
+  | e -> showError e
+
+
 let runInterpreter vultfile =
   try
     let module_name = Pparser.Parse.moduleName vultfile in
@@ -228,8 +265,10 @@ let main () =
     (fun f ->
       runC Float f;
       runC Fixed f;
+      runStandardLua f;
       runLua f;
       runJs f;
+      runJulia f;
       runInterpreter f)
     files
 

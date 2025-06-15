@@ -72,6 +72,7 @@ let generateCode args file_deps (stmts, vm, acc) =
       | LuaCode -> Lua.generate args stmts
       | JSCode -> Js.generate args stmts
       | JavaCode -> Java.generate args stmts
+      | JuliaCode -> Julia.generate args stmts
     in
     (GeneratedCode code :: prog_out) @ acc
   else
