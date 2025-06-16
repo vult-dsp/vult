@@ -165,6 +165,21 @@ let generateJulia (filename : string) (output : string) : unit =
   CCList.iter (Driver.Cli.showResult args) output
 
 
+let generateJava (filename : string) (output : string) : unit =
+  let args =
+    { default_arguments with
+      files = [ File filename ]
+    ; code = JavaCode
+    ; output = Some output
+    ; real = Float
+    ; template = Some "performance"
+    ; includes
+    }
+  in
+  let output = Driver.Cli.driver args in
+  CCList.iter (Driver.Cli.showResult args) output
+
+
 let realString f =
   match f with
   | Fixed -> "fixed"
@@ -231,6 +246,48 @@ let runJulia vultfile =
   | e -> showError e
 
 
+[@@@warning "-32"]
+
+let runJava vultfile =
+  try
+    let output = Filename.chop_extension (Filename.basename vultfile) in
+    let module_name = Pparser.Parse.moduleName vultfile in
+    let class_name = String.capitalize_ascii output in
+    Sys.chdir tmp_dir;
+    generateJava vultfile output;
+    (* Now we have two files: output.java and outputPerf.java *)
+    let main_java_file = output ^ ".java" in
+    let perf_java_file = output ^ "Perf.java" in
+    let proper_main_file = class_name ^ ".java" in
+    let proper_perf_file = module_name ^ "Perf.java" in
+    (* Rename files to match class names *)
+    Sys.rename main_java_file proper_main_file;
+    Sys.rename perf_java_file proper_perf_file;
+    (* Create package directory *)
+    ignore (Sys.command "mkdir -p vult");
+    (* Compile both Java files *)
+    let compile_cmd = "javac " ^ proper_main_file ^ " " ^ proper_perf_file in
+    if Sys.command compile_cmd <> 0 then (
+      (* If compilation fails, print a warning but don't fail the whole test *)
+      Printf.eprintf "Warning: Java compilation failed for %s\n%!" module_name;
+      Printf.printf "%s\tJava\tCompilation Failed\n%!" module_name)
+    else (
+      (* Move class files to package directory *)
+      ignore (Sys.command "mv *.class vult/");
+      (* Run the performance test *)
+      let run_cmd = "java -cp . vult." ^ module_name ^ "Perf" in
+      ignore (Sys.command run_cmd));
+    (* Clean up *)
+    (try Sys.remove proper_main_file with
+    | _ -> ());
+    (try Sys.remove proper_perf_file with
+    | _ -> ());
+    ignore (Sys.command "rm -rf vult/");
+    Sys.chdir init_dir
+  with
+  | e -> showError e
+
+
 let runInterpreter vultfile =
   try
     let module_name = Pparser.Parse.moduleName vultfile in
@@ -269,6 +326,7 @@ let main () =
       runLua f;
       runJs f;
       runJulia f;
+      runJava f;
       runInterpreter f)
     files
 

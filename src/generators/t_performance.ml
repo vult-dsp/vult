@@ -195,3 +195,54 @@ measure_performance()
 
 
 let generateJulia (args : Util.Args.args) = Pla.unit, juliaPost args
+
+let javaPost (args : Util.Args.args) =
+  let module_name =
+    match args.files with
+    | Util.Args.File s :: _ -> Pparser.Parse.moduleName s
+    | _ -> "Top"
+  in
+  let class_name =
+    match args.output with
+    | Some output -> String.capitalize_ascii (Filename.basename (Filename.remove_extension output))
+    | None -> "VultCode"
+  in
+  {%pla|
+public class <#module_name#s>Perf {
+    public static void main(String[] args) {
+        <#class_name#s> vult = new <#class_name#s>();
+        <#class_name#s>.<#module_name#s>_process_type data = vult.<#module_name#s>_process_type_alloc();
+        vult.<#module_name#s>_default(data);
+        
+        double time = <#time#f>;
+        int samples = (int)(44100 * time);
+        
+        // Warm up - run iterations to allow JVM JIT compilation
+        for (int i = 0; i < 10000; i++) {
+            vult.<#module_name#s>_process(data, (float)0.0);
+        }
+        
+        // Actual performance measurement
+        long startTime = System.nanoTime();
+        double acc = 0.0;
+        double ramp = 0.0;
+        
+        for (int i = 0; i < samples; i++) {
+            ramp += 0.001;
+            if (ramp > 1.0) {
+                ramp = ramp - 1.0;
+            }
+            acc += vult.<#module_name#s>_process(data, (float)ramp);
+        }
+        
+        long endTime = System.nanoTime();
+        double elapsedSeconds = (endTime - startTime) / 1_000_000_000.0;
+        double msPerSecond = (elapsedSeconds / time) * 1000.0;
+        
+        System.out.printf("<#module_name#s>\tJava\t%.2f ms/s\n", msPerSecond);
+    }
+}
+|}
+
+
+let generateJava (args : Util.Args.args) = Pla.unit, javaPost args

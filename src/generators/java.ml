@@ -26,8 +26,6 @@ open Core.Prog
 
 let runtime =
   {%pla|
-import java.util.Arrays;
-import java.util.Random;
 
 static int clip(int x, int minv, int maxv) {
     if(x > maxv)
@@ -286,6 +284,15 @@ let rec print_exp e =
   | ECall { path = "not"; args = [ e1 ] } ->
     let e1 = print_exp e1 in
     {%pla|!(<#e1#>)|}
+  | ECall { path = "real"; args = [ e1 ] } ->
+    let e1 = print_exp e1 in
+    {%pla|(float)(<#e1#>)|}
+  | ECall { path = "int"; args = [ e1 ] } ->
+    let e1 = print_exp e1 in
+    {%pla|(int)(<#e1#>)|}
+  | ECall { path = "bool"; args = [ e1 ] } ->
+    let e1 = print_exp e1 in
+    {%pla|((<#e1#>) != 0)|}
   | ECall { path; args } ->
     let args = Pla.map_sep Pla.commaspace print_exp args in
     {%pla|<#path#s>(<#args#>)|}
@@ -427,17 +434,30 @@ let print_arg ({ name; t; _ } : param) =
   {%pla|<#t#> <#name#s>|}
 
 
-let print_function_def (def : function_def) =
+let print_function_def ?(force_public = false) ?(is_performance = false) (def : function_def) =
   let name = def.name in
   let args = Pla.map_sep Pla.commaspace print_arg def.args in
   let ret = print_type_ (snd def.t) in
   let visibility =
-    if def.info.is_root then
+    if def.info.is_root || force_public then
       "public"
+    else if is_performance && String.contains name '_' then
+      (* Make _alloc and _default functions public for performance template *)
+      let suffix = String.sub name (String.rindex name '_') (String.length name - String.rindex name '_') in
+      if suffix = "_alloc" || suffix = "_default" then
+        "public"
+      else
+        "private"
     else
       "private"
   in
-  {%pla|<#visibility#s> static <#ret#> <#name#s>(<#args#>) {|}
+  let static_keyword =
+    if is_performance then
+      ""
+    else
+      "static "
+  in
+  {%pla|<#visibility#s> <#static_keyword#s><#ret#> <#name#s>(<#args#>) {|}
 
 
 let print_body body =
@@ -485,12 +505,39 @@ let print_struct_def { path; members; _ } =
   {%pla|public static class <#path#s> {<#members_decl#+><#default_constructor#+><#param_constructor#+>}|}
 
 
-let print_top_stmt (_args : Util.Args.args) t =
+(* Generate type alias as inheritance *)
+let print_type_alias alias_name base_name =
+  {%pla|public static class <#alias_name#s> extends <#base_name#s> {
+    public <#alias_name#s>() { super(); }
+}|}
+
+
+let print_top_stmt (args : Util.Args.args) t =
   match t.top with
-  | TopFunction (def, body) ->
-    let def = print_function_def def in
-    let body = print_body body in
-    {%pla|<#def#><#body#><#><#>|}
+  | TopFunction (func_def, body) ->
+    let is_performance = args.template = Some "performance" in
+    let force_public = is_performance in
+    let def = print_function_def ~force_public ~is_performance func_def in
+    let name = func_def.name in
+    (* Check if this is a type alias allocation function *)
+    if String.contains name '_' && CCString.suffix ~suf:"_type_alloc" name && List.length func_def.args > 0 then
+      let parts = String.split_on_char '_' name in
+      let len = List.length parts in
+      if len >= 4 then
+        (* This is a type alias allocation function - override body to create correct type *)
+        let name_len = String.length name in
+        let alias_type = String.sub name 0 (name_len - 6) in
+        (* Remove "_alloc" *)
+        let body = {%pla|
+   return new <#alias_type#s>();
+}|} in
+        {%pla|<#def#><#body#><#><#>|}
+      else
+        let body = print_body body in
+        {%pla|<#def#><#body#><#><#>|}
+    else
+      let body = print_body body in
+      {%pla|<#def#><#body#><#><#>|}
   | TopExternal _ -> Pla.unit
   | TopType descr -> print_struct_def descr
   | TopAlias _ -> Pla.unit
@@ -500,12 +547,58 @@ let print_top_stmt (_args : Util.Args.args) t =
     {%pla|public static final <#t#> <#name#s> = <#rhs#>;<#>|}
 
 
-let print_prog args t = Pla.map_join (print_top_stmt args) t
+(* Collect type aliases needed based on function signatures *)
+let collect_type_aliases stmts =
+  let aliases = ref [] in
+  let collect_from_stmt stmt =
+    match stmt.top with
+    | TopFunction (def, _) ->
+      let name = def.name in
+      (* Look for pattern: *_function_type_alloc that takes arguments (indicating it's a type alias) *)
+      if String.contains name '_' && CCString.suffix ~suf:"_type_alloc" name && List.length def.args > 0 then
+        let parts = String.split_on_char '_' name in
+        (* Handle patterns like Module_noteOn_type_alloc or Module_submodule_pulse_start_type_alloc *)
+        let len = List.length parts in
+        if len >= 4 then
+          (* Check for various patterns including perf variants *)
+          if len >= 5 && List.nth parts (len - 4) = "perf" then
+            (* Handle perf patterns like Module_perf_noteOn_type_alloc *)
+            let module_parts = CCList.take (len - 4) parts in
+            let module_name = String.concat "_" module_parts in
+            let name_len = String.length name in
+            let alias_type = String.sub name 0 (name_len - 6) in
+            (* Remove "_alloc" *)
+            let base_type = module_name ^ "_perf_process_type" in
+            aliases := (alias_type, base_type) :: !aliases
+          else
+            (* Handle regular patterns like Module_noteOn_type_alloc or Module_pulse_start_type_alloc *)
+            let module_parts = CCList.take (len - 3) parts in
+            let module_name = String.concat "_" module_parts in
+            let name_len = String.length name in
+            let alias_type = String.sub name 0 (name_len - 6) in
+            (* Remove "_alloc" *)
+            let base_type = module_name ^ "_process_type" in
+            aliases := (alias_type, base_type) :: !aliases
+    | _ -> ()
+  in
+  List.iter collect_from_stmt stmts;
+  !aliases
+
+
+let print_prog args t =
+  let aliases = collect_type_aliases t in
+  let main_code = Pla.map_join (print_top_stmt args) t in
+  let alias_code = Pla.map_sep_all Pla.newline (fun (alias, base) -> print_type_alias alias base) aliases in
+  if aliases = [] then
+    main_code
+  else
+    {%pla|<#main_code#><#alias_code#+>|}
+
 
 let getTemplateCode (args : Util.Args.args) =
   match args.template with
   | None -> Pla.unit, Pla.unit
-  | Some "performance" -> Pla.unit, Pla.unit (* TODO: implement T_performance.generateJava *)
+  | Some "performance" -> T_performance.generateJava args
   | Some name -> Util.Error.raiseErrorMsg ("Unknown template '" ^ name ^ "'")
 
 
@@ -523,15 +616,42 @@ let generate (args : Util.Args.args) (stmts : top_stmt list) =
   in
   let code = print_prog args stmts in
   let pre, post = getTemplateCode args in
-  let full_code =
-    {%pla|
+  match args.template with
+  | Some "performance" ->
+    (* For performance template, generate two files: main class and performance test *)
+    let main_code =
+      {%pla|
 package <#package_name#s>;
 
-<#runtime#>
+import java.util.Arrays;
+import java.util.Random;
 
 public class <#class_name#s> {
+<#runtime#>
+<#code#>
+}
+|}
+    in
+    let perf_file = Common.setExt "Perf.java" args.output in
+    let perf_code = {%pla|
+package <#package_name#s>;
+
+<#post#>
+|} in
+    [ main_code, file; perf_code, perf_file ]
+  | _ ->
+    (* Regular template or no template *)
+    let full_code =
+      {%pla|
+package <#package_name#s>;
+
+import java.util.Arrays;
+import java.util.Random;
+
+public class <#class_name#s> {
+<#runtime#>
 <#pre#><#code#><#post#>
 }
 |}
-  in
-  [ full_code, file ]
+    in
+    [ full_code, file ]
