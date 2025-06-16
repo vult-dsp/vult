@@ -11,6 +11,7 @@
   Tables
   T_pd
   T_performance
+  T_mathematica
   Replacements)
  (libraries core pparser pla vm str util)
  (flags

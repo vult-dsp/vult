@@ -567,6 +567,7 @@ let getTemplateCode (name : string option) (args : Util.Args.args) (stmts : top_
   match name with
   | Some "pd" -> T_pd.generate (getLibName args.output) stmts
   | Some "performance" -> T_performance.generateC args
+  | Some "mathematica" -> T_mathematica.generate (getLibName args.output) stmts
   | None -> (Pla.unit, Pla.unit), (Pla.unit, Pla.unit)
   | Some name -> Util.Error.raiseErrorMsg ("Unknown template '" ^ name ^ "'")
 
