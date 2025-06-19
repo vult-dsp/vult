@@ -404,8 +404,13 @@ let patt_PattString (loc : Lexing.position * Lexing.position) (s : string) (stat
 
 let patt_PattId (loc : Lexing.position * Lexing.position) (p : 'state -> 'state * path) (state : 'state) :
     'state * pattern =
-  let state, p = p state in
-  state, { p = SPEnum p; loc = mk_loc state loc }
+  let state, path = p state in
+  (* Allow identifier patterns - inference will validate if they're enum constructors *)
+  match path with
+  | { id; n = None; _ } -> state, { p = SPId id; loc = mk_loc state loc }
+  | { id; n = Some module_name; _ } ->
+    (* Module-qualified enum patterns like Module.EnumValue *)
+    state, { p = SPId (module_name ^ "_" ^ id); loc = mk_loc state loc }
 
 
 let patt_PattGroup (loc : Lexing.position * Lexing.position) (p : 'state -> 'state * pattern) (state : 'state) :

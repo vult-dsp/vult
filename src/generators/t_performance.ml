@@ -115,7 +115,7 @@ let luaPost (args : Util.Args.args) =
 
 let generateLua (args : Util.Args.args) = Pla.unit, luaPost args
 
-let jsPost (args : Util.Args.args) =
+let jsPostWithLabel (args : Util.Args.args) (label : string) =
   let module_name =
     match args.files with
     | Util.Args.File s :: _ -> Pparser.Parse.moduleName s
@@ -138,11 +138,17 @@ while (samples > 0) {
   samples = samples -1;
 }
 var finish = Number(process.hrtime.bigint() - start) / 1000000 / time;
-console.log(`<#module_name#s>\tJs\t${finish.toFixed(2)} ms/s`)
+console.log(`<#module_name#s>\t<#label#s>\t${finish.toFixed(2)} ms/s`)
 |}
 
 
+let jsPost (args : Util.Args.args) = jsPostWithLabel args "Js"
+
+let jsBunPost (args : Util.Args.args) = jsPostWithLabel args "Bun"
+
 let generateJs (args : Util.Args.args) = Pla.unit, jsPost args
+
+let generateJsBun (args : Util.Args.args) = Pla.unit, jsBunPost args
 
 let juliaPost (args : Util.Args.args) =
   let module_name =

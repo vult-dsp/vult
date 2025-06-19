@@ -265,6 +265,7 @@ let getTemplateCode (args : Util.Args.args) =
   match args.template with
   | None -> Pla.unit, Pla.unit
   | Some "performance" -> T_performance.generateJs args
+  | Some "performance-bun" -> T_performance.generateJsBun args
   | Some name -> Util.Error.raiseErrorMsg ("Unknown template '" ^ name ^ "'")
 
 

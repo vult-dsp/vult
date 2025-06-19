@@ -47,7 +47,6 @@ type exp_d =
   | SEFixed of string
   | SEString of string
   | SEId of string
-  | SEEnum of path
   | SEIndex of
       { e : exp
       ; index : exp
@@ -86,7 +85,7 @@ type pattern_d =
   | SPReal of string
   | SPFixed of string
   | SPString of string
-  | SPEnum of path
+  | SPId of string
   | SPTuple of pattern list
   | SPGroup of pattern
 
@@ -246,7 +245,6 @@ module Print = struct
     | SEFixed f -> Pla.string f
     | SEString s -> Pla.string_quoted s
     | SEId s -> Pla.string s
-    | SEEnum p -> path p
     | SEIndex { e; index } ->
       let e = exp e in
       let index = exp index in
@@ -322,7 +320,7 @@ module Print = struct
     | SPReal f -> Pla.string f
     | SPFixed f -> Pla.string f
     | SPString s -> Pla.string_quoted s
-    | SPEnum p -> path p
+    | SPId id -> Pla.string id
     | SPTuple elems ->
       let elems = Pla.map_sep Pla.commaspace pattern elems in
       {%pla|<#elems#>|}
@@ -833,15 +831,6 @@ module Mapper = struct
         | SEFixed _ -> state, idata
         | SEString _ -> state, idata
         | SEId _ -> state, idata
-        | SEEnum field_0 ->
-          let state, field_0' = map_path mapper context state field_0 in
-          let odata =
-            if field_0 == field_0' then
-              idata
-            else
-              SEEnum field_0'
-          in
-          state, odata
         | SEIndex { e; index } ->
           let state, index' = map_exp mapper context state index in
           let state, e' = map_exp mapper context state e in
@@ -1440,7 +1429,6 @@ module SExpr = struct
       | SEFixed s -> "(SEFixed " ^ s ^ ")"
       | SEString s -> "(SEString \"" ^ s ^ "\")"
       | SEId s -> "(SEId " ^ s ^ ")"
-      | SEEnum p -> "(SEEnum " ^ print_path p ^ ")"
       | SEIndex { e; index } -> "(SEIndex " ^ print_exp e ^ " " ^ print_exp index ^ ")"
       | SENamed (e1, e2) -> "(SENamed " ^ print_exp e1 ^ " " ^ print_exp e2 ^ ")"
       | SEArray lst -> "(SEArray " ^ print_list print_exp lst ^ ")"
@@ -1471,9 +1459,9 @@ module SExpr = struct
       | SPReal s -> "(SPReal " ^ s ^ ")"
       | SPFixed s -> "(SPFixed " ^ s ^ ")"
       | SPString s -> "(SPString \"" ^ s ^ "\")"
+      | SPId id -> "(SPId " ^ id ^ ")"
       | SPTuple lst -> "(SPTuple " ^ print_list print_pattern lst ^ ")"
       | SPGroup p -> "(SPGroup " ^ print_pattern p ^ ")"
-      | SPEnum path -> "(SPEnum " ^ print_path path ^ ")"
     in
     "(pattern " ^ p_str ^ ")"
 

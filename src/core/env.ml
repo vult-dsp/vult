@@ -818,9 +818,8 @@ type expression_symbol =
   | ExprEnum of (path * Loc.t * int)
   | ExprNotFound
 
-let lookupExpressionSymbol (env : env) (name : string) (loc : Loc.t) (in_constant_context : bool) : expression_symbol =
-  let name_path : path = { id = name; n = None; loc } in
-  let results = lookupPath env name_path in
+let lookupExpressionSymbol (env : env) (path : path) (in_constant_context : bool) : expression_symbol =
+  let results = lookupPath env path in
   if in_constant_context then
     (* In constant context: constants first, then enums, then types *)
     match findVar results with

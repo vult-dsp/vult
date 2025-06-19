@@ -101,9 +101,6 @@ let expToPath error (exp : exp) : path =
   match exp with
   | { e = SEId id; loc } -> { id; n = None; loc }
   | { e = SEMember ({ e = SEId e; _ }, id); loc } -> { id; n = Some e; loc }
-  | { e = SEMember ({ e = SEEnum { id = e; n = None; loc = loc1 }; _ }, id); loc = loc2 } ->
-    let loc = Loc.merge loc1 loc2 in
-    { id; n = Some e; loc }
   | _ -> error ()
 
 
@@ -505,10 +502,7 @@ and exp_nud (buffer : Stream.stream) (token : 'kind token) : exp =
   | OP, "-" -> unaryOp buffer token
   | ID, _ ->
     let id = token.value in
-    if String.capitalize_ascii id = id then
-      { e = SEEnum { id; n = None; loc }; loc }
-    else
-      { e = SEId id; loc }
+    { e = SEId id; loc }
   | LPAREN, _ ->
     let e = expression 0 buffer in
     let _ = consumeInContext buffer RPAREN "grouped expression" in
@@ -568,12 +562,7 @@ and pattern_nud (buffer : Stream.stream) (token : 'kind token) : pattern =
   let loc = token.loc in
   match token.kind, token.value with
   | WILD, _ -> { p = SPWild; loc }
-  | ID, _ ->
-    let id = token.value in
-    if String.capitalize_ascii id = id then
-      { p = SPEnum { id; n = None; loc }; loc }
-    else
-      failwith "Add error"
+  | ID, _ -> { p = SPId token.value; loc }
   | LPAREN, _ ->
     let p = pattern 0 buffer in
     let _ = consumeInContext buffer RPAREN "grouped pattern" in
@@ -613,22 +602,11 @@ and pair_pattern (buffer : Stream.stream) (token : 'kind token) (left : pattern)
   { p = SPTuple (elems1 @ elems2); loc = left.loc }
 
 
-and pattern_member (buffer : Stream.stream) (token : 'kind token) (left : pattern) : pattern =
-  let right = pattern (getExpLbp token) buffer in
-  match right.p with
-  | SPEnum { id; n = None; loc } -> (
-    match left.p with
-    | SPEnum { id = m; n = None; _ } -> { right with p = SPEnum { id; n = Some m; loc } }
-    | _ ->
-      let message =
-        Error.PointedError (token.loc, "Invalid pattern in match expression. Expected a constructor or member access")
-      in
-      raise (ParserError message))
-  | _ ->
-    let message =
-      Error.PointedError (token.loc, "Invalid pattern in match expression. Expected a constructor with member access")
-    in
-    raise (ParserError message)
+and pattern_member (_ : Stream.stream) (token : 'kind token) (_ : pattern) : pattern =
+  let message =
+    Error.PointedError (token.loc, "Pattern member access is not supported. Use simple patterns in match expressions")
+  in
+  raise (ParserError message)
 
 
 and exp_member (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
@@ -636,12 +614,6 @@ and exp_member (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp
   match right.e with
   | SEMember (({ e = SEId id; _ } as i), n) -> { right with e = SEMember ({ i with e = SEMember (left, id) }, n) }
   | SEId id -> { right with e = SEMember (left, id) }
-  | SEEnum { id; n = None; loc } -> (
-    match left.e with
-    | SEEnum { id = m; n = None; _ } -> { right with e = SEEnum { id; n = Some m; loc } }
-    | _ ->
-      let message = Error.PointedError (token.loc, "Invalid member access. Expected enum constructor access") in
-      raise (ParserError message))
   | _ ->
     let message = Error.PointedError (token.loc, "Invalid member access. Expected a field name after the dot") in
     raise (ParserError message)

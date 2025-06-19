@@ -213,6 +213,32 @@ let runJs vultfile =
   | e -> showError e
 
 
+let generateJsBun (filename : string) (output : string) : unit =
+  let args =
+    { default_arguments with
+      files = [ File filename ]
+    ; code = JSCode
+    ; output = Some output
+    ; real = Float
+    ; template = Some "performance-bun"
+    ; includes
+    }
+  in
+  let output = Driver.Cli.driver args in
+  CCList.iter (Driver.Cli.showResult args) output
+
+
+let runBun vultfile =
+  try
+    let output = Filename.chop_extension (Filename.basename vultfile) in
+    Sys.chdir tmp_dir;
+    generateJsBun vultfile output;
+    ignore (Sys.command ("bun " ^ output ^ ".js"));
+    Sys.chdir init_dir
+  with
+  | e -> showError e
+
+
 let runLua vultfile =
   try
     let output = Filename.chop_extension (Filename.basename vultfile) in
@@ -325,6 +351,7 @@ let main () =
       runStandardLua f;
       runLua f;
       runJs f;
+      runBun f;
       runJulia f;
       runJava f;
       runInterpreter f)

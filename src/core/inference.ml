@@ -373,7 +373,8 @@ and exp ?(in_constant_context = false) (env : env) (e : Syntax.exp) : env * exp 
     env, { e = EString value; t; loc }
   | { e = SEGroup e; _ } -> exp ~in_constant_context env e
   | { e = SEId name; loc } when not (String.equal (String.capitalize_ascii name) name) -> (
-    match Env.lookupExpressionSymbol env name loc in_constant_context with
+    let name_path : path = { id = name; n = None; loc } in
+    match Env.lookupExpressionSymbol env name_path in_constant_context with
     | ExprVariable var ->
       let t = var.t in
       let e =
@@ -503,41 +504,61 @@ and exp ?(in_constant_context = false) (env : env) (e : Syntax.exp) : env * exp 
     let t = applyFunction e.loc args_t ret [ e ] in
     env, { e = EUnOp (op, e); t; loc }
   | { e = SEMember (e1, m); loc } -> (
-    (* First, try to interpret this as an enum reference if e1 is an SEId *)
+    (* First, try to interpret this as an enum reference if e1 is an SEId or SEEnum *)
     match e1 with
-    | { e = SEId module_name; _ } -> (
-      (* Try to lookup as enum: module_name.m *)
-      let enum_path = Syntax.{ id = m; n = Some module_name; loc } in
-      try
-        let type_path, tloc, index = Env.lookEnum env enum_path loc in
-        let t = C.path_t tloc type_path in
-        env, { e = EInt index; t; loc }
-      with
-      | _ -> (
-        (* If enum lookup fails, fall back to normal member access *)
-        let env, e1 = exp ~in_constant_context env e1 in
-        match (unlink e1.t).tx with
-        | TEId path -> (
-          match Env.lookType env path loc with
-          | { path; descr = Record members; _ } -> (
-            match Map.find m members with
-            | None -> Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
-            | Some { t; _ } ->
-              let t = refreshConstness t in
-              (* if the type is a builtin (a value) do not unify the constness *)
-              let () =
-                if (not in_constant_context) && not (Env.isBuiltinType t) then
-                  unifyConstness t e1.t
-              in
-              env, { e = EMember (e1, m); t; loc })
-          | _ ->
-            let t = Pla.print (Typed.print_type_ e1.t) in
-            let e = Pla.print (Typed.print_exp e1) in
-            Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
-        | _ ->
-          let t = Pla.print (Typed.print_type_ e1.t) in
-          let e = Pla.print (Typed.print_exp e1) in
-          Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc))
+    | { e = SEId module_name; _ } when String.equal (String.capitalize_ascii module_name) module_name -> (
+      (* First check if this is a module name - try module-qualified access *)
+      let const_path = Syntax.{ id = m; n = Some module_name; loc } in
+      let results = Env.lookupPath env const_path in
+      match results with
+      | _ :: _ -> (
+        (* Found something in module - check what it is *)
+        match Env.findVar results with
+        | Some var when var.kind = Const ->
+          let t = var.t in
+          env, { e = EConst const_path; t; loc }
+        | Some var ->
+          Error.raiseError
+            ("Found '"
+            ^ module_name
+            ^ "."
+            ^ m
+            ^ "' but it's not a constant (it's a "
+            ^ (match var.kind with
+              | Val -> "variable"
+              | Mem _ -> "memory"
+              | Inst -> "instance"
+              | Const -> "constant")
+            ^ ")")
+            loc
+        | None -> (
+          (* Check for function or enum *)
+          match Env.findFunction results with
+          | Some _ ->
+            Error.raiseError
+              ("'"
+              ^ module_name
+              ^ "."
+              ^ m
+              ^ "' is a function, not a constant. Use function call syntax: "
+              ^ module_name
+              ^ "."
+              ^ m
+              ^ "(args)")
+              loc
+          | None -> (
+            match Env.findEnum results with
+            | Some (type_path, tloc, index) ->
+              let t = C.path_t tloc type_path in
+              env, { e = EInt index; t; loc }
+            | None ->
+              Error.raiseError ("Found '" ^ module_name ^ "." ^ m ^ "' but it's not a constant, function, or enum") loc)
+          ))
+      | [] ->
+        (* Module not found - check if it's an actual module name or just not found *)
+        Error.raiseError
+          ("Module '" ^ module_name ^ "' not found. Check that the module is included or spelled correctly")
+          loc)
     | _ -> (
       (* For non-SEId expressions, use normal member access *)
       let env, e1 = exp ~in_constant_context env e1 in
@@ -563,13 +584,10 @@ and exp ?(in_constant_context = false) (env : env) (e : Syntax.exp) : env * exp 
         let t = Pla.print (Typed.print_type_ e1.t) in
         let e = Pla.print (Typed.print_exp e1) in
         Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc))
-  | { e = SEEnum path; loc } ->
-    let type_path, tloc, index = Env.lookEnum env path loc in
-    let t = C.path_t tloc type_path in
-    env, { e = EInt index; t; loc }
   | { e = SEId id; loc } -> (
     (* This case handles uppercase identifiers (enum constructors) *)
-    match Env.lookupExpressionSymbol env id loc in_constant_context with
+    let id_path : path = { id; n = None; loc } in
+    match Env.lookupExpressionSymbol env id_path in_constant_context with
     | ExprEnum (type_path, tloc, index) ->
       let t = C.path_t tloc type_path in
       env, { e = EInt index; t; loc }
@@ -755,7 +773,7 @@ let makeIterWhile (env : env) name id_loc value body loc =
   { s = SStmtBlock [ decl; while_s ]; loc }
 
 
-let makeIfOfMatch e cases =
+let makeIfOfMatch env e cases =
   let rec makeComparison (e : Syntax.exp) (p : Syntax.pattern) =
     let makeEq e1 e2 = Syntax.{ e = SEOp ("==", e1, e2); loc = e1.loc } in
     let makeAnd e1 e2 = Syntax.{ e = SEOp ("&&", e1, e2); loc = e1.loc } in
@@ -789,7 +807,17 @@ let makeIfOfMatch e cases =
     | _, { p = SPReal f; loc } -> makeEq e Syntax.{ e = SEReal f; loc }
     | _, { p = SPFixed f; loc } -> makeEq e Syntax.{ e = SEFixed f; loc }
     | _, { p = SPString s; loc } -> makeEq e Syntax.{ e = SEString s; loc }
-    | _, { p = SPEnum p; loc } -> makeEq e Syntax.{ e = SEEnum p; loc }
+    | _, { p = SPId id; loc } -> (
+      (* Handle enum constructor and constant patterns *)
+      let id_path : path = { id; n = None; loc } in
+      match Env.lookupExpressionSymbol env id_path false with
+      | ExprEnum (_, _, _) ->
+        (* Enum constructor: compare with the enum value itself *)
+        makeEq e Syntax.{ e = SEId id; loc }
+      | ExprVariable var when var.kind = Const ->
+        (* Constant: create a constant reference for comparison *)
+        makeEq e Syntax.{ e = SEId id; loc }
+      | _ -> Error.raiseError ("Pattern '" ^ id ^ "' is not a valid enum constructor or constant") loc)
   in
   let if_stmt =
     CCList.fold_right
@@ -855,7 +883,7 @@ let rec stmt (env : env) (return : type_) (s : Syntax.stmt) : env * stmt list =
     let while_s = makeIterWhile env name id_loc value body loc in
     stmt env return while_s
   | { s = SStmtMatch { e; cases }; _ } ->
-    let if_stmt = makeIfOfMatch e cases in
+    let if_stmt = makeIfOfMatch env e cases in
     stmt env return if_stmt
 
 

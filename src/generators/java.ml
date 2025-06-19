@@ -547,38 +547,55 @@ let print_top_stmt (args : Util.Args.args) t =
     {%pla|public static final <#t#> <#name#s> = <#rhs#>;<#>|}
 
 
-(* Collect type aliases needed based on function signatures *)
+(* Extract the base type from a function call in the return statement *)
+let extract_base_type_from_call = function
+  | { e = ECall { path; _ }; _ } when CCString.suffix ~suf:"_type_alloc" path ->
+    let len = String.length path in
+    Some (String.sub path 0 (len - 6))
+    (* Remove "_alloc" *)
+  | _ -> None
+
+
+(* Collect type aliases needed based on function signatures and bodies *)
 let collect_type_aliases stmts =
   let aliases = ref [] in
   let collect_from_stmt stmt =
     match stmt.top with
-    | TopFunction (def, _) ->
+    | TopFunction (def, body) ->
       let name = def.name in
       (* Look for pattern: *_function_type_alloc that takes arguments (indicating it's a type alias) *)
       if String.contains name '_' && CCString.suffix ~suf:"_type_alloc" name && List.length def.args > 0 then
-        let parts = String.split_on_char '_' name in
-        (* Handle patterns like Module_noteOn_type_alloc or Module_submodule_pulse_start_type_alloc *)
-        let len = List.length parts in
-        if len >= 4 then
-          (* Check for various patterns including perf variants *)
-          if len >= 5 && List.nth parts (len - 4) = "perf" then
-            (* Handle perf patterns like Module_perf_noteOn_type_alloc *)
-            let module_parts = CCList.take (len - 4) parts in
-            let module_name = String.concat "_" module_parts in
-            let name_len = String.length name in
-            let alias_type = String.sub name 0 (name_len - 6) in
-            (* Remove "_alloc" *)
-            let base_type = module_name ^ "_perf_process_type" in
-            aliases := (alias_type, base_type) :: !aliases
-          else
-            (* Handle regular patterns like Module_noteOn_type_alloc or Module_pulse_start_type_alloc *)
-            let module_parts = CCList.take (len - 3) parts in
-            let module_name = String.concat "_" module_parts in
-            let name_len = String.length name in
-            let alias_type = String.sub name 0 (name_len - 6) in
-            (* Remove "_alloc" *)
-            let base_type = module_name ^ "_process_type" in
-            aliases := (alias_type, base_type) :: !aliases
+        let name_len = String.length name in
+        let alias_type = String.sub name 0 (name_len - 6) in
+        (* Remove "_alloc" *)
+        (* Try to extract the base type from the function body *)
+        let base_type =
+          match body.s with
+          | StmtReturn exp -> (
+            match extract_base_type_from_call exp with
+            | Some base -> base
+            | None ->
+              (* Fallback to old logic if we can't parse the body *)
+              let parts = String.split_on_char '_' name in
+              let len = List.length parts in
+              if len >= 4 then
+                let module_parts = CCList.take (len - 3) parts in
+                let module_name = String.concat "_" module_parts in
+                module_name ^ "_process_type"
+              else
+                alias_type ^ "_base_type")
+          | _ ->
+            (* Fallback if no return statement found *)
+            let parts = String.split_on_char '_' name in
+            let len = List.length parts in
+            if len >= 4 then
+              let module_parts = CCList.take (len - 3) parts in
+              let module_name = String.concat "_" module_parts in
+              module_name ^ "_process_type"
+            else
+              alias_type ^ "_base_type"
+        in
+        aliases := (alias_type, base_type) :: !aliases
     | _ -> ()
   in
   List.iter collect_from_stmt stmts;

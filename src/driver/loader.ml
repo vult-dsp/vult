@@ -71,9 +71,17 @@ module Dependencies = struct
     | SEOp (_, e1, e2) -> exp (exp set e1) e2
     | SEIf { cond; then_; else_ } -> exp (exp (exp set cond) then_) else_
     | SETuple elems -> list exp set elems
-    | SEMember (e, _) -> exp set e
+    | SEMember (e, member) -> (
+      (* Check if this is module-qualified access: Module.member *)
+      match e with
+      | { e = SEId module_name; loc } when String.equal (String.capitalize_ascii module_name) module_name ->
+        (* This is module-qualified access, add module to dependencies *)
+        let module_path = { id = member; n = Some module_name; loc } in
+        path set module_path
+      | _ ->
+        (* Regular member access, just process the expression *)
+        exp set e)
     | SEGroup e -> exp set e
-    | SEEnum p -> path set p
     | SERecord { path = p; elems } -> list (fun set (p, v) -> exp (path set p) v) (path set p) elems
 
 
@@ -85,9 +93,9 @@ module Dependencies = struct
     | SPReal _ -> set
     | SPFixed _ -> set
     | SPString _ -> set
+    | SPId _ -> set
     | SPTuple elems -> list pattern set elems
     | SPGroup e -> pattern set e
-    | SPEnum p -> path set p
 
 
   let rec dexp set d =
