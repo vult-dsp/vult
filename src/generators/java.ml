@@ -73,6 +73,14 @@ static int float_to_int(float x) {
     return (int)x;
 }
 
+static short int16(int x) {
+    return (short)Math.max(-32768, Math.min(32767, x));
+}
+
+static short int16(float x) {
+    return (short)Math.max(-32768, Math.min(32767, (int)x));
+}
+
 static float floor(float x) {
     return (float)Math.floor(x);
 }
@@ -233,6 +241,7 @@ let rec print_type_ (t : type_) =
   | TEmptyType -> Pla.string "Object"
   | TVoid _ -> Pla.string "void"
   | TInt -> Pla.string "int"
+  | TInt16 -> Pla.string "short"
   | TReal -> Pla.string "float"
   | TBool -> Pla.string "boolean"
   | TString -> Pla.string "String"
@@ -290,6 +299,9 @@ let rec print_exp e =
   | ECall { path = "int"; args = [ e1 ] } ->
     let e1 = print_exp e1 in
     {%pla|(int)(<#e1#>)|}
+  | ECall { path = "int16"; args = [ e1 ] } ->
+    let e1 = print_exp e1 in
+    {%pla|int16(<#e1#>)|}
   | ECall { path = "bool"; args = [ e1 ] } ->
     let e1 = print_exp e1 in
     {%pla|((<#e1#>) != 0)|}
@@ -351,6 +363,7 @@ let print_dexp (e : dexp) =
 let rec getInitValue (t : type_) =
   match t.t with
   | TInt -> Pla.string "0"
+  | TInt16 -> Pla.string "0"
   | TReal -> Pla.string "0.0f"
   | TBool -> Pla.string "false"
   | TString -> Pla.string "\"\""

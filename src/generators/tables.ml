@@ -192,6 +192,7 @@ let calculateTablesOrder2 loc iprog name size min max precision =
 let getCastIndexFunction (in_precision : type_) =
   match in_precision.t with
   | TFix16 -> "fix_to_int"
+  | TInt16 -> "int16_to_int"
   | TReal -> "float_to_int"
   | _ -> failwith "invalid input precision"
 
@@ -211,8 +212,13 @@ let castInputVarPrecision (in_precision : type_) (out_precision : type_) (input 
   match in_precision.t, out_precision.t with
   | TReal, TReal -> input
   | TFix16, TFix16 -> input
+  | TInt16, TInt16 -> input
   | TReal, TFix16 -> C.ecall "float_to_fix" [ input ] C.fix16_t
   | TFix16, TReal -> C.ecall "fix_to_float" [ input ] C.real_t
+  | TInt16, TReal -> C.ecall "int16_to_float" [ input ] C.real_t
+  | TReal, TInt16 -> C.ecall "float_to_int16" [ input ] C.int16_t
+  | TInt16, TFix16 -> C.ecall "int16_to_fix" [ input ] C.fix16_t
+  | TFix16, TInt16 -> C.ecall "fix_to_int16" [ input ] C.int16_t
   | _ -> failwith "castInputVarPrecision: invalid input"
 
 

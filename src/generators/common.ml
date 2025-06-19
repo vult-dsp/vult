@@ -49,18 +49,27 @@ let cast ~(from : type_) ~(to_ : type_) (value : Pla.t) =
   | TInt, TReal -> {%pla|(float)<#value#>|}
   | TInt, TBool -> {%pla|(bool)<#value#>|}
   | TInt, TFix16 -> {%pla|int_to_fix(<#value#>)|}
+  | TInt, TInt16 -> {%pla|(int16_t)<#value#>|}
+  | TInt16, TReal -> {%pla|(float)<#value#>|}
+  | TInt16, TBool -> {%pla|(bool)<#value#>|}
+  | TInt16, TFix16 -> {%pla|int_to_fix(<#value#>)|}
+  | TInt16, TInt -> {%pla|(int)<#value#>|}
   | TReal, TInt -> {%pla|(int)<#value#>|}
+  | TReal, TInt16 -> {%pla|(int16_t)<#value#>|}
   | TReal, TBool -> {%pla|(<#value#> != 0.0f)|}
   | TReal, TFix16 -> {%pla|float_to_fix(<#value#>)|}
   | TBool, TInt -> {%pla|(int)<#value#>|}
+  | TBool, TInt16 -> {%pla|(int16_t)<#value#>|}
   | TBool, TReal -> {%pla|(<#value#> ? 1.0f : 0.0f)|}
   | TBool, TFix16 -> {%pla|(<#value#> ? int_to_fix(1) : int_to_fix(0))|}
   | TFix16, TInt -> {%pla|fix_to_int(<#value#>)|}
+  | TFix16, TInt16 -> {%pla|(int16_t)fix_to_int(<#value#>)|}
   | TFix16, TReal -> {%pla|fix_to_float(<#value#>)|}
   | TFix16, TBool -> {%pla|(<#value#> != 0)|}
   (* no cast *)
   | TReal, TReal -> value
   | TInt, TInt -> value
+  | TInt16, TInt16 -> value
   | TBool, TBool -> value
   | TFix16, TFix16 -> value
   | _ -> failwith "Unknown cast"

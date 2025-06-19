@@ -1,0 +1,47 @@
+// Test int16 basic functionality
+fun main() : int {
+  // Test basic int16 declaration and initialization
+  val a : int16 = int16(100);
+  val b : int16 = int16(200);
+  
+  // Test arithmetic operations
+  val sum : int16 = a + b;      // Should be 300
+  val diff : int16 = b - a;     // Should be 100
+  val prod : int16 = a * int16(2);     // Should be 200
+  val quot : int16 = b / int16(2);     // Should be 100
+  
+  // Test comparisons
+  val eq : bool = (a == a);     // Should be true
+  val lt : bool = (a < b);      // Should be true
+  val gt : bool = (b > a);      // Should be true
+  
+  // Test conversions
+  val to_int : int = int(a);         // Should be 100
+  val to_real : real = real(b);      // Should be 200.0
+  val to_bool : bool = bool(a);      // Should be true
+  val to_string : string = string(a); // Should be "100"
+  
+  // Test conversions to int16
+  val from_int : int16 = int16(42);      // Should be 42
+  val from_real : int16 = int16(3.14);   // Should be 3
+  val from_bool : int16 = int16(true);   // Should be 1
+  
+  // Test overflow handling (should clamp to int16 range)
+  val big_val : int16 = int16(50000);    // Should clamp to 32767
+  val small_val : int16 = int16(-50000); // Should clamp to -32768
+  
+  // Verify basic results
+  if (sum == int16(300) && diff == int16(100) && prod == int16(200) && quot == int16(100)) {
+    if (eq && lt && gt) {
+      if (to_int == 100 && to_bool) {
+        if (from_int == int16(42) && from_real == int16(3) && from_bool == int16(1)) {
+          if (big_val == int16(32767) && small_val == int16(-32768)) {
+            return 1000; // All int16 tests passed
+          }
+        }
+      }
+    }
+  }
+  
+  return -1; // Some test failed
+}

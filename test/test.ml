@@ -179,6 +179,7 @@ let interpreter =
   ; "function_calls_in_constants.vult"
   ; "functions.vult"
   ; "instance_state.vult"
+  ; "int16_test.vult"
   ; "memory_state.vult"
   ; "strength_reduction.vult"
   ]

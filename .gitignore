@@ -33,7 +33,6 @@ debug_*/
 .vscode/settings.json
 *.swp
 *.swo
-*~
 
 # Node.js (for VS Code extension)
 node_modules/
@@ -65,7 +64,6 @@ __pycache__/
 lsp-*.log
 
 # Emacs files
-*~
 \#*\#
 /.emacs.desktop
 /.emacs.desktop.lock
@@ -80,3 +78,4 @@ tramp
 [._]s[a-rt-v][a-z]
 [._]ss[a-gi-z]
 [._]sw[a-p]
+/src/lsp/vscode-extension/vult_lsp_js.js

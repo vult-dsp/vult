@@ -99,6 +99,31 @@ static_inline int fix_to_int(fix16_t a) { return (a >> 16); }
 
 static_inline int int_clip(int v, int minv, int maxv) { return v > maxv ? maxv : (v < minv ? minv : v); }
 
+// Int16 type conversion functions
+static_inline int16_t int_to_int16(int a) { return (int16_t)(a < -32768 ? -32768 : (a > 32767 ? 32767 : a)); }
+static_inline int16_t float_to_int16(float a) { return int_to_int16((int)a); }
+static_inline int16_t bool_to_int16(bool a) { return a ? 1 : 0; }
+static_inline int16_t fix_to_int16(fix16_t a) { return int_to_int16(fix_to_int(a)); }
+static_inline int16_t int16_to_int16(int16_t a) { return a; }
+
+static_inline int int16_to_int(int16_t a) { return (int)a; }
+static_inline float int16_to_float(int16_t a) { return (float)a; }
+static_inline bool int16_to_bool(int16_t a) { return a != 0; }
+static_inline fix16_t int16_to_fix(int16_t a) { return int_to_fix((int)a); }
+static_inline std::string int16_to_string(int16_t a) { return std::to_string(a); }
+
+// Int16 arithmetic operations with clamping
+static_inline int16_t int16_add(int16_t a, int16_t b) { return int_to_int16((int)a + (int)b); }
+static_inline int16_t int16_sub(int16_t a, int16_t b) { return int_to_int16((int)a - (int)b); }
+static_inline int16_t int16_mul(int16_t a, int16_t b) { return int_to_int16((int)a * (int)b); }
+static_inline int16_t int16_div(int16_t a, int16_t b) { return b == 0 ? 0 : int_to_int16((int)a / (int)b); }
+static_inline int16_t int16_mod(int16_t a, int16_t b) { return b == 0 ? 0 : (int16_t)((int)a % (int)b); }
+
+static_inline int16_t int16_clip(int16_t v, int16_t minv, int16_t maxv) { return v > maxv ? maxv : (v < minv ? minv : v); }
+static_inline int16_t int16_abs(int16_t a) { return a < 0 ? -a : a; }
+static_inline int16_t int16_min(int16_t a, int16_t b) { return a < b ? a : b; }
+static_inline int16_t int16_max(int16_t a, int16_t b) { return a > b ? a : b; }
+
 // Basic operations for fixed point numbers
 static_inline fix16_t fix_add(fix16_t x, fix16_t y) { return x + y; }
 
@@ -175,6 +200,7 @@ static_inline uint8_t bool_not(uint8_t x) { return !x; }
 /* Tables */
 static_inline fix16_t *fix_wrap_array(const fix16_t x[]) { return (fix16_t *)x; };
 static_inline float *float_wrap_array(const float x[]) { return (float *)x; };
+static_inline int16_t *int16_wrap_array(const int16_t x[]) { return (int16_t *)x; };
 
 /* Random numbers */
 float float_random();

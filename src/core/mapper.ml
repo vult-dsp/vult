@@ -234,6 +234,7 @@ let rec type_ (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state)
     let state, elems = (mapper_list type_) mapper sub_env state elems in
     apply mapper.type_ env state { t = TVoid (Some elems); const; loc }
   | { t = TInt; _ } -> apply mapper.type_ env state t
+  | { t = TInt16; _ } -> apply mapper.type_ env state t
   | { t = TReal; _ } -> apply mapper.type_ env state t
   | { t = TString; _ } -> apply mapper.type_ env state t
   | { t = TBool; _ } -> apply mapper.type_ env state t

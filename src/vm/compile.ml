@@ -383,7 +383,7 @@ let rec compile_stmt (env : env) (stmt : stmt) =
 
 let getNOutputs (t : type_) =
   match t.t with
-  | TEmptyType | TVoid _ | TInt | TReal | TString | TBool | TFix16 | TArray _ | TStruct _ -> 1
+  | TEmptyType | TVoid _ | TInt | TInt16 | TReal | TString | TBool | TFix16 | TArray _ | TStruct _ -> 1
   | TTuple elems -> CCList.length elems
 
 

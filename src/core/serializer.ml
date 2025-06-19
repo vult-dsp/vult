@@ -216,7 +216,7 @@ let tagAllMembers fully_saved (stmts : top_stmt list) =
 
 let serializerForType (t : type_) =
   match t with
-  | { t = TInt | TFix16 | TBool; _ } -> push_int
+  | { t = TInt | TInt16 | TFix16 | TBool; _ } -> push_int
   | { t = TReal; _ } -> push_float
   | { t = TString; _ } -> push_string
   | { t = TEmptyType; _ } -> failwith "serializerForType: void"
@@ -228,7 +228,7 @@ let serializerForType (t : type_) =
 
 let deserializerForType (t : type_) =
   match t with
-  | { t = TInt | TFix16 | TBool; _ } -> "deserialize_int"
+  | { t = TInt | TInt16 | TFix16 | TBool; _ } -> "deserialize_int"
   | { t = TReal; _ } -> "deserialize_float"
   | { t = TString; _ } -> "deserialize_string"
   | { t = TEmptyType; _ } -> failwith "deserializerForType: void"
@@ -279,7 +279,7 @@ let createSerializer table (stmt : top_stmt) =
           (fun (name, (t : type_), tags, loc) ->
             if Pparser.Ptags.has tags "save" then
               match t with
-              | { t = TInt | TFix16; _ } -> callPush push_int this_type name t loc
+              | { t = TInt | TInt16 | TFix16; _ } -> callPush push_int this_type name t loc
               | { t = TReal; _ } -> callPush push_float this_type name t loc
               | { t = TString; _ } -> callPush push_string this_type name t loc
               | { t = TBool; _ } -> callPush push_int this_type name t loc
@@ -421,7 +421,7 @@ let createDeserializer table (stmt : top_stmt) =
             in
             if Pparser.Ptags.has tags "save" then
               match t with
-              | { t = TInt | TFix16; _ } ->
+              | { t = TInt | TInt16 | TFix16; _ } ->
                 Some { s = StmtBlock [ search_stmt; found_index [ callDeserializer "deserialize_int" ] ]; loc }
               | { t = TReal; _ } ->
                 Some { s = StmtBlock [ search_stmt; found_index [ callDeserializer "deserialize_float" ] ]; loc }

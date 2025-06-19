@@ -105,6 +105,9 @@ let rec print_exp e =
     | "int", [ arg ] ->
       let arg = print_exp arg in
       {%pla|trunc(Int32, <#arg#>)|}
+    | "int16", [ arg ] ->
+      let arg = print_exp arg in
+      {%pla|trunc(Int16, <#arg#>)|}
     | "real", [ arg ] ->
       let arg = print_exp arg in
       {%pla|Float32(<#arg#>)|}
@@ -114,6 +117,18 @@ let rec print_exp e =
     | "float_to_int", [ arg ] ->
       let arg = print_exp arg in
       {%pla|trunc(Int32, <#arg#>)|}
+    | "int16_to_int", [ arg ] ->
+      let arg = print_exp arg in
+      {%pla|Int32(<#arg#>)|}
+    | "int_to_int16", [ arg ] ->
+      let arg = print_exp arg in
+      {%pla|trunc(Int16, <#arg#>)|}
+    | "float_to_int16", [ arg ] ->
+      let arg = print_exp arg in
+      {%pla|trunc(Int16, <#arg#>)|}
+    | "int16_to_float", [ arg ] ->
+      let arg = print_exp arg in
+      {%pla|Float32(<#arg#>)|}
     | "initializeArray", [ value; size ] ->
       let value = print_exp value in
       let size = print_exp size in
@@ -306,6 +321,7 @@ let print_top_stmt (args : Util.Args.args) t =
       let jtype =
         match t.t with
         | TInt -> "Int32"
+        | TInt16 -> "Int16"
         | TReal -> "Float32"
         | TBool -> "Bool"
         | TString -> "String"
@@ -313,6 +329,7 @@ let print_top_stmt (args : Util.Args.args) t =
         | TArray (_, elem_type) -> (
           match elem_type.t with
           | TInt -> "Vector{Int32}"
+          | TInt16 -> "Vector{Int16}"
           | TReal -> "Vector{Float32}"
           | TBool -> "Vector{Bool}"
           | _ -> "Vector{Any}")
@@ -324,6 +341,7 @@ let print_top_stmt (args : Util.Args.args) t =
     let getDefaultValue (_n, (t : type_), _, _) =
       match t.t with
       | TInt -> "Int32(0)"
+      | TInt16 -> "Int16(0)"
       | TReal -> "Float32(0.0)"
       | TBool -> "false"
       | TString -> "\"\""
@@ -334,6 +352,7 @@ let print_top_stmt (args : Util.Args.args) t =
           let elem_default =
             match elem_type.t with
             | TInt -> "Int32(0)"
+            | TInt16 -> "Int16(0)"
             | TReal -> "Float32(0.0)"
             | TBool -> "false"
             | _ -> "nothing"

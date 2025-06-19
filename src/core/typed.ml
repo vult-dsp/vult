@@ -462,13 +462,15 @@ module C = struct
 
   let real ~loc = makeId loc "real"
 
+  let int16 ~loc = makeId loc "int16"
+
   let fix16 ~loc = makeId loc "fix16"
 
-  let num loc = { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc ]; loc; const = const () }
+  let num loc = { tx = TEOption [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc ]; loc; const = const () }
 
-  let numstr loc = { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; string ~loc ]; loc; const = const () }
+  let numstr loc = { tx = TEOption [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; string ~loc ]; loc; const = const () }
 
-  let num_bool loc = { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () }
+  let num_bool loc = { tx = TEOption [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () }
 
   let size ?(loc = Loc.default) n = { tx = TESize n; loc; const = const () }
 
@@ -530,27 +532,33 @@ module C = struct
 
   let valid_int () : fun_type =
     let loc = Loc.default in
-    [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () } ], int ~loc
+    [ { tx = TEOption [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () } ], int ~loc
 
 
   let valid_real () : fun_type =
     let loc = Loc.default in
-    [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () } ], real ~loc
+    [ { tx = TEOption [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () } ], real ~loc
 
 
   let valid_fix16 () : fun_type =
     let loc = Loc.default in
-    [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () } ], fix16 ~loc
+    [ { tx = TEOption [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () } ], fix16 ~loc
+
+
+  let valid_int16 () : fun_type =
+    let loc = Loc.default in
+    [ { tx = TEOption [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () } ], int16 ~loc
 
 
   let valid_bool () : fun_type =
     let loc = Loc.default in
-    [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () } ], bool ~loc
+    [ { tx = TEOption [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () } ], bool ~loc
 
 
   let valid_string () : fun_type =
     let loc = Loc.default in
-    ( [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc; string ~loc ]; loc; const = const () } ]
+    ( [ { tx = TEOption [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc; string ~loc ]; loc; const = const () }
+      ]
     , string ~loc )
 
 

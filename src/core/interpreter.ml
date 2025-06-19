@@ -29,6 +29,7 @@ open Util.Maps
 type dvalue =
   | DVoid
   | DInt of int
+  | DInt16 of int
   | DReal of float
   | DBool of bool
   | DString of string
@@ -53,16 +54,23 @@ type iexp =
   | IESubInt of iexp * iexp
   | IEMulInt of iexp * iexp
   | IEDivInt of iexp * iexp
+  | IEAddInt16 of iexp * iexp
+  | IESubInt16 of iexp * iexp
+  | IEMulInt16 of iexp * iexp
+  | IEDivInt16 of iexp * iexp
   | IEAddReal of iexp * iexp
   | IESubReal of iexp * iexp
   | IEMulReal of iexp * iexp
   | IEDivReal of iexp * iexp
   (* Specialized comparison operations *)
   | IEEqInt of iexp * iexp
+  | IEEqInt16 of iexp * iexp
   | IEEqReal of iexp * iexp
   | IELtInt of iexp * iexp
+  | IELtInt16 of iexp * iexp
   | IELtReal of iexp * iexp
   | IEGtInt of iexp * iexp
+  | IEGtInt16 of iexp * iexp
   | IEGtReal of iexp * iexp
   (* Inlined built-in functions *)
   | IEBuiltinTanh of iexp
@@ -90,6 +98,7 @@ type iexp =
   (* Type conversion functions *)
   | IEBuiltinReal of iexp
   | IEBuiltinInt of iexp
+  | IEBuiltinInt16 of iexp
   | IEBuiltinBool of iexp
   | IEBuiltinString of iexp
   | IEBuiltinFixed of iexp
@@ -206,6 +215,7 @@ let rec printDvalue (dv : dvalue) : string =
   match dv with
   | DVoid -> "void"
   | DInt i -> string_of_int i
+  | DInt16 i -> string_of_int i
   | DReal f -> string_of_float f
   | DBool b -> string_of_bool b
   | DString s -> "\"" ^ s ^ "\""
@@ -263,16 +273,23 @@ let rec printIexp (ie : iexp) : string =
   | IESubInt (e1, e2) -> "(" ^ printIexp e1 ^ " -int " ^ printIexp e2 ^ ")"
   | IEMulInt (e1, e2) -> "(" ^ printIexp e1 ^ " *int " ^ printIexp e2 ^ ")"
   | IEDivInt (e1, e2) -> "(" ^ printIexp e1 ^ " /int " ^ printIexp e2 ^ ")"
+  | IEAddInt16 (e1, e2) -> "(" ^ printIexp e1 ^ " +int16 " ^ printIexp e2 ^ ")"
+  | IESubInt16 (e1, e2) -> "(" ^ printIexp e1 ^ " -int16 " ^ printIexp e2 ^ ")"
+  | IEMulInt16 (e1, e2) -> "(" ^ printIexp e1 ^ " *int16 " ^ printIexp e2 ^ ")"
+  | IEDivInt16 (e1, e2) -> "(" ^ printIexp e1 ^ " /int16 " ^ printIexp e2 ^ ")"
   | IEAddReal (e1, e2) -> "(" ^ printIexp e1 ^ " +real " ^ printIexp e2 ^ ")"
   | IESubReal (e1, e2) -> "(" ^ printIexp e1 ^ " -real " ^ printIexp e2 ^ ")"
   | IEMulReal (e1, e2) -> "(" ^ printIexp e1 ^ " *real " ^ printIexp e2 ^ ")"
   | IEDivReal (e1, e2) -> "(" ^ printIexp e1 ^ " /real " ^ printIexp e2 ^ ")"
   (* Specialized comparison operations *)
   | IEEqInt (e1, e2) -> "(" ^ printIexp e1 ^ " ==int " ^ printIexp e2 ^ ")"
+  | IEEqInt16 (e1, e2) -> "(" ^ printIexp e1 ^ " ==int16 " ^ printIexp e2 ^ ")"
   | IEEqReal (e1, e2) -> "(" ^ printIexp e1 ^ " ==real " ^ printIexp e2 ^ ")"
   | IELtInt (e1, e2) -> "(" ^ printIexp e1 ^ " <int " ^ printIexp e2 ^ ")"
+  | IELtInt16 (e1, e2) -> "(" ^ printIexp e1 ^ " <int16 " ^ printIexp e2 ^ ")"
   | IELtReal (e1, e2) -> "(" ^ printIexp e1 ^ " <real " ^ printIexp e2 ^ ")"
   | IEGtInt (e1, e2) -> "(" ^ printIexp e1 ^ " >int " ^ printIexp e2 ^ ")"
+  | IEGtInt16 (e1, e2) -> "(" ^ printIexp e1 ^ " >int16 " ^ printIexp e2 ^ ")"
   | IEGtReal (e1, e2) -> "(" ^ printIexp e1 ^ " >real " ^ printIexp e2 ^ ")"
   (* Inlined built-in functions *)
   | IEBuiltinTanh e -> "tanh(" ^ printIexp e ^ ")"
@@ -302,6 +319,7 @@ let rec printIexp (ie : iexp) : string =
   (* Type conversion functions *)
   | IEBuiltinReal e -> "real(" ^ printIexp e ^ ")"
   | IEBuiltinInt e -> "int(" ^ printIexp e ^ ")"
+  | IEBuiltinInt16 e -> "int16(" ^ printIexp e ^ ")"
   | IEBuiltinBool e -> "bool(" ^ printIexp e ^ ")"
   | IEBuiltinString e -> "string(" ^ printIexp e ^ ")"
   | IEBuiltinFixed e -> "fix16(" ^ printIexp e ^ ")"
@@ -376,7 +394,7 @@ let printIprog (prog : iprog) : string =
 (* Determines if a type represents an integer value *)
 let isIntType (typ : type_) : bool =
   match typ.t with
-  | TInt -> true
+  | TInt | TInt16 -> true
   | _ -> false
 
 
@@ -384,6 +402,13 @@ let isIntType (typ : type_) : bool =
 let isRealType (typ : type_) : bool =
   match typ.t with
   | TReal | TFix16 -> true
+  | _ -> false
+
+
+(* Determines if a type represents a 16-bit integer value *)
+let isInt16Type (typ : type_) : bool =
+  match typ.t with
+  | TInt16 -> true
   | _ -> false
 
 
@@ -410,18 +435,25 @@ let rec transformExp (ctx : transform_ctx) (exp : exp) : iexp =
     let te1 = transformExp ctx e1 in
     let te2 = transformExp ctx e2 in
     match op with
+    | OpAdd when isInt16Type e1.t && isInt16Type e2.t -> IEAddInt16 (te1, te2)
     | OpAdd when isIntType e1.t && isIntType e2.t -> IEAddInt (te1, te2)
     | OpAdd when isRealType e1.t || isRealType e2.t -> IEAddReal (te1, te2)
+    | OpSub when isInt16Type e1.t && isInt16Type e2.t -> IESubInt16 (te1, te2)
     | OpSub when isIntType e1.t && isIntType e2.t -> IESubInt (te1, te2)
     | OpSub when isRealType e1.t || isRealType e2.t -> IESubReal (te1, te2)
+    | OpMul when isInt16Type e1.t && isInt16Type e2.t -> IEMulInt16 (te1, te2)
     | OpMul when isIntType e1.t && isIntType e2.t -> IEMulInt (te1, te2)
     | OpMul when isRealType e1.t || isRealType e2.t -> IEMulReal (te1, te2)
+    | OpDiv when isInt16Type e1.t && isInt16Type e2.t -> IEDivInt16 (te1, te2)
     | OpDiv when isIntType e1.t && isIntType e2.t -> IEDivInt (te1, te2)
     | OpDiv when isRealType e1.t || isRealType e2.t -> IEDivReal (te1, te2)
+    | OpEq when isInt16Type e1.t && isInt16Type e2.t -> IEEqInt16 (te1, te2)
     | OpEq when isIntType e1.t && isIntType e2.t -> IEEqInt (te1, te2)
     | OpEq when isRealType e1.t || isRealType e2.t -> IEEqReal (te1, te2)
+    | OpLt when isInt16Type e1.t && isInt16Type e2.t -> IELtInt16 (te1, te2)
     | OpLt when isIntType e1.t && isIntType e2.t -> IELtInt (te1, te2)
     | OpLt when isRealType e1.t || isRealType e2.t -> IELtReal (te1, te2)
+    | OpGt when isInt16Type e1.t && isInt16Type e2.t -> IEGtInt16 (te1, te2)
     | OpGt when isIntType e1.t && isIntType e2.t -> IEGtInt (te1, te2)
     | OpGt when isRealType e1.t || isRealType e2.t -> IEGtReal (te1, te2)
     | _ -> IEOp (op, te1, te2)
@@ -458,6 +490,7 @@ let rec transformExp (ctx : transform_ctx) (exp : exp) : iexp =
     (* Type conversion functions *)
     | "real", [ arg ] -> IEBuiltinReal arg
     | "int", [ arg ] -> IEBuiltinInt arg
+    | "int16", [ arg ] -> IEBuiltinInt16 arg
     | "bool", [ arg ] -> IEBuiltinBool arg
     | "string", [ arg ] -> IEBuiltinString arg
     | "fix16", [ arg ] -> IEBuiltinFixed arg
@@ -607,6 +640,13 @@ let rec evalConstantExpression (constants : dvalue array) (exp : iexp) : dvalue 
     match evalConstantExpression constants e1, evalConstantExpression constants e2 with
     | DInt a, DInt b -> DInt (a + b)
     | _ -> error "Type mismatch in constant integer addition")
+  | IEAddInt16 (e1, e2) -> (
+    match evalConstantExpression constants e1, evalConstantExpression constants e2 with
+    | DInt16 a, DInt16 b ->
+      let result = a + b in
+      let clamped = max (-32768) (min 32767 result) in
+      DInt16 clamped
+    | _ -> error "Type mismatch in constant int16 addition")
   | IEAddReal (e1, e2) -> (
     match evalConstantExpression constants e1, evalConstantExpression constants e2 with
     | DReal a, DReal b -> DReal (a +. b)
@@ -736,6 +776,7 @@ let rec defaultValue (typ : type_) : dvalue =
   match typ.t with
   | TVoid _ -> DVoid
   | TInt -> DInt 0
+  | TInt16 -> DInt16 0
   | TReal -> DReal 0.0
   | TFix16 -> DReal 0.0
   | TBool -> DBool false
@@ -785,45 +826,61 @@ let getStructMember (struct_val : dvalue) (member_idx : int) : dvalue =
 let evalBinop (op : operator) (v1 : dvalue) (v2 : dvalue) : dvalue =
   match op, v1, v2 with
   | OpAdd, DInt a, DInt b -> DInt (a + b)
+  | OpAdd, DInt16 a, DInt16 b -> DInt16 (max (-32768) (min 32767 (a + b)))
   | OpAdd, DReal a, DReal b -> DReal (a +. b)
   | OpAdd, DInt a, DReal b -> DReal (float_of_int a +. b)
   | OpAdd, DReal a, DInt b -> DReal (a +. float_of_int b)
   | OpSub, DInt a, DInt b -> DInt (a - b)
+  | OpSub, DInt16 a, DInt16 b -> DInt16 (max (-32768) (min 32767 (a - b)))
   | OpSub, DReal a, DReal b -> DReal (a -. b)
   | OpSub, DInt a, DReal b -> DReal (float_of_int a -. b)
   | OpSub, DReal a, DInt b -> DReal (a -. float_of_int b)
   | OpMul, DInt a, DInt b -> DInt (a * b)
+  | OpMul, DInt16 a, DInt16 b -> DInt16 (max (-32768) (min 32767 (a * b)))
   | OpMul, DReal a, DReal b -> DReal (a *. b)
   | OpMul, DInt a, DReal b -> DReal (float_of_int a *. b)
   | OpMul, DReal a, DInt b -> DReal (a *. float_of_int b)
   | OpDiv, DInt a, DInt b when b <> 0 -> DInt (a / b)
+  | OpDiv, DInt16 a, DInt16 b when b <> 0 -> DInt16 (max (-32768) (min 32767 (a / b)))
   | OpDiv, DReal a, DReal b when b <> 0.0 -> DReal (a /. b)
   | OpDiv, DInt a, DReal b when b <> 0.0 -> DReal (float_of_int a /. b)
   | OpDiv, DReal a, DInt b when b <> 0 -> DReal (a /. float_of_int b)
   | OpMod, DInt a, DInt b when b <> 0 -> DInt (a mod b)
+  | OpMod, DInt16 a, DInt16 b when b <> 0 -> DInt16 (max (-32768) (min 32767 (a mod b)))
   | OpEq, DInt a, DInt b -> DBool (a = b)
+  | OpEq, DInt16 a, DInt16 b -> DBool (a = b)
   | OpEq, DReal a, DReal b -> DBool (a = b)
   | OpEq, DBool a, DBool b -> DBool (a = b)
   | OpEq, DString a, DString b -> DBool (a = b)
   | OpNe, DInt a, DInt b -> DBool (a <> b)
+  | OpNe, DInt16 a, DInt16 b -> DBool (a <> b)
   | OpNe, DReal a, DReal b -> DBool (a <> b)
   | OpNe, DBool a, DBool b -> DBool (a <> b)
   | OpNe, DString a, DString b -> DBool (a <> b)
   | OpLt, DInt a, DInt b -> DBool (a < b)
+  | OpLt, DInt16 a, DInt16 b -> DBool (a < b)
   | OpLt, DReal a, DReal b -> DBool (a < b)
   | OpLe, DInt a, DInt b -> DBool (a <= b)
+  | OpLe, DInt16 a, DInt16 b -> DBool (a <= b)
   | OpLe, DReal a, DReal b -> DBool (a <= b)
   | OpGt, DInt a, DInt b -> DBool (a > b)
+  | OpGt, DInt16 a, DInt16 b -> DBool (a > b)
   | OpGt, DReal a, DReal b -> DBool (a > b)
   | OpGe, DInt a, DInt b -> DBool (a >= b)
+  | OpGe, DInt16 a, DInt16 b -> DBool (a >= b)
   | OpGe, DReal a, DReal b -> DBool (a >= b)
   | OpLand, DBool a, DBool b -> DBool (a && b)
   | OpLor, DBool a, DBool b -> DBool (a || b)
   | OpBand, DInt a, DInt b -> DInt (a land b)
+  | OpBand, DInt16 a, DInt16 b -> DInt16 (a land b)
   | OpBor, DInt a, DInt b -> DInt (a lor b)
+  | OpBor, DInt16 a, DInt16 b -> DInt16 (a lor b)
   | OpBxor, DInt a, DInt b -> DInt (a lxor b)
+  | OpBxor, DInt16 a, DInt16 b -> DInt16 (a lxor b)
   | OpLsh, DInt a, DInt b -> DInt (a lsl b)
+  | OpLsh, DInt16 a, DInt16 b -> DInt16 (max (-32768) (min 32767 (a lsl b)))
   | OpRsh, DInt a, DInt b -> DInt (a lsr b)
+  | OpRsh, DInt16 a, DInt16 b -> DInt16 (a lsr b)
   | OpMod, DReal a, DReal b -> DReal (Stdlib.mod_float a b)
   | _ ->
     let ops = Pla.print (Prog.Print.print_operator op) in
@@ -836,9 +893,11 @@ let evalBinop (op : operator) (v1 : dvalue) (v2 : dvalue) : dvalue =
 let evalUnop (op : uoperator) (v : dvalue) : dvalue =
   match op, v with
   | UOpNeg, DInt i -> DInt (-i)
+  | UOpNeg, DInt16 i -> DInt16 (max (-32768) (min 32767 (-i)))
   | UOpNeg, DReal f -> DReal (-.f)
   | UOpNot, DBool b -> DBool (not b)
   | UOpNot, DInt i -> DBool (i = 0)
+  | UOpNot, DInt16 i -> DBool (i = 0)
   | _ -> error "Unsupported unary operation"
 
 
@@ -1025,6 +1084,35 @@ and evalIexp (prog : iprog) (stack : runtime_stack) (frame_start : int) (exp : i
     match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
     | DInt a, DInt b -> DInt (a / b)
     | _ -> error "Type mismatch in integer division")
+  | IEAddInt16 (e1, e2) -> (
+    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    | DInt16 a, DInt16 b ->
+      (* Clamp to int16 range (-32768 to 32767) *)
+      let result = a + b in
+      let clamped = max (-32768) (min 32767 result) in
+      DInt16 clamped
+    | _ -> error "Type mismatch in int16 addition")
+  | IESubInt16 (e1, e2) -> (
+    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    | DInt16 a, DInt16 b ->
+      let result = a - b in
+      let clamped = max (-32768) (min 32767 result) in
+      DInt16 clamped
+    | _ -> error "Type mismatch in int16 subtraction")
+  | IEMulInt16 (e1, e2) -> (
+    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    | DInt16 a, DInt16 b ->
+      let result = a * b in
+      let clamped = max (-32768) (min 32767 result) in
+      DInt16 clamped
+    | _ -> error "Type mismatch in int16 multiplication")
+  | IEDivInt16 (e1, e2) -> (
+    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    | DInt16 a, DInt16 b ->
+      let result = a / b in
+      let clamped = max (-32768) (min 32767 result) in
+      DInt16 clamped
+    | _ -> error "Type mismatch in int16 division")
   | IEAddReal (e1, e2) -> (
     match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
     | DReal a, DReal b -> DReal (a +. b)
@@ -1046,6 +1134,10 @@ and evalIexp (prog : iprog) (stack : runtime_stack) (frame_start : int) (exp : i
     match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
     | DInt a, DInt b -> DBool (a = b)
     | _ -> error "Type mismatch in integer equality")
+  | IEEqInt16 (e1, e2) -> (
+    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    | DInt16 a, DInt16 b -> DBool (a = b)
+    | _ -> error "Type mismatch in int16 equality")
   | IEEqReal (e1, e2) -> (
     match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
     | DReal a, DReal b -> DBool (Float.equal a b)
@@ -1054,6 +1146,10 @@ and evalIexp (prog : iprog) (stack : runtime_stack) (frame_start : int) (exp : i
     match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
     | DInt a, DInt b -> DBool (a < b)
     | _ -> error "Type mismatch in integer less than")
+  | IELtInt16 (e1, e2) -> (
+    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    | DInt16 a, DInt16 b -> DBool (a < b)
+    | _ -> error "Type mismatch in int16 less than")
   | IELtReal (e1, e2) -> (
     match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
     | DReal a, DReal b -> DBool (a < b)
@@ -1062,6 +1158,10 @@ and evalIexp (prog : iprog) (stack : runtime_stack) (frame_start : int) (exp : i
     match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
     | DInt a, DInt b -> DBool (a > b)
     | _ -> error "Type mismatch in integer greater than")
+  | IEGtInt16 (e1, e2) -> (
+    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    | DInt16 a, DInt16 b -> DBool (a > b)
+    | _ -> error "Type mismatch in int16 greater than")
   | IEGtReal (e1, e2) -> (
     match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
     | DReal a, DReal b -> DBool (a > b)
@@ -1143,6 +1243,7 @@ and evalIexp (prog : iprog) (stack : runtime_stack) (frame_start : int) (exp : i
   | IEBuiltinReal e -> (
     match evalIexp prog stack frame_start e with
     | DInt i -> DReal (float_of_int i)
+    | DInt16 i -> DReal (float_of_int i)
     | DBool b ->
       DReal
         (if b then
@@ -1161,16 +1262,36 @@ and evalIexp (prog : iprog) (stack : runtime_stack) (frame_start : int) (exp : i
          else
            0)
     | DInt i -> DInt i
+    | DInt16 i -> DInt i
     | _ -> error "Type mismatch in int conversion")
+  | IEBuiltinInt16 e -> (
+    match evalIexp prog stack frame_start e with
+    | DReal f ->
+      let i = int_of_float f in
+      let clamped = max (-32768) (min 32767 i) in
+      DInt16 clamped
+    | DBool b ->
+      DInt16
+        (if b then
+           1
+         else
+           0)
+    | DInt i ->
+      let clamped = max (-32768) (min 32767 i) in
+      DInt16 clamped
+    | DInt16 i -> DInt16 i
+    | _ -> error "Type mismatch in int16 conversion")
   | IEBuiltinBool e -> (
     match evalIexp prog stack frame_start e with
     | DInt i -> DBool (i <> 0)
+    | DInt16 i -> DBool (i <> 0)
     | DReal f -> DBool (f <> 0.0)
     | DBool b -> DBool b
     | _ -> error "Type mismatch in bool conversion")
   | IEBuiltinString e -> (
     match evalIexp prog stack frame_start e with
     | DInt i -> DString (string_of_int i)
+    | DInt16 i -> DString (string_of_int i)
     | DReal f -> DString (string_of_float f)
     | DBool b -> DString (string_of_bool b)
     | DString s -> DString s

@@ -496,6 +496,7 @@ and valueOfType (t : type_) : rvalue =
   | TEmptyType -> RVoid
   | TVoid _ -> RVoid
   | TInt -> RInt 0
+  | TInt16 -> RInt 0
   | TReal -> RReal 0.0
   | TFix16 -> RReal 0.0
   | TBool -> RBool false

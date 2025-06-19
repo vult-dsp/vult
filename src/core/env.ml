@@ -184,6 +184,7 @@ let builtin_functions =
     ; "int", C.valid_int
     ; "real", C.valid_real
     ; "fix16", C.valid_fix16
+    ; "int16", C.valid_int16
     ; "string", C.valid_string
     ; "bool", C.valid_bool
     ; "u-", C.num_num
@@ -218,7 +219,7 @@ let builtin_functions =
 
 
 let builtin_types =
-  [ "int"; "real"; "fix16"; "bool"; "string"; "unit" ]
+  [ "int"; "int16"; "real"; "fix16"; "bool"; "string"; "unit" ]
   |> CCList.map (fun n ->
          ( n
          , { path = Pparser.Syntax.{ id = n; n = None; loc = Loc.default }

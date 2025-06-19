@@ -105,6 +105,7 @@ let rec print_type_ state (t : type_) =
   | TEmptyType -> Pla.string "void*"
   | TVoid _ -> Pla.string "void"
   | TInt -> Pla.string "int32_t"
+  | TInt16 -> Pla.string "int16_t"
   | TReal -> Pla.string "float"
   | TBool -> Pla.string "bool"
   | TString -> Pla.string "std::string"

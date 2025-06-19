@@ -62,6 +62,7 @@ let rec getInitRHS (t : type_) =
   match t.t with
   | TVoid _ -> Some C.eunit
   | TInt -> Some (C.eint 0)
+  | TInt16 -> Some (C.eint 0)
   | TReal -> Some (C.ereal 0.0)
   | TFix16 -> Some (C.efix16 0.0)
   | TString -> Some (C.estring "")

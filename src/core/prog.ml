@@ -31,6 +31,7 @@ type tags = Ptags.tags
 type type_d_ =
   | TVoid of type_ list option (* used to keep the original return type *)
   | TInt
+  | TInt16
   | TReal
   | TString
   | TBool
@@ -205,6 +206,7 @@ module Print = struct
     match t.t with
     | TVoid _ -> Pla.string "void"
     | TInt -> Pla.string "int"
+    | TInt16 -> Pla.string "int16"
     | TReal -> Pla.string "real"
     | TString -> Pla.string "string"
     | TBool -> Pla.string "bool"
@@ -455,6 +457,8 @@ module C = struct
 
   let int_t = { t = TInt; loc = Loc.default; const = false }
 
+  let int16_t = { t = TInt16; loc = Loc.default; const = false }
+
   let string_t = { t = TString; loc = Loc.default; const = false }
 
   let bool_t = { t = TBool; loc = Loc.default; const = false }
@@ -472,6 +476,8 @@ module C = struct
   let estring ?(loc = Loc.default) i = { e = EString i; t = string_t; loc }
 
   let eint ?(loc = Loc.default) i = { e = EInt i; t = int_t; loc }
+
+  let eint16 ?(loc = Loc.default) i = { e = EInt i; t = int16_t; loc }
 
   let enull = { e = EEmptyValue; t = nullptr_t; loc = Loc.default }
 

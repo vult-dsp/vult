@@ -67,6 +67,7 @@ let rec type_ ?(const = false) (env : env) (state : state) (t : Typed.type_) =
   | T.TEOption _ -> Error.raiseError "undecided type" t.loc
   | T.TEId { id = "unit"; n = None; _ } -> state, { t = TVoid None; const; loc }
   | T.TEId { id = "int"; n = None; _ } -> state, { t = TInt; const; loc }
+  | T.TEId { id = "int16"; n = None; _ } -> state, { t = TInt16; const; loc }
   | T.TEId { id = "real"; n = None; _ } -> state, { t = TReal; const; loc }
   | T.TEId { id = "fix16"; n = None; _ } -> state, { t = TFix16; const; loc }
   | T.TEId { id = "string"; n = None; _ } -> state, { t = TString; const; loc }
