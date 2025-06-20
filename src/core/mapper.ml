@@ -93,6 +93,24 @@ let makeExpander (mapper : 'env -> 'data state -> 'kind -> 'data state * 'kind l
 let makeEnv (f : 'env -> 'kind -> 'env) : ('env, 'kind) env_func = Some f
 
 let mapper_list mapper_app mapper env state el =
+  let state', rev_el, all_same =
+    CCList.fold_left
+      (fun (s, acc, all_equal) e ->
+        let s', e' = mapper_app mapper env s e in
+        (* Use physical equality to check if the result is the same object *)
+        let same = e' == e in
+        s', e' :: acc, all_equal && same)
+      (state, [], true)
+      el
+  in
+  (* If all elements are physically equal to their inputs, return the original list *)
+  if all_same then
+    state', el
+  else
+    state', CCList.rev rev_el
+
+
+let mapper_list_expand mapper_app mapper env state el =
   let state', rev_el =
     CCList.fold_left
       (fun (s, acc) e ->
@@ -105,6 +123,17 @@ let mapper_list mapper_app mapper env state el =
 
 
 let mapper_opt mapper_app mapper env state e_opt =
+  match e_opt with
+  | None -> state, None
+  | Some e ->
+    let state', e' = mapper_app mapper env state e in
+    if e == e' then
+      state', e_opt
+    else
+      state', Some e'
+
+
+let mapper_opt_expand mapper_app mapper env state e_opt =
   match e_opt with
   | None -> state, None
   | Some e ->
@@ -231,8 +260,11 @@ let rec type_ (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state)
   | { t = TEmptyType; _ } -> apply mapper.type_ env state t
   | { t = TVoid None; _ } -> apply mapper.type_ env state t
   | { t = TVoid (Some elems); const; _ } ->
-    let state, elems = (mapper_list type_) mapper sub_env state elems in
-    apply mapper.type_ env state { t = TVoid (Some elems); const; loc }
+    let state, elems' = (mapper_list type_) mapper sub_env state elems in
+    if elems' == elems then
+      apply mapper.type_ env state t
+    else
+      apply mapper.type_ env state { t = TVoid (Some elems'); const; loc }
   | { t = TInt; _ } -> apply mapper.type_ env state t
   | { t = TInt16; _ } -> apply mapper.type_ env state t
   | { t = TReal; _ } -> apply mapper.type_ env state t
@@ -240,14 +272,23 @@ let rec type_ (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state)
   | { t = TBool; _ } -> apply mapper.type_ env state t
   | { t = TFix16; _ } -> apply mapper.type_ env state t
   | { t = TArray (dim, t1); const; _ } ->
-    let state, t1 = type_ mapper sub_env state t1 in
-    apply mapper.type_ env state { t = TArray (dim, t1); const; loc }
+    let state, t1' = type_ mapper sub_env state t1 in
+    if t1' == t1 then
+      apply mapper.type_ env state t
+    else
+      apply mapper.type_ env state { t = TArray (dim, t1'); const; loc }
   | { t = TTuple elems; const; _ } ->
-    let state, elems = (mapper_list type_) mapper sub_env state elems in
-    apply mapper.type_ env state { t = TTuple elems; const; loc }
+    let state, elems' = (mapper_list type_) mapper sub_env state elems in
+    if elems' == elems then
+      apply mapper.type_ env state t
+    else
+      apply mapper.type_ env state { t = TTuple elems'; const; loc }
   | { t = TStruct s; const; _ } ->
-    let state, s = struct_descr mapper sub_env state s in
-    apply mapper.type_ env state { t = TStruct s; const; loc }
+    let state, s' = struct_descr mapper sub_env state s in
+    if s' == s then
+      apply mapper.type_ env state t
+    else
+      apply mapper.type_ env state { t = TStruct s'; const; loc }
 
 
 and struct_descr (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (s : struct_descr) :
@@ -255,103 +296,196 @@ and struct_descr (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data sta
   let sub_env = enter mapper.struct_descr_env env s in
   match s with
   | { path; members } ->
-    let state, members = (mapper_list member) mapper sub_env state members in
-    apply mapper.struct_descr env state { path; members }
+    let state, members' = (mapper_list member) mapper sub_env state members in
+    if members' == members then
+      apply mapper.struct_descr env state s
+    else
+      apply mapper.struct_descr env state { path; members = members' }
 
 
 and param (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (p : param) : 'data state * param =
   let sub_env = enter mapper.param_env env p in
-  let state, t = type_ mapper sub_env state p.t in
-  apply mapper.param env state { p with t }
+  let state, t' = type_ mapper sub_env state p.t in
+  if t' == p.t then
+    apply mapper.param env state p
+  else
+    apply mapper.param env state { p with t = t' }
 
 
 and member (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (p : member) : 'data state * member =
   let name, t, tags, loc = p in
   let sub_env = enter mapper.member_env env p in
-  let state, t = type_ mapper sub_env state t in
-  apply mapper.member env state (name, t, tags, loc)
+  let state, t' = type_ mapper sub_env state t in
+  if t' == t then
+    apply mapper.member env state p
+  else
+    apply mapper.member env state (name, t', tags, loc)
 
 
 let rec exp (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (e : exp) : 'data state * exp =
   let loc = e.loc in
   let sub_env = enter mapper.exp_env env e in
-  let state, t = type_ mapper sub_env state e.t in
+  let state, t' = type_ mapper sub_env state e.t in
   match e with
-  | { e = EEmptyValue; _ } -> apply mapper.exp env state { e = EEmptyValue; t; loc }
-  | { e = EUnit; _ } -> apply mapper.exp env state { e = EUnit; t; loc }
-  | { e = EBool b; _ } -> apply mapper.exp env state { e = EBool b; t; loc }
-  | { e = EInt n; _ } -> apply mapper.exp env state { e = EInt n; t; loc }
-  | { e = EReal n; _ } -> apply mapper.exp env state { e = EReal n; t; loc }
-  | { e = EFixed n; _ } -> apply mapper.exp env state { e = EFixed n; t; loc }
-  | { e = EString n; _ } -> apply mapper.exp env state { e = EString n; t; loc }
-  | { e = EId n; _ } -> apply mapper.exp env state { e = EId n; t; loc }
+  | { e = EEmptyValue; _ } ->
+    if t' == e.t then
+      apply mapper.exp env state e
+    else
+      apply mapper.exp env state { e = EEmptyValue; t = t'; loc }
+  | { e = EUnit; _ } ->
+    if t' == e.t then
+      apply mapper.exp env state e
+    else
+      apply mapper.exp env state { e = EUnit; t = t'; loc }
+  | { e = EBool b; _ } ->
+    if t' == e.t then
+      apply mapper.exp env state e
+    else
+      apply mapper.exp env state { e = EBool b; t = t'; loc }
+  | { e = EInt n; _ } ->
+    if t' == e.t then
+      apply mapper.exp env state e
+    else
+      apply mapper.exp env state { e = EInt n; t = t'; loc }
+  | { e = EReal n; _ } ->
+    if t' == e.t then
+      apply mapper.exp env state e
+    else
+      apply mapper.exp env state { e = EReal n; t = t'; loc }
+  | { e = EFixed n; _ } ->
+    if t' == e.t then
+      apply mapper.exp env state e
+    else
+      apply mapper.exp env state { e = EFixed n; t = t'; loc }
+  | { e = EString n; _ } ->
+    if t' == e.t then
+      apply mapper.exp env state e
+    else
+      apply mapper.exp env state { e = EString n; t = t'; loc }
+  | { e = EId n; _ } ->
+    if t' == e.t then
+      apply mapper.exp env state e
+    else
+      apply mapper.exp env state { e = EId n; t = t'; loc }
   | { e = EIndex { e; index }; _ } ->
-    let state, e = exp mapper sub_env state e in
-    let state, index = exp mapper sub_env state index in
-    apply mapper.exp env state { e = EIndex { e; index }; t; loc }
+    let state, e' = exp mapper sub_env state e in
+    let state, index' = exp mapper sub_env state index in
+    if t' == e.t && e' == e && index' == index then
+      apply mapper.exp env state e
+    else
+      apply mapper.exp env state { e = EIndex { e = e'; index = index' }; t = t'; loc }
   | { e = EArray elems; _ } ->
-    let state, elems = mapper_list exp mapper sub_env state elems in
-    apply mapper.exp env state { e = EArray elems; t; loc }
+    let state, elems' = mapper_list exp mapper sub_env state elems in
+    if t' == e.t && elems' == elems then
+      apply mapper.exp env state e
+    else
+      apply mapper.exp env state { e = EArray elems'; t = t'; loc }
   | { e = ECall { path; args }; _ } ->
-    let state, args = mapper_list exp mapper sub_env state args in
-    apply mapper.exp env state { e = ECall { path; args }; t; loc }
+    let state, args' = mapper_list exp mapper sub_env state args in
+    if t' == e.t && args' == args then
+      apply mapper.exp env state e
+    else
+      apply mapper.exp env state { e = ECall { path; args = args' }; t = t'; loc }
   | { e = EUnOp (op, e1); _ } ->
-    let state, e1 = exp mapper sub_env state e1 in
-    apply mapper.exp env state { e = EUnOp (op, e1); t; loc }
+    let state, e1' = exp mapper sub_env state e1 in
+    if t' == e.t && e1' == e1 then
+      apply mapper.exp env state e
+    else
+      apply mapper.exp env state { e = EUnOp (op, e1'); t = t'; loc }
   | { e = EOp (op, e1, e2); _ } ->
-    let state, e1 = exp mapper sub_env state e1 in
-    let state, e2 = exp mapper sub_env state e2 in
-    apply mapper.exp env state { e = EOp (op, e1, e2); t; loc }
+    let state, e1' = exp mapper sub_env state e1 in
+    let state, e2' = exp mapper sub_env state e2 in
+    if t' == e.t && e1' == e1 && e2' == e2 then
+      apply mapper.exp env state e
+    else
+      apply mapper.exp env state { e = EOp (op, e1', e2'); t = t'; loc }
   | { e = EIf { cond; then_; else_ }; _ } ->
-    let state, cond = exp mapper sub_env state cond in
-    let state, then_ = exp mapper sub_env state then_ in
-    let state, else_ = exp mapper sub_env state else_ in
-    apply mapper.exp env state { e = EIf { cond; then_; else_ }; t; loc }
+    let state, cond' = exp mapper sub_env state cond in
+    let state, then_' = exp mapper sub_env state then_ in
+    let state, else_' = exp mapper sub_env state else_ in
+    if t' == e.t && cond' == cond && then_' == then_ && else_' == else_ then
+      apply mapper.exp env state e
+    else
+      apply mapper.exp env state { e = EIf { cond = cond'; then_ = then_'; else_ = else_' }; t = t'; loc }
   | { e = ETuple elems; _ } ->
-    let state, elems = mapper_list exp mapper sub_env state elems in
-    apply mapper.exp env state { e = ETuple elems; t; loc }
+    let state, elems' = mapper_list exp mapper sub_env state elems in
+    if t' == e.t && elems' == elems then
+      apply mapper.exp env state e
+    else
+      apply mapper.exp env state { e = ETuple elems'; t = t'; loc }
   | { e = EMember (e1, n); _ } ->
-    let state, e1 = exp mapper sub_env state e1 in
-    apply mapper.exp env state { e = EMember (e1, n); t; loc }
+    let state, e1' = exp mapper sub_env state e1 in
+    if t' == e.t && e1' == e1 then
+      apply mapper.exp env state e
+    else
+      apply mapper.exp env state { e = EMember (e1', n); t = t'; loc }
   | { e = ETMember (e1, n); _ } ->
-    let state, e1 = exp mapper sub_env state e1 in
-    apply mapper.exp env state { e = ETMember (e1, n); t; loc }
+    let state, e1' = exp mapper sub_env state e1 in
+    if t' == e.t && e1' == e1 then
+      apply mapper.exp env state e
+    else
+      apply mapper.exp env state { e = ETMember (e1', n); t = t'; loc }
   | { e = ERecord { path; elems }; _ } ->
-    let state, elems_rev =
+    let state, elems_rev, all_same =
       CCList.fold_left
-        (fun (state, acc) (n, e) ->
-          let state, e = exp mapper sub_env state e in
-          state, (n, e) :: acc)
-        (state, [])
+        (fun (state, acc, all_equal) (n, e) ->
+          let state, e' = exp mapper sub_env state e in
+          let same = e' == e in
+          state, (n, e') :: acc, all_equal && same)
+        (state, [], true)
         elems
     in
-    apply mapper.exp env state { e = ERecord { path; elems = CCList.rev elems_rev }; t; loc }
+    if t' == e.t && all_same then
+      apply mapper.exp env state e
+    else
+      apply mapper.exp env state { e = ERecord { path; elems = CCList.rev elems_rev }; t = t'; loc }
 
 
 let rec lexp (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (e : lexp) : 'data state * lexp =
   let loc = e.loc in
   let sub_env = enter mapper.lexp_env env e in
-  let state, t = type_ mapper env state e.t in
+  let state, t' = type_ mapper env state e.t in
   match e with
-  | { l = LWild; _ } -> apply mapper.lexp env state { l = LWild; t; loc }
-  | { l = LId n; _ } -> apply mapper.lexp env state { l = LId n; t; loc }
+  | { l = LWild; _ } ->
+    if t' == e.t then
+      apply mapper.lexp env state e
+    else
+      apply mapper.lexp env state { l = LWild; t = t'; loc }
+  | { l = LId n; _ } ->
+    if t' == e.t then
+      apply mapper.lexp env state e
+    else
+      apply mapper.lexp env state { l = LId n; t = t'; loc }
   | { l = LMember (e1, n); _ } ->
-    let state, e1 = lexp mapper sub_env state e1 in
-    apply mapper.lexp env state { l = LMember (e1, n); t; loc }
+    let state, e1' = lexp mapper sub_env state e1 in
+    if t' == e.t && e1' == e1 then
+      apply mapper.lexp env state e
+    else
+      apply mapper.lexp env state { l = LMember (e1', n); t = t'; loc }
   | { l = LIndex { e; index }; _ } ->
-    let state, e = lexp mapper sub_env state e in
-    let state, index = exp mapper sub_env state index in
-    apply mapper.lexp env state { l = LIndex { e; index }; t; loc }
+    let state, e' = lexp mapper sub_env state e in
+    let state, index' = exp mapper sub_env state index in
+    if t' == e.t && e' == e && index' == index then
+      apply mapper.lexp env state e
+    else
+      apply mapper.lexp env state { l = LIndex { e = e'; index = index' }; t = t'; loc }
   | { l = LTuple elems; _ } ->
-    let state, elems = mapper_list lexp mapper sub_env state elems in
-    apply mapper.lexp env state { l = LTuple elems; t; loc }
+    let state, elems' = mapper_list lexp mapper sub_env state elems in
+    if t' == e.t && elems' == elems then
+      apply mapper.lexp env state e
+    else
+      apply mapper.lexp env state { l = LTuple elems'; t = t'; loc }
 
 
 let dexp (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (e : dexp) : 'data state * dexp =
   let loc = e.loc in
-  let state, t = type_ mapper env state e.t in
+  let state, t' = type_ mapper env state e.t in
   match e with
-  | { d = DId (n, dim); _ } -> apply mapper.dexp env state { d = DId (n, dim); t; loc }
+  | { d = DId (n, dim); _ } ->
+    if t' == e.t then
+      apply mapper.dexp env state e
+    else
+      apply mapper.dexp env state { d = DId (n, dim); t = t'; loc }
 
 
 let block stmts loc =
@@ -404,7 +538,7 @@ let rec stmt (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) 
     let else_ = block else_l else_.loc in
     applyStmtExpander mapper.stmt env state pre { s = StmtIf (cond, then_, Some else_); loc }
   | { s = StmtBlock stmts; _ } ->
-    let state, stmts = mapper_list stmt mapper sub_env state stmts in
+    let state, stmts = mapper_list_expand stmt mapper sub_env state stmts in
     applyExpander mapper.stmt env state { s = StmtBlock (CCList.flatten stmts); loc }
   | { s = StmtSwitch (cond, cases, default); _ } ->
     let state, cond = exp mapper sub_env state cond in
@@ -420,7 +554,7 @@ let rec stmt (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) 
         state
         cases
     in
-    let state, default_l = mapper_opt stmt mapper sub_env state default in
+    let state, default_l = mapper_opt_expand stmt mapper sub_env state default in
     let default = Option.map (fun elems -> block elems loc) default_l in
     applyStmtExpander mapper.stmt env state pre { s = StmtSwitch (cond, cases, default); loc }
 
@@ -430,10 +564,13 @@ let function_def (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data sta
   let sub_env = enter mapper.function_def_env env f in
   match f with
   | { name; args; t = t_args, ret; loc; tags; info } ->
-    let state, args = mapper_list param mapper sub_env state args in
-    let state, t_args = mapper_list type_ mapper sub_env state t_args in
-    let state, ret = type_ mapper sub_env state ret in
-    apply mapper.function_def env state { name; args; t = t_args, ret; loc; tags; info }
+    let state, args' = mapper_list param mapper sub_env state args in
+    let state, t_args' = mapper_list type_ mapper sub_env state t_args in
+    let state, ret' = type_ mapper sub_env state ret in
+    if args' == args && t_args' == t_args && ret' == ret then
+      apply mapper.function_def env state f
+    else
+      apply mapper.function_def env state { name; args = args'; t = t_args', ret'; loc; tags; info }
 
 
 let applyTopStmtExpander mapper env state pre s =
@@ -470,13 +607,13 @@ let top_stmt (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) 
   | { top = TopAlias { path; alias_of }; _ } ->
     let state, pre = getTopStmts state in
     applyTopStmtExpander mapper.top_stmt env state pre { top = TopAlias { path; alias_of }; loc }
-  | { top = TopConstant (path, dim, t, e); _ } ->
+  | { top = TopConstant (path, dim, t, e, tags); _ } ->
     let state, e = exp mapper sub_env state e in
     let state, t = type_ mapper sub_env state t in
     let state, pre = getTopStmts state in
-    applyTopStmtExpander mapper.top_stmt env state pre { top = TopConstant (path, dim, t, e); loc }
+    applyTopStmtExpander mapper.top_stmt env state pre { top = TopConstant (path, dim, t, e, tags); loc }
 
 
 let prog (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (p : prog) : 'data state * prog =
-  let state, p = mapper_list top_stmt mapper env state p in
+  let state, p = mapper_list_expand top_stmt mapper env state p in
   state, CCList.flatten p

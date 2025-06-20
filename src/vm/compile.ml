@@ -404,7 +404,7 @@ let compile_top (env : env) (s : top_stmt) =
     let env, body = compile_stmt env body in
     let n_args = CCList.length args in
     env, [ Function { name; body; locals = env.lcount - n_args; n_args } ]
-  | TopConstant (name, _, _, e) ->
+  | TopConstant (name, _, _, e, _) ->
     let e = compile_exp env e in
     let env = addConstant env name e in
     env, []

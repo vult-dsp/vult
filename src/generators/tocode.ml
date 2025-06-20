@@ -324,9 +324,9 @@ let top_stmt (context : context) (top : Core.Prog.top_stmt) : top_stmt option =
   | { top = TopExternal (def, name); loc } ->
     let def = function_def context def in
     Some { top = TopExternal (def, name); loc }
-  | { top = TopConstant (path, dims, t, e); loc } ->
+  | { top = TopConstant (path, dims, t, e, tags); loc } ->
     let path = Replacements.keyword context.args.code path in
-    Some { top = TopConstant (path, dims, t, e); loc }
+    Some { top = TopConstant (path, dims, t, e, tags); loc }
 
 
 let registerExternalNames (stmts : Core.Prog.top_stmt list) =
@@ -342,6 +342,8 @@ let registerExternalNames (stmts : Core.Prog.top_stmt list) =
 let prog args stmts =
   let ext_names = registerExternalNames stmts in
   let context = { args; ext_names } in
-  let _, stmts = (Mapper.mapper_list Mapper.top_stmt) ApplyReplacements.mapper context (Mapper.defaultState ()) stmts in
+  let _, stmts =
+    (Mapper.mapper_list_expand Mapper.top_stmt) ApplyReplacements.mapper context (Mapper.defaultState ()) stmts
+  in
   let stmts = CCList.flatten stmts in
   CCList.filter_map (top_stmt context) stmts

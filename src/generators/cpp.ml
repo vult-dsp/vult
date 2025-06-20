@@ -531,17 +531,17 @@ let print_top_stmt state ~allow_inline (target : target) t =
     {%pla|typedef struct <#alias_of#s> <#path#s>;<#><#>|}
   | TopType _, _ -> Pla.unit
   | TopAlias _, _ -> Pla.unit
-  | TopConstant (name, _, t, rhs), Tables when isBuiltinType t ->
+  | TopConstant (name, _, t, rhs, _), Tables when isBuiltinType t ->
     let prefixed_name = registerPrefix state name in
     let t = print_type_ state t in
     let rhs = print_exp state None rhs in
     {%pla|static const <#t#> <#prefixed_name#s> = <#rhs#+>;<#><#>|}
-  | TopConstant (name, _, t, rhs), Header when not (isBuiltinType t) ->
+  | TopConstant (name, _, t, rhs, _), Header when not (isBuiltinType t) ->
     let prefixed_name = registerPrefix state name in
     let t = print_type_ state t in
     let rhs = print_exp state None rhs in
     {%pla|static const <#t#> <#prefixed_name#s> = <#rhs#+>;<#><#>|}
-  | TopConstant (name, _, _, _), _ ->
+  | TopConstant (name, _, _, _, _), _ ->
     let _ = registerPrefix state name in
     Pla.unit
 

@@ -253,8 +253,8 @@ let print_top_stmt (args : Util.Args.args) t =
   | TopExternal _ -> Pla.unit
   | TopType _ -> Pla.unit
   | TopAlias _ -> Pla.unit
-  | TopConstant (name, _, _, _) when args.test_mode -> {%pla|var <#name#s> = {};<#>|}
-  | TopConstant (name, _, _, rhs) ->
+  | TopConstant (name, _, _, _, _) when args.test_mode -> {%pla|var <#name#s> = {};<#>|}
+  | TopConstant (name, _, _, rhs, _) ->
     let rhs = print_exp rhs in
     {%pla|var <#name#s> = <#rhs#>;<#>|}
 

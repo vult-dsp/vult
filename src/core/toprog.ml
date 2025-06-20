@@ -367,11 +367,11 @@ let top_stmt (env : env) (state : state) (t : Typed.top_stmt) =
     let p = path p in
     let alias_of = path alias_of in
     state, [ { top = TopAlias { path = p; alias_of }; loc = t.loc } ]
-  | TopConstant (p, dim, t, e) ->
+  | TopConstant (p, dim, t, e, tags) ->
     let p = path p in
     let state, e = exp env state e in
     let state, t = type_ env state t in
-    state, [ { top = TopConstant (p, dim, t, e); loc = t.loc } ]
+    state, [ { top = TopConstant (p, dim, t, e, tags); loc = t.loc } ]
 
 
 let top_stmt_list (env : env) (state : state) (t : Typed.top_stmt list) = list top_stmt env state t

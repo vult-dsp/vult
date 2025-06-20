@@ -185,7 +185,7 @@ type top_stmt_d =
       { path : path
       ; members : (string * Loc.t) list
       }
-  | TopConstant of path * int option * type_ * exp
+  | TopConstant of path * int option * type_ * exp * Ptags.tags option
 
 and top_stmt =
   { top : top_stmt_d
@@ -418,7 +418,7 @@ let print_top_stmt t =
     let p = print_path p in
     let members = Pla.map_sep {%pla|,<#>|} print_enum_member members in
     {%pla|enum <#p#> {<#members#+><#>}<#>|}
-  | TopConstant (path, dim, _, e) ->
+  | TopConstant (path, dim, _, e, _) ->
     let path = print_path path in
     let e = print_exp e in
     let dim =

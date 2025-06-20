@@ -1076,7 +1076,7 @@ let top_dexp (env : env) (d : Syntax.dexp) =
   | _ -> failwith "invalid constant"
 
 
-let rec top_stmt (iargs : Args.args) (env : env) (s : Syntax.top_stmt) : env * top_stmt =
+let rec top_stmt (iargs : Args.args) (env : env) (s : Syntax.top_stmt) : env * top_stmt list =
   match s with
   | { top = STopError; _ } -> failwith "Parser error"
   | { top = STopFunction def; _ } ->
@@ -1084,24 +1084,24 @@ let rec top_stmt (iargs : Args.args) (env : env) (s : Syntax.top_stmt) : env * t
     let env, (def, body) = function_def iargs env def in
     let def = insertContextArgument env def in
     let env = Env.exitContext env in
-    env, { top = TopFunction (def, body); loc = def.loc }
+    env, [ { top = TopFunction (def, body); loc = def.loc } ]
   | { top = STopExternal (def, link_name); _ } ->
     let env = Env.createContextForExternal env in
     let env, def = ext_function iargs env def in
     let env = Env.exitContext env in
-    env, { top = TopExternal (def, link_name); loc = def.loc }
+    env, [ { top = TopExternal (def, link_name); loc = def.loc } ]
   | { top = STopType { name; members }; loc } ->
     let members = CCList.map (fun (name, t, tags, loc) -> name, type_in_m env t, tags, loc) members in
     let members = CCList.sort (fun (n1, _, _, _) (n2, _, _, _) -> compare n1 n2) members in
     let env = Env.addType env name members loc in
     let m = Env.getCurrentModule env in
     let path = Env.getPath m name loc in
-    env, { top = TopType { path; members }; loc }
+    env, [ { top = TopType { path; members }; loc } ]
   | { top = STopEnum { name; members }; loc } ->
     let env = Env.addEnum env name members loc in
     let m = Env.getCurrentModule env in
     let path = Env.getPath m name loc in
-    env, { top = TopEnum { path; members }; loc }
+    env, [ { top = TopEnum { path; members }; loc } ]
   | { top = STopConstant (({ d = SDId (name, dim); _ } as d), e); loc } ->
     let env, d = top_dexp env d in
     let env, e = exp ~in_constant_context:true env e in
@@ -1109,7 +1109,7 @@ let rec top_stmt (iargs : Args.args) (env : env) (s : Syntax.top_stmt) : env * t
     let m = Env.getCurrentModule env in
     let path = Env.getPath m name loc in
     let env = Env.addConstant env unify name d.t loc in
-    env, { top = TopConstant (path, dim, d.t, e); loc }
+    env, [ { top = TopConstant (path, dim, d.t, e, None); loc } ]
   | { top = STopConstant _; _ } -> failwith ""
 
 
@@ -1117,8 +1117,8 @@ and top_stmt_list (iargs : Args.args) (env : env) (s : Syntax.top_stmt list) : e
   let env, rev_s =
     CCList.fold_left
       (fun (env, acc) s ->
-        let env, s = top_stmt iargs env s in
-        env, s :: acc)
+        let env, stmt_list = top_stmt iargs env s in
+        env, stmt_list @ acc)
       (env, [])
       s
   in

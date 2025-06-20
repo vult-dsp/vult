@@ -730,7 +730,7 @@ let rec evalConstantExpression (constants : dvalue array) (exp : iexp) : dvalue 
 let transformStatement (prog : iprog) (stmt : top_stmt) : unit =
   match stmt.top with
   | TopType descr -> prog.struct_types <- Map.add descr.path descr prog.struct_types
-  | TopConstant (name, _, _, exp) -> (
+  | TopConstant (name, _, _, exp, _) -> (
     let const_idx = Array.length prog.iconstants in
     prog.constant_names <- Map.add name const_idx prog.constant_names;
     (* Create context for transforming the constant expression *)

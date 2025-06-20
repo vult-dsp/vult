@@ -184,7 +184,7 @@ type top_stmt_d =
       { path : string
       ; alias_of : string
       }
-  | TopConstant of string * int option * type_ * exp
+  | TopConstant of string * int option * type_ * exp * tags option
 
 and top_stmt =
   { top : top_stmt_d
@@ -437,7 +437,7 @@ module Print = struct
       let members = Pla.map_sep_all Pla.newline print_member members in
       {%pla|struct <#p#s> {<#members#+>}<#>|}
     | TopAlias { path = p; alias_of } -> {%pla|type <#p#s> = <#alias_of#s><#>|}
-    | TopConstant (path, dim, _, e) ->
+    | TopConstant (path, dim, _, e, _) ->
       let e = print_exp e in
       let dim =
         match dim with

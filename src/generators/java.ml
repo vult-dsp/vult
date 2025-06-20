@@ -554,7 +554,7 @@ let print_top_stmt (args : Util.Args.args) t =
   | TopExternal _ -> Pla.unit
   | TopType descr -> print_struct_def descr
   | TopAlias _ -> Pla.unit
-  | TopConstant (name, _, t, rhs) ->
+  | TopConstant (name, _, t, rhs, _) ->
     let t = print_type_ t in
     let rhs = print_exp rhs in
     {%pla|public static final <#t#> <#name#s> = <#rhs#>;<#>|}

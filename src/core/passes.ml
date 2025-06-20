@@ -223,7 +223,7 @@ module GetVariables = struct
 
 
   let in_stmts (s : stmt list) =
-    let state, _ = Mapper.mapper_list Mapper.stmt mapper () (Mapper.defaultState Set.empty) s in
+    let state, _ = Mapper.mapper_list_expand Mapper.stmt mapper () (Mapper.defaultState Set.empty) s in
     Mapper.getData state
 end
 
@@ -323,7 +323,7 @@ module LiteralRecords = struct
     Mapper.makeEnv
     @@ fun env (s : top_stmt) ->
     match s with
-    | { top = TopConstant (_, _, _, { e = ERecord _; _ }); _ } -> { env with bound_record = true }
+    | { top = TopConstant (_, _, _, { e = ERecord _; _ }, _); _ } -> { env with bound_record = true }
     | _ -> env
 
 
@@ -344,7 +344,7 @@ module LiteralRecords = struct
       let tick = getTick env state in
       let temp = "_record_" ^ string_of_int tick in
       let temp_e = { e = EId temp; t; loc } in
-      let constant_decl = { top = TopConstant (temp, None, t, e); loc } in
+      let constant_decl = { top = TopConstant (temp, None, t, e, None); loc } in
       let state = Mapper.pushTopStmts state [ constant_decl ] in
       reapply state, temp_e
     | _ -> state, e
@@ -386,7 +386,7 @@ module LiteralArrays = struct
     Mapper.makeEnv
     @@ fun env (s : top_stmt) ->
     match s with
-    | { top = TopConstant (_, _, _, { e = EArray _; _ }); _ } -> { env with bound_array = true }
+    | { top = TopConstant (_, _, _, { e = EArray _; _ }, _); _ } -> { env with bound_array = true }
     | _ -> env
 
 
@@ -1045,7 +1045,7 @@ module Sort = struct
      |{ top = TopAlias { path = name; _ }; _ } :: t
      |{ top = TopFunction ({ name; _ }, _); _ } :: t
      |{ top = TopExternal ({ name; _ }, _); _ } :: t
-     |{ top = TopConstant (name, _, _, _); _ } :: t ->
+     |{ top = TopConstant (name, _, _, _, _); _ } :: t ->
       let visited, sorted = pullIn deps table visited sorted name in
       sort deps table visited sorted t
 

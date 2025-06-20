@@ -364,8 +364,8 @@ let print_top_stmt (args : Util.Args.args) t =
     let default_values = CCList.map getDefaultValue members |> String.concat ", " in
     {%pla|mutable struct <#path#s><#members_typed#+><#>end<#><#># Default constructor for <#path#s><#>function <#path#s>()<#>    return <#path#s>(<#default_values#s>)<#>end<#><#>|}
   | TopAlias _ -> Pla.unit
-  | TopConstant (name, _, _, _) when args.test_mode -> {%pla|<#name#s> = nothing<#>|}
-  | TopConstant (name, _, _, rhs) ->
+  | TopConstant (name, _, _, _, _) when args.test_mode -> {%pla|<#name#s> = nothing<#>|}
+  | TopConstant (name, _, _, rhs, _) ->
     let rhs = print_exp rhs in
     {%pla|const <#name#s> = <#rhs#><#>|}
 
