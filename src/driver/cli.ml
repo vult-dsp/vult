@@ -92,7 +92,7 @@ let compileCode (args : args) env stmts : Prog.top_stmt list * Interpreter.iprog
   let run =
     match args.eval with
     | Some fn ->
-      let result = Util.Profile.time "Eval" (fun () -> Interpreter.evalProgram iprog fn []) in
+      let result = Util.Profile.time "Eval" (fun () -> Interpreter.evaluateMainExpression args env iprog fn) in
       let str = Interpreter.printDvalue result in
       [ EvalResult str ]
     | None -> []

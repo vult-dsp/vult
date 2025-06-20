@@ -1210,3 +1210,7 @@ let parseString (file : string option) (text : string) =
   let file = Option.value file ~default:"live.vult" in
   let result = parseBuffer file buffer in
   result
+
+
+(** Parses a string containing a list of statements and returns the results *)
+let parseTagString (text : string) = tag 0 (Stream.fromString text)

@@ -329,11 +329,11 @@ let runInterpreter vultfile =
     in
     let parsed, _ = Driver.Loader.loadFiles args args.files in
     let env, stmts = Core.Inference.infer args parsed in
-    let _env, stmts = Core.Toprog.convert args env stmts in
+    let env, stmts = Core.Toprog.convert args env stmts in
     let stmts = Core.Passes.run args stmts in
     let iprog = Core.Interpreter.transformProgram stmts in
     let t1 = Sys.time () in
-    let _result = Core.Interpreter.evalProgram iprog "Perf.main" [] in
+    let _result = Core.Interpreter.evaluateMainExpression args env iprog "Perf.main()" in
     let t2 = Sys.time () in
     print_endline (Printf.sprintf "%s\tEval\t%f ms/s" module_name ((t2 -. t1) /. 5.0 *. 1000.0))
   with

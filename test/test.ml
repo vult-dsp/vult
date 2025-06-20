@@ -743,7 +743,7 @@ module InterpretPerf = struct
       Args.
         { default_arguments with
           files = [ Code ("intepret.vult", code) ]
-        ; eval = Some "Intepret.run"
+        ; eval = Some "Intepret.run()"
         ; includes = in_test_directory "perf" :: includes
         }
     in
@@ -766,7 +766,7 @@ module Interpret = struct
     let args =
       Args.
         { default_arguments with
-          eval = Some (moduleName fullfile ^ ".main")
+          eval = Some (moduleName fullfile ^ ".main()")
         ; includes = in_test_directory "interpreter" :: includes
         }
     in

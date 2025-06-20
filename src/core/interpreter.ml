@@ -752,9 +752,7 @@ let transformStatement (prog : iprog) (stmt : top_stmt) : unit =
   | TopAlias _ -> () (* Type aliases don't need special handling in the interpreter *)
 
 
-(* Transforms an entire program from original AST to optimized interpreter AST using single-pass incremental approach *)
-let transformProgram (prog : top_stmt list) : iprog =
-  let iprog = createEmptyProgram () in
+let extendProgram iprog (prog : top_stmt list) =
   CCList.iter (transformStatement iprog) prog;
   (* Update lazy evaluation contexts with the completed function array *)
   Array.iteri
@@ -767,6 +765,9 @@ let transformProgram (prog : top_stmt list) : iprog =
     iprog.iconstants;
   iprog
 
+
+(* Transforms an entire program from original AST to optimized interpreter AST using single-pass incremental approach *)
+let transformProgram (prog : top_stmt list) : iprog = extendProgram (createEmptyProgram ()) prog
 
 (* Runtime stack for function execution *)
 type runtime_stack =
@@ -1352,29 +1353,27 @@ and evalIexp (prog : iprog) (stack : runtime_stack) (frame_start : int) (exp : i
     DStruct member_vals
 
 
-let evalProgram iprog (main_func_name_original : string) (args : dvalue list) : dvalue =
-  let stack = createStack 1000 in
-  let main_func_name = CCString.replace ~sub:"." ~by:"_" main_func_name_original in
+let evaluateMainExpression args env iprog exp : dvalue =
+  let e = Pparser.Parse.parseString (Some "Main_.vult") (Pla.print {%pla|fun _main_() return <#exp#s>;|}) in
+  let env, main = Inference.infer_single args env e in
+  let _, main = Toprog.convert args env main in
+  let main = Passes.run args main in
+  (*let () = print_endline (Pla.print (Prog.Print.print_prog main)) in*)
+  let iprog = extendProgram iprog main in
+  (* Look for the new function Main___main_ in the bytecode function table *)
+  let main_func_name = "Main___main_" in
   match Map.find_opt main_func_name iprog.ifunctions with
-  | Some ifunc -> (
-    let expected_args = CCList.length ifunc.iargs in
-    let provided_args = CCList.length args in
-    if expected_args = 1 && provided_args = 0 then (
-      (* Try to find allocation function *)
+  | Some _ -> (
+    let stack = createStack 1000 in
+    let call_args =
       let alloc_func_name = main_func_name ^ "_type_alloc" in
       match Map.find_opt alloc_func_name iprog.ifunction_names with
-      | Some alloc_idx -> (
+      | Some alloc_idx ->
         let state = callFunction iprog stack alloc_idx [] in
-        match Map.find_opt main_func_name iprog.ifunction_names with
-        | Some main_idx -> callFunction iprog stack main_idx [ state ]
-        | None -> error ("Function not found: " ^ main_func_name))
-      | None ->
-        (* Debug: show available functions *)
-        print_endline "Available functions:";
-        Map.iter (fun name _ -> print_endline ("  " ^ name)) iprog.ifunctions;
-        error ("Allocation function not found: " ^ alloc_func_name))
-    else
-      match Map.find_opt main_func_name iprog.ifunction_names with
-      | Some func_idx -> callFunction iprog stack func_idx args
-      | None -> error ("Function not found: " ^ main_func_name))
-  | None -> error ("Function not found: " ^ main_func_name)
+        [ state ]
+      | None -> []
+    in
+    match Map.find_opt main_func_name iprog.ifunction_names with
+    | Some func_idx -> callFunction iprog stack func_idx call_args
+    | None -> error "Could not execute the expression")
+  | None -> error "Could not execute the expression"
