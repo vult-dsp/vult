@@ -178,6 +178,7 @@ type transform_ctx =
 type call_context =
   { frames : string list (* Function names in call order *)
   ; max_depth : int
+  ; sample_rate : float option (* Sample rate from CLI args *)
   }
 
 (* Exceptions *)
@@ -1082,7 +1083,7 @@ and evaluateLazyConstant (constants : constant_value array) (idx : int) : dvalue
     in
     (* Create a minimal stack for pure function evaluation *)
     let temp_stack = createStack 100 in
-    let temp_ctx = { frames = []; max_depth = 50 } in
+    let temp_ctx = { frames = []; max_depth = 50; sample_rate = None } in
     let value = evalIexp temp_ctx temp_prog temp_stack 0 exp in
     (* Cache the evaluated value *)
     constants.(idx) <- Evaluated value;
@@ -1280,7 +1281,13 @@ and evalIexp (ctx : call_context) (prog : iprog) (stack : runtime_stack) (frame_
   (* Constants *)
   | IEBuiltinPi -> DReal Float.pi
   | IEBuiltinEps -> DReal 1e-18
-  | IEBuiltinSamplerate -> failwith "samplerate()"
+  | IEBuiltinSamplerate -> (
+    match ctx.sample_rate with
+    | Some fs -> DReal fs
+    | None ->
+      error_with_context
+        ctx
+        "samplerate() requires the -samplerate flag. Use: vult file.vult -eval \"expr\" -samplerate 44100")
   (* Random functions *)
   | IEBuiltinRandom -> DReal (Random.float 1.0)
   | IEBuiltinIrandom -> DInt (Random.int Int.max_int)
@@ -1408,7 +1415,7 @@ let evaluateMainExpression args env iprog exp : dvalue =
   let main_func_name = "Main___main_" in
   match Map.find_opt main_func_name iprog.ifunctions with
   | Some _ -> (
-    let initial_ctx = { frames = []; max_depth = 50 } in
+    let initial_ctx = { frames = []; max_depth = 50; sample_rate = args.fs } in
     let stack = createStack 1000 in
     let call_args =
       let alloc_func_name = main_func_name ^ "_type_alloc" in
@@ -1511,7 +1518,7 @@ let renderAudioExpression (args : Util.Args.args) (env : Env.in_top) (iprog : ip
   let iprog = extendProgram iprog main in
   (* Execute wrapper function *)
   let main_func_name = "Render___main" in
-  let initial_ctx = { frames = []; max_depth = 50 } in
+  let initial_ctx = { frames = []; max_depth = 50; sample_rate = args.fs } in
   let stack = createStack 10000 in
   (* Prepare call arguments - CRITICAL ADDITION *)
   let call_args =
@@ -1534,5 +1541,5 @@ let renderAudioExpression (args : Util.Args.args) (env : Env.in_top) (iprog : ip
 
 (* Wrapper functions for external compatibility (maintain backwards compatibility) *)
 let callFunctionEntry (prog : iprog) (stack : runtime_stack) (func_idx : int) (args : dvalue list) : dvalue =
-  let initial_ctx = { frames = []; max_depth = 50 } in
+  let initial_ctx = { frames = []; max_depth = 50; sample_rate = None } in
   callFunction initial_ctx prog stack func_idx args
