@@ -119,7 +119,7 @@ let calculateIntRealTables loc iprog name min max precision =
   let data =
     CCList.init (size + 1) (fun i ->
         let x = min + i in
-        getRealResult (Core.Interpreter.callFunction iprog stack fun_index [ DInt x ]))
+        getRealResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [ DInt x ]))
   in
   [ makeRealTableDecl loc name "table" precision data ]
 
@@ -131,7 +131,7 @@ let calculateIntIntTables loc iprog name min max =
   let data =
     CCList.init (size + 1) (fun i ->
         let x = min + i in
-        getIntResult (Core.Interpreter.callFunction iprog stack fun_index [ DInt x ]))
+        getIntResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [ DInt x ]))
   in
   [ makeIntTableDecl loc name "table" data ]
 
@@ -144,7 +144,7 @@ let calculateTablesOrder1 loc iprog name size min max precision =
   let data =
     Array.init (size + 1) (fun i ->
         let x = map_x (float_of_int i) in
-        x, getRealResult (Core.Interpreter.callFunction iprog stack fun_index [ DReal x ]))
+        x, getRealResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [ DReal x ]))
   in
   let acc0, acc1 = fitDataOrder1 data (size - 1) [] [] in
   [ makeRealTableDecl loc name "c0" precision acc0; makeRealTableDecl loc name "c1" precision acc1 ]
@@ -158,7 +158,7 @@ let calculateTablesOrder1Fixed loc iprog name size min max precision =
   let data =
     CCList.init (size + 1) (fun i ->
         let x = map_x (float_of_int i) in
-        x, getRealResult (Core.Interpreter.callFunction iprog stack fun_index [ DReal x ]))
+        x, getRealResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [ DReal x ]))
   in
   let rec increments data =
     match data with
@@ -181,7 +181,7 @@ let calculateTablesOrder2 loc iprog name size min max precision =
       ((size * 2) + 2)
       (fun i ->
         let x = map_x (float_of_int i /. 2.0) in
-        x, getRealResult (Core.Interpreter.callFunction iprog stack fun_index [ DReal x ]))
+        x, getRealResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [ DReal x ]))
   in
   let acc0, acc1, acc2 = fitDataOrder2 data (size - 1) [] [] [] in
   [ makeRealTableDecl loc name "c0" precision acc0

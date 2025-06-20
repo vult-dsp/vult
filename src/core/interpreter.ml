@@ -174,6 +174,12 @@ type transform_ctx =
   ; external_functions : Set.t (* Immutable - can be shared *)
   }
 
+(* Call stack context for better error reporting *)
+type call_context =
+  { frames : string list (* Function names in call order *)
+  ; max_depth : int
+  }
+
 (* Exceptions *)
 exception Runtime_error of string
 
@@ -182,6 +188,22 @@ type exec_result =
   | Continue
   | Return of dvalue
 
+(* Enhanced error function that includes call stack information *)
+let error_with_context (ctx : call_context) (msg : string) : 'a =
+  let call_stack_info =
+    match ctx.frames with
+    | [] -> ""
+    | frames ->
+      let stack_str =
+        frames |> CCList.mapi (fun i func_name -> Printf.sprintf "  %d. %s" (i + 1) func_name) |> String.concat "\n"
+      in
+      Printf.sprintf "\nCall stack:\n%s" stack_str
+  in
+  let enhanced_msg = msg ^ call_stack_info in
+  raise (Runtime_error enhanced_msg)
+
+
+(* Legacy error function for backwards compatibility *)
 let error (msg : string) : 'a = raise (Runtime_error msg)
 
 (* Creates an empty iprog for incremental building *)
@@ -817,21 +839,28 @@ let setupFunctionCall (stack : runtime_stack) (ifunc : ifunc_def) (args : dvalue
 let cleanupFunctionCall (stack : runtime_stack) (ifunc : ifunc_def) : unit = stack.sp <- stack.sp - ifunc.ilocals
 
 (* Retrieves an element from an array using an index *)
-let getArrayElement (arr : dvalue) (idx : dvalue) : dvalue =
+let getArrayElement (ctx : call_context) (arr : dvalue) (idx : dvalue) : dvalue =
   match arr, idx with
   | DArray elems, DInt i when i >= 0 && i < Array.length elems -> elems.(i)
-  | _ -> error "Invalid array access"
+  | DArray elems, DInt i ->
+    error_with_context
+      ctx
+      ("getArrayElement: Invalid array access. size = "
+      ^ string_of_int (Array.length elems)
+      ^ " index = "
+      ^ string_of_int i)
+  | _ -> error_with_context ctx "getArrayElement: Invalid array access. This is not an array"
 
 
 (* Retrieves a member from a struct using a member index *)
-let getStructMember (struct_val : dvalue) (member_idx : int) : dvalue =
+let getStructMember (ctx : call_context) (struct_val : dvalue) (member_idx : int) : dvalue =
   match struct_val with
   | DStruct members when member_idx >= 0 && member_idx < Array.length members -> members.(member_idx)
-  | _ -> error "Invalid struct member access"
+  | _ -> error_with_context ctx "Invalid struct member access"
 
 
 (* Evaluates a binary operation on two runtime values *)
-let evalBinop (op : operator) (v1 : dvalue) (v2 : dvalue) : dvalue =
+let evalBinop (ctx : call_context) (op : operator) (v1 : dvalue) (v2 : dvalue) : dvalue =
   match op, v1, v2 with
   | OpAdd, DInt a, DInt b -> DInt (a + b)
   | OpAdd, DInt16 a, DInt16 b -> DInt16 (max (-32768) (min 32767 (a + b)))
@@ -894,11 +923,11 @@ let evalBinop (op : operator) (v1 : dvalue) (v2 : dvalue) : dvalue =
     let ops = Pla.print (Prog.Print.print_operator op) in
     let v1 = printDvalue v1 in
     let v2 = printDvalue v2 in
-    error ("Unsupported operation: " ^ v1 ^ " " ^ ops ^ " " ^ v2)
+    error_with_context ctx ("Unsupported operation: " ^ v1 ^ " " ^ ops ^ " " ^ v2)
 
 
 (* Evaluates a unary operation on a runtime value *)
-let evalUnop (op : uoperator) (v : dvalue) : dvalue =
+let evalUnop (ctx : call_context) (op : uoperator) (v : dvalue) : dvalue =
   match op, v with
   | UOpNeg, DInt i -> DInt (-i)
   | UOpNeg, DInt16 i -> DInt16 (max (-32768) (min 32767 (-i)))
@@ -906,15 +935,15 @@ let evalUnop (op : uoperator) (v : dvalue) : dvalue =
   | UOpNot, DBool b -> DBool (not b)
   | UOpNot, DInt i -> DBool (i = 0)
   | UOpNot, DInt16 i -> DBool (i = 0)
-  | _ -> error "Unsupported unary operation"
+  | _ -> error_with_context ctx "Unsupported unary operation"
 
 
 (* Calls a function by index with the given arguments and returns the result *)
-let rec callFunction : iprog -> runtime_stack -> int -> dvalue list -> dvalue =
- fun prog stack func_idx args ->
+let rec callFunction : call_context -> iprog -> runtime_stack -> int -> dvalue list -> dvalue =
+ fun ctx prog stack func_idx args ->
   let ifunc = prog.ifunctions_array.(func_idx) in
   let frame_start = setupFunctionCall stack ifunc args in
-  let result = execIstmt prog stack frame_start ifunc.ibody in
+  let result = execIstmt ctx prog stack frame_start ifunc.ibody in
   cleanupFunctionCall stack ifunc;
   match result with
   | Continue -> DVoid (* Function completed without explicit return *)
@@ -922,12 +951,12 @@ let rec callFunction : iprog -> runtime_stack -> int -> dvalue list -> dvalue =
 
 
 (* Executes a list of statements, stopping early if a return is encountered *)
-and execStmtList : iprog -> runtime_stack -> int -> istmt list -> exec_result =
- fun prog stack frame_start stmts ->
+and execStmtList : call_context -> iprog -> runtime_stack -> int -> istmt list -> exec_result =
+ fun ctx prog stack frame_start stmts ->
   let rec loop = function
     | [] -> Continue
     | stmt :: rest -> (
-      match execIstmt prog stack frame_start stmt with
+      match execIstmt ctx prog stack frame_start stmt with
       | Continue -> loop rest
       | Return v -> Return v)
   in
@@ -935,54 +964,54 @@ and execStmtList : iprog -> runtime_stack -> int -> istmt list -> exec_result =
 
 
 (* Executes an interpreter statement *)
-and execIstmt : iprog -> runtime_stack -> int -> istmt -> exec_result =
- fun prog stack frame_start stmt ->
+and execIstmt : call_context -> iprog -> runtime_stack -> int -> istmt -> exec_result =
+ fun ctx prog stack frame_start stmt ->
   match stmt with
   | IStmtDecl (var_idx, typ, init_exp) ->
     let init_val =
       match init_exp with
-      | Some exp -> evalIexp prog stack frame_start exp
+      | Some exp -> evalIexp ctx prog stack frame_start exp
       | None -> defaultValue typ
     in
     stack.stack.(frame_start + var_idx) <- init_val;
     Continue
   | IStmtBind (lexp, exp) ->
-    let val_ = evalIexp prog stack frame_start exp in
-    assignIlvalue prog stack frame_start lexp val_;
+    let val_ = evalIexp ctx prog stack frame_start exp in
+    assignIlvalue ctx prog stack frame_start lexp val_;
     Continue
   | IStmtReturn exp ->
-    let val_ = evalIexp prog stack frame_start exp in
+    let val_ = evalIexp ctx prog stack frame_start exp in
     Return val_
-  | IStmtBlock stmts -> execStmtList prog stack frame_start stmts
+  | IStmtBlock stmts -> execStmtList ctx prog stack frame_start stmts
   | IStmtIf (cond, then_stmt, else_stmt) -> (
-    match evalIexp prog stack frame_start cond with
-    | DBool true -> execIstmt prog stack frame_start then_stmt
+    match evalIexp ctx prog stack frame_start cond with
+    | DBool true -> execIstmt ctx prog stack frame_start then_stmt
     | DBool false -> (
       match else_stmt with
-      | Some stmt -> execIstmt prog stack frame_start stmt
+      | Some stmt -> execIstmt ctx prog stack frame_start stmt
       | None -> Continue)
-    | _ -> error "Invalid condition")
+    | _ -> error_with_context ctx "Invalid condition")
   | IStmtWhile (cond, body) ->
     let rec loop () =
-      match evalIexp prog stack frame_start cond with
+      match evalIexp ctx prog stack frame_start cond with
       | DBool true -> (
-        match execIstmt prog stack frame_start body with
+        match execIstmt ctx prog stack frame_start body with
         | Continue -> loop ()
         | Return v -> Return v)
       | _ -> Continue
     in
     loop ()
   | IStmtSwitch (exp, cases, default) ->
-    let exp_val = evalIexp prog stack frame_start exp in
+    let exp_val = evalIexp ctx prog stack frame_start exp in
     let rec try_cases = function
       | [] -> (
         match default with
-        | Some stmt -> execIstmt prog stack frame_start stmt
+        | Some stmt -> execIstmt ctx prog stack frame_start stmt
         | None -> Continue)
       | (case_exp, case_stmt) :: rest ->
-        let case_val = evalIexp prog stack frame_start case_exp in
-        if evalBinop OpEq exp_val case_val = DBool true then
-          execIstmt prog stack frame_start case_stmt
+        let case_val = evalIexp ctx prog stack frame_start case_exp in
+        if evalBinop ctx OpEq exp_val case_val = DBool true then
+          execIstmt ctx prog stack frame_start case_stmt
         else
           try_cases rest
     in
@@ -990,49 +1019,49 @@ and execIstmt : iprog -> runtime_stack -> int -> istmt -> exec_result =
 
 
 (* Evaluates an lvalue expression as an rvalue (gets the value it points to) *)
-and evalIlexpAsRvalue : iprog -> runtime_stack -> int -> ilexp -> dvalue =
- fun prog stack frame_start lexp ->
+and evalIlexpAsRvalue : call_context -> iprog -> runtime_stack -> int -> ilexp -> dvalue =
+ fun ctx prog stack frame_start lexp ->
   match lexp with
-  | ILWild -> error "Cannot evaluate wildcard as rvalue"
+  | ILWild -> error_with_context ctx "Cannot evaluate wildcard as rvalue"
   | ILVar idx -> stack.stack.(frame_start + idx)
   | ILMember (e, member_idx) -> (
-    let struct_val = evalIlexpAsRvalue prog stack frame_start e in
+    let struct_val = evalIlexpAsRvalue ctx prog stack frame_start e in
     match struct_val with
     | DStruct members when member_idx >= 0 && member_idx < Array.length members -> members.(member_idx)
-    | _ -> error "Invalid struct member access")
+    | _ -> error_with_context ctx "Invalid struct member access")
   | ILIndex (e, index) -> (
-    let idx_val = evalIexp prog stack frame_start index in
-    let array_val = evalIlexpAsRvalue prog stack frame_start e in
+    let idx_val = evalIexp ctx prog stack frame_start index in
+    let array_val = evalIlexpAsRvalue ctx prog stack frame_start e in
     match array_val, idx_val with
     | DArray arr, DInt i when i >= 0 && i < Array.length arr -> arr.(i)
-    | _ -> error "Invalid array access")
-  | ILTuple _ -> error "Cannot evaluate tuple lvalue as rvalue"
+    | _ -> error_with_context ctx "evalIlexpAsRvalue: Invalid array access")
+  | ILTuple _ -> error_with_context ctx "Cannot evaluate tuple lvalue as rvalue"
 
 
 (* Assigns a value to an optimized interpreter left-value expression *)
-and assignIlvalue : iprog -> runtime_stack -> int -> ilexp -> dvalue -> unit =
- fun prog stack frame_start lexp val_ ->
+and assignIlvalue : call_context -> iprog -> runtime_stack -> int -> ilexp -> dvalue -> unit =
+ fun ctx prog stack frame_start lexp val_ ->
   match lexp with
   | ILWild -> ()
   | ILVar idx -> stack.stack.(frame_start + idx) <- val_
   | ILMember (e, member_idx) -> (
     (* First get the container struct by recursively evaluating the base expression *)
-    let struct_val = evalIlexpAsRvalue prog stack frame_start e in
+    let struct_val = evalIlexpAsRvalue ctx prog stack frame_start e in
     match struct_val with
     | DStruct members when member_idx >= 0 && member_idx < Array.length members -> members.(member_idx) <- val_
-    | _ -> error "Invalid struct member assignment")
+    | _ -> error_with_context ctx "Invalid struct member assignment")
   | ILIndex (e, index) -> (
-    let idx_val = evalIexp prog stack frame_start index in
+    let idx_val = evalIexp ctx prog stack frame_start index in
     (* Get the container array by recursively evaluating the base expression *)
-    let array_val = evalIlexpAsRvalue prog stack frame_start e in
+    let array_val = evalIlexpAsRvalue ctx prog stack frame_start e in
     match array_val, idx_val with
     | DArray arr, DInt i when i >= 0 && i < Array.length arr -> arr.(i) <- val_
-    | _ -> error "Invalid array assignment")
+    | _ -> error_with_context ctx "Invalid array assignment")
   | ILTuple lexps -> (
     match val_ with
     | DArray vals when Array.length vals = CCList.length lexps ->
-      CCList.iteri (fun i lexp -> assignIlvalue prog stack frame_start lexp vals.(i)) lexps
-    | _ -> error "Tuple assignment type mismatch")
+      CCList.iteri (fun i lexp -> assignIlvalue ctx prog stack frame_start lexp vals.(i)) lexps
+    | _ -> error_with_context ctx "Tuple assignment type mismatch")
 
 
 (* Evaluates a lazy constant, caching the result *)
@@ -1053,14 +1082,15 @@ and evaluateLazyConstant (constants : constant_value array) (idx : int) : dvalue
     in
     (* Create a minimal stack for pure function evaluation *)
     let temp_stack = createStack 100 in
-    let value = evalIexp temp_prog temp_stack 0 exp in
+    let temp_ctx = { frames = []; max_depth = 50 } in
+    let value = evalIexp temp_ctx temp_prog temp_stack 0 exp in
     (* Cache the evaluated value *)
     constants.(idx) <- Evaluated value;
     value
 
 
 (* Evaluates expressions *)
-and evalIexp (prog : iprog) (stack : runtime_stack) (frame_start : int) (exp : iexp) : dvalue =
+and evalIexp (ctx : call_context) (prog : iprog) (stack : runtime_stack) (frame_start : int) (exp : iexp) : dvalue =
   match exp with
   | IEUnit -> DVoid
   | IEEmptyValue -> DVoid
@@ -1072,177 +1102,181 @@ and evalIexp (prog : iprog) (stack : runtime_stack) (frame_start : int) (exp : i
   | IEVar idx -> stack.stack.(frame_start + idx)
   | IEConstant idx -> evaluateLazyConstant prog.iconstants idx
   | IEUnOp (op, e) ->
-    let v = evalIexp prog stack frame_start e in
-    evalUnop op v
+    let v = evalIexp ctx prog stack frame_start e in
+    evalUnop ctx op v
   | IEOp (op, e1, e2) ->
-    let v1 = evalIexp prog stack frame_start e1 in
-    let v2 = evalIexp prog stack frame_start e2 in
-    evalBinop op v1 v2
+    let v1 = evalIexp ctx prog stack frame_start e1 in
+    let v2 = evalIexp ctx prog stack frame_start e2 in
+    evalBinop ctx op v1 v2
   (* Specialized fast arithmetic operations *)
   | IEAddInt (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DInt a, DInt b -> DInt (a + b)
-    | _ -> error "Type mismatch in integer addition")
+    | _ -> error_with_context ctx "Type mismatch in integer addition")
   | IESubInt (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DInt a, DInt b -> DInt (a - b)
-    | _ -> error "Type mismatch in integer subtraction")
+    | _ -> error_with_context ctx "Type mismatch in integer subtraction")
   | IEMulInt (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DInt a, DInt b -> DInt (a * b)
-    | _ -> error "Type mismatch in integer multiplication")
+    | _ -> error_with_context ctx "Type mismatch in integer multiplication")
   | IEDivInt (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DInt a, DInt b -> DInt (a / b)
-    | _ -> error "Type mismatch in integer division")
+    | _ -> error_with_context ctx "Type mismatch in integer division")
   | IEAddInt16 (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DInt16 a, DInt16 b ->
       (* Clamp to int16 range (-32768 to 32767) *)
       let result = a + b in
       let clamped = max (-32768) (min 32767 result) in
       DInt16 clamped
-    | _ -> error "Type mismatch in int16 addition")
+    | _ -> error_with_context ctx "Type mismatch in int16 addition")
   | IESubInt16 (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DInt16 a, DInt16 b ->
       let result = a - b in
       let clamped = max (-32768) (min 32767 result) in
       DInt16 clamped
-    | _ -> error "Type mismatch in int16 subtraction")
+    | _ -> error_with_context ctx "Type mismatch in int16 subtraction")
   | IEMulInt16 (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DInt16 a, DInt16 b ->
       let result = a * b in
       let clamped = max (-32768) (min 32767 result) in
       DInt16 clamped
-    | _ -> error "Type mismatch in int16 multiplication")
+    | _ -> error_with_context ctx "Type mismatch in int16 multiplication")
   | IEDivInt16 (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DInt16 a, DInt16 b ->
       let result = a / b in
       let clamped = max (-32768) (min 32767 result) in
       DInt16 clamped
-    | _ -> error "Type mismatch in int16 division")
+    | _ -> error_with_context ctx "Type mismatch in int16 division")
   | IEAddReal (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DReal a, DReal b -> DReal (a +. b)
-    | _ -> error "Type mismatch in real addition")
+    | _ -> error_with_context ctx "Type mismatch in real addition")
   | IESubReal (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DReal a, DReal b -> DReal (a -. b)
-    | _ -> error "Type mismatch in real subtraction")
+    | _ -> error_with_context ctx "Type mismatch in real subtraction")
   | IEMulReal (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DReal a, DReal b -> DReal (a *. b)
-    | _ -> error "Type mismatch in real multiplication")
+    | _ -> error_with_context ctx "Type mismatch in real multiplication")
   | IEDivReal (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DReal a, DReal b -> DReal (a /. b)
-    | _ -> error "Type mismatch in real division")
+    | _ -> error_with_context ctx "Type mismatch in real division")
   (* Specialized fast comparison operations *)
   | IEEqInt (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DInt a, DInt b -> DBool (a = b)
-    | _ -> error "Type mismatch in integer equality")
+    | _ -> error_with_context ctx "Type mismatch in integer equality")
   | IEEqInt16 (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DInt16 a, DInt16 b -> DBool (a = b)
-    | _ -> error "Type mismatch in int16 equality")
+    | _ -> error_with_context ctx "Type mismatch in int16 equality")
   | IEEqReal (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DReal a, DReal b -> DBool (Float.equal a b)
-    | _ -> error "Type mismatch in real equality")
+    | _ -> error_with_context ctx "Type mismatch in real equality")
   | IELtInt (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DInt a, DInt b -> DBool (a < b)
-    | _ -> error "Type mismatch in integer less than")
+    | _ -> error_with_context ctx "Type mismatch in integer less than")
   | IELtInt16 (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DInt16 a, DInt16 b -> DBool (a < b)
-    | _ -> error "Type mismatch in int16 less than")
+    | _ -> error_with_context ctx "Type mismatch in int16 less than")
   | IELtReal (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DReal a, DReal b -> DBool (a < b)
-    | _ -> error "Type mismatch in real less than")
+    | _ -> error_with_context ctx "Type mismatch in real less than")
   | IEGtInt (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DInt a, DInt b -> DBool (a > b)
-    | _ -> error "Type mismatch in integer greater than")
+    | _ -> error_with_context ctx "Type mismatch in integer greater than")
   | IEGtInt16 (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DInt16 a, DInt16 b -> DBool (a > b)
-    | _ -> error "Type mismatch in int16 greater than")
+    | _ -> error_with_context ctx "Type mismatch in int16 greater than")
   | IEGtReal (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DReal a, DReal b -> DBool (a > b)
-    | _ -> error "Type mismatch in real greater than")
+    | _ -> error_with_context ctx "Type mismatch in real greater than")
   (* Inlined built-in functions *)
   | IEBuiltinSin e -> (
-    match evalIexp prog stack frame_start e with
+    match evalIexp ctx prog stack frame_start e with
     | DReal f -> DReal (sin f)
-    | _ -> error "Type mismatch in sin")
+    | _ -> error_with_context ctx "Type mismatch in sin")
   | IEBuiltinSinh e -> (
-    match evalIexp prog stack frame_start e with
+    match evalIexp ctx prog stack frame_start e with
     | DReal f -> DReal (sinh f)
-    | _ -> error "Type mismatch in sin")
+    | _ -> error_with_context ctx "Type mismatch in sin")
   | IEBuiltinCosh e -> (
-    match evalIexp prog stack frame_start e with
+    match evalIexp ctx prog stack frame_start e with
     | DReal f -> DReal (cosh f)
-    | _ -> error "Type mismatch in cosh")
+    | _ -> error_with_context ctx "Type mismatch in cosh")
   | IEBuiltinTanh e -> (
-    match evalIexp prog stack frame_start e with
+    match evalIexp ctx prog stack frame_start e with
     | DReal f -> DReal (tanh f)
-    | _ -> error "Type mismatch in sin")
+    | _ -> error_with_context ctx "Type mismatch in sin")
   | IEBuiltinCos e -> (
-    match evalIexp prog stack frame_start e with
+    match evalIexp ctx prog stack frame_start e with
     | DReal f -> DReal (cos f)
-    | _ -> error "Type mismatch in cos")
+    | _ -> error_with_context ctx "Type mismatch in cos")
   | IEBuiltinExp e -> (
-    match evalIexp prog stack frame_start e with
+    match evalIexp ctx prog stack frame_start e with
     | DReal f -> DReal (Stdlib.exp f)
-    | _ -> error "Type mismatch in exp")
+    | _ -> error_with_context ctx "Type mismatch in exp")
   | IEBuiltinLog e -> (
-    match evalIexp prog stack frame_start e with
+    match evalIexp ctx prog stack frame_start e with
     | DReal f -> DReal (log f)
-    | _ -> error "Type mismatch in log")
+    | _ -> error_with_context ctx "Type mismatch in log")
   | IEBuiltinSqrt e -> (
-    match evalIexp prog stack frame_start e with
+    match evalIexp ctx prog stack frame_start e with
     | DReal f -> DReal (sqrt f)
-    | _ -> error "Type mismatch in sqrt")
+    | _ -> error_with_context ctx "Type mismatch in sqrt")
   | IEBuiltinAbs e -> (
-    match evalIexp prog stack frame_start e with
+    match evalIexp ctx prog stack frame_start e with
     | DReal f -> DReal (abs_float f)
     | DInt i -> DInt (abs i)
-    | _ -> error "Type mismatch in abs")
+    | _ -> error_with_context ctx "Type mismatch in abs")
   | IEBuiltinFloor e -> (
-    match evalIexp prog stack frame_start e with
+    match evalIexp ctx prog stack frame_start e with
     | DReal f -> DReal (floor f)
-    | _ -> error "Type mismatch in floor")
+    | _ -> error_with_context ctx "Type mismatch in floor")
   | IEBuiltinPow (e1, e2) -> (
-    match evalIexp prog stack frame_start e1, evalIexp prog stack frame_start e2 with
+    match evalIexp ctx prog stack frame_start e1, evalIexp ctx prog stack frame_start e2 with
     | DReal x, DReal y -> DReal (x ** y)
-    | _ -> error "Type mismatch in pow")
+    | _ -> error_with_context ctx "Type mismatch in pow")
   | IEBuiltinTan e -> (
-    match evalIexp prog stack frame_start e with
+    match evalIexp ctx prog stack frame_start e with
     | DReal f -> DReal (tan f)
-    | _ -> error "Type mismatch in tan")
+    | _ -> error_with_context ctx "Type mismatch in tan")
   | IEBuiltinLog10 e -> (
-    match evalIexp prog stack frame_start e with
+    match evalIexp ctx prog stack frame_start e with
     | DReal f -> DReal (log10 f)
-    | _ -> error "Type mismatch in log10")
+    | _ -> error_with_context ctx "Type mismatch in log10")
   | IEBuiltinClipReal (x, min_v, max_v) -> (
     match
-      evalIexp prog stack frame_start x, evalIexp prog stack frame_start min_v, evalIexp prog stack frame_start max_v
+      ( evalIexp ctx prog stack frame_start x
+      , evalIexp ctx prog stack frame_start min_v
+      , evalIexp ctx prog stack frame_start max_v )
     with
     | DReal x_val, DReal min_val, DReal max_val -> DReal (min (max x_val min_val) max_val)
-    | _ -> error "Type mismatch in clip_real")
+    | _ -> error_with_context ctx "Type mismatch in clip_real")
   | IEBuiltinClipInt (x, min_v, max_v) -> (
     match
-      evalIexp prog stack frame_start x, evalIexp prog stack frame_start min_v, evalIexp prog stack frame_start max_v
+      ( evalIexp ctx prog stack frame_start x
+      , evalIexp ctx prog stack frame_start min_v
+      , evalIexp ctx prog stack frame_start max_v )
     with
     | DInt x_val, DInt min_val, DInt max_val -> DInt (min (max x_val min_val) max_val)
-    | _ -> error "Type mismatch in clip_int")
+    | _ -> error_with_context ctx "Type mismatch in clip_int")
   (* Constants *)
   | IEBuiltinPi -> DReal Float.pi
   | IEBuiltinEps -> DReal 1e-18
@@ -1252,7 +1286,7 @@ and evalIexp (prog : iprog) (stack : runtime_stack) (frame_start : int) (exp : i
   | IEBuiltinIrandom -> DInt (Random.int Int.max_int)
   (* Type conversion functions *)
   | IEBuiltinReal e -> (
-    match evalIexp prog stack frame_start e with
+    match evalIexp ctx prog stack frame_start e with
     | DInt i -> DReal (float_of_int i)
     | DInt16 i -> DReal (float_of_int i)
     | DBool b ->
@@ -1262,9 +1296,9 @@ and evalIexp (prog : iprog) (stack : runtime_stack) (frame_start : int) (exp : i
          else
            0.0)
     | DReal f -> DReal f
-    | _ -> error "Type mismatch in real conversion")
+    | _ -> error_with_context ctx "Type mismatch in real conversion")
   | IEBuiltinInt e -> (
-    match evalIexp prog stack frame_start e with
+    match evalIexp ctx prog stack frame_start e with
     | DReal f -> DInt (int_of_float f)
     | DBool b ->
       DInt
@@ -1274,9 +1308,9 @@ and evalIexp (prog : iprog) (stack : runtime_stack) (frame_start : int) (exp : i
            0)
     | DInt i -> DInt i
     | DInt16 i -> DInt i
-    | _ -> error "Type mismatch in int conversion")
+    | _ -> error_with_context ctx "Type mismatch in int conversion")
   | IEBuiltinInt16 e -> (
-    match evalIexp prog stack frame_start e with
+    match evalIexp ctx prog stack frame_start e with
     | DReal f ->
       let i = int_of_float f in
       let clamped = max (-32768) (min 32767 i) in
@@ -1291,63 +1325,73 @@ and evalIexp (prog : iprog) (stack : runtime_stack) (frame_start : int) (exp : i
       let clamped = max (-32768) (min 32767 i) in
       DInt16 clamped
     | DInt16 i -> DInt16 i
-    | _ -> error "Type mismatch in int16 conversion")
+    | _ -> error_with_context ctx "Type mismatch in int16 conversion")
   | IEBuiltinBool e -> (
-    match evalIexp prog stack frame_start e with
+    match evalIexp ctx prog stack frame_start e with
     | DInt i -> DBool (i <> 0)
     | DInt16 i -> DBool (i <> 0)
     | DReal f -> DBool (f <> 0.0)
     | DBool b -> DBool b
-    | _ -> error "Type mismatch in bool conversion")
+    | _ -> error_with_context ctx "Type mismatch in bool conversion")
   | IEBuiltinString e -> (
-    match evalIexp prog stack frame_start e with
+    match evalIexp ctx prog stack frame_start e with
     | DInt i -> DString (string_of_int i)
     | DInt16 i -> DString (string_of_int i)
     | DReal f -> DString (string_of_float f)
     | DBool b -> DString (string_of_bool b)
     | DString s -> DString s
-    | _ -> error "Type mismatch in string conversion")
+    | _ -> error_with_context ctx "Type mismatch in string conversion")
   | IEBuiltinFixed e -> (
-    match evalIexp prog stack frame_start e with
+    match evalIexp ctx prog stack frame_start e with
     | DReal f -> DReal f
     | DInt i -> DReal (float_of_int i)
-    | _ -> error "Type mismatch in fixed conversion")
+    | _ -> error_with_context ctx "Type mismatch in fixed conversion")
   (* Array/string functions *)
   | IEBuiltinSize e -> (
-    match evalIexp prog stack frame_start e with
+    match evalIexp ctx prog stack frame_start e with
     | DArray arr -> DInt (Array.length arr)
-    | _ -> error "Type mismatch in size - expected array")
+    | _ -> error_with_context ctx "Type mismatch in size - expected array")
   | IEBuiltinLength e -> (
-    match evalIexp prog stack frame_start e with
+    match evalIexp ctx prog stack frame_start e with
     | DString s -> DInt (String.length s)
-    | _ -> error "Type mismatch in length - expected string")
+    | _ -> error_with_context ctx "Type mismatch in length - expected string")
   | IEIndex (e, index) ->
-    let arr_val = evalIexp prog stack frame_start e in
-    let idx_val = evalIexp prog stack frame_start index in
-    getArrayElement arr_val idx_val
+    let arr_val = evalIexp ctx prog stack frame_start e in
+    let idx_val = evalIexp ctx prog stack frame_start index in
+    getArrayElement ctx arr_val idx_val
   | IEArray elems ->
-    let values = Array.of_list (CCList.map (evalIexp prog stack frame_start) elems) in
+    let values = Array.of_list (CCList.map (evalIexp ctx prog stack frame_start) elems) in
     DArray values
   | IECall (func_idx, args) ->
-    let arg_vals = CCList.map (evalIexp prog stack frame_start) args in
-    callFunction prog stack func_idx arg_vals
-  | IECallExt _ -> error "Extenal evaluations are not possible"
+    let func_def = prog.ifunctions_array.(func_idx) in
+    let new_frames = func_def.iname :: ctx.frames in
+    (* Limit call stack depth to prevent memory issues *)
+    let limited_frames =
+      if List.length new_frames > ctx.max_depth then
+        CCList.take ctx.max_depth new_frames
+      else
+        new_frames
+    in
+    let new_ctx = { ctx with frames = limited_frames } in
+    let arg_vals = CCList.map (evalIexp ctx prog stack frame_start) args in
+    callFunction new_ctx prog stack func_idx arg_vals
+  | IECallExt _ -> error_with_context ctx "External evaluations are not possible"
   | IEIf (cond, then_, else_) -> (
-    match evalIexp prog stack frame_start cond with
-    | DBool true -> evalIexp prog stack frame_start then_
-    | DBool false -> evalIexp prog stack frame_start else_
-    | _ -> error "Invalid condition")
+    match evalIexp ctx prog stack frame_start cond with
+    | DBool true -> evalIexp ctx prog stack frame_start then_
+    | DBool false -> evalIexp ctx prog stack frame_start else_
+    | _ -> error_with_context ctx "Invalid condition")
   | IETuple elems ->
-    let values = Array.of_list (CCList.map (evalIexp prog stack frame_start) elems) in
+    let values = Array.of_list (CCList.map (evalIexp ctx prog stack frame_start) elems) in
     DArray values
   | IEMember (e, member_idx) ->
-    let struct_val = evalIexp prog stack frame_start e in
-    getStructMember struct_val member_idx
+    let struct_val = evalIexp ctx prog stack frame_start e in
+    getStructMember ctx struct_val member_idx
   | IERecord (descr, elems) ->
     let member_vals = Array.make (CCList.length descr.members) DVoid in
     CCList.iter
       (fun (idx, exp) ->
-        let val_ = evalIexp prog stack frame_start exp in
+        let val_ = evalIexp ctx prog stack frame_start exp in
         member_vals.(idx) <- val_)
       elems;
     DStruct member_vals
@@ -1364,17 +1408,18 @@ let evaluateMainExpression args env iprog exp : dvalue =
   let main_func_name = "Main___main_" in
   match Map.find_opt main_func_name iprog.ifunctions with
   | Some _ -> (
+    let initial_ctx = { frames = []; max_depth = 50 } in
     let stack = createStack 1000 in
     let call_args =
       let alloc_func_name = main_func_name ^ "_type_alloc" in
       match Map.find_opt alloc_func_name iprog.ifunction_names with
       | Some alloc_idx ->
-        let state = callFunction iprog stack alloc_idx [] in
+        let state = callFunction initial_ctx iprog stack alloc_idx [] in
         [ state ]
       | None -> []
     in
     match Map.find_opt main_func_name iprog.ifunction_names with
-    | Some func_idx -> callFunction iprog stack func_idx call_args
+    | Some func_idx -> callFunction initial_ctx iprog stack func_idx call_args
     | None -> error "Could not execute the expression")
   | None -> error "Could not execute the expression"
 
@@ -1466,21 +1511,28 @@ let renderAudioExpression (args : Util.Args.args) (env : Env.in_top) (iprog : ip
   let iprog = extendProgram iprog main in
   (* Execute wrapper function *)
   let main_func_name = "Render___main" in
+  let initial_ctx = { frames = []; max_depth = 50 } in
   let stack = createStack 10000 in
   (* Prepare call arguments - CRITICAL ADDITION *)
   let call_args =
     let alloc_func_name = main_func_name ^ "_type_alloc" in
     match Map.find_opt alloc_func_name iprog.ifunction_names with
     | Some alloc_idx ->
-      let state = callFunction iprog stack alloc_idx [] in
+      let state = callFunction initial_ctx iprog stack alloc_idx [] in
       [ state ]
     | None -> []
   in
   match Map.find_opt main_func_name iprog.ifunction_names with
   | Some func_idx ->
-    let result = callFunction iprog stack func_idx call_args in
+    let result = callFunction initial_ctx iprog stack func_idx call_args in
     writeResultToWav result params;
     let end_time = Sys.time () in
     let duration = end_time -. start_time in
     params.file, duration
   | None -> error "Could not execute render function"
+
+
+(* Wrapper functions for external compatibility (maintain backwards compatibility) *)
+let callFunctionEntry (prog : iprog) (stack : runtime_stack) (func_idx : int) (args : dvalue list) : dvalue =
+  let initial_ctx = { frames = []; max_depth = 50 } in
+  callFunction initial_ctx prog stack func_idx args
