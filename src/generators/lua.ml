@@ -116,7 +116,6 @@ function real(x)            return x end
 function int(x)             if type(x) == "boolean" then x = x and 1 or 0 end local int_part,_ = math.modf(x) return int_part end
 function int16(x)           if type(x) == "boolean" then x = x and 1 or 0 end local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end
 function bool(x)            return x ~= 0 and x ~= false end
-function string(x)          return tostring(x) end
 function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end

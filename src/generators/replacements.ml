@@ -221,6 +221,12 @@ module Lua = struct
     match path, args, (getReturnType ret).t with
     (* builtins *)
     | "float_to_int", [ TReal ], TInt -> Some "math.floor"
+    (* cast - map string directly to tostring to avoid conflict with Lua string library *)
+    | "string", [ TInt ], TString -> Some "tostring"
+    | "string", [ TInt16 ], TString -> Some "tostring"
+    | "string", [ TReal ], TString -> Some "tostring"
+    | "string", [ TFix16 ], TString -> Some "tostring"
+    | "string", [ TBool ], TString -> Some "tostring"
     | _ -> None
 end
 

@@ -20,3 +20,8 @@ This directory contains a complete Language Server Protocol implementation for t
 - **Basic Completions**: Keyword completion support
 - **Workspace Support**: Multi-file project awareness
 
+# Install
+
+```
+ln -s /Users/leonardo/Development/vult/src/lsp/vscode-extension ~/.vscode/extensions/vult-language-server
+```

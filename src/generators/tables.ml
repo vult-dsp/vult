@@ -29,6 +29,7 @@ let makeFloat (t : type_) x : exp =
   match t.t with
   | TReal -> C.ereal x
   | TFix16 -> C.efix16 x
+  | TInt16 -> C.eint16 (int_of_float (x *. 65536.0))
   | _ -> failwith "invalid type"
 
 
