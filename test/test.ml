@@ -787,6 +787,113 @@ module Interpret = struct
   let get files = "run" >::: CCList.map (fun file -> Filename.basename file >:: run file) files
 end
 
+module RenderTest = struct
+  let test_sine_wave_render _context =
+    (* Test parameters *)
+    let sample_rate = 1000 in
+    let duration = 1.0 in
+    (* 1 second = 1000 samples *)
+    let tolerance = 0.005 in
+    (* 0.5% tolerance for floating point comparison and rounding errors *)
+    (* Generate unique temp file name *)
+    let temp_file = in_tmp_dir "test_render_sine.wav" in
+    (* Create Vult code for sine wave generation using a phasor *)
+    (* This generates a 1 Hz sine wave (1000 samples = 1 complete period) *)
+    let vult_content =
+      {|
+fun main() : real {
+    mem phase;
+    val result = 0.5 * sin(2.0 * 3.14159265359 * phase);  // Scale to -0.5 to 0.5
+    phase = phase + 1.0 / 1000.0;  // 1 Hz at 1000 Hz sample rate
+    if (phase >= 1.0) {
+        phase = phase - 1.0;
+    }
+    return result;
+}
+|}
+    in
+    let vult_file = in_tmp_dir "test_sine.vult" in
+    (* Write test Vult file *)
+    FileIO.write vult_file vult_content |> ignore;
+    (* Prepare render arguments *)
+    let render_tag =
+      Printf.sprintf
+        "render(file=\"%s\", samplerate=%d, time=%f, exp=\"Test_sine.main()\")"
+        temp_file
+        sample_rate
+        duration
+    in
+    let args = Args.{ default_arguments with files = [ File vult_file ]; render = Some render_tag } in
+    (* Execute rendering *)
+    let results = Driver.Cli.driver args in
+    (* Check for errors first *)
+    CCList.iter
+      (function
+        | Args.Errors errors -> assert_failure (Error.reportErrors errors)
+        | _ -> ())
+      results;
+    (* Verify audio file was created successfully *)
+    let audio_rendered =
+      CCList.exists
+        (function
+          | Args.AudioRendered _ -> true
+          | _ -> false)
+        results
+    in
+    assert_bool "Audio rendering should complete successfully" audio_rendered;
+    (* Read back the generated WAV file *)
+    match Util.WaveFile.read temp_file with
+    | Error msg -> assert_failure ("Failed to read generated WAV file: " ^ msg)
+    | Ok wave_data -> (
+      (* Verify basic properties *)
+      assert_equal ~msg:"Should have 1 channel" 1 wave_data.channels;
+      assert_equal ~msg:"Should have 1000 samples" 1000 wave_data.samples;
+      (* Get the audio data *)
+      let samples = wave_data.data.(0) in
+      (* Generate expected values for all 1000 samples *)
+      let expected_values =
+        List.init 1000 (fun i ->
+            (* Calculate expected sine value for each sample *)
+            let phase = float_of_int i /. 1000.0 in
+            0.5 *. sin (2.0 *. 3.14159265359 *. phase))
+        (* Scaled to match the generated wave *)
+      in
+      (* Verify all sample points *)
+      List.iteri
+        (fun i expected ->
+          let actual = samples.(i) in
+          let diff = abs_float (actual -. expected) in
+          if diff > tolerance then
+            assert_failure
+              (Printf.sprintf "Sample %d: expected %f, got %f (diff=%f > %f)" i expected actual diff tolerance))
+        expected_values;
+      (* Also verify key points with descriptive messages *)
+      let key_points =
+        [ 0, 0.0, "Start of sine wave"
+        ; 250, 0.5, "Peak of sine wave"
+        ; 500, 0.0, "Zero crossing"
+        ; 750, -0.5, "Trough of sine wave"
+        ; 999, 0.0, "End of period"
+        ]
+      in
+      CCList.iter
+        (fun (index, expected, description) ->
+          let actual = samples.(index) in
+          let diff = abs_float (actual -. expected) in
+          assert_bool
+            (Printf.sprintf "%s at sample %d: expected ~%f, got %f (diff=%f)" description index expected actual diff)
+            (diff <= tolerance))
+        key_points;
+      (* Clean up temporary files *)
+      (try Sys.remove temp_file with
+      | _ -> ());
+      try Sys.remove vult_file with
+      | _ -> ())
+
+
+  let get () = "render" >::: [ "sine_wave" >:: test_sine_wave_render ]
+end
+
 let suite =
   "vult"
   >::: [ ErrorTest.get errors_files
@@ -813,6 +920,7 @@ let suite =
        ; RandomCompileTest.get test_random_code
        ; InterpretPerf.get perf_files
        ; Interpret.get interpreter
+       ; RenderTest.get ()
        ]
 
 

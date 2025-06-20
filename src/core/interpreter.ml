@@ -1377,3 +1377,110 @@ let evaluateMainExpression args env iprog exp : dvalue =
     | Some func_idx -> callFunction iprog stack func_idx call_args
     | None -> error "Could not execute the expression")
   | None -> error "Could not execute the expression"
+
+
+(* Audio rendering functionality *)
+type render_params =
+  { file : string
+  ; samplerate : int
+  ; time : float
+  ; exp : string
+  }
+
+let default_render_params = { file = "output.wav"; samplerate = 48000; time = 1.0; exp = "" }
+
+let parseRenderParams (tag_string : string) : render_params =
+  let tag = Pparser.Parse.parseTagString tag_string in
+  let params = Pparser.Ptags.[ "file", TypeString; "samplerate", TypeInt; "time", TypeReal; "exp", TypeString ] in
+  match Pparser.Ptags.getParameterList [ tag ] "render" params with
+  | [ file_opt; samplerate_opt; time_opt; exp_opt ] ->
+    let file =
+      match file_opt with
+      | Some (Pparser.Ptags.String s) -> s
+      | _ -> default_render_params.file
+    in
+    let samplerate =
+      match samplerate_opt with
+      | Some (Pparser.Ptags.Int i) -> i
+      | _ -> default_render_params.samplerate
+    in
+    let time =
+      match time_opt with
+      | Some (Pparser.Ptags.Real f) -> f
+      | Some (Pparser.Ptags.Int i) -> float_of_int i
+      | _ -> default_render_params.time
+    in
+    let exp =
+      match exp_opt with
+      | Some (Pparser.Ptags.String s) -> s
+      | _ -> default_render_params.exp
+    in
+    { file; samplerate; time; exp }
+  | _ -> error "Invalid render parameters format"
+
+
+let generateRenderWrapper (params : render_params) : string =
+  let n_samples = int_of_float (params.time *. float_of_int params.samplerate) in
+  let exp = params.exp in
+  Pla.print
+    {%pla|fun _main() {
+  val buffer : array(real, <#n_samples#i>);
+  iter(i, size(buffer)) {
+    buffer[i] = <#exp#s>;
+  }
+  return buffer;
+}|}
+
+
+let dvalueToFloat (dval : dvalue) : float =
+  match dval with
+  | DReal f -> f
+  | DInt i -> float_of_int i
+  | _ -> error "Sample values must be numeric"
+
+
+let writeResultToWav (result : dvalue) (params : render_params) : unit =
+  match result with
+  | DArray samples -> (
+    let float_samples = Array.map dvalueToFloat samples in
+    match Util.WaveFile.write_mono params.file float_samples ~sample_rate:params.samplerate () with
+    | Ok () -> ()
+    | Error msg -> error ("Failed to write WAV file: " ^ msg))
+  | _ -> error "Render function must return an array"
+
+
+let renderAudioExpression (args : Util.Args.args) (env : Env.in_top) (iprog : iprog) (tag_string : string) :
+    string * float =
+  let start_time = Sys.time () in
+  (* Parse render parameters *)
+  let params = parseRenderParams tag_string in
+  (* Always update args.fs *)
+  args.fs <- Some (float_of_int params.samplerate);
+  (* Generate wrapper function *)
+  let wrapper_code = generateRenderWrapper params in
+  (* Parse and compile wrapper function *)
+  let e = Pparser.Parse.parseString (Some "Render_.vult") wrapper_code in
+  let env, main = Inference.infer_single args env e in
+  let _, main = Toprog.convert args env main in
+  let main = Passes.run args main in
+  let iprog = extendProgram iprog main in
+  (* Execute wrapper function *)
+  let main_func_name = "Render___main" in
+  let stack = createStack 10000 in
+  (* Prepare call arguments - CRITICAL ADDITION *)
+  let call_args =
+    let alloc_func_name = main_func_name ^ "_type_alloc" in
+    match Map.find_opt alloc_func_name iprog.ifunction_names with
+    | Some alloc_idx ->
+      let state = callFunction iprog stack alloc_idx [] in
+      [ state ]
+    | None -> []
+  in
+  match Map.find_opt main_func_name iprog.ifunction_names with
+  | Some func_idx ->
+    let result = callFunction iprog stack func_idx call_args in
+    writeResultToWav result params;
+    let end_time = Sys.time () in
+    let duration = end_time -. start_time in
+    params.file, duration
+  | None -> error "Could not execute render function"

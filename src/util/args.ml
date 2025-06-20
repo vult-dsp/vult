@@ -37,6 +37,7 @@ type output =
   | Prog of string
   | Interpret of string
   | CheckOk
+  | AudioRendered of string
   | Errors of Error.t list
 
 type code =
@@ -84,6 +85,7 @@ type args =
   ; mutable test_mode : bool
   ; mutable use_menhir : bool
   ; mutable dump_sexpr : bool
+  ; mutable render : string option
   }
 
 let default_arguments : args =
@@ -118,6 +120,7 @@ let default_arguments : args =
   ; test_mode = false
   ; use_menhir = false
   ; dump_sexpr = false
+  ; render = None
   }
 
 
@@ -190,6 +193,10 @@ let flags result =
     ; comment = "name Adds text in the given file as header to the generated files."
     }
   ; { flag = "-eval"; action = Arg.String (fun s -> result.eval <- Some s); comment = " Runs the code (default: off)" }
+  ; { flag = "-render"
+    ; action = Arg.String (fun s -> result.render <- Some s)
+    ; comment = " Renders audio from expression to WAV file"
+    }
   ; { flag = "-show-output"
     ; action = Arg.Bool (fun s -> result.show_output <- s)
     ; comment = " Shows the values of constants when running the interpreter (default: off)"

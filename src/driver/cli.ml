@@ -33,6 +33,7 @@ let showResult (args : args) (output : output) =
   | Message v -> print_endline v
   | Dependencies deps -> String.concat " " deps |> print_endline
   | EvalResult v -> print_endline v
+  | AudioRendered msg -> print_endline msg
   | ParsedCode v -> print_endline v
   | Typed v -> print_endline v
   | Prog v -> print_endline v
@@ -97,7 +98,16 @@ let compileCode (args : args) env stmts : Prog.top_stmt list * Interpreter.iprog
       [ EvalResult str ]
     | None -> []
   in
-  prog, iprog, run @ prog_out
+  let render_out =
+    match args.render with
+    | Some tag ->
+      let filename, duration =
+        Util.Profile.time "Render" (fun () -> Interpreter.renderAudioExpression args env iprog tag)
+      in
+      [ AudioRendered (Printf.sprintf "Audio rendered to: %s (%.3fs)" filename duration) ]
+    | None -> []
+  in
+  prog, iprog, run @ prog_out @ render_out
 
 
 let version = String.sub Version.version 1 (String.length Version.version - 2)
