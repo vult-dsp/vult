@@ -87,18 +87,18 @@ let luaPost (args : Util.Args.args) =
   {%pla|
      -- Performance measurement with LuaJIT detection
      local engine = isLuaJIT and "LuaJIT" or "Lua"
-     
+
      data = <#module_name#s>_process_type_alloc()
      <#module_name#s>_default(data)
      time = <#time#f>
      samples = 44100 * time
-     
+
      -- Warm up - run more iterations for LuaJIT to allow proper compilation
      local warmup_iterations = isLuaJIT and 5000 or 1000
      for i = 1, warmup_iterations do
         <#module_name#s>_process(data, 0.0, 0.5, 0.5)
      end
-     
+
      local start = os.clock()
      local ramp = 0.0
      local acc = 0.0
@@ -161,22 +161,22 @@ let juliaPost (args : Util.Args.args) =
 function measure_performance()
     # Initialize the process state
     data = <#module_name#s>_process_type_alloc()
-    
+
     # Setup timing parameters
     time_seconds = <#time#f>
     sample_rate = 44100
     samples = Int(sample_rate * time_seconds)
-    
+
     # Warm up - run a few iterations to allow Julia JIT compilation
     for i in 1:1000
         result = <#module_name#s>_process(data, 0.0)
     end
-    
+
     # Actual performance measurement
     start_time = time_ns()
     acc = 0.0
     ramp = 0.0
-    
+
     for i in 1:samples
         ramp += 0.001
         if ramp > 1.0
@@ -184,13 +184,13 @@ function measure_performance()
         end
         acc += <#module_name#s>_process(data, ramp)
     end
-    
+
     elapsed_ns = time_ns() - start_time
     elapsed_seconds = elapsed_ns / 1_000_000_000
     ms_per_second = (elapsed_seconds / time_seconds) * 1000.0
-    
+
     println("<#module_name#s>\tJulia\t$(round(ms_per_second, digits=2)) ms/s")
-    
+
     # Return accumulated value to prevent dead code elimination
     return acc
 end
@@ -219,20 +219,20 @@ public class <#module_name#s>Perf {
         <#class_name#s> vult = new <#class_name#s>();
         <#class_name#s>.<#module_name#s>_process_type data = vult.<#module_name#s>_process_type_alloc();
         vult.<#module_name#s>_default(data);
-        
+
         double time = <#time#f>;
         int samples = (int)(44100 * time);
-        
+
         // Warm up - run iterations to allow JVM JIT compilation
         for (int i = 0; i < 10000; i++) {
             vult.<#module_name#s>_process(data, (float)0.0);
         }
-        
+
         // Actual performance measurement
         long startTime = System.nanoTime();
         double acc = 0.0;
         double ramp = 0.0;
-        
+
         for (int i = 0; i < samples; i++) {
             ramp += 0.001;
             if (ramp > 1.0) {
@@ -240,11 +240,11 @@ public class <#module_name#s>Perf {
             }
             acc += vult.<#module_name#s>_process(data, (float)ramp);
         }
-        
+
         long endTime = System.nanoTime();
         double elapsedSeconds = (endTime - startTime) / 1_000_000_000.0;
         double msPerSecond = (elapsedSeconds / time) * 1000.0;
-        
+
         System.out.printf("<#module_name#s>\tJava\t%.2f ms/s\n", msPerSecond);
     }
 }

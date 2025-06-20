@@ -82,7 +82,7 @@ let generateCode args file_deps (stmts, vm, acc) =
 let compileCode (args : args) env stmts : Prog.top_stmt list * Interpreter.iprog * output list =
   let env, stmts = Toprog.convert args env stmts in
   let prog = Util.Profile.time "Passes" (fun () -> Passes.run args stmts) in
-  let iprog = Util.Profile.time "Compile" (fun () -> Interpreter.transformProgram false prog) in
+  let iprog = Util.Profile.time "Compile" (fun () -> Interpreter.transformProgram prog) in
   let prog_out =
     if args.dprog then
       [ Prog (Pla.print (Prog.Print.print_prog prog)) ]

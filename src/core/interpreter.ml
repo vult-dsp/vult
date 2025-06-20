@@ -155,10 +155,13 @@ and eval_context =
 
 (* Program *)
 type iprog =
-  { ifunctions : ifunc_def Map.t (* Immutable map for function definitions *)
-  ; ifunctions_array : ifunc_def array (* Function array for O(1) access by index *)
-  ; ifunction_names : int Map.t (* Function name to index mapping *)
-  ; iconstants : constant_value array (* Global constants array with lazy evaluation *)
+  { mutable ifunctions : ifunc_def Map.t (* Map for function definitions *)
+  ; mutable ifunctions_array : ifunc_def array (* Function array for O(1) access by index *)
+  ; mutable ifunction_names : int Map.t (* Function name to index mapping *)
+  ; mutable iconstants : constant_value array (* Global constants array with lazy evaluation *)
+  ; mutable struct_types : struct_descr Map.t (* Struct type definitions *)
+  ; mutable constant_names : int Map.t (* Constant name to index mapping *)
+  ; mutable external_functions : Set.t (* External function names *)
   }
 
 (* Variable resolution context for transformation *)
@@ -180,6 +183,39 @@ type exec_result =
   | Return of dvalue
 
 let error (msg : string) : 'a = raise (Runtime_error msg)
+
+(* Creates an empty iprog for incremental building *)
+let createEmptyProgram () : iprog =
+  { ifunctions = Map.empty
+  ; ifunctions_array = [||]
+  ; ifunction_names = Map.empty
+  ; iconstants = [||]
+  ; struct_types = Map.empty
+  ; constant_names = Map.empty
+  ; external_functions = Set.empty
+  }
+
+
+(* Adds a function to the iprog, resizing arrays as needed *)
+let addFunction (prog : iprog) (name : string) (ifunc : ifunc_def) : unit =
+  let func_idx = Map.cardinal prog.ifunction_names in
+  prog.ifunction_names <- Map.add name func_idx prog.ifunction_names;
+  prog.ifunctions <- Map.add name ifunc prog.ifunctions;
+  (* Resize function array if needed *)
+  let new_array = Array.make (func_idx + 1) ifunc in
+  Array.blit prog.ifunctions_array 0 new_array 0 (Array.length prog.ifunctions_array);
+  new_array.(func_idx) <- ifunc;
+  prog.ifunctions_array <- new_array
+
+
+(* Adds a constant to the iprog, resizing array as needed *)
+let addConstant (prog : iprog) (const_val : constant_value) : unit =
+  let const_idx = Array.length prog.iconstants in
+  let new_array = Array.make (const_idx + 1) const_val in
+  Array.blit prog.iconstants 0 new_array 0 (Array.length prog.iconstants);
+  new_array.(const_idx) <- const_val;
+  prog.iconstants <- new_array
+
 
 (* Adds a variable to the transformation context and returns its assigned index *)
 let addVar (ctx : transform_ctx) (name : string) : int =
@@ -667,98 +703,69 @@ let rec evalConstantExpression (constants : dvalue array) (exp : iexp) : dvalue 
   | _ -> error "Unsupported expression in constant declaration"
 
 
-(* Transforms an entire program from original AST to optimized interpreter AST *)
-let transformProgram (print_constants : bool) (prog : top_stmt list) : iprog =
-  let functions = ref Map.empty in
-  let types = ref Map.empty in
-  let constant_names = ref Map.empty in
-  let function_defs = ref [] in
-  let external_functions = ref Set.empty in
-  let const_index = ref 0 in
-  CCList.iter
-    (fun stmt ->
-      match stmt.top with
-      | TopType descr -> types := Map.add descr.path descr !types
-      | TopConstant (name, _, _, _) ->
-        constant_names := Map.add name !const_index !constant_names;
-        incr const_index
-      | TopFunction (def, body) -> function_defs := (def, body) :: !function_defs
-      | TopExternal (def, _) -> external_functions := Set.add def.name !external_functions
-      | _ -> ())
-    prog;
-  let function_names = ref Map.empty in
-  CCList.iteri (fun idx (def, _) -> function_names := Map.add def.name idx !function_names) (CCList.rev !function_defs);
-  let createConstCtx () =
-    { var_to_index = Hashtbl.create 32
-    ; next_index = 0
-    ; struct_types = !types
-    ; constant_names = !constant_names
-    ; function_names = !function_names
-    ; external_functions = !external_functions
-    }
-  in
-  let constants_array = Array.make !const_index (Evaluated DVoid) in
-  let constants_ref = ref constants_array in
-  CCList.iter
-    (fun stmt ->
-      match stmt.top with
-      | TopConstant (name, _, _, exp) -> (
-        let ctx = createConstCtx () in
-        let iexp = transformExp ctx exp in
-        let idx = Map.find name !constant_names in
-        (* Try to evaluate immediately, fall back to lazy evaluation for function calls *)
-        try
-          let value =
-            evalConstantExpression
-              (Array.map
-                 (function
-                   | Evaluated v -> v
-                   | Unevaluated _ -> DVoid)
-                 constants_array)
-              iexp
-          in
-          constants_array.(idx) <- Evaluated value;
-          (* Print constant if requested *)
-          if print_constants then
-            Printf.printf "%s = %s\n" name (printDvalue value)
-        with
-        | _ ->
-          (* Store as unevaluated for lazy evaluation later *)
-          let eval_ctx =
-            { ifunctions_array = [||]
-            ; (* Will be filled after function processing *)
-              ifunction_names = !function_names
-            ; iconstants_ref = constants_ref
-            }
-          in
-          constants_array.(idx) <- Unevaluated (iexp, eval_ctx))
-      | _ -> ())
-    prog;
-  let function_array =
-    Array.make
-      (CCList.length !function_defs)
-      { iname = ""; iargs = []; iret_type = Prog.C.void_t; ilocals = 0; ibody = IStmtBlock [] }
-  in
-  CCList.iteri
-    (fun idx (def, body) ->
-      let ifunc = transformFunction !types !constant_names !function_names !external_functions def body in
-      functions := Map.add def.name ifunc !functions;
-      function_array.(idx) <- ifunc)
-    (CCList.rev !function_defs);
+(* Transforms a single top-level statement incrementally *)
+let transformStatement (prog : iprog) (stmt : top_stmt) : unit =
+  match stmt.top with
+  | TopType descr -> prog.struct_types <- Map.add descr.path descr prog.struct_types
+  | TopConstant (name, _, _, exp) -> (
+    let const_idx = Array.length prog.iconstants in
+    prog.constant_names <- Map.add name const_idx prog.constant_names;
+    (* Create context for transforming the constant expression *)
+    let ctx =
+      { var_to_index = Hashtbl.create 32
+      ; next_index = 0
+      ; struct_types = prog.struct_types
+      ; constant_names = prog.constant_names
+      ; function_names = prog.ifunction_names
+      ; external_functions = prog.external_functions
+      }
+    in
+    let iexp = transformExp ctx exp in
+    (* Try to evaluate immediately, fall back to lazy evaluation *)
+    try
+      let value =
+        evalConstantExpression
+          (Array.map
+             (function
+               | Evaluated v -> v
+               | Unevaluated _ -> DVoid)
+             prog.iconstants)
+          iexp
+      in
+      addConstant prog (Evaluated value)
+    with
+    | _ ->
+      (* Store as unevaluated for lazy evaluation later *)
+      let eval_ctx =
+        { ifunctions_array = prog.ifunctions_array
+        ; ifunction_names = prog.ifunction_names
+        ; iconstants_ref = ref prog.iconstants
+        }
+      in
+      addConstant prog (Unevaluated (iexp, eval_ctx)))
+  | TopFunction (def, body) ->
+    let ifunc =
+      transformFunction prog.struct_types prog.constant_names prog.ifunction_names prog.external_functions def body
+    in
+    addFunction prog def.name ifunc
+  | TopExternal (def, _) -> prog.external_functions <- Set.add def.name prog.external_functions
+  | TopAlias _ -> () (* Type aliases don't need special handling in the interpreter *)
+
+
+(* Transforms an entire program from original AST to optimized interpreter AST using single-pass incremental approach *)
+let transformProgram (prog : top_stmt list) : iprog =
+  let iprog = createEmptyProgram () in
+  CCList.iter (transformStatement iprog) prog;
   (* Update lazy evaluation contexts with the completed function array *)
   Array.iteri
     (fun idx const_val ->
       match const_val with
       | Unevaluated (iexp, eval_ctx) ->
-        let updated_ctx = { eval_ctx with ifunctions_array = function_array } in
-        constants_array.(idx) <- Unevaluated (iexp, updated_ctx)
+        let updated_ctx = { eval_ctx with ifunctions_array = iprog.ifunctions_array } in
+        iprog.iconstants.(idx) <- Unevaluated (iexp, updated_ctx)
       | Evaluated _ -> ())
-    constants_array;
-  { ifunctions = !functions
-  ; ifunctions_array = function_array
-  ; ifunction_names = !function_names
-  ; iconstants = constants_array
-  }
+    iprog.iconstants;
+  iprog
 
 
 (* Runtime stack for function execution *)
@@ -1038,6 +1045,9 @@ and evaluateLazyConstant (constants : constant_value array) (idx : int) : dvalue
       ; ifunctions_array = ctx.ifunctions_array
       ; ifunction_names = ctx.ifunction_names
       ; iconstants = !(ctx.iconstants_ref)
+      ; struct_types = Map.empty
+      ; constant_names = Map.empty
+      ; external_functions = Set.empty
       }
     in
     (* Create a minimal stack for pure function evaluation *)
