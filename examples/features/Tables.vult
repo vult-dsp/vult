@@ -37,3 +37,8 @@ fun power2(x:int) : fix16 @[table(min = -4, max = 4)] {
 fun square(x:int) : int @[table(min = -4, max = 4)] {
   return x * x;
 }
+
+// Tables of integers can return integers
+fun square16(x:int16) : int16 @[table(min = -4, max = 4)] {
+  return x * x;
+}

@@ -81,3 +81,8 @@ this.Tables_square = function (x) {
    return Tables_square_table[(this.int_clip(x, (-4|0), (4|0)) + (4|0))];
 };
 
+var Tables_square16_table = {};
+this.Tables_square16 = function (x) {
+   return Tables_square16_table[(this.int_clip(x, (-4|0), (4|0)) + (4|0))];
+};
+

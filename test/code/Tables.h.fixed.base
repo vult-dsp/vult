@@ -58,5 +58,9 @@ static_inline int32_t Tables_square(int32_t x) {
    return Tables_square_table[static_cast<uint32_t>(int_clip(x, -4, 4) + 4)];
 }
 
+static_inline int16_t Tables_square16(int16_t x) {
+   return Tables_square16_table[static_cast<uint32_t>(int_clip(x, -4, 4) + 4)];
+}
+
 
 #endif // TABLES_H

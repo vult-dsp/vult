@@ -63,3 +63,8 @@ function Tables_square(x)
    return @inbounds Tables_square_table[(int_clip(x, Int32(-4), Int32(4)) + Int32(4)) + 1]
 end
 
+Tables_square16_table = nothing
+function Tables_square16(x)
+   return @inbounds Tables_square16_table[(int_clip(x, Int32(-4), Int32(4)) + Int32(4)) + 1]
+end
+

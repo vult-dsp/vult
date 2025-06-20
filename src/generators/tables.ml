@@ -33,6 +33,13 @@ let makeFloat (t : type_) x : exp =
   | _ -> failwith "invalid type"
 
 
+let makeInt (t : type_) x : exp =
+  match t.t with
+  | TInt -> C.eint x
+  | TInt16 -> C.eint16 x
+  | _ -> failwith "invalid type"
+
+
 let makeArrayType precision dim : type_ = C.array_t ~dim precision
 
 let makeRealTableDecl loc fname name precision data =
@@ -43,11 +50,11 @@ let makeRealTableDecl loc fname name precision data =
   { top = TopConstant (varname, Some size, t, C.earray elems t); loc }
 
 
-let makeIntTableDecl loc fname name data =
+let makeIntTableDecl loc fname name int_type data =
   let varname = fname ^ "_" ^ name in
   let size = CCList.length data in
-  let t = makeArrayType C.int_t size in
-  let elems = CCList.map C.eint data in
+  let t = makeArrayType int_type size in
+  let elems = CCList.map (makeInt int_type) data in
   { top = TopConstant (varname, Some size, t, C.earray elems t); loc }
 
 
@@ -103,13 +110,14 @@ let rec fitDataOrder2 data index acc0 acc1 acc2 =
 let getRealResult (x : Core.Interpreter.dvalue) =
   match x with
   | DReal y -> y
-  | _ -> failwith "Function returned an unexpected type. This should not happen."
+  | _ -> failwith "getRealResult: Function returned an unexpected type. This should not happen."
 
 
 let getIntResult (x : Core.Interpreter.dvalue) =
   match x with
   | DInt y -> y
-  | _ -> failwith "Function returned an unexpected type. This should not happen."
+  | DInt16 y -> y
+  | _ -> failwith "getIntResult: Function returned an unexpected type. This should not happen."
 
 
 let calculateIntRealTables loc iprog name min max precision =
@@ -124,16 +132,22 @@ let calculateIntRealTables loc iprog name min max precision =
   [ makeRealTableDecl loc name "table" precision data ]
 
 
-let calculateIntIntTables loc iprog name min max =
+let calculateIntIntTables loc iprog name (int_type : type_) min max =
   let size = max - min in
   let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
   let stack = Core.Interpreter.createStack 256 in
+  let makeInt i : Core.Interpreter.dvalue =
+    match int_type with
+    | { t = TInt; _ } -> DInt i
+    | { t = TInt16; _ } -> DInt16 i
+    | _ -> failwith "makeInt: invalid input type"
+  in
   let data =
     CCList.init (size + 1) (fun i ->
         let x = min + i in
-        getIntResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [ DInt x ]))
+        getIntResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [ makeInt x ]))
   in
-  [ makeIntTableDecl loc name "table" data ]
+  [ makeIntTableDecl loc name "table" int_type data ]
 
 
 let calculateTablesOrder1 loc iprog name size min max precision =
@@ -333,7 +347,7 @@ let checkInputVariables (loc : Loc.t) (args : param list) : exp =
   | [ { name; t; _ } ] -> C.eid name t
   | _ ->
     let msg =
-      "Table generation attribute requires a function with exactly one parameter (e.g., 'fun foo(x:real) : real')"
+      "Table generation attribute requires a function with exactly one parameter (e.g., 'fun foo(x:type) : type')"
     in
     Error.raiseError msg loc
 
@@ -393,10 +407,18 @@ let makeIntTable vm (def : function_def) =
     let result = calculateIntRealTables loc vm def.name min max out_precision in
     let new_body = makeIntAccessBody def.name out_precision min max var in
     result @ [ { top = TopFunction (def, new_body); loc } ]
-  | Tags.[ Some (Int min); Some (Int max) ], (_, { t = TInt; _ }) ->
+  | ( Tags.[ Some (Int min); Some (Int max) ]
+    , ([ ({ t = TInt | TInt16; _ } as arg_type) ], ({ t = TInt | TInt16; _ } as int_type)) ) ->
+    let () =
+      if compare arg_type.t int_type.t = 0 then
+        ()
+      else
+        let msg = "To generate the table, the function requires the same types as input and output" in
+        Util.Error.raiseError msg def.loc
+    in
     let var = checkInputVariables def.loc def.args in
-    let result = calculateIntIntTables loc vm def.name min max in
-    let new_body = makeIntAccessBody def.name C.int_t min max var in
+    let result = calculateIntIntTables loc vm def.name int_type min max in
+    let new_body = makeIntAccessBody def.name int_type min max var in
     result @ [ { top = TopFunction (def, new_body); loc } ]
   | _ ->
     let msg = "The attribute 'table' on integer tables requires specific parameters. e.g. 'table(min = 0, max = 16)'" in
@@ -549,7 +571,8 @@ let makeWavetable (args : Args.args) _vm (def : function_def) =
 
 let replaceFunction (args : Args.args) vm stmt =
   match stmt.top with
-  | TopFunction (({ t = [ { t = TInt; _ } ], _; _ } as def), _) when Tags.has def.tags "table" -> makeIntTable vm def
+  | TopFunction (({ t = [ { t = TInt | TInt16; _ } ], _; _ } as def), _) when Tags.has def.tags "table" ->
+    makeIntTable vm def
   | TopFunction (def, _) when Tags.has def.tags "table" -> makeTable vm def
   | TopExternal (def, _) when Tags.has def.tags "wave" -> makeWave args vm def
   | TopExternal (def, _) when Tags.has def.tags "wavetable" -> makeWavetable args vm def

@@ -150,3 +150,8 @@ function Tables_square(x)
    return Tables_square_table[(int_clip(x, -4, 4) + 4) + 1]
 end
 
+Tables_square16_table = {};
+function Tables_square16(x)
+   return Tables_square16_table[(int_clip(x, -4, 4) + 4) + 1]
+end
+
