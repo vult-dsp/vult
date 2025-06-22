@@ -221,14 +221,24 @@ let createEmptyProgram () : iprog =
 
 (* Adds a function to the iprog, resizing arrays as needed *)
 let addFunction (prog : iprog) (name : string) (ifunc : ifunc_def) : unit =
-  let func_idx = Map.cardinal prog.ifunction_names in
-  prog.ifunction_names <- Map.add name func_idx prog.ifunction_names;
+  (* Get the function index - it should already exist since we add it before transforming *)
+  let func_idx =
+    match Map.find_opt name prog.ifunction_names with
+    | Some idx -> idx
+    | None ->
+      (* This shouldn't happen if functions are processed correctly *)
+      error ("Function index not found for: " ^ name)
+  in
   prog.ifunctions <- Map.add name ifunc prog.ifunctions;
   (* Resize function array if needed *)
-  let new_array = Array.make (func_idx + 1) ifunc in
-  Array.blit prog.ifunctions_array 0 new_array 0 (Array.length prog.ifunctions_array);
-  new_array.(func_idx) <- ifunc;
-  prog.ifunctions_array <- new_array
+  if func_idx >= Array.length prog.ifunctions_array then (
+    let new_size = max (func_idx + 1) (Array.length prog.ifunctions_array * 2) in
+    let new_array = Array.make new_size ifunc in
+    Array.blit prog.ifunctions_array 0 new_array 0 (Array.length prog.ifunctions_array);
+    new_array.(func_idx) <- ifunc;
+    prog.ifunctions_array <- new_array)
+  else
+    prog.ifunctions_array.(func_idx) <- ifunc
 
 
 (* Adds a constant to the iprog, resizing array as needed *)
@@ -767,6 +777,10 @@ let transformStatement (prog : iprog) (stmt : top_stmt) : unit =
       in
       addConstant prog (Unevaluated (iexp, eval_ctx)))
   | TopFunction (def, body) ->
+    (* Assign function index before transforming the body to support recursion *)
+    let func_idx = Map.cardinal prog.ifunction_names in
+    prog.ifunction_names <- Map.add def.name func_idx prog.ifunction_names;
+    (* Now transform the function body with the updated function mapping *)
     let ifunc =
       transformFunction prog.struct_types prog.constant_names prog.ifunction_names prog.external_functions def body
     in
@@ -776,6 +790,7 @@ let transformStatement (prog : iprog) (stmt : top_stmt) : unit =
 
 
 let extendProgram iprog (prog : top_stmt list) =
+  (* Single pass: process statements in order *)
   CCList.iter (transformStatement iprog) prog;
   (* Update lazy evaluation contexts with the completed function array *)
   Array.iteri
