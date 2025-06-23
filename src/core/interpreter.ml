@@ -159,6 +159,7 @@ type iprog =
   ; mutable ifunctions_array : ifunc_def array (* Function array for O(1) access by index *)
   ; mutable ifunction_names : int Map.t (* Function name to index mapping *)
   ; mutable iconstants : constant_value array (* Global constants array with lazy evaluation *)
+  ; mutable iconstants_count : int (* Number of constants currently stored *)
   ; mutable struct_types : struct_descr Map.t (* Struct type definitions *)
   ; mutable constant_names : int Map.t (* Constant name to index mapping *)
   ; mutable external_functions : Set.t (* External function names *)
@@ -213,6 +214,7 @@ let createEmptyProgram () : iprog =
   ; ifunctions_array = [||]
   ; ifunction_names = Map.empty
   ; iconstants = [||]
+  ; iconstants_count = 0
   ; struct_types = Map.empty
   ; constant_names = Map.empty
   ; external_functions = Set.empty
@@ -243,11 +245,22 @@ let addFunction (prog : iprog) (name : string) (ifunc : ifunc_def) : unit =
 
 (* Adds a constant to the iprog, resizing array as needed *)
 let addConstant (prog : iprog) (const_val : constant_value) : unit =
-  let const_idx = Array.length prog.iconstants in
-  let new_array = Array.make (const_idx + 1) const_val in
-  Array.blit prog.iconstants 0 new_array 0 (Array.length prog.iconstants);
-  new_array.(const_idx) <- const_val;
-  prog.iconstants <- new_array
+  let const_idx = prog.iconstants_count in
+  (* Resize constants array if needed using doubling strategy *)
+  if const_idx >= Array.length prog.iconstants then (
+    let new_size =
+      if const_idx = 0 then
+        16
+      else
+        Array.length prog.iconstants * 2
+    in
+    let new_array = Array.make new_size (Evaluated DVoid) in
+    Array.blit prog.iconstants 0 new_array 0 prog.iconstants_count;
+    new_array.(const_idx) <- const_val;
+    prog.iconstants <- new_array)
+  else
+    prog.iconstants.(const_idx) <- const_val;
+  prog.iconstants_count <- prog.iconstants_count + 1
 
 
 (* Adds a variable to the transformation context and returns its assigned index *)
@@ -762,7 +775,7 @@ let transformStatement (prog : iprog) (stmt : top_stmt) : unit =
              (function
                | Evaluated v -> v
                | Unevaluated _ -> DVoid)
-             prog.iconstants)
+             (Array.sub prog.iconstants 0 prog.iconstants_count))
           iexp
       in
       addConstant prog (Evaluated value)
@@ -793,14 +806,13 @@ let extendProgram iprog (prog : top_stmt list) =
   (* Single pass: process statements in order *)
   CCList.iter (transformStatement iprog) prog;
   (* Update lazy evaluation contexts with the completed function array *)
-  Array.iteri
-    (fun idx const_val ->
-      match const_val with
-      | Unevaluated (iexp, eval_ctx) ->
-        let updated_ctx = { eval_ctx with ifunctions_array = iprog.ifunctions_array } in
-        iprog.iconstants.(idx) <- Unevaluated (iexp, updated_ctx)
-      | Evaluated _ -> ())
-    iprog.iconstants;
+  for idx = 0 to iprog.iconstants_count - 1 do
+    match iprog.iconstants.(idx) with
+    | Unevaluated (iexp, eval_ctx) ->
+      let updated_ctx = { eval_ctx with ifunctions_array = iprog.ifunctions_array } in
+      iprog.iconstants.(idx) <- Unevaluated (iexp, updated_ctx)
+    | Evaluated _ -> ()
+  done;
   iprog
 
 
@@ -1091,6 +1103,7 @@ and evaluateLazyConstant (constants : constant_value array) (idx : int) : dvalue
       ; ifunctions_array = ctx.ifunctions_array
       ; ifunction_names = ctx.ifunction_names
       ; iconstants = !(ctx.iconstants_ref)
+      ; iconstants_count = Array.length !(ctx.iconstants_ref)
       ; struct_types = Map.empty
       ; constant_names = Map.empty
       ; external_functions = Set.empty
