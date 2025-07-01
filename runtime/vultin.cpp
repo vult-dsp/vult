@@ -234,7 +234,7 @@ void update_size(CustomBuffer &buffer, int32_t index, int32_t size) {
 int32_t push_float(CustomBuffer &buffer, int32_t index, float value) {
   float_bytes_union converter;
   converter.f = value;
-  
+
   push_byte(buffer, FLOAT_TAG);
   push_byte(buffer, converter.bytes[0]);
   push_byte(buffer, converter.bytes[1]);
@@ -417,7 +417,7 @@ std::string deserialize_string(CustomBuffer &buffer, int32_t index) {
     // String size = total_size - header(4) - tag(1) = total_size - 5
     // But we need to account for null terminator, so actual string length = total_size - 5 - 1
     int32_t string_length = total_size - 5 - 1;
-    
+
     if (string_length < 0) {
       buffer.error = true;
       return "";
@@ -426,7 +426,7 @@ std::string deserialize_string(CustomBuffer &buffer, int32_t index) {
     index = index + 4; // move to the first characters
     std::string str;
     str.reserve(static_cast<size_t>(string_length));
-    
+
     for (int i = 0; i < string_length; i++) {
       char c = static_cast<char>(read_byte(buffer, index++));
       if (buffer.error) {
@@ -434,10 +434,10 @@ std::string deserialize_string(CustomBuffer &buffer, int32_t index) {
       }
       str.push_back(c);
     }
-    
+
     // Skip the null terminator
     index++;
-    
+
     return str;
   } else {
     buffer.error = true;

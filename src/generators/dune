@@ -13,7 +13,7 @@
   T_performance
   T_mathematica
   Replacements)
- (libraries core pparser pla vm str util)
+ (libraries core pparser pla str util)
  (flags
   (:standard -w -30))
  (preprocess
