@@ -1,0 +1,60 @@
+// Test: Nested generic function calls
+// A generic function calling another generic function
+
+fun identity(x : 't) : 't {
+  return x;
+}
+
+fun double_identity(x : 't) : 't {
+  // Call another generic function
+  return identity(x);
+}
+
+fun triple_nested(x : 't) : 't {
+  // Three levels of nesting
+  return double_identity(x);
+}
+
+fun test_double_identity() : int {
+  val r1 = double_identity(42);
+  val r2 = double_identity(100);
+
+  if (r1 == 42 && r2 == 100) {
+    return 100;
+  }
+  return -1;
+}
+
+fun test_triple_nested() : int {
+  val r1 = triple_nested(55);
+  val r2 = triple_nested(77);
+
+  if (r1 == 55 && r2 == 77) {
+    return 200;
+  }
+  return -2;
+}
+
+fun test_many_calls() : int {
+  // Multiple calls to same specialized version
+  val r1 = double_identity(10);
+  val r2 = triple_nested(20);
+  val r3 = double_identity(30);
+
+  if (r1 == 10 && r2 == 20 && r3 == 30) {
+    return 300;
+  }
+  return -3;
+}
+
+fun main() : int {
+  val t1 = test_double_identity();
+  val t2 = test_triple_nested();
+  val t3 = test_many_calls();
+
+  // All tests pass: 100 + 200 + 300 = 600
+  if (t1 == 100 && t2 == 200 && t3 == 300) {
+    return 600;
+  }
+  return t1 + t2 + t3;
+}

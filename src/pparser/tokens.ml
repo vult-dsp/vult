@@ -36,6 +36,7 @@ type token_enum =
   | REAL
   | FIXED
   | ID
+  | QUOTED_ID
   | STRING
   | FUN
   | MEM

@@ -194,6 +194,151 @@ and top_stmt =
 
 type program = top_stmt list
 
+type generic_param =
+  | GParamFunction of string * type_ option (* Function type using TEFunction *)
+  | GParamType of string
+  | GParamConstant of string * type_
+
+type generic_function =
+  { name : string
+  ; generic_params : generic_param list
+  ; args : arg list
+  ; t : fun_type (* Keep as fun_type for function definitions *)
+  ; body : Syntax.stmt (* Store the unprocessed body *)
+  ; loc : Loc.t
+  ; tags : tag list
+  }
+
+type generic_binding =
+  | BindFunction of string * type_ (* Function type using TEFunction *)
+  | BindType of type_
+  | BindConstant of exp * type_
+  | BindNonSpecializable (* Marker for non-specializable parameters *)
+
+(* Concrete constant values for generic instantiation *)
+type constant_value =
+  | IntConstant of int
+  | RealConstant of float
+  | BoolConstant of bool
+  | StringConstant of string
+
+(* Enhanced generic binding with complete type information *)
+type generic_binding_value =
+  | FunctionBinding of
+      { func_name : string
+      ; arg_types : type_ list
+      ; return_type : type_
+      }
+  | TypeBinding of type_
+  | ConstantBinding of
+      { value : constant_value
+      ; value_type : type_
+      }
+
+(* Individual generic parameter binding *)
+type generic_param_binding =
+  { param_name : string
+  ; binding : generic_binding_value
+  }
+
+(* Regular function argument signature *)
+type function_arg_signature =
+  { param_name : string
+  ; arg_type : type_
+  }
+
+(* Complete instantiation signature including generic params, function args, and return type *)
+type instantiation_signature =
+  { generic_name : string
+  ; generic_params : generic_param_binding list
+  ; function_args : function_arg_signature list
+  ; return_type : type_
+  }
+
+type generic_instantiation =
+  { signature : instantiation_signature
+  ; specialized_name : string
+  ; bindings : (string * generic_binding) list (* Legacy - will be removed *)
+  ; specialized_def : function_def
+  }
+
+(* Comparison functions for signature-based lookup *)
+let compare_constant_value (c1 : constant_value) (c2 : constant_value) : int =
+  match c1, c2 with
+  | IntConstant i1, IntConstant i2 -> Int.compare i1 i2
+  | RealConstant r1, RealConstant r2 -> Float.compare r1 r2
+  | BoolConstant b1, BoolConstant b2 -> Bool.compare b1 b2
+  | StringConstant s1, StringConstant s2 -> String.compare s1 s2
+  | IntConstant _, _ -> -1
+  | RealConstant _, IntConstant _ -> 1
+  | RealConstant _, _ -> -1
+  | BoolConstant _, (IntConstant _ | RealConstant _) -> 1
+  | BoolConstant _, _ -> -1
+  | StringConstant _, _ -> 1
+
+
+let compare_type (t1 : type_) (t2 : type_) : int =
+  (* Use existing type comparison function *)
+  compare_type_ t1 t2
+
+
+let compare_generic_binding_value (b1 : generic_binding_value) (b2 : generic_binding_value) : int =
+  match b1, b2 with
+  | FunctionBinding f1, FunctionBinding f2 ->
+    let name_cmp = String.compare f1.func_name f2.func_name in
+    if name_cmp <> 0 then
+      name_cmp
+    else
+      let args_cmp = CCList.compare compare_type f1.arg_types f2.arg_types in
+      if args_cmp <> 0 then
+        args_cmp
+      else
+        compare_type f1.return_type f2.return_type
+  | TypeBinding t1, TypeBinding t2 -> compare_type t1 t2
+  | ConstantBinding c1, ConstantBinding c2 ->
+    let value_cmp = compare_constant_value c1.value c2.value in
+    if value_cmp <> 0 then
+      value_cmp
+    else
+      compare_type c1.value_type c2.value_type
+  | FunctionBinding _, _ -> -1
+  | TypeBinding _, FunctionBinding _ -> 1
+  | TypeBinding _, _ -> -1
+  | ConstantBinding _, _ -> 1
+
+
+let compare_generic_param_binding (p1 : generic_param_binding) (p2 : generic_param_binding) : int =
+  let name_cmp = String.compare p1.param_name p2.param_name in
+  if name_cmp <> 0 then
+    name_cmp
+  else
+    compare_generic_binding_value p1.binding p2.binding
+
+
+let compare_function_arg_signature (a1 : function_arg_signature) (a2 : function_arg_signature) : int =
+  let name_cmp = String.compare a1.param_name a2.param_name in
+  if name_cmp <> 0 then
+    name_cmp
+  else
+    compare_type a1.arg_type a2.arg_type
+
+
+let compare_instantiation_signature (s1 : instantiation_signature) (s2 : instantiation_signature) : int =
+  let name_cmp = String.compare s1.generic_name s2.generic_name in
+  if name_cmp <> 0 then
+    name_cmp
+  else
+    let generic_params_cmp = CCList.compare compare_generic_param_binding s1.generic_params s2.generic_params in
+    if generic_params_cmp <> 0 then
+      generic_params_cmp
+    else
+      let function_args_cmp = CCList.compare compare_function_arg_signature s1.function_args s2.function_args in
+      if function_args_cmp <> 0 then
+        function_args_cmp
+      else
+        compare_type s1.return_type s2.return_type
+
+
 let rec print_constness (c : constness) =
   match c.c with
   | TEConst i -> {%pla|const<#i#i> |}
@@ -357,8 +502,9 @@ let rec print_stmt s =
     {%pla|{<#stmt#+>}|}
 
 
-let print_arg { name; t; _ } =
-  let t = print_type_ ~detailed:true t in
+let print_arg (arg : arg) =
+  let t = print_type_ ~detailed:true arg.t in
+  let name = arg.name in
   {%pla|<#name#s> : <#t#>|}
 
 
@@ -665,3 +811,135 @@ let rec refreshConstness (t : type_) =
     | _ -> t
   in
   { t with const = C.const () }
+
+
+(* Create fresh copies of types with new mutable cells to avoid type constraint sharing *)
+let rec copy_type (t : type_) : type_ =
+  match t.tx with
+  | TEUnbound _ ->
+    (* Create a completely fresh unbound type *)
+    { tx = TEUnbound None; const = C.const (); loc = t.loc }
+  | TELink linked_t -> copy_type linked_t
+  | TEId path -> { tx = TEId path; const = C.const (); loc = t.loc }
+  | TESize size -> { tx = TESize size; const = C.const (); loc = t.loc }
+  | TEComposed (name, type_list) ->
+    let fresh_type_list = CCList.map copy_type type_list in
+    { tx = TEComposed (name, fresh_type_list); const = C.const (); loc = t.loc }
+  | TEOption type_list ->
+    let fresh_type_list = CCList.map copy_type type_list in
+    { tx = TEOption fresh_type_list; const = C.const (); loc = t.loc }
+  | TEFunction (arg_types, ret_type) ->
+    let fresh_arg_types = CCList.map copy_type arg_types in
+    let fresh_ret_type = copy_type ret_type in
+    { tx = TEFunction (fresh_arg_types, fresh_ret_type); const = C.const (); loc = t.loc }
+  | TENoReturn -> { tx = TENoReturn; const = C.const (); loc = t.loc }
+
+
+(* Copy types while preserving sharing: if the same original unbound type appears *)
+(* in multiple places (e.g., 't in both array('t, 3) and return type 't), they *)
+(* will map to the same fresh unbound type in the copy. This is essential for *)
+(* generic function specialization to work correctly. *)
+module TypeHashtbl = Hashtbl.Make (struct
+  type t = type_
+
+  let equal = ( == )
+
+  let hash = Hashtbl.hash
+end)
+
+let copy_types_preserving_sharing (types : type_ list) : type_ list =
+  let memo = TypeHashtbl.create 16 in
+  let rec copy_with_memo (t : type_) : type_ =
+    (* Check if we've already copied this exact type object *)
+    match TypeHashtbl.find_opt memo t with
+    | Some fresh_t -> fresh_t
+    | None ->
+      let fresh_t =
+        match t.tx with
+        | TEUnbound _ ->
+          (* Create a fresh unbound type and remember it *)
+          { tx = TEUnbound None; const = C.const (); loc = t.loc }
+        | TELink linked_t ->
+          (* For linked types, copy the linked type (but don't memo the link itself) *)
+          copy_with_memo linked_t
+        | TEId path -> { tx = TEId path; const = C.const (); loc = t.loc }
+        | TESize size -> { tx = TESize size; const = C.const (); loc = t.loc }
+        | TEComposed (name, type_list) ->
+          let fresh_type_list = CCList.map copy_with_memo type_list in
+          { tx = TEComposed (name, fresh_type_list); const = C.const (); loc = t.loc }
+        | TEOption type_list ->
+          let fresh_type_list = CCList.map copy_with_memo type_list in
+          { tx = TEOption fresh_type_list; const = C.const (); loc = t.loc }
+        | TEFunction (arg_types, ret_type) ->
+          let fresh_arg_types = CCList.map copy_with_memo arg_types in
+          let fresh_ret_type = copy_with_memo ret_type in
+          { tx = TEFunction (fresh_arg_types, fresh_ret_type); const = C.const (); loc = t.loc }
+        | TENoReturn -> { tx = TENoReturn; const = C.const (); loc = t.loc }
+      in
+      (* Only memoize unbound types - these are the ones we need to preserve sharing for *)
+      (match t.tx with
+      | TEUnbound _ -> TypeHashtbl.add memo t fresh_t
+      | _ -> ());
+      fresh_t
+  in
+  CCList.map copy_with_memo types
+
+
+(* Find all unique unbound types in a list of types, in order of first appearance *)
+(* Uses physical identity to track uniqueness *)
+let find_unbounds_in_types (types : type_ list) : type_ list =
+  let seen = TypeHashtbl.create 16 in
+  let result = ref [] in
+  let rec walk (t : type_) : unit =
+    match t.tx with
+    | TEUnbound _ ->
+      if not (TypeHashtbl.mem seen t) then (
+        TypeHashtbl.add seen t ();
+        result := t :: !result)
+    | TELink linked_t -> walk linked_t
+    | TEComposed (_, type_list) -> CCList.iter walk type_list
+    | TEOption type_list -> CCList.iter walk type_list
+    | TEFunction (arg_types, ret_type) ->
+      CCList.iter walk arg_types;
+      walk ret_type
+    | TEId _ | TESize _ | TENoReturn -> ()
+  in
+  CCList.iter walk types;
+  CCList.rev !result
+
+
+(* Copy types while preserving sharing AND return the mapping from original unbounds to fresh unbounds *)
+(* This is needed to extract type bindings after unification *)
+let copy_types_with_unbound_mapping (types : type_ list) : type_ list * (type_ * type_) list =
+  let memo = TypeHashtbl.create 16 in
+  let rec copy_with_memo (t : type_) : type_ =
+    match TypeHashtbl.find_opt memo t with
+    | Some fresh_t -> fresh_t
+    | None ->
+      let fresh_t =
+        match t.tx with
+        | TEUnbound _ -> { tx = TEUnbound None; const = C.const (); loc = t.loc }
+        | TELink linked_t -> copy_with_memo linked_t
+        | TEId path -> { tx = TEId path; const = C.const (); loc = t.loc }
+        | TESize size -> { tx = TESize size; const = C.const (); loc = t.loc }
+        | TEComposed (name, type_list) ->
+          let fresh_type_list = CCList.map copy_with_memo type_list in
+          { tx = TEComposed (name, fresh_type_list); const = C.const (); loc = t.loc }
+        | TEOption type_list ->
+          let fresh_type_list = CCList.map copy_with_memo type_list in
+          { tx = TEOption fresh_type_list; const = C.const (); loc = t.loc }
+        | TEFunction (arg_types, ret_type) ->
+          let fresh_arg_types = CCList.map copy_with_memo arg_types in
+          let fresh_ret_type = copy_with_memo ret_type in
+          { tx = TEFunction (fresh_arg_types, fresh_ret_type); const = C.const (); loc = t.loc }
+        | TENoReturn -> { tx = TENoReturn; const = C.const (); loc = t.loc }
+      in
+      (match t.tx with
+      | TEUnbound _ -> TypeHashtbl.add memo t fresh_t
+      | _ -> ());
+      fresh_t
+  in
+  let fresh_types = CCList.map copy_with_memo types in
+  (* Extract the mapping as a list of (original, fresh) pairs *)
+  let mapping = TypeHashtbl.fold (fun orig fresh acc -> (orig, fresh) :: acc) memo [] in
+  fresh_types, mapping

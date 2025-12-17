@@ -1,0 +1,184 @@
+// Stress tests for generic functions
+
+// =============================================================================
+// Test 1: Generic in a loop - same instance used across iterations
+// =============================================================================
+fun counter_generic(x : 't) : int {
+  mem count : int;
+  count = count + 1;
+  return count;
+}
+
+fun test_loop_generic() : int {
+  mem i : int;
+  mem sum : int;
+
+  // Call counter 5 times - should count 1,2,3,4,5
+  while (i < 5) {
+    sum = sum + counter_generic(i);  // Same instance for all iterations
+    i = i + 1;
+  }
+
+  // 1 + 2 + 3 + 4 + 5 = 15
+  if (sum == 15) {
+    return 100;
+  }
+  return -1;
+}
+
+// =============================================================================
+// Test 2: Multiple specializations in same function
+// =============================================================================
+fun track(x : 't) : bool {
+  mem last : 't;
+  val changed = last <> x;
+  last = x;
+  return changed;
+}
+
+fun test_multi_specialize() : int {
+  // int specialization
+  val i1 = track(10);  // last=0, 0<>10=true
+  val i2 = track(20);  // different call site, last=0, 0<>20=true
+
+  // real specialization
+  val r1 = track(1.0); // last=0.0, 0.0<>1.0=true
+  val r2 = track(2.0); // different call site, last=0.0, 0.0<>2.0=true
+
+  // All should be true (each call site has fresh state)
+  if (i1 && i2 && r1 && r2) {
+    return 200;
+  }
+  return -2;
+}
+
+// =============================================================================
+// Test 3: Constant parameter with different values
+// =============================================================================
+fun add_n('n : int, x : int) : int {
+  return n + x;
+}
+
+fun test_const_variations() : int {
+  val a = add_n(1, 10);   // 1 + 10 = 11
+  val b = add_n(5, 10);   // 5 + 10 = 15
+  val c = add_n(100, 10); // 100 + 10 = 110
+
+  if (a == 11 && b == 15 && c == 110) {
+    return 300;
+  }
+  return -3;
+}
+
+// =============================================================================
+// Test 4: Function parameter with different functions
+// =============================================================================
+fun apply('f, x : int, y : int) : int {
+  return f(x, y);
+}
+
+fun add(a : int, b : int) : int { return a + b; }
+fun sub(a : int, b : int) : int { return a - b; }
+fun mul(a : int, b : int) : int { return a * b; }
+
+fun test_func_param() : int {
+  val sum = apply(add, 10, 3);  // 13
+  val diff = apply(sub, 10, 3); // 7
+  val prod = apply(mul, 10, 3); // 30
+
+  if (sum == 13 && diff == 7 && prod == 30) {
+    return 400;
+  }
+  return -4;
+}
+
+// =============================================================================
+// Test 5: Stateful function called multiple times from same call site
+// =============================================================================
+fun increment(x : 't) : int {
+  mem counter : int;
+  counter = counter + 1;
+  return counter;
+}
+
+fun test_same_callsite() : int {
+  mem total : int;
+
+  // These are all DIFFERENT call sites, so each has its own instance
+  total = total + increment(1);   // counter1: 0->1, returns 1
+  total = total + increment(2);   // counter2: 0->1, returns 1
+  total = total + increment(3);   // counter3: 0->1, returns 1
+
+  // Should be 1+1+1 = 3
+  if (total == 3) {
+    return 500;
+  }
+  return -5;
+}
+
+// =============================================================================
+// Test 6: Generic with early return paths
+// =============================================================================
+fun get_or_default(x : 't, use_stored : bool) : 't {
+  mem stored : 't;
+
+  if (use_stored) {
+    return stored;
+  }
+
+  stored = x;
+  return x;
+}
+
+fun test_early_return() : int {
+  // First call: use_stored=false, stores 42, returns 42
+  val a = get_or_default(42, false);
+  // Second call: different instance! use_stored=true, returns 0 (default)
+  val b = get_or_default(100, true);
+
+  if (a == 42 && b == 0) {
+    return 600;
+  }
+  return -6;
+}
+
+// =============================================================================
+// Test 7: Mixed generic and regular parameters
+// =============================================================================
+fun scale(x : 't, factor : int) : int {
+  mem base : 't;
+  base = x;
+  return factor;  // Just return factor to verify call works
+}
+
+fun test_mixed_params() : int {
+  val a = scale(10, 2);
+  val b = scale(3.14, 3);
+
+  if (a == 2 && b == 3) {
+    return 700;
+  }
+  return -7;
+}
+
+// =============================================================================
+// Main test runner
+// =============================================================================
+fun main() : int {
+  val t1 = test_loop_generic();
+  val t2 = test_multi_specialize();
+  val t3 = test_const_variations();
+  val t4 = test_func_param();
+  val t5 = test_same_callsite();
+  val t6 = test_early_return();
+  val t7 = test_mixed_params();
+
+  // All tests pass: 100+200+300+400+500+600+700 = 2800
+  if (t1 == 100 && t2 == 200 && t3 == 300 && t4 == 400 &&
+      t5 == 500 && t6 == 600 && t7 == 700) {
+    return 2800;
+  }
+
+  // Return sum for debugging which tests failed
+  return t1 + t2 + t3 + t4 + t5 + t6 + t7;
+}

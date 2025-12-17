@@ -51,6 +51,7 @@ module Dependencies = struct
     match t.t with
     | STUnbound -> set
     | STId p -> path set p
+    | STGenericType _ -> set
     | STSize _ -> set
     | STComposed (_, subs) -> list type_ set subs
 

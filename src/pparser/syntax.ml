@@ -32,6 +32,7 @@ type path =
 type type_d =
   | STUnbound
   | STId of path
+  | STGenericType of string (* Generic type parameter like 't or 't1 *)
   | STSize of int
   | STComposed of string * type_ list
 
@@ -122,6 +123,11 @@ and dexp =
   ; loc : Loc.t
   }
 
+type generic_param =
+  | GParamFunction of string * type_ option (* 'f : (int,int) -> int *)
+  | GParamType of string (* 't *)
+  | GParamConstant of string * type_ (* 'a : int *)
+
 type arg = string * type_ option * Loc.t
 
 and stmt_d =
@@ -150,6 +156,7 @@ and stmt =
 
 and function_def =
   { name : string
+  ; generic_params : generic_param list
   ; args : arg list
   ; t : type_ option
   ; next : function_def option
@@ -223,6 +230,7 @@ module Print = struct
   and type_d t =
     match t with
     | STId p -> path p
+    | STGenericType id -> Pla.string ("'" ^ id)
     | STSize i -> Pla.int i
     | STComposed (name, subs) ->
       let subs = Pla.map_sep Pla.commaspace type_ subs in
@@ -784,6 +792,7 @@ module Mapper = struct
           in
           state, odata
         | STSize _ -> state, idata
+        | STGenericType _ -> state, idata
         | STComposed (field_0, field_1) ->
           let state, field_1' = (mapper_list map_type_) mapper context state field_1 in
           let field_0' = field_0 in
@@ -1231,17 +1240,34 @@ module Mapper = struct
     let state, odata =
       if context.recurse then
         match idata with
-        | { name; args; t; next; loc; tags; body } ->
+        | { name; generic_params; args; t; next; loc; tags; body } ->
           let state, body' = map_stmt mapper context state body in
           let state, next' = (mapper_opt map_function_def) mapper context state next in
           let state, t' = (mapper_opt map_type_) mapper context state t in
           let state, args' = (mapper_list map_arg) mapper context state args in
           let name' = name in
+          let generic_params' = generic_params in
+          (* For now, generics don't get mapped *)
           let odata =
-            if name == name' && args == args' && t == t' && next == next' && body == body' then
+            if
+              name == name'
+              && generic_params == generic_params'
+              && args == args'
+              && t == t'
+              && next == next'
+              && body == body'
+            then
               idata
             else
-              { name = name'; args = args'; t = t'; next = next'; loc; tags; body = body' }
+              { name = name'
+              ; generic_params = generic_params'
+              ; args = args'
+              ; t = t'
+              ; next = next'
+              ; loc
+              ; tags
+              ; body = body'
+              }
           in
           state, odata
       else
@@ -1416,6 +1442,7 @@ module SExpr = struct
     match type_data with
     | STUnbound -> "STUnbound"
     | STId p -> "(STId " ^ print_path p ^ ")"
+    | STGenericType id -> "(STGenericType " ^ id ^ ")"
     | STSize n -> "(STSize " ^ string_of_int n ^ ")"
     | STComposed (name, types) -> "(STComposed " ^ name ^ " " ^ print_list print_type types ^ ")"
 
@@ -1516,12 +1543,32 @@ module SExpr = struct
     "(lexp " ^ l_str ^ ")"
 
 
+  let print_generic_param (param : generic_param) : string =
+    match param with
+    | GParamFunction (name, type_opt) -> "(GParamFunction " ^ name ^ " " ^ print_option print_type type_opt ^ ")"
+    | GParamType name -> "(GParamType " ^ name ^ ")"
+    | GParamConstant (name, t) -> "(GParamConstant " ^ name ^ " " ^ print_type t ^ ")"
+
+
   let rec print_function_def (def : function_def) : string =
+    let generic_params_str = print_list print_generic_param def.generic_params in
     let args_str = print_list print_arg def.args in
     let ret_str = print_option print_type def.t in
     let body_str = print_stmt def.body in
     let next_str = print_option print_function_def def.next in
-    "(function_def " ^ def.name ^ " " ^ args_str ^ " " ^ ret_str ^ " " ^ body_str ^ " " ^ next_str ^ ")"
+    "(function_def "
+    ^ def.name
+    ^ " "
+    ^ generic_params_str
+    ^ " "
+    ^ args_str
+    ^ " "
+    ^ ret_str
+    ^ " "
+    ^ body_str
+    ^ " "
+    ^ next_str
+    ^ ")"
 
 
   let print_top_stmt (ts : top_stmt) : string =

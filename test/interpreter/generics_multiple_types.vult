@@ -1,0 +1,63 @@
+// Test: Multiple type parameters
+// Each type parameter should bind to its corresponding argument type
+
+fun pair_first(a : 't1, b : 't2) : 't1 {
+  return a;
+}
+
+fun pair_second(a : 't1, b : 't2) : 't2 {
+  return b;
+}
+
+fun swap_types(a : 't1, b : 't2) : 't2 {
+  // Use both types in local variables
+  val x : 't1 = a;
+  val y : 't2 = b;
+  return y;
+}
+
+fun test_pair_first() : int {
+  // int and real - return int
+  val r1 = pair_first(42, 3.14);
+  // int and bool - return int
+  val r2 = pair_first(100, true);
+
+  if (r1 == 42 && r2 == 100) {
+    return 100;
+  }
+  return -1;
+}
+
+fun test_pair_second() : int {
+  // int and bool - return bool
+  val r1 = pair_second(10, true);
+
+  if (r1) {
+    return 200;
+  }
+  return -2;
+}
+
+fun test_swap_types() : int {
+  // real and int - return int
+  val r1 = swap_types(1.5, 100);
+  // int and int - return int
+  val r2 = swap_types(50, 200);
+
+  if (r1 == 100 && r2 == 200) {
+    return 300;
+  }
+  return -3;
+}
+
+fun main() : int {
+  val t1 = test_pair_first();
+  val t2 = test_pair_second();
+  val t3 = test_swap_types();
+
+  // All tests pass: 100 + 200 + 300 = 600
+  if (t1 == 100 && t2 == 200 && t3 == 300) {
+    return 600;
+  }
+  return t1 + t2 + t3;
+}

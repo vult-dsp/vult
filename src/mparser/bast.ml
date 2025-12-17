@@ -574,7 +574,7 @@ let fun_def_FunDef (loc : Lexing.position * Lexing.position) (name : string) (ar
     | None -> []
     | Some tags -> tags
   in
-  state, { name; args; t = ret_type; next = None; loc = mk_loc state loc; tags; body }
+  state, { name; generic_params = []; args; t = ret_type; next = None; loc = mk_loc state loc; tags; body }
 
 
 (* Constructor functions for top_stmt type *)

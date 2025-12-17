@@ -74,6 +74,11 @@ let makeIdToken source lexbuf =
    in
    { kind = kind; value = s; loc = Loc.getLocation source lexbuf; }
 
+let makeQuotedIdToken source lexbuf =
+   let s = lexeme lexbuf in
+   let value = String.sub s 1 (String.length s - 1) in  (* Remove the leading ' *)
+   { kind = QUOTED_ID; value = value; loc = Loc.getLocation source lexbuf; }
+
 (* Functions for testing the tokenizer *)
 let tokenizeString tokenizer str =
    let lexbuf = Lexing.from_string str in
@@ -91,6 +96,7 @@ let kindToString kind =
    | REAL  -> "'real'"
    | FIXED  -> "'fixed'"
    | ID    -> "'id'"
+   | QUOTED_ID -> "'quoted_id'"
    | STRING-> "'string'"
    | FUN   -> "'fun'"
    | MEM   -> "'mem'"
@@ -133,6 +139,7 @@ let tokenToString l =
    | INT   -> "'"^l.value^"'"
    | REAL  -> "'"^l.value^"'"
    | ID    -> "'"^l.value^"'"
+   | QUOTED_ID -> "''"^l.value^"'"
    | OP    -> "'"^l.value^"'"
    | k     -> kindToString k
 
@@ -201,6 +208,8 @@ rule next_token source = parse
   | xint        { makeToken source INT lexbuf }
   | float       { makeToken source REAL lexbuf }
   | fixed       { makeToken source FIXED lexbuf }
+  | '\'' startid idchar *
+                { makeQuotedIdToken source lexbuf }
   | startid idchar *
                 { makeIdToken source lexbuf }
   |  '"'        {

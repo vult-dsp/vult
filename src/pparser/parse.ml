@@ -292,13 +292,17 @@ and type_nud (_ : Stream.stream) (token : 'kind token) : type_ =
     let id = token.value in
     let loc = token.loc in
     { t = STId { id; n = None; loc }; loc }
+  | QUOTED_ID, _ ->
+    let id = token.value in
+    let loc = token.loc in
+    { t = STGenericType id; loc }
   | INT, _ ->
     let loc = token.loc in
     { t = STSize (int_of_string token.value); loc }
   | _ ->
     let message =
       Error.PointedError
-        (token.loc, "Unexpected token in type definition. Expected a type name, wildcard '_', or number")
+        (token.loc, "Unexpected token in type definition. Expected a type name, wildcard '_', number, or generic type")
     in
     raise (ParserError message)
 
@@ -838,6 +842,47 @@ and typedArg (buffer : Stream.stream) =
   token.value, Some e, token.loc
 
 
+and parseGenericParam (buffer : Stream.stream) : generic_param =
+  let _ = expectInContext buffer QUOTED_ID "generic parameter" in
+  let token = Stream.current buffer in
+  let _ = Stream.skip buffer in
+  let param_name = token.value in
+  (* Validate parameter name *)
+  (if String.length param_name = 0 then
+     let msg = "Generic parameter name cannot be empty" in
+     raise (ParserError (Error.PointedError (token.loc, msg))));
+  (* Check for invalid characters in parameter name *)
+  (if not (Str.string_match (Str.regexp "^[a-zA-Z_][a-zA-Z0-9_]*$") param_name 0) then
+     let msg =
+       Printf.sprintf
+         "Generic parameter name '%s' contains invalid characters. Use only letters, numbers, and underscore."
+         param_name
+     in
+     raise (ParserError (Error.PointedError (token.loc, msg))));
+  (* Check for reserved names *)
+  let reserved_names =
+    [ "int"; "real"; "bool"; "string"; "unit"; "if"; "else"; "while"; "for"; "return"; "fun"; "type"; "enum" ]
+  in
+  (if List.mem param_name reserved_names then
+     let msg = Printf.sprintf "Generic parameter name '%s' is a reserved keyword" param_name in
+     raise (ParserError (Error.PointedError (token.loc, msg))));
+  match Stream.peek buffer with
+  | COLON -> (
+    let _ = Stream.skip buffer in
+    let type_expr = type_ 20 buffer in
+    (* Check if this looks like a function type - for now, simple heuristic *)
+    match type_expr.t with
+    | STComposed ("fun", _) -> GParamFunction (param_name, Some type_expr)
+    | _ -> GParamConstant (param_name, type_expr))
+  | _ ->
+    (* No type annotation - use naming convention to determine type *)
+    (* If parameter name starts with 'f' or ends with 'fn'/'func', assume it's a function *)
+    if String.length param_name > 0 && param_name.[0] = 'f' then
+      GParamFunction (param_name, None)
+    else
+      GParamType param_name
+
+
 and argList arg_parser (buffer : Stream.stream) =
   match Stream.peek buffer with
   | ID -> (
@@ -848,6 +893,56 @@ and argList arg_parser (buffer : Stream.stream) =
       first :: argList arg_parser buffer
     | _ -> [ first ])
   | _ -> []
+
+
+and parseGenericsAndArguments (buffer : Stream.stream) : generic_param list * arg list =
+  let rec loop generic_params param_names =
+    match Stream.peek buffer with
+    | QUOTED_ID -> (
+      let generic_param = parseGenericParam buffer in
+      let param_name =
+        match generic_param with
+        | GParamFunction (name, _) -> name
+        | GParamType name -> name
+        | GParamConstant (name, _) -> name
+      in
+      (* Check for duplicate generic parameter names *)
+      (if List.mem param_name param_names then
+         let token = Stream.current buffer in
+         let msg = Printf.sprintf "Duplicate generic parameter name '%s'" param_name in
+         raise (ParserError (Error.PointedError (token.loc, msg))));
+      match Stream.peek buffer with
+      | COMMA ->
+        let _ = consumeInContext buffer COMMA "parameter list" in
+        loop (generic_param :: generic_params) (param_name :: param_names)
+      | _ -> List.rev (generic_param :: generic_params), [])
+    | ID ->
+      (* Start parsing regular arguments *)
+      let args = argList typedArgOpt buffer in
+      let generic_params_final = List.rev generic_params in
+      (* Check for conflicts between generic parameter names and regular argument names *)
+      List.iter
+        (fun generic_param ->
+          let generic_name =
+            match generic_param with
+            | GParamFunction (name, _) -> name
+            | GParamType name -> name
+            | GParamConstant (name, _) -> name
+          in
+          List.iter
+            (fun arg ->
+              let arg_name, _, arg_loc = arg in
+              if arg_name = generic_name then
+                let msg = Printf.sprintf "Generic parameter '%s' conflicts with function argument name" generic_name in
+                raise (ParserError (Error.PointedError (arg_loc, msg))))
+            args)
+        generic_params_final;
+      generic_params_final, args
+    | _ ->
+      (* No arguments at all *)
+      List.rev generic_params, []
+  in
+  loop [] []
 
 
 and stmtExternal (buffer : Stream.stream) : top_stmt =
@@ -879,14 +974,40 @@ and stmtExternal (buffer : Stream.stream) : top_stmt =
   { top = STopExternal ({ name; args; t = Some type_; tags; loc }, link_name); loc }
 
 
+(* Extract quoted identifiers from a type for implicit generic type parameters *)
+and extract_quoted_identifiers_from_type (t : type_) : string list =
+  let rec extract_from_type_d = function
+    | STGenericType id -> [ id ] (* Explicit generic type parameter *)
+    | STComposed (_, types) -> CCList.flat_map extract_from_type types
+    | STUnbound | STSize _ | STId _ -> []
+  and extract_from_type (t : type_) : string list = extract_from_type_d t.t in
+  extract_from_type t
+
+
+(* Extract quoted identifiers from function arguments *)
+and extract_quoted_identifiers_from_args (args : arg list) : string list =
+  CCList.flat_map
+    (fun (_, type_opt, _) ->
+      match type_opt with
+      | Some t -> extract_quoted_identifiers_from_type t
+      | None -> [])
+    args
+
+
+(* Create implicit generic type parameters from quoted identifiers *)
+and create_implicit_generic_params (quoted_ids : string list) : generic_param list =
+  (* Remove duplicates and create GParamType entries *)
+  quoted_ids |> CCList.sort_uniq ~cmp:String.compare |> CCList.map (fun param_name -> GParamType param_name)
+
+
 and stmtFunctionDecl (buffer : Stream.stream) : function_def * Loc.t =
   let _ = Stream.skip buffer in
   let name, loc = id_name buffer in
   let _ = consumeInContext buffer LPAREN "function parameter list" in
-  let args =
+  let explicit_generic_params, args =
     match Stream.peek buffer with
-    | RPAREN -> []
-    | _ -> argList typedArgOpt buffer
+    | RPAREN -> [], []
+    | _ -> parseGenericsAndArguments buffer
   in
   let _ = consumeInContext buffer RPAREN "function parameter list" in
   let t =
@@ -896,6 +1017,17 @@ and stmtFunctionDecl (buffer : Stream.stream) : function_def * Loc.t =
       Some (type_ 0 buffer)
     | _ -> None
   in
+  (* Extract implicit generic type parameters from argument types and return type *)
+  let quoted_ids_from_args = extract_quoted_identifiers_from_args args in
+  let quoted_ids_from_return =
+    match t with
+    | Some return_type -> extract_quoted_identifiers_from_type return_type
+    | None -> []
+  in
+  let all_quoted_ids = quoted_ids_from_args @ quoted_ids_from_return in
+  let implicit_generic_params = create_implicit_generic_params all_quoted_ids in
+  (* Combine explicit and implicit generic parameters *)
+  let all_generic_params = explicit_generic_params @ implicit_generic_params in
   let tags = optional_tag buffer in
   let body = stmtList buffer in
   let next =
@@ -905,7 +1037,7 @@ and stmtFunctionDecl (buffer : Stream.stream) : function_def * Loc.t =
       Some def
     | _ -> None
   in
-  { name; args; t; next; tags; loc; body }, loc
+  { name; generic_params = all_generic_params; args; t; next; tags; loc; body }, loc
 
 
 and stmtFunction (buffer : Stream.stream) : top_stmt =

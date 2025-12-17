@@ -1,0 +1,40 @@
+
+fun apply_func('f, a, b) {
+  return f(a, b);
+}
+// Helper functions for testing
+fun add_int(a, b) {
+  return a + b;
+}
+
+fun add_real(a, b) : real {
+  return a + b;
+}
+
+// Main test function
+fun main() {
+  // Test 1: Function parameter
+  val result1 = apply_func(add_int, 3, 4);           // Should be 7
+  val result3 = apply_func(add_real, 1.0, 4.0);      // Should be 7.0
+}
+
+fun add_const('a : int, b) {
+  return a + b;
+}
+
+fun test_specialized(a : int, b : int) {
+  val x = add_const(1, 2); // should create a specialized version with 'a = 1
+  val y = add_const(a, b); // this cannot be specialized, we generate the non-specialized code
+}
+
+fun change(x : 't) : bool {
+  mem pre : 't;
+  val result = pre <> x;
+  pre = x;
+  return result;
+}
+
+fun test_generic_type() {
+  val x = change(1.0); // specialized for real
+  val y = change(1); // specialized for int
+}

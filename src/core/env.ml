@@ -66,6 +66,38 @@ module Map = struct
   let fold (f : string -> 'a -> 'b -> 'b) (s : 'b) (t : 'a t) : 'b = Map.fold f !t s
 end
 
+(* Signature-based map for template instantiations *)
+module SignatureMap = struct
+  module SignatureOrder = struct
+    type t = Typed.instantiation_signature
+
+    let compare = Typed.compare_instantiation_signature
+  end
+
+  module BaseMap = CCMap.Make (SignatureOrder)
+
+  type 'a t = 'a BaseMap.t ref
+
+  let empty () = ref BaseMap.empty
+
+  let update (report : 'a -> 'a -> 'a) (key : Typed.instantiation_signature) (value : 'a) (t : 'a t) : unit =
+    t :=
+      BaseMap.update
+        key
+        (fun a ->
+          match a with
+          | None -> Some value
+          | Some b ->
+            let c = report b value in
+            Some c)
+        !t
+
+
+  let find (key : Typed.instantiation_signature) (t : 'a t) : 'a option = BaseMap.find_opt key !t
+
+  let is_empty (t : 'a t) : bool = BaseMap.is_empty !t
+end
+
 module type TSig = sig
   type t
 
@@ -124,16 +156,27 @@ type f =
 type m =
   { name : string
   ; functions : f Map.t
+  ; generics : Typed.generic_function Map.t
+  ; instantiated : Typed.generic_instantiation SignatureMap.t
   ; types : t Map.t
   ; mutable init : (path * path) list
   ; enums : t Map.t
   ; mutable constants : var Map.t
+  ; mutable pending_injections :
+      (Typed.function_def
+      * Pparser.Syntax.stmt
+      * ((string * string) list * (string * Pparser.Syntax.exp) list)
+      * (string * Typed.type_) list)
+      list
+        (* Functions to be injected with their syntax bodies, substitutions, and type parameter bindings *)
   }
 
 (* Generic lookup result variant *)
 type lookup_result =
   | LookupVar of var
   | LookupFunction of f
+  | LookupGeneric of Typed.generic_function
+  | LookupInstantiation of Typed.generic_instantiation
   | LookupType of t
   | LookupEnum of (path * Loc.t * int) (* path, location, index *)
   | LookupConstant of var
@@ -662,10 +705,13 @@ let enterModule (env : env) (name : string) : env =
     let m : m =
       { name
       ; functions = Map.empty ()
+      ; generics = Map.empty ()
+      ; instantiated = SignatureMap.empty ()
       ; types = Map.empty ()
       ; enums = Map.empty ()
       ; init = []
       ; constants = Map.empty ()
+      ; pending_injections = []
       }
     in
     let () = Map.update report name m env.modules in
@@ -701,6 +747,11 @@ let lookupPath (env : env) (path : path) : lookup_result list =
         | Some (_, index, loc) -> LookupEnum (t.path, loc, index) :: results
         | None -> results)
       | _ -> results
+    in
+    let results =
+      match Map.find id m.generics with
+      | Some generic -> LookupGeneric generic :: results
+      | None -> results
     in
     results
   in
@@ -793,6 +844,15 @@ let findEnum (results : lookup_result list) : (path * Loc.t * int) option =
   find results
 
 
+let findGeneric (results : lookup_result list) : Typed.generic_function option =
+  let rec find = function
+    | [] -> None
+    | LookupGeneric generic :: _ -> Some generic
+    | _ :: rest -> find rest
+  in
+  find results
+
+
 (* Function lookup using the new generic lookup system *)
 let lookFunctionCall (env : env) (path : path) (loc : Loc.t) : f =
   match findFunction (lookupPath env path) with
@@ -811,7 +871,121 @@ let lookOperator (env : env) (op : string) : f =
 (* Since operators are only builtins, this behaves the same as lookOperator *)
 let lookOperatorInModule (env : env) (op : string) : f = lookOperator env op
 
+(* Generic management functions *)
+let addGeneric (env : env) (generic : Typed.generic_function) : env =
+  match env.location with
+  | InModule name -> (
+    let module_opt = Map.find name env.modules in
+    match module_opt with
+    | Some m ->
+      let () =
+        Map.update (fun _ _ -> failwith ("duplicate generic: " ^ generic.name)) generic.name generic m.generics
+      in
+      env
+    | None -> failwith ("module not found: " ^ name))
+  | _ -> failwith "addGeneric: not in a module"
+
+
+(* Generic lookup using the new generic lookup system *)
+let lookupGeneric (env : env) (name : string) : Typed.generic_function option =
+  let generic_path : path = { id = name; n = None; loc = Loc.default } in
+  findGeneric (lookupPath env generic_path)
+
+
+let addInstantiation (env : env) (instantiation : Typed.generic_instantiation) : env =
+  let module_name =
+    match env.location with
+    | InModule name -> name
+    | InContext (name, _) -> name
+    | InFunction (name, _) -> name
+    | Top -> failwith "addInstantiation: not in any module context"
+  in
+  let module_opt = Map.find module_name env.modules in
+  match module_opt with
+  | Some m ->
+    let () =
+      SignatureMap.update
+        (fun _ _ -> failwith ("duplicate instantiation: " ^ instantiation.specialized_name))
+        instantiation.signature
+        instantiation
+        m.instantiated
+    in
+    env
+  | None -> failwith ("module not found: " ^ module_name)
+
+
+let findInstantiation (env : env) (signature : Typed.instantiation_signature) : Typed.generic_instantiation option =
+  let module_name =
+    match env.location with
+    | InModule name -> Some name
+    | InContext (name, _) -> Some name
+    | InFunction (name, _) -> Some name
+    | Top -> None
+  in
+  match module_name with
+  | Some module_name -> (
+    let module_opt = Map.find module_name env.modules in
+    match module_opt with
+    | Some m -> SignatureMap.find signature m.instantiated
+    | None -> None)
+  | None -> None
+
+
+(* Backward compatibility function removed - now using signature-based lookup *)
+
+(* Add a function to be injected into the current module *)
+let addPendingInjection (env : env)
+    (func_def_syntax_subs :
+      Typed.function_def
+      * Pparser.Syntax.stmt
+      * ((string * string) list * (string * Pparser.Syntax.exp) list)
+      * (string * Typed.type_) list) : env =
+  let module_name =
+    match env.location with
+    | InModule name -> name
+    | InContext (name, _) -> name
+    | InFunction (name, _) -> name
+    | Top -> failwith "addPendingInjection: not in any module context"
+  in
+  let module_opt = Map.find module_name env.modules in
+  match module_opt with
+  | Some m ->
+    m.pending_injections <- func_def_syntax_subs :: m.pending_injections;
+    env
+  | None -> failwith ("module not found: " ^ module_name)
+
+
+(* Get and clear pending injections for a module *)
+let getPendingInjectionsAndClear (env : env) :
+    (Typed.function_def
+    * Pparser.Syntax.stmt
+    * ((string * string) list * (string * Pparser.Syntax.exp) list)
+    * (string * Typed.type_) list)
+    list =
+  let module_name =
+    match env.location with
+    | InModule name -> name
+    | InContext (name, _) -> name
+    | InFunction (name, _) -> name
+    | Top -> failwith "getPendingInjectionsAndClear: not in any module context"
+  in
+  let module_opt = Map.find module_name env.modules in
+  match module_opt with
+  | Some m ->
+    let injections = List.rev m.pending_injections in
+    (* Reverse to maintain order *)
+    m.pending_injections <- [];
+    injections
+  | None -> failwith ("module not found: " ^ module_name)
+
+
 (* Unified expression lookup for handling ambiguous symbols *)
+(* Expression evaluation context *)
+type expr_context =
+  { in_constant : bool
+  ; in_generic_arg : bool
+  }
+
 type expression_symbol =
   | ExprVariable of var
   | ExprFunction of f
@@ -819,9 +993,9 @@ type expression_symbol =
   | ExprEnum of (path * Loc.t * int)
   | ExprNotFound
 
-let lookupExpressionSymbol (env : env) (path : path) (in_constant_context : bool) : expression_symbol =
+let lookupExpressionSymbol (env : env) (path : path) (context : expr_context) : expression_symbol =
   let results = lookupPath env path in
-  if in_constant_context then
+  if context.in_constant then
     (* In constant context: constants first, then enums, then types *)
     match findVar results with
     | Some var when var.kind = Const -> ExprVariable var
@@ -832,8 +1006,19 @@ let lookupExpressionSymbol (env : env) (path : path) (in_constant_context : bool
         match findType results with
         | Some t -> ExprType t
         | None -> ExprNotFound))
+  else if context.in_generic_arg then
+    (* In generic argument context: variables first, then functions (allowed as references), then enums *)
+    match findVar results with
+    | Some var -> ExprVariable var
+    | None -> (
+      match findFunction results with
+      | Some f -> ExprFunction f (* Allow function references in generic context *)
+      | None -> (
+        match findEnum results with
+        | Some enum_data -> ExprEnum enum_data
+        | None -> ExprNotFound))
   else
-    (* In regular context: variables first, then functions, then enums *)
+    (* In regular context: variables first, then functions (require call), then enums *)
     match findVar results with
     | Some var -> ExprVariable var
     | None -> (
