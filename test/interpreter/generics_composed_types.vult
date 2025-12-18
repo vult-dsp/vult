@@ -1,0 +1,62 @@
+// Test: Multiple type parameters inside composed types (arrays)
+// Each type parameter should bind correctly even when inside array types
+
+// Test: Array with single generic type
+fun first_array(arr : array('t, 3)) : 't {
+  return arr[0];
+}
+
+fun sum_array(arr : array('t, 3)) : 't {
+  return arr[0] + arr[1] + arr[2];
+}
+
+fun test_first_array_int() : int {
+  mem buffer : array(int, 3);
+  buffer[0] = 99;
+  buffer[1] = 10;
+  buffer[2] = 20;
+  val r = first_array(buffer);
+
+  if (r == 99) {
+    return 100;
+  }
+  return -1;
+}
+
+fun test_first_array_real() : int {
+  mem buffer : array(real, 3);
+  buffer[0] = 3.14;
+  buffer[1] = 1.0;
+  buffer[2] = 2.0;
+  val r = first_array(buffer);
+
+  if (r > 3.0 && r < 3.5) {
+    return 200;
+  }
+  return -2;
+}
+
+fun test_sum_array_int() : int {
+  mem buffer : array(int, 3);
+  buffer[0] = 10;
+  buffer[1] = 20;
+  buffer[2] = 30;
+  val r = sum_array(buffer);
+
+  if (r == 60) {
+    return 300;
+  }
+  return -3;
+}
+
+fun main() : int {
+  val t1 = test_first_array_int();
+  val t2 = test_first_array_real();
+  val t3 = test_sum_array_int();
+
+  // All tests pass: 100 + 200 + 300 = 600
+  if (t1 == 100 && t2 == 200 && t3 == 300) {
+    return 600;
+  }
+  return t1 + t2 + t3;
+}

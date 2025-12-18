@@ -1,7 +1,7 @@
 (library
  (name vult_lsp_server)
  (modules vult_lsp vult_lsp_server)
- (libraries core util driver mparser yojson unix containers))
+ (libraries core util driver pparser yojson unix containers))
 
 (executable
  (public_name vult_lsp_exe)

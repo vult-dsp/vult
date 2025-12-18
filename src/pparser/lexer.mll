@@ -93,6 +93,7 @@ let kindToString kind =
    match kind with
    | EOF   -> "'eof'"
    | INT   -> "'int'"
+   | XINT  -> "'xint'"
    | REAL  -> "'real'"
    | FIXED  -> "'fixed'"
    | ID    -> "'id'"
@@ -132,15 +133,24 @@ let kindToString kind =
    | MATCH -> "'MATCH'"
    | ARROW -> "'->'"
    | CONSTANT -> "'constant'"
+   | TAG -> "'@['"
+   | WHITESPACE -> "'whitespace'"
+   | NEWLINE -> "'newline'"
+   | BLOCK_COMMENT -> "'block_comment'"
+   | LINE_COMMENT -> "'line_comment'"
 
 (** Returns a string representation of the token *)
 let tokenToString l =
    match l.kind with
    | INT   -> "'"^l.value^"'"
+   | XINT  -> "'"^l.value^"'"
    | REAL  -> "'"^l.value^"'"
    | ID    -> "'"^l.value^"'"
    | QUOTED_ID -> "''"^l.value^"'"
    | OP    -> "'"^l.value^"'"
+   | WHITESPACE -> "'ws'"
+   | BLOCK_COMMENT -> "'/*...*/'"
+   | LINE_COMMENT -> "'//...'"
    | k     -> kindToString k
 
 (** Prints the list of tokens*)
@@ -168,6 +178,7 @@ let float =
 
 let fixed = float 'x'
 
+(* Original entry point - backward compatible, skips comments and whitespace *)
 rule next_token source = parse
   | newline
     { let _ = updateLocation lexbuf 1 0 in (* Increases the line *)
@@ -175,6 +186,7 @@ rule next_token source = parse
     }
   | blank +     { let _ = lexeme lexbuf in next_token source lexbuf }
   | '.'         { makeToken source DOT lexbuf }
+  | "@["        { makeToken source TAG lexbuf }
   | '@'         { makeToken source AT lexbuf }
   | '_'         { makeToken source WILD lexbuf }
   | '('         { makeToken source LPAREN lexbuf }
@@ -205,7 +217,7 @@ rule next_token source = parse
   | '<'         { makeToken source LT lexbuf }
   | '>'         { makeToken source GT lexbuf }
   | int         { makeToken source INT lexbuf }
-  | xint        { makeToken source INT lexbuf }
+  | xint        { makeToken source XINT lexbuf }
   | float       { makeToken source REAL lexbuf }
   | fixed       { makeToken source FIXED lexbuf }
   | '\'' startid idchar *
@@ -231,6 +243,7 @@ rule next_token source = parse
                   raise (Error.Errors([message]))
                 }
 
+(* Line comment that skips content - used by next_token *)
 and line_comment source = parse
    newline
      {
@@ -240,6 +253,7 @@ and line_comment source = parse
   | eof { makeToken source EOF lexbuf }
   | _   { line_comment source lexbuf }
 
+(* Block comment that skips content - used by next_token *)
 and comment source level = parse
   newline
      {
@@ -260,8 +274,164 @@ and comment source level = parse
   | _ { comment source level lexbuf }
   | eof { makeToken source EOF lexbuf }
 
+(* Configurable entry point - can emit comments and whitespace *)
+and next_token_config source config = parse
+  | newline
+    { let _ = updateLocation lexbuf 1 0 in (* Increases the line *)
+      if config.emit_whitespace then
+        makeToken source NEWLINE lexbuf
+      else
+        next_token_config source config lexbuf
+    }
+  | blank + as s
+    { if config.emit_whitespace then
+        { kind = WHITESPACE; value = s; loc = Loc.getLocation source lexbuf }
+      else
+        next_token_config source config lexbuf
+    }
+  | '.'         { makeToken source DOT lexbuf }
+  | "@["        { makeToken source TAG lexbuf }
+  | '@'         { makeToken source AT lexbuf }
+  | '_'         { makeToken source WILD lexbuf }
+  | '('         { makeToken source LPAREN lexbuf }
+  | ')'         { makeToken source RPAREN lexbuf }
+  | '{'         { makeToken source LBRACE lexbuf }
+  | '['         { makeToken source LBRACK lexbuf }
+  | '}'         { makeToken source RBRACE lexbuf }
+  | ']'         { makeToken source RBRACK lexbuf }
+  | ':'         { makeToken source COLON lexbuf }
+  | ';'         { makeToken source SEMI lexbuf }
+  | ','         { makeToken source COMMA lexbuf }
+  | '='         { makeToken source EQUAL lexbuf }
+  | "->"        { makeToken source ARROW lexbuf }
+  | "||"        { makeToken source OP lexbuf }
+  | "!"         { makeToken source OP lexbuf }
+  | "&&"        { makeToken source OP lexbuf }
+  | "=="        { makeToken source OP lexbuf }
+  | "<>"        { makeToken source OP lexbuf }
+  | "<="        { makeToken source OP lexbuf }
+  | ">="        { makeToken source OP lexbuf }
+  | ">>"        { makeToken source OP lexbuf }
+  | "<<"        { makeToken source OP lexbuf }
+  | '|'         { makeToken source OP lexbuf }
+  | '&'         { makeToken source OP lexbuf }
+  | '^'         { makeToken source OP lexbuf }
+  | [ '+' '-' ] { makeToken source OP lexbuf }
+  | [ '*' '/' '%' ] { makeToken source OP lexbuf }
+  | '<'         { makeToken source LT lexbuf }
+  | '>'         { makeToken source GT lexbuf }
+  | int         { makeToken source INT lexbuf }
+  | xint        { makeToken source XINT lexbuf }
+  | float       { makeToken source REAL lexbuf }
+  | fixed       { makeToken source FIXED lexbuf }
+  | '\'' startid idchar *
+                { makeQuotedIdToken source lexbuf }
+  | startid idchar *
+                { makeIdToken source lexbuf }
+  |  '"'        {
+                  let start_loc = Loc.getLocation source lexbuf in
+                  let buffer    = Buffer.create 0 in
+                  let ()        = string source buffer lexbuf in
+                  let end_loc   = Loc.getLocation source lexbuf in
+                  let str       = Buffer.contents buffer in
+                  let loc       = Loc.merge start_loc end_loc in
+                  { kind = STRING; value = str; loc = loc; }
+                }
+  | "//"        {
+                  let start_loc = Loc.getLocation source lexbuf in
+                  let buffer    = Buffer.create 32 in
+                  line_comment_capture source config buffer start_loc lexbuf
+                }
+  | "/*"        {
+                  let start_loc = Loc.getLocation source lexbuf in
+                  let buffer    = Buffer.create 32 in
+                  block_comment_capture source config buffer start_loc 0 lexbuf
+                }
+  | eof         { makeToken source EOF lexbuf }
+  | _ as c      {
+                  let loc = Loc.getLocation source lexbuf in
+                  let message = Error.PointedError(loc, Printf.sprintf "Invalid character '%c' " c) in
+                  raise (Error.Errors([message]))
+                }
+
+(* Line comment that captures content - used by next_token_config *)
+and line_comment_capture source config buffer start_loc = parse
+   newline
+     {
+      let _ = updateLocation lexbuf 1 0 in
+      if config.emit_comments then
+        let end_loc = Loc.getLocation source lexbuf in
+        let loc = Loc.merge start_loc end_loc in
+        { kind = LINE_COMMENT; value = Buffer.contents buffer; loc = loc }
+      else
+        next_token_config source config lexbuf
+     }
+  | eof {
+      if config.emit_comments then
+        let end_loc = Loc.getLocation source lexbuf in
+        let loc = Loc.merge start_loc end_loc in
+        { kind = LINE_COMMENT; value = Buffer.contents buffer; loc = loc }
+      else
+        makeToken source EOF lexbuf
+    }
+  | _ as c
+    {
+      let () = Buffer.add_char buffer c in
+      line_comment_capture source config buffer start_loc lexbuf
+    }
+
+(* Block comment that captures content - used by next_token_config *)
+and block_comment_capture source config buffer start_loc level = parse
+  newline as s
+     {
+      let _ = updateLocation lexbuf 1 0 in
+      let () = Buffer.add_string buffer s in
+      block_comment_capture source config buffer start_loc level lexbuf
+     }
+  | "/*"
+    {
+      let () = Buffer.add_string buffer "/*" in
+      block_comment_capture source config buffer start_loc (level+1) lexbuf
+    }
+  | "*/"
+    {
+      if level = 0 then begin
+        if config.emit_comments then
+          let end_loc = Loc.getLocation source lexbuf in
+          let loc = Loc.merge start_loc end_loc in
+          { kind = BLOCK_COMMENT; value = Buffer.contents buffer; loc = loc }
+        else
+          next_token_config source config lexbuf
+      end else begin
+        let () = Buffer.add_string buffer "*/" in
+        block_comment_capture source config buffer start_loc (level-1) lexbuf
+      end
+    }
+  | _ as c
+    {
+      let () = Buffer.add_char buffer c in
+      block_comment_capture source config buffer start_loc level lexbuf
+    }
+  | eof { makeToken source EOF lexbuf }
+
 and string source buffer = parse
   |  '"' { () }
+  (* Escape sequences *)
+  | '\\' '/'  { Buffer.add_char buffer '/'; string source buffer lexbuf }
+  | '\\' '\\' { Buffer.add_char buffer '\\'; string source buffer lexbuf }
+  | '\\' 'b'  { Buffer.add_char buffer '\b'; string source buffer lexbuf }
+  | '\\' 'f'  { Buffer.add_char buffer '\012'; string source buffer lexbuf }
+  | '\\' 'n'  { Buffer.add_char buffer '\n'; string source buffer lexbuf }
+  | '\\' 'r'  { Buffer.add_char buffer '\r'; string source buffer lexbuf }
+  | '\\' 't'  { Buffer.add_char buffer '\t'; string source buffer lexbuf }
+  | '\\' '"'  { Buffer.add_char buffer '"'; string source buffer lexbuf }
+  (* Unknown escape sequences are kept as-is *)
+  | '\\' (_ as c)
+      {
+        let () = Buffer.add_char buffer '\\' in
+        let () = Buffer.add_char buffer c in
+        string source buffer lexbuf
+      }
   | '\\' newline ([' ' '\t'] * as space)
       {
         let _ = updateLocation lexbuf 1 (String.length space) in
@@ -278,6 +448,11 @@ and string source buffer = parse
       }
   | eof
       { Error.raiseError "Unterminated string" (Loc.getLocation source lexbuf) }
+  | [^ '"' '\\' '\r' '\n']+ as s
+      {
+        let () = Buffer.add_string buffer s in
+        string source buffer lexbuf
+      }
   | _
       {
         let s = lexeme lexbuf in

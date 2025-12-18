@@ -71,6 +71,9 @@ end
 
 (** Common types and utilities *)
 module Common = struct
+  (** Default source for LSP tokenization *)
+  let lsp_source = Loc.Source.File ""
+
   (** Find identifier at a specific position using the tokenizer *)
   let find_identifier_at_position (content : string) (line : int) (character : int) : string option =
     try
@@ -78,9 +81,10 @@ module Common = struct
       (* Lexer uses 1-based line numbers *)
       let lexbuf = Lexing.from_string content in
       let rec loop () =
-        match Mparser.Lexer.token Mparser.Lexer.comment_config lexbuf with
-        | EOF -> None
-        | token ->
+        let token = Pparser.Lexer.next_token_config lsp_source Pparser.Tokens.comment_config lexbuf in
+        match token.kind with
+        | Pparser.Tokens.EOF -> None
+        | _ ->
           let start_pos = lexbuf.lex_start_p in
           let end_pos = lexbuf.lex_curr_p in
           let token_line = start_pos.Lexing.pos_lnum in
@@ -89,8 +93,8 @@ module Common = struct
           (* Check if the cursor position is within this token *)
           if token_line = target_line && character >= token_start_char && character < token_end_char then
             (* Extract identifier from ID tokens *)
-            match token with
-            | Mparser.Grammar.ID id -> Some id
+            match token.kind with
+            | Pparser.Tokens.ID -> Some token.value
             | _ -> None
           else
             loop ()
@@ -150,9 +154,10 @@ module Common = struct
       (* Collect all tokens with their positions *)
       let tokens = ref [] in
       let rec collect_tokens () =
-        match Mparser.Lexer.token Mparser.Lexer.comment_config lexbuf with
-        | EOF -> CCList.rev !tokens
-        | token ->
+        let token = Pparser.Lexer.next_token_config lsp_source Pparser.Tokens.comment_config lexbuf in
+        match token.kind with
+        | Pparser.Tokens.EOF -> CCList.rev !tokens
+        | _ ->
           let start_pos = lexbuf.lex_start_p in
           let end_pos = lexbuf.lex_curr_p in
           tokens := (token, start_pos, end_pos) :: !tokens;
@@ -167,8 +172,8 @@ module Common = struct
           let token_start_char = start_pos.Lexing.pos_cnum - start_pos.Lexing.pos_bol in
           let token_end_char = end_pos.Lexing.pos_cnum - start_pos.Lexing.pos_bol in
           if token_line = target_line && character >= token_start_char && character < token_end_char then
-            match token with
-            | Mparser.Grammar.ID id -> Some (id, end_pos, rest)
+            match token.kind with
+            | Pparser.Tokens.ID -> Some (token.value, end_pos, rest)
             | _ -> None
           else
             find_target_identifier rest
@@ -181,9 +186,9 @@ module Common = struct
           | (token, start_pos, _) :: rest ->
             (* Only consider tokens that come after the identifier *)
             if start_pos.Lexing.pos_cnum > id_end_pos.Lexing.pos_cnum then
-              match token with
-              | Mparser.Grammar.LPAREN -> Some true
-              | Mparser.Grammar.ID _ | Mparser.Grammar.REAL _ | Mparser.Grammar.INT _ -> Some false
+              match token.kind with
+              | Pparser.Tokens.LPAREN -> Some true
+              | Pparser.Tokens.ID | Pparser.Tokens.REAL | Pparser.Tokens.INT -> Some false
               | _ -> find_next_significant_token rest
             else
               find_next_significant_token rest
@@ -242,14 +247,7 @@ module Diagnostics = struct
   let get_diagnostics ?(includes = []) (content : string) (filename : string) : Yojson.Safe.t list =
     try
       (* Use Args.Code to pass content directly without temp files *)
-      let args =
-        { Args.default_arguments with
-          files = [ Args.Code (filename, content) ]
-        ; includes
-        ; check = true
-        ; use_menhir = false
-        }
-      in
+      let args = { Args.default_arguments with files = [ Args.Code (filename, content) ]; includes; check = true } in
       let result =
         try
           let parsed, _ = Driver.Loader.loadFiles args args.files in
@@ -641,17 +639,17 @@ module SemanticTokens = struct
 
 
   (** Classify tokens based on their content *)
-  let classify_token _token_text t =
-    let open Mparser.Grammar in
+  let classify_token _token_text (t : Pparser.Tokens.token_enum) =
+    let open Pparser.Tokens in
     match t with
-    | BLOCK_COMMENT _ -> VComment
-    | LINE_COMMENT _ -> VComment
+    | BLOCK_COMMENT -> VComment
+    | LINE_COMMENT -> VComment
     | TYPE
      |FUN
      |VAL
      |MEM
      |EXTERNAL
-     |RETURN
+     |RET
      |IF
      |THEN
      |ELSE
@@ -663,26 +661,29 @@ module SemanticTokens = struct
      |TRUE
      |FALSE
      |AND -> VKeyword
-    | INT _ | REAL _ | FIXED _ | XINT _ -> VNumber
-    | STRING _ -> VString
-    | ID _s -> VIdentifier
-    | OP_LEVEL_0 _ | OP_LEVEL_1 _ | OP_LEVEL_2 _ | OP_LEVEL_3 _ | MINUS | LAND | LOR -> VOperator
+    | INT | REAL | FIXED | XINT -> VNumber
+    | STRING -> VString
+    | ID | QUOTED_ID -> VIdentifier
+    | OP -> VOperator
     | LPAREN
      |RPAREN
      |LBRACE
      |RBRACE
-     |LBRACKET
-     |RBRACKET
+     |LBRACK
+     |RBRACK
      |TAG
      |ARROW
      |COLON
-     |SEMICOLON
+     |SEMI
      |COMMA
      |DOT
-     |ASSIGN
-     |WILDCARD
-     |WHITESPACE _
+     |EQUAL
+     |WILD
+     |WHITESPACE
      |NEWLINE
+     |AT
+     |LT
+     |GT
      |EOF -> VPunctuation
 
 
@@ -764,13 +765,15 @@ module SemanticTokens = struct
   let tokenize_vult_code (content : string) : (vult_token_type * int * int * int) list =
     try
       let lexbuf = Lexing.from_string content in
+      let lsp_source = Loc.Source.File "" in
       let tokens = ref [] in
       (* Use iterative loop instead of recursive to avoid stack overflow in JavaScript *)
       let continue = ref true in
       while !continue do
-        match Mparser.Lexer.token Mparser.Lexer.comment_config lexbuf with
-        | EOF -> continue := false
-        | token ->
+        let token = Pparser.Lexer.next_token_config lsp_source Pparser.Tokens.comment_config lexbuf in
+        match token.kind with
+        | Pparser.Tokens.EOF -> continue := false
+        | _ ->
           let start_pos = lexbuf.lex_start_p in
           let end_pos = lexbuf.lex_curr_p in
           let line = start_pos.Lexing.pos_lnum - 1 in
@@ -778,7 +781,7 @@ module SemanticTokens = struct
           let start_char = start_pos.Lexing.pos_cnum - start_pos.Lexing.pos_bol in
           let length = end_pos.Lexing.pos_cnum - start_pos.Lexing.pos_cnum in
           let token_text = Lexing.lexeme lexbuf in
-          let token_type = classify_token token_text token in
+          let token_type = classify_token token_text token.kind in
           (* Enhance classification for function calls *)
           let final_token_type =
             match token_type with
@@ -787,8 +790,8 @@ module SemanticTokens = struct
           in
           (* Handle multi-line tokens (block comments) *)
           let line_tokens =
-            match token with
-            | Mparser.Grammar.BLOCK_COMMENT _ ->
+            match token.kind with
+            | Pparser.Tokens.BLOCK_COMMENT ->
               (* Extract the actual comment content from the source file *)
               let actual_token_content =
                 try

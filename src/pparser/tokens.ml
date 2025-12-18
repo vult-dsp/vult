@@ -33,6 +33,7 @@ type lexed_lines =
 type token_enum =
   | EOF
   | INT
+  | XINT
   | REAL
   | FIXED
   | ID
@@ -72,6 +73,26 @@ type token_enum =
   | MATCH
   | ARROW
   | CONSTANT
+  | TAG
+  | WHITESPACE
+  | NEWLINE
+  | BLOCK_COMMENT
+  | LINE_COMMENT
+
+(* Tokenizer configuration for controlling emission of different token types *)
+type tokenizer_config =
+  { emit_comments : bool
+  ; emit_whitespace : bool
+  }
+
+(* Default configuration for backward compatibility - skips comments and whitespace *)
+let default_config : tokenizer_config = { emit_comments = false; emit_whitespace = false }
+
+(* Configuration with only comments enabled *)
+let comment_config : tokenizer_config = { emit_comments = true; emit_whitespace = false }
+
+(* Configuration with both comments and whitespace enabled *)
+let full_config : tokenizer_config = { emit_comments = true; emit_whitespace = true }
 
 type 'kind token =
   { kind : 'kind

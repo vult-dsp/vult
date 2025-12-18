@@ -207,7 +207,7 @@ let getIncludes (arguments : args) (files : input list) : string list =
 
 
 (* main function that iterates the input files, gets the dependencies and searchs for the dependencies locations *)
-let rec loadFiles_loop use_menhir (includes : string list) file_deps dependencies parsed visited (files : input list) =
+let rec loadFiles_loop (includes : string list) file_deps dependencies parsed visited (files : input list) =
   let basename h = Filename.(chop_extension (basename h)) in
   match files with
   | [] -> dependencies, file_deps, parsed
@@ -218,16 +218,8 @@ let rec loadFiles_loop use_menhir (includes : string list) file_deps dependencie
       let () = Hashtbl.add visited h_module true in
       let h_parsed =
         match input with
-        | File _ ->
-          if use_menhir then
-            Mparser.Parser.parseFile h
-          else
-            Parse.parseFile h
-        | Code (file, txt) ->
-          if use_menhir then
-            Mparser.Parser.parseString (Some file) txt
-          else
-            Parse.parseString (Some file) txt
+        | File _ -> Parse.parseFile h
+        | Code (file, txt) -> Parse.parseString (Some file) txt
       in
       let () = Hashtbl.add parsed h_module h_parsed in
       (* gets the depencies based on the modules used *)
@@ -238,9 +230,9 @@ let rec loadFiles_loop use_menhir (includes : string list) file_deps dependencie
       (* updates the tables *)
       let () = Hashtbl.add dependencies h_module h_deps in
       let () = Hashtbl.add file_deps (basename h) (CCList.map basename h_dep_files) in
-      loadFiles_loop use_menhir includes file_deps dependencies parsed visited (t @ h_dep_files_input)
+      loadFiles_loop includes file_deps dependencies parsed visited (t @ h_dep_files_input)
     else
-      loadFiles_loop use_menhir includes file_deps dependencies parsed visited t
+      loadFiles_loop includes file_deps dependencies parsed visited t
 
 
 (** Raises an error if the modules have circular dependencies *)
@@ -267,14 +259,7 @@ let loadFiles (arguments : args) (files : input list) =
   let includes = getIncludes arguments files in
   arguments.includes <- includes;
   let dependencies, file_deps, parsed =
-    loadFiles_loop
-      arguments.use_menhir
-      includes
-      (Hashtbl.create 8)
-      (Hashtbl.create 8)
-      (Hashtbl.create 8)
-      (Hashtbl.create 8)
-      files
+    loadFiles_loop includes (Hashtbl.create 8) (Hashtbl.create 8) (Hashtbl.create 8) (Hashtbl.create 8) files
   in
   let dep_list = Hashtbl.fold (fun a b acc -> (a, b) :: acc) dependencies [] in
   let comps = C.calculate dep_list in

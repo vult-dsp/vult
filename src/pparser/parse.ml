@@ -234,6 +234,7 @@ and tag_nud (buffer : Stream.stream) (token : 'kind token) : Ptags.tag =
     | _ -> { g = TagId name; loc })
   | OP, "-" -> tag_unary_op buffer token
   | INT, _ -> { g = TagInt (int_of_string token.value); loc }
+  | XINT, _ -> { g = TagInt (int_of_string token.value); loc }
   | TRUE, _ -> { g = TagBool true; loc }
   | FALSE, _ -> { g = TagBool false; loc }
   | REAL, _ -> { g = TagReal (float_of_string token.value); loc }
@@ -271,9 +272,8 @@ and tag_pair_list (buffer : Stream.stream) : (string * Ptags.tag * Loc.t) list =
 
 let optional_tag (buffer : Stream.stream) : Ptags.tag list =
   match Stream.peek buffer with
-  | AT ->
-    let _ = consumeInContext buffer AT "attribute declaration" in
-    let _ = consumeInContext buffer LBRACK "attribute list" in
+  | TAG ->
+    let _ = consumeInContext buffer TAG "attribute declaration" in
     let attr = tagExpressionList buffer in
     let _ = consumeInContext buffer RBRACK "attribute list" in
     attr
@@ -297,6 +297,9 @@ and type_nud (_ : Stream.stream) (token : 'kind token) : type_ =
     let loc = token.loc in
     { t = STGenericType id; loc }
   | INT, _ ->
+    let loc = token.loc in
+    { t = STSize (int_of_string token.value); loc }
+  | XINT, _ ->
     let loc = token.loc in
     { t = STSize (int_of_string token.value); loc }
   | _ ->
@@ -512,6 +515,7 @@ and exp_nud (buffer : Stream.stream) (token : 'kind token) : exp =
     let _ = consumeInContext buffer RPAREN "grouped expression" in
     { e = SEGroup e; loc }
   | INT, _ -> { e = SEInt token.value; loc }
+  | XINT, _ -> { e = SEInt token.value; loc }
   | REAL, _ -> { e = SEReal token.value; loc }
   | FIXED, _ -> { e = SEFixed token.value; loc }
   | STRING, _ -> { e = SEString token.value; loc }
@@ -572,6 +576,7 @@ and pattern_nud (buffer : Stream.stream) (token : 'kind token) : pattern =
     let _ = consumeInContext buffer RPAREN "grouped pattern" in
     { p = SPGroup p; loc }
   | INT, _ -> { p = SPInt token.value; loc }
+  | XINT, _ -> { p = SPInt token.value; loc }
   | REAL, _ -> { p = SPReal token.value; loc }
   | FIXED, _ -> { p = SPFixed token.value; loc }
   | STRING, _ -> { p = SPString token.value; loc }
@@ -963,7 +968,7 @@ and stmtExternal (buffer : Stream.stream) : top_stmt =
       let link_name = string buffer in
       let tags = optional_tag buffer in
       Some link_name, tags
-    | AT ->
+    | TAG ->
       let tags = optional_tag buffer in
       None, tags
     | _ ->
