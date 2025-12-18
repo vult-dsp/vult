@@ -1208,7 +1208,16 @@ module Mapper = struct
               SStmtIter { id = id'; value = value'; body = body' }
           in
           state, odata
-        | _ -> failwith "can't map pattern"
+        | SStmtMatch { e; cases } ->
+          let state, e' = map_exp mapper context state e in
+          let state, cases' = (mapper_list (mapper_tuple2 bypass map_stmt)) mapper context state cases in
+          let odata =
+            if e == e' && cases == cases' then
+              idata
+            else
+              SStmtMatch { e = e'; cases = cases' }
+          in
+          state, odata
       else
         state, idata
     in

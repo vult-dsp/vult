@@ -508,12 +508,24 @@ let print_arg (arg : arg) =
   {%pla|<#name#s> : <#t#>|}
 
 
-let next_kind kind =
+(* Variant type for function definition keywords *)
+type fun_kind =
+  | FunKindFun
+  | FunKindAnd
+  | FunKindExternal
+
+let fun_kind_to_string (kind : fun_kind) : string =
   match kind with
-  | "fun" -> "and"
-  | "and" -> "and"
-  | "external" -> "external"
-  | _ -> failwith "invalid kind"
+  | FunKindFun -> "fun"
+  | FunKindAnd -> "and"
+  | FunKindExternal -> "external"
+
+
+let next_kind (kind : fun_kind) : fun_kind =
+  match kind with
+  | FunKindFun -> FunKindAnd
+  | FunKindAnd -> FunKindAnd
+  | FunKindExternal -> FunKindExternal
 
 
 let print_body_linkname body_linkname =
@@ -523,14 +535,15 @@ let print_body_linkname body_linkname =
   | `NoLinkName -> Pla.unit
 
 
-let rec print_function_def kind (def : function_def) body_linkname =
+let rec print_function_def (kind : fun_kind) (def : function_def) body_linkname =
+  let kind_str = fun_kind_to_string kind in
   let name = print_path def.name in
   let args = Pla.map_sep Pla.commaspace print_arg def.args in
   let tags = Ptags.print_tags def.tags in
   let t = print_type_ ~detailed:true (snd def.t) in
   let body = print_body_linkname body_linkname in
   let next = print_next_function_def kind def.next in
-  {%pla|<#kind#s> <#name#>(<#args#>) : <#t#> <#tags#><#body#><#><#next#>|}
+  {%pla|<#kind_str#s> <#name#>(<#args#>) : <#t#> <#tags#><#body#><#><#next#>|}
 
 
 and print_next_function_def kind next =
@@ -549,9 +562,9 @@ let print_enum_member (name, _) = {%pla|<#name#s>|}
 
 let print_top_stmt t =
   match t.top with
-  | TopFunction (def, body) -> print_function_def "fun" def (`Body body)
-  | TopExternal (def, Some linkname) -> print_function_def "external" def (`LinkName linkname)
-  | TopExternal (def, None) -> print_function_def "external" def `NoLinkName
+  | TopFunction (def, body) -> print_function_def FunKindFun def (`Body body)
+  | TopExternal (def, Some linkname) -> print_function_def FunKindExternal def (`LinkName linkname)
+  | TopExternal (def, None) -> print_function_def FunKindExternal def `NoLinkName
   | TopAlias { path = p; alias_of } ->
     let p = print_path p in
     let alias_of = print_path alias_of in

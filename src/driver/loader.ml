@@ -165,21 +165,21 @@ module Dependencies = struct
 end
 
 (** Given a module name, it looks for a matching file in all include directories *)
-let rec findModule (includes : string list) (module_name : string) : string option =
-  match includes with
-  | [] -> None
-  | h :: t ->
-    (* first checks an uncapitalized file *)
-    let file1 = Filename.concat h (String.uncapitalize_ascii module_name ^ ".vult") in
-    if FileIO.exists file1 then
-      Some file1
-    else
-      (* then checks a file with the same name as the module *)
-      let file2 = Filename.concat h (module_name ^ ".vult") in
-      if FileIO.exists file2 then
-        Some file2
+let findModule (includes : string list) (module_name : string) : string option =
+  CCList.find_map
+    (fun dir ->
+      (* first checks an uncapitalized file *)
+      let file1 = Filename.concat dir (String.uncapitalize_ascii module_name ^ ".vult") in
+      if FileIO.exists file1 then
+        Some file1
       else
-        findModule t module_name
+        (* then checks a file with the same name as the module *)
+        let file2 = Filename.concat dir (module_name ^ ".vult") in
+        if FileIO.exists file2 then
+          Some file2
+        else
+          None)
+    includes
 
 
 (** Returns a list with all the possible directories where files can be found *)
@@ -206,16 +206,21 @@ let getIncludes (arguments : args) (files : input list) : string list =
   CCList.sort_uniq ~cmp:compare ((current :: implicit_dirs) @ explicit_dir)
 
 
+(* Set for tracking visited modules *)
+module StringSet = CCSet.Make (String)
+
 (* main function that iterates the input files, gets the dependencies and searchs for the dependencies locations *)
-let rec loadFiles_loop (includes : string list) file_deps dependencies parsed visited (files : input list) =
+let rec loadFiles_loop (includes : string list) file_deps dependencies parsed (visited : StringSet.t)
+    (files : input list) :
+    (string, string list) Hashtbl.t * (string, string list) Hashtbl.t * (string, Parse.parsed_file) Hashtbl.t =
   let basename h = Filename.(chop_extension (basename h)) in
   match files with
   | [] -> dependencies, file_deps, parsed
   | ((File h | Code (h, _)) as input) :: t ->
     (* check that the file has not been visited before *)
     let h_module = Parse.moduleName h in
-    if not (Hashtbl.mem visited h_module) then
-      let () = Hashtbl.add visited h_module true in
+    if not (StringSet.mem h_module visited) then
+      let visited = StringSet.add h_module visited in
       let h_parsed =
         match input with
         | File _ -> Parse.parseFile h
@@ -259,7 +264,7 @@ let loadFiles (arguments : args) (files : input list) =
   let includes = getIncludes arguments files in
   arguments.includes <- includes;
   let dependencies, file_deps, parsed =
-    loadFiles_loop includes (Hashtbl.create 8) (Hashtbl.create 8) (Hashtbl.create 8) (Hashtbl.create 8) files
+    loadFiles_loop includes (Hashtbl.create 8) (Hashtbl.create 8) (Hashtbl.create 8) StringSet.empty files
   in
   let dep_list = Hashtbl.fold (fun a b acc -> (a, b) :: acc) dependencies [] in
   let comps = C.calculate dep_list in

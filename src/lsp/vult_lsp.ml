@@ -71,8 +71,11 @@ end
 
 (** Common types and utilities *)
 module Common = struct
+  (** Type alias for Vult tokens *)
+  type vult_token = Pparser.Tokens.token_enum Pparser.Tokens.token
+
   (** Default source for LSP tokenization *)
-  let lsp_source = Loc.Source.File ""
+  let lsp_source = Loc.File ""
 
   (** Find identifier at a specific position using the tokenizer *)
   let find_identifier_at_position (content : string) (line : int) (character : int) : string option =
@@ -152,7 +155,7 @@ module Common = struct
       (* Lexer uses 1-based line numbers *)
       let lexbuf = Lexing.from_string content in
       (* Collect all tokens with their positions *)
-      let tokens = ref [] in
+      let tokens : (vult_token * Lexing.position * Lexing.position) list ref = ref [] in
       let rec collect_tokens () =
         let token = Pparser.Lexer.next_token_config lsp_source Pparser.Tokens.comment_config lexbuf in
         match token.kind with
@@ -172,8 +175,8 @@ module Common = struct
           let token_start_char = start_pos.Lexing.pos_cnum - start_pos.Lexing.pos_bol in
           let token_end_char = end_pos.Lexing.pos_cnum - start_pos.Lexing.pos_bol in
           if token_line = target_line && character >= token_start_char && character < token_end_char then
-            match token.kind with
-            | Pparser.Tokens.ID -> Some (token.value, end_pos, rest)
+            match token.Pparser.Tokens.kind with
+            | Pparser.Tokens.ID -> Some (token.Pparser.Tokens.value, end_pos, rest)
             | _ -> None
           else
             find_target_identifier rest
@@ -186,7 +189,7 @@ module Common = struct
           | (token, start_pos, _) :: rest ->
             (* Only consider tokens that come after the identifier *)
             if start_pos.Lexing.pos_cnum > id_end_pos.Lexing.pos_cnum then
-              match token.kind with
+              match token.Pparser.Tokens.kind with
               | Pparser.Tokens.LPAREN -> Some true
               | Pparser.Tokens.ID | Pparser.Tokens.REAL | Pparser.Tokens.INT -> Some false
               | _ -> find_next_significant_token rest
@@ -765,7 +768,7 @@ module SemanticTokens = struct
   let tokenize_vult_code (content : string) : (vult_token_type * int * int * int) list =
     try
       let lexbuf = Lexing.from_string content in
-      let lsp_source = Loc.Source.File "" in
+      let lsp_source = Loc.File "" in
       let tokens = ref [] in
       (* Use iterative loop instead of recursive to avoid stack overflow in JavaScript *)
       let continue = ref true in

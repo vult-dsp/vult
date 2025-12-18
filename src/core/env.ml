@@ -291,8 +291,8 @@ let getCurrentModule (env : env) : m =
   | InModule name | InContext (name, _) | InFunction (name, _) -> (
     match Map.find name env.modules with
     | Some m -> m
-    | None -> failwith ("Module " ^ name ^ " not found"))
-  | Top -> failwith "Not currently in a module"
+    | None -> failwith ("Internal error in getCurrentModule: module '" ^ name ^ "' not found in env.modules"))
+  | Top -> failwith "Internal error in getCurrentModule: called at Top level (not inside any module)"
 
 
 let getCurrentContext (env : env) : context =
@@ -305,7 +305,11 @@ let getCurrentContext (env : env) : context =
 let getCurrentFunction (env : env) : f =
   match env.location with
   | InFunction (_, f) -> f
-  | _ -> failwith "Not currently in a function"
+  | InModule name ->
+    failwith ("Internal error in getCurrentFunction: currently in module '" ^ name ^ "', not a function")
+  | InContext (name, _) ->
+    failwith ("Internal error in getCurrentFunction: currently in context '" ^ name ^ "', not a function")
+  | Top -> failwith "Internal error in getCurrentFunction: currently at Top level, not in a function"
 
 
 (* Private helper functions for internal use only *)
@@ -409,81 +413,92 @@ let addConstant (env : env) _unify (name : string) (t : Typed.type_) loc : env =
   env
 
 
-let addVar (env : env) unify (name : string) (t : Typed.type_) (kind : var_kind) loc : env =
-  let f = getCurrentFunction env in
-  let context = getCurrentContext env in
-  let report_mem (found : var) (value : var) =
-    if unify found.t t then
-      let tags = Pparser.Ptags.mergeTags found.tags value.tags in
-      { found with tags }
-    else
-      let old_type = Pla.print (Typed.print_type_ found.t) in
-      let new_type = Pla.print (Typed.print_type_ t) in
+(* Helper: Check if a mem variable with the same name already exists in the context *)
+let checkDuplicatedMem (context : context) (name : string) (loc : Loc.t) : unit =
+  match context with
+  | Some (_, { descr = Record members; _ }) -> (
+    match Map.find name members with
+    | None -> ()
+    | Some found ->
       Error.raiseError
-        ("This declaration tries to change the type of "
+        ("A mem variable with the name '"
         ^ found.name
-        ^ ". The previous type is '"
-        ^ old_type
-        ^ "' and the new is '"
-        ^ new_type
-        ^ "'")
-        value.loc
-  in
-  let checkDuplicatedMem context name =
-    match context with
-    | Some (_, { descr = Record members; _ }) -> (
-      match Map.find name members with
+        ^ "' has already been declared at "
+        ^ Loc.to_string_readable found.loc)
+        loc)
+  | _ -> ()
+
+
+(* Helper: Check if a val variable with the same name already exists in any scope *)
+let checkDuplicatedVal (locals : var Map.t list) (name : string) (loc : Loc.t) : unit =
+  CCList.iter
+    (fun (scope : var Map.t) ->
+      match Map.find name scope with
       | None -> ()
       | Some found ->
         Error.raiseError
-          ("A mem variable with the name '"
+          ("A variable with the name '"
           ^ found.name
           ^ "' has already been declared at "
           ^ Loc.to_string_readable found.loc)
           loc)
-    | _ -> ()
+    locals
+
+
+(* Helper: Create a reporter for mem variable updates that handles type unification *)
+let makeMemReporter (unify : Typed.type_ -> Typed.type_ -> bool) (t : Typed.type_) (found : var) (value : var) : var =
+  if unify found.t t then
+    let tags = Pparser.Ptags.mergeTags found.tags value.tags in
+    { found with tags }
+  else
+    let old_type = Pla.print (Typed.print_type_ found.t) in
+    let new_type = Pla.print (Typed.print_type_ t) in
+    Error.raiseError
+      ("This declaration tries to change the type of "
+      ^ found.name
+      ^ ". The previous type is '"
+      ^ old_type
+      ^ "' and the new is '"
+      ^ new_type
+      ^ "'")
+      value.loc
+
+
+(* Helper: Add a mem or inst variable to the context record *)
+let addMemOrInst (f : f) (members : var Map.t) (unify : Typed.type_ -> Typed.type_ -> bool) (name : string)
+    (t : Typed.type_) (kind : var_kind) (tags : Pparser.Ptags.tag list) (loc : Loc.t) (env : env) : env =
+  let () = checkDuplicatedVal f.locals name loc in
+  let report_mem = makeMemReporter unify t in
+  Map.update report_mem name { name; t; kind; tags; loc } members;
+  env
+
+
+(* Helper: Add a val variable to the current local scope *)
+let addValVar (f : f) (context : context) (name : string) (t : Typed.type_) (loc : Loc.t) (env : env) : env =
+  let report (found : var) =
+    Error.raiseError
+      ("A variable with the name '" ^ found.name ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
+      loc
   in
-  let checkDuplicatedVal locals name =
-    CCList.iter
-      (fun (scope : var Map.t) ->
-        match Map.find name scope with
-        | None -> ()
-        | Some found ->
-          Error.raiseError
-            ("A variable with the name '"
-            ^ found.name
-            ^ "' has already been declared at "
-            ^ Loc.to_string_readable found.loc)
-            loc)
-      locals
-  in
+  let () = checkDuplicatedMem context name loc in
+  match f.locals with
+  | [] -> failwith ("Internal error in addVar: no local scope when adding variable '" ^ name ^ "'")
+  | h :: _ ->
+    Map.update report name { name; t; kind = Val; tags = []; loc } h;
+    env
+
+
+let addVar (env : env) unify (name : string) (t : Typed.type_) (kind : var_kind) loc : env =
+  let f = getCurrentFunction env in
+  let context = getCurrentContext env in
   match kind, context with
-  | Inst, Some (_, { descr = Record members; _ }) ->
-    let () = checkDuplicatedVal f.locals name in
-    Map.update report_mem name { name; t; kind; tags = []; loc } members;
-    env
-  | Mem tags, Some (_, { descr = Record members; _ }) ->
-    let () = checkDuplicatedVal f.locals name in
-    Map.update report_mem name { name; t; kind; tags; loc } members;
-    env
-  | (Mem _ | Inst), None -> failwith "Internal error: cannot add mem to functions with no context"
-  | Val, context -> (
-    let report (found : var) =
-      Error.raiseError
-        ("A variable with the name '"
-        ^ found.name
-        ^ "' has already been declared at "
-        ^ Loc.to_string_readable found.loc)
-        loc
-    in
-    let () = checkDuplicatedMem context name in
-    match f.locals with
-    | [] -> failwith "no local scope"
-    | h :: _ ->
-      Map.update report name { name; t; kind; tags = []; loc } h;
-      env)
-  | Const, _ -> failwith "Do not use to add constants"
-  | _, Some _ -> failwith "Not a record"
+  | Inst, Some (_, { descr = Record members; _ }) -> addMemOrInst f members unify name t kind [] loc env
+  | Mem tags, Some (_, { descr = Record members; _ }) -> addMemOrInst f members unify name t kind tags loc env
+  | (Mem _ | Inst), None ->
+    failwith ("Internal error in addVar: cannot add mem/inst variable '" ^ name ^ "' to function with no context")
+  | Val, context -> addValVar f context name t loc env
+  | Const, _ -> failwith ("Internal error in addVar: use addConstant instead for constant '" ^ name ^ "'")
+  | _, Some _ -> failwith ("Internal error in addVar: context exists but is not a Record for variable '" ^ name ^ "'")
 
 
 let checkMemExists (env : env) name =
@@ -503,8 +518,9 @@ let addReturnVar (env : env) (name : string) (t : Typed.type_) loc : env =
   | Some (_, { descr = Record members; _ }) ->
     Map.update report_mem name { name; t; kind = Mem []; tags = []; loc } members;
     env
-  | None -> failwith "Internal error: cannot add mem to functions with no context"
-  | Some _ -> failwith "Not a record"
+  | None ->
+    failwith ("Internal error in addReturnVar: cannot add return variable '" ^ name ^ "' to function with no context")
+  | Some _ -> failwith ("Internal error in addReturnVar: context exists but is not a Record for variable '" ^ name ^ "'")
 
 
 let pushScope (env : env) : env =
@@ -516,7 +532,7 @@ let pushScope (env : env) : env =
 let popScope (env : env) : env =
   let f = getCurrentFunction env in
   match f.locals with
-  | [] -> failwith "invalid scope"
+  | [] -> failwith ("Internal error in popScope: no scope to pop in function '" ^ f.path.id ^ "'")
   | _ :: t ->
     f.locals <- t;
     env
@@ -651,13 +667,13 @@ let getFunctionTick (env : env) : int =
 let getContext (env : env) : path =
   match getCurrentContext env with
   | Some (p, _) -> p
-  | None -> failwith "trying to get the context of a function without one"
+  | None -> failwith "Internal error in getContext: trying to get context but current function has no context"
 
 
 let getFunctionContext (f : f) : path =
   match f.context with
   | Some (p, _) -> p
-  | None -> failwith "trying to get the context of a function without one"
+  | None -> failwith ("Internal error in getFunctionContext: function '" ^ f.path.id ^ "' has no context")
 
 
 let enterFunction (env : env) (name : string) (args : Typed.arg list) (ret : Typed.type_) loc :
@@ -701,7 +717,7 @@ let enterModule (env : env) (name : string) : env =
   match Map.find name env.modules with
   | Some _ -> { env with location = InModule name }
   | None ->
-    let report _ = failwith ("duplicate module: " ^ name) in
+    let report _ = failwith ("Internal error in enterModule: duplicate module '" ^ name ^ "'") in
     let m : m =
       { name
       ; functions = Map.empty ()
@@ -721,39 +737,35 @@ let enterModule (env : env) (name : string) : env =
 let exitModule (env : env) : env = { env with location = Top }
 
 (* Generic lookup function for paths - returns list of all possible meanings *)
+(* Helper: Prepend to results if option is Some *)
+let consOpt (make : 'a -> lookup_result) (opt : 'a option) (results : lookup_result list) : lookup_result list =
+  match opt with
+  | Some x -> make x :: results
+  | None -> results
+
+
 let lookupPath (env : env) (path : path) : lookup_result list =
   let lookupInModule (m : m) (id : string) : lookup_result list =
-    let results = [] in
-    (* Find all meanings in module *)
-    let results =
-      match Map.find id m.functions with
-      | Some f -> LookupFunction f :: results
-      | None -> results
-    in
-    let results =
-      match Map.find id m.types with
-      | Some t -> LookupType t :: results
-      | None -> results
-    in
-    let results =
-      match Map.find id m.constants with
-      | Some var -> LookupConstant var :: results
-      | None -> results
-    in
-    let results =
+    (* Find enum member if applicable *)
+    let enumResult =
       match Map.find id m.enums with
       | Some ({ descr = Enum members; _ } as t) -> (
         match Map.find id members with
-        | Some (_, index, loc) -> LookupEnum (t.path, loc, index) :: results
-        | None -> results)
-      | _ -> results
+        | Some (_, index, loc) -> Some (LookupEnum (t.path, loc, index))
+        | None -> None)
+      | _ -> None
     in
-    let results =
-      match Map.find id m.generics with
-      | Some generic -> LookupGeneric generic :: results
-      | None -> results
-    in
-    results
+    []
+    |> consOpt (fun f -> LookupFunction f) (Map.find id m.functions)
+    |> consOpt (fun t -> LookupType t) (Map.find id m.types)
+    |> consOpt (fun var -> LookupConstant var) (Map.find id m.constants)
+    |> consOpt Fun.id enumResult
+    |> consOpt (fun g -> LookupGeneric g) (Map.find id m.generics)
+  in
+  let lookupLocalVar (f : f) (id : string) : var option =
+    match lookVarInContext f.context id with
+    | Some var -> Some var
+    | None -> lookVarInScopes f.locals id
   in
   match path with
   | { id; n = Some module_name; _ } -> (
@@ -767,36 +779,19 @@ let lookupPath (env : env) (path : path) : lookup_result list =
     (* Check local scope first (variables have priority) *)
     let results =
       match env.location with
-      | InFunction (_, f) -> (
-        match lookVarInContext f.context id with
-        | Some var -> LookupVar var :: results
-        | None -> (
-          match lookVarInScopes f.locals id with
-          | Some var -> LookupVar var :: results
-          | None -> results))
+      | InFunction (_, f) -> consOpt (fun var -> LookupVar var) (lookupLocalVar f id) results
       | _ -> results
     in
     (* Add module-level symbols *)
     let results =
       match env.location with
-      | InFunction (_, _) | InModule _ | InContext (_, _) ->
-        let m = getCurrentModule env in
-        lookupInModule m id @ results
+      | InFunction (_, _) | InModule _ | InContext (_, _) -> lookupInModule (getCurrentModule env) id @ results
       | Top -> results
     in
-    (* Add builtin functions *)
-    let results =
-      match Map.find id env.builtin_functions with
-      | Some f -> LookupBuiltinFunction (makeFunctionForBuiltin id (f ())) :: results
-      | None -> results
-    in
-    (* Add builtin types *)
-    let results =
-      match Map.find id env.builtin_types with
-      | Some t -> LookupType t :: results
-      | None -> results
-    in
+    (* Add builtin functions and types *)
     results
+    |> consOpt (fun f -> LookupBuiltinFunction (makeFunctionForBuiltin id (f ()))) (Map.find id env.builtin_functions)
+    |> consOpt (fun t -> LookupType t) (Map.find id env.builtin_types)
 
 
 (* Helper functions to find specific lookup result types from a list *)
@@ -865,7 +860,7 @@ let lookOperator (env : env) (op : string) : f =
   let op_path : path = { id = op; n = None; loc = Loc.default } in
   match findFunction (lookupPath env op_path) with
   | Some f -> f
-  | None -> failwith ("operator not found " ^ op)
+  | None -> failwith ("Internal error in lookOperator: builtin operator '" ^ op ^ "' not found")
 
 
 (* Since operators are only builtins, this behaves the same as lookOperator *)
@@ -879,11 +874,20 @@ let addGeneric (env : env) (generic : Typed.generic_function) : env =
     match module_opt with
     | Some m ->
       let () =
-        Map.update (fun _ _ -> failwith ("duplicate generic: " ^ generic.name)) generic.name generic m.generics
+        Map.update
+          (fun _ _ -> failwith ("Internal error in addGeneric: duplicate generic '" ^ generic.name ^ "'"))
+          generic.name
+          generic
+          m.generics
       in
       env
-    | None -> failwith ("module not found: " ^ name))
-  | _ -> failwith "addGeneric: not in a module"
+    | None -> failwith ("Internal error in addGeneric: module '" ^ name ^ "' not found in env.modules"))
+  | InContext (name, _) ->
+    failwith ("Internal error in addGeneric: cannot add generic '" ^ generic.name ^ "' from context '" ^ name ^ "'")
+  | InFunction (name, _) ->
+    failwith
+      ("Internal error in addGeneric: cannot add generic '" ^ generic.name ^ "' from function in module '" ^ name ^ "'")
+  | Top -> failwith ("Internal error in addGeneric: cannot add generic '" ^ generic.name ^ "' at Top level")
 
 
 (* Generic lookup using the new generic lookup system *)
@@ -898,20 +902,26 @@ let addInstantiation (env : env) (instantiation : Typed.generic_instantiation) :
     | InModule name -> name
     | InContext (name, _) -> name
     | InFunction (name, _) -> name
-    | Top -> failwith "addInstantiation: not in any module context"
+    | Top ->
+      failwith
+        ("Internal error in addInstantiation: cannot add instantiation '"
+        ^ instantiation.specialized_name
+        ^ "' at Top level")
   in
   let module_opt = Map.find module_name env.modules in
   match module_opt with
   | Some m ->
     let () =
       SignatureMap.update
-        (fun _ _ -> failwith ("duplicate instantiation: " ^ instantiation.specialized_name))
+        (fun _ _ ->
+          failwith
+            ("Internal error in addInstantiation: duplicate instantiation '" ^ instantiation.specialized_name ^ "'"))
         instantiation.signature
         instantiation
         m.instantiated
     in
     env
-  | None -> failwith ("module not found: " ^ module_name)
+  | None -> failwith ("Internal error in addInstantiation: module '" ^ module_name ^ "' not found")
 
 
 let findInstantiation (env : env) (signature : Typed.instantiation_signature) : Typed.generic_instantiation option =
@@ -945,14 +955,14 @@ let addPendingInjection (env : env)
     | InModule name -> name
     | InContext (name, _) -> name
     | InFunction (name, _) -> name
-    | Top -> failwith "addPendingInjection: not in any module context"
+    | Top -> failwith "Internal error in addPendingInjection: called at Top level (not in any module context)"
   in
   let module_opt = Map.find module_name env.modules in
   match module_opt with
   | Some m ->
     m.pending_injections <- func_def_syntax_subs :: m.pending_injections;
     env
-  | None -> failwith ("module not found: " ^ module_name)
+  | None -> failwith ("Internal error in addPendingInjection: module '" ^ module_name ^ "' not found")
 
 
 (* Get and clear pending injections for a module *)
@@ -967,7 +977,7 @@ let getPendingInjectionsAndClear (env : env) :
     | InModule name -> name
     | InContext (name, _) -> name
     | InFunction (name, _) -> name
-    | Top -> failwith "getPendingInjectionsAndClear: not in any module context"
+    | Top -> failwith "Internal error in getPendingInjectionsAndClear: called at Top level (not in any module context)"
   in
   let module_opt = Map.find module_name env.modules in
   match module_opt with
@@ -976,7 +986,7 @@ let getPendingInjectionsAndClear (env : env) :
     (* Reverse to maintain order *)
     m.pending_injections <- [];
     injections
-  | None -> failwith ("module not found: " ^ module_name)
+  | None -> failwith ("Internal error in getPendingInjectionsAndClear: module '" ^ module_name ^ "' not found")
 
 
 (* Unified expression lookup for handling ambiguous symbols *)
