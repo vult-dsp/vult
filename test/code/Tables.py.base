@@ -1,0 +1,93 @@
+import math
+import random as random_module
+
+def eps():
+    return 1e-18
+
+def pi():
+    return 3.1415926535897932384
+
+def random():
+    return random_module.random()
+
+def irandom():
+    return int(random_module.random() * 4294967296)
+
+def clip(x, low, high):
+    return low if x < low else (high if x > high else x)
+
+def not_(x):
+    return 0 if x != 0 else 1
+
+def real(x):
+    return float(x)
+
+def int_(x):
+    return int(x)
+
+def int_to_float(i):
+    return float(i)
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+Tables_sineTable1_c0 = {}
+Tables_sineTable1_c1 = {}
+Tables_sineTable1_c2 = {}
+def Tables_sineTable1_raw_c0(index):
+   return Tables_sineTable1_c0[index]
+
+def Tables_sineTable1_raw_c1(index):
+   return Tables_sineTable1_c1[index]
+
+def Tables_sineTable1_raw_c2(index):
+   return Tables_sineTable1_c2[index]
+
+def Tables_sineTable1(x):
+   index = clip(float_to_int((x * 31.0)), 0, 31)
+   return (Tables_sineTable1_c0[index] + (x * (Tables_sineTable1_c1[index] + (Tables_sineTable1_c2[index] * x))))
+
+
+Tables_sineTable2_c0 = {}
+Tables_sineTable2_c1 = {}
+def Tables_sineTable2_raw_c0(index):
+   return Tables_sineTable2_c0[index]
+
+def Tables_sineTable2_raw_c1(index):
+   return Tables_sineTable2_c1[index]
+
+def Tables_sineTable2(x):
+   index = clip(float_to_int((x * 31.0)), 0, 31)
+   return (Tables_sineTable2_c0[index] + (x * Tables_sineTable2_c1[index]))
+
+
+Tables_sineTable3_c0 = {}
+Tables_sineTable3_c1 = {}
+def Tables_sineTable3_raw_c0(index):
+   return Tables_sineTable3_c0[index]
+
+def Tables_sineTable3_raw_c1(index):
+   return Tables_sineTable3_c1[index]
+
+def Tables_sineTable3(x):
+   value = clip((x * 32.0), 0.0, 32.0)
+   index = int(value)
+   decimal = (value - floor(value))
+   return (Tables_sineTable3_c0[index] + (Tables_sineTable3_c1[index] * decimal))
+
+
+Tables_power2_table = {}
+def Tables_power2(x):
+   return Tables_power2_table[(int_clip(x, -4, 4) + 4)]
+
+Tables_square_table = {}
+def Tables_square(x):
+   return Tables_square_table[(int_clip(x, -4, 4) + 4)]
+
+Tables_square16_table = {}
+def Tables_square16(x):
+   return Tables_square16_table[(int_clip(x, -4, 4) + 4)]
+

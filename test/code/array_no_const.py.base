@@ -1,0 +1,54 @@
+import math
+import random as random_module
+
+def eps():
+    return 1e-18
+
+def pi():
+    return 3.1415926535897932384
+
+def random():
+    return random_module.random()
+
+def irandom():
+    return int(random_module.random() * 4294967296)
+
+def clip(x, low, high):
+    return low if x < low else (high if x > high else x)
+
+def not_(x):
+    return 0 if x != 0 else 1
+
+def real(x):
+    return float(x)
+
+def int_(x):
+    return int(x)
+
+def int_to_float(i):
+    return float(i)
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+def Array_no_const_bar1(a):
+   a[0] = 1.0
+
+def Array_no_const_bob1(a):
+   _ = Array_no_const_bar1(a)
+
+def Array_no_const_bar2(a):
+   _ = foo(a)
+
+def Array_no_const_bob2(a):
+   _ = Array_no_const_bar2(a)
+
+def Array_no_const_bar3(a):
+   pass
+
+def Array_no_const_bob3(a):
+   _ = Array_no_const_bar3(a)
+

@@ -67,6 +67,16 @@ let has_julia =
     false
 
 
+(** checks if python3 can be called *)
+let has_python =
+  if tryToRun ("python3 -m py_compile " ^ in_test_directory "other/test.py") then
+    let () = print_endline "Python syntax will be checked" in
+    true
+  else
+    let () = print_endline "Python syntax will not be checked" in
+    false
+
+
 let has_wl = false
 (*
    if tryToRun "wolframscript --version > out" then (
@@ -539,6 +549,16 @@ module CliTest = struct
     Sys.chdir initial_dir
 
 
+  let checkPythonFile (file : string) : unit =
+    let output = Filename.chop_extension (Filename.basename file) in
+    Sys.chdir tmp_dir;
+    assert_bool "No code generated" (Sys.file_exists (output ^ ".py"));
+    let cmd = "python3 -m py_compile " ^ output ^ ".py" in
+    if Sys.command cmd <> 0 then
+      assert_failure ("Failed to check " ^ file);
+    Sys.chdir initial_dir
+
+
   let checkWLFile (file : string) : unit =
     let output = Filename.chop_extension (Filename.basename file) in
     Sys.chdir tmp_dir;
@@ -557,6 +577,7 @@ module CliTest = struct
     | "js" -> "-code js", [ ".js", ".js.base" ]
     | "lua" -> "-code lua", [ ".lua", ".lua.base" ]
     | "julia" -> "-code julia", [ ".jl", ".jl.base" ]
+    | "python" -> "-code python", [ ".py", ".py.base" ]
     | "wl" -> "-code wl", [ ".wl", ".wl.base" ]
     | "java" -> "-code java -prefix vult.com", [ ".java", ".java.base" ]
     | _ -> failwith "Unknown target to run test"
@@ -593,6 +614,9 @@ module CliTest = struct
       | "julia" ->
         if has_julia then
           checkJuliaFile fullfile
+      | "python" ->
+        if has_python then
+          checkPythonFile fullfile
       | "wl" ->
         if has_wl then
           checkWLFile fullfile
@@ -611,6 +635,7 @@ module CliTest = struct
       | "js" -> { args with code = JSCode }, [ ".js", ".js.base" ]
       | "lua" -> { args with code = LuaCode }, [ ".lua", ".lua.base" ]
       | "julia" -> { args with code = JuliaCode }, [ ".jl", ".jl.base" ]
+      | "python" -> { args with code = PythonCode }, [ ".py", ".py.base" ]
       | "java" -> { args with code = JavaCode; prefix = Some "vult.com" }, [ ".java", ".java.base" ]
       | _ -> failwith "Unknown target to run test"
     in
@@ -918,10 +943,12 @@ let suite =
        ; CliTest.get all_files Native "lua"
        ; CliTest.get all_files Native "js"
        ; CliTest.get all_files Native "julia"
+       ; CliTest.get all_files Native "python"
        ; CliTest.get all_files Node "float"
        ; CliTest.get all_files Node "fixed"
        ; CliTest.get all_files Node "lua"
        ; CliTest.get all_files Node "julia"
+       ; CliTest.get all_files Node "python"
        ; RandomCompileTest.get test_random_code
        ; InterpretPerf.get perf_files
        ; Interpret.get interpreter

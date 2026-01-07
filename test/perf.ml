@@ -180,6 +180,21 @@ let generateJava (filename : string) (output : string) : unit =
   CCList.iter (Driver.Cli.showResult args) output
 
 
+let generatePython (filename : string) (output : string) : unit =
+  let args =
+    { default_arguments with
+      files = [ File filename ]
+    ; code = PythonCode
+    ; output = Some output
+    ; real = Float
+    ; template = Some "performance"
+    ; includes
+    }
+  in
+  let output = Driver.Cli.driver args in
+  CCList.iter (Driver.Cli.showResult args) output
+
+
 let realString f =
   match f with
   | Fixed -> "fixed"
@@ -272,6 +287,17 @@ let runJulia vultfile =
   | e -> showError e
 
 
+let runPython vultfile =
+  try
+    let output = Filename.chop_extension (Filename.basename vultfile) in
+    Sys.chdir tmp_dir;
+    generatePython vultfile output;
+    ignore (Sys.command ("python3 " ^ output ^ ".py"));
+    Sys.chdir init_dir
+  with
+  | e -> showError e
+
+
 [@@@warning "-32"]
 
 let runJava vultfile =
@@ -353,6 +379,7 @@ let main () =
       runJs f;
       runBun f;
       runJulia f;
+      runPython f;
       runJava f;
       runInterpreter f)
     files

@@ -1,0 +1,82 @@
+import math
+import random as random_module
+
+def eps():
+    return 1e-18
+
+def pi():
+    return 3.1415926535897932384
+
+def random():
+    return random_module.random()
+
+def irandom():
+    return int(random_module.random() * 4294967296)
+
+def clip(x, low, high):
+    return low if x < low else (high if x > high else x)
+
+def not_(x):
+    return 0 if x != 0 else 1
+
+def real(x):
+    return float(x)
+
+def int_(x):
+    return int(x)
+
+def int_to_float(i):
+    return float(i)
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+def Volume_smooth_type_alloc():
+   _ctx = {}
+   _ctx["x"] = 0.0
+   return _ctx
+
+
+def Volume_process_type_alloc():
+   _ctx = {}
+   _ctx["inst_1d7d3"] = Volume_smooth_type_alloc()
+   _ctx["volume"] = 0.0
+   return _ctx
+
+
+def Volume_noteOn_type_alloc(_ctx):
+   return Volume_process_type_alloc()
+
+def Volume_noteOff_type_alloc(_ctx):
+   return Volume_process_type_alloc()
+
+def Volume_controlChange_type_alloc(_ctx):
+   return Volume_process_type_alloc()
+
+def Volume_default_type_alloc(_ctx):
+   return Volume_process_type_alloc()
+
+def Volume_smooth(_ctx, input):
+   _ctx["x"] = ((0.005 * (input + (-_ctx["x"]))) + _ctx["x"])
+   return _ctx["x"]
+
+
+def Volume_process(_ctx, input):
+   return (input * Volume_smooth(_ctx["inst_1d7d3"], _ctx["volume"]))
+
+def Volume_noteOn(_ctx, note, velocity, channel):
+   pass
+
+def Volume_noteOff(_ctx, note, channel):
+   pass
+
+def Volume_controlChange(_ctx, control, value, channel):
+   if (control == 30):
+      _ctx["volume"] = (0.007874 * real(value))
+
+def Volume_default(_ctx):
+   _ctx["volume"] = 0.0
+

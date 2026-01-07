@@ -1,0 +1,97 @@
+import math
+import random as random_module
+
+def eps():
+    return 1e-18
+
+def pi():
+    return 3.1415926535897932384
+
+def random():
+    return random_module.random()
+
+def irandom():
+    return int(random_module.random() * 4294967296)
+
+def clip(x, low, high):
+    return low if x < low else (high if x > high else x)
+
+def not_(x):
+    return 0 if x != 0 else 1
+
+def real(x):
+    return float(x)
+
+def int_(x):
+    return int(x)
+
+def int_to_float(i):
+    return float(i)
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+def Noise_pinker_type_alloc():
+   _ctx = {}
+   _ctx["w1"] = 0.0
+   return _ctx
+
+
+def Noise_process_type_alloc():
+   _ctx = {}
+   _ctx["inst_16d3d"] = Noise_pinker_type_alloc()
+   _ctx["x1"] = 0
+   _ctx["x2"] = 0
+   return _ctx
+
+
+def Noise_noteOn_type_alloc(_ctx):
+   return Noise_process_type_alloc()
+
+def Noise_noteOff_type_alloc(_ctx):
+   return Noise_process_type_alloc()
+
+def Noise_controlChange_type_alloc(_ctx):
+   return Noise_process_type_alloc()
+
+def Noise_default_type_alloc(_ctx):
+   return Noise_process_type_alloc()
+
+def Noise_pinker(_ctx, x):
+   b0 = 0.027712
+   b1 = 0.027712
+   a1 = -0.944575
+   w0 = (x + (-(a1 * _ctx["w1"])))
+   y0 = ((b0 * w0) + (b1 * _ctx["w1"]))
+   _ctx["w1"] = w0
+   return y0
+
+
+def Noise_process(_ctx, color):
+   _ctx["x1"] = ((7919 + (17389 * _ctx["x1"])) % 32768)
+   y1 = (3e-05 * real(_ctx["x1"]))
+   _ctx["x2"] = ((12553 + (27449 * _ctx["x2"])) % 32768)
+   y2 = (3e-05 * real(_ctx["x2"]))
+   out = 0.0
+   if (color > 0.5):
+      out = Noise_pinker(_ctx["inst_16d3d"], (y1 + (-y2)))
+   else:
+      out = (y1 + (-y2))
+   return (2.0 * out)
+
+
+def Noise_noteOn(_ctx, note, velocity, channel):
+   pass
+
+def Noise_noteOff(_ctx, note, channel):
+   pass
+
+def Noise_controlChange(_ctx, control, value, channel):
+   pass
+
+def Noise_default(_ctx):
+   pass
+

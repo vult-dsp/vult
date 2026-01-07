@@ -1,0 +1,73 @@
+import math
+import random as random_module
+
+def eps():
+    return 1e-18
+
+def pi():
+    return 3.1415926535897932384
+
+def random():
+    return random_module.random()
+
+def irandom():
+    return int(random_module.random() * 4294967296)
+
+def clip(x, low, high):
+    return low if x < low else (high if x > high else x)
+
+def not_(x):
+    return 0 if x != 0 else 1
+
+def real(x):
+    return float(x)
+
+def int_(x):
+    return int(x)
+
+def int_to_float(i):
+    return float(i)
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+def Array_instance_counter_type_alloc():
+   _ctx = {}
+   _ctx["x"] = 0
+   return _ctx
+
+
+def Array_instance_foo_type_alloc():
+   i_0 = 0
+   temp = None
+   _ctx = {}
+   while (i_0 < 2):
+      temp[i_0] = Array_instance_counter_type_alloc()
+      i_0 = (1 + i_0)
+
+   _ctx["x"] = temp
+   return _ctx
+
+
+def Array_instance_counter(_ctx):
+   _ctx["x"] = (1 + _ctx["x"])
+   return _ctx["x"]
+
+
+def Array_instance_incr(ctx):
+   ctx["x"] = (1 + ctx["x"])
+   return ctx["x"]
+
+
+def Array_instance_foo(_ctx):
+   i__1 = 0
+   while (i__1 < 2):
+      _ = Array_instance_counter(_ctx["x"][i__1])
+      i__1 = (1 + i__1)
+
+   return _ctx["x"][1]["x"]
+
+

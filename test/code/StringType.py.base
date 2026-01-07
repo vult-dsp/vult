@@ -1,0 +1,59 @@
+import math
+import random as random_module
+
+def eps():
+    return 1e-18
+
+def pi():
+    return 3.1415926535897932384
+
+def random():
+    return random_module.random()
+
+def irandom():
+    return int(random_module.random() * 4294967296)
+
+def clip(x, low, high):
+    return low if x < low else (high if x > high else x)
+
+def not_(x):
+    return 0 if x != 0 else 1
+
+def real(x):
+    return float(x)
+
+def int_(x):
+    return int(x)
+
+def int_to_float(i):
+    return float(i)
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+def StringType_test1():
+   str1 = "first"
+   str2 = "second"
+   str3 = ((str1 + ", ") + str2)
+   return str3
+
+
+def StringType_test2():
+   str1 = str(1)
+   str2 = str(1.0)
+   str3 = str(1.0)
+   str4 = str(True)
+
+
+def StringType_test3(a, b):
+   return (a + b)
+
+def StringType_test4():
+   str = "text"
+   _ = StringType_test3("first", "second")
+   i = (6 + length(str))
+
+

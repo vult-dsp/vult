@@ -1,0 +1,921 @@
+import math
+import random as random_module
+
+def eps():
+    return 1e-18
+
+def pi():
+    return 3.1415926535897932384
+
+def random():
+    return random_module.random()
+
+def irandom():
+    return int(random_module.random() * 4294967296)
+
+def clip(x, low, high):
+    return low if x < low else (high if x > high else x)
+
+def not_(x):
+    return 0 if x != 0 else 1
+
+def real(x):
+    return float(x)
+
+def int_(x):
+    return int(x)
+
+def int_to_float(i):
+    return float(i)
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+def Util_edge_type_alloc():
+   _ctx = {}
+   _ctx["pre"] = False
+   return _ctx
+
+
+def Util_change_type_alloc():
+   _ctx = {}
+   _ctx["pre_x"] = 0.0
+   return _ctx
+
+
+def Util_dcblock_type_alloc():
+   _ctx = {}
+   _ctx["x1"] = 0.0
+   _ctx["y1"] = 0.0
+   return _ctx
+
+
+def Util_smooth_type_alloc():
+   _ctx = {}
+   _ctx["x"] = 0.0
+   return _ctx
+
+
+def Util_average2_type_alloc():
+   _ctx = {}
+   _ctx["x0"] = 0.0
+   return _ctx
+
+
+def Util_cvToPitch(cv):
+   return (24.0 + (120.0 * cv))
+
+Util_pitchToRate_1024_c0 = {}
+Util_pitchToRate_1024_c1 = {}
+Util_pitchToRate_1024_c2 = {}
+def Util_pitchToRate_1024_raw_c0(index):
+   return Util_pitchToRate_1024_c0[index]
+
+def Util_pitchToRate_1024_raw_c1(index):
+   return Util_pitchToRate_1024_c1[index]
+
+def Util_pitchToRate_1024_raw_c2(index):
+   return Util_pitchToRate_1024_c2[index]
+
+def Util_pitchToRate_1024(pitch):
+   index = clip(float_to_int((pitch * 0.244094)), 0, 31)
+   return (Util_pitchToRate_1024_c0[index] + (pitch * (Util_pitchToRate_1024_c1[index] + (Util_pitchToRate_1024_c2[index] * pitch))))
+
+
+Util_cvToRate_1024_c0 = {}
+Util_cvToRate_1024_c1 = {}
+Util_cvToRate_1024_c2 = {}
+def Util_cvToRate_1024_raw_c0(index):
+   return Util_cvToRate_1024_c0[index]
+
+def Util_cvToRate_1024_raw_c1(index):
+   return Util_cvToRate_1024_c1[index]
+
+def Util_cvToRate_1024_raw_c2(index):
+   return Util_cvToRate_1024_c2[index]
+
+def Util_cvToRate_1024(cv):
+   index = clip(float_to_int((cv * 34.444444)), 0, 31)
+   return (Util_cvToRate_1024_c0[index] + (cv * (Util_cvToRate_1024_c1[index] + (Util_cvToRate_1024_c2[index] * cv))))
+
+
+def Tricore_default(_ctx):
+   _ctx["rate"] = Util_cvToRate_1024(0.0)
+
+def Tricore_process_type_alloc():
+   _ctx = {}
+   _ctx["direction"] = False
+   _ctx["inst_1b03c"] = Util_change_type_alloc()
+   _ctx["inst_2043c"] = Util_edge_type_alloc()
+   _ctx["inst_3043c"] = Util_edge_type_alloc()
+   _ctx["phase"] = 0.0
+   _ctx["rate"] = 0.0
+   _ctx["reset_phase"] = 0.0
+   _ctx["reset_state"] = False
+   _ = Tricore_default(_ctx)
+   return _ctx
+
+
+def Tricore_noteOn_type_alloc(_ctx):
+   return Tricore_process_type_alloc()
+
+def Tricore_noteOff_type_alloc(_ctx):
+   return Tricore_process_type_alloc()
+
+def Tricore_controlChange_type_alloc(_ctx):
+   return Tricore_process_type_alloc()
+
+def Tricore_default_type_alloc(_ctx):
+   return Tricore_process_type_alloc()
+
+Svf_calc_g_c0 = {}
+Svf_calc_g_c1 = {}
+Svf_calc_g_c2 = {}
+def Svf_calc_g_raw_c0(index):
+   return Svf_calc_g_c0[index]
+
+def Svf_calc_g_raw_c1(index):
+   return Svf_calc_g_c1[index]
+
+def Svf_calc_g_raw_c2(index):
+   return Svf_calc_g_c2[index]
+
+def Svf_calc_g(cv):
+   index = clip(float_to_int((cv * 141.111111)), 0, 127)
+   return (Svf_calc_g_c0[index] + (cv * (Svf_calc_g_c1[index] + (Svf_calc_g_c2[index] * cv))))
+
+
+def Svf_default(_ctx):
+   _ctx["g"] = Svf_calc_g(0.0)
+   _ctx["r"] = 1.0
+   _ctx["inv_den"] = (1.0 / (1.0 + (_ctx["g"] * _ctx["g"])))
+
+
+def Svf_process_type_alloc():
+   _ctx = {}
+   _ctx["g"] = 0.0
+   _ctx["inst_1b0a2"] = Util_change_type_alloc()
+   _ctx["inst_2b0a2"] = Util_change_type_alloc()
+   _ctx["inv_den"] = 0.0
+   _ctx["r"] = 0.0
+   _ctx["z1"] = 0.0
+   _ctx["z2"] = 0.0
+   _ = Svf_default(_ctx)
+   return _ctx
+
+
+def Svf_noteOn_type_alloc(_ctx):
+   return Svf_process_type_alloc()
+
+def Svf_noteOff_type_alloc(_ctx):
+   return Svf_process_type_alloc()
+
+def Svf_controlChange_type_alloc(_ctx):
+   return Svf_process_type_alloc()
+
+def Svf_default_type_alloc(_ctx):
+   return Svf_process_type_alloc()
+
+def Lfo_soft_type_alloc():
+   _ctx = {}
+   _ctx["x2"] = 0.0
+   _ctx["x3"] = 0.0
+   _ctx["x4"] = 0.0
+   return _ctx
+
+
+def Lfo_process_type_alloc():
+   _ctx = {}
+   _ctx["inst_1b0d6"] = Util_change_type_alloc()
+   _ctx["inst_204d6"] = Util_edge_type_alloc()
+   _ctx["inst_337d6"] = Lfo_soft_type_alloc()
+   _ctx["phase"] = 0.0
+   _ctx["rate"] = 0.0
+   return _ctx
+
+
+def Lfo_noteOn_type_alloc(_ctx):
+   return Lfo_process_type_alloc()
+
+def Lfo_noteOff_type_alloc(_ctx):
+   return Lfo_process_type_alloc()
+
+def Lfo_controlChange_type_alloc(_ctx):
+   return Lfo_process_type_alloc()
+
+def Lfo_default_type_alloc(_ctx):
+   return Lfo_process_type_alloc()
+
+def Phase_default(_ctx):
+   _ctx["rate"] = Util_cvToRate_1024(0.0)
+
+def Phase_process_type_alloc():
+   _ctx = {}
+   _ctx["inst_1b08a"] = Util_change_type_alloc()
+   _ctx["inst_2048a"] = Util_edge_type_alloc()
+   _ctx["phase"] = 0.0
+   _ctx["rate"] = 0.0
+   _ = Phase_default(_ctx)
+   return _ctx
+
+
+def Phase_noteOn_type_alloc(_ctx):
+   return Phase_process_type_alloc()
+
+def Phase_noteOff_type_alloc(_ctx):
+   return Phase_process_type_alloc()
+
+def Phase_controlChange_type_alloc(_ctx):
+   return Phase_process_type_alloc()
+
+def Phase_default_type_alloc(_ctx):
+   return Phase_process_type_alloc()
+
+Util_cvToperiod_c0 = {}
+Util_cvToperiod_c1 = {}
+Util_cvToperiod_c2 = {}
+def Util_cvToperiod_raw_c0(index):
+   return Util_cvToperiod_c0[index]
+
+def Util_cvToperiod_raw_c1(index):
+   return Util_cvToperiod_c1[index]
+
+def Util_cvToperiod_raw_c2(index):
+   return Util_cvToperiod_c2[index]
+
+def Util_cvToperiod(cv):
+   index = clip(float_to_int((cv * 31.0)), 0, 31)
+   return (Util_cvToperiod_c0[index] + (cv * (Util_cvToperiod_c1[index] + (Util_cvToperiod_c2[index] * cv))))
+
+
+def Blit_pulse_start(_ctx):
+   _ctx["m"] = (1 + (int(Util_cvToperiod(0.0)) << 1))
+   _ctx["scale"] = (1.0 + (2.0 * Util_cvToperiod(0.0)))
+
+
+def Blit_pulse_train_type_alloc():
+   _ctx = {}
+   _ctx["inst_1b05e"] = Util_change_type_alloc()
+   _ctx["m"] = 0
+   _ctx["scale"] = 0.0
+   _ = Blit_pulse_start(_ctx)
+   return _ctx
+
+
+def Blit_pulse_start_type_alloc(_ctx):
+   return Blit_pulse_train_type_alloc()
+
+Util_pitchToRate_c0 = {}
+Util_pitchToRate_c1 = {}
+Util_pitchToRate_c2 = {}
+def Util_pitchToRate_raw_c0(index):
+   return Util_pitchToRate_c0[index]
+
+def Util_pitchToRate_raw_c1(index):
+   return Util_pitchToRate_c1[index]
+
+def Util_pitchToRate_raw_c2(index):
+   return Util_pitchToRate_c2[index]
+
+def Util_pitchToRate(pitch):
+   index = clip(float_to_int((pitch * 0.244094)), 0, 31)
+   return (Util_pitchToRate_c0[index] + (pitch * (Util_pitchToRate_c1[index] + (Util_pitchToRate_c2[index] * pitch))))
+
+
+Util_cvToRate_c0 = {}
+Util_cvToRate_c1 = {}
+Util_cvToRate_c2 = {}
+def Util_cvToRate_raw_c0(index):
+   return Util_cvToRate_c0[index]
+
+def Util_cvToRate_raw_c1(index):
+   return Util_cvToRate_c1[index]
+
+def Util_cvToRate_raw_c2(index):
+   return Util_cvToRate_c2[index]
+
+def Util_cvToRate(cv):
+   index = clip(float_to_int((cv * 141.111111)), 0, 127)
+   return (Util_cvToRate_c0[index] + (cv * (Util_cvToRate_c1[index] + (Util_cvToRate_c2[index] * cv))))
+
+
+def Blit_init(_ctx):
+   _ctx["rate"] = Util_cvToRate(0.0)
+
+def Blit_osc_blit_type_alloc():
+   _ctx = {}
+   _ctx["inst_1b026"] = Util_change_type_alloc()
+   _ctx["inst_28a26"] = Phase_process_type_alloc()
+   _ctx["inst_35e26"] = Blit_pulse_train_type_alloc()
+   _ctx["inst_45e26"] = Blit_pulse_train_type_alloc()
+   _ctx["inst_56426"] = Util_dcblock_type_alloc()
+   _ctx["output"] = 0.0
+   _ctx["rate"] = 0.0
+   _ctx["state_pulse"] = 0.0
+   _ctx["state_saw"] = 0.0
+   _ = Blit_init(_ctx)
+   return _ctx
+
+
+def Blit_init_type_alloc(_ctx):
+   return Blit_osc_blit_type_alloc()
+
+def Blit_process_type_alloc():
+   _ctx = {}
+   _ctx["inst_1268b"] = Blit_osc_blit_type_alloc()
+   return _ctx
+
+
+def Blit_noteOn_type_alloc(_ctx):
+   return Blit_process_type_alloc()
+
+def Blit_noteOff_type_alloc(_ctx):
+   return Blit_process_type_alloc()
+
+def Blit_controlChange_type_alloc(_ctx):
+   return Blit_process_type_alloc()
+
+def Blit_default_type_alloc(_ctx):
+   return Blit_process_type_alloc()
+
+def Adsr_do_type_alloc():
+   _ctx = {}
+   _ctx["inst_104a0"] = Util_edge_type_alloc()
+   _ctx["inst_295a0"] = Util_smooth_type_alloc()
+   _ctx["out"] = 0.0
+   _ctx["rate"] = 0.0
+   _ctx["scale"] = 0.0
+   _ctx["state"] = 0
+   _ctx["target"] = 0.0
+   return _ctx
+
+
+def Adsr_process_type_alloc():
+   _ctx = {}
+   _ctx["inst_1a025"] = Adsr_do_type_alloc()
+   _ctx["knob1"] = 0.0
+   _ctx["knob2"] = 0.0
+   _ctx["knob3"] = 0.0
+   _ctx["knob4"] = 0.0
+   return _ctx
+
+
+def Adsr_noteOn_type_alloc(_ctx):
+   return Adsr_process_type_alloc()
+
+def Adsr_noteOff_type_alloc(_ctx):
+   return Adsr_process_type_alloc()
+
+def Adsr_controlChange_type_alloc(_ctx):
+   return Adsr_process_type_alloc()
+
+def Adsr_default_type_alloc(_ctx):
+   return Adsr_process_type_alloc()
+
+def Voice_4_process_type_alloc():
+   _ctx = {}
+   _ctx["attack"] = 0.0
+   _ctx["decay"] = 0.0
+   _ctx["flt_cut"] = 0.0
+   _ctx["flt_res"] = 0.0
+   _ctx["flt_shape"] = 0
+   _ctx["inst_1d695"] = Lfo_process_type_alloc()
+   _ctx["inst_28b95"] = Blit_process_type_alloc()
+   _ctx["inst_38b95"] = Blit_process_type_alloc()
+   _ctx["inst_48b95"] = Blit_process_type_alloc()
+   _ctx["inst_53c95"] = Tricore_process_type_alloc()
+   _ctx["inst_6a295"] = Svf_process_type_alloc()
+   _ctx["inst_7a095"] = Adsr_do_type_alloc()
+   _ctx["level1"] = 0.0
+   _ctx["level2"] = 0.0
+   _ctx["level3"] = 0.0
+   _ctx["level4"] = 0.0
+   _ctx["lfo_cv"] = 0.0
+   _ctx["lfo_flt"] = 0.0
+   _ctx["lfo_pw"] = 0.0
+   _ctx["lfo_rate"] = 0.0
+   _ctx["lfo_reset"] = 0.0
+   _ctx["lfo_shape"] = 0.0
+   _ctx["pw1"] = 0.0
+   _ctx["pw2"] = 0.0
+   _ctx["pw3"] = 0.0
+   _ctx["pw4"] = 0.0
+   _ctx["release"] = 0.0
+   _ctx["sustain"] = 0.0
+   return _ctx
+
+
+def Voice_4_noteOn_type_alloc(_ctx):
+   return Voice_4_process_type_alloc()
+
+def Voice_4_noteOff_type_alloc(_ctx):
+   return Voice_4_process_type_alloc()
+
+def Voice_4_controlChange_type_alloc(_ctx):
+   return Voice_4_process_type_alloc()
+
+def Voice_4_default_type_alloc(_ctx):
+   return Voice_4_process_type_alloc()
+
+def Util_edge(_ctx, x):
+   ret = (x and (_ctx["pre"] == False))
+   _ctx["pre"] = x
+   return ret
+
+
+def Util_change(_ctx, x):
+   v = (_ctx["pre_x"] != x)
+   _ctx["pre_x"] = x
+   return v
+
+
+def Util_map(x, x0, x1, y0, y1):
+   return (y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))))
+
+def Util_dcblock(_ctx, x0):
+   y0 = (x0 + ((-_ctx["x1"]) + (0.995 * _ctx["y1"])))
+   _ctx["x1"] = x0
+   _ctx["y1"] = y0
+   return y0
+
+
+def Util_smooth(_ctx, input):
+   _ctx["x"] = ((0.005 * (input + (-_ctx["x"]))) + _ctx["x"])
+   return _ctx["x"]
+
+
+def Util_average2(_ctx, x1):
+   result = (0.5 * (x1 + _ctx["x0"]))
+   _ctx["x0"] = x1
+   return result
+
+
+def Util_cubic_clipper(x):
+   if (x <= -0.666667):
+      return -0.666667
+   else:
+      if (x >= 0.666666):
+         return 0.666666
+      else:
+         return (x + (-0.333334 * (x * (x * x))))
+
+def Util_pitchToCv(pitch):
+   return (-0.2 + (0.008333 * pitch))
+
+Util_cvTokHz_c0 = {}
+Util_cvTokHz_c1 = {}
+Util_cvTokHz_c2 = {}
+def Util_cvTokHz_raw_c0(index):
+   return Util_cvTokHz_c0[index]
+
+def Util_cvTokHz_raw_c1(index):
+   return Util_cvTokHz_c1[index]
+
+def Util_cvTokHz_raw_c2(index):
+   return Util_cvTokHz_c2[index]
+
+def Util_cvTokHz(cv):
+   index = clip(float_to_int((cv * 31.0)), 0, 31)
+   return (Util_cvTokHz_c0[index] + (cv * (Util_cvTokHz_c1[index] + (Util_cvTokHz_c2[index] * cv))))
+
+
+def Tricore_process(_ctx, cv, reset, disable):
+   out = 0.0
+   if Util_change(_ctx["inst_1b03c"], cv):
+      _ctx["rate"] = (4.0 * Util_cvToRate_1024(cv))
+   new_phase = 0.0
+   _if_temp_0 = 0.0
+   if _ctx["direction"]:
+      _if_temp_0 = _ctx["rate"]
+   else:
+      _if_temp_0 = (-_ctx["rate"])
+   new_phase = (_if_temp_0 + _ctx["phase"])
+   bdisable = (disable > 0.5)
+   if (Util_edge(_ctx["inst_2043c"], (reset > 0.0)) or Util_edge(_ctx["inst_3043c"], bdisable)):
+      _ctx["reset_phase"] = _ctx["phase"]
+      _ctx["reset_state"] = True
+      new_phase = 0.0
+
+   if (new_phase > 1024.0):
+      new_phase = (2048.0 + (-new_phase))
+      _ctx["direction"] = False
+
+   else:
+      if (new_phase < -1024.0):
+         _ctx["direction"] = True
+   if bdisable:
+      _ctx["phase"] = 0.0
+   else:
+      _ctx["phase"] = new_phase
+   if _ctx["reset_state"]:
+      if ((abs(_ctx["reset_phase"]) > 10.0) or bdisable):
+         reset_speed = 0.0
+         if bdisable:
+            reset_speed = 0.01
+         else:
+            reset_speed = 0.5
+         _ctx["reset_phase"] = ((-(reset_speed * _ctx["reset_phase"])) + _ctx["reset_phase"])
+
+      else:
+         if (_ctx["reset_phase"] > 10.0):
+            _ctx["reset_phase"] = _ctx["reset_phase"]
+         else:
+            _ctx["reset_phase"] = 0.0
+         _ctx["reset_state"] = False
+         _ctx["direction"] = True
+
+      out = _ctx["reset_phase"]
+
+   out = (out + _ctx["phase"])
+   return (0.000976 * out)
+
+
+def Tricore_noteOn(_ctx, note, velocity, channel):
+   pass
+
+def Tricore_noteOff(_ctx, note, channel):
+   pass
+
+def Tricore_controlChange(_ctx, control, value, channel):
+   pass
+
+Saturate_soft_tanh_table_c0 = {}
+Saturate_soft_tanh_table_c1 = {}
+Saturate_soft_tanh_table_c2 = {}
+def Saturate_soft_tanh_table_raw_c0(index):
+   return Saturate_soft_tanh_table_c0[index]
+
+def Saturate_soft_tanh_table_raw_c1(index):
+   return Saturate_soft_tanh_table_c1[index]
+
+def Saturate_soft_tanh_table_raw_c2(index):
+   return Saturate_soft_tanh_table_c2[index]
+
+def Saturate_soft_tanh_table(x):
+   index = clip(float_to_int(((x + 24.0) * 5.0)), 0, 240)
+   return (Saturate_soft_tanh_table_c0[index] + (x * (Saturate_soft_tanh_table_c1[index] + (Saturate_soft_tanh_table_c2[index] * x))))
+
+
+def Saturate_soft_process(x):
+   return Saturate_soft_tanh_table(x)
+
+def Saturate_soft_noteOn(note, velocity, channel):
+   pass
+
+def Saturate_soft_noteOff(note, channel):
+   pass
+
+def Saturate_soft_controlChange(control, value, channel):
+   pass
+
+def Saturate_soft_default():
+   pass
+
+def Svf_process(_ctx, x, cv, q, sel):
+   q = (0.5 + q)
+   if (Util_change(_ctx["inst_1b0a2"], cv) or Util_change(_ctx["inst_2b0a2"], q)):
+      _ctx["g"] = Svf_calc_g(cv)
+      _ctx["r"] = (1.0 / (2.0 * (q + eps())))
+      _ctx["inv_den"] = (1.0 / (1.0 + ((2.0 * (_ctx["r"] * _ctx["g"])) + (_ctx["g"] * _ctx["g"]))))
+
+   high = ((x + ((-(((2.0 * _ctx["r"]) + _ctx["g"]) * _ctx["z1"])) + (-_ctx["z2"]))) * _ctx["inv_den"])
+   band = ((high * _ctx["g"]) + _ctx["z1"])
+   low = ((band * _ctx["g"]) + _ctx["z2"])
+   notch = (high + low)
+   _ctx["z1"] = (band + (high * _ctx["g"]))
+   _ctx["z2"] = (low + (band * _ctx["g"]))
+   output = 0.0
+   if (sel == 0):
+      output = low
+   else:
+      if (sel == 1):
+         output = high
+      else:
+         if (sel == 2):
+            output = band
+         else:
+            output = notch
+   return Saturate_soft_process(output)
+
+
+def Svf_noteOn(_ctx, note, velocity, channel):
+   pass
+
+def Svf_noteOff(_ctx, note, channel):
+   pass
+
+def Svf_controlChange(_ctx, control, value, channel):
+   pass
+
+Saturate_tanh_table_c0 = {}
+Saturate_tanh_table_c1 = {}
+Saturate_tanh_table_c2 = {}
+def Saturate_tanh_table_raw_c0(index):
+   return Saturate_tanh_table_c0[index]
+
+def Saturate_tanh_table_raw_c1(index):
+   return Saturate_tanh_table_c1[index]
+
+def Saturate_tanh_table_raw_c2(index):
+   return Saturate_tanh_table_c2[index]
+
+def Saturate_tanh_table(x):
+   index = clip(float_to_int(((x + 24.0) * 5.0)), 0, 240)
+   return (Saturate_tanh_table_c0[index] + (x * (Saturate_tanh_table_c1[index] + (Saturate_tanh_table_c2[index] * x))))
+
+
+def Saturate_process(x):
+   return Saturate_tanh_table(x)
+
+def Saturate_noteOn(note, velocity, channel):
+   pass
+
+def Saturate_noteOff(note, channel):
+   pass
+
+def Saturate_controlChange(control, value, channel):
+   pass
+
+def Saturate_default():
+   pass
+
+def Lfo_soft(_ctx, x1):
+   o = (0.25 * (x1 + (_ctx["x2"] + (_ctx["x3"] + _ctx["x4"]))))
+   _t_temp_0 = x1
+   _t_temp_1 = _ctx["x2"]
+   _t_temp_2 = _ctx["x3"]
+   _ctx["x2"] = _t_temp_0
+   _ctx["x3"] = _t_temp_1
+   _ctx["x4"] = _t_temp_2
+   return o
+
+
+def Lfo_process(_ctx, cv, shape, reset):
+   if Util_change(_ctx["inst_1b0d6"], cv):
+      _ctx["rate"] = Util_cvToRate((-0.3 + cv))
+   _ctx["phase"] = (_ctx["phase"] + _ctx["rate"])
+   if (_ctx["phase"] > 2.0):
+      _ctx["phase"] = (-2.0 + _ctx["phase"])
+   else:
+      _ctx["phase"] = _ctx["phase"]
+   breset = (reset > 0.0)
+   if Util_edge(_ctx["inst_204d6"], breset):
+      _ctx["phase"] = 0.0
+   tmp = (-1.0 + _ctx["phase"])
+   o = 0.0
+   if (shape < 1.0):
+      o = tmp
+   else:
+      if (shape < 2.0):
+         o = (-1.0 + (2.0 * abs(tmp)))
+      else:
+         if (tmp > 0.0):
+            o = 1.0
+         else:
+            o = 0.0
+   return Lfo_soft(_ctx["inst_337d6"], o)
+
+
+def Lfo_noteOn(_ctx, note, velocity, channel):
+   pass
+
+def Lfo_noteOff(_ctx, note, channel):
+   pass
+
+def Lfo_controlChange(_ctx, control, value, channel):
+   pass
+
+def Lfo_default(_ctx):
+   pass
+
+Tables_nsine_c0 = {}
+Tables_nsine_c1 = {}
+Tables_nsine_c2 = {}
+def Tables_nsine_raw_c0(index):
+   return Tables_nsine_c0[index]
+
+def Tables_nsine_raw_c1(index):
+   return Tables_nsine_c1[index]
+
+def Tables_nsine_raw_c2(index):
+   return Tables_nsine_c2[index]
+
+def Tables_nsine(x):
+   index = clip(float_to_int((x * 127.0)), 0, 127)
+   return (Tables_nsine_c0[index] + (x * (Tables_nsine_c1[index] + (Tables_nsine_c2[index] * x))))
+
+
+def Phase_process(_ctx, cv, reset):
+   if Util_change(_ctx["inst_1b08a"], cv):
+      _ctx["rate"] = Util_cvToRate_1024(cv)
+   if Util_edge(_ctx["inst_2048a"], (reset > 0.5)):
+      _ctx["phase"] = 0.0
+   else:
+      _ctx["phase"] = (_ctx["phase"] + _ctx["rate"])
+   if (_ctx["phase"] > 1024.0):
+      _ctx["phase"] = (-1024.0 + _ctx["phase"])
+   else:
+      _ctx["phase"] = _ctx["phase"]
+   return (0.000976 * _ctx["phase"])
+
+
+def Phase_noteOn(_ctx, note, velocity, channel):
+   pass
+
+def Phase_noteOff(_ctx, note, channel):
+   pass
+
+def Phase_controlChange(_ctx, control, value, channel):
+   pass
+
+def Blit_pulse_train(_ctx, cv, phase):
+   if Util_change(_ctx["inst_1b05e"], cv):
+      _ctx["m"] = (1 + (int(Util_cvToperiod(cv)) << 1))
+      _ctx["scale"] = (2.0 * Util_cvToperiod(cv))
+
+   pi_phase = (0.5 * phase)
+   denominator = Tables_nsine(pi_phase)
+   out = 0.0
+   if (denominator <= eps()):
+      out = 1.0
+   else:
+      m_phase = ((pi_phase * real(_ctx["m"])) % 1.0)
+      numerator = Tables_nsine(m_phase)
+      out = (numerator / (denominator * _ctx["scale"]))
+
+   return out
+
+
+def Blit_osc_blit(_ctx, cv, pw, wave):
+   fixed_cv = 0.0
+   if (wave < 1.0):
+      fixed_cv = cv
+   else:
+      fixed_cv = (-0.1 + cv)
+   if Util_change(_ctx["inst_1b026"], fixed_cv):
+      _ctx["rate"] = Util_cvToRate(fixed_cv)
+   phase = Phase_process(_ctx["inst_28a26"], fixed_cv, 0.0)
+   shift05 = (0.5 + (0.49 * pw))
+   shift = (phase + shift05)
+   if (shift > 1.0):
+      shift = (-1.0 + shift)
+   pulse1 = Blit_pulse_train(_ctx["inst_35e26"], fixed_cv, phase)
+   pulse2 = Blit_pulse_train(_ctx["inst_45e26"], fixed_cv, shift)
+   _ctx["state_pulse"] = (pulse1 + ((-pulse2) + (0.9995 * _ctx["state_pulse"])))
+   _ctx["state_saw"] = ((0.5 * ((pulse1 + (pulse2 + (-2.0 * _ctx["rate"]))) / shift05)) + (0.9995 * _ctx["state_saw"]))
+   if (wave < 1.0):
+      _ctx["output"] = _ctx["state_pulse"]
+   else:
+      _ctx["output"] = (2.0 * _ctx["state_saw"])
+   _ctx["output"] = Util_dcblock(_ctx["inst_56426"], _ctx["output"])
+   return _ctx["output"]
+
+
+def Blit_process(_ctx, cv, pw, wave):
+   return Blit_osc_blit(_ctx["inst_1268b"], cv, pw, wave)
+
+def Blit_noteOn(_ctx, note, velocity, channel):
+   pass
+
+def Blit_noteOff(_ctx, note, channel):
+   pass
+
+def Blit_controlChange(_ctx, control, value, channel):
+   pass
+
+def Blit_default(_ctx):
+   pass
+
+def Adsr_do(_ctx, gate, a, d, s, r):
+   a_rate = (1.0 / (0.01 + (100.0 * a)))
+   d_rate = (1.0 / (0.01 + (100.0 * d)))
+   r_rate = (1.0 / (0.01 + (100.0 * r)))
+   _ctx["out"] = ((0.004 * (((-_ctx["out"]) + _ctx["target"]) * _ctx["rate"])) + _ctx["out"])
+   bgate = (gate > 0.0)
+   if (_ctx["state"] == 0):
+      if Util_edge(_ctx["inst_104a0"], bgate):
+         _ctx["state"] = 1
+         _ctx["scale"] = (0.2 * gate)
+
+      _ctx["rate"] = r_rate
+      _ctx["target"] = 0.0
+
+   if (_ctx["state"] == 1):
+      if (bgate == False):
+         _ctx["state"] = 0
+      if (_ctx["out"] > 1024.0):
+         _ctx["state"] = 2
+      _ctx["rate"] = a_rate
+      _ctx["target"] = 1228.8
+
+   if (_ctx["state"] == 2):
+      if (bgate == False):
+         _ctx["state"] = 0
+      _ctx["rate"] = d_rate
+      _ctx["target"] = (1024.0 * s)
+
+   return (Util_smooth(_ctx["inst_295a0"], _ctx["scale"]) * clip((0.000976 * _ctx["out"]), 0.0, 1.0))
+
+
+def Adsr_process(_ctx, gate):
+   return Adsr_do(_ctx["inst_1a025"], gate, _ctx["knob1"], _ctx["knob2"], _ctx["knob3"], _ctx["knob4"])
+
+def Adsr_noteOn(_ctx, note, velocity, channel):
+   pass
+
+def Adsr_noteOff(_ctx, note, channel):
+   pass
+
+def Adsr_controlChange(_ctx, control, value, channel):
+   if (control == 1):
+      _ctx["knob1"] = (0.007874 * real(value))
+   if (control == 2):
+      _ctx["knob2"] = (0.007874 * real(value))
+   if (control == 3):
+      _ctx["knob3"] = (0.007874 * real(value))
+   if (control == 4):
+      _ctx["knob4"] = (0.007874 * real(value))
+
+
+def Adsr_default(_ctx):
+   _ctx["knob1"] = 0.0
+   _ctx["knob2"] = 0.5
+   _ctx["knob3"] = 1.0
+   _ctx["knob4"] = 0.5
+
+
+def Voice_4_process(_ctx, cv, vel, gate):
+   lfo = Lfo_process(_ctx["inst_1d695"], _ctx["lfo_rate"], _ctx["lfo_shape"], (gate * _ctx["lfo_reset"]))
+   mod_pw = (lfo * _ctx["lfo_pw"])
+   mod_cv = (lfo * _ctx["lfo_cv"])
+   mod_flt = (lfo * _ctx["lfo_flt"])
+   o1 = Blit_process(_ctx["inst_28b95"], (0.0001 + (cv + mod_cv)), (mod_pw + _ctx["pw1"]), 0.0)
+   o2 = Blit_process(_ctx["inst_38b95"], (0.0002 + (cv + mod_cv)), (mod_pw + _ctx["pw2"]), 1.0)
+   o3 = Blit_process(_ctx["inst_48b95"], (cv + (mod_cv + _ctx["pw3"])), (mod_pw + _ctx["pw1"]), 0.0)
+   sub = Saturate_process(((2.0 + (5.0 * _ctx["pw4"])) * Tricore_process(_ctx["inst_53c95"], (cv + mod_cv), 0.0, 1.0)))
+   o = ((o1 * _ctx["level1"]) + ((o2 * _ctx["level2"]) + ((o3 * _ctx["level3"]) + (sub * _ctx["level4"]))))
+   f = Svf_process(_ctx["inst_6a295"], o, (mod_flt + _ctx["flt_cut"]), _ctx["flt_res"], _ctx["flt_shape"])
+   env = Adsr_do(_ctx["inst_7a095"], gate, _ctx["attack"], _ctx["decay"], _ctx["sustain"], _ctx["release"])
+   return (env * f)
+
+
+def Voice_4_noteOn(_ctx, note, velocity, channel):
+   pass
+
+def Voice_4_noteOff(_ctx, note, channel):
+   pass
+
+def Voice_4_controlChange(_ctx, control, value, channel):
+   if (control == 30):
+      _ctx["level1"] = (0.007874 * real(value))
+   if (control == 31):
+      _ctx["level2"] = (0.007874 * real(value))
+   if (control == 32):
+      _ctx["level3"] = (0.007874 * real(value))
+   if (control == 33):
+      _ctx["level4"] = (0.007874 * real(value))
+   if (control == 34):
+      _ctx["pw1"] = (0.007874 * real(value))
+   if (control == 35):
+      _ctx["pw2"] = (0.007874 * real(value))
+   if (control == 36):
+      _ctx["pw3"] = (0.000787 * real(value))
+   if (control == 37):
+      _ctx["pw4"] = (0.007874 * real(value))
+   if (control == 38):
+      _ctx["lfo_rate"] = Util_map(real(value), 0.0, 127.0, -0.4, 0.1)
+   if (control == 39):
+      _ctx["lfo_shape"] = (0.023622 * real(value))
+   if (control == 40):
+      _ctx["lfo_pw"] = Util_map(real(value), 0.0, 127.0, -1.0, 1.0)
+   if (control == 41):
+      _ctx["lfo_cv"] = Util_map(real(value), 0.0, 127.0, -0.1, 0.1)
+   if (control == 42):
+      _ctx["lfo_flt"] = Util_map(real(value), 0.0, 127.0, -0.3, 0.3)
+   if (control == 43):
+      if (value > 0):
+         _ctx["lfo_reset"] = 1.0
+      else:
+         _ctx["lfo_reset"] = 0.0
+   if (control == 44):
+      _ctx["flt_cut"] = Util_map(real(value), 0.0, 127.0, -0.2, 0.5)
+   if (control == 45):
+      _ctx["flt_res"] = (0.007874 * real(value))
+   if (control == 46):
+      _ctx["flt_shape"] = ((value << 2) / 127)
+   if (control == 47):
+      _ctx["attack"] = (0.007874 * real(value))
+   if (control == 48):
+      _ctx["decay"] = (0.007874 * real(value))
+   if (control == 49):
+      _ctx["sustain"] = (0.007874 * real(value))
+   if (control == 50):
+      _ctx["release"] = (0.007874 * real(value))
+
+
+def Voice_4_default(_ctx):
+   pass
+

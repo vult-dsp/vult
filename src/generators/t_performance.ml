@@ -252,3 +252,53 @@ public class <#module_name#s>Perf {
 
 
 let generateJava (args : Util.Args.args) = Pla.unit, javaPost args
+
+let pythonPost (args : Util.Args.args) =
+  let module_name =
+    match args.files with
+    | Util.Args.File s :: _ -> Pparser.Parse.moduleName s
+    | _ -> "Top"
+  in
+  {%pla|
+# Performance measurement for <#module_name#s>
+import time
+
+def measure_performance():
+    # Initialize the process state
+    data = <#module_name#s>_process_type_alloc()
+    <#module_name#s>_default(data)
+
+    # Setup timing parameters
+    time_seconds = <#time#f>
+    sample_rate = 44100
+    samples = int(sample_rate * time_seconds)
+
+    # Warm up - run a few iterations
+    for i in range(1000):
+        <#module_name#s>_process(data, 0.0)
+
+    # Actual performance measurement
+    start_time = time.perf_counter()
+    acc = 0.0
+    ramp = 0.0
+
+    for i in range(samples):
+        ramp += 0.001
+        if ramp > 1.0:
+            ramp = ramp - 1.0
+        acc += <#module_name#s>_process(data, ramp)
+
+    elapsed_seconds = time.perf_counter() - start_time
+    ms_per_second = (elapsed_seconds / time_seconds) * 1000.0
+
+    print(f"<#module_name#s>\tPython\t{ms_per_second:.2f} ms/s")
+
+    # Return accumulated value to prevent dead code elimination
+    return acc
+
+# Run the performance measurement
+measure_performance()
+|}
+
+
+let generatePython (args : Util.Args.args) = Pla.unit, pythonPost args

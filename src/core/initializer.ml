@@ -151,6 +151,7 @@ let initializerType (iargs : Args.args) =
   | LuaCode -> NewObject
   | JavaCode -> NewObject
   | JuliaCode -> NewObject
+  | PythonCode -> NewObject
 
 
 let createInitFunction custom_initializers (iargs : Args.args) stmt =

@@ -1,0 +1,160 @@
+import math
+import random as random_module
+
+def eps():
+    return 1e-18
+
+def pi():
+    return 3.1415926535897932384
+
+def random():
+    return random_module.random()
+
+def irandom():
+    return int(random_module.random() * 4294967296)
+
+def clip(x, low, high):
+    return low if x < low else (high if x > high else x)
+
+def not_(x):
+    return 0 if x != 0 else 1
+
+def real(x):
+    return float(x)
+
+def int_(x):
+    return int(x)
+
+def int_to_float(i):
+    return float(i)
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+def Gates_gates_noteOn_type_alloc():
+   _ctx = {}
+   _ctx["Gates_gates_state_ret_0"] = 0.0
+   _ctx["Gates_gates_state_ret_1"] = 0.0
+   _ctx["Gates_gates_state_ret_2"] = 0.0
+   _ctx["Gates_gates_state_ret_3"] = 0.0
+   _ctx["Gates_gates_state_ret_4"] = 0.0
+   _ctx["Gates_gates_state_ret_5"] = 0.0
+   _ctx["Gates_gates_state_ret_6"] = 0.0
+   _ctx["Gates_gates_state_ret_7"] = 0.0
+   i_0 = 0
+   temp = initializeArray(0, 8)
+   while (i_0 < 8):
+      temp[i_0] = 0
+      i_0 = (1 + i_0)
+
+   _ctx["vel"] = temp
+   return _ctx
+
+
+def Gates_gates_noteOff_type_alloc(_ctx):
+   return Gates_gates_noteOn_type_alloc()
+
+def Gates_gates_state_type_alloc(_ctx):
+   return Gates_gates_noteOn_type_alloc()
+
+def Gates_process_type_alloc():
+   _ctx = {}
+   _ctx["Gates_process_ret_0"] = 0.0
+   _ctx["Gates_process_ret_1"] = 0.0
+   _ctx["Gates_process_ret_2"] = 0.0
+   _ctx["Gates_process_ret_3"] = 0.0
+   _ctx["Gates_process_ret_4"] = 0.0
+   _ctx["Gates_process_ret_5"] = 0.0
+   _ctx["Gates_process_ret_6"] = 0.0
+   _ctx["Gates_process_ret_7"] = 0.0
+   _ctx["channel_in"] = 0
+   _ctx["gates"] = Gates_gates_noteOn_type_alloc()
+   return _ctx
+
+
+def Gates_noteOn_type_alloc(_ctx):
+   return Gates_process_type_alloc()
+
+def Gates_noteOff_type_alloc(_ctx):
+   return Gates_process_type_alloc()
+
+def Gates_controlChange_type_alloc(_ctx):
+   return Gates_process_type_alloc()
+
+def Gates_default_type_alloc(_ctx):
+   return Gates_process_type_alloc()
+
+def Gates_velToCV(vel):
+   return (0.007874 * real(vel))
+
+def Gates_gates_noteOn(_ctx, note, velocity):
+   if ((note >= 36) and (note <= 43)):
+      n = (-36 + note)
+      _ctx["vel"][n] = velocity
+
+
+def Gates_gates_noteOff(_ctx, note):
+   if ((note >= 36) and (note <= 43)):
+      n = (-36 + note)
+      _ctx["vel"][n] = 0
+
+
+def Gates_gates_state(_ctx):
+   vel1 = Gates_velToCV(_ctx["vel"][0])
+   vel2 = Gates_velToCV(_ctx["vel"][1])
+   vel3 = Gates_velToCV(_ctx["vel"][2])
+   vel4 = Gates_velToCV(_ctx["vel"][3])
+   vel5 = Gates_velToCV(_ctx["vel"][4])
+   vel6 = Gates_velToCV(_ctx["vel"][5])
+   vel7 = Gates_velToCV(_ctx["vel"][6])
+   vel8 = Gates_velToCV(_ctx["vel"][7])
+   _ctx["Gates_gates_state_ret_0"] = vel1
+   _ctx["Gates_gates_state_ret_1"] = vel2
+   _ctx["Gates_gates_state_ret_2"] = vel3
+   _ctx["Gates_gates_state_ret_3"] = vel4
+   _ctx["Gates_gates_state_ret_4"] = vel5
+   _ctx["Gates_gates_state_ret_5"] = vel6
+   _ctx["Gates_gates_state_ret_6"] = vel7
+   _ctx["Gates_gates_state_ret_7"] = vel8
+   return None
+
+
+def Gates_process(_ctx, c):
+   _ctx["channel_in"] = c
+   _ = Gates_gates_state(_ctx["gates"])
+   _call_temp_0 = _ctx["gates"]["Gates_gates_state_ret_0"]
+   _call_temp_1 = _ctx["gates"]["Gates_gates_state_ret_1"]
+   _call_temp_2 = _ctx["gates"]["Gates_gates_state_ret_2"]
+   _call_temp_3 = _ctx["gates"]["Gates_gates_state_ret_3"]
+   _call_temp_4 = _ctx["gates"]["Gates_gates_state_ret_4"]
+   _call_temp_5 = _ctx["gates"]["Gates_gates_state_ret_5"]
+   _call_temp_6 = _ctx["gates"]["Gates_gates_state_ret_6"]
+   _call_temp_7 = _ctx["gates"]["Gates_gates_state_ret_7"]
+   _ctx["Gates_process_ret_0"] = _call_temp_0
+   _ctx["Gates_process_ret_1"] = _call_temp_1
+   _ctx["Gates_process_ret_2"] = _call_temp_2
+   _ctx["Gates_process_ret_3"] = _call_temp_3
+   _ctx["Gates_process_ret_4"] = _call_temp_4
+   _ctx["Gates_process_ret_5"] = _call_temp_5
+   _ctx["Gates_process_ret_6"] = _call_temp_6
+   _ctx["Gates_process_ret_7"] = _call_temp_7
+   return None
+
+
+def Gates_noteOn(_ctx, note, velocity, channel):
+   if (_ctx["channel_in"] == channel):
+      _ = Gates_gates_noteOn(_ctx["gates"], note, velocity)
+
+def Gates_noteOff(_ctx, note, channel):
+   if (_ctx["channel_in"] == channel):
+      _ = Gates_gates_noteOff(_ctx["gates"], note)
+
+def Gates_controlChange(_ctx, control, value, channel):
+   pass
+
+def Gates_default(_ctx):
+   pass
+

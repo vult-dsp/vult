@@ -1,0 +1,94 @@
+import math
+import random as random_module
+
+def eps():
+    return 1e-18
+
+def pi():
+    return 3.1415926535897932384
+
+def random():
+    return random_module.random()
+
+def irandom():
+    return int(random_module.random() * 4294967296)
+
+def clip(x, low, high):
+    return low if x < low else (high if x > high else x)
+
+def not_(x):
+    return 0 if x != 0 else 1
+
+def real(x):
+    return float(x)
+
+def int_(x):
+    return int(x)
+
+def int_to_float(i):
+    return float(i)
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+def Defined_types_dot_alloc():
+   _ctx = {}
+   _ctx["x"] = 0.0
+   _ctx["y"] = 0.0
+   return _ctx
+
+
+def Defined_types_foo_type_alloc():
+   _ctx = {}
+   _ctx["p1"] = Defined_types_dot_alloc()
+   return _ctx
+
+
+def Defined_types_process_type_alloc():
+   _ctx = {}
+   _ctx["inst_1a5d1"] = Defined_types_foo_type_alloc()
+   return _ctx
+
+
+def Defined_types_noteOn_type_alloc(_ctx):
+   return Defined_types_process_type_alloc()
+
+def Defined_types_noteOff_type_alloc(_ctx):
+   return Defined_types_process_type_alloc()
+
+def Defined_types_controlChange_type_alloc(_ctx):
+   return Defined_types_process_type_alloc()
+
+def Defined_types_default_type_alloc(_ctx):
+   return Defined_types_process_type_alloc()
+
+def Defined_types_micro_alloc():
+   _ctx = {}
+   _ctx["dot_0"] = Defined_types_dot_alloc()
+   _ctx["dot_1"] = Defined_types_dot_alloc()
+   return _ctx
+
+
+def Defined_types_foo(_ctx):
+   pass
+
+def Defined_types_process(_ctx, input):
+   _ = Defined_types_foo(_ctx["inst_1a5d1"])
+   return input
+
+
+def Defined_types_noteOn(_ctx, note, velocity, channel):
+   pass
+
+def Defined_types_noteOff(_ctx, note, channel):
+   pass
+
+def Defined_types_controlChange(_ctx, control, value, channel):
+   pass
+
+def Defined_types_default(_ctx):
+   pass
+

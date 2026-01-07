@@ -1,0 +1,218 @@
+import math
+import random as random_module
+
+def eps():
+    return 1e-18
+
+def pi():
+    return 3.1415926535897932384
+
+def random():
+    return random_module.random()
+
+def irandom():
+    return int(random_module.random() * 4294967296)
+
+def clip(x, low, high):
+    return low if x < low else (high if x > high else x)
+
+def not_(x):
+    return 0 if x != 0 else 1
+
+def real(x):
+    return float(x)
+
+def int_(x):
+    return int(x)
+
+def int_to_float(i):
+    return float(i)
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+def SaveState_counter_type_alloc():
+   _ctx = {}
+   _ctx["count"] = 0
+   return _ctx
+
+
+def SaveState_reset_type_alloc(_ctx):
+   return SaveState_counter_type_alloc()
+
+def SaveState_nosave_type_alloc():
+   _ctx = {}
+   _ctx["x"] = 0
+   return _ctx
+
+
+def SaveState_point_alloc():
+   _ctx = {}
+   _ctx["x"] = 0.0
+   _ctx["y"] = 0.0
+   return _ctx
+
+
+def SaveState_main_type_alloc():
+   _ctx = {}
+   _ctx["c1"] = SaveState_counter_type_alloc()
+   _ctx["inst_19fb0"] = SaveState_counter_type_alloc()
+   _ctx["inst_21bb0"] = SaveState_nosave_type_alloc()
+   _ctx["p1"] = SaveState_point_alloc()
+   _ctx["p2"] = SaveState_point_alloc()
+   i_0 = 0
+   temp = None
+   while (i_0 < 3):
+      temp[i_0] = SaveState_point_alloc()
+      i_0 = (1 + i_0)
+
+   _ctx["point_array"] = temp
+   _ctx["str"] = ""
+   _ctx["x"] = 0.0
+   return _ctx
+
+
+def SaveState_counter_type_serialize_data(buffer, index, _ctx):
+   start = index
+   index = push_block_header(buffer, index)
+   index = push_int(buffer, index, _ctx["count"])
+   _ = update_size(buffer, start, (index + (-start)))
+   return index
+
+
+def SaveState_reset_type_serialize_data(buffer, index, _ctx):
+   return SaveState_counter_type_serialize_data(buffer, index, _ctx)
+
+def SaveState_point_serialize_data(buffer, index, _ctx):
+   start = index
+   index = push_block_header(buffer, index)
+   index = push_float(buffer, index, _ctx["x"])
+   index = push_float(buffer, index, _ctx["y"])
+   _ = update_size(buffer, start, (index + (-start)))
+   return index
+
+
+def SaveState_main_type_serialize_data(buffer, index, _ctx):
+   start = index
+   index = push_block_header(buffer, index)
+   index = SaveState_counter_type_serialize_data(buffer, index, _ctx["c1"])
+   index = SaveState_counter_type_serialize_data(buffer, index, _ctx["inst_19fb0"])
+   index = SaveState_point_serialize_data(buffer, index, _ctx["p1"])
+   index = SaveState_point_serialize_data(buffer, index, _ctx["p2"])
+   start_0 = index
+   index = push_array(buffer, index, 3)
+   i_0 = 0
+   while (i_0 < 3):
+      index = SaveState_point_serialize_data(buffer, index, _ctx["point_array"][i_0])
+      i_0 = (1 + i_0)
+
+   _ = update_size(buffer, start_0, (index + (-start_0)))
+   index = push_string(buffer, index, _ctx["str"])
+   index = push_float(buffer, index, _ctx["x"])
+   _ = update_size(buffer, start, (index + (-start)))
+   return index
+
+
+def SaveState_counter_type_serialize_type_descr(buffer, index, marks):
+   if marks[0]:
+      return index
+   marks[0] = True
+   _array_0 = ["count"]
+   return serialize_type_descr(buffer, index, "SaveState_counter_type", _array_0)
+
+
+def SaveState_point_serialize_type_descr(buffer, index, marks):
+   if marks[2]:
+      return index
+   marks[2] = True
+   _array_0 = ["x", "y"]
+   return serialize_type_descr(buffer, index, "SaveState_point", _array_0)
+
+
+def SaveState_main_type_serialize_type_descr(buffer, index, marks):
+   if marks[1]:
+      return index
+   marks[1] = True
+   index = SaveState_counter_type_serialize_type_descr(buffer, index, marks)
+   index = SaveState_point_serialize_type_descr(buffer, index, marks)
+   _array_0 = ["c1", "inst_19fb0", "p1", "p2", "point_array", "str", "x"]
+   return serialize_type_descr(buffer, index, "SaveState_main_type", _array_0)
+
+
+def SaveState_counter_type_deserialize_data(buffer, type_descr, index, _ctx):
+   field_index = search_field_name(buffer, type_descr, index, "count")
+   if (field_index >= 0):
+      _ctx["count"] = deserialize_int(buffer, field_index)
+
+
+def SaveState_point_deserialize_data(buffer, type_descr, index, _ctx):
+   field_index = search_field_name(buffer, type_descr, index, "x")
+   if (field_index >= 0):
+      _ctx["x"] = deserialize_float(buffer, field_index)
+   field_index = search_field_name(buffer, type_descr, index, "y")
+   if (field_index >= 0):
+      _ctx["y"] = deserialize_float(buffer, field_index)
+
+
+def SaveState_main_type_deserialize_data(buffer, type_descr, index, _ctx):
+   field_index = search_field_name(buffer, type_descr, index, "c1")
+   if (field_index >= 0):
+      field_descr_0 = search_type_description(buffer, "SaveState_counter_type")
+      _ = SaveState_counter_type_deserialize_data(buffer, field_descr_0, field_index, _ctx["c1"])
+
+   field_index = search_field_name(buffer, type_descr, index, "inst_19fb0")
+   if (field_index >= 0):
+      field_descr_1 = search_type_description(buffer, "SaveState_counter_type")
+      _ = SaveState_counter_type_deserialize_data(buffer, field_descr_1, field_index, _ctx["inst_19fb0"])
+
+   field_index = search_field_name(buffer, type_descr, index, "p1")
+   if (field_index >= 0):
+      field_descr_2 = search_type_description(buffer, "SaveState_point")
+      _ = SaveState_point_deserialize_data(buffer, field_descr_2, field_index, _ctx["p1"])
+
+   field_index = search_field_name(buffer, type_descr, index, "p2")
+   if (field_index >= 0):
+      field_descr_3 = search_type_description(buffer, "SaveState_point")
+      _ = SaveState_point_deserialize_data(buffer, field_descr_3, field_index, _ctx["p2"])
+
+   field_descr_4 = search_type_description(buffer, "SaveState_point")
+   field_index = search_field_name(buffer, type_descr, index, "point_array")
+   if (field_index >= 0):
+      field_index = first_array_element(buffer, field_index)
+      i_5 = 0
+      while (i_5 < 3):
+         _ = SaveState_point_deserialize_data(buffer, field_descr_4, field_index, _ctx["point_array"][i_5])
+         i_5 = (1 + i_5)
+         field_index = next_object(buffer, field_index)
+
+
+   field_index = search_field_name(buffer, type_descr, index, "str")
+   if (field_index >= 0):
+      _ctx["str"] = deserialize_string(buffer, field_index)
+   field_index = search_field_name(buffer, type_descr, index, "x")
+   if (field_index >= 0):
+      _ctx["x"] = deserialize_float(buffer, field_index)
+
+
+def SaveState_counter(_ctx):
+   _ctx["count"] = (1 + _ctx["count"])
+   return _ctx["count"]
+
+
+def SaveState_reset(_ctx):
+   _ctx["count"] = 0
+
+def SaveState_nosave(_ctx):
+   _ctx["x"] = 0
+
+def SaveState_main(_ctx):
+   _ctx["x"] = 0.0
+   _ctx["str"] = ""
+   count1 = SaveState_counter(_ctx["c1"])
+   count2 = SaveState_counter(_ctx["inst_19fb0"])
+   _ = SaveState_nosave(_ctx["inst_21bb0"])
+
+

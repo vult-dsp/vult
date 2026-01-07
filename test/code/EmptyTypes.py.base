@@ -1,0 +1,60 @@
+import math
+import random as random_module
+
+def eps():
+    return 1e-18
+
+def pi():
+    return 3.1415926535897932384
+
+def random():
+    return random_module.random()
+
+def irandom():
+    return int(random_module.random() * 4294967296)
+
+def clip(x, low, high):
+    return low if x < low else (high if x > high else x)
+
+def not_(x):
+    return 0 if x != 0 else 1
+
+def real(x):
+    return float(x)
+
+def int_(x):
+    return int(x)
+
+def int_to_float(i):
+    return float(i)
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+def EmptyTypes_foo_type_alloc():
+   _ctx = {}
+   _ctx["screen"] = {}
+   _ctx["settings"] = {}
+   return _ctx
+
+
+def EmptyTypes_setSettings_type_alloc(_ctx):
+   return EmptyTypes_foo_type_alloc()
+
+def EmptyTypes_setScreen_type_alloc(_ctx):
+   return EmptyTypes_foo_type_alloc()
+
+def EmptyTypes_foo(_ctx):
+   _ = setSomething(_ctx["settings"])
+   _ = drawSomething(_ctx["screen"])
+
+
+def EmptyTypes_setSettings(_ctx, s):
+   _ctx["settings"] = s
+
+def EmptyTypes_setScreen(_ctx, s):
+   _ctx["settings"] = s
+

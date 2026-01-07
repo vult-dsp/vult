@@ -1,0 +1,99 @@
+import math
+import random as random_module
+
+def eps():
+    return 1e-18
+
+def pi():
+    return 3.1415926535897932384
+
+def random():
+    return random_module.random()
+
+def irandom():
+    return int(random_module.random() * 4294967296)
+
+def clip(x, low, high):
+    return low if x < low else (high if x > high else x)
+
+def not_(x):
+    return 0 if x != 0 else 1
+
+def real(x):
+    return float(x)
+
+def int_(x):
+    return int(x)
+
+def int_to_float(i):
+    return float(i)
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+Wav_file_ext_wave_chan_0 = {}
+def Wav_file_ext_wave_samples():
+   return 600
+
+def Wav_file_ext_wave(channel, index):
+   if (channel == 0):
+      return Wav_file_ext_wave_chan_0[(index % 600)]
+   return 0.0
+
+
+def Wav_file_index_type_alloc():
+   _ctx = {}
+   _ctx["i"] = 0
+   return _ctx
+
+
+def Wav_file_osc_wave_type_alloc():
+   _ctx = {}
+   _ctx["inst_1e19a"] = Wav_file_index_type_alloc()
+   return _ctx
+
+
+def Wav_file_process_type_alloc():
+   _ctx = {}
+   _ctx["inst_19a53"] = Wav_file_osc_wave_type_alloc()
+   return _ctx
+
+
+def Wav_file_noteOn_type_alloc(_ctx):
+   return Wav_file_process_type_alloc()
+
+def Wav_file_noteOff_type_alloc(_ctx):
+   return Wav_file_process_type_alloc()
+
+def Wav_file_controlChange_type_alloc(_ctx):
+   return Wav_file_process_type_alloc()
+
+def Wav_file_default_type_alloc(_ctx):
+   return Wav_file_process_type_alloc()
+
+def Wav_file_index(_ctx):
+   _ctx["i"] = ((1 + _ctx["i"]) % Wav_file_ext_wave_samples())
+   return _ctx["i"]
+
+
+def Wav_file_osc_wave(_ctx, cv):
+   return Wav_file_ext_wave(0, Wav_file_index(_ctx["inst_1e19a"]))
+
+def Wav_file_process(_ctx, cv):
+   return Wav_file_osc_wave(_ctx["inst_19a53"], cv)
+
+def Wav_file_noteOn(_ctx, note, velocity, channel):
+   pass
+
+def Wav_file_noteOff(_ctx, note, channel):
+   pass
+
+def Wav_file_controlChange(_ctx, control, value, channel):
+   pass
+
+def Wav_file_default(_ctx):
+   pass
+

@@ -1,0 +1,105 @@
+import math
+import random as random_module
+
+def eps():
+    return 1e-18
+
+def pi():
+    return 3.1415926535897932384
+
+def random():
+    return random_module.random()
+
+def irandom():
+    return int(random_module.random() * 4294967296)
+
+def clip(x, low, high):
+    return low if x < low else (high if x > high else x)
+
+def not_(x):
+    return 0 if x != 0 else 1
+
+def real(x):
+    return float(x)
+
+def int_(x):
+    return int(x)
+
+def int_to_float(i):
+    return float(i)
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+def FixedAndFloat_test1():
+   fixed_value = 0.0
+   real_value = 0.0
+   int_value = 0
+   bool_value = False
+   result = (fixed_value + fix16(real_value))
+   from_int = fix16(int_value)
+   from_real = fix16(real_value)
+   from_bool = fix16(bool_value)
+   to_int = int(fixed_value)
+   to_real = real(fixed_value)
+   to_bool = bool(fixed_value)
+   from_int = 0.0
+   from_real = 0.0
+   from_bool = 0.0
+   to_int = 0
+   to_real = 0.0
+   to_bool = False
+
+
+FixedAndFloat_take_fix_return_fixed_c0 = {}
+FixedAndFloat_take_fix_return_fixed_c1 = {}
+def FixedAndFloat_take_fix_return_fixed_raw_c0(index):
+   return FixedAndFloat_take_fix_return_fixed_c0[index]
+
+def FixedAndFloat_take_fix_return_fixed_raw_c1(index):
+   return FixedAndFloat_take_fix_return_fixed_c1[index]
+
+def FixedAndFloat_take_fix_return_fixed(x):
+   value = clip((x * 32.0), 0.0, 32.0)
+   index = int(value)
+   decimal = (value - floor(value))
+   return (FixedAndFloat_take_fix_return_fixed_c0[index] + (FixedAndFloat_take_fix_return_fixed_c1[index] * decimal))
+
+
+FixedAndFloat_take_fix_return_real_c0 = {}
+FixedAndFloat_take_fix_return_real_c1 = {}
+FixedAndFloat_take_fix_return_real_c2 = {}
+def FixedAndFloat_take_fix_return_real_raw_c0(index):
+   return FixedAndFloat_take_fix_return_real_c0[index]
+
+def FixedAndFloat_take_fix_return_real_raw_c1(index):
+   return FixedAndFloat_take_fix_return_real_c1[index]
+
+def FixedAndFloat_take_fix_return_real_raw_c2(index):
+   return FixedAndFloat_take_fix_return_real_c2[index]
+
+def FixedAndFloat_take_fix_return_real(x):
+   index = clip(fix_to_int((x * 31.0)), 0, 31)
+   return (FixedAndFloat_take_fix_return_real_c0[index] + (fix_to_float(x) * (FixedAndFloat_take_fix_return_real_c1[index] + (FixedAndFloat_take_fix_return_real_c2[index] * fix_to_float(x)))))
+
+
+FixedAndFloat_take_real_return_fixed_c0 = {}
+FixedAndFloat_take_real_return_fixed_c1 = {}
+FixedAndFloat_take_real_return_fixed_c2 = {}
+def FixedAndFloat_take_real_return_fixed_raw_c0(index):
+   return FixedAndFloat_take_real_return_fixed_c0[index]
+
+def FixedAndFloat_take_real_return_fixed_raw_c1(index):
+   return FixedAndFloat_take_real_return_fixed_c1[index]
+
+def FixedAndFloat_take_real_return_fixed_raw_c2(index):
+   return FixedAndFloat_take_real_return_fixed_c2[index]
+
+def FixedAndFloat_take_real_return_fixed(x):
+   index = clip(float_to_int((x * 31.0)), 0, 31)
+   return (FixedAndFloat_take_real_return_fixed_c0[index] + (float_to_fix(x) * (FixedAndFloat_take_real_return_fixed_c1[index] + (FixedAndFloat_take_real_return_fixed_c2[index] * float_to_fix(x)))))
+
+

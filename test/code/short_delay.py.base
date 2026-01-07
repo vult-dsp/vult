@@ -1,0 +1,154 @@
+import math
+import random as random_module
+
+def eps():
+    return 1e-18
+
+def pi():
+    return 3.1415926535897932384
+
+def random():
+    return random_module.random()
+
+def irandom():
+    return int(random_module.random() * 4294967296)
+
+def clip(x, low, high):
+    return low if x < low else (high if x > high else x)
+
+def not_(x):
+    return 0 if x != 0 else 1
+
+def real(x):
+    return float(x)
+
+def int_(x):
+    return int(x)
+
+def int_to_float(i):
+    return float(i)
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+def Short_delay_soft_type_alloc():
+   _ctx = {}
+   _ctx["x2"] = 0.0
+   _ctx["x3"] = 0.0
+   _ctx["x4"] = 0.0
+   return _ctx
+
+
+def Short_delay_do_type_alloc():
+   i_0 = 0
+   temp = initializeArray(0.0, 22050)
+   _ctx = {}
+   while (i_0 < 22050):
+      temp[i_0] = 0.0
+      i_0 = (1 + i_0)
+
+   _ctx["buffer"] = temp
+   _ctx["write_pos"] = 0
+   return _ctx
+
+
+def Short_delay_process_type_alloc():
+   _ctx = {}
+   _ctx["inst_1593b"] = Short_delay_soft_type_alloc()
+   _ctx["inst_2ba3b"] = Short_delay_do_type_alloc()
+   return _ctx
+
+
+def Short_delay_noteOn_type_alloc(_ctx):
+   return Short_delay_process_type_alloc()
+
+def Short_delay_noteOff_type_alloc(_ctx):
+   return Short_delay_process_type_alloc()
+
+def Short_delay_controlChange_type_alloc(_ctx):
+   return Short_delay_process_type_alloc()
+
+def Short_delay_default_type_alloc(_ctx):
+   return Short_delay_process_type_alloc()
+
+Saturate_tanh_table_c0 = {}
+Saturate_tanh_table_c1 = {}
+Saturate_tanh_table_c2 = {}
+def Saturate_tanh_table_raw_c0(index):
+   return Saturate_tanh_table_c0[index]
+
+def Saturate_tanh_table_raw_c1(index):
+   return Saturate_tanh_table_c1[index]
+
+def Saturate_tanh_table_raw_c2(index):
+   return Saturate_tanh_table_c2[index]
+
+def Saturate_tanh_table(x):
+   index = clip(float_to_int(((x + 24.0) * 5.0)), 0, 240)
+   return (Saturate_tanh_table_c0[index] + (x * (Saturate_tanh_table_c1[index] + (Saturate_tanh_table_c2[index] * x))))
+
+
+def Saturate_process(x):
+   return Saturate_tanh_table(x)
+
+def Saturate_noteOn(note, velocity, channel):
+   pass
+
+def Saturate_noteOff(note, channel):
+   pass
+
+def Saturate_controlChange(control, value, channel):
+   pass
+
+def Saturate_default():
+   pass
+
+def Short_delay_soft(_ctx, x1):
+   o = (0.25 * (x1 + (_ctx["x2"] + (_ctx["x3"] + _ctx["x4"]))))
+   _t_temp_0 = x1
+   _t_temp_1 = _ctx["x2"]
+   _t_temp_2 = _ctx["x3"]
+   _ctx["x2"] = _t_temp_0
+   _ctx["x3"] = _t_temp_1
+   _ctx["x4"] = _t_temp_2
+   return o
+
+
+def Short_delay_do(_ctx, x, time_in, feedback_in):
+   time = clip(time_in, 0.0, 1.0)
+   feedback = clip(feedback_in, 0.0, 1.0)
+   index_r = (22050.0 * time)
+   index_i = int(math.floor(index_r))
+   delta = ((-index_i) + _ctx["write_pos"])
+   read_pos = 0
+   if (delta < 0):
+      read_pos = (22050 + delta)
+   else:
+      read_pos = delta
+   decimal = (index_r + (-real(index_i)))
+   x1 = _ctx["buffer"][read_pos]
+   x2 = _ctx["buffer"][((1 + read_pos) % 22050)]
+   ret = (x1 + (decimal * (x2 + (-x1))))
+   _ctx["write_pos"] = ((1 + _ctx["write_pos"]) % 22050)
+   _ctx["buffer"][_ctx["write_pos"]] = Saturate_process((x + (feedback * ret)))
+   return ret
+
+
+def Short_delay_process(_ctx, x, time, feedback):
+   return Short_delay_do(_ctx["inst_2ba3b"], x, Short_delay_soft(_ctx["inst_1593b"], time), feedback)
+
+def Short_delay_noteOn(_ctx, note, velocity, channel):
+   pass
+
+def Short_delay_noteOff(_ctx, note, channel):
+   pass
+
+def Short_delay_controlChange(_ctx, control, value, channel):
+   pass
+
+def Short_delay_default(_ctx):
+   pass
+

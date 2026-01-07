@@ -1,0 +1,138 @@
+import math
+import random as random_module
+
+def eps():
+    return 1e-18
+
+def pi():
+    return 3.1415926535897932384
+
+def random():
+    return random_module.random()
+
+def irandom():
+    return int(random_module.random() * 4294967296)
+
+def clip(x, low, high):
+    return low if x < low else (high if x > high else x)
+
+def not_(x):
+    return 0 if x != 0 else 1
+
+def real(x):
+    return float(x)
+
+def int_(x):
+    return int(x)
+
+def int_to_float(i):
+    return float(i)
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+def Phasedist_smooth_type_alloc():
+   _ctx = {}
+   _ctx["x"] = 0.0
+   return _ctx
+
+
+def Phasedist_change_type_alloc():
+   _ctx = {}
+   _ctx["pre_x"] = 0.0
+   return _ctx
+
+
+def Phasedist_phasor_type_alloc():
+   _ctx = {}
+   _ctx["inst_1e817"] = Phasedist_change_type_alloc()
+   _ctx["phase"] = 0.0
+   _ctx["rate"] = 0.0
+   return _ctx
+
+
+def Phasedist_process_type_alloc():
+   _ctx = {}
+   _ctx["detune"] = 0.0
+   _ctx["inst_117e9"] = Phasedist_phasor_type_alloc()
+   _ctx["inst_275e9"] = Phasedist_smooth_type_alloc()
+   _ctx["inst_317e9"] = Phasedist_phasor_type_alloc()
+   _ctx["inst_475e9"] = Phasedist_smooth_type_alloc()
+   _ctx["pitch"] = 0.0
+   _ctx["pre_phase1"] = 0.0
+   _ctx["volume"] = 0.0
+   return _ctx
+
+
+def Phasedist_noteOn_type_alloc(_ctx):
+   return Phasedist_process_type_alloc()
+
+def Phasedist_noteOff_type_alloc(_ctx):
+   return Phasedist_process_type_alloc()
+
+def Phasedist_controlChange_type_alloc(_ctx):
+   return Phasedist_process_type_alloc()
+
+def Phasedist_default_type_alloc(_ctx):
+   return Phasedist_process_type_alloc()
+
+def Phasedist_smooth(_ctx, input):
+   _ctx["x"] = ((0.005 * (input + (-_ctx["x"]))) + _ctx["x"])
+   return _ctx["x"]
+
+
+def Phasedist_change(_ctx, x):
+   v = (_ctx["pre_x"] != x)
+   _ctx["pre_x"] = x
+   return v
+
+
+def Phasedist_pitchToRate(d):
+   return (0.000185 * math.exp((0.057762 * d)))
+
+def Phasedist_phasor(_ctx, pitch, reset):
+   if Phasedist_change(_ctx["inst_1e817"], pitch):
+      _ctx["rate"] = Phasedist_pitchToRate(pitch)
+   if reset:
+      _ctx["phase"] = 0.0
+   else:
+      _ctx["phase"] = (_ctx["phase"] + _ctx["rate"])
+   if (_ctx["phase"] > 1.0):
+      _ctx["phase"] = (-1.0 + _ctx["phase"])
+   else:
+      _ctx["phase"] = _ctx["phase"]
+   return _ctx["phase"]
+
+
+def Phasedist_process(_ctx, input):
+   phase1 = Phasedist_phasor(_ctx["inst_117e9"], _ctx["pitch"], False)
+   comp = (1.0 + (-phase1))
+   reset = (((-phase1) + _ctx["pre_phase1"]) > 0.5)
+   _ctx["pre_phase1"] = phase1
+   phase2 = Phasedist_phasor(_ctx["inst_317e9"], ((32.0 * Phasedist_smooth(_ctx["inst_275e9"], _ctx["detune"])) + _ctx["pitch"]), reset)
+   sine = math.sin((6.283185 * phase2))
+   return (comp * (sine * Phasedist_smooth(_ctx["inst_475e9"], _ctx["volume"])))
+
+
+def Phasedist_noteOn(_ctx, note, velocity, channel):
+   _ctx["pitch"] = real(note)
+
+def Phasedist_noteOff(_ctx, note, channel):
+   pass
+
+def Phasedist_controlChange(_ctx, control, value, channel):
+   if (control == 30):
+      _ctx["volume"] = (0.007874 * real(value))
+   if (control == 31):
+      _ctx["detune"] = (0.007874 * real(value))
+
+
+def Phasedist_default(_ctx):
+   _ctx["volume"] = 1.0
+   _ctx["pitch"] = 45.0
+   _ctx["detune"] = 0.0
+
+

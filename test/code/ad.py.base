@@ -1,0 +1,291 @@
+import math
+import random as random_module
+
+def eps():
+    return 1e-18
+
+def pi():
+    return 3.1415926535897932384
+
+def random():
+    return random_module.random()
+
+def irandom():
+    return int(random_module.random() * 4294967296)
+
+def clip(x, low, high):
+    return low if x < low else (high if x > high else x)
+
+def not_(x):
+    return 0 if x != 0 else 1
+
+def real(x):
+    return float(x)
+
+def int_(x):
+    return int(x)
+
+def int_to_float(i):
+    return float(i)
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+def Util_edge_type_alloc():
+   _ctx = {}
+   _ctx["pre"] = False
+   return _ctx
+
+
+def Util_change_type_alloc():
+   _ctx = {}
+   _ctx["pre_x"] = 0.0
+   return _ctx
+
+
+def Util_dcblock_type_alloc():
+   _ctx = {}
+   _ctx["x1"] = 0.0
+   _ctx["y1"] = 0.0
+   return _ctx
+
+
+def Util_smooth_type_alloc():
+   _ctx = {}
+   _ctx["x"] = 0.0
+   return _ctx
+
+
+def Util_average2_type_alloc():
+   _ctx = {}
+   _ctx["x0"] = 0.0
+   return _ctx
+
+
+def Ad_do_type_alloc():
+   _ctx = {}
+   _ctx["inst_10452"] = Util_edge_type_alloc()
+   _ctx["out"] = 0.0
+   _ctx["rate"] = 0.0
+   _ctx["scale"] = 0.0
+   _ctx["state"] = 0
+   _ctx["target"] = 0.0
+   return _ctx
+
+
+def Ad_process_type_alloc():
+   _ctx = {}
+   _ctx["inst_15232"] = Ad_do_type_alloc()
+   _ctx["knob1"] = 0.0
+   _ctx["knob2"] = 0.0
+   return _ctx
+
+
+def Ad_noteOn_type_alloc(_ctx):
+   return Ad_process_type_alloc()
+
+def Ad_noteOff_type_alloc(_ctx):
+   return Ad_process_type_alloc()
+
+def Ad_controlChange_type_alloc(_ctx):
+   return Ad_process_type_alloc()
+
+def Ad_default_type_alloc(_ctx):
+   return Ad_process_type_alloc()
+
+def Util_edge(_ctx, x):
+   ret = (x and (_ctx["pre"] == False))
+   _ctx["pre"] = x
+   return ret
+
+
+def Util_change(_ctx, x):
+   v = (_ctx["pre_x"] != x)
+   _ctx["pre_x"] = x
+   return v
+
+
+def Util_map(x, x0, x1, y0, y1):
+   return (y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))))
+
+def Util_dcblock(_ctx, x0):
+   y0 = (x0 + ((-_ctx["x1"]) + (0.995 * _ctx["y1"])))
+   _ctx["x1"] = x0
+   _ctx["y1"] = y0
+   return y0
+
+
+def Util_smooth(_ctx, input):
+   _ctx["x"] = ((0.005 * (input + (-_ctx["x"]))) + _ctx["x"])
+   return _ctx["x"]
+
+
+def Util_average2(_ctx, x1):
+   result = (0.5 * (x1 + _ctx["x0"]))
+   _ctx["x0"] = x1
+   return result
+
+
+def Util_cubic_clipper(x):
+   if (x <= -0.666667):
+      return -0.666667
+   else:
+      if (x >= 0.666666):
+         return 0.666666
+      else:
+         return (x + (-0.333334 * (x * (x * x))))
+
+Util_pitchToRate_1024_c0 = {}
+Util_pitchToRate_1024_c1 = {}
+Util_pitchToRate_1024_c2 = {}
+def Util_pitchToRate_1024_raw_c0(index):
+   return Util_pitchToRate_1024_c0[index]
+
+def Util_pitchToRate_1024_raw_c1(index):
+   return Util_pitchToRate_1024_c1[index]
+
+def Util_pitchToRate_1024_raw_c2(index):
+   return Util_pitchToRate_1024_c2[index]
+
+def Util_pitchToRate_1024(pitch):
+   index = clip(float_to_int((pitch * 0.244094)), 0, 31)
+   return (Util_pitchToRate_1024_c0[index] + (pitch * (Util_pitchToRate_1024_c1[index] + (Util_pitchToRate_1024_c2[index] * pitch))))
+
+
+Util_pitchToRate_c0 = {}
+Util_pitchToRate_c1 = {}
+Util_pitchToRate_c2 = {}
+def Util_pitchToRate_raw_c0(index):
+   return Util_pitchToRate_c0[index]
+
+def Util_pitchToRate_raw_c1(index):
+   return Util_pitchToRate_c1[index]
+
+def Util_pitchToRate_raw_c2(index):
+   return Util_pitchToRate_c2[index]
+
+def Util_pitchToRate(pitch):
+   index = clip(float_to_int((pitch * 0.244094)), 0, 31)
+   return (Util_pitchToRate_c0[index] + (pitch * (Util_pitchToRate_c1[index] + (Util_pitchToRate_c2[index] * pitch))))
+
+
+def Util_cvToPitch(cv):
+   return (24.0 + (120.0 * cv))
+
+Util_cvToRate_1024_c0 = {}
+Util_cvToRate_1024_c1 = {}
+Util_cvToRate_1024_c2 = {}
+def Util_cvToRate_1024_raw_c0(index):
+   return Util_cvToRate_1024_c0[index]
+
+def Util_cvToRate_1024_raw_c1(index):
+   return Util_cvToRate_1024_c1[index]
+
+def Util_cvToRate_1024_raw_c2(index):
+   return Util_cvToRate_1024_c2[index]
+
+def Util_cvToRate_1024(cv):
+   index = clip(float_to_int((cv * 34.444444)), 0, 31)
+   return (Util_cvToRate_1024_c0[index] + (cv * (Util_cvToRate_1024_c1[index] + (Util_cvToRate_1024_c2[index] * cv))))
+
+
+Util_cvToRate_c0 = {}
+Util_cvToRate_c1 = {}
+Util_cvToRate_c2 = {}
+def Util_cvToRate_raw_c0(index):
+   return Util_cvToRate_c0[index]
+
+def Util_cvToRate_raw_c1(index):
+   return Util_cvToRate_c1[index]
+
+def Util_cvToRate_raw_c2(index):
+   return Util_cvToRate_c2[index]
+
+def Util_cvToRate(cv):
+   index = clip(float_to_int((cv * 141.111111)), 0, 127)
+   return (Util_cvToRate_c0[index] + (cv * (Util_cvToRate_c1[index] + (Util_cvToRate_c2[index] * cv))))
+
+
+def Util_pitchToCv(pitch):
+   return (-0.2 + (0.008333 * pitch))
+
+Util_cvToperiod_c0 = {}
+Util_cvToperiod_c1 = {}
+Util_cvToperiod_c2 = {}
+def Util_cvToperiod_raw_c0(index):
+   return Util_cvToperiod_c0[index]
+
+def Util_cvToperiod_raw_c1(index):
+   return Util_cvToperiod_c1[index]
+
+def Util_cvToperiod_raw_c2(index):
+   return Util_cvToperiod_c2[index]
+
+def Util_cvToperiod(cv):
+   index = clip(float_to_int((cv * 31.0)), 0, 31)
+   return (Util_cvToperiod_c0[index] + (cv * (Util_cvToperiod_c1[index] + (Util_cvToperiod_c2[index] * cv))))
+
+
+Util_cvTokHz_c0 = {}
+Util_cvTokHz_c1 = {}
+Util_cvTokHz_c2 = {}
+def Util_cvTokHz_raw_c0(index):
+   return Util_cvTokHz_c0[index]
+
+def Util_cvTokHz_raw_c1(index):
+   return Util_cvTokHz_c1[index]
+
+def Util_cvTokHz_raw_c2(index):
+   return Util_cvTokHz_c2[index]
+
+def Util_cvTokHz(cv):
+   index = clip(float_to_int((cv * 31.0)), 0, 31)
+   return (Util_cvTokHz_c0[index] + (cv * (Util_cvTokHz_c1[index] + (Util_cvTokHz_c2[index] * cv))))
+
+
+def Ad_do(_ctx, gate, a, d):
+   a_rate = (1.0 / (0.01 + (100.0 * a)))
+   d_rate = (1.0 / (0.01 + (100.0 * d)))
+   bgate = (gate > 0.0)
+   _ctx["out"] = ((0.004 * (((-_ctx["out"]) + _ctx["target"]) * _ctx["rate"])) + _ctx["out"])
+   if (_ctx["state"] == 0):
+      if Util_edge(_ctx["inst_10452"], bgate):
+         _ctx["state"] = 1
+         _ctx["scale"] = (0.2 * gate)
+
+      _ctx["rate"] = d_rate
+      _ctx["target"] = 0.0
+
+   if (_ctx["state"] == 1):
+      if ((bgate == False) or (_ctx["out"] > 1024.0)):
+         _ctx["state"] = 0
+      _ctx["rate"] = a_rate
+      _ctx["target"] = 1228.8
+
+   return (clip((0.000976 * _ctx["out"]), 0.0, 1.0) * _ctx["scale"])
+
+
+def Ad_process(_ctx, gate):
+   return Ad_do(_ctx["inst_15232"], gate, _ctx["knob1"], _ctx["knob2"])
+
+def Ad_noteOn(_ctx, note, velocity, channel):
+   pass
+
+def Ad_noteOff(_ctx, note, channel):
+   pass
+
+def Ad_controlChange(_ctx, control, value, channel):
+   if (control == 1):
+      _ctx["knob1"] = (0.007874 * real(value))
+   if (control == 2):
+      _ctx["knob2"] = (0.007874 * real(value))
+
+
+def Ad_default(_ctx):
+   _ctx["knob1"] = 0.0
+   _ctx["knob2"] = 0.5
+
+

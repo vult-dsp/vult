@@ -389,12 +389,89 @@ module Julia = struct
     | _ -> None
 end
 
+module Python = struct
+  let keywords =
+    [ "False"
+    ; "None"
+    ; "True"
+    ; "and"
+    ; "as"
+    ; "assert"
+    ; "async"
+    ; "await"
+    ; "break"
+    ; "class"
+    ; "continue"
+    ; "def"
+    ; "del"
+    ; "elif"
+    ; "else"
+    ; "except"
+    ; "finally"
+    ; "for"
+    ; "from"
+    ; "global"
+    ; "if"
+    ; "import"
+    ; "in"
+    ; "is"
+    ; "lambda"
+    ; "nonlocal"
+    ; "not"
+    ; "or"
+    ; "pass"
+    ; "raise"
+    ; "return"
+    ; "try"
+    ; "while"
+    ; "with"
+    ; "yield"
+    ]
+    |> Util.Maps.Set.of_list
+
+
+  let op_to_fun (op : Core.Prog.operator) (e1 : type_) (e2 : type_) (ret : type_) =
+    match op, e1.t, e2.t, ret.t with
+    | _ -> None
+
+
+  let fun_to_fun (path : string) (args : type_ list) (ret : type_) =
+    let args = CCList.map (fun (t : type_) -> t.t) args in
+    match path, args, (getReturnType ret).t with
+    (* Math functions - Python uses math module *)
+    | "sin", [ TReal ], TReal -> Some "math.sin"
+    | "cos", [ TReal ], TReal -> Some "math.cos"
+    | "tan", [ TReal ], TReal -> Some "math.tan"
+    | "sinh", [ TReal ], TReal -> Some "math.sinh"
+    | "cosh", [ TReal ], TReal -> Some "math.cosh"
+    | "tanh", [ TReal ], TReal -> Some "math.tanh"
+    | "exp", [ TReal ], TReal -> Some "math.exp"
+    | "floor", [ TReal ], TReal -> Some "math.floor"
+    | "abs", [ TReal ], TReal -> Some "abs"
+    | "abs", [ TInt ], TInt -> Some "abs"
+    | "sqrt", [ TReal ], TReal -> Some "math.sqrt"
+    | "log", [ TReal ], TReal -> Some "math.log"
+    | "log10", [ TReal ], TReal -> Some "math.log10"
+    (* Math constants *)
+    | "pi", [], TReal -> Some "math.pi"
+    (* Random functions *)
+    | "random", [], TReal -> Some "random.random"
+    (* Cast - map string to str *)
+    | "string", [ TInt ], TString -> Some "str"
+    | "string", [ TInt16 ], TString -> Some "str"
+    | "string", [ TReal ], TString -> Some "str"
+    | "string", [ TFix16 ], TString -> Some "str"
+    | "string", [ TBool ], TString -> Some "str"
+    | _ -> None
+end
+
 let fun_to_fun (lang : Util.Args.code) (path : string) (args : type_ list) (ret : type_) =
   match lang with
   | CppCode -> Cpp.fun_to_fun path args ret
   | LuaCode -> Lua.fun_to_fun path args ret
   | JSCode -> Js.fun_to_fun path args ret
   | JuliaCode -> Julia.fun_to_fun path args ret
+  | PythonCode -> Python.fun_to_fun path args ret
   | _ -> None
 
 
@@ -404,6 +481,7 @@ let op_to_fun (lang : Util.Args.code) (op : Core.Prog.operator) (e1 : type_) (e2
   | LuaCode -> Lua.op_to_fun op e1 e2 ret
   | JSCode -> Js.op_to_fun op e1 e2 ret
   | JuliaCode -> Julia.op_to_fun op e1 e2 ret
+  | PythonCode -> Python.op_to_fun op e1 e2 ret
   | _ -> None
 
 
@@ -426,6 +504,11 @@ let keyword (lang : Util.Args.code) id =
       id
   | JuliaCode ->
     if Util.Maps.Set.mem id Julia.keywords then
+      id ^ "_"
+    else
+      id
+  | PythonCode ->
+    if Util.Maps.Set.mem id Python.keywords then
       id ^ "_"
     else
       id

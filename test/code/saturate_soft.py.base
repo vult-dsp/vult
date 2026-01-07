@@ -1,0 +1,68 @@
+import math
+import random as random_module
+
+def eps():
+    return 1e-18
+
+def pi():
+    return 3.1415926535897932384
+
+def random():
+    return random_module.random()
+
+def irandom():
+    return int(random_module.random() * 4294967296)
+
+def clip(x, low, high):
+    return low if x < low else (high if x > high else x)
+
+def not_(x):
+    return 0 if x != 0 else 1
+
+def real(x):
+    return float(x)
+
+def int_(x):
+    return int(x)
+
+def int_to_float(i):
+    return float(i)
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+Saturate_soft_tanh_table_c0 = {}
+Saturate_soft_tanh_table_c1 = {}
+Saturate_soft_tanh_table_c2 = {}
+def Saturate_soft_tanh_table_raw_c0(index):
+   return Saturate_soft_tanh_table_c0[index]
+
+def Saturate_soft_tanh_table_raw_c1(index):
+   return Saturate_soft_tanh_table_c1[index]
+
+def Saturate_soft_tanh_table_raw_c2(index):
+   return Saturate_soft_tanh_table_c2[index]
+
+def Saturate_soft_tanh_table(x):
+   index = clip(float_to_int(((x + 24.0) * 5.0)), 0, 240)
+   return (Saturate_soft_tanh_table_c0[index] + (x * (Saturate_soft_tanh_table_c1[index] + (Saturate_soft_tanh_table_c2[index] * x))))
+
+
+def Saturate_soft_process(x):
+   return Saturate_soft_tanh_table(x)
+
+def Saturate_soft_noteOn(note, velocity, channel):
+   pass
+
+def Saturate_soft_noteOff(note, channel):
+   pass
+
+def Saturate_soft_controlChange(control, value, channel):
+   pass
+
+def Saturate_soft_default():
+   pass
+

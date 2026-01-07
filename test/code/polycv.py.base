@@ -1,0 +1,394 @@
+import math
+import random as random_module
+
+def eps():
+    return 1e-18
+
+def pi():
+    return 3.1415926535897932384
+
+def random():
+    return random_module.random()
+
+def irandom():
+    return int(random_module.random() * 4294967296)
+
+def clip(x, low, high):
+    return low if x < low else (high if x > high else x)
+
+def not_(x):
+    return 0 if x != 0 else 1
+
+def real(x):
+    return float(x)
+
+def int_(x):
+    return int(x)
+
+def int_to_float(i):
+    return float(i)
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+def Util_edge_type_alloc():
+   _ctx = {}
+   _ctx["pre"] = False
+   return _ctx
+
+
+def Util_change_type_alloc():
+   _ctx = {}
+   _ctx["pre_x"] = 0.0
+   return _ctx
+
+
+def Util_dcblock_type_alloc():
+   _ctx = {}
+   _ctx["x1"] = 0.0
+   _ctx["y1"] = 0.0
+   return _ctx
+
+
+def Util_smooth_type_alloc():
+   _ctx = {}
+   _ctx["x"] = 0.0
+   return _ctx
+
+
+def Util_average2_type_alloc():
+   _ctx = {}
+   _ctx["x0"] = 0.0
+   return _ctx
+
+
+def Polycv_poly_noteOn_type_alloc():
+   _ctx = {}
+   _ctx["Polycv_polyState_ret_0"] = 0.0
+   _ctx["Polycv_polyState_ret_1"] = 0.0
+   _ctx["Polycv_polyState_ret_10"] = 0.0
+   _ctx["Polycv_polyState_ret_11"] = 0.0
+   _ctx["Polycv_polyState_ret_2"] = 0.0
+   _ctx["Polycv_polyState_ret_3"] = 0.0
+   _ctx["Polycv_polyState_ret_4"] = 0.0
+   _ctx["Polycv_polyState_ret_5"] = 0.0
+   _ctx["Polycv_polyState_ret_6"] = 0.0
+   _ctx["Polycv_polyState_ret_7"] = 0.0
+   _ctx["Polycv_polyState_ret_8"] = 0.0
+   _ctx["Polycv_polyState_ret_9"] = 0.0
+   i_0 = 0
+   temp = initializeArray(0, 4)
+   while (i_0 < 4):
+      temp[i_0] = 0
+      i_0 = (1 + i_0)
+
+   _ctx["notes"] = temp
+   i_1 = 0
+   temp = initializeArray(0, 4)
+   while (i_1 < 4):
+      temp[i_1] = 0
+      i_1 = (1 + i_1)
+
+   _ctx["vel"] = temp
+   return _ctx
+
+
+def Polycv_poly_noteOff_type_alloc(_ctx):
+   return Polycv_poly_noteOn_type_alloc()
+
+def Polycv_polyState_type_alloc(_ctx):
+   return Polycv_poly_noteOn_type_alloc()
+
+def Polycv_process_type_alloc():
+   _ctx = {}
+   _ctx["Polycv_process_ret_0"] = 0.0
+   _ctx["Polycv_process_ret_1"] = 0.0
+   _ctx["Polycv_process_ret_10"] = 0.0
+   _ctx["Polycv_process_ret_11"] = 0.0
+   _ctx["Polycv_process_ret_2"] = 0.0
+   _ctx["Polycv_process_ret_3"] = 0.0
+   _ctx["Polycv_process_ret_4"] = 0.0
+   _ctx["Polycv_process_ret_5"] = 0.0
+   _ctx["Polycv_process_ret_6"] = 0.0
+   _ctx["Polycv_process_ret_7"] = 0.0
+   _ctx["Polycv_process_ret_8"] = 0.0
+   _ctx["Polycv_process_ret_9"] = 0.0
+   _ctx["channel_in"] = 0
+   _ctx["poly"] = Polycv_poly_noteOn_type_alloc()
+   return _ctx
+
+
+def Polycv_noteOn_type_alloc(_ctx):
+   return Polycv_process_type_alloc()
+
+def Polycv_noteOff_type_alloc(_ctx):
+   return Polycv_process_type_alloc()
+
+def Polycv_controlChange_type_alloc(_ctx):
+   return Polycv_process_type_alloc()
+
+def Polycv_default_type_alloc(_ctx):
+   return Polycv_process_type_alloc()
+
+def Util_edge(_ctx, x):
+   ret = (x and (_ctx["pre"] == False))
+   _ctx["pre"] = x
+   return ret
+
+
+def Util_change(_ctx, x):
+   v = (_ctx["pre_x"] != x)
+   _ctx["pre_x"] = x
+   return v
+
+
+def Util_map(x, x0, x1, y0, y1):
+   return (y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))))
+
+def Util_dcblock(_ctx, x0):
+   y0 = (x0 + ((-_ctx["x1"]) + (0.995 * _ctx["y1"])))
+   _ctx["x1"] = x0
+   _ctx["y1"] = y0
+   return y0
+
+
+def Util_smooth(_ctx, input):
+   _ctx["x"] = ((0.005 * (input + (-_ctx["x"]))) + _ctx["x"])
+   return _ctx["x"]
+
+
+def Util_average2(_ctx, x1):
+   result = (0.5 * (x1 + _ctx["x0"]))
+   _ctx["x0"] = x1
+   return result
+
+
+def Util_cubic_clipper(x):
+   if (x <= -0.666667):
+      return -0.666667
+   else:
+      if (x >= 0.666666):
+         return 0.666666
+      else:
+         return (x + (-0.333334 * (x * (x * x))))
+
+Util_pitchToRate_1024_c0 = {}
+Util_pitchToRate_1024_c1 = {}
+Util_pitchToRate_1024_c2 = {}
+def Util_pitchToRate_1024_raw_c0(index):
+   return Util_pitchToRate_1024_c0[index]
+
+def Util_pitchToRate_1024_raw_c1(index):
+   return Util_pitchToRate_1024_c1[index]
+
+def Util_pitchToRate_1024_raw_c2(index):
+   return Util_pitchToRate_1024_c2[index]
+
+def Util_pitchToRate_1024(pitch):
+   index = clip(float_to_int((pitch * 0.244094)), 0, 31)
+   return (Util_pitchToRate_1024_c0[index] + (pitch * (Util_pitchToRate_1024_c1[index] + (Util_pitchToRate_1024_c2[index] * pitch))))
+
+
+Util_pitchToRate_c0 = {}
+Util_pitchToRate_c1 = {}
+Util_pitchToRate_c2 = {}
+def Util_pitchToRate_raw_c0(index):
+   return Util_pitchToRate_c0[index]
+
+def Util_pitchToRate_raw_c1(index):
+   return Util_pitchToRate_c1[index]
+
+def Util_pitchToRate_raw_c2(index):
+   return Util_pitchToRate_c2[index]
+
+def Util_pitchToRate(pitch):
+   index = clip(float_to_int((pitch * 0.244094)), 0, 31)
+   return (Util_pitchToRate_c0[index] + (pitch * (Util_pitchToRate_c1[index] + (Util_pitchToRate_c2[index] * pitch))))
+
+
+def Util_cvToPitch(cv):
+   return (24.0 + (120.0 * cv))
+
+Util_cvToRate_1024_c0 = {}
+Util_cvToRate_1024_c1 = {}
+Util_cvToRate_1024_c2 = {}
+def Util_cvToRate_1024_raw_c0(index):
+   return Util_cvToRate_1024_c0[index]
+
+def Util_cvToRate_1024_raw_c1(index):
+   return Util_cvToRate_1024_c1[index]
+
+def Util_cvToRate_1024_raw_c2(index):
+   return Util_cvToRate_1024_c2[index]
+
+def Util_cvToRate_1024(cv):
+   index = clip(float_to_int((cv * 34.444444)), 0, 31)
+   return (Util_cvToRate_1024_c0[index] + (cv * (Util_cvToRate_1024_c1[index] + (Util_cvToRate_1024_c2[index] * cv))))
+
+
+Util_cvToRate_c0 = {}
+Util_cvToRate_c1 = {}
+Util_cvToRate_c2 = {}
+def Util_cvToRate_raw_c0(index):
+   return Util_cvToRate_c0[index]
+
+def Util_cvToRate_raw_c1(index):
+   return Util_cvToRate_c1[index]
+
+def Util_cvToRate_raw_c2(index):
+   return Util_cvToRate_c2[index]
+
+def Util_cvToRate(cv):
+   index = clip(float_to_int((cv * 141.111111)), 0, 127)
+   return (Util_cvToRate_c0[index] + (cv * (Util_cvToRate_c1[index] + (Util_cvToRate_c2[index] * cv))))
+
+
+def Util_pitchToCv(pitch):
+   return (-0.2 + (0.008333 * pitch))
+
+Util_cvToperiod_c0 = {}
+Util_cvToperiod_c1 = {}
+Util_cvToperiod_c2 = {}
+def Util_cvToperiod_raw_c0(index):
+   return Util_cvToperiod_c0[index]
+
+def Util_cvToperiod_raw_c1(index):
+   return Util_cvToperiod_c1[index]
+
+def Util_cvToperiod_raw_c2(index):
+   return Util_cvToperiod_c2[index]
+
+def Util_cvToperiod(cv):
+   index = clip(float_to_int((cv * 31.0)), 0, 31)
+   return (Util_cvToperiod_c0[index] + (cv * (Util_cvToperiod_c1[index] + (Util_cvToperiod_c2[index] * cv))))
+
+
+Util_cvTokHz_c0 = {}
+Util_cvTokHz_c1 = {}
+Util_cvTokHz_c2 = {}
+def Util_cvTokHz_raw_c0(index):
+   return Util_cvTokHz_c0[index]
+
+def Util_cvTokHz_raw_c1(index):
+   return Util_cvTokHz_c1[index]
+
+def Util_cvTokHz_raw_c2(index):
+   return Util_cvTokHz_c2[index]
+
+def Util_cvTokHz(cv):
+   index = clip(float_to_int((cv * 31.0)), 0, 31)
+   return (Util_cvTokHz_c0[index] + (cv * (Util_cvTokHz_c1[index] + (Util_cvTokHz_c2[index] * cv))))
+
+
+def Polycv_velToCV(vel):
+   return (0.007874 * real(vel))
+
+def Polycv_velToGate(vel):
+   if (vel > 0):
+      return (0.007874 * real(vel))
+   else:
+      return 0.0
+
+def Polycv_poly_noteOn(_ctx, note, velocity):
+   i = 0
+   found = False
+   while ((i < 4) and (found == False)):
+      if (_ctx["vel"][i] == 0):
+         _ctx["notes"][i] = note
+         _ctx["vel"][i] = velocity
+         found = True
+
+      i = (1 + i)
+
+
+
+def Polycv_poly_noteOff(_ctx, note):
+   i = 0
+   found = False
+   while ((i < 4) and (found == False)):
+      if (_ctx["notes"][i] == note):
+         _ctx["vel"][i] = 0
+         found = True
+
+      i = (1 + i)
+
+
+
+def Polycv_polyState(_ctx):
+   note1 = Util_pitchToCv(real(_ctx["notes"][0]))
+   note2 = Util_pitchToCv(real(_ctx["notes"][1]))
+   note3 = Util_pitchToCv(real(_ctx["notes"][2]))
+   note4 = Util_pitchToCv(real(_ctx["notes"][3]))
+   vel1 = Polycv_velToCV(_ctx["vel"][0])
+   vel2 = Polycv_velToCV(_ctx["vel"][1])
+   vel3 = Polycv_velToCV(_ctx["vel"][2])
+   vel4 = Polycv_velToCV(_ctx["vel"][3])
+   gate1 = Polycv_velToGate(_ctx["vel"][0])
+   gate2 = Polycv_velToGate(_ctx["vel"][1])
+   gate3 = Polycv_velToGate(_ctx["vel"][2])
+   gate4 = Polycv_velToGate(_ctx["vel"][3])
+   _ctx["Polycv_polyState_ret_0"] = note1
+   _ctx["Polycv_polyState_ret_1"] = vel1
+   _ctx["Polycv_polyState_ret_2"] = gate1
+   _ctx["Polycv_polyState_ret_3"] = note2
+   _ctx["Polycv_polyState_ret_4"] = vel2
+   _ctx["Polycv_polyState_ret_5"] = gate2
+   _ctx["Polycv_polyState_ret_6"] = note3
+   _ctx["Polycv_polyState_ret_7"] = vel3
+   _ctx["Polycv_polyState_ret_8"] = gate3
+   _ctx["Polycv_polyState_ret_9"] = note4
+   _ctx["Polycv_polyState_ret_10"] = vel4
+   _ctx["Polycv_polyState_ret_11"] = gate4
+   return None
+
+
+def Polycv_process(_ctx, c):
+   _ctx["channel_in"] = c
+   _ = Polycv_polyState(_ctx["poly"])
+   _call_temp_0 = _ctx["poly"]["Polycv_polyState_ret_0"]
+   _call_temp_1 = _ctx["poly"]["Polycv_polyState_ret_1"]
+   _call_temp_2 = _ctx["poly"]["Polycv_polyState_ret_2"]
+   _call_temp_3 = _ctx["poly"]["Polycv_polyState_ret_3"]
+   _call_temp_4 = _ctx["poly"]["Polycv_polyState_ret_4"]
+   _call_temp_5 = _ctx["poly"]["Polycv_polyState_ret_5"]
+   _call_temp_6 = _ctx["poly"]["Polycv_polyState_ret_6"]
+   _call_temp_7 = _ctx["poly"]["Polycv_polyState_ret_7"]
+   _call_temp_8 = _ctx["poly"]["Polycv_polyState_ret_8"]
+   _call_temp_9 = _ctx["poly"]["Polycv_polyState_ret_9"]
+   _call_temp_10 = _ctx["poly"]["Polycv_polyState_ret_10"]
+   _call_temp_11 = _ctx["poly"]["Polycv_polyState_ret_11"]
+   _ctx["Polycv_process_ret_0"] = _call_temp_0
+   _ctx["Polycv_process_ret_1"] = _call_temp_1
+   _ctx["Polycv_process_ret_2"] = _call_temp_2
+   _ctx["Polycv_process_ret_3"] = _call_temp_3
+   _ctx["Polycv_process_ret_4"] = _call_temp_4
+   _ctx["Polycv_process_ret_5"] = _call_temp_5
+   _ctx["Polycv_process_ret_6"] = _call_temp_6
+   _ctx["Polycv_process_ret_7"] = _call_temp_7
+   _ctx["Polycv_process_ret_8"] = _call_temp_8
+   _ctx["Polycv_process_ret_9"] = _call_temp_9
+   _ctx["Polycv_process_ret_10"] = _call_temp_10
+   _ctx["Polycv_process_ret_11"] = _call_temp_11
+   return None
+
+
+def Polycv_noteOn(_ctx, note, velocity, channel):
+   if (_ctx["channel_in"] == channel):
+      if (velocity > 0):
+         _ = Polycv_poly_noteOn(_ctx["poly"], note, velocity)
+      else:
+         _ = Polycv_poly_noteOff(_ctx["poly"], note)
+
+def Polycv_noteOff(_ctx, note, channel):
+   if (_ctx["channel_in"] == channel):
+      _ = Polycv_poly_noteOff(_ctx["poly"], note)
+
+def Polycv_controlChange(_ctx, control, value, channel):
+   pass
+
+def Polycv_default(_ctx):
+   pass
+

@@ -74,6 +74,7 @@ let generateCode args file_deps (stmts, vm, acc) =
       | JSCode -> Js.generate args stmts
       | JavaCode -> Java.generate args stmts
       | JuliaCode -> Julia.generate args stmts
+      | PythonCode -> Python.generate args stmts
     in
     (GeneratedCode code :: prog_out) @ acc
   else
