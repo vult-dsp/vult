@@ -1,0 +1,20 @@
+// Test: Record/struct type inference
+
+type Point {
+   val x : real;
+   val y : real;
+}
+
+fun access_member() : real {
+   val p : Point;
+   p.x = 3.0;
+   p.y = 4.0;
+   return p.x + p.y;
+}
+
+fun modify_member() : real {
+   mem p : Point;
+   p.x = 10.0;
+   p.y = 20.0;
+   return p.x;
+}

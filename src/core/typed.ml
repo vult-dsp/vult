@@ -43,7 +43,7 @@ type type_d_ =
   | TEId of path
   | TESize of int
   | TELink of type_
-  | TEOption of type_ list
+  | TEOption of int * type_ list (* ID for substitution binding, list of alternative types *)
   | TEComposed of string * type_ list
   | TEFunction of type_ list * type_
 
@@ -52,6 +52,84 @@ and type_ =
   ; const : constness
   ; mutable loc : Loc.t
   }
+
+(* ============================================================================
+   Substitution-based type resolution infrastructure
+
+   This module provides an immutable alternative to the mutable TELink approach.
+   Type variable bindings are stored in a substitution map, which is threaded
+   through inference functions. This enables:
+   - Pure functional style (no hidden mutations)
+   - Built-in occurs check (prevents infinite types)
+   - Easy backtracking on unification failure
+   ============================================================================ *)
+
+(** Substitution map for immutable type variable bindings.
+    Maps type variable IDs (int) to their resolved types. *)
+module TypeVarMap = Map.Make (Int)
+
+type substitution = type_ TypeVarMap.t
+
+let empty_substitution : substitution = TypeVarMap.empty
+
+(** Walk: resolve a type variable through the substitution.
+    If the type is a variable bound in the substitution, recursively resolve it.
+    Also handles legacy TELink for backward compatibility during migration.
+    TEOption types can also be resolved if they have been unified with a concrete type. *)
+let rec walk (t : type_) (subs : substitution) : type_ =
+  match t.tx with
+  | TEUnbound (Some id) -> (
+    match TypeVarMap.find_opt id subs with
+    | Some resolved -> walk resolved subs
+    | None -> t)
+  | TEOption (id, _) -> (
+    (* Check if this TEOption has been resolved *)
+    match TypeVarMap.find_opt id subs with
+    | Some resolved -> walk resolved subs
+    | None -> t)
+  | TELink linked -> walk linked subs (* Backward compatibility *)
+  | _ -> t
+
+
+(** Walk-star: fully resolve all type variables in a type.
+    Unlike walk, this recursively resolves type variables inside composite types. *)
+let rec walk_star (t : type_) (subs : substitution) : type_ =
+  let t = walk t subs in
+  match t.tx with
+  | TEUnbound _ -> t
+  | TEId _ -> t
+  | TENoReturn -> t
+  | TESize _ -> t
+  | TELink _ -> t (* Should not happen after walk *)
+  | TEOption (id, ts) -> { t with tx = TEOption (id, List.map (fun t -> walk_star t subs) ts) }
+  | TEComposed (name, ts) -> { t with tx = TEComposed (name, List.map (fun t -> walk_star t subs) ts) }
+  | TEFunction (args, ret) -> { t with tx = TEFunction (List.map (fun t -> walk_star t subs) args, walk_star ret subs) }
+
+
+(** Occurs check: returns true if var_id occurs in type t.
+    This prevents creating infinite/cyclic types during unification. *)
+let rec occurs (var_id : int) (t : type_) (subs : substitution) : bool =
+  let t = walk t subs in
+  match t.tx with
+  | TEUnbound (Some id) -> id = var_id
+  | TEUnbound None -> false
+  | TEId _ -> false
+  | TENoReturn -> false
+  | TESize _ -> false
+  | TELink _ -> false (* Should not happen after walk *)
+  | TEOption (id, ts) -> id = var_id || List.exists (fun t -> occurs var_id t subs) ts
+  | TEComposed (_, ts) -> List.exists (fun t -> occurs var_id t subs) ts
+  | TEFunction (args, ret) -> List.exists (fun t -> occurs var_id t subs) args || occurs var_id ret subs
+
+
+(** Extend substitution: add a binding from var_id to type t.
+    Returns None if the occurs check fails (would create infinite type). *)
+let ext_s (var_id : int) (t : type_) (subs : substitution) : substitution option =
+  if occurs var_id t subs then
+    None
+  else
+    Some (TypeVarMap.add var_id t subs)
+
 
 type fun_type = type_ list * type_
 
@@ -65,7 +143,7 @@ let rec compare_type_ (a : type_) (b : type_) =
     | TEId p1, TEId p2 -> Syntax.compare_path p1 p2
     | TESize p1, TESize p2 -> compare p1 p2
     | TEComposed (n1, e1), TEComposed (n2, e2) -> CCOrd.(string n1 n2 <?> (compare_type_list_, e1, e2))
-    | TEOption e1, TEOption e2 -> compare_type_list_ e1 e2
+    | TEOption (_, e1), TEOption (_, e2) -> compare_type_list_ e1 e2
     | TEUnbound n1, TEUnbound n2 -> compare n1 n2
     | _ -> compare a.tx b.tx
 
@@ -364,7 +442,7 @@ let rec print_type_ ?(detailed = false) (t : type_) : Pla.t =
   | TEUnbound None -> Pla.string "_"
   | TEId p -> prefix @@ print_path p
   | TESize n -> Pla.int n
-  | TEOption alt -> prefix @@ Pla.parenthesize @@ Pla.map_sep (Pla.string "|") print_type_ alt
+  | TEOption (_, alt) -> prefix @@ Pla.parenthesize @@ Pla.map_sep (Pla.string "|") print_type_ alt
   | TEComposed (name, elems) ->
     let elems = Pla.map_sep Pla.commaspace (print_type_ ~detailed) elems in
     prefix {%pla|<#name#s>(<#elems#>)|}
@@ -609,6 +687,12 @@ module C = struct
     { tx = TEUnbound (Some !tick); loc; const = const () }
 
 
+  (** Create a TEOption with a fresh unique ID *)
+  let option loc (types : type_ list) : type_ =
+    incr tick;
+    { tx = TEOption (!tick, types); loc; const = const () }
+
+
   let noreturn loc = { tx = TENoReturn; loc; const = const () }
 
   let unit ~loc = makeId loc "unit"
@@ -625,11 +709,11 @@ module C = struct
 
   let fix16 ~loc = makeId loc "fix16"
 
-  let num loc = { tx = TEOption [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc ]; loc; const = const () }
+  let num loc = option loc [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc ]
 
-  let numstr loc = { tx = TEOption [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; string ~loc ]; loc; const = const () }
+  let numstr loc = option loc [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; string ~loc ]
 
-  let num_bool loc = { tx = TEOption [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () }
+  let num_bool loc = option loc [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ]
 
   let size ?(loc = Loc.default) n = { tx = TESize n; loc; const = const () }
 
@@ -639,12 +723,12 @@ module C = struct
       a_dim
     else
       let a = { tx = TEComposed ("array", [ t ]); loc; const = const () } in
-      { tx = TEOption [ a; a_dim ]; loc; const = const () }
+      option loc [ a; a_dim ]
 
 
   let tuple ?(loc = Loc.default) l = { tx = TEComposed ("tuple", l); loc; const = const () }
 
-  let freal_type ?(loc = Loc.default) () = { tx = TEOption [ real ~loc; fix16 ~loc ]; loc; const = const () }
+  let freal_type ?(loc = Loc.default) () = option loc [ real ~loc; fix16 ~loc ]
 
   let array_size () : fun_type =
     let loc = Loc.default in
@@ -691,34 +775,32 @@ module C = struct
 
   let valid_int () : fun_type =
     let loc = Loc.default in
-    [ { tx = TEOption [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () } ], int ~loc
+    [ option loc [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ] ], int ~loc
 
 
   let valid_real () : fun_type =
     let loc = Loc.default in
-    [ { tx = TEOption [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () } ], real ~loc
+    [ option loc [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ] ], real ~loc
 
 
   let valid_fix16 () : fun_type =
     let loc = Loc.default in
-    [ { tx = TEOption [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () } ], fix16 ~loc
+    [ option loc [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ] ], fix16 ~loc
 
 
   let valid_int16 () : fun_type =
     let loc = Loc.default in
-    [ { tx = TEOption [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () } ], int16 ~loc
+    [ option loc [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ] ], int16 ~loc
 
 
   let valid_bool () : fun_type =
     let loc = Loc.default in
-    [ { tx = TEOption [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () } ], bool ~loc
+    [ option loc [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ] ], bool ~loc
 
 
   let valid_string () : fun_type =
     let loc = Loc.default in
-    ( [ { tx = TEOption [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc; string ~loc ]; loc; const = const () }
-      ]
-    , string ~loc )
+    [ option loc [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc; string ~loc ] ], string ~loc
 
 
   let num_num () : fun_type =
@@ -819,7 +901,7 @@ let rec refreshConstness (t : type_) =
   let t =
     match t.tx with
     | TELink t -> refreshConstness t
-    | TEOption options -> { t with tx = TEOption (CCList.map refreshConstness options) }
+    | TEOption (id, options) -> { t with tx = TEOption (id, CCList.map refreshConstness options) }
     | TEComposed (name, subs) -> { t with tx = TEComposed (name, CCList.map refreshConstness subs) }
     | _ -> t
   in
@@ -838,9 +920,9 @@ let rec copy_type (t : type_) : type_ =
   | TEComposed (name, type_list) ->
     let fresh_type_list = CCList.map copy_type type_list in
     { tx = TEComposed (name, fresh_type_list); const = C.const (); loc = t.loc }
-  | TEOption type_list ->
+  | TEOption (_, type_list) ->
     let fresh_type_list = CCList.map copy_type type_list in
-    { tx = TEOption fresh_type_list; const = C.const (); loc = t.loc }
+    C.option t.loc fresh_type_list
   | TEFunction (arg_types, ret_type) ->
     let fresh_arg_types = CCList.map copy_type arg_types in
     let fresh_ret_type = copy_type ret_type in
@@ -880,9 +962,9 @@ let copy_types_preserving_sharing (types : type_ list) : type_ list =
         | TEComposed (name, type_list) ->
           let fresh_type_list = CCList.map copy_with_memo type_list in
           { tx = TEComposed (name, fresh_type_list); const = C.const (); loc = t.loc }
-        | TEOption type_list ->
+        | TEOption (_, type_list) ->
           let fresh_type_list = CCList.map copy_with_memo type_list in
-          { tx = TEOption fresh_type_list; const = C.const (); loc = t.loc }
+          C.option t.loc fresh_type_list
         | TEFunction (arg_types, ret_type) ->
           let fresh_arg_types = CCList.map copy_with_memo arg_types in
           let fresh_ret_type = copy_with_memo ret_type in
@@ -911,7 +993,7 @@ let find_unbounds_in_types (types : type_ list) : type_ list =
         result := t :: !result)
     | TELink linked_t -> walk linked_t
     | TEComposed (_, type_list) -> CCList.iter walk type_list
-    | TEOption type_list -> CCList.iter walk type_list
+    | TEOption (_, type_list) -> CCList.iter walk type_list
     | TEFunction (arg_types, ret_type) ->
       CCList.iter walk arg_types;
       walk ret_type
@@ -938,9 +1020,9 @@ let copy_types_with_unbound_mapping (types : type_ list) : type_ list * (type_ *
         | TEComposed (name, type_list) ->
           let fresh_type_list = CCList.map copy_with_memo type_list in
           { tx = TEComposed (name, fresh_type_list); const = C.const (); loc = t.loc }
-        | TEOption type_list ->
+        | TEOption (_, type_list) ->
           let fresh_type_list = CCList.map copy_with_memo type_list in
-          { tx = TEOption fresh_type_list; const = C.const (); loc = t.loc }
+          C.option t.loc fresh_type_list
         | TEFunction (arg_types, ret_type) ->
           let fresh_arg_types = CCList.map copy_with_memo arg_types in
           let fresh_ret_type = copy_with_memo ret_type in

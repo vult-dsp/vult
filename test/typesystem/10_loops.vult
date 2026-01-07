@@ -1,0 +1,19 @@
+// Test: Loop type inference
+
+fun while_loop() : int {
+   mem i;
+   i = 0;
+   while (i < 10) {
+      i = i + 1;
+   }
+   return i;
+}
+
+fun iter_loop() : int {
+   mem sum;
+   sum = 0;
+   iter(i, 5) {
+      sum = sum + i;
+   }
+   return sum;
+}

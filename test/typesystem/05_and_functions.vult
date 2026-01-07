@@ -1,0 +1,17 @@
+// Test: 'and' functions with shared mem variables
+
+fun process() : int {
+   mem counter;
+   counter = counter + 1;
+   return counter;
+}
+
+and reset() {
+   mem counter;
+   counter = 0;
+}
+
+and set_value(x:int) {
+   mem counter;
+   counter = x;
+}

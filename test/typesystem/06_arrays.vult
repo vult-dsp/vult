@@ -1,0 +1,20 @@
+// Test: Array type inference
+
+fun array_annotated() : real {
+   mem data : array(real, 5);
+   data[0] = 1.0;
+   data[1] = 2.0;
+   return data[0] + data[1];
+}
+
+fun array_literal() : int {
+   val arr = [1, 2, 3];
+   return arr[0];
+}
+
+fun array_index() : int {
+   mem buffer : array(int, 10);
+   val i = 5;
+   buffer[i] = 42;
+   return buffer[i];
+}

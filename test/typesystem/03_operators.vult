@@ -1,0 +1,30 @@
+// Test: Operator type inference (TEOption resolution)
+
+fun test_int_add() : int {
+   val x = 1 + 2;
+   return x;
+}
+
+fun test_real_add() : real {
+   val x = 1.0 + 2.0;
+   return x;
+}
+
+fun test_mixed_ops() : int {
+   val a = 10;
+   val b = 20;
+   val c = a * b + a - b;
+   return c;
+}
+
+fun test_comparison() : bool {
+   val x = 5;
+   val y = 10;
+   return x < y;
+}
+
+fun test_unary() : int {
+   val x = 5;
+   val y = -x;
+   return y;
+}

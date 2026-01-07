@@ -85,6 +85,7 @@ type args =
   ; mutable test_mode : bool
   ; mutable dump_sexpr : bool
   ; mutable render : string option
+  ; mutable pure_inference : bool
   }
 
 let default_arguments : args =
@@ -119,6 +120,7 @@ let default_arguments : args =
   ; test_mode = false
   ; dump_sexpr = false
   ; render = None
+  ; pure_inference = false
   }
 
 
@@ -261,6 +263,10 @@ let flags result =
   ; { flag = "-dump-sexpr"
     ; action = Arg.Unit (fun () -> result.dump_sexpr <- true)
     ; comment = " Dump the parsed syntax tree as S-expressions for debugging (default: off)"
+    }
+  ; { flag = "-pure-inference"
+    ; action = Arg.Unit (fun () -> result.pure_inference <- true)
+    ; comment = " Use pure (immutable) type inference instead of mutable (default: off)"
     }
   ]
 

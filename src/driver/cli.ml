@@ -132,7 +132,12 @@ let driver (args : args) : output list =
               ParsedCode (String.concat "\n" (CCList.map Syntax.SExpr.print_top_stmt r.stmts)))
             parsed
         else
-          let env, stmts = Util.Profile.time "Inference" (fun () -> Inference.infer args parsed) in
+          let env, stmts =
+            if args.pure_inference then
+              Util.Profile.time "Inference (pure)" (fun () -> Inference.infer_pure args parsed)
+            else
+              Util.Profile.time "Inference" (fun () -> Inference.infer args parsed)
+          in
           if args.dtyped then
             [ Typed (Pla.print (Typed.print_prog stmts)) ]
           else

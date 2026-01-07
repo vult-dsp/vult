@@ -35,6 +35,38 @@ let constant_context = { Env.in_constant = true; in_generic_arg = false }
 
 let generic_arg_context = { Env.in_constant = false; in_generic_arg = true }
 
+(* ============================================================================
+   Inference State
+
+   The inference state carries the type substitution graph through inference.
+   This is separate from the environment (env) which handles symbol tables.
+   The state enables a pure functional approach to type unification where
+   type variable bindings are tracked explicitly rather than through mutation.
+   ============================================================================ *)
+
+(** Inference state carrying the substitution map for type variable bindings. *)
+type inference_state = { subs : Typed.substitution }
+
+(** Empty inference state with no type variable bindings. *)
+let empty_state : inference_state = { subs = Typed.empty_substitution }
+
+(** Update the state with a new substitution. *)
+let with_subs (_state : inference_state) (subs : Typed.substitution) : inference_state = { subs }
+
+(** Extend the state's substitution by binding a type variable to a type.
+    Returns None if the binding would create a cyclic type (occurs check fails). *)
+let extend_state (state : inference_state) (var_id : int) (t : Typed.type_) : inference_state option =
+  match Typed.ext_s var_id t state.subs with
+  | Some new_subs -> Some { subs = new_subs }
+  | None -> None
+
+
+(** Resolve a type through the state's substitution. *)
+let resolve_type (state : inference_state) (t : Typed.type_) : Typed.type_ = Typed.walk t state.subs
+
+(** Fully resolve all type variables in a type using the state's substitution. *)
+let resolve_type_fully (state : inference_state) (t : Typed.type_) : Typed.type_ = Typed.walk_star t state.subs
+
 (* Check if a syntax statement contains mem declarations *)
 let rec syntax_has_mem (stmt : Syntax.stmt) : bool =
   match stmt.s with
@@ -213,7 +245,7 @@ and constrainOption loc l1 l2 =
     let msg = Pla.print {%pla|None of the following types: <#t1#>, matches with any of the following types <#t2#>. |} in
     Error.raiseError msg loc
   | [ t ] -> t
-  | l -> { tx = TEOption l; loc = Loc.default; const = C.const () }
+  | l -> C.option Loc.default l
 
 
 and pickOption original l tt =
@@ -278,12 +310,12 @@ and unify ?(bind = false) (t1 : type_) (t2 : type_) =
     | TEUnbound _, _ -> linkType ~from:t2 ~into:t1
     | _, TEUnbound _ -> linkType ~from:t1 ~into:t2
     (* types with alternatives *)
-    | TEOption l1, TEOption l2 ->
+    | TEOption (_, l1), TEOption (_, l2) ->
       let t3 = constrainOption t2.loc l1 l2 in
       let _ = linkType ~from:t3 ~into:t2 in
       linkType ~from:t3 ~into:t1
-    | TEOption l, _ -> pickOption t1 l t2
-    | _, TEOption l -> pickOption t2 l t1
+    | TEOption (_, l), _ -> pickOption t1 l t2
+    | _, TEOption (_, l) -> pickOption t2 l t1
     | TEId _, _ -> false
     | TESize _, _ -> false
     | TEComposed _, _ -> false)
@@ -303,6 +335,187 @@ let unifyRaise ?(bind = false) (loc : Loc.t) (t1 : type_) (t2 : type_) : unit =
     else (
       print_endline (Loc.to_string loc);
       print_endline msg)
+
+
+(* ============================================================================
+   Pure Unification Functions
+
+   These functions implement type unification without mutation. Instead of
+   modifying type cells via TELink, they return an updated substitution map.
+   This enables a pure functional approach to type inference.
+
+   During the migration period, both mutable (unify) and pure (unify_pure)
+   versions coexist. The pure version will eventually replace the mutable one.
+   ============================================================================ *)
+
+(** Pure unification: returns updated substitution on success, None on failure.
+    Uses walk to resolve type variables through the substitution.
+    Uses ext_s to extend substitution with occurs check. *)
+let rec unify_pure (t1 : type_) (t2 : type_) (subs : Typed.substitution) : Typed.substitution option =
+  let t1 = Typed.walk t1 subs in
+  let t2 = Typed.walk t2 subs in
+  if t1 == t2 then
+    Some subs
+  else
+    match t1.tx, t2.tx with
+    (* Concrete types must match exactly *)
+    | TEId p1, TEId p2 ->
+      if Pparser.Syntax.compare_path p1 p2 = 0 then
+        Some subs
+      else
+        None
+    | TESize s1, TESize s2 ->
+      if s1 = s2 then
+        Some subs
+      else
+        None
+    (* Function types: unify arguments and return type *)
+    | TEFunction (args1, ret1), TEFunction (args2, ret2) -> (
+      if CCList.length args1 <> CCList.length args2 then
+        None
+      else
+        match unify_list_pure args1 args2 subs with
+        | Some subs -> unify_pure ret1 ret2 subs
+        | None -> None)
+    | TEFunction _, _ -> None
+    | _, TEFunction _ -> None
+    (* Composed types: same constructor, unify elements *)
+    (* Special case for arrays without dimensions *)
+    | TEComposed ("array", [ e1; _ ]), TEComposed ("array", [ e2 ]) -> unify_pure e1 e2 subs
+    | TEComposed ("array", [ e1 ]), TEComposed ("array", [ e2; _ ]) -> unify_pure e1 e2 subs
+    | TEComposed (n1, elems1), TEComposed (n2, elems2) ->
+      if String.equal n1 n2 && CCList.length elems1 = CCList.length elems2 then
+        unify_list_pure elems1 elems2 subs
+      else
+        None
+    (* Follow legacy links for backward compatibility *)
+    | TELink linked, _ -> unify_pure linked t2 subs
+    | _, TELink linked -> unify_pure t1 linked subs
+    (* Unbound type variables: extend substitution - MUST come before TENoReturn *)
+    | TEUnbound (Some id1), TEUnbound (Some id2) when id1 = id2 -> Some subs
+    | TEUnbound (Some id), _ -> Typed.ext_s id t2 subs
+    | _, TEUnbound (Some id) -> Typed.ext_s id t1 subs
+    | TEUnbound None, _ -> Some subs (* Explicit unbound matches anything *)
+    | _, TEUnbound None -> Some subs
+    (* NoReturn unifies with anything - use linkType like mutable version for proper resolution *)
+    | TENoReturn, _ ->
+      let _ = linkType ~from:t2 ~into:t1 in
+      Some subs
+    | _, TENoReturn ->
+      let _ = linkType ~from:t1 ~into:t2 in
+      Some subs
+    (* Option types: find common type that unifies with both *)
+    | TEOption (id1, l1), TEOption (id2, l2) -> unify_options_pure id1 id2 l1 l2 subs
+    | TEOption (id, l), _ -> pick_option_pure id l t2 subs
+    | _, TEOption (id, l) -> pick_option_pure id l t1 subs
+    (* No match *)
+    | TEId _, _ -> None
+    | TESize _, _ -> None
+    | TEComposed _, _ -> None
+
+
+(** Unify two lists of types pairwise, threading the substitution through. *)
+and unify_list_pure (ts1 : type_ list) (ts2 : type_ list) (subs : Typed.substitution) : Typed.substitution option =
+  match ts1, ts2 with
+  | [], [] -> Some subs
+  | h1 :: t1, h2 :: t2 -> (
+    match unify_pure h1 h2 subs with
+    | Some subs -> unify_list_pure t1 t2 subs
+    | None -> None)
+  | _, _ -> None
+
+
+(** Try to pick an option from the list that unifies with the target type.
+    When a match is found, store the resolution in the substitution so that
+    walk/walk_star can resolve the TEOption to the concrete type. *)
+and pick_option_pure (opt_id : int) (options : type_ list) (target : type_) (subs : Typed.substitution) :
+    Typed.substitution option =
+  match options with
+  | [] -> None
+  | h :: t -> (
+    match unify_pure h target subs with
+    | Some subs ->
+      (* Store the TEOption resolution: opt_id -> target *)
+      Some (Typed.TypeVarMap.add opt_id target subs)
+    | None -> pick_option_pure opt_id t target subs)
+
+
+(** Check if two types are compatible for intersection computation.
+    This is more permissive than strict equality - it checks if types can unify.
+    Unbounds are treated as wildcards that match anything (like mutable unify). *)
+and types_equal_pure (t1 : type_) (t2 : type_) : bool =
+  match t1.tx, t2.tx with
+  | TEId p1, TEId p2 -> Pparser.Syntax.compare_path p1 p2 = 0
+  | TESize s1, TESize s2 -> s1 = s2
+  (* Unbounds are wildcards - they match anything (like mutable unify behavior) *)
+  | TEUnbound _, TEUnbound _ -> true
+  | TEUnbound _, _ -> true
+  | _, TEUnbound _ -> true
+  (* NoReturn matches anything *)
+  | TENoReturn, _ -> true
+  | _, TENoReturn -> true
+  (* Special case for arrays: array(T) equals array(T, N) - matching mutable unify behavior *)
+  | TEComposed ("array", [ e1; _ ]), TEComposed ("array", [ e2 ]) -> types_equal_pure e1 e2
+  | TEComposed ("array", [ e1 ]), TEComposed ("array", [ e2; _ ]) -> types_equal_pure e1 e2
+  | TEComposed (n1, elems1), TEComposed (n2, elems2) ->
+    String.equal n1 n2 && CCList.length elems1 = CCList.length elems2 && CCList.for_all2 types_equal_pure elems1 elems2
+  | TEFunction (args1, ret1), TEFunction (args2, ret2) ->
+    CCList.length args1 = CCList.length args2
+    && CCList.for_all2 types_equal_pure args1 args2
+    && types_equal_pure ret1 ret2
+  (* Options with same ID are equal *)
+  | TEOption (id1, _), TEOption (id2, _) -> id1 = id2
+  (* Follow links *)
+  | TELink t1, _ -> types_equal_pure t1 t2
+  | _, TELink t2 -> types_equal_pure t1 t2
+  | _ -> false
+
+
+(** Compute intersection of two option type lists.
+    Returns types that appear in both lists (by structural equality). *)
+and compute_option_intersection (l1 : type_ list) (l2 : type_ list) : type_ list =
+  CCList.filter (fun t1 -> CCList.exists (fun t2 -> types_equal_pure t1 t2) l2) l1
+
+
+(** Unify two option type lists: compute intersection and constrain accordingly.
+    This matches the mutable version's constrainOption behavior:
+    - If intersection is empty, fail
+    - If intersection is single type, resolve to that type
+    - If intersection has multiple types, create constrained TEOption *)
+and unify_options_pure (opt_id1 : int) (opt_id2 : int) (l1 : type_ list) (l2 : type_ list) (subs : Typed.substitution) :
+    Typed.substitution option =
+  let intersection = compute_option_intersection l1 l2 in
+  match intersection with
+  | [] -> None (* No common types - unification fails *)
+  | [ single_type ] ->
+    (* Single common type - both options resolve to it *)
+    let subs = Typed.TypeVarMap.add opt_id1 single_type subs in
+    let subs = Typed.TypeVarMap.add opt_id2 single_type subs in
+    Some subs
+  | multiple_types ->
+    (* Multiple common types - create constrained TEOption that both resolve to.
+       We use a fresh TEOption so future constraints can further narrow it. *)
+    let constrained_option = C.option Loc.default multiple_types in
+    let subs = Typed.TypeVarMap.add opt_id1 constrained_option subs in
+    let subs = Typed.TypeVarMap.add opt_id2 constrained_option subs in
+    Some subs
+
+
+(** Pure unification with error raising on failure. Updates the inference state. *)
+let unify_pure_raise ?(bind : bool = false) (loc : Loc.t) (t1 : type_) (t2 : type_) (state : inference_state) :
+    inference_state =
+  (* Link constness when bind is true, matching the mutable version's behavior *)
+  let () =
+    if bind then
+      unifyConstnessValue t1.const t2.const
+  in
+  match unify_pure t1 t2 state.subs with
+  | Some new_subs -> { subs = new_subs }
+  | None ->
+    let t1_str = Pla.print (print_type_ (Typed.walk_star t1 state.subs)) in
+    let t2_str = Pla.print (print_type_ (Typed.walk_star t2 state.subs)) in
+    let msg = Printf.sprintf "This expression has type '%s' but '%s' was expected" t2_str t1_str in
+    Error.raiseError msg loc
 
 
 (* Convert a type with a mapping from generic parameter names to their unbound types *)
@@ -389,6 +602,32 @@ let applyFunction loc (args_t_in : type_ list) (ret : type_) (args_in : exp list
       loop args_t args
   in
   loop args_t_in args_in
+
+
+(** Pure version of applyFunction that threads substitution through.
+    Returns (state, ret_type) where state contains updated substitution. *)
+let applyFunction_pure loc (args_t_in : type_ list) (ret : type_) (args_in : exp list) (state : inference_state) :
+    inference_state * type_ =
+  let rec loop (state : inference_state) (args_t : type_ list) args =
+    match args_t, args with
+    | [], _ :: _ ->
+      let required_n = CCList.length args_t_in in
+      let got_n = CCList.length args_in in
+      let loc = Loc.mergeList loc (CCList.map (fun (e : exp) -> e.loc) args_in) in
+      let msg = Pla.print {%pla|Extra arguments in function call. Expecting <#required_n#i> but got <#got_n#i>.|} in
+      Error.raiseError msg loc
+    | _ :: _, [] ->
+      let required_n = CCList.length args_t_in in
+      let got_n = CCList.length args_in in
+      let loc = Loc.mergeList loc (CCList.map (fun (e : exp) -> e.loc) args_in) in
+      let msg = Pla.print {%pla|Missing arguments in function call. Expecting <#required_n#i> but got <#got_n#i>.|} in
+      Error.raiseError msg loc
+    | [], [] -> state, ret
+    | h :: args_t, (ht : exp) :: args ->
+      let state = unify_pure_raise ht.loc h ht.t state in
+      loop state args_t args
+  in
+  loop state args_t_in args_in
 
 
 let rec markExpMutable env exp loc =
@@ -619,7 +858,7 @@ let rec type_to_mangled_name (t : Typed.type_) : string =
     else
       name ^ "_of_" ^ args_str
   | TEUnbound _ -> "unbound"
-  | TEOption type_list -> (
+  | TEOption (_, type_list) -> (
     (* For option types, try to find a concrete type that has been constrained *)
     (* This is a simplified approach - in practice, we should use the actual constrained types *)
     match type_list with
@@ -630,7 +869,7 @@ let rec type_to_mangled_name (t : Typed.type_) : string =
         CCList.filter
           (fun t ->
             match (unlink t).tx with
-            | TEOption _ -> false
+            | TEOption (_, _) -> false
             | _ -> true)
           multiple_types
       in
@@ -678,7 +917,7 @@ let signature_to_specialized_name (signature : Typed.instantiation_signature) : 
       (fun arg ->
         let simplified_type =
           match (unlink arg.arg_type).tx with
-          | TEOption [ single_type ] -> single_type (* Use the concrete type from option *)
+          | TEOption (_, [ single_type ]) -> single_type (* Use the concrete type from option *)
           | _ -> arg.arg_type
         in
         type_to_mangled_name simplified_type)
@@ -795,8 +1034,16 @@ let rec addContextArg (env : env) instance (f : Env.f) args loc =
     | _, Some (name, Some index) ->
       let env, index = exp ~context:normal_context env index in
       unifyRaise index.loc (C.int ~loc:Loc.default) index.t;
-      let t = C.array ~loc fctx_t in
-      let env = Env.addVar env unify name t Inst loc in
+      (* Only add the variable if it doesn't already exist.
+         If it exists (from mem declaration), using addVar would cause mutable unification
+         which conflicts with pure inference's substitution-based approach. *)
+      let env =
+        if checkMemExists env name then
+          env
+        else
+          let t = C.array ~loc fctx_t in
+          Env.addVar env unify name t Inst loc
+      in
       let e = { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); loc; t = fctx_t } in
       let e = { e = EIndex { e; index }; loc; t = fctx_t } in
       let () =
@@ -1655,6 +1902,713 @@ let rec dexp_to_lexp (d : Syntax.dexp) : Syntax.lexp =
   | SDTyped (e, _) -> dexp_to_lexp e
 
 
+(* ============================================================================
+   Pure Expression Inference Functions
+
+   These functions thread inference_state through expression processing.
+   They use unify_pure_raise for type checking instead of the mutable unifyRaise.
+
+   During migration, these coexist with the mutable versions above.
+   Some helper functions (call, applyFunction) still use mutable unification,
+   but direct unification calls in exp/lexp/dexp use the pure approach.
+   ============================================================================ *)
+
+(** Pure expression inference: threads inference_state through processing.
+    Returns (env, state, exp) instead of just (env, exp). *)
+let rec exp_pure ?(context = normal_context) (env : env) (state : inference_state) (e : Syntax.exp) :
+    env * inference_state * exp =
+  match e with
+  | { e = SEBool value; loc } ->
+    let t = C.bool ~loc in
+    env, state, { e = EBool value; t; loc }
+  | { e = SEInt value; loc } ->
+    let t = C.int ~loc in
+    env, state, { e = EInt (int_of_string value); t; loc }
+  | { e = SEReal value; loc } ->
+    let t = C.real ~loc in
+    env, state, { e = EReal (float_of_string value); t; loc }
+  | { e = SEFixed value; loc } ->
+    let t = C.fix16 ~loc in
+    let value = String.sub value 0 (String.length value - 1) in
+    env, state, { e = EFixed (float_of_string value); t; loc }
+  | { e = SEString value; loc } ->
+    let t = C.string ~loc in
+    env, state, { e = EString value; t; loc }
+  | { e = SEGroup e; _ } -> exp_pure ~context env state e
+  | { e = SEId name; loc } when not (String.equal (String.capitalize_ascii name) name) -> (
+    let name_path : path = { id = name; n = None; loc } in
+    match Env.lookupExpressionSymbol env name_path context with
+    | ExprVariable var ->
+      let t = var.t in
+      let e =
+        match var.kind with
+        | Val -> { e = EId name; t; loc }
+        | Const ->
+          let m = Env.getCurrentModule env in
+          { e = EConst { id = name; n = Some m.name; loc }; t; loc }
+        | Mem _ | Inst ->
+          let ctx = Env.getContext env in
+          let ctx_t = C.path_t loc ctx in
+          { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); t; loc }
+      in
+      env, state, e
+    | ExprEnum (type_path, tloc, index) ->
+      let t = C.path_t tloc type_path in
+      env, state, { e = EInt index; t; loc }
+    | ExprFunction f ->
+      if context.in_generic_arg then
+        let args_t, ret = f.t in
+        let t = { tx = TEFunction (args_t, ret); const = C.const (); loc } in
+        env, state, { e = EId name; t; loc }
+      else
+        Error.raiseError ("Function '" ^ name ^ "' must be called with parentheses (e.g., '" ^ name ^ "()')") loc
+    | ExprType _ ->
+      Error.raiseError
+        ("Type '" ^ name ^ "' cannot be used as a value. Use it in variable declarations or type annotations")
+        loc
+    | ExprNotFound ->
+      Error.raiseError ("Undefined symbol '" ^ name ^ "'. Check spelling or ensure it's declared before use") loc)
+  | { e = SEIndex { e; index }; loc } ->
+    let env, state, e = exp_pure ~context env state e in
+    let env, state, index = exp_pure ~context env state index in
+    let t = C.unbound Loc.default in
+    let state = unify_pure_raise e.loc (C.array ~fixed:false t) e.t state in
+    let state = unify_pure_raise index.loc (C.int ~loc:Loc.default) index.t state in
+    let () =
+      if (not context.in_constant) && not (Env.isBuiltinType t) then
+        unifyConstness t e.t
+    in
+    env, state, { e = EIndex { e; index }; t; loc }
+  | { e = SEArray []; loc } ->
+    Error.raiseError
+      "Empty array literal '[]' is not supported. Specify array elements or use array type declaration"
+      loc
+  | { e = SEArray (h :: t); loc } ->
+    let env, state, h = exp_pure ~context env state h in
+    let env, state, t_rev, size =
+      CCList.fold_left
+        (fun (env, state, acc, size) e ->
+          let env, state, e = exp_pure ~context env state e in
+          let state = unify_pure_raise e.loc h.t e.t state in
+          env, state, e :: acc, size + 1)
+        (env, state, [], 1)
+        t
+    in
+    let t = C.array ~size:(C.size ~loc size) h.t in
+    env, state, { e = EArray (h :: CCList.rev t_rev); t; loc }
+  | { e = SETuple l; loc } ->
+    let env, state, l = exp_list_pure ~context env state l in
+    let t = C.tuple ~loc (CCList.map (fun (e : exp) -> e.t) l) in
+    env, state, { e = ETuple l; t; loc }
+  | { e = SEIf { cond; then_; else_ }; loc } ->
+    let env, state, cond = exp_pure ~context env state cond in
+    let env, state, then_ = exp_pure ~context env state then_ in
+    let env, state, else_ = exp_pure ~context env state else_ in
+    let t = then_.t in
+    let state = unify_pure_raise cond.loc (C.bool ~loc) cond.t state in
+    let state = unify_pure_raise else_.loc then_.t else_.t state in
+    env, state, { e = EIf { cond; then_; else_ }; t; loc }
+  | { e = SEOp (op, e1, e2); loc } ->
+    let env, state, e1 = exp_pure ~context env state e1 in
+    let env, state, e2 = exp_pure ~context env state e2 in
+    let f =
+      if context.in_constant then
+        Env.lookOperatorInModule env op
+      else
+        Env.lookOperator env op
+    in
+    let args_t, ret = f.t in
+    let state, t = applyFunction_pure e.loc args_t ret [ e1; e2 ] state in
+    env, state, { e = EOp (op, e1, e2); t; loc }
+  | { e = SEUnOp (op, e); loc } ->
+    let env, state, e = exp_pure ~context env state e in
+    let f =
+      if context.in_constant then
+        Env.lookOperatorInModule env ("u" ^ op)
+      else
+        Env.lookOperator env ("u" ^ op)
+    in
+    let args_t, ret = f.t in
+    let state, t = applyFunction_pure e.loc args_t ret [ e ] state in
+    env, state, { e = EUnOp (op, e); t; loc }
+  | { e = SERecord { path; elems }; loc } -> (
+    let t = Env.lookType env path loc in
+    match t with
+    | { descr = Record members; _ } ->
+      let env, state, elems_rev =
+        CCList.fold_left
+          (fun (env, state, acc) (id, v) ->
+            let env, state, v = exp_pure ~context env state v in
+            let id, id_loc =
+              match id with
+              | Syntax.{ id; n = None; loc } -> id, loc
+              | { loc; _ } ->
+                Error.raiseError ("The name '" ^ path_string id ^ "' is not a valid member of a data type.") loc
+            in
+            match Env.Map.find id members with
+            | None ->
+              Error.raiseError ("The name '" ^ id ^ "' does not belong to type '" ^ path_string path ^ "'.") id_loc
+            | Some var ->
+              let state = unify_pure_raise v.loc var.t v.t state in
+              env, state, (id, v) :: acc)
+          (env, state, [])
+          elems
+      in
+      let elems = CCList.sort (fun (id1, _) (id2, _) -> String.compare id1 id2) elems_rev in
+      env, state, { e = ERecord { path = t.path; elems }; t = Typed.C.path_t loc t.path; loc }
+    | _ -> Error.raiseError ("The path '" ^ path_string path ^ "' is not a type.") loc)
+  | { e = SEMember (e1, m); loc } -> (
+    (* First check if this is module-qualified access like Colors.Edit *)
+    match e1 with
+    | { e = SEId module_name; _ } when String.equal (String.capitalize_ascii module_name) module_name -> (
+      (* Try module-qualified lookup first *)
+      let const_path = Syntax.{ id = m; n = Some module_name; loc } in
+      let results = Env.lookupPath env const_path in
+      match results with
+      | _ :: _ -> (
+        (* Found something in module *)
+        match Env.findVar results with
+        | Some var when var.kind = Const ->
+          let t = var.t in
+          env, state, { e = EConst const_path; t; loc }
+        | Some var ->
+          Error.raiseError
+            ("Found '"
+            ^ module_name
+            ^ "."
+            ^ m
+            ^ "' but it's not a constant (it's a "
+            ^ (match var.kind with
+              | Val -> "variable"
+              | Mem _ -> "memory"
+              | Inst -> "instance"
+              | Const -> "constant")
+            ^ ")")
+            loc
+        | None -> (
+          (* Check for function or enum *)
+          match Env.findFunction results with
+          | Some _ ->
+            Error.raiseError
+              ("'"
+              ^ module_name
+              ^ "."
+              ^ m
+              ^ "' is a function, not a constant. Use function call syntax: "
+              ^ module_name
+              ^ "."
+              ^ m
+              ^ "(args)")
+              loc
+          | None -> (
+            match Env.findEnum results with
+            | Some (type_path, tloc, index) ->
+              let t = C.path_t tloc type_path in
+              env, state, { e = EInt index; t; loc }
+            | None -> Error.raiseError ("Cannot find '" ^ module_name ^ "." ^ m ^ "' in module") loc)))
+      | [] -> (
+        (* Not found in module, fall through to regular member access *)
+        let env, state, e1 = exp_pure ~context env state e1 in
+        let resolved_t = Typed.walk_star e1.t state.subs in
+        match resolved_t.tx with
+        | TEId path -> (
+          match Env.lookType env path loc with
+          | { path; descr = Record members; _ } -> (
+            match Map.find m members with
+            | None -> Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
+            | Some { t; _ } ->
+              let t = refreshConstness t in
+              let () =
+                if (not context.in_constant) && not (Env.isBuiltinType t) then
+                  unifyConstness t e1.t
+              in
+              env, state, { e = EMember (e1, m); t; loc })
+          | _ ->
+            let t = Pla.print (Typed.print_type_ resolved_t) in
+            let e = Pla.print (Typed.print_exp e1) in
+            Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
+        | _ ->
+          let t = Pla.print (Typed.print_type_ resolved_t) in
+          let e = Pla.print (Typed.print_exp e1) in
+          Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc))
+    | _ -> (
+      (* Regular member access - not a module prefix *)
+      let env, state, e1 = exp_pure ~context env state e1 in
+      let resolved_t = Typed.walk_star e1.t state.subs in
+      match resolved_t.tx with
+      | TEId path -> (
+        match Env.lookType env path loc with
+        | { path; descr = Record members; _ } -> (
+          match Map.find m members with
+          | None -> Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
+          | Some { t; _ } ->
+            let t = refreshConstness t in
+            let () =
+              if (not context.in_constant) && not (Env.isBuiltinType t) then
+                unifyConstness t e1.t
+            in
+            env, state, { e = EMember (e1, m); t; loc })
+        | _ ->
+          let t = Pla.print (Typed.print_type_ resolved_t) in
+          let e = Pla.print (Typed.print_exp e1) in
+          Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
+      | _ ->
+        let t = Pla.print (Typed.print_type_ resolved_t) in
+        let e = Pla.print (Typed.print_exp e1) in
+        Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc))
+  (* Function calls - handle both non-generic and generic calls purely *)
+  | { e = SECall { instance; path; args }; loc } -> (
+    let path_string = Env.pathString path in
+    match Env.lookupGeneric env path_string with
+    | Some generic_func ->
+      (* Generic calls use pure approach *)
+      generic_call_pure env state generic_func args loc e.loc
+    | None ->
+      (* Non-generic calls use pure approach *)
+      call_pure env state instance path args loc e.loc)
+  (* Instance calls with array index: instances[i]:counter() *)
+  | { e =
+        SENamed
+          ( { e = SEIndex { e = { e = SEId instance; _ }; index }; _ }
+          , { e = SECall { instance = None; path; args }; loc } )
+    ; _
+    }
+    when not context.in_constant -> call_pure env state (Some (instance, Some index)) path args loc e.loc
+  (* Instance calls without index: foo:bar() *)
+  | { e = SENamed ({ e = SEId instance; _ }, { e = SECall { instance = None; path; args }; loc }); _ }
+    when not context.in_constant -> call_pure env state (Some (instance, None)) path args loc e.loc
+  (* For remaining complex cases, delegate to existing exp *)
+  | other ->
+    let env, result = exp ~context env other in
+    env, state, result
+
+
+(** Pure expression list processing. *)
+and exp_list_pure ?(context = normal_context) (env : env) (state : inference_state) (l : Syntax.exp list) :
+    env * inference_state * exp list =
+  let env, state, rev_l =
+    CCList.fold_left
+      (fun (env, state, acc) e ->
+        let env, state, e = exp_pure ~context env state e in
+        env, state, e :: acc)
+      (env, state, [])
+      l
+  in
+  env, state, CCList.rev rev_l
+
+
+(** Pure version of call for non-generic function calls.
+    Threads inference_state through argument processing and unification. *)
+and call_pure (env : env) (state : inference_state) instance (path : path) (args : Syntax.exp list) (loc : Loc.t)
+    (eloc : Loc.t) : env * inference_state * exp =
+  (* Process arguments with pure inference *)
+  let env, state, args = exp_list_pure env state args in
+  let f = Env.lookFunctionCall env path loc in
+  let args_t, ret = f.t in
+  (* Use pure applyFunction to thread substitution *)
+  let state, t = applyFunction_pure eloc args_t ret args state in
+  let () = propagateVariability env loc f.args args in
+  let env, args = addContextArg env instance f args loc in
+  env, state, { e = ECall { instance = None; path = f.path; args }; t; loc }
+
+
+(** Pure version of bind_mixed_generic_arguments.
+    Threads inference_state through the unification of generic parameters. *)
+and bind_mixed_generic_arguments_pure (env : env) (state : inference_state) (generic_params : Typed.generic_param list)
+    (explicit_generic_args : Typed.exp list) (function_args : Typed.exp list)
+    (generic_func_arg_types : Typed.type_ list) : inference_state * (string * Typed.generic_binding) list =
+  let rec bind_params state params explicit_args acc =
+    match params, explicit_args with
+    | [], _ -> state, acc (* No more parameters to bind *)
+    | Typed.GParamFunction (name, _) :: rest_params, { e = EConst path; _ } :: rest_args ->
+      (* Function parameter bound to function name *)
+      let func_type =
+        try
+          let func = Env.lookFunctionCall env path path.loc in
+          let args_t, ret_t = func.t in
+          { tx = TEFunction (args_t, ret_t); const = C.const (); loc = Loc.default }
+        with
+        | _ -> { tx = TEFunction ([], C.unit ~loc:Loc.default); const = C.const (); loc = Loc.default }
+      in
+      let binding = Typed.BindFunction (path.id, func_type) in
+      bind_params state rest_params rest_args ((name, binding) :: acc)
+    | Typed.GParamFunction (name, _) :: rest_params, { e = EId func_name; _ } :: rest_args ->
+      (* Function parameter bound to identifier *)
+      let func_path = { Pparser.Syntax.id = func_name; n = None; loc = Loc.default } in
+      let func_type =
+        try
+          let func = Env.lookFunctionCall env func_path Loc.default in
+          let args_t, ret_t = func.t in
+          { tx = TEFunction (args_t, ret_t); const = C.const (); loc = Loc.default }
+        with
+        | _ -> { tx = TEFunction ([], C.unit ~loc:Loc.default); const = C.const (); loc = Loc.default }
+      in
+      let binding = Typed.BindFunction (func_name, func_type) in
+      bind_params state rest_params rest_args ((name, binding) :: acc)
+    | Typed.GParamConstant (name, expected_type) :: rest_params, exp :: rest_args ->
+      (* Constant parameter - validate and bind using pure unification *)
+      let state =
+        try unify_pure_raise exp.loc expected_type exp.t state with
+        | Error.Errors _ ->
+          Error.raiseError
+            (Printf.sprintf
+               "Generic constant parameter '%s' expected type %s but got %s"
+               name
+               (Pla.print (Typed.print_type_ expected_type))
+               (Pla.print (Typed.print_type_ exp.t)))
+            exp.loc
+      in
+      let binding =
+        match exp.e with
+        | EInt _ | EReal _ | EBool _ | EString _ -> Typed.BindConstant (exp, exp.t)
+        | _ -> Typed.BindNonSpecializable
+      in
+      bind_params state rest_params rest_args ((name, binding) :: acc)
+    | Typed.GParamType _ :: _, _ ->
+      (* All remaining params are implicit type parameters *)
+      let rec collect_type_params params =
+        match params with
+        | Typed.GParamType name :: rest -> name :: collect_type_params rest
+        | _ :: rest -> collect_type_params rest
+        | [] -> []
+      in
+      let type_param_names = collect_type_params params in
+      let original_unbounds = Typed.find_unbounds_in_types generic_func_arg_types in
+      let fresh_arg_types, unbound_mapping = Typed.copy_types_with_unbound_mapping generic_func_arg_types in
+      (* Unify fresh arg types with actual function arg types using pure unification *)
+      let state =
+        CCList.fold_left2
+          (fun state fresh_t (arg : Typed.exp) -> unify_pure_raise arg.loc fresh_t arg.t state)
+          state
+          fresh_arg_types
+          function_args
+      in
+      (* For each type param name, find the corresponding concrete type using walk_star *)
+      let bindings =
+        CCList.mapi
+          (fun i name ->
+            let binding =
+              match CCList.nth_opt original_unbounds i with
+              | Some orig_unbound -> (
+                match CCList.find_opt (fun (orig, _) -> orig == orig_unbound) unbound_mapping with
+                | Some (_, fresh_unbound) ->
+                  (* Use walk_star to resolve through substitution *)
+                  Typed.BindType (Typed.walk_star fresh_unbound state.subs)
+                | None -> (
+                  match CCList.nth_opt function_args i with
+                  | Some arg -> Typed.BindType (Typed.walk_star arg.t state.subs)
+                  | None -> Typed.BindType (C.unbound Loc.default)))
+              | None -> (
+                match CCList.nth_opt function_args i with
+                | Some arg -> Typed.BindType (Typed.walk_star arg.t state.subs)
+                | None -> Typed.BindType (C.unbound Loc.default))
+            in
+            name, binding)
+          type_param_names
+      in
+      state, List.rev_append bindings acc
+    | param :: rest_params, [] -> (
+      match param with
+      | Typed.GParamType _ -> bind_params state rest_params [] acc
+      | _ -> bind_params state rest_params [] acc)
+    | _ :: rest_params, _ :: rest_args -> bind_params state rest_params rest_args acc
+  in
+  let state, bindings = bind_params state generic_params explicit_generic_args [] in
+  state, List.rev bindings
+
+
+(** Pure version of generic_call.
+    Threads inference_state through generic function instantiation and calling. *)
+and generic_call_pure (env : env) (state : inference_state) (generic_func : Typed.generic_function)
+    (args : Syntax.exp list) (_ : Loc.t) (eloc : Loc.t) : env * inference_state * exp =
+  (* Count only explicit generic parameters *)
+  let explicit_generic_param_count =
+    CCList.count
+      (function
+        | Typed.GParamType _ -> false
+        | _ -> true)
+      generic_func.generic_params
+  in
+  let function_param_count = CCList.length generic_func.args in
+  let total_expected = explicit_generic_param_count + function_param_count in
+  let total_provided = CCList.length args in
+  if total_provided < total_expected then
+    Error.raiseError
+      (Printf.sprintf
+         "Generic function '%s' expects %d arguments (%d explicit generic parameters + %d function parameters) but got \
+          %d"
+         generic_func.name
+         total_expected
+         explicit_generic_param_count
+         function_param_count
+         total_provided)
+      eloc;
+  if total_provided > total_expected then
+    Error.raiseError
+      (Printf.sprintf
+         "Generic function '%s' expects %d arguments (%d explicit generic parameters + %d function parameters) but got \
+          %d"
+         generic_func.name
+         total_expected
+         explicit_generic_param_count
+         function_param_count
+         total_provided)
+      eloc;
+  (* Split arguments *)
+  let explicit_generic_args = CCList.take explicit_generic_param_count args in
+  let function_args = CCList.drop explicit_generic_param_count args in
+  (* Process arguments with pure inference *)
+  let env, state, processed_explicit_generic_args =
+    exp_list_pure ~context:generic_arg_context env state explicit_generic_args
+  in
+  let env, state, processed_function_args = exp_list_pure ~context:normal_context env state function_args in
+  (* Bind generic parameters using pure unification *)
+  let generic_func_arg_types, _ = generic_func.t in
+  let state, bindings =
+    bind_mixed_generic_arguments_pure
+      env
+      state
+      generic_func.generic_params
+      processed_explicit_generic_args
+      processed_function_args
+      generic_func_arg_types
+  in
+  (* Check if this call can be specialized *)
+  let can_specialize =
+    not
+      (CCList.exists
+         (fun (_, binding) ->
+           match binding with
+           | Typed.BindNonSpecializable -> true
+           | _ -> false)
+         bindings)
+  in
+  (* Infer return type - use walk_star instead of unlink *)
+  let inferred_ret =
+    let original_ret = generic_func.t |> snd in
+    let resolved_ret = Typed.walk_star original_ret state.subs in
+    match resolved_ret.tx with
+    | TEUnbound _ -> (
+      match generic_func.generic_params with
+      | [ GParamFunction (param_name, _) ] -> (
+        match CCList.find_opt (fun (name, _) -> String.equal name param_name) bindings with
+        | Some (_, BindFunction (_, function_type)) -> (
+          let resolved_func = Typed.walk_star function_type state.subs in
+          match resolved_func.tx with
+          | TEFunction (_, ret_type) -> ret_type
+          | _ -> original_ret)
+        | _ -> original_ret)
+      | _ -> original_ret)
+    | _ -> resolved_ret
+  in
+  if not can_specialize then
+    (* Cannot specialize - generate non-specialized version *)
+    let all_args = processed_explicit_generic_args @ processed_function_args in
+    let non_specialized_name = generic_func.name in
+    let non_specialized_path = { Pparser.Syntax.id = non_specialized_name; n = None; loc = eloc } in
+    let env = create_non_specialized_function env generic_func eloc in
+    let args_t = CCList.map (fun (e : exp) -> e.t) all_args in
+    let state, t = applyFunction_pure eloc args_t inferred_ret all_args state in
+    env, state, { e = ECall { instance = None; path = non_specialized_path; args = all_args }; t; loc = eloc }
+  else
+    (* Can specialize - proceed with normal specialization *)
+    let signature = build_instantiation_signature generic_func bindings processed_function_args inferred_ret in
+    let specialized_name = signature_to_specialized_name signature in
+    match Env.findInstantiation env signature with
+    | Some instantiation ->
+      (* Already instantiated - just call it *)
+      let specialized_path = instantiation.specialized_def.name in
+      let args_t, ret = instantiation.specialized_def.t in
+      let has_state = syntax_has_mem generic_func.body in
+      let env, call_args =
+        if has_state then
+          addContextArgForSpecialized env instantiation.specialized_name processed_function_args eloc
+        else
+          env, processed_function_args
+      in
+      let m = Env.getCurrentModule env in
+      let call_args_t =
+        if has_state then
+          let specialized_type_name = instantiation.specialized_name ^ "_type" in
+          let ctx_path : Pparser.Syntax.path = { id = specialized_type_name; n = Some m.name; loc = eloc } in
+          C.path_t eloc ctx_path :: args_t
+        else
+          args_t
+      in
+      let state, t = applyFunction_pure eloc call_args_t ret call_args state in
+      env, state, { e = ECall { instance = None; path = specialized_path; args = call_args }; t; loc = eloc }
+    | None ->
+      (* Create new instantiation *)
+      let specialized_def, syntax_body, (function_substitutions, constant_substitutions) =
+        create_specialized_function env generic_func bindings processed_function_args inferred_ret specialized_name eloc
+      in
+      let instantiation : Typed.generic_instantiation = { signature; specialized_name; bindings; specialized_def } in
+      let env = Env.addInstantiation env instantiation in
+      let type_bindings =
+        CCList.filter_map
+          (function
+            | name, Typed.BindType t -> Some (name, t)
+            | _ -> None)
+          bindings
+      in
+      let env =
+        Env.addPendingInjection
+          env
+          (specialized_def, syntax_body, (function_substitutions, constant_substitutions), type_bindings)
+      in
+      let has_state = syntax_has_mem generic_func.body in
+      let env, call_args =
+        if has_state then
+          addContextArgForSpecialized env specialized_name processed_function_args eloc
+        else
+          env, processed_function_args
+      in
+      let specialized_args_t, _ = specialized_def.t in
+      (* Unify specialized args with processed args using pure unification *)
+      let state =
+        CCList.fold_left2
+          (fun state fresh_t (processed_arg : Typed.exp) ->
+            unify_pure_raise processed_arg.loc fresh_t processed_arg.t state)
+          state
+          specialized_args_t
+          processed_function_args
+      in
+      let m = Env.getCurrentModule env in
+      let call_args_t =
+        if has_state then
+          let specialized_type_name = specialized_name ^ "_type" in
+          let ctx_path : Pparser.Syntax.path = { id = specialized_type_name; n = Some m.name; loc = eloc } in
+          C.path_t eloc ctx_path :: specialized_args_t
+        else
+          specialized_args_t
+      in
+      let _, fresh_ret = specialized_def.t in
+      let state, t = applyFunction_pure eloc call_args_t fresh_ret call_args state in
+      env, state, { e = ECall { instance = None; path = specialized_def.name; args = call_args }; t; loc = eloc }
+
+
+(** Pure left-expression inference: threads inference_state through processing. *)
+and lexp_pure ?(const = false) (env : env) (state : inference_state) (e : Syntax.lexp) : env * inference_state * lexp =
+  match e with
+  | { l = SLWild; loc } ->
+    let t = C.noreturn loc in
+    env, state, { l = LWild; t; loc }
+  | { l = SLId name; loc } ->
+    let var = Env.lookVar env name loc in
+    let t = var.t in
+    if not const then
+      setTypeMut t;
+    let e =
+      match var.kind with
+      | Val -> { l = LId name; t; loc }
+      | Mem _ | Inst ->
+        let ctx = Env.getContext env in
+        let ctx_t = C.path_t loc ctx in
+        { l = LMember ({ l = LId context_name; t = ctx_t; loc }, name); t; loc }
+      | Const ->
+        Error.raiseError ("Cannot assign to constant '" ^ name ^ "'. Constants are read-only after declaration") loc
+    in
+    env, state, e
+  | { l = SLGroup e; _ } -> lexp_pure ~const env state e
+  | { l = SLTuple elems; loc } ->
+    let env, state, elems =
+      CCList.fold_left
+        (fun (env, state, acc) e ->
+          let env, state, e = lexp_pure ~const env state e in
+          env, state, e :: acc)
+        (env, state, [])
+        (CCList.rev elems)
+    in
+    let t_elems = CCList.map (fun (e : lexp) -> e.t) elems in
+    let t = C.tuple ~loc t_elems in
+    env, state, { l = LTuple elems; t; loc }
+  | { l = SLIndex { e; index }; loc } ->
+    let env, state, e = lexp_pure ~const env state e in
+    let env, state, index = exp_pure env state index in
+    let t = C.unbound loc in
+    let state = unify_pure_raise index.loc (C.int ~loc) index.t state in
+    let state = unify_pure_raise e.loc (C.array ~fixed:false ~loc t) e.t state in
+    env, state, { l = LIndex { e; index }; t; loc }
+  | { l = SLMember (e, m); loc } -> (
+    let env, state, e = lexp_pure ~const env state e in
+    (* Resolve type through substitution for pure approach *)
+    let resolved_t = Typed.walk_star e.t state.subs in
+    match resolved_t.tx with
+    | TEId path -> (
+      match Env.lookType env path loc with
+      | { path; descr = Record members; _ } -> (
+        match Map.find m members with
+        | None -> Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
+        | Some { t; _ } ->
+          let t = refreshConstness t in
+          let t =
+            if not (Env.isBuiltinType t) then
+              { t with const = e.t.const }
+            else
+              t
+          in
+          env, state, { l = LMember (e, m); t; loc })
+      | _ ->
+        let t = Pla.print (Typed.print_type_ resolved_t) in
+        let e = Pla.print (Typed.print_lexp e) in
+        Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
+    | _ ->
+      let t = Pla.print (Typed.print_type_ resolved_t) in
+      let e = Pla.print (Typed.print_lexp e) in
+      Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
+
+
+(** Pure declaration expression inference: threads inference_state through processing. *)
+and dexp_pure (env : env) (state : inference_state) (e : Syntax.dexp) (kind : var_kind) : env * inference_state * dexp =
+  match e with
+  | { d = SDWild; loc } ->
+    let t = C.noreturn loc in
+    env, state, { d = DWild; t; loc }
+  | { d = SDTuple l; loc } ->
+    let env, state, l =
+      CCList.fold_left
+        (fun (env, state, acc) e ->
+          let env, state, e = dexp_pure env state e kind in
+          env, state, e :: acc)
+        (env, state, [])
+        (CCList.rev l)
+    in
+    let t = C.tuple ~loc (CCList.map (fun (e : dexp) -> e.t) l) in
+    env, state, { d = DTuple l; t; loc }
+  | { d = SDGroup e; _ } -> dexp_pure env state e kind
+  | { d = SDTyped (e, t); _ } ->
+    let env, state, e = dexp_pure env state e kind in
+    let t = type_in_f env t in
+    checkArrayDimensions t;
+    let state = unify_pure_raise ~bind:true e.loc t e.t state in
+    (* Return e with the concrete type from the annotation *)
+    env, state, { e with t }
+  | { d = SDId (name, dims); loc } ->
+    (* For mem variables, check if it already exists in the context (from shared 'and' functions)
+       and unify with the existing type if so *)
+    let existing_type =
+      match kind with
+      | Mem _ when Env.checkMemExists env name -> Some (Env.lookVar env name loc).t
+      | _ -> None
+    in
+    let t =
+      match dims with
+      | Some size -> C.array ~loc ~size:(C.size ~loc size) (C.unbound loc)
+      | None -> C.unbound loc
+    in
+    (* If the variable already exists, unify with its type *)
+    let state, t =
+      match existing_type with
+      | Some existing_t ->
+        (* Unify existing type with new type and use existing for consistency *)
+        let state = unify_pure_raise loc existing_t t state in
+        state, existing_t
+      | None -> state, t
+    in
+    let env = Env.addVar env unify name t kind loc in
+    env, state, { d = DId (name, dims); t; loc }
+
+
 let stmt_block (stmts : stmt list) =
   match stmts with
   | [ s ] -> s
@@ -2011,6 +2965,237 @@ and stmt_list env return l =
   env, CCList.flatten (CCList.rev l_rev)
 
 
+(* ============================================================================
+   Pure Statement Inference Functions
+
+   These functions thread inference_state through statement processing.
+   They use unify_pure_raise for type checking instead of the mutable unifyRaise,
+   and call the pure expression functions (exp_pure, lexp_pure, dexp_pure).
+
+   During migration, these coexist with the mutable versions above.
+   ============================================================================ *)
+
+(** Pure statement inference: threads inference_state through processing.
+    Returns (env, state, stmt list) instead of just (env, stmt list).
+    Uses pure expression functions (exp_pure, lexp_pure, dexp_pure) for full state threading. *)
+let rec stmt_pure (env : env) (state : inference_state) (return : type_) (s : Syntax.stmt) :
+    env * inference_state * stmt list =
+  match s with
+  | { s = SStmtError; _ } -> env, state, []
+  | { s = SStmtBlock stmts; loc } ->
+    let env = Env.pushScope env in
+    let env, state, stmts = stmt_list_pure env state return stmts in
+    let env = Env.popScope env in
+    env, state, [ { s = StmtBlock stmts; loc } ]
+  | { s = SStmtVal (lhs, None); loc } ->
+    let env, state, lhs = dexp_pure env state lhs Val in
+    env, state, [ { s = StmtVal lhs; loc } ]
+  | { s = SStmtVal (lhs, Some rhs); loc } ->
+    let env, state, dlhs = dexp_pure env state lhs Val in
+    let env, state, lhs = lexp_pure ~const:true env state (dexp_to_lexp lhs) in
+    let env, state, rhs = exp_pure env state rhs in
+    let state = unify_pure_raise ~bind:true lhs.loc dlhs.t lhs.t state in
+    let state = unify_pure_raise ~bind:true rhs.loc dlhs.t rhs.t state in
+    env, state, [ { s = StmtVal dlhs; loc }; { s = StmtBind (lhs, rhs); loc } ]
+  | { s = SStmtMem (lhs, None, tags); loc } ->
+    let env, state, lhs = dexp_pure env state lhs (Mem tags) in
+    env, state, [ { s = StmtMem (lhs, tags); loc } ]
+  | { s = SStmtMem (lhs, Some rhs, tags); loc } ->
+    let env, state, dlhs = dexp_pure env state lhs (Mem tags) in
+    let env, state, lhs = lexp_pure env state (dexp_to_lexp lhs) in
+    let env, state, rhs = exp_pure env state rhs in
+    let state = unify_pure_raise ~bind:true rhs.loc lhs.t rhs.t state in
+    env, state, [ { s = StmtMem (dlhs, tags); loc }; { s = StmtBind (lhs, rhs); loc } ]
+  | { s = SStmtBind (lhs, rhs); loc } ->
+    let env, state, lhs = lexp_pure env state lhs in
+    let env, state, rhs = exp_pure env state rhs in
+    let state = unify_pure_raise ~bind:true rhs.loc lhs.t rhs.t state in
+    env, state, [ { s = StmtBind (lhs, rhs); loc } ]
+  | { s = SStmtReturn e; loc } ->
+    let env, state, e = exp_pure env state e in
+    let state = unify_pure_raise e.loc return e.t state in
+    env, state, [ { s = StmtReturn e; loc } ]
+  | { s = SStmtIf (cond, then_, else_); loc } ->
+    let env, state, cond = exp_pure env state cond in
+    let state = unify_pure_raise cond.loc (C.bool ~loc) cond.t state in
+    let env, state, then_ = stmt_pure env state return then_ in
+    let env, state, else_ = stmt_opt_pure env state return else_ in
+    env, state, [ { s = StmtIf (cond, stmt_block then_, else_); loc } ]
+  | { s = SStmtWhile (cond, s); loc } ->
+    let env, state, cond = exp_pure env state cond in
+    let state = unify_pure_raise cond.loc (C.bool ~loc) cond.t state in
+    let env, state, s = stmt_pure env state return s in
+    env, state, [ { s = StmtWhile (cond, stmt_block s); loc } ]
+  | { s = SStmtIter { id = name, id_loc; value; body }; loc } ->
+    let while_s = makeIterWhile env name id_loc value body loc in
+    stmt_pure env state return while_s
+  | { s = SStmtMatch { e; cases }; _ } ->
+    let if_stmt = makeIfOfMatch env e cases in
+    stmt_pure env state return if_stmt
+
+
+(** Pure optional statement processing. *)
+and stmt_opt_pure (env : env) (state : inference_state) (return : type_) (s : Syntax.stmt option) :
+    env * inference_state * stmt option =
+  match s with
+  | None -> env, state, None
+  | Some s ->
+    let env, state, s = stmt_pure env state return s in
+    env, state, Some (stmt_block s)
+
+
+(** Pure statement list processing. *)
+and stmt_list_pure (env : env) (state : inference_state) (return : type_) (l : Syntax.stmt list) :
+    env * inference_state * stmt list =
+  let env, state, l_rev =
+    CCList.fold_left
+      (fun (env, state, acc) s ->
+        let env, state, s = stmt_pure env state return s in
+        env, state, s :: acc)
+      (env, state, [])
+      l
+  in
+  env, state, CCList.flatten (CCList.rev l_rev)
+
+
+(* ============================================================================
+   Reification Pass
+
+   After type inference completes, the substitution map contains all type
+   variable bindings. The reification pass walks through the typed AST and
+   resolves all type variables using the final substitution, producing an
+   AST where all types are fully resolved.
+
+   This is the final step before code generation in the pure inference pipeline.
+   ============================================================================ *)
+
+(** Reify a type: resolve all type variables using the substitution.
+    If the type resolves to something different, link the original type to the resolved one
+    so that later code (passes, code generation) sees the resolved type. *)
+let reify_type (subs : Typed.substitution) (t : type_) : type_ =
+  let resolved = Typed.walk_star t subs in
+  (* If the type was resolved to something different, link the original to the resolved type.
+     This ensures that later code (which may not use walk) still sees the resolved type. *)
+  if t != resolved && not (t.tx == resolved.tx) then
+    let _ = linkType ~from:resolved ~into:t in
+    ()
+  else
+    ();
+  resolved
+
+
+(** Reify an expression: resolve all types in the expression tree. *)
+let rec reify_exp (subs : Typed.substitution) (e : exp) : exp =
+  let t = reify_type subs e.t in
+  let e_d =
+    match e.e with
+    | EUnit -> EUnit
+    | EBool v -> EBool v
+    | EInt v -> EInt v
+    | EReal v -> EReal v
+    | EFixed v -> EFixed v
+    | EString v -> EString v
+    | EId v -> EId v
+    | EConst p -> EConst p
+    | EIndex { e; index } -> EIndex { e = reify_exp subs e; index = reify_exp subs index }
+    | EArray elems -> EArray (CCList.map (reify_exp subs) elems)
+    | ECall { instance; path; args } -> ECall { instance; path; args = CCList.map (reify_exp subs) args }
+    | EUnOp (op, e) -> EUnOp (op, reify_exp subs e)
+    | EOp (op, e1, e2) -> EOp (op, reify_exp subs e1, reify_exp subs e2)
+    | EIf { cond; then_; else_ } ->
+      EIf { cond = reify_exp subs cond; then_ = reify_exp subs then_; else_ = reify_exp subs else_ }
+    | ETuple elems -> ETuple (CCList.map (reify_exp subs) elems)
+    | EMember (e, m) -> EMember (reify_exp subs e, m)
+    | ERecord { path; elems } -> ERecord { path; elems = CCList.map (fun (n, e) -> n, reify_exp subs e) elems }
+  in
+  { e with e = e_d; t }
+
+
+(** Reify a left-expression: resolve all types. *)
+let rec reify_lexp (subs : Typed.substitution) (e : lexp) : lexp =
+  let t = reify_type subs e.t in
+  let l_d =
+    match e.l with
+    | LWild -> LWild
+    | LId v -> LId v
+    | LMember (e, m) -> LMember (reify_lexp subs e, m)
+    | LIndex { e; index } -> LIndex { e = reify_lexp subs e; index = reify_exp subs index }
+    | LTuple elems -> LTuple (CCList.map (reify_lexp subs) elems)
+  in
+  { e with l = l_d; t }
+
+
+(** Reify a declaration expression: resolve all types. *)
+let rec reify_dexp (subs : Typed.substitution) (e : dexp) : dexp =
+  let t = reify_type subs e.t in
+  let d_d =
+    match e.d with
+    | DWild -> DWild
+    | DId (v, dim) -> DId (v, dim)
+    | DTuple elems -> DTuple (CCList.map (reify_dexp subs) elems)
+  in
+  { e with d = d_d; t }
+
+
+(** Reify a statement: resolve all types in the statement tree. *)
+let rec reify_stmt (subs : Typed.substitution) (s : stmt) : stmt =
+  let s_d =
+    match s.s with
+    | StmtVal d -> StmtVal (reify_dexp subs d)
+    | StmtMem (d, tags) -> StmtMem (reify_dexp subs d, tags)
+    | StmtBind (l, e) -> StmtBind (reify_lexp subs l, reify_exp subs e)
+    | StmtReturn e -> StmtReturn (reify_exp subs e)
+    | StmtBlock stmts -> StmtBlock (CCList.map (reify_stmt subs) stmts)
+    | StmtIf (cond, then_, else_) ->
+      StmtIf (reify_exp subs cond, reify_stmt subs then_, Option.map (reify_stmt subs) else_)
+    | StmtWhile (cond, body) -> StmtWhile (reify_exp subs cond, reify_stmt subs body)
+  in
+  { s with s = s_d }
+
+
+(** Reify an argument: resolve its type. *)
+let reify_arg (subs : Typed.substitution) (a : arg) : arg = { a with t = reify_type subs a.t }
+
+(** Reify a function type: resolve all types in arguments and return. *)
+let reify_fun_type (subs : Typed.substitution) ((args_t, ret_t) : fun_type) : fun_type =
+  CCList.map (reify_type subs) args_t, reify_type subs ret_t
+
+
+(** Reify a function definition: resolve all types. *)
+let rec reify_function_def (subs : Typed.substitution) (def : function_def) : function_def =
+  { def with
+    args = CCList.map (reify_arg subs) def.args
+  ; t = reify_fun_type subs def.t
+  ; next = Option.map (fun (d, s) -> reify_function_def subs d, reify_stmt subs s) def.next
+  }
+
+
+(** Reify a top-level statement: resolve all types. *)
+let reify_top_stmt (subs : Typed.substitution) (s : top_stmt) : top_stmt =
+  let top_d =
+    match s.top with
+    | TopExternal (def, linkname) -> TopExternal (reify_function_def subs def, linkname)
+    | TopFunction (def, body) -> TopFunction (reify_function_def subs def, reify_stmt subs body)
+    | TopType { path; members } ->
+      let members = CCList.map (fun (n, t, tags, loc) -> n, reify_type subs t, tags, loc) members in
+      TopType { path; members }
+    | TopAlias { path; alias_of } -> TopAlias { path; alias_of }
+    | TopEnum { path; members } -> TopEnum { path; members }
+    | TopConstant (path, dim, t, e, tags) -> TopConstant (path, dim, reify_type subs t, reify_exp subs e, tags)
+  in
+  { s with top = top_d }
+
+
+(** Reify an entire program: resolve all types in all top-level statements. *)
+let reify_program (subs : Typed.substitution) (stmts : top_stmt list) : top_stmt list =
+  CCList.map (reify_top_stmt subs) stmts
+
+
+(** Reify using inference state: convenience wrapper. *)
+let reify_program_with_state (state : inference_state) (stmts : top_stmt list) : top_stmt list =
+  reify_program state.subs stmts
+
+
 let addGeneratedFunctions tags name next =
   if Ptags.has tags "wave" then
     let code = Pla.print {%pla|fun <#name#s>_samples() : int @[placeholder] {}|} in
@@ -2075,6 +3260,20 @@ let registerMultiReturnMem (env : env) name t loc =
   | _ -> env
 
 
+(** Pure version of registerMultiReturnMem that resolves types through the substitution. *)
+let registerMultiReturnMem_pure (env : env) name t loc (state : inference_state) =
+  let _, ret = t in
+  (* Use walk_star to resolve the type through the substitution *)
+  let resolved_ret = Typed.walk_star ret state.subs in
+  match resolved_ret.tx with
+  | TEComposed ("tuple", elems) ->
+    (* Also resolve each element type *)
+    let resolved_elems = CCList.map (fun t -> Typed.walk_star t state.subs) elems in
+    let names = CCList.mapi (fun i t -> path_string name ^ "_ret_" ^ string_of_int i, t) resolved_elems in
+    CCList.fold_left (fun env (name, t) -> Env.addReturnVar env name t loc) env names
+  | _ -> env
+
+
 let isRoot (args : Args.args) path =
   let s_path = Pla.print (Syntax.print_path path) in
   CCList.mem s_path args.roots
@@ -2100,6 +3299,73 @@ let reportReturnTypeMismatch is_placeholder loc (specified_ret : type_ option) (
       let t = Pla.print (print_type_ t) in
       Error.raiseError ("This function is expected to have type '" ^ t ^ "' but nothing was returned.") loc
   | Some t1, t2 -> unifyRaise loc t1 t2
+
+
+(** Pure version of reportReturnTypeMismatch that uses substitution to resolve types. *)
+let reportReturnTypeMismatch_pure (state : inference_state) is_placeholder loc (specified_ret : type_ option)
+    (inferred_ret : type_) : inference_state =
+  (* Check if no return was found by seeing if inferred_ret was bound in the substitution.
+     In pure inference, inferred_ret starts as TEUnbound. If a return statement was found,
+     the ID gets bound in the substitution. If not bound, no return was found. *)
+  let is_no_return =
+    match inferred_ret.tx with
+    | Typed.TEUnbound (Some id) -> not (Typed.TypeVarMap.mem id state.subs)
+    | Typed.TENoReturn -> true
+    | _ -> false
+  in
+  match specified_ret, is_no_return with
+  | None, true ->
+    (* No specified return and no inferred return - use noreturn (matching mutable version) *)
+    unify_pure_raise loc (C.noreturn loc) inferred_ret state
+  | None, false -> state (* No specified return but found one - OK *)
+  | Some t, true ->
+    (* Specified return type but body doesn't return *)
+    if is_placeholder then
+      unify_pure_raise loc t inferred_ret state
+    else
+      let t_str = Pla.print (print_type_ t) in
+      Error.raiseError ("This function is expected to have type '" ^ t_str ^ "' but nothing was returned.") loc
+  | Some t1, false -> unify_pure_raise loc t1 inferred_ret state
+
+
+(* ============================================================================
+   Pure Function Definition and Top-Level Inference
+
+   These functions provide pure versions of function_def, top_stmt, and the
+   inference entry points. They thread inference_state through and use the
+   pure statement/expression functions.
+   ============================================================================ *)
+
+(** Pure function definition inference.
+    Threads inference_state and uses stmt_pure for the body. *)
+let rec function_def_pure (iargs : Args.args) (env : env) (state : inference_state) (def : Syntax.function_def) :
+    env * inference_state * (function_def * stmt) =
+  let specified_ret = getReturnType env def.t in
+  (* Use unbound type variable so it can be bound in the substitution *)
+  let inferred_ret = C.unbound def.loc in
+  let args = convertArguments env def.args in
+  let env, path, t = Env.enterFunction env def.name args inferred_ret def.loc in
+  let env, state, body = stmt_pure env state inferred_ret def.body in
+  let env = Env.exitFunction env in
+  let next = addGeneratedFunctions def.tags def.name def.next in
+  let env, state, next = function_def_opt_pure iargs env state next in
+  let is_placeholder = Ptags.has def.tags "placeholder" in
+  let state = reportReturnTypeMismatch_pure state is_placeholder def.loc specified_ret inferred_ret in
+  (* Use pure version that resolves return type through substitution *)
+  let env = registerMultiReturnMem_pure env path t def.loc state in
+  let env = customInitializer env def.tags path in
+  let is_root = isRoot iargs path in
+  env, state, ({ name = path; args; t; loc = def.loc; tags = def.tags; next; is_root }, stmt_block body)
+
+
+and function_def_opt_pure (iargs : Args.args) (env : env) (state : inference_state)
+    (def_opt : Syntax.function_def option) : env * inference_state * (function_def * stmt) option =
+  match def_opt with
+  | None -> env, state, None
+  | Some def ->
+    let env = Env.addAliasToContext env def.name def.loc in
+    let env, state, def_body = function_def_pure iargs env state def in
+    env, state, Some def_body
 
 
 let rec function_def (iargs : Args.args) (env : env) (def : Syntax.function_def) : env * (function_def * stmt) =
@@ -2152,6 +3418,20 @@ let ext_function (iargs : Args.args) (env : env) (def : Syntax.ext_def) : env * 
   let next = addGeneratedFunctions def.tags def.name None in
   let env, next = function_def_opt iargs env next in
   env, { name = path; args; t; loc = def.loc; tags = def.tags; next; is_root = false }
+
+
+(** Pure external function inference.
+    External functions don't have bodies, so state is just passed through. *)
+let ext_function_pure (iargs : Args.args) (env : env) (state : inference_state) (def : Syntax.ext_def) :
+    env * inference_state * function_def =
+  let ret = getOptType env def.loc def.t in
+  let args = convertArguments env def.args in
+  let args = applyMutableTag args def.tags in
+  let env, path, t = Env.enterFunction env def.name args ret def.loc in
+  let env = Env.exitFunction env in
+  let next = addGeneratedFunctions def.tags def.name None in
+  let env, state, next = function_def_opt_pure iargs env state next in
+  env, state, { name = path; args; t; loc = def.loc; tags = def.tags; next; is_root = false }
 
 
 let getContextArgument (env : env) (path : path) loc : arg option =
@@ -2599,6 +3879,147 @@ let removeExistingTypes set types =
   CCList.filter f types
 
 
+(** Pure top-level statement inference.
+    Threads inference_state through function and type definitions. *)
+let rec top_stmt_pure (iargs : Args.args) (env : env) (state : inference_state) (s : Syntax.top_stmt) :
+    env * inference_state * top_stmt list =
+  match s with
+  | { top = STopError; _ } -> failwith "Parser error"
+  | { top = STopFunction def; _ } when has_generic_params def ->
+    (* Store generic function, don't process yet *)
+    let generic_func = create_generic_function env def in
+    let env = Env.addGeneric env generic_func in
+    env, state, [] (* No output yet, templates processed on demand *)
+  | { top = STopFunction def; _ } ->
+    let env = Env.createContextForFunction env def.name def.loc in
+    let env, state, (def, body) = function_def_pure iargs env state def in
+    let def = insertContextArgument env def in
+    let env = Env.exitContext env in
+    (* Process pending injections iteratively until no more are created *)
+    (* Note: pending injections still use mutable approach internally *)
+    let rec process_pending_injections depth acc =
+      if depth > 100 then
+        failwith "Too many nested generic instantiations - possible infinite recursion"
+      else
+        let pending_functions = Env.getPendingInjectionsAndClear env in
+        if CCList.is_empty pending_functions then
+          acc
+        else
+          let new_stmts =
+            CCList.map
+              (fun ( (func_def : Typed.function_def)
+                   , syntax_body
+                   , (string_substitutions, const_substitutions)
+                   , type_bindings )
+                 ->
+                (* Process the substituted syntax body through type inference *)
+                let substituted_body = substitute_stmt string_substitutions const_substitutions syntax_body in
+                (* Create proper function context for body processing *)
+                let func_name = func_def.name.id in
+                let env_with_context = Env.createContextForFunction env func_name func_def.loc in
+                let env_in_function, _, _ =
+                  Env.enterFunction env_with_context func_name func_def.args (snd func_def.t) func_def.loc
+                in
+                let _, return_type = func_def.t in
+                (* Use the type bindings directly - they already contain the correct mappings *)
+                let type_substitution_map = type_bindings in
+                let _, typed_body_list =
+                  stmt_with_type_substitution env_in_function type_substitution_map return_type substituted_body
+                in
+                let typed_body =
+                  match typed_body_list with
+                  | [ single_stmt ] -> single_stmt
+                  | multiple_stmts -> { s = StmtBlock multiple_stmts; loc = func_def.loc }
+                in
+                (* Add _ctx argument if the function has mem variables *)
+                let func_def = insertContextArgument env_in_function func_def in
+                { top = TopFunction (func_def, typed_body); loc = func_def.loc })
+              pending_functions
+          in
+          (* Process any newly created pending injections *)
+          process_pending_injections (depth + 1) (acc @ new_stmts)
+    in
+    let injected_stmts = process_pending_injections 0 [] in
+    (* Return injected functions followed by the main function *)
+    env, state, injected_stmts @ [ { top = TopFunction (def, body); loc = def.loc } ]
+  | { top = STopExternal (def, link_name); _ } ->
+    let env = Env.createContextForExternal env in
+    let env, state, def = ext_function_pure iargs env state def in
+    let env = Env.exitContext env in
+    env, state, [ { top = TopExternal (def, link_name); loc = def.loc } ]
+  | { top = STopType { name; members }; loc } ->
+    let members = CCList.map (fun (name, t, tags, loc) -> name, type_in_m env t, tags, loc) members in
+    let members = CCList.sort (fun (n1, _, _, _) (n2, _, _, _) -> compare n1 n2) members in
+    let env = Env.addType env name members loc in
+    let m = Env.getCurrentModule env in
+    let path = Env.getPath m name loc in
+    env, state, [ { top = TopType { path; members }; loc } ]
+  | { top = STopEnum { name; members }; loc } ->
+    let env = Env.addEnum env name members loc in
+    let m = Env.getCurrentModule env in
+    let path = Env.getPath m name loc in
+    env, state, [ { top = TopEnum { path; members }; loc } ]
+  | { top = STopConstant (({ d = SDId (name, dim); _ } as d), e); loc } ->
+    (* Use top_dexp instead of dexp_pure because we're at module level, not in a function.
+       top_dexp doesn't call Env.addVar which requires function context. *)
+    let env, d = top_dexp env d in
+    let env, state, e = exp_pure ~context:constant_context env state e in
+    let state = unify_pure_raise e.loc d.t e.t state in
+    let m = Env.getCurrentModule env in
+    let path = Env.getPath m name loc in
+    let env = Env.addConstant env unify name d.t loc in
+    env, state, [ { top = TopConstant (path, dim, d.t, e, None); loc } ]
+  | { top = STopConstant _; _ } -> failwith ""
+
+
+(** Pure top-level statement list processing. *)
+and top_stmt_list_pure (iargs : Args.args) (env : env) (state : inference_state) (s : Syntax.top_stmt list) :
+    env * inference_state * top_stmt list =
+  let env, state, rev_s =
+    CCList.fold_left
+      (fun (env, state, acc) s ->
+        let env, state, stmt_list = top_stmt_pure iargs env state s in
+        env, state, stmt_list @ acc)
+      (env, state, [])
+      s
+  in
+  env, state, rev_s
+
+
+(** Pure inference for a single parsed file.
+    Uses the pure inference functions and reifies all types at the end. *)
+let infer_single_pure (iargs : Args.args) (env : env) (state : inference_state) (h : Parse.parsed_file) :
+    env * inference_state * top_stmt list =
+  let set = createExistingTypeSet (createTypes env) in
+  let env = Env.enterModule env h.name in
+  let env, state, stmt = top_stmt_list_pure iargs env state h.stmts in
+  let env = Env.exitModule env in
+  let types = removeExistingTypes set (createTypes env) in
+  env, state, stmt @ types
+
+
+(** Pure inference entry point.
+    Processes all parsed files, threads state through, and reifies all types. *)
+let infer_pure (iargs : Args.args) (parsed : Parse.parsed_file list) : env * top_stmt list =
+  let env, state, stmts =
+    CCList.fold_left
+      (fun (env, state, acc) (h : Parse.parsed_file) ->
+        let env = Env.enterModule env h.name in
+        let env, state, stmt = top_stmt_list_pure iargs env state h.stmts in
+        let env = Env.exitModule env in
+        env, state, stmt @ acc)
+      (Env.empty (), empty_state, [])
+      parsed
+  in
+  let types = createTypes env in
+  let all_stmts = types @ CCList.rev stmts in
+  (* Reify all types using the final substitution *)
+  let reified_stmts = reify_program_with_state state all_stmts in
+  env, reified_stmts
+
+
+(** Inference for a single parsed file.
+    Uses the mutable approach. *)
 let infer_single (iargs : Args.args) (env : env) (h : Parse.parsed_file) : env * top_stmt list =
   let set = createExistingTypeSet (createTypes env) in
   let env = Env.enterModule env h.name in
@@ -2608,6 +4029,8 @@ let infer_single (iargs : Args.args) (env : env) (h : Parse.parsed_file) : env *
   env, stmt @ types
 
 
+(** Main inference entry point.
+    Uses the mutable approach. *)
 let infer (iargs : Args.args) (parsed : Parse.parsed_file list) : env * top_stmt list =
   let env, stmts =
     CCList.fold_left

@@ -1,0 +1,21 @@
+// Test: Function return types
+
+fun explicit_return() : int {
+   return 42;
+}
+
+fun inferred_return() {
+   return 42;
+}
+
+fun no_return_inferred() {
+   val x = 1;
+}
+
+fun with_args(a:int, b:int) : int {
+   return a + b;
+}
+
+fun call_other() : int {
+   return with_args(1, 2);
+}

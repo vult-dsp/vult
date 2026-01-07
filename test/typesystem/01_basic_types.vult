@@ -1,0 +1,26 @@
+// Test: Basic type inference for literals and annotated variables
+
+fun test_int() : int {
+   val x : int = 1;
+   return x;
+}
+
+fun test_real() : real {
+   val x : real = 1.0;
+   return x;
+}
+
+fun test_bool() : bool {
+   val x : bool = true;
+   return x;
+}
+
+fun test_inferred_int() : int {
+   val x = 42;
+   return x;
+}
+
+fun test_inferred_real() : real {
+   val x = 3.14;
+   return x;
+}

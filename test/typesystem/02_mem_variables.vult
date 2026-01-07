@@ -1,0 +1,27 @@
+// Test: Mem variables with and without type annotations
+
+fun test_mem_annotated() : int {
+   mem x : int;
+   x = 10;
+   return x;
+}
+
+fun test_mem_inferred() : int {
+   mem x;
+   x = 20;
+   return x;
+}
+
+fun test_mem_array_annotated() : real {
+   mem buffer : array(real, 10);
+   buffer[0] = 1.0;
+   return buffer[0];
+}
+
+fun test_mem_multiple() : int {
+   mem a, b, c;
+   a = 1;
+   b = 2;
+   c = 3;
+   return a + b + c;
+}

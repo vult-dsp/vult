@@ -792,6 +792,95 @@ module Interpret = struct
   let get files = "run" >::: CCList.map (fun file -> Filename.basename file >:: run file) files
 end
 
+(** Module to test pure unification functions *)
+module UnificationTest = struct
+  open Core.Typed
+
+  let loc = Util.Loc.default
+
+  (** Helper: check if unification succeeds *)
+  let unifies (t1 : type_) (t2 : type_) : bool = Option.is_some (Core.Inference.unify_pure t1 t2 empty_substitution)
+
+  (** Helper: convert type to string for assertions *)
+  let type_to_string (t : type_) : string = Pla.print (print_type_ t)
+
+  (* === Basic Unification Tests === *)
+
+  let test_int_unifies_with_int _ = assert_bool "int = int" (unifies (C.int ~loc) (C.int ~loc))
+
+  let test_int_fails_with_real _ = assert_bool "int ≠ real" (not (unifies (C.int ~loc) (C.real ~loc)))
+
+  let test_unbound_binds_to_concrete _ =
+    let tvar = C.unbound loc in
+    let concrete = C.int ~loc in
+    match Core.Inference.unify_pure tvar concrete empty_substitution with
+    | Some subs ->
+      let resolved = walk_star tvar subs in
+      let resolved_str = type_to_string resolved in
+      assert_bool ("should resolve to int, got: " ^ resolved_str) (String.equal resolved_str "int")
+    | None -> assert_failure "unbound should unify with int"
+
+
+  (* === TEOption Tests (Phase 8 Critical) === *)
+
+  let test_num_option_unifies_with_int _ =
+    let opt = C.num loc in
+    (* TEOption [real|int|int16|fix16] *)
+    assert_bool "num option should unify with int" (unifies opt (C.int ~loc))
+
+
+  let test_num_option_unifies_with_real _ =
+    let opt = C.num loc in
+    assert_bool "num option should unify with real" (unifies opt (C.real ~loc))
+
+
+  let test_option_resolution_after_unify _ =
+    (* KEY PHASE 8 BLOCKER TEST - expected to FAIL initially *)
+    let opt = C.num loc in
+    let target = C.int ~loc in
+    match Core.Inference.unify_pure opt target empty_substitution with
+    | Some subs ->
+      let resolved = walk_star opt subs in
+      let resolved_str = type_to_string resolved in
+      (* This test documents the Phase 8 blocker:
+         walk_star doesn't collapse TEOption to the unified type *)
+      assert_bool ("option should resolve to int, got: " ^ resolved_str) (String.equal resolved_str "int")
+    | None -> assert_failure "should unify"
+
+
+  (* === Walk/Substitution Tests === *)
+
+  let test_walk_star_resolves_nested _ =
+    let inner = C.unbound loc in
+    let outer = C.array inner in
+    match Core.Inference.unify_pure inner (C.real ~loc) empty_substitution with
+    | Some subs ->
+      let resolved = walk_star outer subs in
+      let resolved_str = type_to_string resolved in
+      assert_bool ("array element should be real, got: " ^ resolved_str) (CCString.mem ~sub:"real" resolved_str)
+    | None -> assert_failure "should unify"
+
+
+  let test_occurs_check_prevents_cycle _ =
+    let tvar = C.unbound loc in
+    (* Try to create cyclic type: tvar = array(tvar) *)
+    let cyclic = C.array tvar in
+    assert_bool "cyclic type should fail occurs check" (not (unifies tvar cyclic))
+
+
+  let suite =
+    "unification"
+    >::: [ "int_unifies_with_int" >:: test_int_unifies_with_int
+         ; "int_fails_with_real" >:: test_int_fails_with_real
+         ; "unbound_binds_to_concrete" >:: test_unbound_binds_to_concrete
+         ; "num_option_unifies_with_int" >:: test_num_option_unifies_with_int
+         ; "num_option_unifies_with_real" >:: test_num_option_unifies_with_real
+         ; "option_resolution_after_unify" >:: test_option_resolution_after_unify
+         ; "walk_star_resolves_nested" >:: test_walk_star_resolves_nested
+         ; "occurs_check_prevents_cycle" >:: test_occurs_check_prevents_cycle
+         ]
+end
+
 module RenderTest = struct
   let test_sine_wave_render _context =
     (* Test parameters *)
@@ -926,6 +1015,7 @@ let suite =
        ; InterpretPerf.get perf_files
        ; Interpret.get interpreter
        ; RenderTest.get ()
+       ; UnificationTest.suite
        ]
 
 

@@ -1,0 +1,21 @@
+// Test: Tuple type inference
+
+fun tuple_unpack() : int {
+   val a, b = (10, 20);
+   return a + b;
+}
+
+fun tuple_assign() : int {
+   mem x, y;
+   x, y = (1, 2);
+   return x + y;
+}
+
+fun get_pair() {
+   return 1, 2;
+}
+
+fun multi_return() {
+   val a, b = get_pair();
+   return a + b;
+}
