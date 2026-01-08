@@ -103,6 +103,9 @@ let rec type_ ?(const = false) (env : env) (state : state) (t : Typed.type_) =
   | T.TEComposed ("tuple", elems) ->
     let state, elems = list (type_ ~const) env state elems in
     state, { t = TTuple elems; const; loc }
+  | T.TEComposed ("list", [ t ]) ->
+    let state, t = type_ ~const env state t in
+    state, { t = TList t; const; loc }
   | T.TEComposed (name, _) -> Error.raiseError ("Unknown composed type '" ^ name ^ "'.") t.loc
   | T.TESize _ -> Error.raiseError "Invalid type description." t.loc
   | T.TEFunction _ -> failwith "function type not implemented"

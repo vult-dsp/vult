@@ -277,6 +277,12 @@ let rec type_ (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state)
       apply mapper.type_ env state t
     else
       apply mapper.type_ env state { t = TArray (dim, t1'); const; loc }
+  | { t = TList t1; const; _ } ->
+    let state, t1' = type_ mapper sub_env state t1 in
+    if t1' == t1 then
+      apply mapper.type_ env state t
+    else
+      apply mapper.type_ env state { t = TList t1'; const; loc }
   | { t = TTuple elems; const; _ } ->
     let state, elems' = (mapper_list type_) mapper sub_env state elems in
     if elems' == elems then

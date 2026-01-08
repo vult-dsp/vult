@@ -119,6 +119,7 @@ function bool(x)            return x ~= 0 and x ~= false end
 function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
+function list_clear(t)      for k in pairs(t) do t[k] = nil end end
 
 |}
 
@@ -197,6 +198,41 @@ let rec print_exp e =
     | ("sin" | "cos" | "abs" | "exp" | "floor" | "tan" | "tanh" | "sqrt"), _ ->
       let args = Pla.map_sep Pla.commaspace print_exp args in
       {%pla|<#path#s>(<#args#>)|}
+    (* List operations *)
+    | "list_size", [ e1 ] ->
+      let e1 = print_exp e1 in
+      {%pla|#<#e1#>|}
+    | "list_capacity", [ _ ] -> {%pla|2147483647|}
+    | "list_append", [ l; v ] ->
+      let l = print_exp l in
+      let v = print_exp v in
+      {%pla|table.insert(<#l#>, <#v#>)|}
+    | "list_insert", [ l; i; v ] ->
+      let l = print_exp l in
+      let i = print_exp i in
+      let v = print_exp v in
+      {%pla|table.insert(<#l#>, <#i#> + 1, <#v#>)|}
+    | "list_remove", [ l; i ] ->
+      let l = print_exp l in
+      let i = print_exp i in
+      {%pla|table.remove(<#l#>, <#i#> + 1)|}
+    | "list_clear", [ e1 ] ->
+      let e1 = print_exp e1 in
+      {%pla|list_clear(<#e1#>)|}
+    | "list_reserve", [ _; _ ] ->
+      (* No-op for Lua *)
+      {%pla|nil|}
+    | "list_get", [ l; i ] ->
+      let l = print_exp l in
+      let i = print_exp i in
+      (* Lua is 1-based *)
+      {%pla|<#l#>[<#i#> + 1]|}
+    | "list_set", [ l; i; v ] ->
+      let l = print_exp l in
+      let i = print_exp i in
+      let v = print_exp v in
+      (* Lua is 1-based *)
+      {%pla|<#l#>[<#i#> + 1] = <#v#>|}
     | _ ->
       let args = Pla.map_sep Pla.commaspace print_exp args in
       {%pla|<#path#s>(<#args#>)|})

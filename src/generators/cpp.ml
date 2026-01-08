@@ -119,6 +119,9 @@ let rec print_type_ state (t : type_) =
   | TArray (None, t) ->
     let t = print_type_ state t in
     {%pla|std::array<<#t#>>|}
+  | TList t ->
+    let t = print_type_ state t in
+    {%pla|std::vector<<#t#>>|}
   | TStruct { path; _ } ->
     let path = addPrefix state path in
     {%pla|<#path#s>|}
@@ -163,7 +166,10 @@ let uoperator (op : Core.Prog.uoperator) =
 
 let rec print_exp state (prec : operator option) (e : exp) =
   match e.e with
-  | EEmptyValue -> Pla.string "nullptr"
+  | EEmptyValue -> (
+    match e.t.t with
+    | TList _ -> Pla.string "{}"
+    | _ -> Pla.string "nullptr")
   | EUnit -> Pla.string ""
   | EBool v ->
     Pla.string
@@ -227,6 +233,42 @@ let rec print_exp state (prec : operator option) (e : exp) =
   | ECall { path = "length"; args = [ e1 ] } ->
     let e1 = print_exp state prec e1 in
     {%pla|static_cast<int32_t>(<#e1#>.size())|}
+  (* List operations *)
+  | ECall { path = "list_size"; args = [ e1 ] } ->
+    let e1 = print_exp state prec e1 in
+    {%pla|static_cast<int32_t>(<#e1#>.size())|}
+  | ECall { path = "list_capacity"; args = [ e1 ] } ->
+    let e1 = print_exp state prec e1 in
+    {%pla|static_cast<int32_t>(<#e1#>.capacity())|}
+  | ECall { path = "list_append"; args = [ l; v ] } ->
+    let l = print_exp state prec l in
+    let v = print_exp state prec v in
+    {%pla|<#l#>.push_back(<#v#>)|}
+  | ECall { path = "list_insert"; args = [ l; i; v ] } ->
+    let l = print_exp state prec l in
+    let i = print_exp state prec i in
+    let v = print_exp state prec v in
+    {%pla|<#l#>.insert(<#l#>.begin() + <#i#>, <#v#>)|}
+  | ECall { path = "list_remove"; args = [ l; i ] } ->
+    let l = print_exp state prec l in
+    let i = print_exp state prec i in
+    {%pla|<#l#>.erase(<#l#>.begin() + <#i#>)|}
+  | ECall { path = "list_clear"; args = [ e1 ] } ->
+    let e1 = print_exp state prec e1 in
+    {%pla|<#e1#>.clear()|}
+  | ECall { path = "list_reserve"; args = [ l; n ] } ->
+    let l = print_exp state prec l in
+    let n = print_exp state prec n in
+    {%pla|<#l#>.reserve(<#n#>)|}
+  | ECall { path = "list_get"; args = [ l; i ] } ->
+    let l = print_exp state prec l in
+    let i = print_exp state prec i in
+    {%pla|<#l#>[static_cast<uint32_t>(<#i#>)]|}
+  | ECall { path = "list_set"; args = [ l; i; v ] } ->
+    let l = print_exp state prec l in
+    let i = print_exp state prec i in
+    let v = print_exp state prec v in
+    {%pla|(<#l#>[static_cast<uint32_t>(<#i#>)] = <#v#>)|}
   | ECall { path = "not"; args = [ e1 ] } ->
     let e1 = print_exp state prec e1 in
     {%pla|!(<#e1#>)|}
@@ -290,8 +332,11 @@ let print_dexp (e : dexp) =
 
 
 let print_member state (n, (t : type_), _, _) =
-  let t = print_type_ state t in
-  {%pla|<#t#> <#n#s>;|}
+  let type_str = print_type_ state t in
+  (* Add mutable keyword for list members so they can be modified even when context is const *)
+  match t.t with
+  | TList _ -> {%pla|mutable <#type_str#> <#n#s>;|}
+  | _ -> {%pla|<#type_str#> <#n#s>;|}
 
 
 let print_arg state i ({ name; t; const; _ } : param) =

@@ -331,6 +331,11 @@ int32_t first_array_element(CustomBuffer &buffer, int32_t index) {
   return next_object(buffer, index);
 }
 
+int32_t get_array_count(CustomBuffer &buffer, int32_t index) {
+  index = index + 4; // skip header (tag + size bytes)
+  return deserialize_int(buffer, index);
+}
+
 int32_t get_field(CustomBuffer &buffer, int32_t object, int32_t field) {
   int32_t index = object + 4; // Skip the header
   int32_t n = 0;
@@ -414,9 +419,9 @@ std::string deserialize_string(CustomBuffer &buffer, int32_t index) {
   // Check the tag
   if (read_byte(buffer, index) == STRING_TAG) {
     int32_t total_size = block_size(buffer, index);
-    // String size = total_size - header(4) - tag(1) = total_size - 5
-    // But we need to account for null terminator, so actual string length = total_size - 5 - 1
-    int32_t string_length = total_size - 5 - 1;
+    // total_size = header(4) + string_content + null_terminator(1)
+    // string_length = total_size - 4 - 1 = total_size - 5
+    int32_t string_length = total_size - 5;
 
     if (string_length < 0) {
       buffer.error = true;

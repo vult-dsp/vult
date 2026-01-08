@@ -116,6 +116,39 @@ let rec print_exp (e : exp) =
     let index = print_exp index in
     {%pla|<#e#>[<#index#>]|}
   | EArray l -> Pla.wrap (Pla.string "[") (Pla.string "]") (Pla.map_sep Pla.commaspace print_exp l)
+  (* List operations *)
+  | ECall { path = "list_size"; args = [ e1 ] } ->
+    let e1 = print_exp e1 in
+    {%pla|len(<#e1#>)|}
+  | ECall { path = "list_capacity"; args = [ _ ] } -> {%pla|2147483647|}
+  | ECall { path = "list_append"; args = [ l; v ] } ->
+    let l = print_exp l in
+    let v = print_exp v in
+    {%pla|<#l#>.append(<#v#>)|}
+  | ECall { path = "list_insert"; args = [ l; i; v ] } ->
+    let l = print_exp l in
+    let i = print_exp i in
+    let v = print_exp v in
+    {%pla|<#l#>.insert(<#i#>, <#v#>)|}
+  | ECall { path = "list_remove"; args = [ l; i ] } ->
+    let l = print_exp l in
+    let i = print_exp i in
+    {%pla|<#l#>.pop(<#i#>)|}
+  | ECall { path = "list_clear"; args = [ e1 ] } ->
+    let e1 = print_exp e1 in
+    {%pla|<#e1#>.clear()|}
+  | ECall { path = "list_reserve"; args = [ _; _ ] } ->
+    (* No-op for Python *)
+    {%pla|None|}
+  | ECall { path = "list_get"; args = [ l; i ] } ->
+    let l = print_exp l in
+    let i = print_exp i in
+    {%pla|<#l#>[<#i#>]|}
+  | ECall { path = "list_set"; args = [ l; i; v ] } ->
+    let l = print_exp l in
+    let i = print_exp i in
+    let v = print_exp v in
+    {%pla|<#l#>.__setitem__(<#i#>, <#v#>)|}
   | ECall { path; args } ->
     let args = Pla.map_sep Pla.commaspace print_exp args in
     {%pla|<#path#s>(<#args#>)|}

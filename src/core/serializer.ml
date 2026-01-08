@@ -47,6 +47,7 @@ let rec getTypeDep (t : type_) =
   match t with
   | { t = TStruct { path; _ }; _ } -> [ path ]
   | { t = TArray (_, t); _ } -> getTypeDep t
+  | { t = TList t; _ } -> getTypeDep t
   | { t = TTuple elems; _ } -> CCList.flatten (CCList.map getTypeDep elems)
   | _ -> []
 
@@ -156,6 +157,7 @@ let rec getAllStructTypes (t : type_) =
   match t with
   | { t = TStruct { path; members }; _ } -> path :: CCList.flat_map (fun (_, t, _, _) -> getAllStructTypes t) members
   | { t = TArray (_, t); _ } -> getAllStructTypes t
+  | { t = TList t; _ } -> getAllStructTypes t
   | { t = TTuple elems; _ } -> CCList.flat_map (fun t -> getAllStructTypes t) elems
   | _ -> []
 
@@ -222,6 +224,7 @@ let serializerForType (t : type_) =
   | { t = TEmptyType; _ } -> failwith "serializerForType: void"
   | { t = TVoid _; _ } -> failwith "serializerForType: void"
   | { t = TArray _; _ } -> failwith "serializerForType: array"
+  | { t = TList _; _ } -> failwith "serializerForType: list serialization not yet supported"
   | { t = TTuple _; _ } -> failwith "serializerForType: tuple"
   | { t = TStruct { path; _ }; _ } -> path ^ "_serialize_data"
 
@@ -234,6 +237,7 @@ let deserializerForType (t : type_) =
   | { t = TEmptyType; _ } -> failwith "deserializerForType: void"
   | { t = TVoid _; _ } -> failwith "deserializerForType: void"
   | { t = TArray _; _ } -> failwith "deserializerForType: array"
+  | { t = TList _; _ } -> failwith "deserializerForType: list deserialization not yet supported"
   | { t = TTuple _; _ } -> failwith "deserializerForType: tuple"
   | { t = TStruct { path; _ }; _ } -> path ^ "_deserialize_data"
 
@@ -315,6 +319,47 @@ let createSerializer table (stmt : top_stmt) =
                 let loop = { s = StmtWhile (C.elt iter_exp (C.eint size), body); loc } in
                 Some { s = StmtBlock [ start_decl; start_bind; iter_decl; push_array; loop; update_array ]; loc }
               | { t = TArray (None, _t); _ } -> failwith "Serializing array with unknonw size"
+              | { t = TList at; _ } ->
+                let n = !tick in
+                incr tick;
+                let iter_name = "i_" ^ string_of_int n in
+                let iter_exp = C.eid iter_name C.int_t in
+                let iter_lexp = C.lid iter_name C.int_t in
+                let iter_decl = C.sdecl iter_name C.int_t in
+                let start_name = "start_" ^ string_of_int n in
+                let start_exp = C.eid start_name C.int_t in
+                let start_lexp = C.lid start_name C.int_t in
+                let start_decl = C.sdecl start_name C.int_t in
+                let start_bind = C.sbind start_lexp index in
+                let size_name = "size_" ^ string_of_int n in
+                let size_exp = C.eid size_name C.int_t in
+                let size_decl = C.sdecl size_name C.int_t in
+                (* Get list size at runtime *)
+                let list_member = C.emember (C.eid "_ctx" this_type) name t in
+                let list_size_call = C.ecall "list_size" [ list_member ] C.int_t in
+                let size_bind = C.sbind (C.lid size_name C.int_t) list_size_call in
+                let iter_incr = C.sbind iter_lexp (C.eadd iter_exp (C.eint 1)) in
+                let update_array =
+                  C.sbind_wild (C.ecall "update_size" [ buffer; start_exp; C.esub index start_exp ] C.void_t)
+                in
+                (* push_array with runtime size *)
+                let push_array_stmt = C.sbind lindex (C.ecall push_array [ buffer; index; size_exp ] C.void_t) in
+                let call =
+                  C.sbind
+                    lindex
+                    (C.ecall
+                       (serializerForType at)
+                       [ buffer; index; C.ecall "list_get" [ list_member; iter_exp ] at ]
+                       C.void_t)
+                in
+                let body = { s = StmtBlock [ call; iter_incr ]; loc } in
+                let loop = { s = StmtWhile (C.elt iter_exp size_exp, body); loc } in
+                Some
+                  { s =
+                      StmtBlock
+                        [ size_decl; size_bind; start_decl; start_bind; iter_decl; push_array_stmt; loop; update_array ]
+                  ; loc
+                  }
               | { t = TTuple _; _ } -> failwith "serialization of tuple"
             else
               None)
@@ -512,6 +557,113 @@ let createDeserializer table (stmt : top_stmt) =
                 let loop = C.swhile cond body in
                 Some (C.sblock [ decl; search_type; search_stmt; found_index ((skip_size :: iter_decl) @ [ loop ]) ])
               | { t = TArray _; _ } -> failwith "deserialization of array with unknow dimensions"
+              (* list of builtin types *)
+              | { t = TList ({ t = TInt | TReal | TString | TBool | TFix16; _ } as at); _ } ->
+                let () = incr tick in
+                let iter_name = "i_" ^ string_of_int !tick in
+                let () = incr tick in
+                let size_name = "list_size_" ^ string_of_int !tick in
+                let () = incr tick in
+                let temp_name = "temp_" ^ string_of_int !tick in
+                let iter_decl = C.sdecl_bind iter_name (C.eint 0) C.int_t in
+                let iter_id = C.eid iter_name C.int_t in
+                let size_decl = C.sdecl size_name C.int_t in
+                let size_id = C.eid size_name C.int_t in
+                let temp_decl = C.sdecl temp_name at in
+                let temp_id = C.eid temp_name at in
+                (* Clear the list before deserializing *)
+                let list_member = C.emember ectx name t in
+                let clear_list = C.sbind_wild (C.ecall "list_clear" [ list_member ] C.void_t) in
+                (* Get the array count from buffer *)
+                let get_count =
+                  C.sbind (C.lid size_name C.int_t) (C.ecall "get_array_count" [ buffer; field_index ] C.int_t)
+                in
+                (* Deserialize element into temp and push to list *)
+                let call_deserializer =
+                  C.sbind (C.lid temp_name at) (C.ecall (deserializerForType at) [ buffer; field_index ] at)
+                in
+                let append_elem = C.sbind_wild (C.ecall "list_append" [ list_member; temp_id ] C.void_t) in
+                let skip_size =
+                  C.sbind (C.lid "field_index" C.int_t) (C.ecall "first_array_element" [ buffer; field_index ] C.int_t)
+                in
+                let cond = C.elt iter_id size_id in
+                let body =
+                  let next_element =
+                    C.sbind (C.lid "field_index" C.int_t) (C.ecall "next_object" [ buffer; field_index ] C.int_t)
+                  in
+                  C.sblock
+                    [ call_deserializer
+                    ; append_elem
+                    ; C.sbind (C.lid iter_name C.int_t) (C.eadd iter_id (C.eint 1))
+                    ; next_element
+                    ]
+                in
+                let loop = C.swhile cond body in
+                Some
+                  (C.sblock
+                     [ search_stmt
+                     ; found_index ([ size_decl; get_count; temp_decl; clear_list; skip_size ] @ iter_decl @ [ loop ])
+                     ])
+              (* list of structs *)
+              | { t = TList at; _ } ->
+                let field_descr = "field_descr_" ^ string_of_int !tick in
+                let () = incr tick in
+                let decl = C.sdecl field_descr typedescr_type in
+                let search_type =
+                  C.sbind
+                    (C.lid field_descr typedescr_type)
+                    (C.ecall "search_type_description" [ buffer; getTypeNameStringExp at ] typedescr_type)
+                in
+                let iter_name = "i_" ^ string_of_int !tick in
+                let () = incr tick in
+                let size_name = "list_size_" ^ string_of_int !tick in
+                let () = incr tick in
+                let temp_name = "temp_" ^ string_of_int !tick in
+                let iter_decl = C.sdecl_bind iter_name (C.eint 0) C.int_t in
+                let iter_id = C.eid iter_name C.int_t in
+                let size_decl = C.sdecl size_name C.int_t in
+                let size_id = C.eid size_name C.int_t in
+                let temp_decl = C.sdecl temp_name at in
+                let temp_id = C.eid temp_name at in
+                (* Clear the list *)
+                let list_member = C.emember ectx name t in
+                let clear_list = C.sbind_wild (C.ecall "list_clear" [ list_member ] C.void_t) in
+                (* Get count from buffer *)
+                let get_count =
+                  C.sbind (C.lid size_name C.int_t) (C.ecall "get_array_count" [ buffer; field_index ] C.int_t)
+                in
+                (* Deserialize struct into temp and push to list *)
+                let call_deserializer =
+                  C.sbind_wild
+                    (C.ecall
+                       (deserializerForType at)
+                       [ buffer; C.eid field_descr typedescr_type; field_index; temp_id ]
+                       C.void_t)
+                in
+                let append_elem = C.sbind_wild (C.ecall "list_append" [ list_member; temp_id ] C.void_t) in
+                let skip_size =
+                  C.sbind (C.lid "field_index" C.int_t) (C.ecall "first_array_element" [ buffer; field_index ] C.int_t)
+                in
+                let cond = C.elt iter_id size_id in
+                let body =
+                  let next_element =
+                    C.sbind (C.lid "field_index" C.int_t) (C.ecall "next_object" [ buffer; field_index ] C.int_t)
+                  in
+                  C.sblock
+                    [ call_deserializer
+                    ; append_elem
+                    ; C.sbind (C.lid iter_name C.int_t) (C.eadd iter_id (C.eint 1))
+                    ; next_element
+                    ]
+                in
+                let loop = C.swhile cond body in
+                Some
+                  (C.sblock
+                     [ decl
+                     ; search_type
+                     ; search_stmt
+                     ; found_index ([ size_decl; get_count; temp_decl; clear_list; skip_size ] @ iter_decl @ [ loop ])
+                     ])
               | { t = TTuple _; _ } -> failwith "deserialization of tuple"
             else
               None)

@@ -1302,7 +1302,8 @@ and exp ?(context = normal_context) ?(in_constant_context = false) (env : env) (
     let env, e = exp ~context env e in
     let env, index = exp ~context env index in
     let t = C.unbound Loc.default in
-    unifyRaise e.loc (C.array ~fixed:false t) e.t;
+    (* Allow indexing on arrays and lists *)
+    unifyRaise e.loc (C.indexable t) e.t;
     unifyRaise index.loc (C.int ~loc:Loc.default) index.t;
     (* if the type is a builtin (a value) do not unify the constness *)
     let () =

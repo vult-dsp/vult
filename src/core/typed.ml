@@ -644,6 +644,16 @@ module C = struct
 
   let tuple ?(loc = Loc.default) l = { tx = TEComposed ("tuple", l); loc; const = const () }
 
+  let list ?(loc = Loc.default) t = { tx = TEComposed ("list", [ t ]); loc; const = const () }
+
+  (* Type for indexable collections: arrays and lists *)
+  let indexable ?(loc = Loc.default) t =
+    let a = { tx = TEComposed ("array", [ t ]); loc; const = const () } in
+    let a_dim = { tx = TEComposed ("array", [ t; unbound loc ]); loc; const = const () } in
+    let l = { tx = TEComposed ("list", [ t ]); loc; const = const () } in
+    { tx = TEOption [ a; a_dim; l ]; loc; const = const () }
+
+
   let freal_type ?(loc = Loc.default) () = { tx = TEOption [ real ~loc; fix16 ~loc ]; loc; const = const () }
 
   let array_size () : fun_type =
@@ -651,6 +661,70 @@ module C = struct
     let a = unbound loc in
     let a_array = array ~fixed:false a in
     [ a_array ], int ~loc
+
+
+  (* List functions *)
+  let list_size () : fun_type =
+    let loc = Loc.default in
+    let a = unbound loc in
+    let a_list = list a in
+    [ a_list ], int ~loc
+
+
+  let list_append () : fun_type =
+    let loc = Loc.default in
+    let a = unbound loc in
+    let a_list = list a in
+    [ a_list; a ], unit ~loc
+
+
+  let list_insert () : fun_type =
+    let loc = Loc.default in
+    let a = unbound loc in
+    let a_list = list a in
+    [ a_list; int ~loc; a ], unit ~loc
+
+
+  let list_remove () : fun_type =
+    let loc = Loc.default in
+    let a = unbound loc in
+    let a_list = list a in
+    [ a_list; int ~loc ], unit ~loc
+
+
+  let list_clear () : fun_type =
+    let loc = Loc.default in
+    let a = unbound loc in
+    let a_list = list a in
+    [ a_list ], unit ~loc
+
+
+  let list_reserve () : fun_type =
+    let loc = Loc.default in
+    let a = unbound loc in
+    let a_list = list a in
+    [ a_list; int ~loc ], unit ~loc
+
+
+  let list_capacity () : fun_type =
+    let loc = Loc.default in
+    let a = unbound loc in
+    let a_list = list a in
+    [ a_list ], int ~loc
+
+
+  let list_get () : fun_type =
+    let loc = Loc.default in
+    let a = unbound loc in
+    let a_list = list a in
+    [ a_list; int ~loc ], a
+
+
+  let list_set () : fun_type =
+    let loc = Loc.default in
+    let a = unbound loc in
+    let a_list = list a in
+    [ a_list; int ~loc; a ], unit ~loc
 
 
   let str_length () : fun_type =

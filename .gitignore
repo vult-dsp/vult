@@ -79,3 +79,7 @@ tramp
 [._]ss[a-gi-z]
 [._]sw[a-p]
 /src/lsp/vscode-extension/vult_lsp_js.js
+/test/integration/serialization/vultin.o
+/test/integration/serialization/test_serialization_main.o
+/test/integration/serialization/test_serialization
+/test/integration/serialization/test_serialization.o

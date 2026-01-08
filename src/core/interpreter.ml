@@ -34,12 +34,14 @@ type dvalue =
   | DBool of bool
   | DString of string
   | DArray of dvalue array
+  | DList of dvalue list ref (* Dynamic list with mutable reference *)
   | DStruct of dvalue array
 
 (* Expression with resolved indices *)
 type iexp =
   | IEUnit
   | IEEmptyValue
+  | IEEmptyList of type_ (* Empty list of the given element type *)
   | IEBool of bool
   | IEInt of int
   | IEReal of float
@@ -105,6 +107,16 @@ type iexp =
   (* Array/string functions *)
   | IEBuiltinSize of iexp
   | IEBuiltinLength of iexp
+  (* List functions *)
+  | IEBuiltinListSize of iexp
+  | IEBuiltinListCapacity of iexp
+  | IEBuiltinListAppend of iexp * iexp
+  | IEBuiltinListInsert of iexp * iexp * iexp
+  | IEBuiltinListRemove of iexp * iexp
+  | IEBuiltinListClear of iexp
+  | IEBuiltinListReserve of iexp * iexp
+  | IEBuiltinListGet of iexp * iexp
+  | IEBuiltinListSet of iexp * iexp * iexp
   | IEIndex of iexp * iexp
   | IEArray of iexp list
   | IECall of int * iexp list (* Function index and args *)
@@ -302,6 +314,7 @@ let rec printDvalue (dv : dvalue) : string =
   | DBool b -> string_of_bool b
   | DString s -> "\"" ^ s ^ "\""
   | DArray arr -> "[" ^ String.concat "; " (Array.to_list (Array.map printDvalue arr)) ^ "]"
+  | DList list_ref -> "list[" ^ String.concat "; " (CCList.map printDvalue !list_ref) ^ "]"
   | DStruct arr ->
     "{" ^ String.concat "; " (Array.to_list (Array.mapi (fun i v -> string_of_int i ^ ":" ^ printDvalue v) arr)) ^ "}"
 
@@ -341,6 +354,7 @@ let rec printIexp (ie : iexp) : string =
   match ie with
   | IEUnit -> "()"
   | IEEmptyValue -> "empty"
+  | IEEmptyList _ -> "empty_list"
   | IEBool b -> string_of_bool b
   | IEInt i -> string_of_int i
   | IEReal f -> string_of_float f
@@ -408,6 +422,16 @@ let rec printIexp (ie : iexp) : string =
   (* Array/string functions *)
   | IEBuiltinSize e -> "size(" ^ printIexp e ^ ")"
   | IEBuiltinLength e -> "length(" ^ printIexp e ^ ")"
+  (* List functions *)
+  | IEBuiltinListSize e -> "list_size(" ^ printIexp e ^ ")"
+  | IEBuiltinListCapacity e -> "list_capacity(" ^ printIexp e ^ ")"
+  | IEBuiltinListAppend (l, v) -> "list_append(" ^ printIexp l ^ ", " ^ printIexp v ^ ")"
+  | IEBuiltinListInsert (l, i, v) -> "list_insert(" ^ printIexp l ^ ", " ^ printIexp i ^ ", " ^ printIexp v ^ ")"
+  | IEBuiltinListRemove (l, i) -> "list_remove(" ^ printIexp l ^ ", " ^ printIexp i ^ ")"
+  | IEBuiltinListClear e -> "list_clear(" ^ printIexp e ^ ")"
+  | IEBuiltinListReserve (l, n) -> "list_reserve(" ^ printIexp l ^ ", " ^ printIexp n ^ ")"
+  | IEBuiltinListGet (l, i) -> "list_get(" ^ printIexp l ^ ", " ^ printIexp i ^ ")"
+  | IEBuiltinListSet (l, i, v) -> "list_set(" ^ printIexp l ^ ", " ^ printIexp i ^ ", " ^ printIexp v ^ ")"
   | IEIndex (arr, idx) -> printIexp arr ^ "[" ^ printIexp idx ^ "]"
   | IEArray exprs -> "[" ^ String.concat "; " (CCList.map printIexp exprs) ^ "]"
   | IECall (func_idx, args) ->
@@ -498,7 +522,11 @@ let isInt16Type (typ : type_) : bool =
 let rec transformExp (ctx : transform_ctx) (exp : exp) : iexp =
   match exp.e with
   | EUnit -> IEUnit
-  | EEmptyValue -> IEEmptyValue
+  | EEmptyValue -> (
+    (* Check if the empty value is for a list type *)
+    match exp.t.t with
+    | TList _ -> IEEmptyList exp.t
+    | _ -> IEEmptyValue)
   | EBool b -> IEBool b
   | EInt i -> IEInt i
   | EReal f -> IEReal f
@@ -579,6 +607,16 @@ let rec transformExp (ctx : transform_ctx) (exp : exp) : iexp =
     (* Array/string functions *)
     | "size", [ arg ] -> IEBuiltinSize arg
     | "length", [ arg ] -> IEBuiltinLength arg
+    (* List functions *)
+    | "list_size", [ arg ] -> IEBuiltinListSize arg
+    | "list_capacity", [ arg ] -> IEBuiltinListCapacity arg
+    | "list_append", [ l; v ] -> IEBuiltinListAppend (l, v)
+    | "list_insert", [ l; i; v ] -> IEBuiltinListInsert (l, i, v)
+    | "list_remove", [ l; i ] -> IEBuiltinListRemove (l, i)
+    | "list_clear", [ arg ] -> IEBuiltinListClear arg
+    | "list_reserve", [ l; n ] -> IEBuiltinListReserve (l, n)
+    | "list_get", [ l; i ] -> IEBuiltinListGet (l, i)
+    | "list_set", [ l; i; v ] -> IEBuiltinListSet (l, i, v)
     (* External runtime functions *)
     | "push_block_header", args -> IECallExt ("push_block_header", args)
     | "push_int", args -> IECallExt ("push_int", args)
@@ -594,6 +632,7 @@ let rec transformExp (ctx : transform_ctx) (exp : exp) : iexp =
     | "deserialize_string", args -> IECallExt ("deserialize_string", args)
     | "search_type_description", args -> IECallExt ("search_type_description", args)
     | "first_array_element", args -> IECallExt ("first_array_element", args)
+    | "get_array_count", args -> IECallExt ("get_array_count", args)
     | "next_object", args -> IECallExt ("next_object", args)
     (* Fall back to regular call for non-builtins *)
     | _ -> (
@@ -706,6 +745,7 @@ let rec evalConstantExpression (constants : dvalue array) (exp : iexp) : dvalue 
   match exp with
   | IEUnit -> DVoid
   | IEEmptyValue -> DVoid
+  | IEEmptyList _ -> DList (ref [])
   | IEBool b -> DBool b
   | IEInt i -> DInt i
   | IEReal f -> DReal f
@@ -844,7 +884,10 @@ let rec defaultValue (typ : type_) : dvalue =
   | TTuple types -> DArray (Array.of_list (CCList.map defaultValue types))
   | TEmptyType -> DVoid
   | TArray (None, _) -> error "Cannot create default value for unsized array"
+  | TList _ -> DList (ref [])
 
+
+(* Empty mutable list *)
 
 (* Sets up a function call on the runtime stack and returns the frame start offset *)
 let setupFunctionCall (stack : runtime_stack) (ifunc : ifunc_def) (args : dvalue list) : int =
@@ -877,7 +920,17 @@ let getArrayElement (ctx : call_context) (arr : dvalue) (idx : dvalue) : dvalue 
       ^ string_of_int (Array.length elems)
       ^ " index = "
       ^ string_of_int i)
-  | _ -> error_with_context ctx "getArrayElement: Invalid array access. This is not an array"
+  | DList list_ref, DInt i -> (
+    match CCList.nth_opt !list_ref i with
+    | Some v -> v
+    | None ->
+      error_with_context
+        ctx
+        ("getArrayElement: List index out of bounds. size = "
+        ^ string_of_int (CCList.length !list_ref)
+        ^ " index = "
+        ^ string_of_int i))
+  | _ -> error_with_context ctx "getArrayElement: Invalid array access. This is not an array or list"
 
 
 (* Retrieves a member from a struct using a member index *)
@@ -1084,7 +1137,17 @@ and assignIlvalue : call_context -> iprog -> runtime_stack -> int -> ilexp -> dv
     let array_val = evalIlexpAsRvalue ctx prog stack frame_start e in
     match array_val, idx_val with
     | DArray arr, DInt i when i >= 0 && i < Array.length arr -> arr.(i) <- val_
-    | _ -> error_with_context ctx "Invalid array assignment")
+    | DList list_ref, DInt i ->
+      let old_list = !list_ref in
+      let len = CCList.length old_list in
+      if i >= 0 && i < len then
+        let before, after = CCList.take_drop i old_list in
+        match after with
+        | _ :: rest -> list_ref := before @ [ val_ ] @ rest
+        | [] -> error_with_context ctx "List index out of bounds for assignment"
+      else
+        error_with_context ctx ("List index out of bounds: index = " ^ string_of_int i ^ " size = " ^ string_of_int len)
+    | _ -> error_with_context ctx "Invalid array or list assignment")
   | ILTuple lexps -> (
     match val_ with
     | DArray vals when Array.length vals = CCList.length lexps ->
@@ -1123,6 +1186,7 @@ and evalIexp (ctx : call_context) (prog : iprog) (stack : runtime_stack) (frame_
   match exp with
   | IEUnit -> DVoid
   | IEEmptyValue -> DVoid
+  | IEEmptyList _ -> DList (ref [])
   | IEBool b -> DBool b
   | IEInt i -> DInt i
   | IEReal f -> DReal f
@@ -1390,6 +1454,89 @@ and evalIexp (ctx : call_context) (prog : iprog) (stack : runtime_stack) (frame_
     match evalIexp ctx prog stack frame_start e with
     | DString s -> DInt (String.length s)
     | _ -> error_with_context ctx "Type mismatch in length - expected string")
+  (* List functions *)
+  | IEBuiltinListSize e -> (
+    match evalIexp ctx prog stack frame_start e with
+    | DArray arr -> DInt (Array.length arr)
+    | DList list_ref -> DInt (CCList.length !list_ref)
+    | _ -> error_with_context ctx "Type mismatch in list_size - expected list")
+  | IEBuiltinListCapacity e -> (
+    (* Lists in the interpreter don't have a separate capacity, return size *)
+    match evalIexp ctx prog stack frame_start e with
+    | DArray arr -> DInt (Array.length arr)
+    | DList list_ref -> DInt (CCList.length !list_ref)
+    | _ -> error_with_context ctx "Type mismatch in list_capacity - expected list")
+  | IEBuiltinListAppend (l, v) -> (
+    let list_val = evalIexp ctx prog stack frame_start l in
+    let new_val = evalIexp ctx prog stack frame_start v in
+    match list_val with
+    | DList list_ref ->
+      list_ref := !list_ref @ [ new_val ];
+      DVoid
+    | _ -> error_with_context ctx "list_append requires list type")
+  | IEBuiltinListInsert (l, i, v) -> (
+    let list_val = evalIexp ctx prog stack frame_start l in
+    let idx = evalIexp ctx prog stack frame_start i in
+    let new_val = evalIexp ctx prog stack frame_start v in
+    match list_val, idx with
+    | DList list_ref, DInt index ->
+      let before, after = CCList.take_drop index !list_ref in
+      list_ref := before @ [ new_val ] @ after;
+      DVoid
+    | _ -> error_with_context ctx "list_insert: invalid arguments")
+  | IEBuiltinListRemove (l, i) -> (
+    let list_val = evalIexp ctx prog stack frame_start l in
+    let idx = evalIexp ctx prog stack frame_start i in
+    match list_val, idx with
+    | DList list_ref, DInt index ->
+      let before, after = CCList.take_drop index !list_ref in
+      list_ref := before @ CCList.drop 1 after;
+      DVoid
+    | _ -> error_with_context ctx "list_remove: invalid arguments")
+  | IEBuiltinListClear l -> (
+    match evalIexp ctx prog stack frame_start l with
+    | DList list_ref ->
+      list_ref := [];
+      DVoid
+    | _ -> error_with_context ctx "list_clear requires list type")
+  | IEBuiltinListReserve _ ->
+    (* Reserve is a hint, we can safely ignore it and return unit *)
+    DVoid
+  | IEBuiltinListGet (l, i) -> (
+    let list_val = evalIexp ctx prog stack frame_start l in
+    let idx = evalIexp ctx prog stack frame_start i in
+    match list_val, idx with
+    | DList list_ref, DInt index -> (
+      match CCList.nth_opt !list_ref index with
+      | Some v -> v
+      | None ->
+        error_with_context
+          ctx
+          ("list_get: index out of bounds. size = "
+          ^ string_of_int (CCList.length !list_ref)
+          ^ " index = "
+          ^ string_of_int index))
+    | _ -> error_with_context ctx "list_get: invalid arguments")
+  | IEBuiltinListSet (l, i, v) -> (
+    let list_val = evalIexp ctx prog stack frame_start l in
+    let idx = evalIexp ctx prog stack frame_start i in
+    let new_val = evalIexp ctx prog stack frame_start v in
+    match list_val, idx with
+    | DList list_ref, DInt index ->
+      let old_list = !list_ref in
+      let len = CCList.length old_list in
+      if index >= 0 && index < len then
+        let before, after = CCList.take_drop index old_list in
+        match after with
+        | _ :: rest ->
+          list_ref := before @ [ new_val ] @ rest;
+          DVoid
+        | [] -> error_with_context ctx "list_set: index out of bounds"
+      else
+        error_with_context
+          ctx
+          ("list_set: index out of bounds. size = " ^ string_of_int len ^ " index = " ^ string_of_int index)
+    | _ -> error_with_context ctx "list_set: invalid arguments")
   | IEIndex (e, index) ->
     let arr_val = evalIexp ctx prog stack frame_start e in
     let idx_val = evalIexp ctx prog stack frame_start index in

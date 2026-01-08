@@ -131,6 +131,10 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
     let transfer = { s = StmtBind (lhs, rhs_temp); loc } in
     { s = StmtBlock [ decl_array; decl; init; loop; transfer ]; loc }
   | { t = TArray (None, _); _ } -> failwith "initStatement: Array without size"
+  | { t = TList _; loc; _ } ->
+    (* Lists are initialized as empty - use EEmptyValue with list type *)
+    let rhs = { e = EEmptyValue; t; loc } in
+    { s = StmtBind (lhs, rhs); loc }
 
 
 let customInitializerCall (custom_initializers : string Util.Maps.Map.t) name ectx void_type loc =

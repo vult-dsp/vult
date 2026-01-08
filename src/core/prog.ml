@@ -37,6 +37,7 @@ type type_d_ =
   | TBool
   | TFix16
   | TArray of int option * type_
+  | TList of type_ (* Dynamic list type, like std::vector *)
   | TStruct of struct_descr
   | TTuple of type_ list
   | TEmptyType
@@ -218,6 +219,9 @@ module Print = struct
     | TArray (None, t) ->
       let t = print_type_ t in
       prefix {%pla|<#t#>[:]|}
+    | TList t ->
+      let t = print_type_ t in
+      prefix {%pla|list(<#t#>)|}
     | TStruct { path; _ } -> prefix {%pla|struct <#path#s>|}
     | TTuple elems ->
       let elems = Pla.map_sep Pla.commaspace print_type_ elems in
@@ -468,6 +472,8 @@ module C = struct
   let fix16_t = { t = TFix16; loc = Loc.default; const = false }
 
   let array_t ?dim t = { t = TArray (dim, t); loc = Loc.default; const = false }
+
+  let list_t t = { t = TList t; loc = Loc.default; const = false }
 
   let ereal ?(loc = Loc.default) i = { e = EReal i; t = real_t; loc }
 

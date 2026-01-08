@@ -305,6 +305,8 @@ int32_t goto_data(CustomBuffer &buffer);
 
 int32_t first_array_element(CustomBuffer &buffer, int32_t index);
 
+int32_t get_array_count(CustomBuffer &buffer, int32_t index);
+
 template <std::size_t SIZE, typename DATA>
 void serialize_data(CustomBuffer &buffer,
                     int32_t (*serialize_type_descr_function)(CustomBuffer &, int32_t, std::array<bool, SIZE> &),

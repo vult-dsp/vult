@@ -257,6 +257,15 @@ let builtin_functions =
     ; "samplerate", C.unit_real
     ; "wrap_array", C.wrap_array
     ; "length", C.str_length
+    ; "list_size", C.list_size
+    ; "list_append", C.list_append
+    ; "list_insert", C.list_insert
+    ; "list_remove", C.list_remove
+    ; "list_clear", C.list_clear
+    ; "list_reserve", C.list_reserve
+    ; "list_capacity", C.list_capacity
+    ; "list_get", C.list_get
+    ; "list_set", C.list_set
     ]
   |> Map.of_list
 

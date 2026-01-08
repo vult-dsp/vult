@@ -147,6 +147,42 @@ let rec print_exp e =
       let a = print_exp a in
       let b = print_exp b in
       {%pla|div(trunc(Int32, <#a#>), trunc(Int32, <#b#>))|}
+    (* List operations *)
+    | "list_size", [ e1 ] ->
+      let e1 = print_exp e1 in
+      {%pla|Int32(length(<#e1#>))|}
+    | "list_capacity", [ _ ] -> {%pla|typemax(Int32)|}
+    | "list_append", [ l; v ] ->
+      let l = print_exp l in
+      let v = print_exp v in
+      {%pla|push!(<#l#>, <#v#>)|}
+    | "list_insert", [ l; i; v ] ->
+      let l = print_exp l in
+      let i = print_exp i in
+      let v = print_exp v in
+      {%pla|insert!(<#l#>, <#i#> + 1, <#v#>)|}
+    | "list_remove", [ l; i ] ->
+      let l = print_exp l in
+      let i = print_exp i in
+      {%pla|deleteat!(<#l#>, <#i#> + 1)|}
+    | "list_clear", [ e1 ] ->
+      let e1 = print_exp e1 in
+      {%pla|empty!(<#e1#>)|}
+    | "list_reserve", [ l; n ] ->
+      let l = print_exp l in
+      let n = print_exp n in
+      {%pla|sizehint!(<#l#>, <#n#>)|}
+    | "list_get", [ l; i ] ->
+      let l = print_exp l in
+      let i = print_exp i in
+      (* Julia is 1-based *)
+      {%pla|<#l#>[<#i#> + 1]|}
+    | "list_set", [ l; i; v ] ->
+      let l = print_exp l in
+      let i = print_exp i in
+      let v = print_exp v in
+      (* Julia is 1-based *)
+      {%pla|(<#l#>[<#i#> + 1] = <#v#>)|}
     | _ ->
       (* Default case - use replacements system or original name *)
       let args = Pla.map_sep Pla.commaspace print_exp args in

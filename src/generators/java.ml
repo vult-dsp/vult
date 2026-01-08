@@ -255,6 +255,9 @@ let rec print_type_ (t : type_) =
   | TArray (None, t) ->
     let t = print_type_ t in
     {%pla|<#t#>[]|}
+  | TList t ->
+    let t = print_type_ t in
+    {%pla|ArrayList<<#t#>>|}
   | TStruct { path; _ } -> {%pla|<#path#s>|}
 
 
@@ -290,6 +293,42 @@ let rec print_exp e =
   | ECall { path = "length"; args = [ e1 ] } ->
     let e1 = print_exp e1 in
     {%pla|<#e1#>.length()|}
+  (* List operations *)
+  | ECall { path = "list_size"; args = [ e1 ] } ->
+    let e1 = print_exp e1 in
+    {%pla|<#e1#>.size()|}
+  | ECall { path = "list_capacity"; args = [ e1 ] } ->
+    let e1 = print_exp e1 in
+    {%pla|<#e1#>.size()|}
+  | ECall { path = "list_append"; args = [ l; v ] } ->
+    let l = print_exp l in
+    let v = print_exp v in
+    {%pla|<#l#>.add(<#v#>)|}
+  | ECall { path = "list_insert"; args = [ l; i; v ] } ->
+    let l = print_exp l in
+    let i = print_exp i in
+    let v = print_exp v in
+    {%pla|<#l#>.add(<#i#>, <#v#>)|}
+  | ECall { path = "list_remove"; args = [ l; i ] } ->
+    let l = print_exp l in
+    let i = print_exp i in
+    {%pla|<#l#>.remove(<#i#>)|}
+  | ECall { path = "list_clear"; args = [ e1 ] } ->
+    let e1 = print_exp e1 in
+    {%pla|<#e1#>.clear()|}
+  | ECall { path = "list_reserve"; args = [ l; n ] } ->
+    let l = print_exp l in
+    let n = print_exp n in
+    {%pla|<#l#>.ensureCapacity(<#n#>)|}
+  | ECall { path = "list_get"; args = [ l; i ] } ->
+    let l = print_exp l in
+    let i = print_exp i in
+    {%pla|<#l#>.get(<#i#>)|}
+  | ECall { path = "list_set"; args = [ l; i; v ] } ->
+    let l = print_exp l in
+    let i = print_exp i in
+    let v = print_exp v in
+    {%pla|<#l#>.set(<#i#>, <#v#>)|}
   | ECall { path = "not"; args = [ e1 ] } ->
     let e1 = print_exp e1 in
     {%pla|!(<#e1#>)|}
