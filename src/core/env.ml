@@ -454,24 +454,57 @@ let checkDuplicatedVal (locals : var Map.t list) (name : string) (loc : Loc.t) :
     locals
 
 
-(* Helper: Check if any argument names conflict with mem variables in the context *)
-let checkArgumentsAgainstContext (context : context) (args : Typed.arg list) : unit =
-  match context with
-  | Some (_, { descr = Record members; _ }) ->
-    CCList.iter
-      (fun ({ name; loc; _ } : Typed.arg) ->
-        match Map.find name members with
-        | None -> ()
-        | Some found ->
-          Error.raiseError
-            ("Function parameter '"
-            ^ name
-            ^ "' shadows a mem variable declared at "
-            ^ Loc.to_string_readable found.loc
-            ^ ". Rename the parameter or the mem variable to avoid this conflict.")
-            loc)
-      args
-  | _ -> ()
+(* Helper: Check if a constant with the same name exists in the module *)
+let checkDuplicatedConstant (env : env) (name : string) (loc : Loc.t) : unit =
+  let m = getCurrentModule env in
+  match Map.find name m.constants with
+  | None -> ()
+  | Some found ->
+    Error.raiseError
+      ("A constant with the name '"
+      ^ found.name
+      ^ "' has already been declared at "
+      ^ Loc.to_string_readable found.loc
+      ^ ". Local variables cannot shadow constants.")
+      loc
+
+
+(* Helper: Check if any argument names conflict with mem variables in the context or constants *)
+let checkArgumentsAgainstContext (env : env) (context : context) (args : Typed.arg list) : unit =
+  let m = getCurrentModule env in
+  (* Check against mem variables in context *)
+  let () =
+    match context with
+    | Some (_, { descr = Record members; _ }) ->
+      CCList.iter
+        (fun ({ name; loc; _ } : Typed.arg) ->
+          match Map.find name members with
+          | None -> ()
+          | Some found ->
+            Error.raiseError
+              ("Function parameter '"
+              ^ name
+              ^ "' shadows a mem variable declared at "
+              ^ Loc.to_string_readable found.loc
+              ^ ". Rename the parameter or the mem variable to avoid this conflict.")
+              loc)
+        args
+    | _ -> ()
+  in
+  (* Check against module constants *)
+  CCList.iter
+    (fun ({ name; loc; _ } : Typed.arg) ->
+      match Map.find name m.constants with
+      | None -> ()
+      | Some found ->
+        Error.raiseError
+          ("Function parameter '"
+          ^ name
+          ^ "' shadows a constant declared at "
+          ^ Loc.to_string_readable found.loc
+          ^ ". Rename the parameter or the constant to avoid this conflict.")
+          loc)
+    args
 
 
 (* Helper: Create a reporter for mem variable updates that handles type unification *)
@@ -510,6 +543,7 @@ let addValVar (f : f) (context : context) (name : string) (t : Typed.type_) (loc
       loc
   in
   let () = checkDuplicatedMem context name loc in
+  let () = checkDuplicatedConstant env name loc in
   match f.locals with
   | [] -> failwith ("Internal error in addVar: no local scope when adding variable '" ^ name ^ "'")
   | h :: _ ->
@@ -540,13 +574,30 @@ let checkMemExists (env : env) name =
   | _ -> false
 
 
+let checkConstantExists (env : env) (name : string) : bool =
+  let m = getCurrentModule env in
+  match Map.find name m.constants with
+  | None -> false
+  | Some _ -> true
+
+
 let addReturnVar (env : env) (name : string) (t : Typed.type_) loc : env =
-  let report_mem found _ = found in
   let () = Typed.setTypeMut t in
   match getCurrentContext env with
-  | Some (_, { descr = Record members; _ }) ->
-    Map.update report_mem name { name; t; kind = Mem []; tags = []; loc } members;
-    env
+  | Some (_, { descr = Record members; _ }) -> (
+    match Map.find name members with
+    | Some found ->
+      Error.raiseError
+        ("Return variable '"
+        ^ name
+        ^ "' conflicts with a mem variable declared at "
+        ^ Loc.to_string_readable found.loc
+        ^ ". Consider using different names for your mem variables.")
+        loc
+    | None ->
+      let report_mem found _ = found in
+      Map.update report_mem name { name; t; kind = Mem []; tags = []; loc } members;
+      env)
   | None ->
     failwith ("Internal error in addReturnVar: cannot add return variable '" ^ name ^ "' to function with no context")
   | Some _ -> failwith ("Internal error in addReturnVar: context exists but is not a Record for variable '" ^ name ^ "'")
@@ -709,7 +760,7 @@ let enterFunction (env : env) (name : string) (args : Typed.arg list) (ret : Typ
     env * path * (Typed.type_ list * Typed.type_) =
   let m = getCurrentModule env in
   let context = getCurrentContext env in
-  let () = checkArgumentsAgainstContext context args in
+  let () = checkArgumentsAgainstContext env context args in
   let report (found : f) =
     Error.raiseError ("A function with the name '" ^ found.path.id ^ "' has already been declared.") loc
   in

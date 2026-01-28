@@ -1,0 +1,4 @@
+Function parameter 'MAX' shadows a constant declared at line 1, columns 0-8. Rename the parameter or the constant to avoid this conflict.
+
+fun clamp(MAX: int, value: int) : int {
+          ^^^

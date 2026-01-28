@@ -1,0 +1,3 @@
+Return variable 'Error49_getValue_ret_0' conflicts with a mem variable declared at line 2, columns 6-28. Consider using different names for your mem variables.
+fun getValue() {
+    ^^^^^^^^

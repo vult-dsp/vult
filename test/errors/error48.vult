@@ -1,0 +1,6 @@
+constant MAX = 100;
+
+fun clamp(MAX: int, value: int) : int {
+  if (value > MAX) return MAX;
+  return value;
+}

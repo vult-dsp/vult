@@ -714,7 +714,7 @@ let addContextArgForSpecialized (env : env) (specialized_name : string) args loc
   let rec generateName () =
     let n = Env.getFunctionTick env in
     let name = "inst_" ^ string_of_int n ^ number in
-    if checkMemExists env name then
+    if checkMemExists env name || Env.checkConstantExists env name then
       generateName ()
     else
       name
@@ -769,7 +769,7 @@ let rec addContextArg (env : env) instance (f : Env.f) args loc =
       let rec generateName () =
         let n = Env.getFunctionTick env in
         let name = "inst_" ^ string_of_int n ^ number in
-        if checkMemExists env name then
+        if checkMemExists env name || Env.checkConstantExists env name then
           generateName ()
         else
           name
