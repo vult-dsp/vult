@@ -152,7 +152,7 @@ fix16_t fix_random() {
   return (fix16_t)temp;
 }
 
-int irandom() { return (int)rand(); }
+int int_random() { return (int)rand(); }
 
 void float_print(float value) { printf("%f\n", value); }
 void fix_print(fix16_t value) { printf("%f\n", fix_to_float(value)); }

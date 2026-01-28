@@ -1,0 +1,4 @@
+Function parameter 'value' shadows a mem variable declared at line 2, columns 7-12. Rename the parameter or the mem variable to avoid this conflict.
+}
+and helper(value:bool) : real {
+           ^^^^^

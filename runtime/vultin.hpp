@@ -205,7 +205,7 @@ static_inline int16_t *int16_wrap_array(const int16_t x[]) { return (int16_t *)x
 /* Random numbers */
 float float_random();
 fix16_t fix_random();
-int irandom();
+int int_random();
 
 /* Print values */
 void float_print(float value);

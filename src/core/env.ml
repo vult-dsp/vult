@@ -454,6 +454,26 @@ let checkDuplicatedVal (locals : var Map.t list) (name : string) (loc : Loc.t) :
     locals
 
 
+(* Helper: Check if any argument names conflict with mem variables in the context *)
+let checkArgumentsAgainstContext (context : context) (args : Typed.arg list) : unit =
+  match context with
+  | Some (_, { descr = Record members; _ }) ->
+    CCList.iter
+      (fun ({ name; loc; _ } : Typed.arg) ->
+        match Map.find name members with
+        | None -> ()
+        | Some found ->
+          Error.raiseError
+            ("Function parameter '"
+            ^ name
+            ^ "' shadows a mem variable declared at "
+            ^ Loc.to_string_readable found.loc
+            ^ ". Rename the parameter or the mem variable to avoid this conflict.")
+            loc)
+      args
+  | _ -> ()
+
+
 (* Helper: Create a reporter for mem variable updates that handles type unification *)
 let makeMemReporter (unify : Typed.type_ -> Typed.type_ -> bool) (t : Typed.type_) (found : var) (value : var) : var =
   if unify found.t t then
@@ -689,6 +709,7 @@ let enterFunction (env : env) (name : string) (args : Typed.arg list) (ret : Typ
     env * path * (Typed.type_ list * Typed.type_) =
   let m = getCurrentModule env in
   let context = getCurrentContext env in
+  let () = checkArgumentsAgainstContext context args in
   let report (found : f) =
     Error.raiseError ("A function with the name '" ^ found.path.id ^ "' has already been declared.") loc
   in

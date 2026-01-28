@@ -1,0 +1,8 @@
+fun process(input:real) {
+   mem value;
+   value = input;
+}
+and helper(value:bool) : real {
+   if (value) return 1.0;
+   else return 0.0;
+}

@@ -149,6 +149,7 @@ let errors_files =
   ; "error43.vult"
   ; "error44.vult"
   ; "error45.vult"
+  ; "error46.vult"
   ]
 
 
