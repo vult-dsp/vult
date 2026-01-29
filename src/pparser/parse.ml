@@ -611,11 +611,16 @@ and pair_pattern (buffer : Stream.stream) (token : 'kind token) (left : pattern)
   { p = SPTuple (elems1 @ elems2); loc = left.loc }
 
 
-and pattern_member (_ : Stream.stream) (token : 'kind token) (_ : pattern) : pattern =
-  let message =
-    Error.PointedError (token.loc, "Pattern member access is not supported. Use simple patterns in match expressions")
-  in
-  raise (ParserError message)
+and pattern_member (buffer : Stream.stream) (token : 'kind token) (left : pattern) : pattern =
+  let right = pattern (getExpLbp token) buffer in
+  match right.p with
+  | SPMember (({ p = SPId id; _ } as i), n) -> { right with p = SPMember ({ i with p = SPMember (left, id) }, n) }
+  | SPId id -> { right with p = SPMember (left, id) }
+  | _ ->
+    let message =
+      Error.PointedError (token.loc, "Invalid pattern member access. Expected an identifier after the dot")
+    in
+    raise (ParserError message)
 
 
 and exp_member (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =

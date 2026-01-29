@@ -200,6 +200,7 @@ let interpreter =
   ; "instance_state.vult"
   ; "int16_test.vult"
   ; "memory_state.vult"
+  ; "qualified_enum_patterns.vult"
   ; "strength_reduction.vult"
   ]
 

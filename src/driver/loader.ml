@@ -97,6 +97,7 @@ module Dependencies = struct
     | SPId _ -> set
     | SPTuple elems -> list pattern set elems
     | SPGroup e -> pattern set e
+    | SPMember (p, _) -> pattern set p
 
 
   let rec dexp set d =

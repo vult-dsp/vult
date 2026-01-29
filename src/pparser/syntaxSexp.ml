@@ -123,6 +123,7 @@ and pattern_d (p : pattern_d) : string =
     let patterns_str = String.concat " " (List.map pattern patterns) in
     Printf.sprintf "(tuple %s)" patterns_str
   | SPGroup p -> Printf.sprintf "(group %s)" (pattern p)
+  | SPMember (p, m) -> Printf.sprintf "(member %s %s)" (pattern p) m
 
 
 and lexp (l : lexp) : string = Printf.sprintf "(lexp %s %s)" (lexp_d l.l) (Loc.to_string l.loc)

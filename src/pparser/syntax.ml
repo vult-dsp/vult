@@ -89,6 +89,7 @@ type pattern_d =
   | SPId of string
   | SPTuple of pattern list
   | SPGroup of pattern
+  | SPMember of pattern * string
 
 and pattern =
   { p : pattern_d
@@ -335,6 +336,9 @@ module Print = struct
     | SPGroup e ->
       let e = pattern e in
       {%pla|(<#e#>)|}
+    | SPMember (p, m) ->
+      let p = pattern p in
+      {%pla|<#p#>.<#m#s>|}
 
 
   let rec lexp (l : lexp) = lexp_d l.l
@@ -1498,6 +1502,7 @@ module SExpr = struct
       | SPId id -> "(SPId " ^ id ^ ")"
       | SPTuple lst -> "(SPTuple " ^ print_list print_pattern lst ^ ")"
       | SPGroup p -> "(SPGroup " ^ print_pattern p ^ ")"
+      | SPMember (p, m) -> "(SPMember " ^ print_pattern p ^ " " ^ m ^ ")"
     in
     "(pattern " ^ p_str ^ ")"
 

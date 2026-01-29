@@ -1723,6 +1723,15 @@ let makeIfOfMatch env e cases =
         (* Constant: create a constant reference for comparison *)
         makeEq e Syntax.{ e = SEId id; loc }
       | _ -> Error.raiseError ("Pattern '" ^ id ^ "' is not a valid enum constructor or constant") loc)
+    | _, { p = SPMember ({ p = SPId module_name; _ }, variant_name); loc } -> (
+      (* Handle qualified enum constructor patterns like Button.Push *)
+      let id_path : path = { id = variant_name; n = Some module_name; loc } in
+      match Env.lookupExpressionSymbol env id_path normal_context with
+      | ExprEnum (_, _, _) -> makeEq e Syntax.{ e = SEMember (Syntax.{ e = SEId module_name; loc }, variant_name); loc }
+      | _ -> Error.raiseError ("Pattern '" ^ module_name ^ "." ^ variant_name ^ "' is not a valid enum constructor") loc
+      )
+    | _, { p = SPMember _; loc } ->
+      Error.raiseError "Invalid qualified pattern. Only Module.Variant patterns are supported" loc
   in
   let if_stmt =
     CCList.fold_right
