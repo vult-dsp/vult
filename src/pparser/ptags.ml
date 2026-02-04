@@ -29,6 +29,7 @@ type tag_type =
   | TypeReal
   | TypeString
   | TypeId
+  | TypeTypeIntrinsic
 
 type value =
   | Int of int
@@ -36,6 +37,7 @@ type value =
   | Real of float
   | String of string
   | Id of string
+  | TypeIntrinsic of string * string (* intrinsic_name, type_param e.g., ("typemax", "t") *)
 
 type tag_d =
   | TagId of string
@@ -47,6 +49,7 @@ type tag_d =
       { name : string
       ; args : (string * tag * Loc.t) list
       }
+  | TagTypeIntrinsic of string * string (* intrinsic_name, type_param e.g., ("typemax", "t") *)
 
 and tag =
   { g : tag_d
@@ -77,6 +80,7 @@ let rec print_tag t : Pla.t =
         args
     in
     {%pla|<#name#s>(<#args#>)|}
+  | TagTypeIntrinsic (intrinsic_name, type_param) -> {%pla|<#intrinsic_name#s>('<#type_param#s>)|}
 
 
 let print_tags tags =
@@ -105,6 +109,7 @@ let getType (tag : tag) : string =
   | TagReal _ -> "real"
   | TagCall _ -> "tag"
   | TagString _ -> "string"
+  | TagTypeIntrinsic _ -> "type_intrinsic"
 
 
 let getTypeLiteral t : string =
@@ -114,6 +119,7 @@ let getTypeLiteral t : string =
   | TypeReal -> "real"
   | TypeId -> "identifier"
   | TypeString -> "string"
+  | TypeTypeIntrinsic -> "type_intrinsic"
 
 
 let rec getParam (remaining : (string * tag * Loc.t) list) (args : (string * tag * Loc.t) list) (id : string) =
@@ -130,6 +136,11 @@ let getTypedParam (args : (string * tag * Loc.t) list) (id, typ) =
   | r, Some { g = TagBool value; _ } when typ = TypeBool -> r, Some (Bool value)
   | r, Some { g = TagId value; _ } when typ = TypeId -> r, Some (Id value)
   | r, Some { g = TagString value; _ } when typ = TypeString -> r, Some (String value)
+  | r, Some { g = TagTypeIntrinsic (intrinsic, type_param); _ } when typ = TypeTypeIntrinsic ->
+    r, Some (TypeIntrinsic (intrinsic, type_param))
+  (* Type intrinsics can match any numeric type - they'll be resolved later *)
+  | r, Some { g = TagTypeIntrinsic (intrinsic, type_param); _ } when typ = TypeInt || typ = TypeReal || typ = TypeBool
+    -> r, Some (TypeIntrinsic (intrinsic, type_param))
   | _, Some tag ->
     let msg =
       Printf.sprintf

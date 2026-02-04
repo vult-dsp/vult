@@ -1,0 +1,129 @@
+// Test type intrinsics: typemax, typemin, typedefault
+// and @[init(value = X)] tag for mem declarations
+
+// Test 1: Basic @[init(value = X)] with literal values
+fun test_init_literal_int() : int {
+  mem counter : int @[init(value = 100)];
+  val result = counter;
+  counter = counter + 1;
+  return result;
+}
+
+fun test_init_literal_real() : real {
+  mem value : real @[init(value = 3.14)];
+  val result = value;
+  value = value + 1.0;
+  return result;
+}
+
+fun test_init_literal_bool() : bool {
+  mem flag : bool @[init(value = true)];
+  val result = flag;
+  flag = false;
+  return result;
+}
+
+// Test 2: Type intrinsics as expressions in generic functions
+fun get_max(x : 't) : 't {
+  return typemax('t);
+}
+
+fun get_min(x : 't) : 't {
+  return typemin('t);
+}
+
+fun get_default(x : 't) : 't {
+  return typedefault('t);
+}
+
+// Test 3: Type intrinsics in @[init(value = ...)] for generic mem declarations
+// Tests initial value only (state persistence between calls has known interpreter issues)
+fun check_init_max_int() : bool {
+  mem pre : int @[init(value = typemax('int))];
+  return pre == 2147483647;
+}
+
+fun check_init_min_int() : bool {
+  mem pre : int @[init(value = typemin('int))];
+  return pre == -2147483648;
+}
+
+fun check_init_default_int() : bool {
+  mem pre : int @[init(value = typedefault('int))];
+  return pre == 0;
+}
+
+fun check_init_max_real() : bool {
+  mem pre : real @[init(value = typemax('real))];
+  return pre > 1.0e38;
+}
+
+fun check_init_min_real() : bool {
+  mem pre : real @[init(value = typemin('real))];
+  return pre < -1.0e38;
+}
+
+fun check_init_default_real() : bool {
+  mem pre : real @[init(value = typedefault('real))];
+  return pre == 0.0;
+}
+
+// Test 4: Generic function with type intrinsic init
+fun change_with_max(x : 't) : bool {
+  mem pre : 't @[init(value = typemax('t))];
+  val result = pre <> x;
+  pre = x;
+  return result;
+}
+
+// Main test function - tests all features directly
+fun main() : int {
+  // Test 1: Basic @[init(value = X)] with literals
+  val init_int = test_init_literal_int();
+  if (init_int <> 100) return -1;
+
+  val init_real = test_init_literal_real();
+  if (init_real < 3.13 || init_real > 3.15) return -2;
+
+  val init_bool = test_init_literal_bool();
+  if (init_bool <> true) return -3;
+
+  // Test 2: Type intrinsics values for int
+  val max_int = get_max(0);
+  val min_int = get_min(0);
+  val def_int = get_default(0);
+  if (max_int <> 2147483647) return -4;
+  if (min_int <> -2147483648) return -5;
+  if (def_int <> 0) return -6;
+
+  // Test 3: Type intrinsics values for bool
+  val max_bool = get_max(false);
+  val min_bool = get_min(false);
+  val def_bool = get_default(false);
+  if (max_bool <> true) return -7;
+  if (min_bool <> false) return -8;
+  if (def_bool <> false) return -9;
+
+  // Test 4: Type intrinsics values for real
+  val max_real = get_max(0.0);
+  val min_real = get_min(0.0);
+  val def_real = get_default(0.0);
+  if (max_real < 1.0e38) return -10;
+  if (min_real > -1.0e38) return -11;
+  if (def_real <> 0.0) return -12;
+
+  // Test 5: Verify mem init with type intrinsics (tests initial values only)
+  if (check_init_max_int() == false) return -13;
+  if (check_init_min_int() == false) return -14;
+  if (check_init_default_int() == false) return -15;
+  if (check_init_max_real() == false) return -16;
+  if (check_init_min_real() == false) return -17;
+  if (check_init_default_real() == false) return -18;
+
+  // Test 6: Generic function with typemax init - single call to verify initial value
+  val first_max = change_with_max(0);
+  if (first_max <> true) return -19;  // typemax(int) <> 0 should be true
+
+  // All tests passed
+  return 1000;
+}

@@ -220,6 +220,9 @@ and tag_nud (buffer : Stream.stream) (token : 'kind token) : Ptags.tag =
   match token.kind, token.value with
   | ID, _ -> (
     let name = token.value in
+    let is_type_intrinsic =
+      String.equal name "typemax" || String.equal name "typemin" || String.equal name "typedefault"
+    in
     match Stream.peek buffer with
     | LPAREN -> (
       let _ = Stream.skip buffer in
@@ -227,6 +230,12 @@ and tag_nud (buffer : Stream.stream) (token : 'kind token) : Ptags.tag =
       | RPAREN ->
         let _ = Stream.skip buffer in
         { g = TagId name; loc }
+      | QUOTED_ID when is_type_intrinsic ->
+        (* Parse type intrinsic: typemax('t) *)
+        let type_param_token = Stream.current buffer in
+        let _ = Stream.skip buffer in
+        let _ = consumeInContext buffer RPAREN "type intrinsic call" in
+        { g = TagTypeIntrinsic (name, type_param_token.value); loc }
       | _ ->
         let args = tag_pair_list buffer in
         let _ = consumeInContext buffer RPAREN "tag function call" in
@@ -691,13 +700,41 @@ and call (buffer : Stream.stream) (_token : 'kind token) (left : exp) : exp =
     raise (ParserError message)
   in
   let path = expToPath error left in
-  let args =
-    match Stream.peek buffer with
-    | RPAREN -> []
-    | _ -> expressionList buffer
+  (* Check for type intrinsics: typemax('t), typemin('t), typedefault('t) *)
+  let is_type_intrinsic =
+    match path with
+    | { id; n = None; _ } -> String.equal id "typemax" || String.equal id "typemin" || String.equal id "typedefault"
+    | _ -> false
   in
-  let _ = consumeInContext buffer RPAREN "function call" in
-  { e = SECall { instance = None; path; args }; loc = path.loc }
+  if is_type_intrinsic then
+    (* Parse a single quoted identifier argument for type intrinsics *)
+    match Stream.peek buffer with
+    | QUOTED_ID ->
+      let token = Stream.current buffer in
+      let () = Stream.skip buffer in
+      let type_param = token.value in
+      let () = consumeInContext buffer RPAREN "type intrinsic call" in
+      { e = SETypeIntrinsic (path.id, type_param); loc = path.loc }
+    | RPAREN ->
+      let message =
+        Error.PointedError
+          (path.loc, "Type intrinsic '" ^ path.id ^ "' requires a type parameter (e.g., " ^ path.id ^ "('t))")
+      in
+      raise (ParserError message)
+    | _ ->
+      let message =
+        Error.PointedError
+          (path.loc, "Type intrinsic '" ^ path.id ^ "' expects a generic type parameter (e.g., " ^ path.id ^ "('t))")
+      in
+      raise (ParserError message)
+  else
+    let args =
+      match Stream.peek buffer with
+      | RPAREN -> []
+      | _ -> expressionList buffer
+    in
+    let _ = consumeInContext buffer RPAREN "function call" in
+    { e = SECall { instance = None; path; args }; loc = path.loc }
 
 
 and exp_index (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =

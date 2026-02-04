@@ -212,6 +212,31 @@ let rec exp (env : env) (state : state) (e : Typed.exp) : state * Prog.exp =
     let numbered = CCList.map (fun (n, v) -> snd (CCList.find (fun (id, _) -> id = n) sorting), (n, v)) elems_rev in
     let sorted = CCList.sort (fun (i1, _) (i2, _) -> compare i1 i2) numbered |> CCList.map snd in
     state, { e = ERecord { path = p; elems = sorted }; t; loc }
+  | EGenCall { generic_path; args = _; explicit_args = _ } ->
+    (* EGenCall should have been replaced with ECall during inference post-processing.
+       If we reach here, it means instantiation failed. *)
+    let path_str = Pla.print (Syntax.print_path generic_path) in
+    failwith
+      (Printf.sprintf
+         "Internal error: EGenCall for '%s' at %s reached toprog - should have been replaced during inference"
+         path_str
+         (Loc.to_string_readable loc))
+  | ETypeIntrinsic { intrinsic; type_param } ->
+    (* ETypeIntrinsic should have been resolved during generic instantiation.
+       If we reach here, it means the intrinsic was used outside a generic context. *)
+    let intrinsic_name =
+      match intrinsic with
+      | TypeDefault -> "typedefault"
+      | TypeMax -> "typemax"
+      | TypeMin -> "typemin"
+    in
+    failwith
+      (Printf.sprintf
+         "Internal error: ETypeIntrinsic '%s('%s)' at %s reached toprog - should have been resolved during generic \
+          instantiation"
+         intrinsic_name
+         type_param
+         (Loc.to_string_readable loc))
 
 
 let rec lexp (env : env) (state : state) (e : Typed.lexp) =
@@ -357,6 +382,9 @@ let top_stmt (env : env) (state : state) (t : Typed.top_stmt) =
   | TopExternal (def, linkname) ->
     let state, functions = ext_function_def env state def linkname in
     state, functions
+  | TopGenericPlaceholder _ ->
+    (* Placeholder should have been replaced during inference - skip if it somehow remains *)
+    state, []
   | TopType { members = []; _ } -> state, []
   | TopType { path = p; members } ->
     let p = path p in

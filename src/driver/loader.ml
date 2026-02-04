@@ -84,6 +84,7 @@ module Dependencies = struct
         exp set e)
     | SEGroup e -> exp set e
     | SERecord { path = p; elems } -> list (fun set (p, v) -> exp (path set p) v) (path set p) elems
+    | SETypeIntrinsic _ -> set (* Type intrinsics don't introduce dependencies *)
 
 
   let rec pattern set e =

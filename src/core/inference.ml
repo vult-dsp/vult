@@ -46,110 +46,6 @@ let rec syntax_has_mem (stmt : Syntax.stmt) : bool =
   | _ -> false
 
 
-(* Convert typed expression to syntax expression for substitution *)
-let typed_exp_to_syntax_exp (typed_exp : Typed.exp) : Syntax.exp =
-  let loc = typed_exp.loc in
-  match typed_exp.e with
-  | EInt i -> { e = SEInt (string_of_int i); loc }
-  | EReal r -> { e = SEReal (string_of_float r); loc }
-  | EBool b -> { e = SEBool b; loc }
-  | EString s -> { e = SEString s; loc }
-  | EConst path -> { e = SEId path.id; loc } (* Constant references become identifiers *)
-  | _ -> failwith ("Unsupported typed expression for syntax conversion: " ^ Pla.print (print_exp typed_exp))
-
-
-(* Substitute generic parameters in syntax expressions *)
-let rec substitute_exp (string_substitutions : (string * string) list)
-    (const_substitutions : (string * Syntax.exp) list) (exp : Syntax.exp) : Syntax.exp =
-  match exp.e with
-  | SEId id -> (
-    (* Check if this identifier should be substituted with a string (function name) *)
-    try
-      let replacement = CCList.assoc ~eq:String.equal id string_substitutions in
-      { exp with e = SEId replacement }
-    with
-    | Not_found -> (
-      (* Check if this identifier should be substituted with a constant expression *)
-      try
-        let const_exp = CCList.assoc ~eq:String.equal id const_substitutions in
-        const_exp (* Replace the identifier with the constant expression *)
-      with
-      | Not_found -> exp))
-  | SECall { instance; path; args } ->
-    let substituted_args = CCList.map (substitute_exp string_substitutions const_substitutions) args in
-    (* Also substitute the function name in the path if it matches *)
-    let substituted_path =
-      match path with
-      | { id = func_id; n = None; loc } -> (
-        try
-          let replacement = CCList.assoc ~eq:String.equal func_id string_substitutions in
-          { Pparser.Syntax.id = replacement; n = None; loc }
-        with
-        | Not_found -> path)
-      | _ -> path (* Don't substitute module-qualified paths *)
-    in
-    { exp with e = SECall { instance; path = substituted_path; args = substituted_args } }
-  | SEOp (op, e1, e2) ->
-    let e1' = substitute_exp string_substitutions const_substitutions e1 in
-    let e2' = substitute_exp string_substitutions const_substitutions e2 in
-    { exp with e = SEOp (op, e1', e2') }
-  | SEUnOp (op, e) ->
-    let e' = substitute_exp string_substitutions const_substitutions e in
-    { exp with e = SEUnOp (op, e') }
-  | SEIf { cond; then_; else_ } ->
-    let cond' = substitute_exp string_substitutions const_substitutions cond in
-    let then_' = substitute_exp string_substitutions const_substitutions then_ in
-    let else_' = substitute_exp string_substitutions const_substitutions else_ in
-    { exp with e = SEIf { cond = cond'; then_ = then_'; else_ = else_' } }
-  | SETuple exps ->
-    let exps' = CCList.map (substitute_exp string_substitutions const_substitutions) exps in
-    { exp with e = SETuple exps' }
-  | SEArray exps ->
-    let exps' = CCList.map (substitute_exp string_substitutions const_substitutions) exps in
-    { exp with e = SEArray exps' }
-  | SEIndex { e; index } ->
-    let e' = substitute_exp string_substitutions const_substitutions e in
-    let index' = substitute_exp string_substitutions const_substitutions index in
-    { exp with e = SEIndex { e = e'; index = index' } }
-  | SEGroup e ->
-    let e' = substitute_exp string_substitutions const_substitutions e in
-    { exp with e = SEGroup e' }
-  | SERecord { path; elems } ->
-    let elems' =
-      CCList.map (fun (name, exp) -> name, substitute_exp string_substitutions const_substitutions exp) elems
-    in
-    { exp with e = SERecord { path; elems = elems' } }
-  | SEMember (e, member) ->
-    let e' = substitute_exp string_substitutions const_substitutions e in
-    { exp with e = SEMember (e', member) }
-  | _ -> exp (* Literals and other expressions that don't contain identifiers *)
-
-
-(* Substitute generic parameters in syntax statements *)
-let rec substitute_stmt (string_substitutions : (string * string) list)
-    (const_substitutions : (string * Syntax.exp) list) (stmt : Syntax.stmt) : Syntax.stmt =
-  match stmt.s with
-  | SStmtReturn exp ->
-    let exp' = substitute_exp string_substitutions const_substitutions exp in
-    { stmt with s = SStmtReturn exp' }
-  | SStmtBind (lexp, exp) ->
-    let exp' = substitute_exp string_substitutions const_substitutions exp in
-    { stmt with s = SStmtBind (lexp, exp') }
-  | SStmtIf (cond, then_stmt, else_stmt_opt) ->
-    let cond' = substitute_exp string_substitutions const_substitutions cond in
-    let then_stmt' = substitute_stmt string_substitutions const_substitutions then_stmt in
-    let else_stmt_opt' = Option.map (substitute_stmt string_substitutions const_substitutions) else_stmt_opt in
-    { stmt with s = SStmtIf (cond', then_stmt', else_stmt_opt') }
-  | SStmtWhile (cond, body) ->
-    let cond' = substitute_exp string_substitutions const_substitutions cond in
-    let body' = substitute_stmt string_substitutions const_substitutions body in
-    { stmt with s = SStmtWhile (cond', body') }
-  | SStmtBlock stmts ->
-    let stmts' = CCList.map (substitute_stmt string_substitutions const_substitutions) stmts in
-    { stmt with s = SStmtBlock stmts' }
-  | _ -> stmt (* Other statements that don't contain expressions *)
-
-
 let pickLoc (t1 : type_) (t2 : type_) : unit =
   if t1.loc == Loc.default then
     t1.loc <- t2.loc
@@ -414,196 +310,8 @@ let propagateVariability env loc (args : Typed.arg list option) (exp_args : exp 
       exp_args
 
 
-(* Template instantiation helper functions *)
-let generate_specialized_name (generic_name : string) (bindings : (string * Typed.generic_binding) list) : string =
-  let binding_suffix =
-    bindings
-    |> CCList.filter_map (fun (_, binding) ->
-           match binding with
-           | Typed.BindFunction (func_name, _) -> Some func_name
-           | Typed.BindType _ -> Some "T" (* Simple type suffix for now *)
-           | Typed.BindConstant (_, _) -> Some "C" (* Simple constant suffix for now *)
-           | Typed.BindNonSpecializable -> None (* Skip non-specializable bindings *))
-    |> String.concat "_"
-  in
-  generic_name ^ "__" ^ binding_suffix ^ "_"
-
-
-(* Bind generic parameters to processed expressions (after inference) *)
-let bind_generic_arguments_from_exps (_ : env) (generic_params : Typed.generic_param list) (args : Typed.exp list) :
-    (string * Typed.generic_binding) list =
-  (* Validate argument count *)
-  let param_count = CCList.length generic_params in
-  let arg_count = CCList.length args in
-  if arg_count < param_count then
-    Error.raiseError
-      (Printf.sprintf "Template requires %d parameters but only %d were provided" param_count arg_count)
-      Loc.default;
-  let rec loop params args acc =
-    match params, args with
-    | [], _ -> List.rev acc
-    | _, [] -> List.rev acc (* This case should not happen due to validation above *)
-    | Typed.GParamFunction (name, expected_type) :: params_rest, { e = EId func_name; t; loc } :: args_rest ->
-      (* Validate function parameter type if expected type is specified *)
-      (match expected_type with
-      | Some expected_t ->
-        if not (unify expected_t t) then
-          Error.raiseError
-            (Printf.sprintf
-               "Generic function parameter '%s' expected type %s but got %s"
-               name
-               (Pla.print (Typed.print_type_ expected_t))
-               (Pla.print (Typed.print_type_ t)))
-            loc
-      | None -> ());
-      let binding = Typed.BindFunction (func_name, t) in
-      loop params_rest args_rest ((name, binding) :: acc)
-    | Typed.GParamFunction (name, _) :: _, exp :: _ ->
-      Error.raiseError
-        (Printf.sprintf
-           "Generic function parameter '%s' must be a function identifier, but got %s"
-           name
-           (Pla.print (Typed.print_exp exp)))
-        exp.loc
-    | Typed.GParamType name :: params_rest, { t; _ } :: args_rest ->
-      (* Type parameters - bind to the inferred type *)
-      let binding = Typed.BindType t in
-      loop params_rest args_rest ((name, binding) :: acc)
-    | Typed.GParamConstant (name, expected_type) :: params_rest, exp :: args_rest -> (
-      (* Validate constant parameter type *)
-      if not (unify expected_type exp.t) then
-        Error.raiseError
-          (Printf.sprintf
-             "Generic constant parameter '%s' expected type %s but got %s"
-             name
-             (Pla.print (Typed.print_type_ expected_type))
-             (Pla.print (Typed.print_type_ exp.t)))
-          exp.loc;
-      (* Check if expression is actually constant *)
-      match exp.e with
-      | EInt _ | EReal _ | EBool _ | EString _ | EConst _ ->
-        (* Constant expression - can specialize *)
-        let binding = Typed.BindConstant (exp, exp.t) in
-        loop params_rest args_rest ((name, binding) :: acc)
-      | _ ->
-        (* Non-constant expression - mark as non-specializable *)
-        (* We'll return a special binding to indicate this generic cannot be specialized *)
-        let binding = Typed.BindNonSpecializable in
-        loop params_rest args_rest ((name, binding) :: acc))
-  in
-  loop generic_params args []
-
-
-let bind_generic_arguments (_ : env) (generic_params : Typed.generic_param list) (args : Syntax.exp list) :
-    (string * Typed.generic_binding) list =
-  (* For now, implement a simple binding for function parameters *)
-  let rec loop params args acc =
-    match params, args with
-    | [], _ -> List.rev acc
-    | _, [] -> List.rev acc (* Not enough arguments - will be caught later *)
-    | Typed.GParamFunction (name, _) :: params_rest, { Syntax.e = Syntax.SEId func_name; _ } :: args_rest ->
-      (* Bind function parameter to function name *)
-      let binding = Typed.BindFunction (func_name, C.noreturn Loc.default) in
-      loop params_rest args_rest ((name, binding) :: acc)
-    | Typed.GParamType name :: params_rest, _ :: args_rest ->
-      (* Type parameters need type inference - skip for now *)
-      let binding = Typed.BindType (C.noreturn Loc.default) in
-      loop params_rest args_rest ((name, binding) :: acc)
-    | Typed.GParamConstant (name, _) :: params_rest, _ :: args_rest ->
-      (* Constant parameters - skip for now *)
-      let binding =
-        Typed.BindConstant ({ e = EUnit; t = C.noreturn Loc.default; loc = Loc.default }, C.noreturn Loc.default)
-      in
-      loop params_rest args_rest ((name, binding) :: acc)
-    | _ :: params_rest, _ :: args_rest ->
-      (* Skip unhandled cases for now *)
-      loop params_rest args_rest acc
-  in
-  loop generic_params args []
-
-
-(* Convert constant expressions to constant_value *)
-let extract_constant_value (exp : Typed.exp) : Typed.constant_value =
-  match exp.e with
-  | EInt i -> IntConstant i
-  | EReal r -> RealConstant r
-  | EBool b -> BoolConstant b
-  | EString s -> StringConstant s
-  | EConst _ ->
-    (* For constant references, we need to evaluate them *)
-    Error.raiseError
-      (Printf.sprintf
-         "Generic constant parameter must be a literal value, not a constant reference '%s'"
-         (Pla.print (Typed.print_exp exp)))
-      exp.loc
-  | _ ->
-    Error.raiseError
-      (Printf.sprintf
-         "Generic constant parameter must be a literal value (int, real, bool, or string), got %s"
-         (Pla.print (Typed.print_exp exp)))
-      exp.loc
-
-
-(* Convert generic bindings to generic_param_binding list *)
-let convert_generic_bindings (bindings : (string * Typed.generic_binding) list) : Typed.generic_param_binding list =
-  CCList.filter_map
-    (fun (name, binding) ->
-      match binding with
-      | BindFunction (func_name, function_type) -> (
-        (* Extract function signature from TEFunction type *)
-        match (unlink function_type).tx with
-        | TEFunction (arg_types, return_type) ->
-          let binding_value = Typed.FunctionBinding { func_name; arg_types; return_type } in
-          Some { param_name = name; binding = binding_value }
-        | _ ->
-          Error.raiseError
-            (Printf.sprintf
-               "Generic function parameter '%s' has invalid function type: %s"
-               name
-               (Pla.print (Typed.print_type_ function_type)))
-            Loc.default)
-      | BindType t ->
-        (* Validate that the type is well-formed *)
-        (match (unlink t).tx with
-        | TEUnbound _ ->
-          Error.raiseError (Printf.sprintf "Template type parameter '%s' cannot be unbound" name) Loc.default
-        | _ -> ());
-        let binding_value = Typed.TypeBinding t in
-        Some { param_name = name; binding = binding_value }
-      | BindConstant (exp, t) ->
-        let value = extract_constant_value exp in
-        let binding_value = Typed.ConstantBinding { value; value_type = t } in
-        Some { param_name = name; binding = binding_value }
-      | BindNonSpecializable ->
-        (* Skip non-specializable parameters - they should not be included in the signature *)
-        None)
-    bindings
-
-
-(* Extract function argument signatures from processed function arguments *)
-let extract_function_arg_signatures (_generic_func : Typed.generic_function) (processed_function_args : Typed.exp list)
-    : Typed.function_arg_signature list =
-  (* Extract actual types from processed function arguments *)
-  CCList.mapi
-    (fun i (exp_arg : Typed.exp) ->
-      let param_name = "arg" ^ string_of_int i in
-      let arg_type = (exp_arg.t : Typed.type_) in
-      ({ param_name; arg_type } : Typed.function_arg_signature))
-    processed_function_args
-
-
-(* Build complete instantiation signature *)
-let build_instantiation_signature (generic_func : Typed.generic_function)
-    (bindings : (string * Typed.generic_binding) list) (processed_function_args : Typed.exp list)
-    (return_type : Typed.type_) : Typed.instantiation_signature =
-  { generic_name = generic_func.name
-  ; generic_params = convert_generic_bindings bindings
-  ; function_args = extract_function_arg_signatures generic_func processed_function_args
-  ; return_type
-  }
-
-
 (* Convert type to mangled name for specialized function names *)
+(* Used by toprog.ml for generating specialized function names *)
 let rec type_to_mangled_name (t : Typed.type_) : string =
   match (unlink t).tx with
   | TEId { id; n = None; _ } -> id
@@ -618,7 +326,8 @@ let rec type_to_mangled_name (t : Typed.type_) : string =
       name
     else
       name ^ "_of_" ^ args_str
-  | TEUnbound _ -> "unbound"
+  | TEUnbound (Some id) -> "unbound" ^ string_of_int id
+  | TEUnbound None -> "unbound"
   | TEOption type_list -> (
     (* For option types, try to find a concrete type that has been constrained *)
     (* This is a simplified approach - in practice, we should use the actual constrained types *)
@@ -640,91 +349,6 @@ let rec type_to_mangled_name (t : Typed.type_) : string =
   | TENoReturn -> "noreturn"
   | TESize i -> "size_" ^ string_of_int i
   | TELink _ -> "link" (* Should not happen after unlink *)
-
-
-(* Generate specialized function name from signature *)
-let signature_to_specialized_name (signature : Typed.instantiation_signature) : string =
-  let base_name = signature.generic_name in
-  (* Create a simple, clean name using just the essential information *)
-  let generic_part =
-    CCList.map
-      (fun param ->
-        match param.binding with
-        | FunctionBinding f ->
-          (* Just use the function name - much cleaner *)
-          f.func_name
-        | TypeBinding t -> type_to_mangled_name t
-        | ConstantBinding c -> (
-          match c.value with
-          | IntConstant i -> string_of_int i
-          | RealConstant r ->
-            Printf.sprintf "%.0f" r
-            |> String.map (function
-                 | '.' -> 'p'
-                 | c -> c)
-          | BoolConstant b -> string_of_bool b
-          | StringConstant s ->
-            String.map
-              (function
-                | ' ' -> '_'
-                | c -> c)
-              s))
-      signature.generic_params
-    |> String.concat "_"
-  in
-  (* Use only the essential argument types - and try to get concrete types *)
-  let args_part =
-    CCList.map
-      (fun arg ->
-        let simplified_type =
-          match (unlink arg.arg_type).tx with
-          | TEOption [ single_type ] -> single_type (* Use the concrete type from option *)
-          | _ -> arg.arg_type
-        in
-        type_to_mangled_name simplified_type)
-      signature.function_args
-    |> String.concat "_"
-  in
-  (* Create a much cleaner name *)
-  if generic_part = "" then
-    base_name ^ "_" ^ args_part
-  else
-    base_name ^ "_" ^ generic_part ^ "_" ^ args_part
-
-
-(* Add context argument for specialized generic functions that have state *)
-let addContextArgForSpecialized (env : env) (specialized_name : string) args loc =
-  let m = Env.getCurrentModule env in
-  (* The specialized function's context type name *)
-  let specialized_type_name = specialized_name ^ "_type" in
-  let fpath : Pparser.Syntax.path = { id = specialized_type_name; n = Some m.name; loc } in
-  let fctx_t = C.path_t loc fpath in
-  (* Get the current function's context type *)
-  let cpath = Env.getContext env in
-  let ctx_t =
-    let f = Env.getCurrentFunction env in
-    match Env.lookVarInScopes f.locals context_name with
-    | Some var -> var.t
-    | None -> failwith "context var not declared in addContextArgForSpecialized"
-  in
-  (* Generate unique instance name *)
-  let number =
-    Printf.sprintf "%.2x%.2x" (0xFF land Hashtbl.hash (path_string fpath)) (0xFF land Hashtbl.hash (path_string cpath))
-  in
-  let rec generateName () =
-    let n = Env.getFunctionTick env in
-    let name = "inst_" ^ string_of_int n ^ number in
-    if checkMemExists env name || Env.checkConstantExists env name then
-      generateName ()
-    else
-      name
-  in
-  let inst_name = generateName () in
-  let env = Env.addVar env unify inst_name fctx_t Inst loc in
-  let e = { e = EMember ({ e = EId context_name; t = ctx_t; loc }, inst_name); loc; t = fctx_t } in
-  (* Mark the context expression as mutable since specialized functions with state modify it *)
-  let () = markExpMutable env e loc in
-  env, e :: args
 
 
 let rec addContextArg (env : env) instance (f : Env.f) args loc =
@@ -810,12 +434,11 @@ let rec addContextArg (env : env) instance (f : Env.f) args loc =
 
 and call (env : env) instance path args loc eloc =
   (* First check if this is a generic function *)
-  let path_string = Env.pathString path in
-  match Env.lookupGeneric env path_string with
+  match Env.lookupGeneric env path with
   | Some generic_func ->
     (* This is a generic call - handle instantiation *)
     (* NOTE: Don't process args with exp_list yet - generic_call will handle them *)
-    generic_call env generic_func args loc eloc
+    generic_call env path generic_func args loc eloc
   | None ->
     (* Regular function call *)
     let env, args = exp_list env args in
@@ -827,232 +450,8 @@ and call (env : env) instance path args loc eloc =
     env, { e = ECall { instance = None; path = f.path; args }; t; loc }
 
 
-(* Create a non-specialized version of a generic function where generic parameters become regular parameters *)
-and create_non_specialized_function (env : env) (generic_func : Typed.generic_function) (eloc : Loc.t) : env =
-  let non_specialized_name = generic_func.name in
-  (* Check if we already generated this non-specialized version *)
-  let generic_path : Typed.path = { id = non_specialized_name; n = None; loc = eloc } in
-  match Env.findFunction (Env.lookupPath env generic_path) with
-  | Some _ -> env (* Already exists *)
-  | None ->
-    (* Need to generate the non-specialized function *)
-    (* Convert generic parameters to regular function arguments *)
-    let generic_param_args =
-      CCList.map
-        (fun param ->
-          match param with
-          | Typed.GParamFunction (name, Some t) -> { Typed.name; t; loc = eloc }
-          | Typed.GParamFunction (name, None) -> { Typed.name; t = C.unbound eloc; loc = eloc }
-          | Typed.GParamType name -> { Typed.name; t = C.unbound eloc; loc = eloc }
-          | Typed.GParamConstant (name, t) -> { Typed.name; t; loc = eloc })
-        generic_func.generic_params
-    in
-    (* Combine generic parameters with regular arguments *)
-    let all_args = generic_param_args @ generic_func.args in
-    (* Create the function definition *)
-    let func_def =
-      { Typed.name = generic_path
-      ; args = all_args
-      ; t = CCList.map (fun (arg : Typed.arg) -> arg.t) all_args, snd generic_func.t
-      ; loc = eloc
-      ; tags = generic_func.tags
-      ; next = None
-      ; is_root = false
-      }
-    in
-    (* Add to pending injections with empty substitutions (no substitution needed) *)
-    (* Non-specialized functions don't have concrete type bindings *)
-    let env = Env.addPendingInjection env (func_def, generic_func.body, ([], []), []) in
-    env
-
-
-(* Create a specialized function with fresh types by re-processing the original syntax *)
-and create_specialized_function (_env : env) (generic_func : Typed.generic_function)
-    (bindings : (string * Typed.generic_binding) list) (_processed_function_args : Typed.exp list)
-    (_inferred_ret : Typed.type_) (specialized_name : string) (eloc : Loc.t) :
-    Typed.function_def * Pparser.Syntax.stmt * ((string * string) list * (string * Syntax.exp) list) =
-  (* Get the original generic function's types and create fresh copies preserving sharing *)
-  (* CRITICAL: We must copy arg types AND return type together so that if the same type variable *)
-  (* appears in both (e.g., 't in array('t, 3) and return type 't), they map to the SAME fresh unbound *)
-  let original_arg_types, original_ret_type = generic_func.t in
-  let all_original_types = original_arg_types @ [ original_ret_type ] in
-  let all_fresh_types = Typed.copy_types_preserving_sharing all_original_types in
-  (* Split back into arg types and return type *)
-  let fresh_arg_types, fresh_ret_type =
-    match CCList.rev all_fresh_types with
-    | last :: rest -> CCList.rev rest, last
-    | [] -> failwith "copy_types_preserving_sharing returned empty list"
-  in
-  let specialized_type = fresh_arg_types, fresh_ret_type in
-  (* Create fresh argument list with specialized types *)
-  let fresh_args =
-    CCList.map2
-      (fun (original_arg : Typed.arg) (specialized_type : Typed.type_) -> { original_arg with t = specialized_type })
-      (generic_func.args : Typed.arg list)
-      fresh_arg_types
-  in
-  (* Create substitution maps for different types of bindings *)
-  let function_substitutions =
-    CCList.filter_map
-      (fun (param_name, binding) ->
-        match binding with
-        | Typed.BindFunction (func_name, _) -> Some (param_name, func_name)
-        | _ -> None)
-      bindings
-  in
-  let constant_substitutions =
-    CCList.filter_map
-      (fun (param_name, binding) ->
-        match binding with
-        | Typed.BindConstant (const_exp, _) ->
-          (* Convert typed expression to syntax expression for substitution *)
-          let const_syntax = typed_exp_to_syntax_exp const_exp in
-          Some (param_name, const_syntax)
-        | _ -> None)
-      bindings
-  in
-  (* Create specialized function definition *)
-  let specialized_path = { Pparser.Syntax.id = specialized_name; n = None; loc = eloc } in
-  let specialized_def =
-    { name = specialized_path
-    ; args = fresh_args
-    ; t = specialized_type
-    ; loc = eloc
-    ; tags = generic_func.tags
-    ; next = None
-    ; is_root = false
-    }
-  in
-  (* Return the specialized definition, original syntax body, and substitutions for deferred processing *)
-  specialized_def, generic_func.body, (function_substitutions, constant_substitutions)
-
-
-(* Bind mixed generic parameters - explicit args for explicit params, inferred types for implicit type params *)
-(* Now takes generic function's arg types to extract type bindings via unification *)
-and bind_mixed_generic_arguments (env : env) (generic_params : Typed.generic_param list)
-    (explicit_generic_args : Typed.exp list) (function_args : Typed.exp list)
-    (generic_func_arg_types : Typed.type_ list) : (string * Typed.generic_binding) list =
-  let rec bind_params params explicit_args acc =
-    match params, explicit_args with
-    | [], _ -> acc (* No more parameters to bind *)
-    | Typed.GParamFunction (name, _) :: rest_params, { e = EConst path; _ } :: rest_args ->
-      (* Function parameter bound to function name *)
-      (* Look up the actual function type *)
-      let func_type =
-        try
-          let func = Env.lookFunctionCall env path path.loc in
-          let args_t, ret_t = func.t in
-          { tx = TEFunction (args_t, ret_t); const = C.const (); loc = Loc.default }
-        with
-        | _ -> { tx = TEFunction ([], C.unit ~loc:Loc.default); const = C.const (); loc = Loc.default }
-      in
-      let binding = Typed.BindFunction (path.id, func_type) in
-      bind_params rest_params rest_args ((name, binding) :: acc)
-    | Typed.GParamFunction (name, _) :: rest_params, { e = EId func_name; _ } :: rest_args ->
-      (* Function parameter bound to identifier *)
-      (* Look up the actual function type *)
-      let func_path = { Pparser.Syntax.id = func_name; n = None; loc = Loc.default } in
-      let func_type =
-        try
-          let func = Env.lookFunctionCall env func_path Loc.default in
-          let args_t, ret_t = func.t in
-          { tx = TEFunction (args_t, ret_t); const = C.const (); loc = Loc.default }
-        with
-        | _ -> { tx = TEFunction ([], C.unit ~loc:Loc.default); const = C.const (); loc = Loc.default }
-      in
-      let binding = Typed.BindFunction (func_name, func_type) in
-      bind_params rest_params rest_args ((name, binding) :: acc)
-    | Typed.GParamConstant (name, expected_type) :: rest_params, exp :: rest_args ->
-      (* Constant parameter - validate and bind *)
-      if not (unify expected_type exp.t) then
-        Error.raiseError
-          (Printf.sprintf
-             "Generic constant parameter '%s' expected type %s but got %s"
-             name
-             (Pla.print (Typed.print_type_ expected_type))
-             (Pla.print (Typed.print_type_ exp.t)))
-          exp.loc;
-      (* Check if this is a literal value that can be specialized *)
-      let binding =
-        match exp.e with
-        | EInt _ | EReal _ | EBool _ | EString _ ->
-          (* Literal value - can be specialized *)
-          Typed.BindConstant (exp, exp.t)
-        | _ ->
-          (* Non-literal value - cannot be specialized *)
-          Typed.BindNonSpecializable
-      in
-      bind_params rest_params rest_args ((name, binding) :: acc)
-    | Typed.GParamType _ :: _, _ ->
-      (* All remaining params are implicit type parameters *)
-      (* Use unification-based binding extraction for correct handling of composed types *)
-      (* First, collect all implicit type parameters *)
-      let rec collect_type_params params =
-        match params with
-        | Typed.GParamType name :: rest -> name :: collect_type_params rest
-        | _ :: rest -> collect_type_params rest
-        | [] -> []
-      in
-      let type_param_names = collect_type_params params in
-      (* Find unbounds in the generic function's arg types (in order of first appearance) *)
-      let original_unbounds = Typed.find_unbounds_in_types generic_func_arg_types in
-      (* Copy the generic function's arg types with unbound mapping *)
-      let fresh_arg_types, unbound_mapping = Typed.copy_types_with_unbound_mapping generic_func_arg_types in
-      (* Unify fresh arg types with actual function arg types *)
-      let () =
-        CCList.iter2
-          (fun fresh_t (arg : Typed.exp) ->
-            let _ = unify fresh_t arg.t in
-            ())
-          fresh_arg_types
-          function_args
-      in
-      (* For each type param name, find the corresponding concrete type *)
-      let bindings =
-        CCList.mapi
-          (fun i name ->
-            let binding =
-              (* Find the original unbound at position i *)
-              match CCList.nth_opt original_unbounds i with
-              | Some orig_unbound -> (
-                (* Find the fresh unbound that corresponds to this original *)
-                match CCList.find_opt (fun (orig, _) -> orig == orig_unbound) unbound_mapping with
-                | Some (_, fresh_unbound) ->
-                  (* Get what the fresh unbound is now linked to after unification *)
-                  Typed.BindType (unlink fresh_unbound)
-                | None -> (
-                  (* Fallback: use the original approach if no mapping found *)
-                  match CCList.nth_opt function_args i with
-                  | Some arg -> Typed.BindType arg.t
-                  | None -> Typed.BindType (C.unbound Loc.default)))
-              | None -> (
-                (* No unbound at this position - use original approach *)
-                match CCList.nth_opt function_args i with
-                | Some arg -> Typed.BindType arg.t
-                | None -> Typed.BindType (C.unbound Loc.default))
-            in
-            name, binding)
-          type_param_names
-      in
-      List.rev_append bindings acc
-    | param :: rest_params, [] -> (
-      (* No more explicit arguments for explicit params *)
-      match param with
-      | Typed.GParamType _ ->
-        (* This case should be handled above, but include for safety *)
-        bind_params rest_params [] acc
-      | _ ->
-        (* Missing explicit argument for explicit parameter *)
-        bind_params rest_params [] acc)
-    | _ :: rest_params, _ :: rest_args ->
-      (* Skip unsupported parameter types for now *)
-      bind_params rest_params rest_args acc
-  in
-  List.rev (bind_params generic_params explicit_generic_args [])
-
-
-and generic_call (env : env) (generic_func : Typed.generic_function) (args : Syntax.exp list) (_ : Loc.t) (eloc : Loc.t)
-    : env * exp =
+and generic_call (env : env) (generic_path : Syntax.path) (generic_func : Typed.generic_function)
+    (args : Syntax.exp list) (_ : Loc.t) (eloc : Loc.t) : env * exp =
   (* Count only explicit generic parameters (exclude implicit type parameters) *)
   let explicit_generic_param_count =
     CCList.count
@@ -1093,146 +492,37 @@ and generic_call (env : env) (generic_func : Typed.generic_function) (args : Syn
   let env, processed_explicit_generic_args = exp_list ~context:generic_arg_context env explicit_generic_args in
   (* Process regular function arguments with normal context *)
   let env, processed_function_args = exp_list ~context:normal_context env function_args in
-  (* Bind generic parameters to their values - handle both explicit and implicit parameters *)
-  (* Pass generic function's arg types for unification-based type binding extraction *)
-  let generic_func_arg_types, _ = generic_func.t in
-  let bindings =
-    bind_mixed_generic_arguments
-      env
-      generic_func.generic_params
-      processed_explicit_generic_args
-      processed_function_args
-      generic_func_arg_types
+  (* Create fresh copies of the generic function's argument types for unification *)
+  (* This allows the types to be constrained by unification without polluting the original *)
+  let generic_func_arg_types, generic_func_ret_type = generic_func.t in
+  let all_orig_types = generic_func_arg_types @ [ generic_func_ret_type ] in
+  let all_fresh_types = Typed.copy_types_preserving_sharing all_orig_types in
+  let fresh_arg_types, fresh_ret_type =
+    match CCList.rev all_fresh_types with
+    | last :: rest -> CCList.rev rest, last
+    | [] -> failwith "copy_types_preserving_sharing returned empty list"
   in
-  (* Check if this call can be specialized *)
-  let can_specialize =
-    not
-      (CCList.exists
-         (fun (_, binding) ->
-           match binding with
-           | Typed.BindNonSpecializable -> true
-           | _ -> false)
-         bindings)
-  in
-  (* Infer the return type based on generic parameter bindings *)
-  let inferred_ret =
-    let original_ret = generic_func.t |> snd in
-    match (unlink original_ret).tx with
-    | TEUnbound _ -> (
-      (* If the original return type is unbound, try to infer it from the function parameters *)
-      match generic_func.generic_params with
-      | [ GParamFunction (param_name, _) ] -> (
-        (* For single function parameter templates, use the function's return type *)
-        match CCList.find_opt (fun (name, _) -> name = param_name) bindings with
-        | Some (_, BindFunction (_, function_type)) -> (
-          (* Extract return type from function type *)
-          match (unlink function_type).tx with
-          | TEFunction (_, ret_type) -> ret_type
-          | _ -> original_ret)
-        | _ -> original_ret)
-      | _ -> original_ret)
-    | _ -> original_ret (* Use the explicit return type if specified *)
-  in
-  if not can_specialize then
-    (* Cannot specialize - generate non-specialized version *)
-    (* For now, we'll generate a simple non-specialized version that takes all parameters *)
-    let all_args = processed_explicit_generic_args @ processed_function_args in
-    (* Create a call to a non-specialized version of the generic function *)
-    let non_specialized_name = generic_func.name in
-    let non_specialized_path = { Pparser.Syntax.id = non_specialized_name; n = None; loc = eloc } in
-    (* Generate the non-specialized function if it doesn't exist *)
-    let env = create_non_specialized_function env generic_func eloc in
-    (* Create a call to the non-specialized function *)
-    let args_t = CCList.map (fun (e : exp) -> e.t) all_args in
-    let t = applyFunction eloc args_t inferred_ret all_args in
-    env, { e = ECall { instance = None; path = non_specialized_path; args = all_args }; t; loc = eloc }
-  else
-    (* Can specialize - proceed with normal specialization *)
-    (* Build complete instantiation signature *)
-    let signature = build_instantiation_signature generic_func bindings processed_function_args inferred_ret in
-    (* Generate specialized function name from signature *)
-    let specialized_name = signature_to_specialized_name signature in
-    (* Check if we already have this instantiation using signature-based lookup *)
-    match Env.findInstantiation env signature with
-    | Some instantiation ->
-      (* Already instantiated - just call it *)
-      let specialized_path = instantiation.specialized_def.name in
-      let args_t, ret = instantiation.specialized_def.t in
-      (* Check if the generic function has mem statements - if so, add context arg *)
-      let has_state = syntax_has_mem generic_func.body in
-      let env, call_args =
-        if has_state then
-          addContextArgForSpecialized env instantiation.specialized_name processed_function_args eloc
-        else
-          env, processed_function_args
-      in
-      let m = Env.getCurrentModule env in
-      let call_args_t =
-        if has_state then
-          let specialized_type_name = instantiation.specialized_name ^ "_type" in
-          let ctx_path : Pparser.Syntax.path = { id = specialized_type_name; n = Some m.name; loc = eloc } in
-          C.path_t eloc ctx_path :: args_t
-        else
-          args_t
-      in
-      let t = applyFunction eloc call_args_t ret call_args in
-      env, { e = ECall { instance = None; path = specialized_path; args = call_args }; t; loc = eloc }
-    | None ->
-      (* Create new instantiation with complete signature *)
-      (* Create specialized function definition with fresh types *)
-      (* Generate specialized function by re-processing the original syntax with fresh types *)
-      let specialized_def, syntax_body, (function_substitutions, constant_substitutions) =
-        create_specialized_function env generic_func bindings processed_function_args inferred_ret specialized_name eloc
-      in
-      let instantiation : Typed.generic_instantiation = { signature; specialized_name; bindings; specialized_def } in
-      (* Register the instantiation *)
-      let env = Env.addInstantiation env instantiation in
-      (* Add the specialized function to pending injections *)
-      (* Extract type bindings from the generic parameter bindings *)
-      let type_bindings =
-        CCList.filter_map
-          (function
-            | name, Typed.BindType t -> Some (name, t)
-            | _ -> None)
-          bindings
-      in
-      let env =
-        Env.addPendingInjection
-          env
-          (specialized_def, syntax_body, (function_substitutions, constant_substitutions), type_bindings)
-      in
-      (* Check if the generic function has mem statements - if so, add context arg *)
-      let has_state = syntax_has_mem generic_func.body in
-      let env, call_args =
-        if has_state then
-          addContextArgForSpecialized env specialized_name processed_function_args eloc
-        else
-          env, processed_function_args
-      in
-      (* Return a call to the specialized function *)
-      (* Use fresh argument types and unify them with processed function arguments *)
-      let specialized_args_t, _ = specialized_def.t in
-      (* First unify the fresh types with the actual processed argument types *)
-      CCList.iter2
-        (fun fresh_t (processed_arg : Typed.exp) -> unifyRaise processed_arg.loc fresh_t processed_arg.t)
-        specialized_args_t
-        processed_function_args;
-      (* Build the call args type - include context type if function has state *)
-      let m = Env.getCurrentModule env in
-      let call_args_t =
-        if has_state then
-          let specialized_type_name = specialized_name ^ "_type" in
-          let ctx_path : Pparser.Syntax.path = { id = specialized_type_name; n = Some m.name; loc = eloc } in
-          C.path_t eloc ctx_path :: specialized_args_t
-        else
-          specialized_args_t
-      in
-      (* CRITICAL: Use the fresh return type from specialized_def.t, NOT inferred_ret *)
-      (* inferred_ret is the ORIGINAL generic function's return type, and using it here *)
-      (* would cause later unifications to pollute the original generic function's types *)
-      let _, fresh_ret = specialized_def.t in
-      let t = applyFunction eloc call_args_t fresh_ret call_args in
-      env, { e = ECall { instance = None; path = specialized_def.name; args = call_args }; t; loc = eloc }
+  (* Unify argument types to constrain the fresh types *)
+  CCList.iter2
+    (fun fresh_t (arg : Typed.exp) ->
+      let _ = unify fresh_t arg.t in
+      ())
+    fresh_arg_types
+    processed_function_args;
+  (* Return type is now constrained through unification (may still be unbound if type depends on *)
+  (* context not yet available - that's fine, it will be resolved by further unification) *)
+  let t = applyFunction eloc fresh_arg_types fresh_ret_type processed_function_args in
+  (* Return EGenCall - instantiation will happen during post-processing when types are fully resolved *)
+  ( env
+  , { e =
+        EGenCall
+          { generic_path (* Use full path for correct module-qualified lookup *)
+          ; args = processed_function_args
+          ; explicit_args = processed_explicit_generic_args
+          }
+    ; t
+    ; loc = eloc
+    } )
 
 
 and exp ?(context = normal_context) ?(in_constant_context = false) (env : env) (e : Syntax.exp) : env * exp =
@@ -1520,6 +810,19 @@ and exp ?(context = normal_context) ?(in_constant_context = false) (env : env) (
       let elems = CCList.sort (fun (id1, _) (id2, _) -> String.compare id1 id2) elems_rev in
       env, { e = ERecord { path = t.path; elems }; t = Typed.C.path_t loc t.path; loc }
     | _ -> Error.raiseError ("The path '" ^ path_string path ^ "' is not a type.") loc)
+  | { e = SETypeIntrinsic (intrinsic_name, type_param); loc } ->
+    (* Type intrinsics - convert to typed representation *)
+    (* The type is unbound here and will be resolved during generic instantiation *)
+    let intrinsic =
+      match intrinsic_name with
+      | "typedefault" -> Typed.TypeDefault
+      | "typemax" -> Typed.TypeMax
+      | "typemin" -> Typed.TypeMin
+      | _ -> Error.raiseError ("Unknown type intrinsic: " ^ intrinsic_name) loc
+    in
+    (* Type is unbound - will be resolved during generic specialization *)
+    let t = C.unbound loc in
+    env, { e = ETypeIntrinsic { intrinsic; type_param }; t; loc }
 
 
 and exp_list ?(context = normal_context) ?(in_constant_context = false) (env : env) (l : Syntax.exp list) :
@@ -1746,6 +1049,92 @@ let makeIfOfMatch env e cases =
   | Some stmt -> stmt
 
 
+(** Resolves a type intrinsic to a concrete expression during generic instantiation.
+    This is called when processing specialized function bodies. *)
+let resolve_type_intrinsic_inline (intrinsic : Typed.type_intrinsic) (concrete_type : Typed.type_) (loc : Loc.t) :
+    Typed.exp =
+  let t = concrete_type in
+  let unlinked = unlink concrete_type in
+  match intrinsic, unlinked.tx with
+  (* typedefault - all types supported *)
+  | TypeDefault, TEId { id = "int"; _ } -> { e = EInt 0; t; loc }
+  | TypeDefault, TEId { id = "int16"; _ } -> { e = EInt 0; t; loc }
+  | TypeDefault, TEId { id = "real"; _ } -> { e = EReal 0.0; t; loc }
+  | TypeDefault, TEId { id = "fix16"; _ } -> { e = EFixed 0.0; t; loc }
+  | TypeDefault, TEId { id = "bool"; _ } -> { e = EBool false; t; loc }
+  | TypeDefault, TEId { id = "string"; _ } -> { e = EString ""; t; loc }
+  (* typemax - numeric types only *)
+  | TypeMax, TEId { id = "int"; _ } -> { e = EInt 2147483647; t; loc }
+  | TypeMax, TEId { id = "int16"; _ } -> { e = EInt 32767; t; loc }
+  | TypeMax, TEId { id = "real"; _ } -> { e = EReal 3.40282347e+38; t; loc }
+  | TypeMax, TEId { id = "fix16"; _ } -> { e = EFixed 32767.99998; t; loc }
+  | TypeMax, TEId { id = "bool"; _ } -> { e = EBool true; t; loc }
+  (* typemin - numeric types only *)
+  | TypeMin, TEId { id = "int"; _ } -> { e = EInt (-2147483648); t; loc }
+  | TypeMin, TEId { id = "int16"; _ } -> { e = EInt (-32768); t; loc }
+  | TypeMin, TEId { id = "real"; _ } -> { e = EReal (-3.40282347e+38); t; loc }
+  | TypeMin, TEId { id = "fix16"; _ } -> { e = EFixed (-32768.0); t; loc }
+  | TypeMin, TEId { id = "bool"; _ } -> { e = EBool false; t; loc }
+  (* Compile-time error for unsupported types *)
+  | TypeMax, _ ->
+    let type_str = Pla.print (Typed.print_type_ concrete_type) in
+    Error.raiseError (Printf.sprintf "typemax() is not supported for type '%s'" type_str) loc
+  | TypeMin, _ ->
+    let type_str = Pla.print (Typed.print_type_ concrete_type) in
+    Error.raiseError (Printf.sprintf "typemin() is not supported for type '%s'" type_str) loc
+  | TypeDefault, _ ->
+    let type_str = Pla.print (Typed.print_type_ concrete_type) in
+    Error.raiseError (Printf.sprintf "typedefault() is not supported for type '%s'" type_str) loc
+
+
+(** Resolves type intrinsics in an expression tree using the type substitution map.
+    This is called after processing an expression to replace ETypeIntrinsic nodes
+    with concrete values. *)
+let rec resolve_type_intrinsics_in_exp (type_substitution_map : (string * type_) list) (e : Typed.exp) : Typed.exp =
+  match e.e with
+  | ETypeIntrinsic { intrinsic; type_param } -> (
+    (* Look up the type parameter in the substitution map *)
+    match CCList.assoc_opt ~eq:String.equal type_param type_substitution_map with
+    | Some concrete_type -> resolve_type_intrinsic_inline intrinsic concrete_type e.loc
+    | None -> Error.raiseError (Printf.sprintf "Type parameter '%s' not found in generic bindings" type_param) e.loc)
+  | ECall { instance; path; args } ->
+    let args = CCList.map (resolve_type_intrinsics_in_exp type_substitution_map) args in
+    { e with e = ECall { instance; path; args } }
+  | EOp (op, e1, e2) ->
+    let e1 = resolve_type_intrinsics_in_exp type_substitution_map e1 in
+    let e2 = resolve_type_intrinsics_in_exp type_substitution_map e2 in
+    { e with e = EOp (op, e1, e2) }
+  | EUnOp (op, e1) ->
+    let e1 = resolve_type_intrinsics_in_exp type_substitution_map e1 in
+    { e with e = EUnOp (op, e1) }
+  | EIf { cond; then_; else_ } ->
+    let cond = resolve_type_intrinsics_in_exp type_substitution_map cond in
+    let then_ = resolve_type_intrinsics_in_exp type_substitution_map then_ in
+    let else_ = resolve_type_intrinsics_in_exp type_substitution_map else_ in
+    { e with e = EIf { cond; then_; else_ } }
+  | EIndex { e = arr; index } ->
+    let arr = resolve_type_intrinsics_in_exp type_substitution_map arr in
+    let index = resolve_type_intrinsics_in_exp type_substitution_map index in
+    { e with e = EIndex { e = arr; index } }
+  | EArray elems ->
+    let elems = CCList.map (resolve_type_intrinsics_in_exp type_substitution_map) elems in
+    { e with e = EArray elems }
+  | ETuple elems ->
+    let elems = CCList.map (resolve_type_intrinsics_in_exp type_substitution_map) elems in
+    { e with e = ETuple elems }
+  | EMember (e1, m) ->
+    let e1 = resolve_type_intrinsics_in_exp type_substitution_map e1 in
+    { e with e = EMember (e1, m) }
+  | ERecord { path; elems } ->
+    let elems = CCList.map (fun (n, v) -> n, resolve_type_intrinsics_in_exp type_substitution_map v) elems in
+    { e with e = ERecord { path; elems } }
+  | EGenCall { generic_path; args; explicit_args } ->
+    let args = CCList.map (resolve_type_intrinsics_in_exp type_substitution_map) args in
+    let explicit_args = CCList.map (resolve_type_intrinsics_in_exp type_substitution_map) explicit_args in
+    { e with e = EGenCall { generic_path; args; explicit_args } }
+  | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ | EConst _ -> e
+
+
 (* Type substitution version of stmt for processing specialized function bodies *)
 let rec stmt_with_type_substitution (env : env) (type_substitution_map : (string * type_) list) (return : type_)
     (s : Syntax.stmt) : env * stmt list =
@@ -1783,7 +1172,35 @@ let rec stmt_with_type_substitution (env : env) (type_substitution_map : (string
       env, { d = DWild; t; loc }
   in
   (* Use the same stmt function but with our type-substituting dexp *)
-  stmt_generic env dexp_with_substitution return s
+  let env, stmts = stmt_generic env dexp_with_substitution return s in
+  (* Resolve any type intrinsics in the resulting statements *)
+  let stmts = CCList.map (resolve_type_intrinsics_in_stmt type_substitution_map) stmts in
+  env, stmts
+
+
+(** Resolves type intrinsics in a statement tree. *)
+and resolve_type_intrinsics_in_stmt (type_substitution_map : (string * type_) list) (s : Typed.stmt) : Typed.stmt =
+  match s.s with
+  | StmtVal _ -> s (* Declaration doesn't have expressions *)
+  | StmtMem (_, _) -> s (* Mem declaration doesn't have expressions *)
+  | StmtBind (lhs, rhs) ->
+    let rhs = resolve_type_intrinsics_in_exp type_substitution_map rhs in
+    { s with s = StmtBind (lhs, rhs) }
+  | StmtReturn e ->
+    let e = resolve_type_intrinsics_in_exp type_substitution_map e in
+    { s with s = StmtReturn e }
+  | StmtIf (cond, then_, else_opt) ->
+    let cond = resolve_type_intrinsics_in_exp type_substitution_map cond in
+    let then_ = resolve_type_intrinsics_in_stmt type_substitution_map then_ in
+    let else_opt = Option.map (resolve_type_intrinsics_in_stmt type_substitution_map) else_opt in
+    { s with s = StmtIf (cond, then_, else_opt) }
+  | StmtWhile (cond, body) ->
+    let cond = resolve_type_intrinsics_in_exp type_substitution_map cond in
+    let body = resolve_type_intrinsics_in_stmt type_substitution_map body in
+    { s with s = StmtWhile (cond, body) }
+  | StmtBlock stmts ->
+    let stmts = CCList.map (resolve_type_intrinsics_in_stmt type_substitution_map) stmts in
+    { s with s = StmtBlock stmts }
 
 
 and type_in_m_with_substitution (env : env) (type_substitution_map : (string * type_) list) (t : Syntax.type_) =
@@ -2185,18 +1602,27 @@ let getContextArgument (env : env) (path : path) loc : arg option =
 
 
 let insertContextArgument (env : env) (def : function_def) : function_def =
-  match getContextArgument env def.name def.loc with
-  | None -> def
-  | Some arg ->
-    let rec loop next =
-      match next with
-      | Some (def, body) ->
-        let next = loop def.next in
-        Some ({ def with args = arg :: def.args; next }, body)
-      | None -> None
-    in
-    let next = loop def.next in
-    { def with args = arg :: def.args; next }
+  (* Check if the function already has a _ctx argument *)
+  let already_has_ctx =
+    match def.args with
+    | { name; _ } :: _ when String.equal name context_name -> true
+    | _ -> false
+  in
+  if already_has_ctx then
+    def
+  else
+    match getContextArgument env def.name def.loc with
+    | None -> def
+    | Some arg ->
+      let rec loop next =
+        match next with
+        | Some (def, body) ->
+          let next = loop def.next in
+          Some ({ def with args = arg :: def.args; next }, body)
+        | None -> None
+      in
+      let next = loop def.next in
+      { def with args = arg :: def.args; next }
 
 
 let top_dexp (env : env) (d : Syntax.dexp) =
@@ -2277,22 +1703,8 @@ let create_generic_function (env : env) (def : Syntax.function_def) : Typed.gene
   let unique_names = CCList.sort_uniq ~cmp:String.compare param_names in
   if CCList.length unique_names <> CCList.length param_names then
     Error.raiseError (Printf.sprintf "Generic function '%s' has duplicate generic parameter names" def.name) def.loc;
-  (* Check for name conflicts between generic parameters and function arguments *)
-  let arg_names =
-    CCList.map
-      (fun arg ->
-        let name, _, _ = arg in
-        name)
-      def.args
-  in
-  let conflicting_names = CCList.filter (fun name -> CCList.mem name arg_names) param_names in
-  if conflicting_names <> [] then
-    Error.raiseError
-      (Printf.sprintf
-         "Generic function '%s' has generic parameters with same names as function arguments: %s"
-         def.name
-         (String.concat ", " conflicting_names))
-      def.loc;
+  (* Note: Type parameter names like 'a can have the same base name as function arguments
+     like 'a' since they are in separate namespaces (type vs value). *)
   let generic_params = CCList.map (convert_generic_param env) def.generic_params in
   (* Extract just the type parameter names for context *)
   let type_param_names =
@@ -2314,6 +1726,8 @@ let create_generic_function (env : env) (def : Syntax.function_def) : Typed.gene
   in
   (* Create function type from regular arguments only (exclude template params) *)
   let arg_types = CCList.map (fun (arg : Typed.arg) -> arg.t) args in
+  (* Capture the type index at definition time - this ensures specialized types appear near the generic's position *)
+  let type_index = Env.getGlobalTick () in
   { name = def.name
   ; generic_params
   ; args
@@ -2321,128 +1735,7 @@ let create_generic_function (env : env) (def : Syntax.function_def) : Typed.gene
   ; body = def.body
   ; loc = def.loc
   ; tags = def.tags
-  }
-
-
-(* Substitute generic parameters in statements *)
-let substitute_generic_params (stmt : Syntax.stmt) (substitution_map : (string * string) list) : Syntax.stmt =
-  let rec substitute_stmt (stmt : Syntax.stmt) : Syntax.stmt =
-    match stmt.s with
-    | SStmtError -> stmt
-    | SStmtVal (dexp, exp_opt) ->
-      let exp_opt = Option.map substitute_exp exp_opt in
-      { stmt with s = SStmtVal (dexp, exp_opt) }
-    | SStmtMem (dexp, exp_opt, tags) ->
-      let exp_opt = Option.map substitute_exp exp_opt in
-      { stmt with s = SStmtMem (dexp, exp_opt, tags) }
-    | SStmtBind (lexp, exp) ->
-      let exp = substitute_exp exp in
-      { stmt with s = SStmtBind (lexp, exp) }
-    | SStmtReturn exp ->
-      let exp = substitute_exp exp in
-      { stmt with s = SStmtReturn exp }
-    | SStmtBlock stmts ->
-      let stmts = CCList.map substitute_stmt stmts in
-      { stmt with s = SStmtBlock stmts }
-    | SStmtIf (cond, then_stmt, else_opt) ->
-      let cond = substitute_exp cond in
-      let then_stmt = substitute_stmt then_stmt in
-      let else_opt = Option.map substitute_stmt else_opt in
-      { stmt with s = SStmtIf (cond, then_stmt, else_opt) }
-    | SStmtWhile (cond, body) ->
-      let cond = substitute_exp cond in
-      let body = substitute_stmt body in
-      { stmt with s = SStmtWhile (cond, body) }
-    | SStmtIter { id; value; body } ->
-      let value = substitute_exp value in
-      let body = substitute_stmt body in
-      { stmt with s = SStmtIter { id; value; body } }
-    | SStmtMatch { e; cases } ->
-      let e = substitute_exp e in
-      let cases = CCList.map (fun (pattern, stmt) -> pattern, substitute_stmt stmt) cases in
-      { stmt with s = SStmtMatch { e; cases } }
-  and substitute_exp (exp : Syntax.exp) : Syntax.exp =
-    match exp.e with
-    | SEBool _ | SEInt _ | SEReal _ | SEFixed _ | SEString _ -> exp
-    | SEId id -> (
-      (* Check if this identifier should be substituted *)
-      match CCList.assoc_opt ~eq:String.equal id substitution_map with
-      | Some replacement -> { exp with e = SEId replacement }
-      | None -> exp)
-    | SEIndex { e; index } ->
-      let e = substitute_exp e in
-      let index = substitute_exp index in
-      { exp with e = SEIndex { e; index } }
-    | SEArray exps ->
-      let exps = CCList.map substitute_exp exps in
-      { exp with e = SEArray exps }
-    | SECall { instance; path; args } ->
-      let args = CCList.map substitute_exp args in
-      { exp with e = SECall { instance; path; args } }
-    | SEUnOp (op, exp1) ->
-      let exp1 = substitute_exp exp1 in
-      { exp with e = SEUnOp (op, exp1) }
-    | SEOp (op, exp1, exp2) ->
-      let exp1 = substitute_exp exp1 in
-      let exp2 = substitute_exp exp2 in
-      { exp with e = SEOp (op, exp1, exp2) }
-    | SEIf { cond; then_; else_ } ->
-      let cond = substitute_exp cond in
-      let then_ = substitute_exp then_ in
-      let else_ = substitute_exp else_ in
-      { exp with e = SEIf { cond; then_; else_ } }
-    | SETuple exps ->
-      let exps = CCList.map substitute_exp exps in
-      { exp with e = SETuple exps }
-    | SEMember (exp1, member) ->
-      let exp1 = substitute_exp exp1 in
-      { exp with e = SEMember (exp1, member) }
-    | SEGroup exp1 ->
-      let exp1 = substitute_exp exp1 in
-      { exp with e = SEGroup exp1 }
-    | SERecord { path; elems } ->
-      let elems = CCList.map (fun (path, exp) -> path, substitute_exp exp) elems in
-      { exp with e = SERecord { path; elems } }
-    | SENamed (name, exp1) ->
-      let name = substitute_exp name in
-      let exp1 = substitute_exp exp1 in
-      { exp with e = SENamed (name, exp1) }
-  in
-  substitute_stmt stmt
-
-
-(* Helper function to convert Typed.arg to Syntax.arg *)
-let convert_typed_arg_to_syntax (arg : Typed.arg) : Syntax.arg = arg.name, None, arg.loc
-(* No type annotation - will be inferred *)
-
-(* Creates a specialized function definition by substituting generic parameters *)
-let create_specialized_function (generic_func : Typed.generic_function)
-    (bindings : (string * Typed.generic_binding) list) (specialized_name : string) : Syntax.function_def =
-  (* Create substitution map from bindings *)
-  let substitution_map =
-    CCList.fold_left
-      (fun acc (param_name, binding) ->
-        match binding with
-        | Typed.BindFunction (func_name, _) -> (param_name, func_name) :: acc
-        | Typed.BindType _ -> acc (* Type substitution not implemented yet *)
-        | Typed.BindConstant _ -> acc (* Constant substitution not implemented yet *)
-        | Typed.BindNonSpecializable -> acc (* Non-specializable parameters are skipped *))
-      []
-      bindings
-  in
-  (* Substitute generic parameters in the function body *)
-  let substituted_body = substitute_generic_params generic_func.body substitution_map in
-  (* Convert args from Typed.arg to Syntax.arg *)
-  let syntax_args = CCList.map convert_typed_arg_to_syntax generic_func.args in
-  (* Create new function definition with substituted body *)
-  { name = specialized_name
-  ; generic_params = [] (* Specialized functions have no generic parameters *)
-  ; args = syntax_args
-  ; t = None (* Will be inferred *)
-  ; next = None
-  ; tags = generic_func.tags
-  ; loc = generic_func.loc
-  ; body = substituted_body
+  ; type_index
   }
 
 
@@ -2451,63 +1744,18 @@ let has_generic_params (def : Syntax.function_def) : bool = not (CCList.is_empty
 let rec top_stmt (iargs : Args.args) (env : env) (s : Syntax.top_stmt) : env * top_stmt list =
   match s with
   | { top = STopError; _ } -> failwith "Parser error"
-  | { top = STopFunction def; _ } when has_generic_params def ->
-    (* Store generic function, don't process yet *)
+  | { top = STopFunction def; loc } when has_generic_params def ->
+    (* Store generic function and emit placeholder to mark where specializations go *)
     let generic_func = create_generic_function env def in
     let env = Env.addGeneric env generic_func in
-    env, [] (* No output yet, templates processed on demand *)
+    env, [ { top = TopGenericPlaceholder def.name; loc } ]
   | { top = STopFunction def; _ } ->
     let env = Env.createContextForFunction env def.name def.loc in
     let env, (def, body) = function_def iargs env def in
     let def = insertContextArgument env def in
     let env = Env.exitContext env in
-    (* Process pending injections iteratively until no more are created *)
-    (* This handles nested generic calls where processing one creates more *)
-    let rec process_pending_injections depth acc =
-      if depth > 100 then
-        failwith "Too many nested generic instantiations - possible infinite recursion"
-      else
-        let pending_functions = Env.getPendingInjectionsAndClear env in
-        if CCList.is_empty pending_functions then
-          acc
-        else
-          let new_stmts =
-            CCList.map
-              (fun ( (func_def : Typed.function_def)
-                   , syntax_body
-                   , (string_substitutions, const_substitutions)
-                   , type_bindings )
-                 ->
-                (* Process the substituted syntax body through type inference *)
-                let substituted_body = substitute_stmt string_substitutions const_substitutions syntax_body in
-                (* Create proper function context for body processing *)
-                let func_name = func_def.name.id in
-                let env_with_context = Env.createContextForFunction env func_name func_def.loc in
-                let env_in_function, _, _ =
-                  Env.enterFunction env_with_context func_name func_def.args (snd func_def.t) func_def.loc
-                in
-                let _, return_type = func_def.t in
-                (* Use the type bindings directly - they already contain the correct mappings *)
-                let type_substitution_map = type_bindings in
-                let _, typed_body_list =
-                  stmt_with_type_substitution env_in_function type_substitution_map return_type substituted_body
-                in
-                let typed_body =
-                  match typed_body_list with
-                  | [ single_stmt ] -> single_stmt
-                  | multiple_stmts -> { s = StmtBlock multiple_stmts; loc = func_def.loc }
-                in
-                (* Add _ctx argument if the function has mem variables *)
-                let func_def = insertContextArgument env_in_function func_def in
-                { top = TopFunction (func_def, typed_body); loc = func_def.loc })
-              pending_functions
-          in
-          (* Process any newly created pending injections *)
-          process_pending_injections (depth + 1) (acc @ new_stmts)
-    in
-    let injected_stmts = process_pending_injections 0 [] in
-    (* Return injected functions followed by the main function *)
-    env, injected_stmts @ [ { top = TopFunction (def, body); loc = def.loc } ]
+    (* Generic function instantiation is now handled in toprog.ml when processing EGenCall *)
+    env, [ { top = TopFunction (def, body); loc = def.loc } ]
   | { top = STopExternal (def, link_name); _ } ->
     let env = Env.createContextForExternal env in
     let env, def = ext_function iargs env def in
@@ -2609,6 +1857,426 @@ let removeExistingTypes set types =
   CCList.filter f types
 
 
+(* ========== Generic Function Instantiation Post-Processing ========== *)
+
+(* Helper to create a simple path *)
+let make_path (name : string) (loc : Loc.t) : Syntax.path = { id = name; n = None; loc }
+
+(* State for tracking instantiated generic functions during post-processing *)
+type instantiation_state =
+  { mutable instantiated : (string, Typed.function_def * Typed.stmt) Hashtbl.t
+        (* signature string -> (specialized_def, body) *)
+  ; mutable pending_functions : (string * string * Typed.function_def * Typed.stmt) list
+        (* (module_name, generic_name, specialized_def, body) - functions to be added at specific placeholders *)
+  ; mutable functions_needing_context : (string, Typed.type_) Hashtbl.t
+        (* function path string -> context type. Tracks functions that have been updated to need _ctx *)
+  }
+
+let create_instantiation_state () : instantiation_state =
+  { instantiated = Hashtbl.create 16; pending_functions = []; functions_needing_context = Hashtbl.create 16 }
+
+
+(* Build a signature string for deduplication based on resolved types *)
+let build_signature_string (generic_name : string) (arg_types : Typed.type_ list) : string =
+  let type_strings = CCList.map type_to_mangled_name arg_types in
+  generic_name ^ "_" ^ String.concat "_" type_strings
+
+
+(* Create a specialized function from a generic function with resolved types.
+   This runs type inference on the body with the type bindings. *)
+let instantiate_generic_function (iargs : Args.args) (env : env) (generic_func : Typed.generic_function)
+    (call_arg_types : Typed.type_ list) (loc : Loc.t) : Typed.function_def * Typed.stmt =
+  (* Build specialized name from types *)
+  let specialized_name = build_signature_string generic_func.name call_arg_types in
+  (* Extract type parameter names *)
+  let type_param_names =
+    CCList.filter_map
+      (function
+        | Typed.GParamType name -> Some name
+        | _ -> None)
+      generic_func.generic_params
+  in
+  (* Create type bindings: map generic type params to concrete types *)
+  let generic_func_arg_types, generic_func_ret_type = generic_func.t in
+  (* Create a substitution map from generic type params to concrete types *)
+  (* We do this by unifying the generic arg types with the call arg types *)
+  let fresh_types = Typed.copy_types_preserving_sharing (generic_func_arg_types @ [ generic_func_ret_type ]) in
+  let fresh_arg_types, fresh_ret_type =
+    match CCList.rev fresh_types with
+    | last :: rest -> CCList.rev rest, last
+    | [] -> failwith "Empty type list"
+  in
+  (* Unify fresh types with call types to bind them to concrete types *)
+  CCList.iter2
+    (fun fresh_t call_t ->
+      let _ = unify fresh_t call_t in
+      ())
+    fresh_arg_types
+    call_arg_types;
+  (* Build type substitution map: map type param names to concrete types from call args.
+     For each type param, we find the corresponding concrete type.
+     Since type params appear in the function args in order they're declared,
+     we match type param i with call_arg_type at the position where that param is used. *)
+  let type_substitution_map =
+    CCList.mapi
+      (fun i name ->
+        (* For simple cases (one type param used for first arg), use call_arg_types[i] *)
+        let concrete_type =
+          if i < CCList.length call_arg_types then
+            CCList.nth call_arg_types i
+          else if CCList.length call_arg_types > 0 then
+            CCList.hd call_arg_types
+          else
+            (* Fallback - create int type if no args *)
+            { tx = TEId { id = "int"; n = None; loc }; loc; const = C.const () }
+        in
+        name, concrete_type)
+      type_param_names
+  in
+  (* Now create the specialized function definition *)
+  let specialized_args =
+    CCList.map2 (fun (arg : Typed.arg) fresh_t -> { arg with t = fresh_t }) generic_func.args fresh_arg_types
+  in
+  (* Create context for the specialized function using the type_index from the generic definition *)
+  (* This ensures the specialized type appears near where the original generic was defined *)
+  let env = Env.createContextForFunctionWithIndex env specialized_name loc generic_func.type_index in
+  (* Enter function context - this sets up proper environment for variable handling *)
+  let inferred_ret = C.noreturn loc in
+  let env, path, _t = Env.enterFunction env specialized_name specialized_args inferred_ret loc in
+  (* Process body with type substitution for generic parameters *)
+  let env, body = stmt_with_type_substitution env type_substitution_map fresh_ret_type generic_func.body in
+  let env = Env.exitFunction env in
+  (* Create the specialized function definition *)
+  let specialized_def : Typed.function_def =
+    { name = path
+    ; args = specialized_args
+    ; t = CCList.map (fun (a : Typed.arg) -> a.t) specialized_args, fresh_ret_type
+    ; loc = generic_func.loc
+    ; tags = generic_func.tags
+    ; is_root = false
+    ; next = None
+    }
+  in
+  (* Add context argument if the function has mem/instances *)
+  let specialized_def = insertContextArgument env specialized_def in
+  let env = Env.exitContext env in
+  let _ = env in
+  let _ = iargs in
+  (* iargs not used here currently *)
+  (* Combine the body statements into a single block *)
+  let combined_body =
+    match body with
+    | [ single ] -> single
+    | stmts -> { s = StmtBlock stmts; loc = generic_func.loc }
+  in
+  specialized_def, combined_body
+
+
+(* Process an expression, replacing EGenCall with ECall to specialized functions.
+   Mutually recursive with process_stmt_instantiation to handle nested generic calls. *)
+let rec process_exp_instantiation (iargs : Args.args) (env : env) (state : instantiation_state) (e : Typed.exp) :
+    Typed.exp =
+  let loc = e.loc in
+  match e.e with
+  | EGenCall { generic_path; args; explicit_args = _ } -> (
+    (* Look up the generic function using the stored path *)
+    let generic_name = Pla.print (Syntax.print_path generic_path) in
+    match Env.lookupGeneric env generic_path with
+    | None -> Error.raiseError (Printf.sprintf "Generic function '%s' not found" generic_name) loc
+    | Some generic_func ->
+      (* Get resolved types from the arguments *)
+      let resolved_arg_types = CCList.map (fun (a : Typed.exp) -> unlink a.t) args in
+      (* Build signature for deduplication using the full path for uniqueness *)
+      let signature = build_signature_string generic_name resolved_arg_types in
+      (* Check if already instantiated, get the function definition and path *)
+      let specialized_def =
+        match Hashtbl.find_opt state.instantiated signature with
+        | Some (def, _) -> def
+        | None ->
+          (* Determine which module to create the specialization in *)
+          let generic_module = generic_path.n in
+          (* If the generic is from a different module, enter that module's context *)
+          let env_for_instantiation =
+            match generic_module with
+            | Some module_name ->
+              (* Enter the generic's module context for instantiation *)
+              Env.enterModule env module_name
+            | None -> env
+          in
+          (* Create new instantiation in the correct module context *)
+          let def, body =
+            instantiate_generic_function iargs env_for_instantiation generic_func resolved_arg_types loc
+          in
+          (* Recursively process the body to replace any nested EGenCall nodes *)
+          let processed_body = process_stmt_instantiation iargs env_for_instantiation state body in
+          (* Exit the module if we entered one *)
+          let _ =
+            match generic_module with
+            | Some _ -> Env.exitModule env_for_instantiation
+            | None -> env_for_instantiation
+          in
+          (* Get the module name for tracking - use from the definition's path *)
+          let target_module =
+            match def.name.n with
+            | Some m -> m
+            | None -> (
+              (* Fallback to current module if path doesn't have module info *)
+              match generic_module with
+              | Some m -> m
+              | None ->
+                (* Use current env's module *)
+                let m = Env.getCurrentModule env in
+                m.name)
+          in
+          Hashtbl.add state.instantiated signature (def, processed_body);
+          state.pending_functions <- (target_module, generic_func.name, def, processed_body) :: state.pending_functions;
+          def
+      in
+      (* Process the arguments recursively *)
+      let processed_args = CCList.map (process_exp_instantiation iargs env state) args in
+      (* Check if specialized function needs context (has _ctx as first argument) *)
+      let final_args =
+        match specialized_def.args with
+        | { name; t = ctx_t; _ } :: _ when String.equal name context_name ->
+          (* Function needs context - create instance and add context argument *)
+          let current_f = Env.getCurrentFunction env in
+          let current_ctx_t =
+            match Env.lookVarInScopes current_f.locals context_name with
+            | Some var -> var.t
+            | None -> failwith "context var not declared in caller"
+          in
+          (* Generate unique instance name *)
+          let number =
+            Printf.sprintf
+              "%.2x%.2x"
+              (0xFF land Hashtbl.hash (path_string specialized_def.name))
+              (0xFF land Hashtbl.hash (path_string (Env.getContext env)))
+          in
+          let rec generateName () =
+            let n = Env.getFunctionTick env in
+            let inst_name = "inst_" ^ string_of_int n ^ number in
+            if checkMemExists env inst_name || Env.checkConstantExists env inst_name then
+              generateName ()
+            else
+              inst_name
+          in
+          let inst_name = generateName () in
+          (* Add instance to caller's context *)
+          let _ = Env.addVar env unify inst_name ctx_t Inst loc in
+          (* Create context argument expression *)
+          let ctx_e = { e = EId context_name; t = current_ctx_t; loc } in
+          let inst_e = { e = EMember (ctx_e, inst_name); t = ctx_t; loc } in
+          inst_e :: processed_args
+        | _ ->
+          (* No context needed *)
+          processed_args
+      in
+      (* Replace with regular ECall using the specialized function's path *)
+      { e = ECall { instance = None; path = specialized_def.name; args = final_args }; t = e.t; loc })
+  | ECall { instance; path; args } ->
+    let processed_args = CCList.map (process_exp_instantiation iargs env state) args in
+    (* Check if the called function has been updated to need context *)
+    let func_path_str = path_string path in
+    let final_args =
+      match Hashtbl.find_opt state.functions_needing_context func_path_str with
+      | Some ctx_t ->
+        (* Function needs context - create instance and add context argument *)
+        let current_f = Env.getCurrentFunction env in
+        let current_ctx_t =
+          match Env.lookVarInScopes current_f.locals context_name with
+          | Some var -> var.t
+          | None ->
+            (* Caller doesn't have context yet - this can happen for top-level calls.
+               In this case, we need to ensure the caller also gets context. *)
+            failwith
+              (Printf.sprintf
+                 "Function '%s' calls '%s' which needs context, but caller has no context"
+                 (path_string current_f.path)
+                 func_path_str)
+        in
+        (* Generate unique instance name *)
+        let number =
+          Printf.sprintf
+            "%.2x%.2x"
+            (0xFF land Hashtbl.hash func_path_str)
+            (0xFF land Hashtbl.hash (path_string (Env.getContext env)))
+        in
+        let rec generateName () =
+          let n = Env.getFunctionTick env in
+          let inst_name = "inst_" ^ string_of_int n ^ number in
+          if checkMemExists env inst_name || Env.checkConstantExists env inst_name then
+            generateName ()
+          else
+            inst_name
+        in
+        let inst_name = generateName () in
+        (* Add instance to caller's context *)
+        let _ = Env.addVar env unify inst_name ctx_t Inst loc in
+        (* Create context argument expression *)
+        let ctx_e = { e = EId context_name; t = current_ctx_t; loc } in
+        let inst_e = { e = EMember (ctx_e, inst_name); t = ctx_t; loc } in
+        inst_e :: processed_args
+      | None ->
+        (* Function doesn't need context *)
+        processed_args
+    in
+    { e with e = ECall { instance; path; args = final_args } }
+  | EOp (op, e1, e2) ->
+    let e1 = process_exp_instantiation iargs env state e1 in
+    let e2 = process_exp_instantiation iargs env state e2 in
+    { e with e = EOp (op, e1, e2) }
+  | EUnOp (op, e1) ->
+    let e1 = process_exp_instantiation iargs env state e1 in
+    { e with e = EUnOp (op, e1) }
+  | EIf { cond; then_; else_ } ->
+    let cond = process_exp_instantiation iargs env state cond in
+    let then_ = process_exp_instantiation iargs env state then_ in
+    let else_ = process_exp_instantiation iargs env state else_ in
+    { e with e = EIf { cond; then_; else_ } }
+  | EIndex { e = arr; index } ->
+    let arr = process_exp_instantiation iargs env state arr in
+    let index = process_exp_instantiation iargs env state index in
+    { e with e = EIndex { e = arr; index } }
+  | EArray elems ->
+    let elems = CCList.map (process_exp_instantiation iargs env state) elems in
+    { e with e = EArray elems }
+  | ETuple elems ->
+    let elems = CCList.map (process_exp_instantiation iargs env state) elems in
+    { e with e = ETuple elems }
+  | EMember (e1, m) ->
+    let e1 = process_exp_instantiation iargs env state e1 in
+    { e with e = EMember (e1, m) }
+  | ERecord { path; elems } ->
+    let elems = CCList.map (fun (n, v) -> n, process_exp_instantiation iargs env state v) elems in
+    { e with e = ERecord { path; elems } }
+  | ETypeIntrinsic { intrinsic; type_param } ->
+    (* Type intrinsics should have been resolved during stmt_with_type_substitution.
+       If we see one here, it's an error - the intrinsic was used outside a generic function context. *)
+    let intrinsic_name =
+      match intrinsic with
+      | TypeDefault -> "typedefault"
+      | TypeMax -> "typemax"
+      | TypeMin -> "typemin"
+    in
+    Error.raiseError
+      (Printf.sprintf
+         "Type intrinsic '%s('%s)' was not resolved - it must be used inside a generic function"
+         intrinsic_name
+         type_param)
+      e.loc
+  | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ | EConst _ -> e
+
+
+(* Process a statement, recursively processing expressions.
+   Mutually recursive with process_exp_instantiation to handle nested generic calls. *)
+and process_stmt_instantiation (iargs : Args.args) (env : env) (state : instantiation_state) (s : Typed.stmt) :
+    Typed.stmt =
+  match s.s with
+  | StmtVal d -> { s with s = StmtVal d }
+  | StmtMem (d, tags) ->
+    (* StmtMem has dexp and tags, no init expression *)
+    { s with s = StmtMem (d, tags) }
+  | StmtBind (lhs, rhs) ->
+    let rhs = process_exp_instantiation iargs env state rhs in
+    { s with s = StmtBind (lhs, rhs) }
+  | StmtReturn e ->
+    let e = process_exp_instantiation iargs env state e in
+    { s with s = StmtReturn e }
+  | StmtIf (cond, then_, else_opt) ->
+    let cond = process_exp_instantiation iargs env state cond in
+    let then_ = process_stmt_instantiation iargs env state then_ in
+    let else_opt = Option.map (process_stmt_instantiation iargs env state) else_opt in
+    { s with s = StmtIf (cond, then_, else_opt) }
+  | StmtWhile (cond, body) ->
+    let cond = process_exp_instantiation iargs env state cond in
+    let body = process_stmt_instantiation iargs env state body in
+    { s with s = StmtWhile (cond, body) }
+  | StmtBlock stmts ->
+    let stmts = CCList.map (process_stmt_instantiation iargs env state) stmts in
+    { s with s = StmtBlock stmts }
+
+
+(* Process a function definition, including the 'next' chain for 'and' functions *)
+let rec process_function_def (iargs : Args.args) (env : env) (state : instantiation_state) (def : Typed.function_def)
+    (body : Typed.stmt) : Typed.function_def * Typed.stmt =
+  (* Re-enter the function context so addContextArg can add instance variables *)
+  let env = Env.reenterFunction env def.name in
+  let body = process_stmt_instantiation iargs env state body in
+  (* Check if function already had _ctx before processing *)
+  let had_ctx_before =
+    match def.args with
+    | { name; _ } :: _ when String.equal name context_name -> true
+    | _ -> false
+  in
+  (* After processing the body, instances may have been added to the context.
+     Re-apply insertContextArgument to add _ctx if needed. *)
+  let def = insertContextArgument env def in
+  (* Track if this function now needs context (didn't have it before, has it now) *)
+  let () =
+    if not had_ctx_before then
+      match def.args with
+      | { name; t = ctx_t; _ } :: _ when String.equal name context_name ->
+        (* Function was updated to need context - track it *)
+        let func_path_str = path_string def.name in
+        Hashtbl.replace state.functions_needing_context func_path_str ctx_t
+      | _ -> ()
+  in
+  let next =
+    match def.next with
+    | None -> None
+    | Some (next_def, next_body) ->
+      let next_def, next_body = process_function_def iargs env state next_def next_body in
+      Some (next_def, next_body)
+  in
+  { def with next }, body
+
+
+(* Process a top statement *)
+let process_top_stmt_instantiation (iargs : Args.args) (env : env) (state : instantiation_state) (t : Typed.top_stmt) :
+    Typed.top_stmt =
+  match t.top with
+  | TopFunction (def, body) ->
+    let def, body = process_function_def iargs env state def body in
+    { t with top = TopFunction (def, body) }
+  | TopGenericPlaceholder _ -> t (* Pass through - will be replaced in second pass *)
+  | TopExternal _ | TopType _ | TopEnum _ | TopConstant _ | TopAlias _ -> t
+
+
+(* Transform EGenCall to ECall in a module's statements.
+   Uses two passes to handle functions that gain context arguments:
+   Pass 1: Process all functions, collecting which ones need context
+   Pass 2: Update ECall nodes to add context arguments where needed *)
+let transform_module_generics (iargs : Args.args) (env : env) (state : instantiation_state)
+    (stmts : Typed.top_stmt list) : Typed.top_stmt list =
+  (* Pass 1: Process all functions - this populates functions_needing_context *)
+  let stmts = CCList.map (process_top_stmt_instantiation iargs env state) stmts in
+  (* Pass 2: Update ECall nodes for functions that now need context *)
+  CCList.map (process_top_stmt_instantiation iargs env state) stmts
+
+
+(* Replace placeholders with their specialized functions *)
+let replace_placeholders_in_module (state : instantiation_state) (module_name : string) (stmts : Typed.top_stmt list) :
+    Typed.top_stmt list =
+  CCList.flat_map
+    (fun (stmt : Typed.top_stmt) ->
+      match stmt.top with
+      | TopGenericPlaceholder generic_name ->
+        (* Find all specializations for this generic in this module *)
+        let for_this_generic, remaining =
+          CCList.partition
+            (fun (m, gname, _, _) -> String.equal m module_name && String.equal gname generic_name)
+            state.pending_functions
+        in
+        state.pending_functions <- remaining;
+        CCList.map
+          (fun (_, _, def, body) -> { top = TopFunction (def, body); loc = def.loc })
+          (CCList.rev for_this_generic)
+      | _ -> [ stmt ])
+    stmts
+
+
+(* ========== End Generic Function Instantiation ========== *)
+
 let infer_single (iargs : Args.args) (env : env) (h : Parse.parsed_file) : env * top_stmt list =
   let set = createExistingTypeSet (createTypes env) in
   let env = Env.enterModule env h.name in
@@ -2619,15 +2287,39 @@ let infer_single (iargs : Args.args) (env : env) (h : Parse.parsed_file) : env *
 
 
 let infer (iargs : Args.args) (parsed : Parse.parsed_file list) : env * top_stmt list =
-  let env, stmts =
+  (* Phase 1: Process all modules to build the environment and create EGenCall nodes *)
+  let env, module_stmts =
     CCList.fold_left
       (fun (env, acc) (h : Parse.parsed_file) ->
         let env = Env.enterModule env h.name in
         let env, stmt = top_stmt_list iargs env h.stmts in
         let env = Env.exitModule env in
-        env, stmt @ acc)
+        (* Keep track of (module_name, stmts) pairs for phase 2 *)
+        env, (h.name, stmt) :: acc)
       (Env.empty (), [])
       parsed
   in
+  let module_stmts = CCList.rev module_stmts in
+  (* Phase 2: Instantiate generics - two passes *)
+  let instantiation_state = create_instantiation_state () in
+  (* Pass 1: Transform all EGenCall to ECall across all modules, collecting specialized functions *)
+  let transformed_stmts =
+    CCList.map
+      (fun (module_name, stmts) ->
+        let env = Env.enterModule env module_name in
+        let stmts = transform_module_generics iargs env instantiation_state stmts in
+        let _ = Env.exitModule env in
+        module_name, stmts)
+      module_stmts
+  in
+  (* Pass 2: Replace placeholders with specialized functions, preserving original order *)
+  let final_stmts =
+    CCList.fold_left
+      (fun acc (module_name, stmts) ->
+        let stmts = replace_placeholders_in_module instantiation_state module_name stmts in
+        stmts @ acc)
+      []
+      transformed_stmts
+  in
   let types = createTypes env in
-  env, types @ CCList.rev stmts
+  env, types @ CCList.rev final_stmts

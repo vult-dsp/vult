@@ -106,6 +106,21 @@ type exp_d =
       { path : path
       ; elems : (string * exp) list
       }
+  | EGenCall of
+      { generic_path : path (* Full path to the generic function for lookup *)
+      ; args : exp list (* Processed function arguments *)
+      ; explicit_args : exp list (* Processed explicit generic arguments (functions, constants) *)
+      }
+  | ETypeIntrinsic of
+      { intrinsic : type_intrinsic (* Which intrinsic: typedefault, typemax, typemin *)
+      ; type_param : string (* The generic type parameter name, e.g., "t" from 't *)
+      }
+
+(** Type intrinsics that depend on the concrete type during generic instantiation *)
+and type_intrinsic =
+  | TypeDefault (* typedefault('t) - default value for the type *)
+  | TypeMax (* typemax('t) - maximum value for the type *)
+  | TypeMin (* typemin('t) - minimum value for the type *)
 
 and exp =
   { e : exp_d
@@ -173,6 +188,7 @@ and function_def =
 type top_stmt_d =
   | TopExternal of function_def * string option
   | TopFunction of function_def * stmt
+  | TopGenericPlaceholder of string (* Marks where specializations of a generic function should be inserted *)
   | TopType of
       { path : path
       ; members : (string * type_ * Ptags.tags * Loc.t) list
@@ -207,6 +223,7 @@ type generic_function =
   ; body : Syntax.stmt (* Store the unprocessed body *)
   ; loc : Loc.t
   ; tags : tag list
+  ; type_index : int (* Index for type ordering - captured at definition time *)
   }
 
 type generic_binding =
@@ -432,6 +449,19 @@ let rec print_exp (e : exp) =
     let path = print_path path in
     let elems = Pla.map_sep Pla.commaspace printElem elems in
     {%pla|<#path#> { <#elems#> }|}
+  | EGenCall { generic_path; args; explicit_args } ->
+    let all_args = explicit_args @ args in
+    let args = Pla.map_sep Pla.commaspace print_exp all_args in
+    let path = print_path generic_path in
+    {%pla|<#path#>@generic(<#args#>)|}
+  | ETypeIntrinsic { intrinsic; type_param } ->
+    let intrinsic_name =
+      match intrinsic with
+      | TypeDefault -> "typedefault"
+      | TypeMax -> "typemax"
+      | TypeMin -> "typemin"
+    in
+    {%pla|<#intrinsic_name#s>('<#type_param#s>)|}
 
 
 let rec print_lexp (e : lexp) =
@@ -565,6 +595,7 @@ let print_top_stmt t =
   | TopFunction (def, body) -> print_function_def FunKindFun def (`Body body)
   | TopExternal (def, Some linkname) -> print_function_def FunKindExternal def (`LinkName linkname)
   | TopExternal (def, None) -> print_function_def FunKindExternal def `NoLinkName
+  | TopGenericPlaceholder name -> {%pla|(* generic placeholder: <#name#s> *)|}
   | TopAlias { path = p; alias_of } ->
     let p = print_path p in
     let alias_of = print_path alias_of in

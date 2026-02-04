@@ -50,6 +50,7 @@ let tag_name (t : Ptags.tag) : string =
   | Ptags.TagBool b -> string_of_bool b
   | Ptags.TagReal f -> string_of_float f
   | Ptags.TagString s -> s
+  | Ptags.TagTypeIntrinsic (intrinsic, type_param) -> Printf.sprintf "%s('%s)" intrinsic type_param
 
 
 let rec path (p : path) : string =
@@ -106,6 +107,7 @@ and exp_d (e : exp_d) : string =
     let elems_str = String.concat " " (List.map (fun (p, e) -> Printf.sprintf "(%s %s)" (path p) (exp e)) elems) in
     Printf.sprintf "(record %s %s)" (path p) elems_str
   | SENamed (e1, e2) -> Printf.sprintf "(named %s %s)" (exp e1) (exp e2)
+  | SETypeIntrinsic (name, type_param) -> Printf.sprintf "(type_intrinsic %s '%s)" name type_param
 
 
 and pattern (p : pattern) : string = Printf.sprintf "(pattern %s %s)" (pattern_d p.p) (Loc.to_string p.loc)

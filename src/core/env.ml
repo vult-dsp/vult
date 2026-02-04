@@ -162,13 +162,6 @@ type m =
   ; mutable init : (path * path) list
   ; enums : t Map.t
   ; mutable constants : var Map.t
-  ; mutable pending_injections :
-      (Typed.function_def
-      * Pparser.Syntax.stmt
-      * ((string * string) list * (string * Pparser.Syntax.exp) list)
-      * (string * Typed.type_) list)
-      list
-        (* Functions to be injected with their syntax bodies, substitutions, and type parameter bindings *)
   }
 
 (* Generic lookup result variant *)
@@ -635,6 +628,20 @@ let createContextForFunction (env : env) name loc : env =
   { env with location = InContext (m.name, Some (path, t)) }
 
 
+let createContextForFunctionWithIndex (env : env) name loc (type_index : int) : env =
+  let m = getCurrentModule env in
+  let report name (found : t) =
+    Error.raiseError
+      ("A function with the name '" ^ name ^ "' already exists at " ^ Loc.to_string_readable found.loc)
+      loc
+  in
+  let type_name = name ^ "_type" in
+  let path = getPath m type_name loc in
+  let t = { descr = Record (Map.empty ()); path; index = type_index; loc; generated = true } in
+  let _ = Map.update (report name) type_name t m.types in
+  { env with location = InContext (m.name, Some (path, t)) }
+
+
 let addAliasToContext (env : env) name loc : env =
   match getCurrentContext env with
   | Some (ctx, { descr = Record members; _ }) when not (Map.is_empty members) ->
@@ -785,6 +792,22 @@ let exitFunction (env : env) : env =
   { env with location = InContext (m.name, f.context) }
 
 
+(** Re-enter a function context for post-processing. Looks up the function by path
+    and sets the environment to be inside that function. *)
+let reenterFunction (env : env) (func_path : path) : env =
+  let module_name =
+    match func_path.n with
+    | Some n -> n
+    | None -> (getCurrentModule env).name
+  in
+  match Map.find module_name env.modules with
+  | None -> failwith ("reenterFunction: module '" ^ module_name ^ "' not found")
+  | Some m -> (
+    match Map.find func_path.id m.functions with
+    | Some f -> { env with location = InFunction (module_name, f) }
+    | None -> failwith ("reenterFunction: function '" ^ pathString func_path ^ "' not found"))
+
+
 let addCustomInitFunction (env : env) name =
   match getCurrentContext env with
   | Some (p, _) ->
@@ -808,7 +831,6 @@ let enterModule (env : env) (name : string) : env =
       ; enums = Map.empty ()
       ; init = []
       ; constants = Map.empty ()
-      ; pending_injections = []
       }
     in
     let () = Map.update report name m env.modules in
@@ -972,10 +994,7 @@ let addGeneric (env : env) (generic : Typed.generic_function) : env =
 
 
 (* Generic lookup using the new generic lookup system *)
-let lookupGeneric (env : env) (name : string) : Typed.generic_function option =
-  let generic_path : path = { id = name; n = None; loc = Loc.default } in
-  findGeneric (lookupPath env generic_path)
-
+let lookupGeneric (env : env) (path : path) : Typed.generic_function option = findGeneric (lookupPath env path)
 
 let addInstantiation (env : env) (instantiation : Typed.generic_instantiation) : env =
   let module_name =
@@ -1020,54 +1039,6 @@ let findInstantiation (env : env) (signature : Typed.instantiation_signature) : 
     | Some m -> SignatureMap.find signature m.instantiated
     | None -> None)
   | None -> None
-
-
-(* Backward compatibility function removed - now using signature-based lookup *)
-
-(* Add a function to be injected into the current module *)
-let addPendingInjection (env : env)
-    (func_def_syntax_subs :
-      Typed.function_def
-      * Pparser.Syntax.stmt
-      * ((string * string) list * (string * Pparser.Syntax.exp) list)
-      * (string * Typed.type_) list) : env =
-  let module_name =
-    match env.location with
-    | InModule name -> name
-    | InContext (name, _) -> name
-    | InFunction (name, _) -> name
-    | Top -> failwith "Internal error in addPendingInjection: called at Top level (not in any module context)"
-  in
-  let module_opt = Map.find module_name env.modules in
-  match module_opt with
-  | Some m ->
-    m.pending_injections <- func_def_syntax_subs :: m.pending_injections;
-    env
-  | None -> failwith ("Internal error in addPendingInjection: module '" ^ module_name ^ "' not found")
-
-
-(* Get and clear pending injections for a module *)
-let getPendingInjectionsAndClear (env : env) :
-    (Typed.function_def
-    * Pparser.Syntax.stmt
-    * ((string * string) list * (string * Pparser.Syntax.exp) list)
-    * (string * Typed.type_) list)
-    list =
-  let module_name =
-    match env.location with
-    | InModule name -> name
-    | InContext (name, _) -> name
-    | InFunction (name, _) -> name
-    | Top -> failwith "Internal error in getPendingInjectionsAndClear: called at Top level (not in any module context)"
-  in
-  let module_opt = Map.find module_name env.modules in
-  match module_opt with
-  | Some m ->
-    let injections = List.rev m.pending_injections in
-    (* Reverse to maintain order *)
-    m.pending_injections <- [];
-    injections
-  | None -> failwith ("Internal error in getPendingInjectionsAndClear: module '" ^ module_name ^ "' not found")
 
 
 (* Unified expression lookup for handling ambiguous symbols *)

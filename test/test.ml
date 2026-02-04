@@ -196,12 +196,14 @@ let interpreter =
   ; "generics_comprehensive.vult"
   ; "generics_multiple_types.vult"
   ; "generics_nested.vult"
+  ; "generics_shared_types.vult"
   ; "generics_stress.vult"
   ; "instance_state.vult"
   ; "int16_test.vult"
   ; "memory_state.vult"
   ; "qualified_enum_patterns.vult"
   ; "strength_reduction.vult"
+  ; "type_intrinsics.vult"
   ]
 
 

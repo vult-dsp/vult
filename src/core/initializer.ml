@@ -53,44 +53,119 @@ let rec getInitRHS (t : type_) =
   | _ -> failwith "Not a simple type"
 
 
+(** Infers the expected tag type from a Prog type *)
+let inferTagType (t : type_) : Pparser.Ptags.tag_type =
+  match t.t with
+  | TInt | TInt16 -> Pparser.Ptags.TypeInt
+  | TReal | TFix16 -> Pparser.Ptags.TypeReal
+  | TBool -> Pparser.Ptags.TypeBool
+  | TString -> Pparser.Ptags.TypeString
+  | _ -> Pparser.Ptags.TypeInt (* default *)
+
+
+(** Resolves a type intrinsic (typemax, typemin, typedefault) for a concrete type *)
+let resolveTypeIntrinsic (intrinsic : string) (t : type_) : exp =
+  let loc = t.loc in
+  match intrinsic, t.t with
+  (* typedefault - all types supported *)
+  | "typedefault", TInt -> { e = EInt 0; t; loc }
+  | "typedefault", TInt16 -> { e = EInt 0; t; loc }
+  | "typedefault", TReal -> { e = EReal 0.0; t; loc }
+  | "typedefault", TFix16 -> { e = EFixed 0.0; t; loc }
+  | "typedefault", TBool -> { e = EBool false; t; loc }
+  | "typedefault", TString -> { e = EString ""; t; loc }
+  (* typemax - numeric types only *)
+  | "typemax", TInt -> { e = EInt 2147483647; t; loc }
+  | "typemax", TInt16 -> { e = EInt 32767; t; loc }
+  | "typemax", TReal -> { e = EReal 3.40282347e+38; t; loc }
+  | "typemax", TFix16 -> { e = EFixed 32767.99998; t; loc }
+  | "typemax", TBool -> { e = EBool true; t; loc }
+  (* typemin - numeric types only *)
+  | "typemin", TInt -> { e = EInt (-2147483648); t; loc }
+  | "typemin", TInt16 -> { e = EInt (-32768); t; loc }
+  | "typemin", TReal -> { e = EReal (-3.40282347e+38); t; loc }
+  | "typemin", TFix16 -> { e = EFixed (-32768.0); t; loc }
+  | "typemin", TBool -> { e = EBool false; t; loc }
+  (* Unsupported combinations *)
+  | _ ->
+    let type_name = Pla.print (Prog.Print.print_type_ t) in
+    Error.raiseError (Printf.sprintf "%s() is not supported for type '%s'" intrinsic type_name) loc
+
+
+(** Converts a tag value to a Prog expression *)
+let tagValueToExp (value : Pparser.Ptags.value) (t : type_) : exp =
+  let loc = t.loc in
+  match value with
+  | Pparser.Ptags.Int i -> { e = EInt i; t; loc }
+  | Pparser.Ptags.Real r -> { e = EReal r; t; loc }
+  | Pparser.Ptags.Bool b -> { e = EBool b; t; loc }
+  | Pparser.Ptags.String s -> { e = EString s; t; loc }
+  | Pparser.Ptags.Id _ -> failwith "Identifier not supported as init value"
+  | Pparser.Ptags.TypeIntrinsic (intrinsic, _type_param) ->
+    (* Resolve the intrinsic based on the concrete type t *)
+    resolveTypeIntrinsic intrinsic t
+
+
+(** Extracts the init value from tags if present *)
+let getInitValueFromTags (tags : Pparser.Ptags.tags) (t : type_) : exp option =
+  match Pparser.Ptags.getArguments tags "init" with
+  | Some args -> (
+    (* First try to get a typed value matching the expected type *)
+    match Pparser.Ptags.getTypedParam args ("value", inferTagType t) with
+    | _, Some value -> Some (tagValueToExp value t)
+    | _, None -> (
+      (* If that fails, try to get a type intrinsic *)
+      match Pparser.Ptags.getTypedParam args ("value", Pparser.Ptags.TypeTypeIntrinsic) with
+      | _, Some value -> Some (tagValueToExp value t)
+      | _, None -> None))
+  | None -> None
+
+
 type cstyle =
   | NewObject
   | RefObject
 
-let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
-  match t with
-  | { t = TEmptyType; loc; _ } ->
+(** Creates an initialization statement. If init_value is Some, uses that custom value
+    instead of the default for the type. For primitive types, uses the custom value directly.
+    For composite types, the custom init value is ignored. *)
+let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) (init_value : exp option) =
+  match init_value, t with
+  (* If a custom init value is provided and the type is a simple type, use it *)
+  | Some custom_rhs, { t = TInt | TInt16 | TReal | TFix16 | TString | TBool; loc; _ } ->
+    { s = StmtBind (lhs, custom_rhs); loc }
+  (* Default initialization for types without custom init value *)
+  | None, { t = TEmptyType; loc; _ } ->
     let rhs = getInitRHS t in
     { s = StmtBind (lhs, rhs); loc }
-  | { t = TVoid _; loc; _ } ->
+  | None, { t = TVoid _; loc; _ } ->
     let rhs = getInitRHS t in
     { s = StmtBind (lhs, rhs); loc }
-  | { t = TInt; loc; _ } ->
+  | None, { t = TInt; loc; _ } ->
     let rhs = getInitRHS t in
     { s = StmtBind (lhs, rhs); loc }
-  | { t = TInt16; loc; _ } ->
+  | None, { t = TInt16; loc; _ } ->
     let rhs = getInitRHS t in
     { s = StmtBind (lhs, rhs); loc }
-  | { t = TReal; loc; _ } ->
+  | None, { t = TReal; loc; _ } ->
     let rhs = getInitRHS t in
     { s = StmtBind (lhs, rhs); loc }
-  | { t = TFix16; loc; _ } ->
+  | None, { t = TFix16; loc; _ } ->
     let rhs = getInitRHS t in
     { s = StmtBind (lhs, rhs); loc }
-  | { t = TString; loc; _ } ->
+  | None, { t = TString; loc; _ } ->
     let rhs = getInitRHS t in
     { s = StmtBind (lhs, rhs); loc }
-  | { t = TBool; loc; _ } ->
+  | None, { t = TBool; loc; _ } ->
     let rhs = getInitRHS t in
     { s = StmtBind (lhs, rhs); loc }
-  | { t = TTuple _; _ } -> failwith "tuples"
-  | { t = TStruct { path; _ }; loc; _ } when cstyle = RefObject ->
+  | _, { t = TTuple _; _ } -> failwith "tuples"
+  | _, { t = TStruct { path; _ }; loc; _ } when cstyle = RefObject ->
     let rhs = { e = ECall { path = path ^ "_init"; args = [ rhs ] }; t; loc } in
     { s = StmtBind ({ l = LWild; loc; t = C.void_t }, rhs); loc }
-  | { t = TStruct { path; _ }; loc; _ } ->
+  | _, { t = TStruct { path; _ }; loc; _ } ->
     let rhs = { e = ECall { path = path ^ "_alloc"; args = [] }; t; loc } in
     { s = StmtBind (lhs, rhs); loc }
-  | { t = TArray (Some size, subt); loc; _ } when cstyle = RefObject ->
+  | _, { t = TArray (Some size, subt); loc; _ } when cstyle = RefObject ->
     let i = "i_" ^ string_of_int (getTick ()) in
     let int_t = C.int_t in
     let index = { e = EId i; t = int_t; loc } in
@@ -99,7 +174,7 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
     let bind =
       let lhs = { l = LIndex { e = lhs; index }; t = subt; loc } in
       let rhs = { e = EIndex { e = rhs; index }; t = subt; loc } in
-      initStatement cstyle lhs rhs subt
+      initStatement cstyle lhs rhs subt None
     in
     let plus_one = { e = EOp (OpAdd, index, one); t = int_t; loc } in
     let incr = { s = StmtBind ({ l = LId i; t = int_t; loc }, plus_one); loc } in
@@ -108,7 +183,7 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
     let decl = { s = StmtDecl ({ d = DId (i, None); t = int_t; loc }, None); loc } in
     let init = { s = StmtBind ({ l = LId i; t = int_t; loc }, { e = EInt 0; t = int_t; loc }); loc } in
     { s = StmtBlock [ decl; init; loop ]; loc }
-  | { t = TArray (Some size, subt); loc; _ } ->
+  | _, { t = TArray (Some size, subt); loc; _ } ->
     let i = "i_" ^ string_of_int (getTick ()) in
     let int_t = C.int_t in
     let index = { e = EId i; t = int_t; loc } in
@@ -119,7 +194,7 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
     let bind =
       let lhs = { l = LIndex { e = lhs_temp; index }; t = subt; loc } in
       let rhs = { e = EIndex { e = rhs_temp; index }; t = subt; loc } in
-      initStatement cstyle lhs rhs subt
+      initStatement cstyle lhs rhs subt None
     in
     let plus_one = { e = EOp (OpAdd, index, one); t = int_t; loc } in
     let incr = { s = StmtBind ({ l = LId i; t = int_t; loc }, plus_one); loc } in
@@ -130,10 +205,14 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
     let init = { s = StmtBind ({ l = LId i; t = int_t; loc }, { e = EInt 0; t = int_t; loc }); loc } in
     let transfer = { s = StmtBind (lhs, rhs_temp); loc } in
     { s = StmtBlock [ decl_array; decl; init; loop; transfer ]; loc }
-  | { t = TArray (None, _); _ } -> failwith "initStatement: Array without size"
-  | { t = TList _; loc; _ } ->
+  | _, { t = TArray (None, _); _ } -> failwith "initStatement: Array without size"
+  | _, { t = TList _; loc; _ } ->
     (* Lists are initialized as empty - use EEmptyValue with list type *)
     let rhs = { e = EEmptyValue; t; loc } in
+    { s = StmtBind (lhs, rhs); loc }
+  (* Catch remaining cases with custom init value for unsupported types *)
+  | Some _, { loc; _ } ->
+    let rhs = getInitRHS t in
     { s = StmtBind (lhs, rhs); loc }
 
 
@@ -171,10 +250,11 @@ let createInitFunction custom_initializers (iargs : Args.args) stmt =
     let ectx = { e = EId "_ctx"; t = this_type; loc } in
     let stmts =
       CCList.map
-        (fun (var, (t : type_), _, _) ->
+        (fun (var, (t : type_), tags, _) ->
+          let init_value = getInitValueFromTags tags t in
           let lhs = { l = LMember (lctx, var); t; loc = t.loc } in
           let rhs = { e = EMember (ectx, var); t; loc = t.loc } in
-          initStatement cstyle lhs rhs t)
+          initStatement cstyle lhs rhs t init_value)
         struct_t.members
     in
     let custom_initializer = customInitializerCall custom_initializers struct_t.path ectx void_type loc in
@@ -202,10 +282,11 @@ let createInitFunction custom_initializers (iargs : Args.args) stmt =
     let ectx = { e = EId "_ctx"; t = this_type; loc } in
     let stmts =
       CCList.map
-        (fun (var, (t : type_), _, _) ->
+        (fun (var, (t : type_), tags, _) ->
+          let init_value = getInitValueFromTags tags t in
           let lhs = { l = LMember (lctx, var); t; loc = t.loc } in
           let rhs = { e = EMember (ectx, var); t; loc = t.loc } in
-          initStatement cstyle lhs rhs t)
+          initStatement cstyle lhs rhs t init_value)
         struct_t.members
     in
     let custom_initializer = customInitializerCall custom_initializers struct_t.path ectx void_type loc in

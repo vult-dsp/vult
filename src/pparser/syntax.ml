@@ -73,6 +73,7 @@ type exp_d =
       ; elems : (path * exp) list
       }
   | SENamed of exp * exp
+  | SETypeIntrinsic of string * string (* intrinsic_name, type_param_name e.g., ("typemax", "t") *)
 
 and exp =
   { e : exp_d
@@ -312,6 +313,7 @@ module Print = struct
       let e1 = exp e1 in
       let e2 = exp e2 in
       {%pla|<#e1#>:<#e2#>|}
+    | SETypeIntrinsic (intrinsic_name, type_param) -> {%pla|<#intrinsic_name#s>('<#type_param#s>)|}
 
 
   let rec pattern (p : pattern) = pattern_d p.p
@@ -956,6 +958,9 @@ module Mapper = struct
               SENamed (field_0', field_1')
           in
           state, odata
+        | SETypeIntrinsic _ ->
+          (* Type intrinsics have no sub-expressions to map *)
+          state, idata
       else
         state, idata
     in
@@ -1486,6 +1491,7 @@ module SExpr = struct
       | SERecord { path; elems } ->
         let elem_str = print_list (fun (p, e) -> "(" ^ print_path p ^ " " ^ print_exp e ^ ")") elems in
         "(SERecord " ^ print_path path ^ " " ^ elem_str ^ ")"
+      | SETypeIntrinsic (name, type_param) -> "(SETypeIntrinsic " ^ name ^ " " ^ type_param ^ ")"
     in
     "(exp " ^ e_str ^ ")"
 
