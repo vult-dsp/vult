@@ -1,0 +1,428 @@
+// Tests for value-based specialization of constant parameters ('param)
+//
+// Key behaviors tested:
+// - All constant literals → specialized version with constants inlined
+// - Any variable argument → non-specialized version with all params as args
+// - Different constant values → different specialized versions
+// - Same variable calls → share same non-specialized version
+// - Interleaved constant and regular parameters
+// - Multiple constant parameters
+// - Stateful generic functions with constant params
+
+// =============================================================================
+// Test 1: Basic constant specialization vs non-specialization
+// =============================================================================
+fun add_const('a : int, b : int) : int {
+   return a + b;
+}
+
+fun test_basic_specialization() : int {
+   // All constants - should create specialized version with 'a = 5 inlined
+   val result1 = add_const(5, 10);  // 5 + 10 = 15
+
+   // Different constants - should create different specialized version
+   val result2 = add_const(100, 10);  // 100 + 10 = 110
+
+   if (result1 == 15 && result2 == 110) {
+      return 100;
+   }
+   return -1;
+}
+
+// =============================================================================
+// Test 2: Non-specialization with variable arguments
+// =============================================================================
+fun test_nonspec_with_variable() : int {
+   val x = 7;
+   // Variable argument - should use non-specialized version
+   val result1 = add_const(x, 10);  // 7 + 10 = 17
+
+   val y = 20;
+   // Another variable - should reuse same non-specialized version
+   val result2 = add_const(y, 5);   // 20 + 5 = 25
+
+   if (result1 == 17 && result2 == 25) {
+      return 200;
+   }
+   return -2;
+}
+
+// =============================================================================
+// Test 3: Mixed calls - some with constants, some with variables
+// =============================================================================
+fun scale('factor : real, x : real) : real {
+   return factor * x;
+}
+
+fun test_mixed_calls() : int {
+   // Constant - specialized
+   val a = scale(2.0, 5.0);   // 2.0 * 5.0 = 10.0
+
+   // Variable - non-specialized
+   val f = 3.0;
+   val b = scale(f, 5.0);     // 3.0 * 5.0 = 15.0
+
+   // Different constant - another specialized version
+   val c = scale(0.5, 10.0);  // 0.5 * 10.0 = 5.0
+
+   if (a == 10.0 && b == 15.0 && c == 5.0) {
+      return 300;
+   }
+   return -3;
+}
+
+// =============================================================================
+// Test 4: Multiple constant parameters - all literals
+// =============================================================================
+fun weighted_sum('w1 : real, 'w2 : real, x : real, y : real) : real {
+   return w1 * x + w2 * y;
+}
+
+fun test_multi_const_all_literals() : int {
+   // All constants specialized
+   val result1 = weighted_sum(0.3, 0.7, 10.0, 20.0);  // 0.3*10 + 0.7*20 = 3 + 14 = 17
+   val result2 = weighted_sum(0.5, 0.5, 10.0, 20.0);  // 0.5*10 + 0.5*20 = 5 + 10 = 15
+
+   if (result1 == 17.0 && result2 == 15.0) {
+      return 400;
+   }
+   return -4;
+}
+
+// =============================================================================
+// Test 5: Multiple constant parameters - some variable
+// =============================================================================
+fun test_multi_const_with_variable() : int {
+   val w = 0.4;
+   // First constant is variable - non-specialized
+   val result1 = weighted_sum(w, 0.6, 10.0, 10.0);  // 0.4*10 + 0.6*10 = 4 + 6 = 10
+
+   // Both constants are variables - also non-specialized (same version)
+   val w2 = 0.25;
+   val result2 = weighted_sum(w, w2, 8.0, 8.0);    // 0.4*8 + 0.25*8 = 3.2 + 2 = 5.2
+
+   if (result1 == 10.0 && result2 == 5.2) {
+      return 500;
+   }
+   return -5;
+}
+
+// =============================================================================
+// Test 6: Interleaved constant and regular parameters
+// =============================================================================
+fun interleaved(x : real, 'a : real, y : real, 'b : real) : real {
+   return a * x + b * y;
+}
+
+fun test_interleaved_params() : int {
+   // All constants for 'a and 'b - specialized
+   val result1 = interleaved(2.0, 3.0, 4.0, 5.0);  // 3*2 + 5*4 = 6 + 20 = 26
+
+   // Different constants - different specialized version
+   val result2 = interleaved(2.0, 1.0, 4.0, 1.0);  // 1*2 + 1*4 = 2 + 4 = 6
+
+   if (result1 == 26.0 && result2 == 6.0) {
+      return 600;
+   }
+   return -6;
+}
+
+// =============================================================================
+// Test 7: Interleaved with variable
+// =============================================================================
+fun test_interleaved_with_variable() : int {
+   val coef = 2.0;
+   // 'a is variable - non-specialized
+   val result = interleaved(3.0, coef, 4.0, 5.0);  // 2*3 + 5*4 = 6 + 20 = 26
+
+   if (result == 26.0) {
+      return 700;
+   }
+   return -7;
+}
+
+// =============================================================================
+// Test 8: Stateful function with constant param - specialized
+// =============================================================================
+fun accumulate('scale : real, x : real) : real {
+   mem sum : real;
+   sum = sum + scale * x;
+   return sum;
+}
+
+fun test_stateful_specialized() : int {
+   // Specialized version with scale=2.0 inlined
+   val a = accumulate(2.0, 1.0);  // sum = 0 + 2*1 = 2
+   val b = accumulate(2.0, 2.0);  // Different call site! sum = 0 + 2*2 = 4
+   val c = accumulate(2.0, 3.0);  // Different call site! sum = 0 + 2*3 = 6
+
+   // Each call site has its own instance
+   if (a == 2.0 && b == 4.0 && c == 6.0) {
+      return 800;
+   }
+   return -8;
+}
+
+// =============================================================================
+// Test 9: Stateful function with constant param - non-specialized
+// =============================================================================
+fun test_stateful_nonspec() : int {
+   val s = 3.0;
+   // Non-specialized version
+   val a = accumulate(s, 1.0);    // sum = 0 + 3*1 = 3
+   val b = accumulate(s, 2.0);    // Different call site! sum = 0 + 3*2 = 6
+
+   if (a == 3.0 && b == 6.0) {
+      return 900;
+   }
+   return -9;
+}
+
+// =============================================================================
+// Test 10: Constant param with negative value
+// =============================================================================
+fun offset('delta : int, x : int) : int {
+   return x + delta;
+}
+
+fun test_negative_constants() : int {
+   val result1 = offset(-5, 10);   // 10 + (-5) = 5
+   val result2 = offset(-100, 50); // 50 + (-100) = -50
+
+   if (result1 == 5 && result2 == -50) {
+      return 1000;
+   }
+   return -10;
+}
+
+// =============================================================================
+// Test 11: Constant param with zero
+// =============================================================================
+fun test_zero_constant() : int {
+   val result = offset(0, 42);  // 42 + 0 = 42
+
+   if (result == 42) {
+      return 1100;
+   }
+   return -11;
+}
+
+// =============================================================================
+// Test 12: Boolean constant param
+// =============================================================================
+fun conditional('flag : bool, x : int, y : int) : int {
+   if (flag) {
+      return x;
+   }
+   return y;
+}
+
+fun test_bool_constant() : int {
+   val a = conditional(true, 10, 20);   // returns 10
+   val b = conditional(false, 10, 20);  // returns 20
+
+   if (a == 10 && b == 20) {
+      return 1200;
+   }
+   return -12;
+}
+
+// =============================================================================
+// Test 13: Boolean constant with variable
+// =============================================================================
+fun test_bool_variable() : int {
+   val flag = true;
+   val result = conditional(flag, 30, 40);  // non-specialized, returns 30
+
+   if (result == 30) {
+      return 1300;
+   }
+   return -13;
+}
+
+// =============================================================================
+// Test 14: Constant param used in expression
+// =============================================================================
+fun polynomial('a : real, 'b : real, 'c : real, x : real) : real {
+   return a * x * x + b * x + c;
+}
+
+fun test_polynomial_specialized() : int {
+   // Specialized: a=1, b=2, c=1 -> (x+1)^2 = x^2 + 2x + 1
+   val result1 = polynomial(1.0, 2.0, 1.0, 2.0);  // 1*4 + 2*2 + 1 = 4 + 4 + 1 = 9
+   val result2 = polynomial(1.0, 2.0, 1.0, 3.0);  // 1*9 + 2*3 + 1 = 9 + 6 + 1 = 16
+
+   // Different coefficients - different specialized version
+   val result3 = polynomial(2.0, 0.0, -1.0, 2.0); // 2*4 + 0*2 - 1 = 8 - 1 = 7
+
+   if (result1 == 9.0 && result2 == 16.0 && result3 == 7.0) {
+      return 1400;
+   }
+   return -14;
+}
+
+// =============================================================================
+// Test 15: Constant param with type generic param
+// =============================================================================
+fun scale_generic('factor : int, x : 't) : 't {
+   mem last : 't;
+   last = x;
+   return x;  // Just return x (factor used to generate different specializations)
+}
+
+fun test_type_and_const_param() : int {
+   // Specialized for int with factor=1
+   val a = scale_generic(1, 42);
+   // Specialized for real with factor=1
+   val b = scale_generic(1, 3.14);
+   // Specialized for int with factor=2 (different specialization)
+   val c = scale_generic(2, 42);
+
+   if (a == 42 && b == 3.14 && c == 42) {
+      return 1500;
+   }
+   return -15;
+}
+
+// =============================================================================
+// Test 16: Deeply nested constant usage
+// =============================================================================
+fun multiply('k : int, x : int) : int {
+   return k * x;
+}
+
+fun test_nested_constant_usage() : int {
+   // Each call with different constant creates different specialization
+   val a = multiply(2, multiply(3, 5));   // multiply(3,5)=15, multiply(2,15)=30
+   val b = multiply(4, 10);               // 4 * 10 = 40
+
+   if (a == 30 && b == 40) {
+      return 1600;
+   }
+   return -16;
+}
+
+// =============================================================================
+// Test 17: Same specialized function called from different contexts
+// =============================================================================
+fun double('two : int, x : int) : int {
+   return two * x;
+}
+
+fun caller1() : int {
+   return double(2, 5);  // specialized with 2
+}
+
+fun caller2() : int {
+   return double(2, 10); // same specialization
+}
+
+fun test_shared_specialization() : int {
+   val a = caller1();  // 2 * 5 = 10
+   val b = caller2();  // 2 * 10 = 20
+
+   if (a == 10 && b == 20) {
+      return 1700;
+   }
+   return -17;
+}
+
+// =============================================================================
+// Test 18: Fractional real constants
+// =============================================================================
+fun lerp('t : real, a : real, b : real) : real {
+   return a + t * (b - a);
+}
+
+fun test_fractional_constants() : int {
+   val result1 = lerp(0.0, 10.0, 20.0);   // 10 + 0*(20-10) = 10
+   val result2 = lerp(1.0, 10.0, 20.0);   // 10 + 1*(20-10) = 20
+   val result3 = lerp(0.5, 10.0, 20.0);   // 10 + 0.5*(20-10) = 15
+   val result4 = lerp(0.25, 0.0, 100.0);  // 0 + 0.25*100 = 25
+
+   if (result1 == 10.0 && result2 == 20.0 && result3 == 15.0 && result4 == 25.0) {
+      return 1800;
+   }
+   return -18;
+}
+
+// =============================================================================
+// Test 19: Complex expression with constant
+// =============================================================================
+fun quadratic_discriminant('a : real, 'b : real, 'c : real) : real {
+   return b * b - 4.0 * a * c;
+}
+
+fun test_quadratic() : int {
+   // x^2 - 5x + 6 = 0 -> discriminant = 25 - 24 = 1
+   val d1 = quadratic_discriminant(1.0, -5.0, 6.0);
+
+   // 2x^2 + 4x + 2 = 0 -> discriminant = 16 - 16 = 0
+   val d2 = quadratic_discriminant(2.0, 4.0, 2.0);
+
+   if (d1 == 1.0 && d2 == 0.0) {
+      return 1900;
+   }
+   return -19;
+}
+
+// =============================================================================
+// Test 20: Constant param with memory initialization
+// =============================================================================
+fun init_with_const('init : real, x : real) : real {
+   mem value : real;
+   if (value == 0.0) {
+      value = init;
+   }
+   value = value + x;
+   return value;
+}
+
+fun test_const_init() : int {
+   // Different call sites, each with own instance initialized to different values
+   val a = init_with_const(10.0, 1.0);  // value=10+1=11
+   val b = init_with_const(20.0, 2.0);  // value=20+2=22
+
+   if (a == 11.0 && b == 22.0) {
+      return 2000;
+   }
+   return -20;
+}
+
+// =============================================================================
+// Main test runner
+// =============================================================================
+fun main() : int {
+   val t1 = test_basic_specialization();
+   val t2 = test_nonspec_with_variable();
+   val t3 = test_mixed_calls();
+   val t4 = test_multi_const_all_literals();
+   val t5 = test_multi_const_with_variable();
+   val t6 = test_interleaved_params();
+   val t7 = test_interleaved_with_variable();
+   val t8 = test_stateful_specialized();
+   val t9 = test_stateful_nonspec();
+   val t10 = test_negative_constants();
+   val t11 = test_zero_constant();
+   val t12 = test_bool_constant();
+   val t13 = test_bool_variable();
+   val t14 = test_polynomial_specialized();
+   val t15 = test_type_and_const_param();
+   val t16 = test_nested_constant_usage();
+   val t17 = test_shared_specialization();
+   val t18 = test_fractional_constants();
+   val t19 = test_quadratic();
+   val t20 = test_const_init();
+
+   // Sum of all passing tests: 100+200+...+2000 = 21000
+   val expected = 21000;
+   val actual = t1 + t2 + t3 + t4 + t5 + t6 + t7 + t8 + t9 + t10 +
+                t11 + t12 + t13 + t14 + t15 + t16 + t17 + t18 + t19 + t20;
+
+   if (actual == expected) {
+      return expected;  // All tests passed
+   }
+
+   // Return negative sum to indicate which tests failed
+   return actual;
+}

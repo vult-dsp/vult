@@ -777,22 +777,24 @@ and record (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
 and expressionList (buffer : Stream.stream) : exp list = commaSepList expression buffer
 
 and stmtVal (buffer : Stream.stream) : stmt =
-  let loc = Stream.location buffer in
+  let start_loc = Stream.location buffer in
   let _ = consumeInContext buffer VAL "value declaration" in
   let lhs = dexp_expression 0 buffer in
   match Stream.peek buffer with
   | EQUAL ->
     let _ = Stream.skip buffer in
     let rhs = expression 0 buffer in
+    let end_loc = Stream.location buffer in
     let _ = consumeInContext buffer SEMI "value declaration" in
-    { s = SStmtVal (lhs, Some rhs); loc }
+    { s = SStmtVal (lhs, Some rhs); loc = Loc.merge start_loc end_loc }
   | _ ->
+    let end_loc = Stream.location buffer in
     let _ = consumeInContext buffer SEMI "value declaration" in
-    { s = SStmtVal (lhs, None); loc }
+    { s = SStmtVal (lhs, None); loc = Loc.merge start_loc end_loc }
 
 
 and stmtMem (buffer : Stream.stream) : stmt =
-  let loc = Stream.location buffer in
+  let start_loc = Stream.location buffer in
   let _ = consumeInContext buffer MEM "memory declaration" in
   let lhs = dexp_expression 0 buffer in
   match Stream.peek buffer with
@@ -800,32 +802,36 @@ and stmtMem (buffer : Stream.stream) : stmt =
     let _ = Stream.skip buffer in
     let rhs = expression 0 buffer in
     let tags = optional_tag buffer in
+    let end_loc = Stream.location buffer in
     let _ = consumeInContext buffer SEMI "memory declaration" in
-    { s = SStmtMem (lhs, Some rhs, tags); loc }
+    { s = SStmtMem (lhs, Some rhs, tags); loc = Loc.merge start_loc end_loc }
   | _ ->
     let tags = optional_tag buffer in
+    let end_loc = Stream.location buffer in
     let _ = consumeInContext buffer SEMI "memory declaration" in
-    { s = SStmtMem (lhs, None, tags); loc }
+    { s = SStmtMem (lhs, None, tags); loc = Loc.merge start_loc end_loc }
 
 
 and stmtReturn (buffer : Stream.stream) : stmt =
-  let loc = Stream.location buffer in
+  let start_loc = Stream.location buffer in
   let _ = consumeInContext buffer RET "return statement" in
   let e = expression 0 buffer in
+  let end_loc = Stream.location buffer in
   let _ = consumeInContext buffer SEMI "return statement" in
-  { s = SStmtReturn e; loc }
+  { s = SStmtReturn e; loc = Loc.merge start_loc end_loc }
 
 
 and stmtBind (buffer : Stream.stream) : stmt =
+  let start_loc = Stream.location buffer in
   match lexp_expression 0 buffer with
   | e1 -> (
-    let loc = e1.loc in
     match Stream.peek buffer with
     | EQUAL ->
       let _ = consumeInContext buffer EQUAL "assignment" in
       let e2 = expression 0 buffer in
+      let end_loc = Stream.location buffer in
       let _ = consumeInContext buffer SEMI "assignment" in
-      { s = SStmtBind (e1, e2); loc }
+      { s = SStmtBind (e1, e2); loc = Loc.merge start_loc end_loc }
     | _ ->
       let message =
         Printf.sprintf "Invalid statement. All statements should be in the forms: \"a = b; \" or \"_ = b(); \" "
@@ -834,27 +840,27 @@ and stmtBind (buffer : Stream.stream) : stmt =
 
 
 and stmtIf (buffer : Stream.stream) : stmt =
+  let start_loc = Stream.location buffer in
   let _ = consumeInContext buffer IF "if statement" in
   let _ = consumeInContext buffer LPAREN "if condition" in
   let cond = expression 0 buffer in
   let _ = consumeInContext buffer RPAREN "if condition" in
   let tstm = stmtList buffer in
-  let loc = cond.loc in
   match Stream.peek buffer with
   | ELSE ->
     let _ = consumeInContext buffer ELSE "if-else statement" in
     let fstm = stmtList buffer in
-    { s = SStmtIf (cond, tstm, Some fstm); loc }
-  | _ -> { s = SStmtIf (cond, tstm, None); loc }
+    { s = SStmtIf (cond, tstm, Some fstm); loc = Loc.merge start_loc fstm.loc }
+  | _ -> { s = SStmtIf (cond, tstm, None); loc = Loc.merge start_loc tstm.loc }
 
 
 and stmtMatch (buffer : Stream.stream) : stmt =
+  let start_loc = Stream.location buffer in
   let _ = consumeInContext buffer MATCH "match statement" in
   let _ = consumeInContext buffer LPAREN "match expression" in
   let e = expression 0 buffer in
   let _ = consumeInContext buffer RPAREN "match expression" in
   let _ = consumeInContext buffer LBRACE "match cases" in
-  let loc = e.loc in
   let rec loop cases =
     let m = pattern 0 buffer in
     let _ = consumeInContext buffer ARROW "match case" in
@@ -864,8 +870,9 @@ and stmtMatch (buffer : Stream.stream) : stmt =
     | _ -> loop ((m, case) :: cases)
   in
   let cases = loop [] in
+  let end_loc = Stream.location buffer in
   let _ = consumeInContext buffer RBRACE "match cases" in
-  { s = SStmtMatch { e; cases }; loc }
+  { s = SStmtMatch { e; cases }; loc = Loc.merge start_loc end_loc }
 
 
 and typedArgOpt (buffer : Stream.stream) =
@@ -927,7 +934,8 @@ and parseGenericParam (buffer : Stream.stream) : generic_param =
     if String.length param_name > 0 && param_name.[0] = 'f' then
       GParamFunction (param_name, None)
     else
-      GParamType param_name
+      (* Default to constant parameter with unbound type (will be inferred) *)
+      GParamConstant (param_name, { t = STUnbound; loc = token.loc })
 
 
 and argList arg_parser (buffer : Stream.stream) =
@@ -942,54 +950,69 @@ and argList arg_parser (buffer : Stream.stream) =
   | _ -> []
 
 
-and parseGenericsAndArguments (buffer : Stream.stream) : generic_param list * arg list =
-  let rec loop generic_params param_names =
+and parseGenericsAndArguments (buffer : Stream.stream) : generic_param list * arg list * param_kind list =
+  (* Helper to extract name from generic_param *)
+  let getGenericName (param : generic_param) : string =
+    match param with
+    | GParamFunction (name, _) -> name
+    | GParamType name -> name
+    | GParamConstant (name, _) -> name
+  in
+  let rec loop generic_params generic_names generic_count args arg_names arg_count param_order =
     match Stream.peek buffer with
     | QUOTED_ID -> (
+      (* Parse specialized parameter *)
       let generic_param = parseGenericParam buffer in
-      let param_name =
-        match generic_param with
-        | GParamFunction (name, _) -> name
-        | GParamType name -> name
-        | GParamConstant (name, _) -> name
-      in
+      let param_name = getGenericName generic_param in
       (* Check for duplicate generic parameter names *)
-      (if List.mem param_name param_names then
-         let token = Stream.current buffer in
-         let msg = Printf.sprintf "Duplicate generic parameter name '%s'" param_name in
-         raise (ParserError (Error.PointedError (token.loc, msg))));
+      let () =
+        if List.mem param_name generic_names then
+          let token = Stream.current buffer in
+          let msg = Printf.sprintf "Duplicate generic parameter name '%s'" param_name in
+          raise (ParserError (Error.PointedError (token.loc, msg)))
+      in
+      (* Check for conflict with existing regular argument names *)
+      let () =
+        if List.mem param_name arg_names then
+          let token = Stream.current buffer in
+          let msg = Printf.sprintf "Generic parameter '%s' conflicts with function argument name" param_name in
+          raise (ParserError (Error.PointedError (token.loc, msg)))
+      in
+      let new_order = PKGeneric generic_count :: param_order in
       match Stream.peek buffer with
       | COMMA ->
         let _ = consumeInContext buffer COMMA "parameter list" in
-        loop (generic_param :: generic_params) (param_name :: param_names)
-      | _ -> List.rev (generic_param :: generic_params), [])
-    | ID ->
-      (* Start parsing regular arguments *)
-      let args = argList typedArgOpt buffer in
-      let generic_params_final = List.rev generic_params in
-      (* Check for conflicts between generic parameter names and regular argument names *)
-      List.iter
-        (fun generic_param ->
-          let generic_name =
-            match generic_param with
-            | GParamFunction (name, _) -> name
-            | GParamType name -> name
-            | GParamConstant (name, _) -> name
-          in
-          List.iter
-            (fun arg ->
-              let arg_name, _, arg_loc = arg in
-              if arg_name = generic_name then
-                let msg = Printf.sprintf "Generic parameter '%s' conflicts with function argument name" generic_name in
-                raise (ParserError (Error.PointedError (arg_loc, msg))))
-            args)
-        generic_params_final;
-      generic_params_final, args
+        loop
+          (generic_param :: generic_params)
+          (param_name :: generic_names)
+          (generic_count + 1)
+          args
+          arg_names
+          arg_count
+          new_order
+      | _ -> List.rev (generic_param :: generic_params), List.rev args, List.rev new_order)
+    | ID -> (
+      (* Parse regular argument *)
+      let arg = typedArgOpt buffer in
+      let arg_name, _, arg_loc = arg in
+      (* Check for conflict with existing generic parameter names *)
+      let () =
+        if List.mem arg_name generic_names then
+          let msg = Printf.sprintf "Function argument '%s' conflicts with generic parameter name" arg_name in
+          raise (ParserError (Error.PointedError (arg_loc, msg)))
+      in
+      (* Note: Duplicate argument name checking is handled by the type checker *)
+      let new_order = PKArg arg_count :: param_order in
+      match Stream.peek buffer with
+      | COMMA ->
+        let _ = consumeInContext buffer COMMA "parameter list" in
+        loop generic_params generic_names generic_count (arg :: args) (arg_name :: arg_names) (arg_count + 1) new_order
+      | _ -> List.rev generic_params, List.rev (arg :: args), List.rev new_order)
     | _ ->
-      (* No arguments at all *)
-      List.rev generic_params, []
+      (* No more arguments *)
+      List.rev generic_params, List.rev args, List.rev param_order
   in
-  loop [] []
+  loop [] [] 0 [] [] 0 []
 
 
 and stmtExternal (buffer : Stream.stream) : top_stmt =
@@ -1051,9 +1074,9 @@ and stmtFunctionDecl (buffer : Stream.stream) : function_def * Loc.t =
   let _ = Stream.skip buffer in
   let name, loc = id_name buffer in
   let _ = consumeInContext buffer LPAREN "function parameter list" in
-  let explicit_generic_params, args =
+  let explicit_generic_params, args, explicit_param_order =
     match Stream.peek buffer with
-    | RPAREN -> [], []
+    | RPAREN -> [], [], []
     | _ -> parseGenericsAndArguments buffer
   in
   let _ = consumeInContext buffer RPAREN "function parameter list" in
@@ -1075,6 +1098,8 @@ and stmtFunctionDecl (buffer : Stream.stream) : function_def * Loc.t =
   let implicit_generic_params = create_implicit_generic_params all_quoted_ids in
   (* Combine explicit and implicit generic parameters *)
   let all_generic_params = explicit_generic_params @ implicit_generic_params in
+  (* param_order only tracks explicit params - implicit type params don't appear in call args *)
+  let param_order = explicit_param_order in
   let tags = optional_tag buffer in
   let body = stmtList buffer in
   let next =
@@ -1084,7 +1109,7 @@ and stmtFunctionDecl (buffer : Stream.stream) : function_def * Loc.t =
       Some def
     | _ -> None
   in
-  { name; generic_params = all_generic_params; args; t; next; tags; loc; body }, loc
+  { name; generic_params = all_generic_params; args; param_order; t; next; tags; loc; body }, loc
 
 
 and stmtFunction (buffer : Stream.stream) : top_stmt =
@@ -1185,17 +1210,17 @@ and enum_name (buffer : Stream.stream) =
 
 
 and stmtWhile (buffer : Stream.stream) : stmt =
-  let loc = Stream.location buffer in
+  let start_loc = Stream.location buffer in
   let _ = consumeInContext buffer WHILE "while loop" in
   let _ = consumeInContext buffer LPAREN "while condition" in
   let cond = expression 0 buffer in
   let _ = consumeInContext buffer RPAREN "while condition" in
   let tstm = stmtList buffer in
-  { s = SStmtWhile (cond, tstm); loc }
+  { s = SStmtWhile (cond, tstm); loc = Loc.merge start_loc tstm.loc }
 
 
 and stmtIter (buffer : Stream.stream) : stmt =
-  let loc = Stream.location buffer in
+  let start_loc = Stream.location buffer in
   let _ = consumeInContext buffer ITER "iter loop" in
   let _ = consumeInContext buffer LPAREN "iter parameters" in
   let name, id_loc = id_name buffer in
@@ -1203,7 +1228,7 @@ and stmtIter (buffer : Stream.stream) : stmt =
   let value = expression 0 buffer in
   let _ = consumeInContext buffer RPAREN "iter parameters" in
   let body = stmtList buffer in
-  { s = SStmtIter { id = name, id_loc; value; body }; loc }
+  { s = SStmtIter { id = name, id_loc; value; body }; loc = Loc.merge start_loc body.loc }
 
 
 and stmt (buffer : Stream.stream) : stmt =

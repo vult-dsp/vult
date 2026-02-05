@@ -58,6 +58,7 @@ type args =
   { mutable files : input list
   ; mutable dparse : bool
   ; mutable dtyped : bool
+  ; mutable dlocs : bool
   ; mutable dbytecode : bool
   ; mutable dprog : bool
   ; mutable dcode : bool
@@ -92,6 +93,7 @@ let default_arguments : args =
   { files = []
   ; dparse = false
   ; dtyped = false
+  ; dlocs = false
   ; dbytecode = false
   ; dprog = false
   ; dcode = false
@@ -252,6 +254,10 @@ let flags result =
   ; { flag = "-dump-typed"
     ; action = Arg.Unit (fun () -> result.dtyped <- true)
     ; comment = " Dumps the typed program (default: off)"
+    }
+  ; { flag = "-dump-locs"
+    ; action = Arg.Unit (fun () -> result.dlocs <- true)
+    ; comment = " Include locations in dumped output (default: off)"
     }
   ; { flag = "-deps"; action = Arg.Unit (fun () -> result.deps <- true); comment = " Prints all file dependencies" }
   ; { flag = "-version"

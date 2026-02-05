@@ -32,6 +32,7 @@ open Util
 type parsed_cache_entry =
   { content_hash : string
   ; parsed_files : Pparser.Parse.parsed_file list
+  ; typed_stmts : Core.Typed.top_stmt list option (* Typed AST after inference *)
   ; parse_time : float
   }
 
@@ -71,6 +72,23 @@ module State = struct
     { state with workspace = new_workspace }
 
 
+  (** Update workspace config paths based on file location *)
+  let update_config_for_file (state : t) (file_path : string) : t =
+    let config_paths = Vult_lsp.Config.get_include_paths_for_file file_path in
+    if CCList.length config_paths > 0 then (
+      Printf.eprintf "   📁 Loaded config include paths: %s\n" (String.concat ", " config_paths);
+      flush stderr)
+    else
+      ();
+    let new_workspace = Vult_lsp.Workspace.set_config_paths state.workspace config_paths in
+    (* Clear caches if config paths changed *)
+    if not (CCList.equal String.equal config_paths state.workspace.config_paths) then
+      Hashtbl.clear state.parsed_cache
+    else
+      ();
+    { state with workspace = new_workspace }
+
+
   (** Get cached parsed files or parse if needed *)
   let get_parsed_files state uri content filename =
     let content_hash = Digest.string content in
@@ -92,6 +110,7 @@ module State = struct
         let cache_entry =
           { content_hash
           ; parsed_files
+          ; typed_stmts = None (* Will be computed on demand *)
           ; parse_time =
               (try Unix.time () with
               | _ -> 0.0)
@@ -122,6 +141,7 @@ module State = struct
         let cache_entry =
           { content_hash
           ; parsed_files
+          ; typed_stmts = None (* Will be computed on demand *)
           ; parse_time =
               (try Unix.time () with
               | _ -> 0.0)
@@ -143,6 +163,42 @@ module State = struct
   let get_parsed_statements state uri content filename =
     let parsed_files = get_parsed_files state uri content filename in
     CCList.flatten @@ CCList.map (fun (p : Pparser.Parse.parsed_file) -> p.stmts) parsed_files
+
+
+  (** Get typed statements (runs inference if needed) *)
+  let get_typed_statements (state : t) (uri : string) (content : string) (filename : string) :
+      Core.Typed.top_stmt list option =
+    let content_hash = Digest.string content in
+    let cache_key = uri in
+    (* First ensure we have parsed files *)
+    let _parsed_files = get_parsed_files state uri content filename in
+    (* Check cache for typed statements *)
+    match Hashtbl.find_opt state.parsed_cache cache_key with
+    | Some cached when cached.content_hash = content_hash -> (
+      match cached.typed_stmts with
+      | Some typed -> Some typed
+      | None -> (
+        (* Need to run type inference *)
+        Printf.eprintf "   🔍 Running type inference for %s\n" filename;
+        flush stderr;
+        try
+          let includes = Vult_lsp.Workspace.get_effective_include_paths state.workspace in
+          let args =
+            { Args.default_arguments with files = [ Args.Code (filename, content) ]; includes; check = false }
+          in
+          let _env, typed_stmts = Core.Inference.infer args cached.parsed_files in
+          (* Update cache with typed statements *)
+          let updated_cache = { cached with typed_stmts = Some typed_stmts } in
+          Hashtbl.replace state.parsed_cache cache_key updated_cache;
+          Printf.eprintf "   ✅ Type inference successful for %s\n" filename;
+          flush stderr;
+          Some typed_stmts
+        with
+        | exn ->
+          Printf.eprintf "   ❌ Type inference error for %s: %s\n" filename (Printexc.to_string exn);
+          flush stderr;
+          None))
+    | _ -> None
 end
 
 (** LSP Protocol Constants *)
@@ -266,19 +322,42 @@ module RequestHandlers = struct
 
 
   (** Handle hover request *)
-  let handle_hover id params =
+  let handle_hover state id params =
     Printf.eprintf "✅ Hover request handled\n";
     flush stderr;
+    let uri = params |> member "textDocument" |> member "uri" |> to_string in
     let position = params |> member "position" in
     let line = position |> member "line" |> to_int in
     let character = position |> member "character" |> to_int in
-    (* Simple hover info for now *)
-    let hover_text = Printf.sprintf "Vult position: line %d, character %d" line character in
-    `Assoc
-      [ "jsonrpc", `String "2.0"
-      ; "id", id
-      ; "result", `Assoc [ "contents", `Assoc [ "kind", `String "markdown"; "value", `String hover_text ] ]
-      ]
+    let filename = Vult_lsp.Workspace.uri_to_path uri in
+    let content =
+      match State.get_document state uri with
+      | Some doc_content -> doc_content
+      | None -> ""
+    in
+    (* LSP uses 0-based lines, Vult uses 1-based *)
+    let vult_line = line + 1 in
+    match State.get_typed_statements state uri content filename with
+    | Some typed_stmts -> (
+      match Vult_lsp.Hover.get_hover_info typed_stmts vult_line character with
+      | Some text ->
+        let hover_text = Printf.sprintf "```vult\n%s\n```" text in
+        `Assoc
+          [ "jsonrpc", `String "2.0"
+          ; "id", id
+          ; "result", `Assoc [ "contents", `Assoc [ "kind", `String "markdown"; "value", `String hover_text ] ]
+          ]
+      | None ->
+        (* No hover info found - return null result *)
+        `Assoc [ "jsonrpc", `String "2.0"; "id", id; "result", `Null ])
+    | None ->
+      (* Fallback to position info if type inference fails *)
+      let hover_text = Printf.sprintf "Vult position: line %d, character %d" line character in
+      `Assoc
+        [ "jsonrpc", `String "2.0"
+        ; "id", id
+        ; "result", `Assoc [ "contents", `Assoc [ "kind", `String "markdown"; "value", `String hover_text ] ]
+        ]
 
 
   (** Handle shutdown request *)
@@ -404,12 +483,14 @@ module NotificationHandlers = struct
     let text_document = params |> member "textDocument" in
     let uri = text_document |> member "uri" |> to_string in
     let content = text_document |> member "text" |> to_string in
-    let new_state = State.set_document state uri content in
+    let filename = Vult_lsp.Workspace.uri_to_path uri in
+    (* Update config paths based on the file's location *)
+    let state_with_config = State.update_config_for_file state filename in
+    let new_state = State.set_document state_with_config uri content in
     Printf.eprintf "✅ Document opened: %s\n" uri;
     flush stderr;
     (* Generate diagnostics using workspace context *)
-    let filename = Vult_lsp.Workspace.uri_to_path uri in
-    let diagnostics = Vult_lsp.Diagnostics.get_diagnostics_with_workspace state.workspace content filename in
+    let diagnostics = Vult_lsp.Diagnostics.get_diagnostics_with_workspace new_state.workspace content filename in
     Printf.eprintf "   Generated %d diagnostics\n" (CCList.length diagnostics);
     flush stderr;
     (* Diagnostics are already in JSON format *)
@@ -528,7 +609,7 @@ let run () =
            match method_name with
            | "initialize" -> RequestHandlers.handle_initialize id params
            | "textDocument/completion" -> RequestHandlers.handle_completion !state id params
-           | "textDocument/hover" -> RequestHandlers.handle_hover id params
+           | "textDocument/hover" -> RequestHandlers.handle_hover !state id params
            | "textDocument/semanticTokens/full" -> RequestHandlers.handle_semantic_tokens !state id params
            | "textDocument/documentSymbol" -> RequestHandlers.handle_document_symbol !state id params
            | "textDocument/definition" -> RequestHandlers.handle_definition !state id params

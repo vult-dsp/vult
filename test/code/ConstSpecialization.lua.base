@@ -1,0 +1,254 @@
+
+-- LuaJIT detection and optimization
+local isLuaJIT = type(jit) == "table" and jit.version
+
+-- Optimized array creation for LuaJIT using FFI
+local initializeArray
+if isLuaJIT then
+    local ffi = require("ffi")
+    ffi.cdef[[
+        typedef struct { double data[1]; } vult_array_t;
+    ]]
+    
+    function initializeArray(v, n) 
+        if type(v) == "number" then
+            -- Use FFI for numeric arrays in LuaJIT
+            local arr = ffi.new("double[?]", n)
+            for i = 0, n-1 do arr[i] = v end
+            return setmetatable({}, {
+                __index = function(t, k) return arr[k-1] end,
+                __newindex = function(t, k, v) arr[k-1] = v end,
+                __len = function() return n end
+            })
+        else
+            -- Fallback for non-numeric values
+            local a = {} 
+            for i=1, n do a[i] = v end 
+            return a 
+        end
+    end
+else
+    -- Standard Lua implementation
+    function initializeArray(v, n) 
+        local a = {} 
+        for i=1, n do a[i] = v end 
+        return a 
+    end
+end
+
+-- Math functions with LuaJIT optimizations
+local sin, cos, abs, exp, floor, tan, tanh, sqrt
+if isLuaJIT then
+    -- LuaJIT has faster math operations
+    sin = math.sin
+    cos = math.cos
+    abs = math.abs
+    exp = math.exp
+    floor = math.floor
+    tan = math.tan
+    tanh = math.tanh
+    sqrt = math.sqrt
+else
+    -- Standard Lua (same functions but explicit for potential future optimizations)
+    sin = math.sin
+    cos = math.cos
+    abs = math.abs
+    exp = math.exp
+    floor = math.floor
+    tan = math.tan
+    tanh = math.tanh
+    sqrt = math.sqrt
+end
+
+-- Bit operations optimized for LuaJIT
+local lshift, rshift
+if isLuaJIT then
+    local bit = require("bit")
+    lshift = bit.lshift
+    rshift = bit.rshift
+else
+    -- Fallback to arithmetic operations for standard Lua
+    function lshift(a, b) return a * (2 ^ b) end
+    function rshift(a, b) return math.floor(a / (2 ^ b)) end
+end
+
+-- Core runtime functions
+function ifExpressionValue(cond,then_,else_) if cond then return then_ else return else_ end end
+function ifExpression(cond,then_,else_) if cond then return then_() else return else_() end end
+function eps()              return 1e-18 end
+function pi()               return 3.1415926535897932384 end
+function random()           return math.random() end
+function irandom()          return math.floor(math.random() * 4294967296) end
+function clip(x,low,high)   if x > high then return high else if x < low then return low else return x end end end
+function real(x)            return x end
+function int(x)             if type(x) == "boolean" then x = x and 1 or 0 end local int_part,_ = math.modf(x) return int_part end
+function int16(x)           if type(x) == "boolean" then x = x and 1 or 0 end local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end
+function bool(x)            return x ~= 0 and x ~= false end
+function set(a, i, v)       a[i+1]=v end
+function get(a, i)          return a[i+1] end
+function intDiv(a, b)       return math.floor(a / b) end
+function list_clear(t)      for k in pairs(t) do t[k] = nil end end
+
+function ConstSpecialization_accumulate_real_2_type_alloc()
+   local _ctx = {};
+   _ctx.sum = 0.0
+   return _ctx
+end
+
+function ConstSpecialization_accumulate_nonspec_real_type_alloc()
+   local _ctx = {};
+   _ctx.sum = 0.0
+   return _ctx
+end
+
+function ConstSpecialization_test_accumulate_spec_type_alloc()
+   local _ctx = {};
+   _ctx.inst_10ec4 = ConstSpecialization_accumulate_real_2_type_alloc()
+   return _ctx
+end
+
+function ConstSpecialization_test_accumulate_nonspec_type_alloc()
+   local _ctx = {};
+   _ctx.inst_1383f = ConstSpecialization_accumulate_nonspec_real_type_alloc()
+   return _ctx
+end
+
+function ConstSpecialization_scale_typed_real_2_type_alloc()
+   local _ctx = {};
+   _ctx.last = 0.0
+   return _ctx
+end
+
+function ConstSpecialization_scale_typed_int_2_type_alloc()
+   local _ctx = {};
+   _ctx.last = 0
+   return _ctx
+end
+
+function ConstSpecialization_test_typed_int_type_alloc()
+   local _ctx = {};
+   _ctx.inst_1c235 = ConstSpecialization_scale_typed_int_2_type_alloc()
+   return _ctx
+end
+
+function ConstSpecialization_test_typed_real_type_alloc()
+   local _ctx = {};
+   _ctx.inst_15f7d = ConstSpecialization_scale_typed_real_2_type_alloc()
+   return _ctx
+end
+
+function ConstSpecialization_main_type_alloc()
+   local _ctx = {};
+   _ctx.inst_13dfa = ConstSpecialization_test_accumulate_spec_type_alloc()
+   _ctx.inst_201fa = ConstSpecialization_test_accumulate_nonspec_type_alloc()
+   _ctx.inst_3e2fa = ConstSpecialization_test_typed_int_type_alloc()
+   _ctx.inst_477fa = ConstSpecialization_test_typed_real_type_alloc()
+   return _ctx
+end
+
+function ConstSpecialization_add_n_int_5(x)
+   return (5 + x)
+end
+
+function ConstSpecialization_add_n_int_100(x)
+   return (100 + x)
+end
+
+function ConstSpecialization_add_n_nonspec_int(n, x)
+   return (n + x)
+end
+
+function ConstSpecialization_test_specialized_5()
+   return ConstSpecialization_add_n_int_5(10)
+end
+
+function ConstSpecialization_test_specialized_100()
+   return ConstSpecialization_add_n_int_100(10)
+end
+
+function ConstSpecialization_test_nonspec(n)
+   return ConstSpecialization_add_n_nonspec_int(n, 10)
+end
+
+function ConstSpecialization_weighted_real_real_0_3_0_7(x, y)
+   return ((0.3 * x) + (0.7 * y))
+end
+
+function ConstSpecialization_weighted_nonspec_real_real(w1, w2, x, y)
+   return ((w1 * x) + (w2 * y))
+end
+
+function ConstSpecialization_test_weighted_spec()
+   return ConstSpecialization_weighted_real_real_0_3_0_7(10.0, 20.0)
+end
+
+function ConstSpecialization_test_weighted_nonspec(w)
+   return ConstSpecialization_weighted_nonspec_real_real(w, 0.7, 10.0, 20.0)
+end
+
+function ConstSpecialization_interleaved_real_real_2_3(x, y)
+   return ((2.0 * x) + (3.0 * y))
+end
+
+function ConstSpecialization_interleaved_nonspec_real_real(x, a, y, b)
+   return ((a * x) + (b * y))
+end
+
+function ConstSpecialization_test_interleaved_spec()
+   return ConstSpecialization_interleaved_real_real_2_3(5.0, 4.0)
+end
+
+function ConstSpecialization_test_interleaved_nonspec(a)
+   return ConstSpecialization_interleaved_nonspec_real_real(5.0, a, 4.0, 3.0)
+end
+
+function ConstSpecialization_accumulate_real_2(_ctx, x)
+   _ctx.sum = ((2.0 * x) + _ctx.sum)
+   return _ctx.sum
+end
+
+function ConstSpecialization_accumulate_nonspec_real(_ctx, scale, x)
+   _ctx.sum = ((scale * x) + _ctx.sum)
+   return _ctx.sum
+end
+
+function ConstSpecialization_test_accumulate_spec(_ctx)
+   return ConstSpecialization_accumulate_real_2(_ctx.inst_10ec4, 5.0)
+end
+
+function ConstSpecialization_test_accumulate_nonspec(_ctx, s, x)
+   return ConstSpecialization_accumulate_nonspec_real(_ctx.inst_1383f, s, x)
+end
+
+function ConstSpecialization_scale_typed_int_2(_ctx, x)
+   _ctx.last = x
+   return x
+end
+
+function ConstSpecialization_scale_typed_real_2(_ctx, x)
+   _ctx.last = x
+   return x
+end
+
+function ConstSpecialization_test_typed_int(_ctx)
+   return ConstSpecialization_scale_typed_int_2(_ctx.inst_1c235, 42)
+end
+
+function ConstSpecialization_test_typed_real(_ctx)
+   return ConstSpecialization_scale_typed_real_2(_ctx.inst_15f7d, 3.14)
+end
+
+function ConstSpecialization_main(_ctx)
+   local r1 = ConstSpecialization_test_specialized_5()
+   local r2 = ConstSpecialization_test_specialized_100()
+   local r3 = ConstSpecialization_test_nonspec(50)
+   local r4 = ConstSpecialization_test_weighted_spec()
+   local r5 = ConstSpecialization_test_weighted_nonspec(0.5)
+   local r6 = ConstSpecialization_test_interleaved_spec()
+   local r7 = ConstSpecialization_test_interleaved_nonspec(1.5)
+   local r8 = ConstSpecialization_test_accumulate_spec(_ctx.inst_13dfa)
+   local r9 = ConstSpecialization_test_accumulate_nonspec(_ctx.inst_201fa, 3.0, 4.0)
+   local r10 = ConstSpecialization_test_typed_int(_ctx.inst_3e2fa)
+   local r11 = ConstSpecialization_test_typed_real(_ctx.inst_477fa)
+end
+

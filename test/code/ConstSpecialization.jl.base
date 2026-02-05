@@ -1,0 +1,250 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct ConstSpecialization_accumulate_real_2_type
+       sum::Float32
+end
+
+# Default constructor for ConstSpecialization_accumulate_real_2_type
+function ConstSpecialization_accumulate_real_2_type()
+    return ConstSpecialization_accumulate_real_2_type(Float32(0.0))
+end
+
+mutable struct ConstSpecialization_accumulate_nonspec_real_type
+       sum::Float32
+end
+
+# Default constructor for ConstSpecialization_accumulate_nonspec_real_type
+function ConstSpecialization_accumulate_nonspec_real_type()
+    return ConstSpecialization_accumulate_nonspec_real_type(Float32(0.0))
+end
+
+mutable struct ConstSpecialization_test_accumulate_spec_type
+       inst_10ec4::ConstSpecialization_accumulate_real_2_type
+end
+
+# Default constructor for ConstSpecialization_test_accumulate_spec_type
+function ConstSpecialization_test_accumulate_spec_type()
+    return ConstSpecialization_test_accumulate_spec_type(ConstSpecialization_accumulate_real_2_type())
+end
+
+mutable struct ConstSpecialization_test_accumulate_nonspec_type
+       inst_1383f::ConstSpecialization_accumulate_nonspec_real_type
+end
+
+# Default constructor for ConstSpecialization_test_accumulate_nonspec_type
+function ConstSpecialization_test_accumulate_nonspec_type()
+    return ConstSpecialization_test_accumulate_nonspec_type(ConstSpecialization_accumulate_nonspec_real_type())
+end
+
+mutable struct ConstSpecialization_scale_typed_real_2_type
+       last::Float32
+end
+
+# Default constructor for ConstSpecialization_scale_typed_real_2_type
+function ConstSpecialization_scale_typed_real_2_type()
+    return ConstSpecialization_scale_typed_real_2_type(Float32(0.0))
+end
+
+mutable struct ConstSpecialization_scale_typed_int_2_type
+       last::Int32
+end
+
+# Default constructor for ConstSpecialization_scale_typed_int_2_type
+function ConstSpecialization_scale_typed_int_2_type()
+    return ConstSpecialization_scale_typed_int_2_type(Int32(0))
+end
+
+mutable struct ConstSpecialization_test_typed_int_type
+       inst_1c235::ConstSpecialization_scale_typed_int_2_type
+end
+
+# Default constructor for ConstSpecialization_test_typed_int_type
+function ConstSpecialization_test_typed_int_type()
+    return ConstSpecialization_test_typed_int_type(ConstSpecialization_scale_typed_int_2_type())
+end
+
+mutable struct ConstSpecialization_test_typed_real_type
+       inst_15f7d::ConstSpecialization_scale_typed_real_2_type
+end
+
+# Default constructor for ConstSpecialization_test_typed_real_type
+function ConstSpecialization_test_typed_real_type()
+    return ConstSpecialization_test_typed_real_type(ConstSpecialization_scale_typed_real_2_type())
+end
+
+mutable struct ConstSpecialization_main_type
+       inst_13dfa::ConstSpecialization_test_accumulate_spec_type
+       inst_201fa::ConstSpecialization_test_accumulate_nonspec_type
+       inst_3e2fa::ConstSpecialization_test_typed_int_type
+       inst_477fa::ConstSpecialization_test_typed_real_type
+end
+
+# Default constructor for ConstSpecialization_main_type
+function ConstSpecialization_main_type()
+    return ConstSpecialization_main_type(ConstSpecialization_test_accumulate_spec_type(), ConstSpecialization_test_accumulate_nonspec_type(), ConstSpecialization_test_typed_int_type(), ConstSpecialization_test_typed_real_type())
+end
+
+function ConstSpecialization_accumulate_real_2_type_alloc()
+   _ctx = ConstSpecialization_accumulate_real_2_type()
+   _ctx.sum = Float32(0.0)
+   return _ctx
+end
+
+function ConstSpecialization_accumulate_nonspec_real_type_alloc()
+   _ctx = ConstSpecialization_accumulate_nonspec_real_type()
+   _ctx.sum = Float32(0.0)
+   return _ctx
+end
+
+function ConstSpecialization_test_accumulate_spec_type_alloc()
+   _ctx = ConstSpecialization_test_accumulate_spec_type()
+   _ctx.inst_10ec4 = ConstSpecialization_accumulate_real_2_type_alloc()
+   return _ctx
+end
+
+function ConstSpecialization_test_accumulate_nonspec_type_alloc()
+   _ctx = ConstSpecialization_test_accumulate_nonspec_type()
+   _ctx.inst_1383f = ConstSpecialization_accumulate_nonspec_real_type_alloc()
+   return _ctx
+end
+
+function ConstSpecialization_scale_typed_real_2_type_alloc()
+   _ctx = ConstSpecialization_scale_typed_real_2_type()
+   _ctx.last = Float32(0.0)
+   return _ctx
+end
+
+function ConstSpecialization_scale_typed_int_2_type_alloc()
+   _ctx = ConstSpecialization_scale_typed_int_2_type()
+   _ctx.last = Int32(0)
+   return _ctx
+end
+
+function ConstSpecialization_test_typed_int_type_alloc()
+   _ctx = ConstSpecialization_test_typed_int_type()
+   _ctx.inst_1c235 = ConstSpecialization_scale_typed_int_2_type_alloc()
+   return _ctx
+end
+
+function ConstSpecialization_test_typed_real_type_alloc()
+   _ctx = ConstSpecialization_test_typed_real_type()
+   _ctx.inst_15f7d = ConstSpecialization_scale_typed_real_2_type_alloc()
+   return _ctx
+end
+
+function ConstSpecialization_main_type_alloc()
+   _ctx = ConstSpecialization_main_type()
+   _ctx.inst_13dfa = ConstSpecialization_test_accumulate_spec_type_alloc()
+   _ctx.inst_201fa = ConstSpecialization_test_accumulate_nonspec_type_alloc()
+   _ctx.inst_3e2fa = ConstSpecialization_test_typed_int_type_alloc()
+   _ctx.inst_477fa = ConstSpecialization_test_typed_real_type_alloc()
+   return _ctx
+end
+
+function ConstSpecialization_add_n_int_5(x)
+   return (Int32(5) + x)
+end
+
+function ConstSpecialization_add_n_int_100(x)
+   return (Int32(100) + x)
+end
+
+function ConstSpecialization_add_n_nonspec_int(n, x)
+   return (n + x)
+end
+
+function ConstSpecialization_test_specialized_5()
+   return ConstSpecialization_add_n_int_5(Int32(10))
+end
+
+function ConstSpecialization_test_specialized_100()
+   return ConstSpecialization_add_n_int_100(Int32(10))
+end
+
+function ConstSpecialization_test_nonspec(n)
+   return ConstSpecialization_add_n_nonspec_int(n, Int32(10))
+end
+
+function ConstSpecialization_weighted_real_real_0_3_0_7(x, y)
+   return ((Float32(0.3) * x) + (Float32(0.7) * y))
+end
+
+function ConstSpecialization_weighted_nonspec_real_real(w1, w2, x, y)
+   return ((w1 * x) + (w2 * y))
+end
+
+function ConstSpecialization_test_weighted_spec()
+   return ConstSpecialization_weighted_real_real_0_3_0_7(Float32(10.0), Float32(20.0))
+end
+
+function ConstSpecialization_test_weighted_nonspec(w)
+   return ConstSpecialization_weighted_nonspec_real_real(w, Float32(0.7), Float32(10.0), Float32(20.0))
+end
+
+function ConstSpecialization_interleaved_real_real_2_3(x, y)
+   return ((Float32(2.0) * x) + (Float32(3.0) * y))
+end
+
+function ConstSpecialization_interleaved_nonspec_real_real(x, a, y, b)
+   return ((a * x) + (b * y))
+end
+
+function ConstSpecialization_test_interleaved_spec()
+   return ConstSpecialization_interleaved_real_real_2_3(Float32(5.0), Float32(4.0))
+end
+
+function ConstSpecialization_test_interleaved_nonspec(a)
+   return ConstSpecialization_interleaved_nonspec_real_real(Float32(5.0), a, Float32(4.0), Float32(3.0))
+end
+
+function ConstSpecialization_accumulate_real_2(_ctx, x)
+   _ctx.sum = ((Float32(2.0) * x) + _ctx.sum)
+   return _ctx.sum
+end
+
+function ConstSpecialization_accumulate_nonspec_real(_ctx, scale, x)
+   _ctx.sum = ((scale * x) + _ctx.sum)
+   return _ctx.sum
+end
+
+function ConstSpecialization_test_accumulate_spec(_ctx)
+   return ConstSpecialization_accumulate_real_2(_ctx.inst_10ec4, Float32(5.0))
+end
+
+function ConstSpecialization_test_accumulate_nonspec(_ctx, s, x)
+   return ConstSpecialization_accumulate_nonspec_real(_ctx.inst_1383f, s, x)
+end
+
+function ConstSpecialization_scale_typed_int_2(_ctx, x)
+   _ctx.last = x
+   return x
+end
+
+function ConstSpecialization_scale_typed_real_2(_ctx, x)
+   _ctx.last = x
+   return x
+end
+
+function ConstSpecialization_test_typed_int(_ctx)
+   return ConstSpecialization_scale_typed_int_2(_ctx.inst_1c235, Int32(42))
+end
+
+function ConstSpecialization_test_typed_real(_ctx)
+   return ConstSpecialization_scale_typed_real_2(_ctx.inst_15f7d, Float32(3.14))
+end
+
+function ConstSpecialization_main(_ctx)
+   r1 = ConstSpecialization_test_specialized_5()
+   r2 = ConstSpecialization_test_specialized_100()
+   r3 = ConstSpecialization_test_nonspec(Int32(50))
+   r4 = ConstSpecialization_test_weighted_spec()
+   r5 = ConstSpecialization_test_weighted_nonspec(Float32(0.5))
+   r6 = ConstSpecialization_test_interleaved_spec()
+   r7 = ConstSpecialization_test_interleaved_nonspec(Float32(1.5))
+   r8 = ConstSpecialization_test_accumulate_spec(_ctx.inst_13dfa)
+   r9 = ConstSpecialization_test_accumulate_nonspec(_ctx.inst_201fa, Float32(3.0), Float32(4.0))
+   r10 = ConstSpecialization_test_typed_int(_ctx.inst_3e2fa)
+   r11 = ConstSpecialization_test_typed_real(_ctx.inst_477fa)
+end
+

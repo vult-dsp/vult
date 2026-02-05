@@ -31,12 +31,15 @@ module Workspace = struct
   type t =
     { root_uri : string option
     ; include_paths : string list
+    ; config_paths : string list (* paths from vultconfig.json *)
     ; documents : (string, string) Hashtbl.t (* uri -> content *)
     }
 
-  let create ?root_uri () = { root_uri; include_paths = []; documents = Hashtbl.create 16 }
+  let create ?root_uri () = { root_uri; include_paths = []; config_paths = []; documents = Hashtbl.create 16 }
 
-  let set_include_paths workspace paths = { workspace with include_paths = paths }
+  let set_include_paths (workspace : t) (paths : string list) : t = { workspace with include_paths = paths }
+
+  let set_config_paths (workspace : t) (paths : string list) : t = { workspace with config_paths = paths }
 
   let add_document workspace uri content =
     Hashtbl.replace workspace.documents uri content;
@@ -60,13 +63,92 @@ module Workspace = struct
       uri
 
 
-  (** Get include paths, adding workspace root if available *)
-  let get_effective_include_paths workspace =
-    match workspace.root_uri with
-    | Some root ->
-      let root_path = uri_to_path root in
-      root_path :: workspace.include_paths
-    | None -> workspace.include_paths
+  (** Get include paths, adding workspace root and config paths if available *)
+  let get_effective_include_paths (workspace : t) : string list =
+    let base_paths =
+      match workspace.root_uri with
+      | Some root ->
+        let root_path = uri_to_path root in
+        root_path :: workspace.include_paths
+      | None -> workspace.include_paths
+    in
+    (* Append config paths, avoiding duplicates *)
+    let all_paths = base_paths @ workspace.config_paths in
+    CCList.uniq ~eq:String.equal all_paths
+end
+
+(** Configuration file support for vultconfig.json *)
+module Config = struct
+  type t = { include_paths : string list }
+
+  let empty : t = { include_paths = [] }
+
+  (** Check if a path is absolute *)
+  let is_absolute (path : string) : bool = String.length path > 0 && path.[0] = '/'
+
+  (** Find vultconfig.json by searching upward from start_dir *)
+  let find_config_file ~(start_dir : string) : string option =
+    let config_name = "vultconfig.json" in
+    let rec search (dir : string) : string option =
+      let config_path = Filename.concat dir config_name in
+      if FileIO.exists config_path then
+        Some config_path
+      else
+        let parent = Filename.dirname dir in
+        (* Stop if we've reached the root *)
+        if String.equal parent dir then
+          None
+        else
+          search parent
+    in
+    search start_dir
+
+
+  (** Load and parse vultconfig.json *)
+  let load ~(config_path : string) : t option =
+    match FileIO.read config_path with
+    | None -> None
+    | Some content -> (
+      try
+        let json = Yojson.Safe.from_string content in
+        let include_paths =
+          try
+            json
+            |> Yojson.Safe.Util.member "include"
+            |> Yojson.Safe.Util.to_list
+            |> CCList.filter_map (fun v ->
+                   try Some (Yojson.Safe.Util.to_string v) with
+                   | _ -> None)
+          with
+          | _ -> []
+        in
+        Some { include_paths }
+      with
+      | _ -> None)
+
+
+  (** Resolve relative paths to absolute using config file's directory *)
+  let resolve_paths ~(config_dir : string) (config : t) : string list =
+    CCList.map
+      (fun path ->
+        if is_absolute path then
+          path
+        else
+          Filename.concat config_dir path)
+      config.include_paths
+
+
+  (** Load config for a file and return resolved include paths *)
+  let get_include_paths_for_file (file_path : string) : string list =
+    let dir = Filename.dirname file_path in
+    match find_config_file ~start_dir:dir with
+    | None -> []
+    | Some config_path -> (
+      match load ~config_path with
+      | None -> []
+      | Some config ->
+        let config_dir = Filename.dirname config_path in
+        resolve_paths ~config_dir config)
 end
 
 (** Common types and utilities *)
@@ -612,6 +694,286 @@ module GoToDefinition = struct
       | None -> None
     with
     | _ -> None
+end
+
+(** Hover module - provides type information on hover *)
+module Hover = struct
+  (** Hover result types *)
+  type hover_result =
+    | HoverExp of Core.Typed.exp (* Variable/expression *)
+    | HoverArg of Core.Typed.arg (* Function argument *)
+    | HoverFunction of Core.Typed.function_def (* Function name in definition *)
+    | HoverNotFound (* Keywords, whitespace, etc. *)
+
+  (** Check if loc1 is strictly smaller than loc2 (contained within but not equal) *)
+  let loc_strictly_smaller (loc1 : Loc.t) (loc2 : Loc.t) : bool =
+    let s1_line = Loc.startLine loc1 in
+    let s1_col = Loc.startColumn loc1 in
+    let e1_line = Loc.endLine loc1 in
+    let e1_col = Loc.endColumn loc1 in
+    let s2_line = Loc.startLine loc2 in
+    let s2_col = Loc.startColumn loc2 in
+    let e2_line = Loc.endLine loc2 in
+    let e2_col = Loc.endColumn loc2 in
+    (* loc1 must start at or after loc2's start AND end at or before loc2's end *)
+    (* AND at least one boundary must be strictly inside *)
+    let starts_at_or_after = s1_line > s2_line || (s1_line = s2_line && s1_col >= s2_col) in
+    let ends_at_or_before = e1_line < e2_line || (e1_line = e2_line && e1_col <= e2_col) in
+    let strictly_inside =
+      s1_line > s2_line
+      || (s1_line = s2_line && s1_col > s2_col)
+      || e1_line < e2_line
+      || (e1_line = e2_line && e1_col < e2_col)
+    in
+    starts_at_or_after && ends_at_or_before && strictly_inside
+
+
+  (** Check if a position is within a location.
+      LSP uses 0-based lines, Vult Loc.t uses 1-based lines.
+      Column is 0-based in both. *)
+  let position_in_loc (loc : Loc.t) (line : int) (col : int) : bool =
+    let start_line = Loc.startLine loc in
+    let end_line = Loc.endLine loc in
+    let start_col = Loc.startColumn loc in
+    let end_col = Loc.endColumn loc in
+    (* Check if position is within the location bounds *)
+    if line < start_line || line > end_line then
+      false
+    else if line = start_line && line = end_line then
+      col >= start_col && col < end_col
+    else if line = start_line then
+      col >= start_col
+    else if line = end_line then
+      col < end_col
+    else
+      true
+
+
+  (** Format a type for display *)
+  let format_type (t : Core.Typed.type_) : string = Core.Typed.print_type_ t |> Pla.print
+
+  (** Format function signature for display *)
+  let format_function_signature (def : Core.Typed.function_def) : string =
+    let name = Core.Typed.print_path def.name |> Pla.print in
+    let args =
+      CCList.map
+        (fun (arg : Core.Typed.arg) ->
+          let t = format_type arg.t in
+          Printf.sprintf "%s : %s" arg.name t)
+        def.args
+      |> String.concat ", "
+    in
+    let ret = format_type (snd def.t) in
+    Printf.sprintf "fun %s(%s) : %s" name args ret
+
+
+  (** Check if we're hovering over a function argument definition.
+      Skip internal/generated arguments (those starting with '_' like _ctx). *)
+  let find_in_args (args : Core.Typed.arg list) (line : int) (col : int) : hover_result option =
+    CCList.find_map
+      (fun (arg : Core.Typed.arg) ->
+        (* Skip internal arguments like _ctx *)
+        if String.length arg.name > 0 && arg.name.[0] = '_' then
+          None
+        else if position_in_loc arg.loc line col then
+          Some (HoverArg arg)
+        else
+          None)
+      args
+
+
+  (** Find hover info in an expression - recurse into children to find the innermost match *)
+  let rec find_in_exp (e : Core.Typed.exp) (line : int) (col : int) : hover_result option =
+    if not (position_in_loc e.loc line col) then
+      None
+    else
+      (* Try to find a more specific match in children first *)
+      let child_result =
+        match e.e with
+        | Core.Typed.EIndex { e = sub_e; index } ->
+          CCList.find_map (fun exp -> find_in_exp exp line col) [ sub_e; index ]
+        | Core.Typed.EArray elems -> CCList.find_map (fun exp -> find_in_exp exp line col) elems
+        | Core.Typed.ECall { args; _ } -> CCList.find_map (fun exp -> find_in_exp exp line col) args
+        | Core.Typed.EUnOp (_, sub_e) -> find_in_exp sub_e line col
+        | Core.Typed.EOp (_, e1, e2) -> CCList.find_map (fun exp -> find_in_exp exp line col) [ e1; e2 ]
+        | Core.Typed.EIf { cond; then_; else_ } ->
+          CCList.find_map (fun exp -> find_in_exp exp line col) [ cond; then_; else_ ]
+        | Core.Typed.ETuple elems -> CCList.find_map (fun exp -> find_in_exp exp line col) elems
+        | Core.Typed.EMember (sub_e, _) ->
+          (* Only recurse if sub-expression has a strictly smaller location.
+             For mem variables, _ctx and _ctx.member have the same location,
+             so we should return the member access (with the field type), not _ctx (with record type). *)
+          if loc_strictly_smaller sub_e.loc e.loc then
+            find_in_exp sub_e line col
+          else
+            None
+        | Core.Typed.ERecord { elems; _ } -> CCList.find_map (fun (_, exp) -> find_in_exp exp line col) elems
+        | Core.Typed.EGenCall { args; explicit_args; _ } ->
+          CCList.find_map (fun exp -> find_in_exp exp line col) (explicit_args @ args)
+        | Core.Typed.EUnit
+         |Core.Typed.EBool _
+         |Core.Typed.EInt _
+         |Core.Typed.EReal _
+         |Core.Typed.EFixed _
+         |Core.Typed.EString _
+         |Core.Typed.EId _
+         |Core.Typed.EConst _
+         |Core.Typed.ETypeIntrinsic _ -> None
+      in
+      (* Return child match if found, otherwise return this expression *)
+      match child_result with
+      | Some _ -> child_result
+      | None -> Some (HoverExp e)
+
+
+  (** Find hover info in a left-value expression - recurse into children to find the innermost match *)
+  let rec find_in_lexp (le : Core.Typed.lexp) (line : int) (col : int) : hover_result option =
+    if not (position_in_loc le.loc line col) then
+      None
+    else
+      (* Try to find a more specific match in children first *)
+      let child_result =
+        match le.l with
+        | Core.Typed.LWild | Core.Typed.LId _ -> None
+        | Core.Typed.LMember (sub_le, _) ->
+          (* Only recurse if sub-expression has a strictly smaller location *)
+          if loc_strictly_smaller sub_le.loc le.loc then
+            find_in_lexp sub_le line col
+          else
+            None
+        | Core.Typed.LIndex { e = sub_le; index } -> (
+          match find_in_lexp sub_le line col with
+          | Some _ as result -> result
+          | None -> find_in_exp index line col)
+        | Core.Typed.LTuple lexps -> CCList.find_map (fun le -> find_in_lexp le line col) lexps
+      in
+      (* Return child match if found, otherwise return this lexp's type *)
+      match child_result with
+      | Some _ -> child_result
+      | None ->
+        let exp : Core.Typed.exp = { e = Core.Typed.EUnit; loc = le.loc; t = le.t } in
+        Some (HoverExp exp)
+
+
+  (** Find hover info in a declaration expression - recurse into children to find the innermost match *)
+  let rec find_in_dexp (de : Core.Typed.dexp) (line : int) (col : int) : hover_result option =
+    if not (position_in_loc de.loc line col) then
+      None
+    else
+      (* Try to find a more specific match in children first *)
+      let child_result =
+        match de.d with
+        | Core.Typed.DWild | Core.Typed.DId _ -> None
+        | Core.Typed.DTuple dexps -> CCList.find_map (fun de -> find_in_dexp de line col) dexps
+      in
+      (* Return child match if found, otherwise return this dexp's type *)
+      match child_result with
+      | Some _ -> child_result
+      | None ->
+        let exp : Core.Typed.exp = { e = Core.Typed.EUnit; loc = de.loc; t = de.t } in
+        Some (HoverExp exp)
+
+
+  (** Find hover info in a statement.
+      Note: Statement locations in the typed AST may not include the full statement,
+      so we search children directly without relying on statement bounds. *)
+  let rec find_in_stmt (s : Core.Typed.stmt) (line : int) (col : int) : hover_result option =
+    match s.s with
+    | Core.Typed.StmtVal dexp -> find_in_dexp dexp line col
+    | Core.Typed.StmtMem (dexp, _) -> find_in_dexp dexp line col
+    | Core.Typed.StmtBind (lexp, exp) -> (
+      match find_in_lexp lexp line col with
+      | Some _ as result -> result
+      | None -> find_in_exp exp line col)
+    | Core.Typed.StmtReturn exp -> find_in_exp exp line col
+    | Core.Typed.StmtBlock stmts -> CCList.find_map (fun stmt -> find_in_stmt stmt line col) stmts
+    | Core.Typed.StmtIf (cond, then_stmt, else_opt) -> (
+      match find_in_exp cond line col with
+      | Some _ as result -> result
+      | None -> (
+        match find_in_stmt then_stmt line col with
+        | Some _ as result -> result
+        | None -> (
+          match else_opt with
+          | Some else_stmt -> find_in_stmt else_stmt line col
+          | None -> None)))
+    | Core.Typed.StmtWhile (cond, body) -> (
+      match find_in_exp cond line col with
+      | Some _ as result -> result
+      | None -> find_in_stmt body line col)
+
+
+  (** Find hover info in a function definition.
+      Note: def.loc only covers the function name, not the entire function,
+      so we search all children directly without relying on def.loc bounds. *)
+  let rec find_in_function_def (def : Core.Typed.function_def) (body : Core.Typed.stmt) (line : int) (col : int) :
+      hover_result option =
+    (* First check if cursor is on an argument *)
+    match find_in_args def.args line col with
+    | Some _ as result -> result
+    | None -> (
+      (* Check function body *)
+      match find_in_stmt body line col with
+      | Some _ as result -> result
+      | None -> (
+        (* Check nested functions *)
+        match def.next with
+        | Some (next_def, next_body) -> find_in_function_def next_def next_body line col
+        | None ->
+          (* Check if on function name *)
+          if position_in_loc def.loc line col then
+            Some (HoverFunction def)
+          else
+            None))
+
+
+  (** Find hover info at a position in the typed AST.
+      Note: top_stmt.loc only covers the keyword/name, not the entire definition,
+      so we search all children directly without relying on stmt.loc bounds. *)
+  let find_at_position (stmts : Core.Typed.top_stmt list) (line : int) (col : int) : hover_result =
+    let result =
+      CCList.find_map
+        (fun (stmt : Core.Typed.top_stmt) ->
+          match stmt.top with
+          | Core.Typed.TopFunction (def, body) -> find_in_function_def def body line col
+          | Core.Typed.TopExternal (def, _) -> (
+            match find_in_args def.args line col with
+            | Some _ as result -> result
+            | None ->
+              if position_in_loc def.loc line col then
+                Some (HoverFunction def)
+              else
+                None)
+          | Core.Typed.TopConstant (_path, _dim, t, exp, _) ->
+            if position_in_loc exp.loc line col then
+              Some (HoverExp exp)
+            else if position_in_loc stmt.loc line col then
+              let const_exp : Core.Typed.exp = { e = Core.Typed.EUnit; loc = stmt.loc; t } in
+              Some (HoverExp const_exp)
+            else
+              None
+          | Core.Typed.TopType _ | Core.Typed.TopAlias _ | Core.Typed.TopEnum _ | Core.Typed.TopGenericPlaceholder _ ->
+            None)
+        stmts
+    in
+    match result with
+    | Some r -> r
+    | None -> HoverNotFound
+
+
+  (** Get hover text for a hover result *)
+  let get_hover_text (result : hover_result) : string option =
+    match result with
+    | HoverExp exp -> Some (format_type exp.t)
+    | HoverArg arg -> Some (Printf.sprintf "%s : %s" arg.name (format_type arg.t))
+    | HoverFunction def -> Some (format_function_signature def)
+    | HoverNotFound -> None
+
+
+  (** Main entry point: get hover info at a position *)
+  let get_hover_info (typed_stmts : Core.Typed.top_stmt list) (line : int) (col : int) : string option =
+    let result = find_at_position typed_stmts line col in
+    get_hover_text result
 end
 
 (** Semantic Tokens module *)

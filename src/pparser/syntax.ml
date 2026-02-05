@@ -156,10 +156,15 @@ and stmt =
   ; loc : Loc.t
   }
 
+type param_kind =
+  | PKGeneric of int (* Index into generic_params list *)
+  | PKArg of int (* Index into args list *)
+
 and function_def =
   { name : string
   ; generic_params : generic_param list
   ; args : arg list
+  ; param_order : param_kind list (* Original order of parameters *)
   ; t : type_ option
   ; next : function_def option
   ; loc : Loc.t
@@ -1258,19 +1263,21 @@ module Mapper = struct
     let state, odata =
       if context.recurse then
         match idata with
-        | { name; generic_params; args; t; next; loc; tags; body } ->
+        | { name; generic_params; args; param_order; t; next; loc; tags; body } ->
           let state, body' = map_stmt mapper context state body in
           let state, next' = (mapper_opt map_function_def) mapper context state next in
           let state, t' = (mapper_opt map_type_) mapper context state t in
           let state, args' = (mapper_list map_arg) mapper context state args in
           let name' = name in
           let generic_params' = generic_params in
+          let param_order' = param_order in
           (* For now, generics don't get mapped *)
           let odata =
             if
               name == name'
               && generic_params == generic_params'
               && args == args'
+              && param_order == param_order'
               && t == t'
               && next == next'
               && body == body'
@@ -1280,6 +1287,7 @@ module Mapper = struct
               { name = name'
               ; generic_params = generic_params'
               ; args = args'
+              ; param_order = param_order'
               ; t = t'
               ; next = next'
               ; loc

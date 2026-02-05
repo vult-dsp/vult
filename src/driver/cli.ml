@@ -135,6 +135,7 @@ let driver (args : args) : output list =
         else
           let env, stmts = Util.Profile.time "Inference" (fun () -> Inference.infer args parsed) in
           if args.dtyped then
+            let () = Typed.print_exp_locs := args.dlocs in
             [ Typed (Pla.print (Typed.print_prog stmts)) ]
           else
             compileCode args env stmts |> generateCode args file_deps

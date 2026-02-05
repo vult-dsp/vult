@@ -461,7 +461,7 @@ and generic_call (env : env) (generic_path : Syntax.path) (generic_func : Typed.
       generic_func.generic_params
   in
   let function_param_count = CCList.length generic_func.args in
-  let total_expected = explicit_generic_param_count + function_param_count in
+  let total_expected = CCList.length generic_func.param_order in
   let total_provided = CCList.length args in
   if total_provided < total_expected then
     Error.raiseError
@@ -485,9 +485,16 @@ and generic_call (env : env) (generic_path : Syntax.path) (generic_func : Typed.
          function_param_count
          total_provided)
       eloc;
-  (* Split arguments into explicit generic parameters and regular function arguments *)
-  let explicit_generic_args = CCList.take explicit_generic_param_count args in
-  let function_args = CCList.drop explicit_generic_param_count args in
+  (* Split arguments using param_order to handle interleaved params *)
+  let args_array = Array.of_list args in
+  let rec split_args (pos : int) (gen_acc : Syntax.exp list) (arg_acc : Syntax.exp list) (order : Typed.param_kind list)
+      : Syntax.exp list * Syntax.exp list =
+    match order with
+    | [] -> List.rev gen_acc, List.rev arg_acc
+    | Typed.PKGeneric _ :: rest -> split_args (pos + 1) (args_array.(pos) :: gen_acc) arg_acc rest
+    | Typed.PKArg _ :: rest -> split_args (pos + 1) gen_acc (args_array.(pos) :: arg_acc) rest
+  in
+  let explicit_generic_args, function_args = split_args 0 [] [] generic_func.param_order in
   (* Process explicit template arguments with template argument context (allows function references) *)
   let env, processed_explicit_generic_args = exp_list ~context:generic_arg_context env explicit_generic_args in
   (* Process regular function arguments with normal context *)
@@ -1135,6 +1142,78 @@ let rec resolve_type_intrinsics_in_exp (type_substitution_map : (string * type_)
   | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ | EConst _ -> e
 
 
+(** Substitutes constant parameter references with their literal values in expressions.
+    This is used for specialized generic functions where constant params are inlined. *)
+let rec substitute_constants_in_exp (constant_map : (string * Typed.exp) list) (e : Typed.exp) : Typed.exp =
+  match e.e with
+  | EId name -> (
+    (* Check if this identifier is a constant parameter that should be substituted *)
+    match CCList.assoc_opt ~eq:String.equal name constant_map with
+    | Some const_exp -> { const_exp with loc = e.loc; t = e.t }
+    | None -> e)
+  | ECall { instance; path; args } ->
+    let args = CCList.map (substitute_constants_in_exp constant_map) args in
+    { e with e = ECall { instance; path; args } }
+  | EOp (op, e1, e2) ->
+    let e1 = substitute_constants_in_exp constant_map e1 in
+    let e2 = substitute_constants_in_exp constant_map e2 in
+    { e with e = EOp (op, e1, e2) }
+  | EUnOp (op, e1) ->
+    let e1 = substitute_constants_in_exp constant_map e1 in
+    { e with e = EUnOp (op, e1) }
+  | EIf { cond; then_; else_ } ->
+    let cond = substitute_constants_in_exp constant_map cond in
+    let then_ = substitute_constants_in_exp constant_map then_ in
+    let else_ = substitute_constants_in_exp constant_map else_ in
+    { e with e = EIf { cond; then_; else_ } }
+  | EIndex { e = arr; index } ->
+    let arr = substitute_constants_in_exp constant_map arr in
+    let index = substitute_constants_in_exp constant_map index in
+    { e with e = EIndex { e = arr; index } }
+  | EArray elems ->
+    let elems = CCList.map (substitute_constants_in_exp constant_map) elems in
+    { e with e = EArray elems }
+  | ETuple elems ->
+    let elems = CCList.map (substitute_constants_in_exp constant_map) elems in
+    { e with e = ETuple elems }
+  | EMember (e1, m) ->
+    let e1 = substitute_constants_in_exp constant_map e1 in
+    { e with e = EMember (e1, m) }
+  | ERecord { path; elems } ->
+    let elems = CCList.map (fun (n, v) -> n, substitute_constants_in_exp constant_map v) elems in
+    { e with e = ERecord { path; elems } }
+  | EGenCall { generic_path; args; explicit_args } ->
+    let args = CCList.map (substitute_constants_in_exp constant_map) args in
+    let explicit_args = CCList.map (substitute_constants_in_exp constant_map) explicit_args in
+    { e with e = EGenCall { generic_path; args; explicit_args } }
+  | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EConst _ | ETypeIntrinsic _ -> e
+
+
+(** Substitutes constant parameter references in a statement tree. *)
+let rec substitute_constants_in_stmt (constant_map : (string * Typed.exp) list) (s : Typed.stmt) : Typed.stmt =
+  match s.s with
+  | StmtVal _ -> s
+  | StmtMem (_, _) -> s
+  | StmtBind (lhs, rhs) ->
+    let rhs = substitute_constants_in_exp constant_map rhs in
+    { s with s = StmtBind (lhs, rhs) }
+  | StmtReturn e ->
+    let e = substitute_constants_in_exp constant_map e in
+    { s with s = StmtReturn e }
+  | StmtIf (cond, then_, else_opt) ->
+    let cond = substitute_constants_in_exp constant_map cond in
+    let then_ = substitute_constants_in_stmt constant_map then_ in
+    let else_opt = Option.map (substitute_constants_in_stmt constant_map) else_opt in
+    { s with s = StmtIf (cond, then_, else_opt) }
+  | StmtWhile (cond, body) ->
+    let cond = substitute_constants_in_exp constant_map cond in
+    let body = substitute_constants_in_stmt constant_map body in
+    { s with s = StmtWhile (cond, body) }
+  | StmtBlock stmts ->
+    let stmts = CCList.map (substitute_constants_in_stmt constant_map) stmts in
+    { s with s = StmtBlock stmts }
+
+
 (* Type substitution version of stmt for processing specialized function bodies *)
 let rec stmt_with_type_substitution (env : env) (type_substitution_map : (string * type_) list) (return : type_)
     (s : Syntax.stmt) : env * stmt list =
@@ -1674,9 +1753,10 @@ let convert_generic_param (env : env) (param : Syntax.generic_param) : Typed.gen
     if String.length name = 0 then
       Error.raiseError "Generic constant parameter name cannot be empty" Loc.default;
     let converted_type = type_in_m env type_expr in
-    (* Validate that the type is a valid constant type *)
+    (* Validate that the type is a valid constant type (allow unbound for inference) *)
     (match (unlink converted_type).tx with
     | TEId { id = "int" | "real" | "bool" | "string"; _ } -> ()
+    | TEUnbound _ -> () (* Allow unbound types - will be inferred from call site *)
     | _ ->
       Error.raiseError
         (Printf.sprintf
@@ -1726,11 +1806,20 @@ let create_generic_function (env : env) (def : Syntax.function_def) : Typed.gene
   in
   (* Create function type from regular arguments only (exclude template params) *)
   let arg_types = CCList.map (fun (arg : Typed.arg) -> arg.t) args in
+  (* Convert param_order from Syntax to Typed *)
+  let param_order =
+    CCList.map
+      (function
+        | Syntax.PKGeneric i -> Typed.PKGeneric i
+        | Syntax.PKArg i -> Typed.PKArg i)
+      def.param_order
+  in
   (* Capture the type index at definition time - this ensures specialized types appear near the generic's position *)
   let type_index = Env.getGlobalTick () in
   { name = def.name
   ; generic_params
   ; args
+  ; param_order
   ; t = arg_types, inferred_ret
   ; body = def.body
   ; loc = def.loc
@@ -1862,6 +1951,44 @@ let removeExistingTypes set types =
 (* Helper to create a simple path *)
 let make_path (name : string) (loc : Loc.t) : Syntax.path = { id = name; n = None; loc }
 
+(* Check if a typed expression is a compile-time constant literal *)
+let is_constant_literal (e : Typed.exp) : bool =
+  match e.e with
+  | EInt _ | EReal _ | EBool _ | EString _ | EFixed _ -> true
+  | _ -> false
+
+
+(* Convert a constant literal expression to a string for signature encoding *)
+let constant_to_signature_string (e : Typed.exp) : string =
+  match e.e with
+  | EInt n ->
+    (* Handle negative numbers *)
+    if n < 0 then
+      "n" ^ string_of_int (abs n)
+    else
+      string_of_int n
+  | EReal f ->
+    (* Convert float to string, replacing dots and negative signs for valid identifier *)
+    let s = Printf.sprintf "%.6g" f in
+    let s = Str.global_replace (Str.regexp_string ".") "_" s in
+    let s = Str.global_replace (Str.regexp_string "-") "n" s in
+    s
+  | EBool b ->
+    if b then
+      "true"
+    else
+      "false"
+  | EString s ->
+    (* Use hash of string for short signature *)
+    Printf.sprintf "s%x" (Hashtbl.hash s land 0xFFFF)
+  | EFixed f ->
+    let s = Printf.sprintf "%.6g" f in
+    let s = Str.global_replace (Str.regexp_string ".") "_" s in
+    let s = Str.global_replace (Str.regexp_string "-") "n" s in
+    "fx" ^ s
+  | _ -> "var" (* Should not happen if is_constant_literal was checked *)
+
+
 (* State for tracking instantiated generic functions during post-processing *)
 type instantiation_state =
   { mutable instantiated : (string, Typed.function_def * Typed.stmt) Hashtbl.t
@@ -1882,17 +2009,59 @@ let build_signature_string (generic_name : string) (arg_types : Typed.type_ list
   generic_name ^ "_" ^ String.concat "_" type_strings
 
 
+(* Build a signature string that includes constant values for fully specialized functions *)
+let build_specialized_signature_string (generic_name : string) (arg_types : Typed.type_ list)
+    (explicit_args : Typed.exp list) : string =
+  let type_strings = CCList.map type_to_mangled_name arg_types in
+  let const_strings = CCList.map constant_to_signature_string explicit_args in
+  generic_name ^ "_" ^ String.concat "_" type_strings ^ "_" ^ String.concat "_" const_strings
+
+
+(* Build a signature string for non-specialized version (when any constant param is a variable) *)
+let build_nonspec_signature_string (generic_name : string) (arg_types : Typed.type_ list) : string =
+  let type_strings = CCList.map type_to_mangled_name arg_types in
+  generic_name ^ "_nonspec_" ^ String.concat "_" type_strings
+
+
 (* Create a specialized function from a generic function with resolved types.
-   This runs type inference on the body with the type bindings. *)
+   This runs type inference on the body with the type bindings.
+   explicit_args contains the values for constant generic params.
+
+   Value-based specialization:
+   - If ALL explicit_args are compile-time constant literals -> create specialized version
+     with constants inlined in the body (no constant params as function args)
+   - If ANY explicit_arg is a variable -> create non-specialized version with all
+     constant params as function arguments *)
 let instantiate_generic_function (iargs : Args.args) (env : env) (generic_func : Typed.generic_function)
-    (call_arg_types : Typed.type_ list) (loc : Loc.t) : Typed.function_def * Typed.stmt =
-  (* Build specialized name from types *)
-  let specialized_name = build_signature_string generic_func.name call_arg_types in
+    (call_arg_types : Typed.type_ list) (explicit_args : Typed.exp list) (loc : Loc.t) : Typed.function_def * Typed.stmt
+    =
+  (* Check if all explicit args are compile-time constant literals *)
+  let all_constants = CCList.for_all is_constant_literal explicit_args in
+  (* Build specialized name based on whether we can fully specialize *)
+  let specialized_name =
+    if all_constants && CCList.length explicit_args > 0 then
+      (* All constants - include constant values in signature for unique specialization *)
+      build_specialized_signature_string generic_func.name call_arg_types explicit_args
+    else if CCList.length explicit_args > 0 then
+      (* Any variable - use non-specialized signature (single version for all variable calls) *)
+      build_nonspec_signature_string generic_func.name call_arg_types
+    else
+      (* No constant params - just use type-based signature *)
+      build_signature_string generic_func.name call_arg_types
+  in
   (* Extract type parameter names *)
   let type_param_names =
     CCList.filter_map
       (function
         | Typed.GParamType name -> Some name
+        | _ -> None)
+      generic_func.generic_params
+  in
+  (* Extract constant parameter info - name and type from explicit_args *)
+  let constant_params =
+    CCList.filter_map
+      (function
+        | Typed.GParamConstant (name, param_type) -> Some (name, param_type)
         | _ -> None)
       generic_func.generic_params
   in
@@ -1933,20 +2102,94 @@ let instantiate_generic_function (iargs : Args.args) (env : env) (generic_func :
         name, concrete_type)
       type_param_names
   in
-  (* Now create the specialized function definition *)
+  (* Build constant substitution map for specialized case *)
+  let constant_substitution_map =
+    if all_constants && CCList.length explicit_args > 0 then
+      (* Build constant substitution map: param_name -> constant expression *)
+      CCList.mapi
+        (fun i (name, _param_type) ->
+          if i < CCList.length explicit_args then
+            name, CCList.nth explicit_args i
+          else
+            failwith "Mismatch between constant_params and explicit_args")
+        constant_params
+    else
+      []
+  in
+  (* Build ALL args (including constant params) for body processing.
+     This ensures constant params are in the environment during type inference. *)
+  let constant_args : Typed.arg list =
+    CCList.mapi
+      (fun i (name, param_type) ->
+        let actual_type =
+          if i < CCList.length explicit_args then
+            (CCList.nth explicit_args i).t
+          else
+            param_type
+        in
+        { name; t = actual_type; loc })
+      constant_params
+  in
+  let regular_args_array = Array.of_list generic_func.args in
+  let constant_args_array = Array.of_list constant_args in
+  let all_args_for_body =
+    CCList.map
+      (fun pk ->
+        match pk with
+        | Typed.PKArg i ->
+          let arg = regular_args_array.(i) in
+          if i < CCList.length fresh_arg_types then
+            { arg with t = CCList.nth fresh_arg_types i }
+          else
+            arg
+        | Typed.PKGeneric i ->
+          if i < Array.length constant_args_array then
+            constant_args_array.(i)
+          else
+            failwith "Invalid generic param index in param_order")
+      generic_func.param_order
+  in
+  (* Build the final specialized args based on specialization mode *)
   let specialized_args =
-    CCList.map2 (fun (arg : Typed.arg) fresh_t -> { arg with t = fresh_t }) generic_func.args fresh_arg_types
+    if all_constants && CCList.length explicit_args > 0 then
+      (* Path A: All constants - exclude constant params from function signature *)
+      CCList.filter_map
+        (fun pk ->
+          match pk with
+          | Typed.PKArg i ->
+            let arg = regular_args_array.(i) in
+            let arg_with_type =
+              if i < CCList.length fresh_arg_types then
+                { arg with t = CCList.nth fresh_arg_types i }
+              else
+                arg
+            in
+            Some arg_with_type
+          | Typed.PKGeneric _ ->
+            (* Skip constant params - they will be inlined *)
+            None)
+        generic_func.param_order
+    else
+      (* Path B: Any variable (or no constant params) - include all params as args *)
+      all_args_for_body
   in
   (* Create context for the specialized function using the type_index from the generic definition *)
   (* This ensures the specialized type appears near where the original generic was defined *)
   let env = Env.createContextForFunctionWithIndex env specialized_name loc generic_func.type_index in
-  (* Enter function context - this sets up proper environment for variable handling *)
+  (* Enter function context with ALL args so constant params are in environment during body processing *)
   let inferred_ret = C.noreturn loc in
-  let env, path, _t = Env.enterFunction env specialized_name specialized_args inferred_ret loc in
+  let env, path, _t = Env.enterFunction env specialized_name all_args_for_body inferred_ret loc in
   (* Process body with type substitution for generic parameters *)
   let env, body = stmt_with_type_substitution env type_substitution_map fresh_ret_type generic_func.body in
+  (* If we have constant substitutions, apply them to the body *)
+  let body =
+    if CCList.length constant_substitution_map > 0 then
+      CCList.map (substitute_constants_in_stmt constant_substitution_map) body
+    else
+      body
+  in
   let env = Env.exitFunction env in
-  (* Create the specialized function definition *)
+  (* Create the specialized function definition with the appropriate args *)
   let specialized_def : Typed.function_def =
     { name = path
     ; args = specialized_args
@@ -1978,7 +2221,7 @@ let rec process_exp_instantiation (iargs : Args.args) (env : env) (state : insta
     Typed.exp =
   let loc = e.loc in
   match e.e with
-  | EGenCall { generic_path; args; explicit_args = _ } -> (
+  | EGenCall { generic_path; args; explicit_args } -> (
     (* Look up the generic function using the stored path *)
     let generic_name = Pla.print (Syntax.print_path generic_path) in
     match Env.lookupGeneric env generic_path with
@@ -1986,8 +2229,17 @@ let rec process_exp_instantiation (iargs : Args.args) (env : env) (state : insta
     | Some generic_func ->
       (* Get resolved types from the arguments *)
       let resolved_arg_types = CCList.map (fun (a : Typed.exp) -> unlink a.t) args in
-      (* Build signature for deduplication using the full path for uniqueness *)
-      let signature = build_signature_string generic_name resolved_arg_types in
+      (* Check if all explicit args are compile-time constant literals *)
+      let all_constants = CCList.for_all is_constant_literal explicit_args in
+      (* Build signature for deduplication based on specialization mode *)
+      let signature =
+        if all_constants && CCList.length explicit_args > 0 then
+          build_specialized_signature_string generic_name resolved_arg_types explicit_args
+        else if CCList.length explicit_args > 0 then
+          build_nonspec_signature_string generic_name resolved_arg_types
+        else
+          build_signature_string generic_name resolved_arg_types
+      in
       (* Check if already instantiated, get the function definition and path *)
       let specialized_def =
         match Hashtbl.find_opt state.instantiated signature with
@@ -2005,7 +2257,7 @@ let rec process_exp_instantiation (iargs : Args.args) (env : env) (state : insta
           in
           (* Create new instantiation in the correct module context *)
           let def, body =
-            instantiate_generic_function iargs env_for_instantiation generic_func resolved_arg_types loc
+            instantiate_generic_function iargs env_for_instantiation generic_func resolved_arg_types explicit_args loc
           in
           (* Recursively process the body to replace any nested EGenCall nodes *)
           let processed_body = process_stmt_instantiation iargs env_for_instantiation state body in
@@ -2032,8 +2284,45 @@ let rec process_exp_instantiation (iargs : Args.args) (env : env) (state : insta
           state.pending_functions <- (target_module, generic_func.name, def, processed_body) :: state.pending_functions;
           def
       in
-      (* Process the arguments recursively *)
-      let processed_args = CCList.map (process_exp_instantiation iargs env state) args in
+      (* Process both regular and explicit arguments recursively *)
+      let processed_regular_args = CCList.map (process_exp_instantiation iargs env state) args in
+      let processed_explicit_args = CCList.map (process_exp_instantiation iargs env state) explicit_args in
+      (* Build the final args list based on specialization mode *)
+      let processed_args =
+        if all_constants && CCList.length explicit_args > 0 then
+          (* Specialized version: only pass regular args, constants are inlined *)
+          let regular_args_array = Array.of_list processed_regular_args in
+          CCList.filter_map
+            (fun pk ->
+              match pk with
+              | Typed.PKArg i ->
+                if i < Array.length regular_args_array then
+                  Some regular_args_array.(i)
+                else
+                  failwith "Invalid arg index in param_order"
+              | Typed.PKGeneric _ ->
+                (* Skip constant args - they are inlined in the function body *)
+                None)
+            generic_func.param_order
+        else
+          (* Non-specialized version: pass all args including constants *)
+          let regular_args_array = Array.of_list processed_regular_args in
+          let explicit_args_array = Array.of_list processed_explicit_args in
+          CCList.map
+            (fun pk ->
+              match pk with
+              | Typed.PKArg i ->
+                if i < Array.length regular_args_array then
+                  regular_args_array.(i)
+                else
+                  failwith "Invalid arg index in param_order"
+              | Typed.PKGeneric i ->
+                if i < Array.length explicit_args_array then
+                  explicit_args_array.(i)
+                else
+                  failwith "Invalid generic param index in param_order")
+            generic_func.param_order
+      in
       (* Check if specialized function needs context (has _ctx as first argument) *)
       let final_args =
         match specialized_def.args with
