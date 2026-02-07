@@ -328,7 +328,9 @@ module Diagnostics = struct
         ]
 
 
-  (** Run Vult compiler diagnostics on file content *)
+  (** Run Vult compiler diagnostics on file content.
+      Only performs type checking (not elaboration) since diagnostics don't need
+      generic function instantiation. *)
   let get_diagnostics ?(includes = []) (content : string) (filename : string) : Yojson.Safe.t list =
     try
       (* Use Args.Code to pass content directly without temp files *)
@@ -336,7 +338,8 @@ module Diagnostics = struct
       let result =
         try
           let parsed, _ = Driver.Loader.loadFiles args args.files in
-          let _ = Core.Inference.infer args parsed in
+          (* Use typecheck only - no elaboration needed for diagnostics *)
+          let _ = Core.Typechecking.typecheck args parsed in
           []
         with
         | Error.Errors errors -> CCList.map error_to_diagnostic_json errors
@@ -347,7 +350,9 @@ module Diagnostics = struct
     | _ -> []
 
 
-  (** Enhanced diagnostics using workspace context *)
+  (** Enhanced diagnostics using workspace context.
+      Only performs type checking (not elaboration) since diagnostics don't need
+      generic function instantiation. *)
   let get_diagnostics_with_workspace (workspace : Workspace.t) (content : string) (filename : string) :
       Yojson.Safe.t list =
     let includes = Workspace.get_effective_include_paths workspace in
@@ -371,7 +376,8 @@ module Diagnostics = struct
       let result =
         try
           let parsed, _ = Driver.Loader.loadFiles args args.files in
-          let _ = Core.Inference.infer args parsed in
+          (* Use typecheck only - no elaboration needed for diagnostics *)
+          let _ = Core.Typechecking.typecheck args parsed in
           []
         with
         | Error.Errors errors ->

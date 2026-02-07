@@ -1,3 +1,98 @@
+Vult Type System
+================
+
+NOTE (February 2026): This document has been updated. The original design
+described type classes/interfaces that were never implemented. The current
+type system is simpler and more pragmatic.
+
+== Current Implementation ==
+
+The Vult type system uses Hindley-Milner style type inference with unification.
+
+Basic Types:
+- int      : 32-bit signed integer
+- int16    : 16-bit signed integer (for DSP optimizations)
+- real     : floating point (maps to double in C++)
+- fix16    : 16.16 fixed-point arithmetic
+- bool     : boolean (true/false)
+- string   : string literals (compile-time only)
+- unit     : void type
+
+Composite Types:
+- array(T, N)  : fixed-size array of N elements of type T
+- tuple        : heterogeneous product type, e.g., (int, real)
+- Records      : user-defined named types with fields
+- Enumerations : user-defined sum types
+
+Type Inference:
+- Types are inferred via unification
+- Explicit type annotations are optional but recommended
+- All type conversions must be explicit (e.g., real2int(), int2real())
+
+Generic Functions:
+- Type parameters are inferred from call-site arguments
+- Constant parameters allow compile-time specialization
+- Function parameters enable higher-order generic programming
+
+Generic parameters are prefixed with ' (single quote).
+
+Examples:
+
+```vult
+// Type parameter - 't is inferred from the argument type
+fun change(x : 't) : bool {
+   mem pre : 't;
+   val result = pre <> x;
+   pre = x;
+   return result;
+}
+
+// Function parameter - 'f is a function passed as argument
+fun apply_func('f, a, b) {
+   return f(a, b);
+}
+
+// Constant parameter with explicit type annotation
+fun add_const('n : int, x : int) : int {
+   return n + x;
+}
+```
+
+Usage:
+```vult
+val x = change(1.0);              // Specialized for real
+val y = change(1);                // Specialized for int
+val z = apply_func(add_int, 3, 4); // Pass function as parameter
+val w = add_const(10, 5);         // Constant 10 inlined at compile time
+```
+
+The compiler generates specialized versions for each distinct type/constant
+combination at each call site.
+
+Type Intrinsics (for generic code):
+- typedefault<'a>() : returns default value for type 'a
+- typemax<'a>()     : returns maximum value for numeric type 'a
+- typemin<'a>()     : returns minimum value for numeric type 'a
+
+== Implementation Details ==
+
+Type checking is performed in src/core/typechecking.ml:
+- Unification: unify(), unifyRaise()
+- Type conversion: type_in_m(), type_in_c()
+- Generic registration: create_generic_function()
+
+Generic instantiation is performed in src/core/elaboration.ml:
+- EGenCall → ECall transformation
+- Type substitution
+- Constant inlining
+
+== Original Design Notes (Historical - Not Implemented) ==
+
+The following describes a type class system that was considered but never
+implemented. It remains here for historical reference.
+
+---
+
 Some notes on the type system.
 
 Any type conversions must be explicit.
@@ -37,7 +132,7 @@ In the end we have something like:
 
 fun biquad(x:Int,b0:Int,b1:Int,b2:Int,a1:Int,a2:Int){
     mem w1,w2;
-    val w0 = 
+    val w0 =
     	IntAdd(x,
     		IntAdd(
     			IntNegate(IntMul(a1,w1))
@@ -46,3 +141,10 @@ fun biquad(x:Int,b0:Int,b1:Int,b2:Int,a1:Int,a2:Int){
     	)
     ...
 }
+
+---
+
+NOTE: The type class approach above was not implemented. Instead, Vult uses
+a simpler approach where operators like +, -, * are resolved based on the
+inferred types of their operands. The compiler has built-in knowledge of
+which types support which operators.

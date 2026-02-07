@@ -1581,7 +1581,7 @@ and evalIexp (ctx : call_context) (prog : iprog) (stack : runtime_stack) (frame_
 
 let evaluateMainExpression args env iprog exp : dvalue =
   let e = Pparser.Parse.parseString (Some "Main_.vult") (Pla.print {%pla|fun _main_() return <#exp#s>;|}) in
-  let env, main = Inference.infer_single args env e in
+  let env, main = Typechecking.typecheck_single args env e in
   let _, main = Toprog.convert args env main in
   let main = Passes.run args main in
   (*let () = print_endline (Pla.print (Prog.Print.print_prog main)) in*)
@@ -1687,7 +1687,7 @@ let renderAudioExpression (args : Util.Args.args) (env : Env.in_top) (iprog : ip
   let wrapper_code = generateRenderWrapper params in
   (* Parse and compile wrapper function *)
   let e = Pparser.Parse.parseString (Some "Render_.vult") wrapper_code in
-  let env, main = Inference.infer_single args env e in
+  let env, main = Typechecking.typecheck_single args env e in
   let _, main = Toprog.convert args env main in
   let main = Passes.run args main in
   let iprog = extendProgram iprog main in

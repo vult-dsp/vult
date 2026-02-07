@@ -354,7 +354,7 @@ let runInterpreter vultfile =
       }
     in
     let parsed, _ = Driver.Loader.loadFiles args args.files in
-    let env, stmts = Core.Inference.infer args parsed in
+    let env, stmts = Core.Typechecking.typecheck_and_elaborate args parsed in
     let env, stmts = Core.Toprog.convert args env stmts in
     let stmts = Core.Passes.run args stmts in
     let iprog = Core.Interpreter.transformProgram stmts in

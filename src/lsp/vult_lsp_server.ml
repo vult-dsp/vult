@@ -186,7 +186,7 @@ module State = struct
           let args =
             { Args.default_arguments with files = [ Args.Code (filename, content) ]; includes; check = false }
           in
-          let _env, typed_stmts = Core.Inference.infer args cached.parsed_files in
+          let _env, typed_stmts = Core.Typechecking.typecheck_and_elaborate args cached.parsed_files in
           (* Update cache with typed statements *)
           let updated_cache = { cached with typed_stmts = Some typed_stmts } in
           Hashtbl.replace state.parsed_cache cache_key updated_cache;
