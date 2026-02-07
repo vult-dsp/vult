@@ -126,7 +126,7 @@ function InstanceArray_test1(_ctx)
    local i__1 = 0
    while (i__1 < 4) do
       do
-         sum = (sum + InstanceArray_counter(_ctx.instances[i__1 + 1]))
+         sum = (sum + InstanceArray_counter(get(_ctx.instances, i__1)))
          i__1 = (1 + i__1)
       end
    end

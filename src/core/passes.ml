@@ -249,6 +249,21 @@ module Location = struct
 end
 
 module IfExpressions = struct
+  (* Check if an expression is simple enough to remain as a ternary operator *)
+  let rec isSimpleValue (e : exp) =
+    match e.e with
+    | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ -> true
+    | EId _ | EMember _ -> true
+    | EUnOp (_, e) -> isSimpleValue e
+    | _ -> false
+
+
+  let isSimpleIf (e : exp) =
+    match e.e with
+    | EIf { cond; then_; else_ } -> isSimpleValue cond && isSimpleValue then_ && isSimpleValue else_
+    | _ -> false
+
+
   let stmt_env =
     Mapper.makeEnv
     @@ fun env (s : stmt) ->
@@ -291,6 +306,8 @@ module IfExpressions = struct
           then_
         else
           else_ )
+    (* Preserve simple if-expressions as ternary operators *)
+    | { e = EIf _; _ } when isSimpleIf e -> state, e
     (* Bind if-expressions to a variable in function context *)
     | { e = EIf _; t; loc } when (not env.in_if_exp) && (not env.bound_if) && env.in_function ->
       let tick = getTick env state in
@@ -929,12 +946,30 @@ module StrengthReduction = struct
       | TReal -> reapply state, C.ereal ~loc:e.loc 0.0
       | TFix16 -> reapply state, C.efix16 ~loc:e.loc 0.0
       | _ -> state, e)
+    (* x * -1 -> -x *)
+    | { e = EOp (OpMul, e1, { e = EInt -1; _ }); _ } -> reapply state, { e with e = EUnOp (UOpNeg, e1) }
+    | { e = EOp (OpMul, { e = EInt -1; _ }, e2); _ } -> reapply state, { e with e = EUnOp (UOpNeg, e2) }
+    (* x % 1 -> 0 *)
+    | { e = EOp (OpMod, _, { e = EInt 1; _ }); loc; _ } -> reapply state, C.eint ~loc 0
+    (* NOTE: x % 2^n -> x & (2^n - 1) optimization removed because Lua 5.1/LuaJIT
+       doesn't support native bitwise operators, and modulo works correctly *)
+    (* 0 / x -> 0 *)
+    | { e = EOp (OpDiv, { e = EInt 0; _ }, _); loc; _ } -> reapply state, C.eint ~loc 0
+    (* 0 - x -> -x *)
+    | { e = EOp (OpSub, { e = EInt 0; _ }, e2); _ } -> reapply state, { e with e = EUnOp (UOpNeg, e2) }
     (* ========== FLOATING POINT ARITHMETIC OPTIMIZATIONS ========== *)
     (* x * 0.0 -> 0.0, x * 1.0 -> x *)
     | { e = EOp (OpMul, _, { e = EReal 0.0; _ }); _ } | { e = EOp (OpMul, { e = EReal 0.0; _ }, _); _ } ->
       reapply state, { e with e = EReal 0.0 }
     | { e = EOp (OpMul, e1, { e = EReal 1.0; _ }); _ } -> reapply state, e1
     | { e = EOp (OpMul, { e = EReal 1.0; _ }, e2); _ } -> reapply state, e2
+    (* x * -1.0 -> -x *)
+    | { e = EOp (OpMul, e1, { e = EReal -1.0; _ }); _ } -> reapply state, { e with e = EUnOp (UOpNeg, e1) }
+    | { e = EOp (OpMul, { e = EReal -1.0; _ }, e2); _ } -> reapply state, { e with e = EUnOp (UOpNeg, e2) }
+    (* 0.0 / x -> 0.0 *)
+    | { e = EOp (OpDiv, { e = EReal 0.0; _ }, _); loc; _ } -> reapply state, C.ereal ~loc 0.0
+    (* 0.0 - x -> -x *)
+    | { e = EOp (OpSub, { e = EReal 0.0; _ }, e2); _ } -> reapply state, { e with e = EUnOp (UOpNeg, e2) }
     (* Removed x * 2.0 -> x + x transformation as it interferes with constant folding *)
     (* Removed x * 0.5 <-> x / 2.0 transformations as they create cycles with other passes *)
     (* Removed problematic power-of-2 real multiplication transformation *)
@@ -945,6 +980,18 @@ module StrengthReduction = struct
     | { e = EOp (OpMul, e1, { e = EFixed 1.0; _ }); _ } -> reapply state, e1
     | { e = EOp (OpMul, { e = EFixed 1.0; _ }, e2); _ } ->
       reapply state, e2 (* Removed x * 2.0 -> x + x for fixed point as it interferes with constant folding *)
+    (* x * -1.0 -> -x (fixed) *)
+    | { e = EOp (OpMul, e1, { e = EFixed -1.0; _ }); _ } -> reapply state, { e with e = EUnOp (UOpNeg, e1) }
+    | { e = EOp (OpMul, { e = EFixed -1.0; _ }, e2); _ } -> reapply state, { e with e = EUnOp (UOpNeg, e2) }
+    (* 0.0 / x -> 0.0 (fixed) *)
+    | { e = EOp (OpDiv, { e = EFixed 0.0; _ }, _); loc; _ } -> reapply state, C.efix16 ~loc 0.0
+    (* 0.0 - x -> -x (fixed) *)
+    | { e = EOp (OpSub, { e = EFixed 0.0; _ }, e2); _ } -> reapply state, { e with e = EUnOp (UOpNeg, e2) }
+    (* ========== DIVISION BY 1 OPTIMIZATIONS ========== *)
+    (* x / 1 -> x (for all numeric types) *)
+    | { e = EOp (OpDiv, e1, { e = EInt 1; _ }); _ } -> reapply state, e1
+    | { e = EOp (OpDiv, e1, { e = EReal 1.0; _ }); _ } -> reapply state, e1
+    | { e = EOp (OpDiv, e1, { e = EFixed 1.0; _ }); _ } -> reapply state, e1
     (* ========== FUNCTION CALL OPTIMIZATIONS ========== *)
     (* pow(x, 2) -> x * x *)
     | { e = ECall { path = "pow"; args = [ x; { e = EReal 2.0; _ } ] }; _ } ->
@@ -975,6 +1022,13 @@ module StrengthReduction = struct
       reapply state, { e with e = EOp (OpDiv, C.ereal ~loc 1.0, x) }
     | { e = ECall { path = "pow"; args = [ x; { e = EInt -1; _ } ] }; loc; _ } ->
       reapply state, { e with e = EOp (OpDiv, C.ereal ~loc 1.0, x) }
+    (* pow(x, -2) -> 1.0 / (x * x) *)
+    | { e = ECall { path = "pow"; args = [ x; { e = EReal -2.0; _ } ] }; loc; _ } ->
+      let x_squared = { e with e = EOp (OpMul, x, x) } in
+      reapply state, { e with e = EOp (OpDiv, C.ereal ~loc 1.0, x_squared) }
+    | { e = ECall { path = "pow"; args = [ x; { e = EInt -2; _ } ] }; loc; _ } ->
+      let x_squared = { e with e = EOp (OpMul, x, x) } in
+      reapply state, { e with e = EOp (OpDiv, C.ereal ~loc 1.0, x_squared) }
     (* pow(x, 1) -> x *)
     | { e = ECall { path = "pow"; args = [ x; { e = EReal 1.0; _ } ] }; _ } -> reapply state, x
     | { e = ECall { path = "pow"; args = [ x; { e = EInt 1; _ } ] }; _ } -> reapply state, x
@@ -1013,6 +1067,46 @@ module StrengthReduction = struct
     (* x << 0 -> x, x >> 0 -> x *)
     | { e = EOp (OpLsh, e1, { e = EInt 0; _ }); _ } -> reapply state, e1
     | { e = EOp (OpRsh, e1, { e = EInt 0; _ }); _ } -> reapply state, e1
+    (* x & x -> x, x | x -> x *)
+    | { e = EOp (OpBand, e1, e2); _ } when Compare.exp e1 e2 = 0 -> reapply state, e1
+    | { e = EOp (OpBor, e1, e2); _ } when Compare.exp e1 e2 = 0 -> reapply state, e1
+    (* x & -1 -> x (all bits set) *)
+    | { e = EOp (OpBand, e1, { e = EInt -1; _ }); _ } -> reapply state, e1
+    | { e = EOp (OpBand, { e = EInt -1; _ }, e2); _ } -> reapply state, e2
+    (* ========== NEGATION OPTIMIZATIONS ========== *)
+    (* -(-x) -> x *)
+    | { e = EUnOp (UOpNeg, { e = EUnOp (UOpNeg, x); _ }); _ } -> reapply state, x
+    (* not(not(x)) -> x *)
+    | { e = EUnOp (UOpNot, { e = EUnOp (UOpNot, x); _ }); _ } -> reapply state, x
+    (* ========== BOOLEAN LOGIC OPTIMIZATIONS ========== *)
+    (* x && true -> x *)
+    | { e = EOp (OpLand, e1, { e = EBool true; _ }); _ } -> reapply state, e1
+    | { e = EOp (OpLand, { e = EBool true; _ }, e2); _ } -> reapply state, e2
+    (* x && false -> false *)
+    | { e = EOp (OpLand, _, { e = EBool false; loc; _ }); _ } -> reapply state, C.ebool ~loc false
+    | { e = EOp (OpLand, { e = EBool false; loc; _ }, _); _ } -> reapply state, C.ebool ~loc false
+    (* x || false -> x *)
+    | { e = EOp (OpLor, e1, { e = EBool false; _ }); _ } -> reapply state, e1
+    | { e = EOp (OpLor, { e = EBool false; _ }, e2); _ } -> reapply state, e2
+    (* x || true -> true *)
+    | { e = EOp (OpLor, _, { e = EBool true; loc; _ }); _ } -> reapply state, C.ebool ~loc true
+    | { e = EOp (OpLor, { e = EBool true; loc; _ }, _); _ } -> reapply state, C.ebool ~loc true
+    (* ========== COMPARISON SELF-IDENTITIES ========== *)
+    (* x == x -> true (int only, floats have NaN) *)
+    | { e = EOp (OpEq, e1, e2); loc; _ } when Compare.exp e1 e2 = 0 && e1.t.t = TInt -> reapply state, C.ebool ~loc true
+    (* x != x -> false (int only) *)
+    | { e = EOp (OpNe, e1, e2); loc; _ } when Compare.exp e1 e2 = 0 && e1.t.t = TInt ->
+      reapply state, C.ebool ~loc false
+    (* x < x -> false, x > x -> false *)
+    | { e = EOp (OpLt, e1, e2); loc; _ } when Compare.exp e1 e2 = 0 -> reapply state, C.ebool ~loc false
+    | { e = EOp (OpGt, e1, e2); loc; _ } when Compare.exp e1 e2 = 0 -> reapply state, C.ebool ~loc false
+    (* x <= x -> true, x >= x -> true (int only) *)
+    | { e = EOp (OpLe, e1, e2); loc; _ } when Compare.exp e1 e2 = 0 && e1.t.t = TInt -> reapply state, C.ebool ~loc true
+    | { e = EOp (OpGe, e1, e2); loc; _ } when Compare.exp e1 e2 = 0 && e1.t.t = TInt -> reapply state, C.ebool ~loc true
+    (* ========== MIN/MAX OPTIMIZATIONS ========== *)
+    (* min(x, x) -> x, max(x, x) -> x *)
+    | { e = ECall { path = "min"; args = [ x1; x2 ] }; _ } when Compare.exp x1 x2 = 0 -> reapply state, x1
+    | { e = ECall { path = "max"; args = [ x1; x2 ] }; _ } when Compare.exp x1 x2 = 0 -> reapply state, x1
     (* No optimization found *)
     | _ -> state, e
 

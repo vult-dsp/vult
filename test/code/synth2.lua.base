@@ -423,7 +423,7 @@ function Synth2_mono_noteOff(_ctx, n)
    end
    while ((i < 4) and (found == false)) do
       do
-         if (_ctx.notes[i + 1] == n) then
+         if (get(_ctx.notes, i) == n) then
             do
                pos = i
                found = true
@@ -437,14 +437,14 @@ function Synth2_mono_noteOff(_ctx, n)
          local k = (1 + pos)
          while (k < 4) do
             do
-               _ctx.notes[(-1 + k) + 1] = _ctx.notes[k + 1]
+               _ctx.notes[(-1 + k) + 1] = get(_ctx.notes, k)
                k = (1 + k)
             end
          end
          if (found and (_ctx.count > 0)) then
             do
                _ctx.count = (-1 + _ctx.count)
-               _ctx.pre = _ctx.notes[(-1 + _ctx.count) + 1]
+               _ctx.pre = get(_ctx.notes, (-1 + _ctx.count))
             end
          end
       end
@@ -460,14 +460,7 @@ function Synth2_process(_ctx, i)
    local gate = Synth2_mono_isGateOn(_ctx.monoin)
    local lfo1 = (Synth2_lfo(_ctx.inst_15fb7, _ctx.lfo_rate, gate) * _ctx.lfo_amt)
    local o1 = Synth2_osc(_ctx.inst_2e5b7, _ctx.pitch, (lfo1 + _ctx.pw), _ctx.wave)
-   local amp_env = 0.0
-   local _if_temp_0 = 0.0
-   if gate then
-      _if_temp_0 = 1.0
-   else
-      _if_temp_0 = 0.0
-   end
-   amp_env = Synth2_smooth(_ctx.inst_3dfb7, _if_temp_0)
+   local amp_env = Synth2_smooth(_ctx.inst_3dfb7, ifExpressionValue(gate, 1.0, 0.0))
    local output = (amp_env * Synth2_svf(_ctx.inst_4a7b7, o1, _ctx.cut, _ctx.res, 0))
    return (output * _ctx.volume)
 end

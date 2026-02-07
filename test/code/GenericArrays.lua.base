@@ -94,7 +94,7 @@ function GenericArrays_sum(data)
    local i__1 = 0
    while (i__1 < size(data)) do
       do
-         total = (total + data[i__1 + 1])
+         total = (total + get(data, i__1))
          i__1 = (1 + i__1)
       end
    end

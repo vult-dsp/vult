@@ -16,23 +16,13 @@ fun If_to_stmt_foo(const e : int) : void {
    {
       val _if_temp_0 : real;
       if ((cond1 : bool)) (_if_temp_0 : real) = 0.0;
-      else {
-         val _if_temp_2 : real;
-         if ((cond2 : bool)) (_if_temp_2 : real) = 1.0;
-         else (_if_temp_2 : real) = 2.0;
-         (_if_temp_0 : real) = (2.0 + (_if_temp_2 : real));
-      }
+      else (_if_temp_0 : real) = (2.0 + (if (cond2 : bool) then 1.0 else 2.0));
       (a : real) = (1.0 + (_if_temp_0 : real));
    }
    {
       val _if_temp_1 : real;
       if ((cond1 : bool)) (_if_temp_1 : real) = 0.0;
-      else {
-         val _if_temp_3 : real;
-         if ((cond2 : bool)) (_if_temp_3 : real) = 1.0;
-         else (_if_temp_3 : real) = 2.0;
-         (_if_temp_1 : real) = (2.0 + (_if_temp_3 : real));
-      }
+      else (_if_temp_1 : real) = (2.0 + (if (cond2 : bool) then 1.0 else 2.0));
       (z : real) = (1.0 + (_if_temp_1 : real));
    }
 }

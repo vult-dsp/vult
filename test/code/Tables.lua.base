@@ -93,66 +93,66 @@ Tables_sineTable1_c0 = {};
 Tables_sineTable1_c1 = {};
 Tables_sineTable1_c2 = {};
 function Tables_sineTable1_raw_c0(index)
-   return Tables_sineTable1_c0[index + 1]
+   return get(Tables_sineTable1_c0, index)
 end
 
 function Tables_sineTable1_raw_c1(index)
-   return Tables_sineTable1_c1[index + 1]
+   return get(Tables_sineTable1_c1, index)
 end
 
 function Tables_sineTable1_raw_c2(index)
-   return Tables_sineTable1_c2[index + 1]
+   return get(Tables_sineTable1_c2, index)
 end
 
 function Tables_sineTable1(x)
    local index = clip(math.floor((x * 31.0)), 0, 31)
-   return (Tables_sineTable1_c0[index + 1] + (x * (Tables_sineTable1_c1[index + 1] + (Tables_sineTable1_c2[index + 1] * x))))
+   return (get(Tables_sineTable1_c0, index) + (x * (get(Tables_sineTable1_c1, index) + (get(Tables_sineTable1_c2, index) * x))))
 end
 
 Tables_sineTable2_c0 = {};
 Tables_sineTable2_c1 = {};
 function Tables_sineTable2_raw_c0(index)
-   return Tables_sineTable2_c0[index + 1]
+   return get(Tables_sineTable2_c0, index)
 end
 
 function Tables_sineTable2_raw_c1(index)
-   return Tables_sineTable2_c1[index + 1]
+   return get(Tables_sineTable2_c1, index)
 end
 
 function Tables_sineTable2(x)
    local index = clip(math.floor((x * 31.0)), 0, 31)
-   return (Tables_sineTable2_c0[index + 1] + (x * Tables_sineTable2_c1[index + 1]))
+   return (get(Tables_sineTable2_c0, index) + (x * get(Tables_sineTable2_c1, index)))
 end
 
 Tables_sineTable3_c0 = {};
 Tables_sineTable3_c1 = {};
 function Tables_sineTable3_raw_c0(index)
-   return Tables_sineTable3_c0[index + 1]
+   return get(Tables_sineTable3_c0, index)
 end
 
 function Tables_sineTable3_raw_c1(index)
-   return Tables_sineTable3_c1[index + 1]
+   return get(Tables_sineTable3_c1, index)
 end
 
 function Tables_sineTable3(x)
    local value = clip((x * 32.0), 0.0, 32.0)
    local index = int(value)
    local decimal = (value - floor(value))
-   return (Tables_sineTable3_c0[index + 1] + (Tables_sineTable3_c1[index + 1] * decimal))
+   return (get(Tables_sineTable3_c0, index) + (get(Tables_sineTable3_c1, index) * decimal))
 end
 
 Tables_power2_table = {};
 function Tables_power2(x)
-   return Tables_power2_table[(int_clip(x, -4, 4) + 4) + 1]
+   return get(Tables_power2_table, (int_clip(x, -4, 4) + 4))
 end
 
 Tables_square_table = {};
 function Tables_square(x)
-   return Tables_square_table[(int_clip(x, -4, 4) + 4) + 1]
+   return get(Tables_square_table, (int_clip(x, -4, 4) + 4))
 end
 
 Tables_square16_table = {};
 function Tables_square16(x)
-   return Tables_square16_table[(int_clip(x, -4, 4) + 4) + 1]
+   return get(Tables_square16_table, (int_clip(x, -4, 4) + 4))
 end
 

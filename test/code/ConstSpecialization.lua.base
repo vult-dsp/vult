@@ -264,7 +264,7 @@ function ConstSpecialization_setMatrix2(m, row, col, value)
 end
 
 function ConstSpecialization_getMatrix2(m, row, col)
-   return m[(row + lshift(col, 1)) + 1]
+   return get(m, (row + lshift(col, 1)))
 end
 
 function ConstSpecialization_test_matrix_mutation(m, x)

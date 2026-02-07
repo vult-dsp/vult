@@ -518,14 +518,7 @@ function Synth2_process(_ctx, i)
    gate = Synth2_mono_isGateOn(_ctx.monoin)
    lfo1 = (Synth2_lfo(_ctx.inst_15fb7, _ctx.lfo_rate, gate) * _ctx.lfo_amt)
    o1 = Synth2_osc(_ctx.inst_2e5b7, _ctx.pitch, (lfo1 + _ctx.pw), _ctx.wave)
-   amp_env = Float32(0.0)
-   _if_temp_0 = Float32(0.0)
-   if gate
-      _if_temp_0 = Float32(1.0)
-   else
-      _if_temp_0 = Float32(0.0)
-   end
-   amp_env = Synth2_smooth(_ctx.inst_3dfb7, _if_temp_0)
+   amp_env = Synth2_smooth(_ctx.inst_3dfb7, (gate ? Float32(1.0) : Float32(0.0)))
    output = (amp_env * Synth2_svf(_ctx.inst_4a7b7, o1, _ctx.cut, _ctx.res, Int32(0)))
    return (output * _ctx.volume)
 end

@@ -123,7 +123,7 @@ function Array_instance_foo(_ctx)
    local i__1 = 0
    while (i__1 < 2) do
       do
-         Array_instance_counter(_ctx.x[i__1 + 1])
+         Array_instance_counter(get(_ctx.x, i__1))
          i__1 = (1 + i__1)
       end
    end

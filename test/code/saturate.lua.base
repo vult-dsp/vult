@@ -93,20 +93,20 @@ Saturate_tanh_table_c0 = {};
 Saturate_tanh_table_c1 = {};
 Saturate_tanh_table_c2 = {};
 function Saturate_tanh_table_raw_c0(index)
-   return Saturate_tanh_table_c0[index + 1]
+   return get(Saturate_tanh_table_c0, index)
 end
 
 function Saturate_tanh_table_raw_c1(index)
-   return Saturate_tanh_table_c1[index + 1]
+   return get(Saturate_tanh_table_c1, index)
 end
 
 function Saturate_tanh_table_raw_c2(index)
-   return Saturate_tanh_table_c2[index + 1]
+   return get(Saturate_tanh_table_c2, index)
 end
 
 function Saturate_tanh_table(x)
    local index = clip(math.floor(((x + 24.0) * 5.0)), 0, 240)
-   return (Saturate_tanh_table_c0[index + 1] + (x * (Saturate_tanh_table_c1[index + 1] + (Saturate_tanh_table_c2[index + 1] * x))))
+   return (get(Saturate_tanh_table_c0, index) + (x * (get(Saturate_tanh_table_c1, index) + (get(Saturate_tanh_table_c2, index) * x))))
 end
 
 function Saturate_process(x)

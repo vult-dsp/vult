@@ -93,20 +93,20 @@ Bitcrush_factor_c0 = {};
 Bitcrush_factor_c1 = {};
 Bitcrush_factor_c2 = {};
 function Bitcrush_factor_raw_c0(index)
-   return Bitcrush_factor_c0[index + 1]
+   return get(Bitcrush_factor_c0, index)
 end
 
 function Bitcrush_factor_raw_c1(index)
-   return Bitcrush_factor_c1[index + 1]
+   return get(Bitcrush_factor_c1, index)
 end
 
 function Bitcrush_factor_raw_c2(index)
-   return Bitcrush_factor_c2[index + 1]
+   return get(Bitcrush_factor_c2, index)
 end
 
 function Bitcrush_factor(cv)
    local index = clip(math.floor((cv * 127.0)), 0, 127)
-   return (Bitcrush_factor_c0[index + 1] + (cv * (Bitcrush_factor_c1[index + 1] + (Bitcrush_factor_c2[index + 1] * cv))))
+   return (get(Bitcrush_factor_c0, index) + (cv * (get(Bitcrush_factor_c1, index) + (get(Bitcrush_factor_c2, index) * cv))))
 end
 
 function Bitcrush_process(i, cv)

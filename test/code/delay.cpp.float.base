@@ -138,15 +138,7 @@ float Delay_process(Delay_process_type& _ctx, float input) {
    bool gate = Delay_mono_isGateOn(_ctx.notes);
    float lfo_val = Delay_lfo(_ctx.inst_16101, _ctx.lfo_rate, gate) * _ctx.lfo_amt;
    float o1 = Delay_phd_osc(_ctx.inst_2c401, _ctx.pitch, lfo_val + _ctx.detune);
-   float amp = 0.0f;
-   float _if_temp_0 = 0.0f;
-   if (gate) {
-      _if_temp_0 = 1.0f;
-   }
-   else {
-      _if_temp_0 = 0.0f;
-   }
-   amp = Delay_smooth(_ctx.inst_37701, _if_temp_0);
+   float amp = Delay_smooth(_ctx.inst_37701, (gate ? 1.0f : 0.0f));
    float osc_out = amp * o1;
    float delay_out = Delay_delay(_ctx.inst_68e01, osc_out, Delay_smooth(_ctx.inst_47701, _ctx.time), Delay_smooth(_ctx.inst_57701, _ctx.feedback));
    return 0.5f * (delay_out + osc_out) * _ctx.volume;

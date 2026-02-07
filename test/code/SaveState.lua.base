@@ -166,7 +166,7 @@ function SaveState_main_type_serialize_data(buffer, index, _ctx)
    local i_0 = 0
    while (i_0 < 3) do
       do
-         index = SaveState_point_serialize_data(buffer, index, _ctx.point_array[i_0 + 1])
+         index = SaveState_point_serialize_data(buffer, index, get(_ctx.point_array, i_0))
          i_0 = (1 + i_0)
       end
    end
@@ -261,7 +261,7 @@ function SaveState_main_type_deserialize_data(buffer, type_descr, index, _ctx)
          local i_5 = 0
          while (i_5 < 3) do
             do
-               SaveState_point_deserialize_data(buffer, field_descr_4, field_index, _ctx.point_array[i_5 + 1])
+               SaveState_point_deserialize_data(buffer, field_descr_4, field_index, get(_ctx.point_array, i_5))
                i_5 = (1 + i_5)
                field_index = next_object(buffer, field_index)
             end

@@ -138,15 +138,7 @@ fix16_t Delay_process(Delay_process_type& _ctx, fix16_t input) {
    bool gate = Delay_mono_isGateOn(_ctx.notes);
    fix16_t lfo_val = fix_mul(Delay_lfo(_ctx.inst_16101, _ctx.lfo_rate, gate), _ctx.lfo_amt);
    fix16_t o1 = Delay_phd_osc(_ctx.inst_2c401, _ctx.pitch, lfo_val + _ctx.detune);
-   fix16_t amp = 0x0 /* 0.000000 */;
-   fix16_t _if_temp_0 = 0x0 /* 0.000000 */;
-   if (gate) {
-      _if_temp_0 = 0x10000 /* 1.000000 */;
-   }
-   else {
-      _if_temp_0 = 0x0 /* 0.000000 */;
-   }
-   amp = Delay_smooth(_ctx.inst_37701, _if_temp_0);
+   fix16_t amp = Delay_smooth(_ctx.inst_37701, (gate ? 0x10000 /* 1.000000 */ : 0x0 /* 0.000000 */));
    fix16_t osc_out = fix_mul(amp, o1);
    fix16_t delay_out = Delay_delay(_ctx.inst_68e01, osc_out, Delay_smooth(_ctx.inst_47701, _ctx.time), Delay_smooth(_ctx.inst_57701, _ctx.feedback));
    return (fix_mul((delay_out + osc_out), _ctx.volume) >> 1);

@@ -126,8 +126,10 @@ function list_clear(t)      for k in pairs(t) do t[k] = nil end end
 
 let rec isValueOrIf (e : exp) =
   match e.e with
-  | EUnit | EBool _ | EInt _ | EReal _ | EString _ | EId _ | EMember _ -> true
+  | EUnit | EBool _ | EInt _ | EReal _ | EString _ | EId _ | EMember _ | EFixed _ -> true
   | EUnOp (_, e) -> isValueOrIf e
+  | EOp (_, e1, e2) -> isValueOrIf e1 && isValueOrIf e2
+  | EIndex { e; index } -> isValueOrIf e && isValueOrIf index
   | EIf { then_; else_; _ } -> isValueOrIf then_ && isValueOrIf else_
   | _ -> false
 
@@ -182,7 +184,7 @@ let rec print_exp e =
   | EIndex { e; index } ->
     let e = print_exp e in
     let index = print_exp index in
-    {%pla|<#e#>[<#index#> + 1]|}
+    {%pla|get(<#e#>, <#index#>)|}
   | EArray l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
   | ECall { path; args } -> (
     (* Use optimized functions when available *)
@@ -225,8 +227,8 @@ let rec print_exp e =
     | "list_get", [ l; i ] ->
       let l = print_exp l in
       let i = print_exp i in
-      (* Lua is 1-based *)
-      {%pla|<#l#>[<#i#> + 1]|}
+      (* Use get() helper for 1-based indexing *)
+      {%pla|get(<#l#>, <#i#>)|}
     | "list_set", [ l; i; v ] ->
       let l = print_exp l in
       let i = print_exp i in

@@ -158,40 +158,40 @@ Util_pitchToRate_1024_c0 = {};
 Util_pitchToRate_1024_c1 = {};
 Util_pitchToRate_1024_c2 = {};
 function Util_pitchToRate_1024_raw_c0(index)
-   return Util_pitchToRate_1024_c0[index + 1]
+   return get(Util_pitchToRate_1024_c0, index)
 end
 
 function Util_pitchToRate_1024_raw_c1(index)
-   return Util_pitchToRate_1024_c1[index + 1]
+   return get(Util_pitchToRate_1024_c1, index)
 end
 
 function Util_pitchToRate_1024_raw_c2(index)
-   return Util_pitchToRate_1024_c2[index + 1]
+   return get(Util_pitchToRate_1024_c2, index)
 end
 
 function Util_pitchToRate_1024(pitch)
    local index = clip(math.floor((pitch * 0.244094)), 0, 31)
-   return (Util_pitchToRate_1024_c0[index + 1] + (pitch * (Util_pitchToRate_1024_c1[index + 1] + (Util_pitchToRate_1024_c2[index + 1] * pitch))))
+   return (get(Util_pitchToRate_1024_c0, index) + (pitch * (get(Util_pitchToRate_1024_c1, index) + (get(Util_pitchToRate_1024_c2, index) * pitch))))
 end
 
 Util_cvToRate_1024_c0 = {};
 Util_cvToRate_1024_c1 = {};
 Util_cvToRate_1024_c2 = {};
 function Util_cvToRate_1024_raw_c0(index)
-   return Util_cvToRate_1024_c0[index + 1]
+   return get(Util_cvToRate_1024_c0, index)
 end
 
 function Util_cvToRate_1024_raw_c1(index)
-   return Util_cvToRate_1024_c1[index + 1]
+   return get(Util_cvToRate_1024_c1, index)
 end
 
 function Util_cvToRate_1024_raw_c2(index)
-   return Util_cvToRate_1024_c2[index + 1]
+   return get(Util_cvToRate_1024_c2, index)
 end
 
 function Util_cvToRate_1024(cv)
    local index = clip(math.floor((cv * 34.444444)), 0, 31)
-   return (Util_cvToRate_1024_c0[index + 1] + (cv * (Util_cvToRate_1024_c1[index + 1] + (Util_cvToRate_1024_c2[index + 1] * cv))))
+   return (get(Util_cvToRate_1024_c0, index) + (cv * (get(Util_cvToRate_1024_c1, index) + (get(Util_cvToRate_1024_c2, index) * cv))))
 end
 
 function Tricore_default(_ctx)
@@ -414,40 +414,40 @@ Util_pitchToRate_c0 = {};
 Util_pitchToRate_c1 = {};
 Util_pitchToRate_c2 = {};
 function Util_pitchToRate_raw_c0(index)
-   return Util_pitchToRate_c0[index + 1]
+   return get(Util_pitchToRate_c0, index)
 end
 
 function Util_pitchToRate_raw_c1(index)
-   return Util_pitchToRate_c1[index + 1]
+   return get(Util_pitchToRate_c1, index)
 end
 
 function Util_pitchToRate_raw_c2(index)
-   return Util_pitchToRate_c2[index + 1]
+   return get(Util_pitchToRate_c2, index)
 end
 
 function Util_pitchToRate(pitch)
    local index = clip(math.floor((pitch * 0.244094)), 0, 31)
-   return (Util_pitchToRate_c0[index + 1] + (pitch * (Util_pitchToRate_c1[index + 1] + (Util_pitchToRate_c2[index + 1] * pitch))))
+   return (get(Util_pitchToRate_c0, index) + (pitch * (get(Util_pitchToRate_c1, index) + (get(Util_pitchToRate_c2, index) * pitch))))
 end
 
 Util_cvToRate_c0 = {};
 Util_cvToRate_c1 = {};
 Util_cvToRate_c2 = {};
 function Util_cvToRate_raw_c0(index)
-   return Util_cvToRate_c0[index + 1]
+   return get(Util_cvToRate_c0, index)
 end
 
 function Util_cvToRate_raw_c1(index)
-   return Util_cvToRate_c1[index + 1]
+   return get(Util_cvToRate_c1, index)
 end
 
 function Util_cvToRate_raw_c2(index)
-   return Util_cvToRate_c2[index + 1]
+   return get(Util_cvToRate_c2, index)
 end
 
 function Util_cvToRate(cv)
    local index = clip(math.floor((cv * 141.111111)), 0, 127)
-   return (Util_cvToRate_c0[index + 1] + (cv * (Util_cvToRate_c1[index + 1] + (Util_cvToRate_c2[index + 1] * cv))))
+   return (get(Util_cvToRate_c0, index) + (cv * (get(Util_cvToRate_c1, index) + (get(Util_cvToRate_c2, index) * cv))))
 end
 
 function Util_pitchToCv(pitch)
@@ -458,40 +458,40 @@ Util_cvToperiod_c0 = {};
 Util_cvToperiod_c1 = {};
 Util_cvToperiod_c2 = {};
 function Util_cvToperiod_raw_c0(index)
-   return Util_cvToperiod_c0[index + 1]
+   return get(Util_cvToperiod_c0, index)
 end
 
 function Util_cvToperiod_raw_c1(index)
-   return Util_cvToperiod_c1[index + 1]
+   return get(Util_cvToperiod_c1, index)
 end
 
 function Util_cvToperiod_raw_c2(index)
-   return Util_cvToperiod_c2[index + 1]
+   return get(Util_cvToperiod_c2, index)
 end
 
 function Util_cvToperiod(cv)
    local index = clip(math.floor((cv * 31.0)), 0, 31)
-   return (Util_cvToperiod_c0[index + 1] + (cv * (Util_cvToperiod_c1[index + 1] + (Util_cvToperiod_c2[index + 1] * cv))))
+   return (get(Util_cvToperiod_c0, index) + (cv * (get(Util_cvToperiod_c1, index) + (get(Util_cvToperiod_c2, index) * cv))))
 end
 
 Util_cvTokHz_c0 = {};
 Util_cvTokHz_c1 = {};
 Util_cvTokHz_c2 = {};
 function Util_cvTokHz_raw_c0(index)
-   return Util_cvTokHz_c0[index + 1]
+   return get(Util_cvTokHz_c0, index)
 end
 
 function Util_cvTokHz_raw_c1(index)
-   return Util_cvTokHz_c1[index + 1]
+   return get(Util_cvTokHz_c1, index)
 end
 
 function Util_cvTokHz_raw_c2(index)
-   return Util_cvTokHz_c2[index + 1]
+   return get(Util_cvTokHz_c2, index)
 end
 
 function Util_cvTokHz(cv)
    local index = clip(math.floor((cv * 31.0)), 0, 31)
-   return (Util_cvTokHz_c0[index + 1] + (cv * (Util_cvTokHz_c1[index + 1] + (Util_cvTokHz_c2[index + 1] * cv))))
+   return (get(Util_cvTokHz_c0, index) + (cv * (get(Util_cvTokHz_c1, index) + (get(Util_cvTokHz_c2, index) * cv))))
 end
 
 function Tricore_process(_ctx, cv, reset, disable)
@@ -499,14 +499,7 @@ function Tricore_process(_ctx, cv, reset, disable)
    if Util_change(_ctx.inst_1b03c, cv) then
       _ctx.rate = (4.0 * Util_cvToRate_1024(cv))
    end
-   local new_phase = 0.0
-   local _if_temp_0 = 0.0
-   if _ctx.direction then
-      _if_temp_0 = _ctx.rate
-   else
-      _if_temp_0 = (-_ctx.rate)
-   end
-   new_phase = (_if_temp_0 + _ctx.phase)
+   local new_phase = (ifExpressionValue(_ctx.direction, _ctx.rate, (-_ctx.rate)) + _ctx.phase)
    local bdisable = (disable > 0.5)
    if (Util_edge(_ctx.inst_2043c, (reset > 0.0)) or Util_edge(_ctx.inst_3043c, bdisable)) then
       do
@@ -595,20 +588,20 @@ Saturate_tanh_table_c0 = {};
 Saturate_tanh_table_c1 = {};
 Saturate_tanh_table_c2 = {};
 function Saturate_tanh_table_raw_c0(index)
-   return Saturate_tanh_table_c0[index + 1]
+   return get(Saturate_tanh_table_c0, index)
 end
 
 function Saturate_tanh_table_raw_c1(index)
-   return Saturate_tanh_table_c1[index + 1]
+   return get(Saturate_tanh_table_c1, index)
 end
 
 function Saturate_tanh_table_raw_c2(index)
-   return Saturate_tanh_table_c2[index + 1]
+   return get(Saturate_tanh_table_c2, index)
 end
 
 function Saturate_tanh_table(x)
    local index = clip(math.floor(((x + 24.0) * 5.0)), 0, 240)
-   return (Saturate_tanh_table_c0[index + 1] + (x * (Saturate_tanh_table_c1[index + 1] + (Saturate_tanh_table_c2[index + 1] * x))))
+   return (get(Saturate_tanh_table_c0, index) + (x * (get(Saturate_tanh_table_c1, index) + (get(Saturate_tanh_table_c2, index) * x))))
 end
 
 function Saturate_process(x)

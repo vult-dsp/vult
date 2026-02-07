@@ -376,14 +376,7 @@ function Delay_process(_ctx, input)
    gate = Delay_mono_isGateOn(_ctx.notes)
    lfo_val = (Delay_lfo(_ctx.inst_16101, _ctx.lfo_rate, gate) * _ctx.lfo_amt)
    o1 = Delay_phd_osc(_ctx.inst_2c401, _ctx.pitch, (lfo_val + _ctx.detune))
-   amp = Float32(0.0)
-   _if_temp_0 = Float32(0.0)
-   if gate
-      _if_temp_0 = Float32(1.0)
-   else
-      _if_temp_0 = Float32(0.0)
-   end
-   amp = Delay_smooth(_ctx.inst_37701, _if_temp_0)
+   amp = Delay_smooth(_ctx.inst_37701, (gate ? Float32(1.0) : Float32(0.0)))
    osc_out = (amp * o1)
    delay_out = Delay_delay(_ctx.inst_68e01, osc_out, Delay_smooth(_ctx.inst_47701, _ctx.time), Delay_smooth(_ctx.inst_57701, _ctx.feedback))
    return (Float32(0.5) * ((delay_out + osc_out) * _ctx.volume))

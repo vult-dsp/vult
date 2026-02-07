@@ -94,7 +94,7 @@ function Array_dimension_total(data)
    local i__1 = 0
    while (i__1 < size(data)) do
       do
-         acc = (acc + data[i__1 + 1])
+         acc = (acc + get(data, i__1))
          i__1 = (1 + i__1)
       end
    end
@@ -106,7 +106,7 @@ function Array_dimension_sum(data1, data2)
    local i__1 = 0
    while (i__1 < size(data1)) do
       do
-         acc = (acc + (data1[i__1 + 1] + data2[i__1 + 1]))
+         acc = (acc + (get(data1, i__1) + get(data2, i__1)))
          i__1 = (1 + i__1)
       end
    end
