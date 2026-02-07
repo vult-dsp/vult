@@ -1,0 +1,194 @@
+// Tests for constant parameters in left-hand side (LHS) array index expressions
+//
+// Key behaviors tested:
+// - Constant parameters used in array index expressions on LHS of assignments
+// - Matrix access patterns with row/column constant parameters
+// - Nested array indexing with constant parameters
+
+// =============================================================================
+// Test 1: Simple array write with constant index
+// =============================================================================
+fun setElement(m:array(int, 4), 'index:int, value:int) {
+   m[index] = value;
+}
+
+fun test_simple_lhs_index() : int {
+   val arr = [0, 0, 0, 0];
+   setElement(arr, 0, 10);
+   setElement(arr, 2, 20);
+
+   if (arr[0] == 10 && arr[2] == 20 && arr[1] == 0 && arr[3] == 0) {
+      return 100;
+   }
+   return -1;
+}
+
+// =============================================================================
+// Test 2: Matrix-style access with row and column constant params
+// =============================================================================
+fun setMatrix(m:array(real, 4), 'row:int, 'col:int, value:real) {
+   // 2x2 matrix stored as flat array: m[col * 2 + row]
+   m[col * 2 + row] = value;
+}
+
+fun getMatrix(m:array(real, 4), 'row:int, 'col:int) : real {
+   return m[col * 2 + row];
+}
+
+fun test_matrix_access() : int {
+   val matrix = [0.0, 0.0, 0.0, 0.0];
+
+   // Set matrix[0,0] = 1.0
+   setMatrix(matrix, 0, 0, 1.0);
+   // Set matrix[1,0] = 2.0
+   setMatrix(matrix, 1, 0, 2.0);
+   // Set matrix[0,1] = 3.0
+   setMatrix(matrix, 0, 1, 3.0);
+   // Set matrix[1,1] = 4.0
+   setMatrix(matrix, 1, 1, 4.0);
+
+   // Verify: matrix should be [1.0, 2.0, 3.0, 4.0]
+   val v00 = getMatrix(matrix, 0, 0);  // 1.0
+   val v10 = getMatrix(matrix, 1, 0);  // 2.0
+   val v01 = getMatrix(matrix, 0, 1);  // 3.0
+   val v11 = getMatrix(matrix, 1, 1);  // 4.0
+
+   if (v00 == 1.0 && v10 == 2.0 && v01 == 3.0 && v11 == 4.0) {
+      return 200;
+   }
+   return -2;
+}
+
+// =============================================================================
+// Test 3: Larger matrix (6x6) with constant row/col indices
+// =============================================================================
+fun setMatrix6(m:array(real, 36), 'row:int, 'col:int, value:real) {
+   m[col * 6 + row] = value;
+}
+
+fun getMatrix6(m:array(real, 36), 'row:int, 'col:int) : real {
+   return m[col * 6 + row];
+}
+
+fun test_large_matrix() : int {
+   val matrix = [
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+   ];
+
+   // Set diagonal elements
+   setMatrix6(matrix, 0, 0, 1.0);
+   setMatrix6(matrix, 1, 1, 2.0);
+   setMatrix6(matrix, 2, 2, 3.0);
+   setMatrix6(matrix, 3, 3, 4.0);
+   setMatrix6(matrix, 4, 4, 5.0);
+   setMatrix6(matrix, 5, 5, 6.0);
+
+   // Check diagonal
+   val d0 = getMatrix6(matrix, 0, 0);
+   val d1 = getMatrix6(matrix, 1, 1);
+   val d2 = getMatrix6(matrix, 2, 2);
+   val d3 = getMatrix6(matrix, 3, 3);
+   val d4 = getMatrix6(matrix, 4, 4);
+   val d5 = getMatrix6(matrix, 5, 5);
+
+   // Check off-diagonal (should be 0)
+   val off = getMatrix6(matrix, 0, 1);
+
+   if (d0 == 1.0 && d1 == 2.0 && d2 == 3.0 && d3 == 4.0 && d4 == 5.0 && d5 == 6.0 && off == 0.0) {
+      return 300;
+   }
+   return -3;
+}
+
+// =============================================================================
+// Test 4: Constant index with arithmetic expression
+// =============================================================================
+fun setWithOffset(arr:array(int, 8), 'base:int, offset:int, value:int) {
+   arr[base + offset] = value;
+}
+
+fun test_index_arithmetic() : int {
+   val arr = [0, 0, 0, 0, 0, 0, 0, 0];
+
+   // base=2, so writes at indices 2+0=2, 2+1=3, 2+2=4
+   setWithOffset(arr, 2, 0, 10);
+   setWithOffset(arr, 2, 1, 20);
+   setWithOffset(arr, 2, 2, 30);
+
+   if (arr[2] == 10 && arr[3] == 20 && arr[4] == 30 && arr[0] == 0) {
+      return 400;
+   }
+   return -4;
+}
+
+// =============================================================================
+// Test 5: Multiple constant params in complex index expression
+// =============================================================================
+fun setSlice(arr:array(int, 16), 'stride:int, 'offset:int, i:int, value:int) {
+   arr[stride * i + offset] = value;
+}
+
+fun test_complex_index() : int {
+   val arr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+   // stride=4, offset=1: indices are 4*0+1=1, 4*1+1=5, 4*2+1=9
+   setSlice(arr, 4, 1, 0, 100);
+   setSlice(arr, 4, 1, 1, 200);
+   setSlice(arr, 4, 1, 2, 300);
+
+   if (arr[1] == 100 && arr[5] == 200 && arr[9] == 300 && arr[0] == 0) {
+      return 500;
+   }
+   return -5;
+}
+
+// =============================================================================
+// Test 6: Stateful function with LHS array index
+// =============================================================================
+fun accumulateAt(arr:array(real, 4), 'idx:int, value:real) : real {
+   mem sum : real;
+   sum = sum + value;
+   arr[idx] = sum;
+   return sum;
+}
+
+fun test_stateful_lhs_index() : int {
+   val arr = [0.0, 0.0, 0.0, 0.0];
+
+   // Different call sites have different state
+   val s1 = accumulateAt(arr, 0, 1.0);  // sum=1.0, arr[0]=1.0
+   val s2 = accumulateAt(arr, 1, 2.0);  // sum=2.0, arr[1]=2.0
+   val s3 = accumulateAt(arr, 2, 3.0);  // sum=3.0, arr[2]=3.0
+
+   if (arr[0] == 1.0 && arr[1] == 2.0 && arr[2] == 3.0 && s1 == 1.0 && s2 == 2.0 && s3 == 3.0) {
+      return 600;
+   }
+   return -6;
+}
+
+// =============================================================================
+// Main test runner
+// =============================================================================
+fun main() : int {
+   val t1 = test_simple_lhs_index();
+   val t2 = test_matrix_access();
+   val t3 = test_large_matrix();
+   val t4 = test_index_arithmetic();
+   val t5 = test_complex_index();
+   val t6 = test_stateful_lhs_index();
+
+   // Sum of all passing tests: 100+200+300+400+500+600 = 2100
+   val expected = 2100;
+   val actual = t1 + t2 + t3 + t4 + t5 + t6;
+
+   if (actual == expected) {
+      return expected;  // All tests passed
+   }
+
+   return actual;
+}

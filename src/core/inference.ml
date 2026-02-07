@@ -302,12 +302,15 @@ let propagateVariability env loc (args : Typed.arg list option) (exp_args : exp 
   match args with
   | None -> ()
   | Some args ->
-    CCList.iter2
-      (fun (arg : arg) (exp : exp) ->
-        if isTypeConst arg.t = false then
-          markExpMutable env exp loc)
-      args
-      exp_args
+    (* Only propagate if the lists have the same length to avoid iter2 failures.
+       Length mismatches can happen with external functions or context arguments. *)
+    if CCList.length args = CCList.length exp_args then
+      CCList.iter2
+        (fun (arg : arg) (exp : exp) ->
+          if isTypeConst arg.t = false then
+            markExpMutable env exp loc)
+        args
+        exp_args
 
 
 (* Convert type to mangled name for specialized function names *)
@@ -438,20 +441,49 @@ and call (env : env) instance path args loc eloc =
   | Some generic_func ->
     (* This is a generic call - handle instantiation *)
     (* NOTE: Don't process args with exp_list yet - generic_call will handle them *)
-    generic_call env path generic_func args loc eloc
-  | None ->
-    (* Regular function call *)
-    let env, args = exp_list env args in
-    let f = Env.lookFunctionCall env path loc in
-    let args_t, ret = f.t in
-    let t = applyFunction eloc args_t ret args in
-    let () = propagateVariability env loc f.args args in
-    let env, args = addContextArg env instance f args loc in
-    env, { e = ECall { instance = None; path = f.path; args }; t; loc }
+    generic_call env instance path generic_func args loc eloc
+  | None -> (
+    (* Try regular function lookup first *)
+    match Env.tryLookFunctionCall env path with
+    | Some f ->
+      (* Regular function call *)
+      let env, args = exp_list env args in
+      let args_t, ret = f.t in
+      let t = applyFunction eloc args_t ret args in
+      let () = propagateVariability env loc f.args args in
+      let env, args = addContextArg env instance f args loc in
+      env, { e = ECall { instance = None; path = f.path; args }; t; loc }
+    | None -> (
+      (* Check if this might be a companion function of a generic *)
+      match Env.lookupGenericByCompanion env path with
+      | Some parent_generic ->
+        (* This is a companion call - create EGenCompanionCall for later processing *)
+        let env, processed_args = exp_list env args in
+        (* For now, we use noreturn as the return type - it will be resolved during instantiation *)
+        let t = C.noreturn loc in
+        let parent_path : path = { id = parent_generic.name; n = path.Syntax.n; loc = path.Syntax.loc } in
+        (* Extract just the instance name from the Syntax instance type *)
+        let instance_name = Option.map fst instance in
+        ( env
+        , { e =
+              EGenCompanionCall
+                { instance = instance_name
+                ; companion_name = path.Syntax.id
+                ; parent_generic_path = parent_path
+                ; args = processed_args
+                }
+          ; t
+          ; loc
+          } )
+      | None ->
+        (* Function not found - raise the standard error *)
+        let _ = Env.lookFunctionCall env path loc in
+        (* lookFunctionCall will raise, so this is unreachable *)
+        failwith "Unreachable"))
 
 
-and generic_call (env : env) (generic_path : Syntax.path) (generic_func : Typed.generic_function)
-    (args : Syntax.exp list) (_ : Loc.t) (eloc : Loc.t) : env * exp =
+and generic_call (env : env) (instance : (string * Syntax.exp option) option) (generic_path : Syntax.path)
+    (generic_func : Typed.generic_function) (args : Syntax.exp list) (_ : Loc.t) (eloc : Loc.t) : env * exp =
   (* Count only explicit generic parameters (exclude implicit type parameters) *)
   let explicit_generic_param_count =
     CCList.count
@@ -519,11 +551,17 @@ and generic_call (env : env) (generic_path : Syntax.path) (generic_func : Typed.
   (* Return type is now constrained through unification (may still be unbound if type depends on *)
   (* context not yet available - that's fine, it will be resolved by further unification) *)
   let t = applyFunction eloc fresh_arg_types fresh_ret_type processed_function_args in
+  (* Note: We don't propagate variability here because generic_func.args types haven't been
+     marked mutable yet at this point. The mutability is determined LATER during instantiation
+     when the body is processed (e.g., m[...] = value marks m mutable). Variability propagation
+     happens in process_exp_instantiation after instantiation, using the specialized function's
+     args which ARE properly marked as mutable. *)
   (* Return EGenCall - instantiation will happen during post-processing when types are fully resolved *)
   ( env
   , { e =
         EGenCall
-          { generic_path (* Use full path for correct module-qualified lookup *)
+          { instance = Option.map fst instance (* Extract just the name *)
+          ; generic_path (* Use full path for correct module-qualified lookup *)
           ; args = processed_function_args
           ; explicit_args = processed_explicit_generic_args
           }
@@ -1135,10 +1173,13 @@ let rec resolve_type_intrinsics_in_exp (type_substitution_map : (string * type_)
   | ERecord { path; elems } ->
     let elems = CCList.map (fun (n, v) -> n, resolve_type_intrinsics_in_exp type_substitution_map v) elems in
     { e with e = ERecord { path; elems } }
-  | EGenCall { generic_path; args; explicit_args } ->
+  | EGenCall { instance; generic_path; args; explicit_args } ->
     let args = CCList.map (resolve_type_intrinsics_in_exp type_substitution_map) args in
     let explicit_args = CCList.map (resolve_type_intrinsics_in_exp type_substitution_map) explicit_args in
-    { e with e = EGenCall { generic_path; args; explicit_args } }
+    { e with e = EGenCall { instance; generic_path; args; explicit_args } }
+  | EGenCompanionCall { instance; companion_name; parent_generic_path; args } ->
+    let args = CCList.map (resolve_type_intrinsics_in_exp type_substitution_map) args in
+    { e with e = EGenCompanionCall { instance; companion_name; parent_generic_path; args } }
   | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ | EConst _ -> e
 
 
@@ -1182,11 +1223,32 @@ let rec substitute_constants_in_exp (constant_map : (string * Typed.exp) list) (
   | ERecord { path; elems } ->
     let elems = CCList.map (fun (n, v) -> n, substitute_constants_in_exp constant_map v) elems in
     { e with e = ERecord { path; elems } }
-  | EGenCall { generic_path; args; explicit_args } ->
+  | EGenCall { instance; generic_path; args; explicit_args } ->
     let args = CCList.map (substitute_constants_in_exp constant_map) args in
     let explicit_args = CCList.map (substitute_constants_in_exp constant_map) explicit_args in
-    { e with e = EGenCall { generic_path; args; explicit_args } }
+    { e with e = EGenCall { instance; generic_path; args; explicit_args } }
+  | EGenCompanionCall { instance; companion_name; parent_generic_path; args } ->
+    let args = CCList.map (substitute_constants_in_exp constant_map) args in
+    { e with e = EGenCompanionCall { instance; companion_name; parent_generic_path; args } }
   | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EConst _ | ETypeIntrinsic _ -> e
+
+
+(** Substitutes constant parameter references in a left-hand side expression.
+    This handles cases like array indices that contain constant parameters. *)
+let rec substitute_constants_in_lexp (constant_map : (string * Typed.exp) list) (l : Typed.lexp) : Typed.lexp =
+  match l.l with
+  | LWild -> l
+  | LId _ -> l
+  | LMember (e, member_name) ->
+    let e = substitute_constants_in_lexp constant_map e in
+    { l with l = LMember (e, member_name) }
+  | LIndex { e; index } ->
+    let e = substitute_constants_in_lexp constant_map e in
+    let index = substitute_constants_in_exp constant_map index in
+    { l with l = LIndex { e; index } }
+  | LTuple lexps ->
+    let lexps = CCList.map (substitute_constants_in_lexp constant_map) lexps in
+    { l with l = LTuple lexps }
 
 
 (** Substitutes constant parameter references in a statement tree. *)
@@ -1195,6 +1257,7 @@ let rec substitute_constants_in_stmt (constant_map : (string * Typed.exp) list) 
   | StmtVal _ -> s
   | StmtMem (_, _) -> s
   | StmtBind (lhs, rhs) ->
+    let lhs = substitute_constants_in_lexp constant_map lhs in
     let rhs = substitute_constants_in_exp constant_map rhs in
     { s with s = StmtBind (lhs, rhs) }
   | StmtReturn e ->
@@ -1693,7 +1756,7 @@ let insertContextArgument (env : env) (def : function_def) : function_def =
     match getContextArgument env def.name def.loc with
     | None -> def
     | Some arg ->
-      let rec loop next =
+      let rec loop (next : (function_def * stmt) option) : (function_def * stmt) option =
         match next with
         | Some (def, body) ->
           let next = loop def.next in
@@ -1822,6 +1885,7 @@ let create_generic_function (env : env) (def : Syntax.function_def) : Typed.gene
   ; param_order
   ; t = arg_types, inferred_ret
   ; body = def.body
+  ; next = def.next
   ; loc = def.loc
   ; tags = def.tags
   ; type_index
@@ -1997,10 +2061,19 @@ type instantiation_state =
         (* (module_name, generic_name, specialized_def, body) - functions to be added at specific placeholders *)
   ; mutable functions_needing_context : (string, Typed.type_) Hashtbl.t
         (* function path string -> context type. Tracks functions that have been updated to need _ctx *)
+  ; mutable processed_companions : (string, (Typed.function_def * Typed.stmt) option) Hashtbl.t
+        (* generic function name -> processed companion chain. Caches companions to avoid re-processing *)
+  ; mutable pending_generic_calls : Typed.exp list
+        (* EGenCall expressions found during prescan, to be processed on-demand when companion calls need them *)
   }
 
 let create_instantiation_state () : instantiation_state =
-  { instantiated = Hashtbl.create 16; pending_functions = []; functions_needing_context = Hashtbl.create 16 }
+  { instantiated = Hashtbl.create 16
+  ; pending_functions = []
+  ; functions_needing_context = Hashtbl.create 16
+  ; processed_companions = Hashtbl.create 16
+  ; pending_generic_calls = []
+  }
 
 
 (* Build a signature string for deduplication based on resolved types *)
@@ -2018,9 +2091,9 @@ let build_specialized_signature_string (generic_name : string) (arg_types : Type
 
 
 (* Build a signature string for non-specialized version (when any constant param is a variable) *)
-let build_nonspec_signature_string (generic_name : string) (arg_types : Typed.type_ list) : string =
-  let type_strings = CCList.map type_to_mangled_name arg_types in
-  generic_name ^ "_nonspec_" ^ String.concat "_" type_strings
+let build_nonspec_signature_string (generic_name : string) (_arg_types : Typed.type_ list) : string =
+  (* Use original name for non-specialized version *)
+  generic_name
 
 
 (* Create a specialized function from a generic function with resolved types.
@@ -2032,9 +2105,9 @@ let build_nonspec_signature_string (generic_name : string) (arg_types : Typed.ty
      with constants inlined in the body (no constant params as function args)
    - If ANY explicit_arg is a variable -> create non-specialized version with all
      constant params as function arguments *)
-let instantiate_generic_function (iargs : Args.args) (env : env) (generic_func : Typed.generic_function)
-    (call_arg_types : Typed.type_ list) (explicit_args : Typed.exp list) (loc : Loc.t) : Typed.function_def * Typed.stmt
-    =
+let instantiate_generic_function (iargs : Args.args) (env : env) (state : instantiation_state)
+    (generic_func : Typed.generic_function) (call_arg_types : Typed.type_ list) (explicit_args : Typed.exp list)
+    (loc : Loc.t) : Typed.function_def * Typed.stmt =
   (* Check if all explicit args are compile-time constant literals *)
   let all_constants = CCList.for_all is_constant_literal explicit_args in
   (* Build specialized name based on whether we can fully specialize *)
@@ -2189,6 +2262,23 @@ let instantiate_generic_function (iargs : Args.args) (env : env) (generic_func :
       body
   in
   let env = Env.exitFunction env in
+  (* Process companion 'and' functions if present - only process once per generic function *)
+  let env, next =
+    match generic_func.next with
+    | None -> env, None
+    | Some _ -> (
+      (* Check if we've already processed companions for this generic function *)
+      let generic_key = generic_func.name in
+      match Hashtbl.find_opt state.processed_companions generic_key with
+      | Some cached_next ->
+        (* Already processed - reuse the cached companions *)
+        env, cached_next
+      | None ->
+        (* First time processing this generic's companions *)
+        let env, next = function_def_opt iargs env generic_func.next in
+        Hashtbl.add state.processed_companions generic_key next;
+        env, next)
+  in
   (* Create the specialized function definition with the appropriate args *)
   let specialized_def : Typed.function_def =
     { name = path
@@ -2197,7 +2287,7 @@ let instantiate_generic_function (iargs : Args.args) (env : env) (generic_func :
     ; loc = generic_func.loc
     ; tags = generic_func.tags
     ; is_root = false
-    ; next = None
+    ; next
     }
   in
   (* Add context argument if the function has mem/instances *)
@@ -2205,7 +2295,6 @@ let instantiate_generic_function (iargs : Args.args) (env : env) (generic_func :
   let env = Env.exitContext env in
   let _ = env in
   let _ = iargs in
-  (* iargs not used here currently *)
   (* Combine the body statements into a single block *)
   let combined_body =
     match body with
@@ -2215,13 +2304,69 @@ let instantiate_generic_function (iargs : Args.args) (env : env) (generic_func :
   specialized_def, combined_body
 
 
+(* Pre-scan a statement to find all EGenCall nodes and trigger their instantiation.
+   This ensures that companion function calls (EGenCompanionCall) can find their parent's
+   instantiation even if the companion is called BEFORE the primary generic function.
+   This is the pattern used in VultModules-private where set_* companions are called
+   inside an if block before the main function call.
+
+   The instantiation is cached in state.instantiated, so when the actual processing
+   happens later, the cached result is reused. This function does NOT create instances
+   or increment tick counters - it only triggers the creation of specialized function
+   definitions. *)
+let rec prescan_generic_calls_in_stmt (iargs : Args.args) (env : env) (state : instantiation_state) (stmt : Typed.stmt)
+    : unit =
+  match stmt.s with
+  | StmtVal _ -> () (* Variable declarations don't have expressions *)
+  | StmtReturn e -> prescan_generic_calls_in_exp iargs env state e
+  | StmtBind (_, e) -> prescan_generic_calls_in_exp iargs env state e
+  | StmtIf (cond, then_s, else_opt) ->
+    prescan_generic_calls_in_exp iargs env state cond;
+    prescan_generic_calls_in_stmt iargs env state then_s;
+    Option.iter (prescan_generic_calls_in_stmt iargs env state) else_opt
+  | StmtWhile (cond, body) ->
+    prescan_generic_calls_in_exp iargs env state cond;
+    prescan_generic_calls_in_stmt iargs env state body
+  | StmtBlock stmts -> CCList.iter (prescan_generic_calls_in_stmt iargs env state) stmts
+  | StmtMem _ -> ()
+
+
+and prescan_generic_calls_in_exp (iargs : Args.args) (env : env) (state : instantiation_state) (e : Typed.exp) : unit =
+  match e.e with
+  | EGenCall _ ->
+    (* During prescan, collect this EGenCall expression so companion call handling
+       can trigger its instantiation on-demand if needed. We don't process it here
+       to avoid creating instances and incrementing tick counters prematurely. *)
+    state.pending_generic_calls <- e :: state.pending_generic_calls
+  | ECall { args; _ } -> CCList.iter (prescan_generic_calls_in_exp iargs env state) args
+  | EIf { cond; then_; else_ } ->
+    prescan_generic_calls_in_exp iargs env state cond;
+    prescan_generic_calls_in_exp iargs env state then_;
+    prescan_generic_calls_in_exp iargs env state else_
+  | EOp (_, lhs, rhs) ->
+    prescan_generic_calls_in_exp iargs env state lhs;
+    prescan_generic_calls_in_exp iargs env state rhs
+  | EUnOp (_, arg) -> prescan_generic_calls_in_exp iargs env state arg
+  | EIndex { e = inner; index } ->
+    prescan_generic_calls_in_exp iargs env state inner;
+    prescan_generic_calls_in_exp iargs env state index
+  | EArray elems | ETuple elems -> CCList.iter (prescan_generic_calls_in_exp iargs env state) elems
+  | EMember (inner, _) -> prescan_generic_calls_in_exp iargs env state inner
+  | ERecord { elems; _ } -> CCList.iter (fun (_, v) -> prescan_generic_calls_in_exp iargs env state v) elems
+  | EGenCompanionCall { args; _ } ->
+    (* Don't trigger companion calls during prescan - they depend on parent being instantiated.
+       But do scan their arguments for nested generic calls. *)
+    CCList.iter (prescan_generic_calls_in_exp iargs env state) args
+  | EId _ | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EConst _ | ETypeIntrinsic _ -> ()
+
+
 (* Process an expression, replacing EGenCall with ECall to specialized functions.
    Mutually recursive with process_stmt_instantiation to handle nested generic calls. *)
 let rec process_exp_instantiation (iargs : Args.args) (env : env) (state : instantiation_state) (e : Typed.exp) :
     Typed.exp =
   let loc = e.loc in
   match e.e with
-  | EGenCall { generic_path; args; explicit_args } -> (
+  | EGenCall { instance; generic_path; args; explicit_args } -> (
     (* Look up the generic function using the stored path *)
     let generic_name = Pla.print (Syntax.print_path generic_path) in
     match Env.lookupGeneric env generic_path with
@@ -2257,8 +2402,18 @@ let rec process_exp_instantiation (iargs : Args.args) (env : env) (state : insta
           in
           (* Create new instantiation in the correct module context *)
           let def, body =
-            instantiate_generic_function iargs env_for_instantiation generic_func resolved_arg_types explicit_args loc
+            instantiate_generic_function
+              iargs
+              env_for_instantiation
+              state
+              generic_func
+              resolved_arg_types
+              explicit_args
+              loc
           in
+          (* Pre-scan the body to find all EGenCall nodes and trigger their instantiation.
+             This ensures companion calls can find their parent's instantiation. *)
+          let () = prescan_generic_calls_in_stmt iargs env_for_instantiation state body in
           (* Recursively process the body to replace any nested EGenCall nodes *)
           let processed_body = process_stmt_instantiation iargs env_for_instantiation state body in
           (* Exit the module if we entered one *)
@@ -2323,6 +2478,16 @@ let rec process_exp_instantiation (iargs : Args.args) (env : env) (state : insta
                   failwith "Invalid generic param index in param_order")
             generic_func.param_order
       in
+      (* Propagate variability from specialized function's args to the call expressions.
+         This ensures that if the specialized function mutates an array parameter,
+         the caller's array variable is marked as mutable (non-const).
+         Skip _ctx if present since it's not part of the original call arguments. *)
+      let specialized_non_ctx_args =
+        match specialized_def.args with
+        | { name; _ } :: rest when String.equal name context_name -> rest
+        | args -> args
+      in
+      let () = propagateVariability env loc (Some specialized_non_ctx_args) processed_args in
       (* Check if specialized function needs context (has _ctx as first argument) *)
       let final_args =
         match specialized_def.args with
@@ -2334,24 +2499,39 @@ let rec process_exp_instantiation (iargs : Args.args) (env : env) (state : insta
             | Some var -> var.t
             | None -> failwith "context var not declared in caller"
           in
-          (* Generate unique instance name *)
-          let number =
-            Printf.sprintf
-              "%.2x%.2x"
-              (0xFF land Hashtbl.hash (path_string specialized_def.name))
-              (0xFF land Hashtbl.hash (path_string (Env.getContext env)))
+          (* Get or generate instance name *)
+          let inst_name =
+            match instance with
+            | Some user_inst_name ->
+              (* User provided explicit instance name - use it directly *)
+              let () =
+                if not (checkMemExists env user_inst_name || Env.checkConstantExists env user_inst_name) then
+                  (* New user-provided instance - create it *)
+                  let _ = Env.addVar env unify user_inst_name ctx_t Inst loc in
+                  ()
+              in
+              user_inst_name
+            | None ->
+              (* Generate unique instance name *)
+              let number =
+                Printf.sprintf
+                  "%.2x%.2x"
+                  (0xFF land Hashtbl.hash (path_string specialized_def.name))
+                  (0xFF land Hashtbl.hash (path_string (Env.getContext env)))
+              in
+              let rec generateName () =
+                let n = Env.getFunctionTick env in
+                let name = "inst_" ^ string_of_int n ^ number in
+                if checkMemExists env name || Env.checkConstantExists env name then
+                  generateName ()
+                else
+                  name
+              in
+              let name = generateName () in
+              (* Add instance to caller's context *)
+              let _ = Env.addVar env unify name ctx_t Inst loc in
+              name
           in
-          let rec generateName () =
-            let n = Env.getFunctionTick env in
-            let inst_name = "inst_" ^ string_of_int n ^ number in
-            if checkMemExists env inst_name || Env.checkConstantExists env inst_name then
-              generateName ()
-            else
-              inst_name
-          in
-          let inst_name = generateName () in
-          (* Add instance to caller's context *)
-          let _ = Env.addVar env unify inst_name ctx_t Inst loc in
           (* Create context argument expression *)
           let ctx_e = { e = EId context_name; t = current_ctx_t; loc } in
           let inst_e = { e = EMember (ctx_e, inst_name); t = ctx_t; loc } in
@@ -2364,6 +2544,22 @@ let rec process_exp_instantiation (iargs : Args.args) (env : env) (state : insta
       { e = ECall { instance = None; path = specialized_def.name; args = final_args }; t = e.t; loc })
   | ECall { instance; path; args } ->
     let processed_args = CCList.map (process_exp_instantiation iargs env state) args in
+    (* Propagate variability from the called function's args to the call expressions.
+       This handles the case where a function's args were marked mutable during Phase 2
+       (e.g., because it calls a specialized generic function that mutates its args),
+       and we need to propagate that to callers of this function. *)
+    let () =
+      match Env.tryLookFunctionCall env path with
+      | Some f ->
+        (* Skip _ctx if present since it's not part of the original call arguments *)
+        let func_non_ctx_args =
+          match f.args with
+          | Some ({ name; _ } :: rest) when String.equal name context_name -> Some rest
+          | args -> args
+        in
+        propagateVariability env loc func_non_ctx_args processed_args
+      | None -> ()
+    in
     (* Check if the called function has been updated to need context *)
     let func_path_str = path_string path in
     let final_args =
@@ -2438,6 +2634,174 @@ let rec process_exp_instantiation (iargs : Args.args) (env : env) (state : insta
   | ERecord { path; elems } ->
     let elems = CCList.map (fun (n, v) -> n, process_exp_instantiation iargs env state v) elems in
     { e with e = ERecord { path; elems } }
+  | EGenCompanionCall { instance; companion_name; parent_generic_path; args } -> (
+    (* Look up the parent generic function *)
+    match Env.lookupGeneric env parent_generic_path with
+    | None ->
+      Error.raiseError
+        (Printf.sprintf
+           "Parent generic function '%s' not found for companion '%s'"
+           (path_string parent_generic_path)
+           companion_name)
+        loc
+    | Some _parent_generic -> (
+      (* Find an instantiated version of the parent generic in our state *)
+      (* We look through pending_functions to find one matching the parent generic name *)
+      let parent_name = parent_generic_path.id in
+      let matching_instantiation =
+        CCList.find_opt
+          (fun (_module, gen_name, (def : Typed.function_def), _body) ->
+            String.equal gen_name parent_name
+            &&
+            (* Also check that the specialized function has the companion in its next chain *)
+            let rec has_companion (next : (Typed.function_def * Typed.stmt) option) =
+              match next with
+              | None -> false
+              | Some (companion_def, _) ->
+                if String.equal companion_def.name.id companion_name then
+                  true
+                else
+                  has_companion companion_def.next
+            in
+            has_companion def.next)
+          state.pending_functions
+      in
+      (* If no instantiation found, try to find and process a pending parent call *)
+      let matching_instantiation =
+        match matching_instantiation with
+        | Some _ -> matching_instantiation
+        | None -> (
+          (* Look for a pending parent call that we can instantiate on-demand *)
+          let matching_pending =
+            CCList.find_opt
+              (fun (pending_e : Typed.exp) ->
+                match pending_e.e with
+                | EGenCall { generic_path; _ } -> String.equal generic_path.id parent_name
+                | _ -> false)
+              state.pending_generic_calls
+          in
+          match matching_pending with
+          | Some parent_call ->
+            (* Process the parent call to instantiate it *)
+            let _ = process_exp_instantiation iargs env state parent_call in
+            (* Now look again in pending_functions *)
+            CCList.find_opt
+              (fun (_module, gen_name, (def : Typed.function_def), _body) ->
+                String.equal gen_name parent_name
+                &&
+                let rec has_companion (next : (Typed.function_def * Typed.stmt) option) =
+                  match next with
+                  | None -> false
+                  | Some (companion_def, _) ->
+                    if String.equal companion_def.name.id companion_name then
+                      true
+                    else
+                      has_companion companion_def.next
+                in
+                has_companion def.next)
+              state.pending_functions
+          | None -> None)
+      in
+      match matching_instantiation with
+      | None ->
+        (* No matching instantiation found - the parent generic hasn't been called yet.
+           This is an error - companion calls must come after the main generic call. *)
+        Error.raiseError
+          (Printf.sprintf
+             "Companion function '%s' called before parent generic '%s' was instantiated. Make sure to call the parent \
+              function first."
+             companion_name
+             parent_name)
+          loc
+      | Some (_, _, specialized_def, _) -> (
+        (* Find the companion function in the specialized function's next chain *)
+        let rec find_companion (next : (function_def * stmt) option) : (function_def * stmt) option =
+          match next with
+          | None -> None
+          | Some ((companion_def, _companion_body) as companion) ->
+            if String.equal companion_def.name.id companion_name then
+              Some companion
+            else
+              find_companion companion_def.next
+        in
+        match find_companion specialized_def.next with
+        | None ->
+          Error.raiseError
+            (Printf.sprintf "Companion function '%s' not found in instantiated generic" companion_name)
+            loc
+        | Some (companion_def, _) ->
+          (* Process arguments recursively *)
+          let processed_args = CCList.map (process_exp_instantiation iargs env state) args in
+          (* Unify companion function parameter types with call argument types.
+             This enables type inference for companion function parameters that don't have
+             explicit annotations and whose types can't be inferred from the body alone. *)
+          let companion_non_ctx_args =
+            match companion_def.args with
+            | { name; _ } :: rest when String.equal name context_name -> rest
+            | args -> args
+          in
+          let () =
+            if CCList.length companion_non_ctx_args = CCList.length processed_args then
+              CCList.iter2
+                (fun (def_arg : Typed.arg) (call_arg : Typed.exp) ->
+                  let _ = unify def_arg.t call_arg.t in
+                  ())
+                companion_non_ctx_args
+                processed_args
+          in
+          (* Handle context argument for companion function if needed *)
+          let final_args =
+            match companion_def.args with
+            | { name; t = ctx_t; _ } :: _ when String.equal name context_name ->
+              (* Companion needs context - reuse the instance from the main function call *)
+              let current_f = Env.getCurrentFunction env in
+              let current_ctx_t =
+                match Env.lookVarInScopes current_f.locals context_name with
+                | Some var -> var.t
+                | None -> failwith "context var not declared in caller for companion call"
+              in
+              (* Get instance name - use user-provided or search for auto-generated *)
+              let inst_name =
+                match instance with
+                | Some user_inst_name ->
+                  (* User provided explicit instance name - use it directly *)
+                  (* If instance doesn't exist yet, create it (companion may be called before primary) *)
+                  let () =
+                    if not (checkMemExists env user_inst_name || Env.checkConstantExists env user_inst_name) then
+                      let _ = Env.addVar env unify user_inst_name ctx_t Inst loc in
+                      ()
+                  in
+                  user_inst_name
+                | None ->
+                  (* Find the instance that was created for the parent generic call *)
+                  (* We need to use the same instance name pattern as the parent *)
+                  let number =
+                    Printf.sprintf
+                      "%.2x%.2x"
+                      (0xFF land Hashtbl.hash (path_string specialized_def.name))
+                      (0xFF land Hashtbl.hash (path_string (Env.getContext env)))
+                  in
+                  let rec findInstance n =
+                    if n < 0 then
+                      failwith "Could not find instance for companion call"
+                    else
+                      let name = "inst_" ^ string_of_int n ^ number in
+                      if checkMemExists env name then
+                        name
+                      else
+                        findInstance (n - 1)
+                  in
+                  findInstance (Env.getFunctionTick env)
+              in
+              let ctx_e = { e = EId context_name; t = current_ctx_t; loc } in
+              let inst_e = { e = EMember (ctx_e, inst_name); t = ctx_t; loc } in
+              inst_e :: processed_args
+            | _ ->
+              (* No context needed *)
+              processed_args
+          in
+          (* Convert to ECall using the companion's path *)
+          { e = ECall { instance = None; path = companion_def.name; args = final_args }; t = e.t; loc })))
   | ETypeIntrinsic { intrinsic; type_param } ->
     (* Type intrinsics should have been resolved during stmt_with_type_substitution.
        If we see one here, it's an error - the intrinsic was used outside a generic function context. *)
@@ -2490,6 +2854,10 @@ let rec process_function_def (iargs : Args.args) (env : env) (state : instantiat
     (body : Typed.stmt) : Typed.function_def * Typed.stmt =
   (* Re-enter the function context so addContextArg can add instance variables *)
   let env = Env.reenterFunction env def.name in
+  (* Pre-scan the body to find all EGenCall nodes and trigger their instantiation.
+     This ensures that companion function calls (EGenCompanionCall) can find their parent's
+     instantiation even if the companion is called BEFORE the primary generic function. *)
+  let () = prescan_generic_calls_in_stmt iargs env state body in
   let body = process_stmt_instantiation iargs env state body in
   (* Check if function already had _ctx before processing *)
   let had_ctx_before =

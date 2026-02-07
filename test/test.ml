@@ -200,6 +200,8 @@ let interpreter =
   ; "generics_stress.vult"
   ; "specialization_const_params.vult"
   ; "specialization_interleaved.vult"
+  ; "specialization_lhs_index.vult"
+  ; "specialization_companions.vult"
   ; "instance_state.vult"
   ; "int16_test.vult"
   ; "memory_state.vult"

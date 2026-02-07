@@ -104,6 +104,61 @@ fun test_typed_real() : real {
 }
 
 // =============================================================================
+// Array mutation with constant parameter (Bug fix: const qualifier mismatch)
+// =============================================================================
+
+// Generic function that writes to an array parameter
+// When specialized, the caller must also receive a non-const array reference
+fun setArrayElement(m : array(real, 4), 'index : int, value : real) {
+   m[index] = value;
+}
+
+// This function passes an array to a specialized generic function that mutates it.
+// Bug: Previously generated caller with const array, causing C++ compilation error:
+//   "cannot bind non-const reference to const"
+fun test_array_mutation(m : array(real, 4), x : array(real, 2)) {
+   setArrayElement(m, 0, x[0]);
+   setArrayElement(m, 1, x[1]);
+}
+
+// Matrix-style array mutation with row/col specialization
+fun setMatrix2(m : array(real, 4), 'row : int, 'col : int, value : real) {
+   m[col * 2 + row] = value;
+}
+
+fun getMatrix2(m : array(real, 4), 'row : int, 'col : int) : real {
+   return m[col * 2 + row];
+}
+
+// Tests multiple specialized calls with different constant values
+fun test_matrix_mutation(m : array(real, 4), x : array(real, 2)) {
+   setMatrix2(m, 0, 0, x[0]);  // Sets m[0]
+   setMatrix2(m, 0, 1, x[1]);  // Sets m[2]
+}
+
+// =============================================================================
+// Chain of function calls with variable args to specialized generic
+// Tests that const propagation works through multiple levels of function calls
+// =============================================================================
+
+// This function calls setMatrix2 with VARIABLE row/col (non-specialized)
+// Its m parameter should be marked non-const because it mutates via setMatrix2
+fun eliminate_row(m : array(real, 4), row : int, col : int) {
+   val k = getMatrix2(m, row, col);
+   setMatrix2(m, row, col, k + 1.0);
+}
+
+// This function calls eliminate_row (a regular function)
+// Its m parameter should also be marked non-const (propagated from eliminate_row)
+fun process_matrix(m : array(real, 4)) {
+   val row = 0;
+   while (row < 2) {
+      eliminate_row(m, row, 0);
+      row = row + 1;
+   }
+}
+
+// =============================================================================
 // Main function to exercise all test functions
 // =============================================================================
 
@@ -119,4 +174,13 @@ fun main() {
    val r9 = test_accumulate_nonspec(3.0, 4.0);
    val r10 = test_typed_int();
    val r11 = test_typed_real();
+   // Test array mutation with specialized generic functions
+   val arr : array(real, 4);
+   val inputs : array(real, 2);
+   inputs[0] = 1.0;
+   inputs[1] = 2.0;
+   test_array_mutation(arr, inputs);
+   test_matrix_mutation(arr, inputs);
+   // Test chain of function calls (process_matrix -> eliminate_row -> setMatrix2)
+   process_matrix(arr);
 }

@@ -1,0 +1,210 @@
+// Tests for generic functions with companion 'and' functions
+//
+// Key behaviors tested:
+// - Generic functions with 'param can have companion 'and' functions
+// - Companion functions are accessible after calling the parent generic
+//
+// Note: Instance naming for generic functions is handled differently than
+// regular functions - each call creates a new instance. This test verifies
+// that companion functions are callable, not that instances are shared.
+
+// =============================================================================
+// Test 1: Basic generic function with companion
+// =============================================================================
+fun gain(x:real, 'g:real) : real {
+   mem last : real;
+   last = x;
+   return x * g;
+}
+and get_last() : real {
+   return last;
+}
+
+fun test_basic_companion() : int {
+   // Call without instance prefix - state is module-level
+   val result = gain(5.0, 2.0);  // 5.0 * 2.0 = 10.0, last = 5.0
+   val last = get_last();         // Should be 5.0
+
+   if (result == 10.0 && last == 5.0) {
+      return 100;
+   }
+   return -1;
+}
+
+// =============================================================================
+// Test 2: Companion with setter - single call site
+// =============================================================================
+fun scaler(x:real, 'factor:real) : real {
+   mem state : real;
+   state = x;
+   return x * factor;
+}
+and set_state(v:real) {
+   state = v;
+}
+and get_state() : real {
+   return state;
+}
+
+fun test_companion_setter() : int {
+   // Call parent first to instantiate (without instance prefix)
+   val r1 = scaler(3.0, 2.0);  // 6.0, state = 3.0
+   val s1 = get_state();       // 3.0
+
+   // Set state via companion
+   _ = set_state(10.0);
+   val s2 = get_state();       // 10.0
+
+   if (r1 == 6.0 && s1 == 3.0 && s2 == 10.0) {
+      return 200;
+   }
+   return -2;
+}
+
+// =============================================================================
+// Test 3: Multiple companion functions
+// =============================================================================
+fun counter('step:int) : int {
+   mem count : int;
+   count = count + step;
+   return count;
+}
+and reset_counter() {
+   count = 0;
+}
+and get_count() : int {
+   return count;
+}
+
+fun test_multiple_companions() : int {
+   // Call parent to instantiate
+   val c1 = counter(5);     // count = 5
+
+   // Use companions
+   val g1 = get_count();    // 5
+   _ = reset_counter();
+   val g2 = get_count();    // 0
+
+   // Continue
+   val c2 = counter(5);     // count = 5
+
+   if (c1 == 5 && g1 == 5 && g2 == 0 && c2 == 5) {
+      return 300;
+   }
+   return -3;
+}
+
+// =============================================================================
+// Test 4: Companion with different constant params
+// =============================================================================
+fun multiplier(x:int, 'factor:int) : int {
+   mem last_result : int;
+   last_result = x * factor;
+   return last_result;
+}
+and get_result() : int {
+   return last_result;
+}
+
+fun test_different_params() : int {
+   // Call with factor=3
+   val r1 = multiplier(4, 3);   // 12
+   val g1 = get_result();       // 12
+
+   // Call with factor=5 (different specialization)
+   val r2 = multiplier(2, 5);   // 10
+   // Note: get_result may return value from the first specialization's context
+   // This is expected behavior given current instance handling
+
+   if (r1 == 12 && g1 == 12 && r2 == 10) {
+      return 400;
+   }
+   return -4;
+}
+
+// =============================================================================
+// Test 5: Companion with parameters called BEFORE primary function
+// Bug fix: Companion calls should work even if called before the primary function
+// =============================================================================
+fun processor(x:real, 'scale:real) : real {
+   mem state : real;
+   state = state + x * scale;
+   return state;
+}
+and configure(initial_state:real, multiplier:real) {
+   state = initial_state * multiplier;
+}
+
+fun test_companion_before_primary() : int {
+   // Call companion BEFORE calling primary function
+   // This tests the bug fix where the instance is created on first use
+   // (regardless of whether it's the primary or companion function)
+   _ = inst1:configure(5.0, 2.0);  // state = 10.0 in inst1
+
+   // Now call primary function
+   val r1 = inst1:processor(1.0, 3.0);  // state = 10.0 + 1.0 * 3.0 = 13.0
+
+   if (r1 == 13.0) {
+      return 500;
+   }
+   return -5;
+}
+
+// =============================================================================
+// Test 6: Companion called BEFORE primary inside an if block
+// This is the VultModules-private pattern where set_* functions are called
+// inside if(change(fs)) blocks before the main processing function.
+// =============================================================================
+fun change_detector(x:real) : bool {
+   mem prev : real;
+   val changed = (prev < x) || (prev > x);
+   prev = x;
+   return changed;
+}
+
+fun processor2(x:real, 'scale:real) : real {
+   mem state : real;
+   state = state + x * scale;
+   return state;
+}
+and configure2(initial_state:real, multiplier:real) {
+   state = initial_state * multiplier;
+}
+
+fun test_companion_in_if_block() : int {
+   // Call companion INSIDE an if block BEFORE primary function call
+   // This tests the VultModules-private pattern
+   if (change_detector(1.0)) {
+      _ = inst2:configure2(5.0, 2.0);  // state = 10.0 in inst2
+   }
+
+   // Now call primary function (outside the if block)
+   val r1 = inst2:processor2(1.0, 3.0);  // state = 10.0 + 1.0 * 3.0 = 13.0
+
+   if (r1 == 13.0) {
+      return 600;
+   }
+   return -6;
+}
+
+// =============================================================================
+// Main test runner
+// =============================================================================
+fun main() : int {
+   val t1 = test_basic_companion();
+   val t2 = test_companion_setter();
+   val t3 = test_multiple_companions();
+   val t4 = test_different_params();
+   val t5 = test_companion_before_primary();
+   val t6 = test_companion_in_if_block();
+
+   // Sum of all passing tests: 100+200+300+400+500+600 = 2100
+   val expected = 2100;
+   val actual = t1 + t2 + t3 + t4 + t5 + t6;
+
+   if (actual == expected) {
+      return expected;  // All tests passed
+   }
+
+   return actual;
+}

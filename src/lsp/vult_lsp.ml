@@ -808,7 +808,7 @@ module Hover = struct
           else
             None
         | Core.Typed.ERecord { elems; _ } -> CCList.find_map (fun (_, exp) -> find_in_exp exp line col) elems
-        | Core.Typed.EGenCall { args; explicit_args; _ } ->
+        | Core.Typed.EGenCall { instance = _; args; explicit_args; _ } ->
           CCList.find_map (fun exp -> find_in_exp exp line col) (explicit_args @ args)
         | Core.Typed.EUnit
          |Core.Typed.EBool _
@@ -818,7 +818,8 @@ module Hover = struct
          |Core.Typed.EString _
          |Core.Typed.EId _
          |Core.Typed.EConst _
-         |Core.Typed.ETypeIntrinsic _ -> None
+         |Core.Typed.ETypeIntrinsic _
+         |Core.Typed.EGenCompanionCall _ -> None
       in
       (* Return child match if found, otherwise return this expression *)
       match child_result with

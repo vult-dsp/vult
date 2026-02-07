@@ -89,13 +89,13 @@ function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 function list_clear(t)      for k in pairs(t) do t[k] = nil end end
 
-function ConstSpecialization_accumulate_real_2_type_alloc()
+function ConstSpecialization_accumulate_type_alloc()
    local _ctx = {};
    _ctx.sum = 0.0
    return _ctx
 end
 
-function ConstSpecialization_accumulate_nonspec_real_type_alloc()
+function ConstSpecialization_accumulate_real_2_type_alloc()
    local _ctx = {};
    _ctx.sum = 0.0
    return _ctx
@@ -109,7 +109,7 @@ end
 
 function ConstSpecialization_test_accumulate_nonspec_type_alloc()
    local _ctx = {};
-   _ctx.inst_1383f = ConstSpecialization_accumulate_nonspec_real_type_alloc()
+   _ctx.inst_17a3f = ConstSpecialization_accumulate_type_alloc()
    return _ctx
 end
 
@@ -154,7 +154,7 @@ function ConstSpecialization_add_n_int_100(x)
    return (100 + x)
 end
 
-function ConstSpecialization_add_n_nonspec_int(n, x)
+function ConstSpecialization_add_n(n, x)
    return (n + x)
 end
 
@@ -167,14 +167,14 @@ function ConstSpecialization_test_specialized_100()
 end
 
 function ConstSpecialization_test_nonspec(n)
-   return ConstSpecialization_add_n_nonspec_int(n, 10)
+   return ConstSpecialization_add_n(n, 10)
 end
 
 function ConstSpecialization_weighted_real_real_0_3_0_7(x, y)
    return ((0.3 * x) + (0.7 * y))
 end
 
-function ConstSpecialization_weighted_nonspec_real_real(w1, w2, x, y)
+function ConstSpecialization_weighted(w1, w2, x, y)
    return ((w1 * x) + (w2 * y))
 end
 
@@ -183,14 +183,14 @@ function ConstSpecialization_test_weighted_spec()
 end
 
 function ConstSpecialization_test_weighted_nonspec(w)
-   return ConstSpecialization_weighted_nonspec_real_real(w, 0.7, 10.0, 20.0)
+   return ConstSpecialization_weighted(w, 0.7, 10.0, 20.0)
 end
 
 function ConstSpecialization_interleaved_real_real_2_3(x, y)
    return ((2.0 * x) + (3.0 * y))
 end
 
-function ConstSpecialization_interleaved_nonspec_real_real(x, a, y, b)
+function ConstSpecialization_interleaved(x, a, y, b)
    return ((a * x) + (b * y))
 end
 
@@ -199,7 +199,7 @@ function ConstSpecialization_test_interleaved_spec()
 end
 
 function ConstSpecialization_test_interleaved_nonspec(a)
-   return ConstSpecialization_interleaved_nonspec_real_real(5.0, a, 4.0, 3.0)
+   return ConstSpecialization_interleaved(5.0, a, 4.0, 3.0)
 end
 
 function ConstSpecialization_accumulate_real_2(_ctx, x)
@@ -207,7 +207,7 @@ function ConstSpecialization_accumulate_real_2(_ctx, x)
    return _ctx.sum
 end
 
-function ConstSpecialization_accumulate_nonspec_real(_ctx, scale, x)
+function ConstSpecialization_accumulate(_ctx, scale, x)
    _ctx.sum = ((scale * x) + _ctx.sum)
    return _ctx.sum
 end
@@ -217,7 +217,7 @@ function ConstSpecialization_test_accumulate_spec(_ctx)
 end
 
 function ConstSpecialization_test_accumulate_nonspec(_ctx, s, x)
-   return ConstSpecialization_accumulate_nonspec_real(_ctx.inst_1383f, s, x)
+   return ConstSpecialization_accumulate(_ctx.inst_17a3f, s, x)
 end
 
 function ConstSpecialization_scale_typed_int_2(_ctx, x)
@@ -238,6 +238,55 @@ function ConstSpecialization_test_typed_real(_ctx)
    return ConstSpecialization_scale_typed_real_2(_ctx.inst_15f7d, 3.14)
 end
 
+function ConstSpecialization_setArrayElement_array_of_real_size_4_real_1(m, value)
+   m[2] = value
+end
+
+function ConstSpecialization_setArrayElement_array_of_real_size_4_real_0(m, value)
+   m[1] = value
+end
+
+function ConstSpecialization_test_array_mutation(m, x)
+   ConstSpecialization_setArrayElement_array_of_real_size_4_real_0(m, x[1])
+   ConstSpecialization_setArrayElement_array_of_real_size_4_real_1(m, x[2])
+end
+
+function ConstSpecialization_setMatrix2_array_of_real_size_4_real_0_1(m, value)
+   m[3] = value
+end
+
+function ConstSpecialization_setMatrix2_array_of_real_size_4_real_0_0(m, value)
+   m[1] = value
+end
+
+function ConstSpecialization_setMatrix2(m, row, col, value)
+   m[(row + lshift(col, 1)) + 1] = value
+end
+
+function ConstSpecialization_getMatrix2(m, row, col)
+   return m[(row + lshift(col, 1)) + 1]
+end
+
+function ConstSpecialization_test_matrix_mutation(m, x)
+   ConstSpecialization_setMatrix2_array_of_real_size_4_real_0_0(m, x[1])
+   ConstSpecialization_setMatrix2_array_of_real_size_4_real_0_1(m, x[2])
+end
+
+function ConstSpecialization_eliminate_row(m, row, col)
+   local k = ConstSpecialization_getMatrix2(m, row, col)
+   ConstSpecialization_setMatrix2(m, row, col, (1.0 + k))
+end
+
+function ConstSpecialization_process_matrix(m)
+   local row = 0
+   while (row < 2) do
+      do
+         ConstSpecialization_eliminate_row(m, row, 0)
+         row = (1 + row)
+      end
+   end
+end
+
 function ConstSpecialization_main(_ctx)
    local r1 = ConstSpecialization_test_specialized_5()
    local r2 = ConstSpecialization_test_specialized_100()
@@ -250,5 +299,12 @@ function ConstSpecialization_main(_ctx)
    local r9 = ConstSpecialization_test_accumulate_nonspec(_ctx.inst_201fa, 3.0, 4.0)
    local r10 = ConstSpecialization_test_typed_int(_ctx.inst_3e2fa)
    local r11 = ConstSpecialization_test_typed_real(_ctx.inst_477fa)
+   local inputs = initializeArray(0.0, 2)
+   inputs[1] = 1.0
+   inputs[2] = 2.0
+   local arr = initializeArray(0.0, 4)
+   ConstSpecialization_test_array_mutation(arr, inputs)
+   ConstSpecialization_test_matrix_mutation(arr, inputs)
+   ConstSpecialization_process_matrix(arr)
 end
 

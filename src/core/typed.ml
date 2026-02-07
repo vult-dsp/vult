@@ -118,9 +118,16 @@ type exp_d =
       ; elems : (string * exp) list
       }
   | EGenCall of
-      { generic_path : path (* Full path to the generic function for lookup *)
+      { instance : string option (* Instance identifier if using inst:func() syntax *)
+      ; generic_path : path (* Full path to the generic function for lookup *)
       ; args : exp list (* Processed function arguments *)
       ; explicit_args : exp list (* Processed explicit generic arguments (functions, constants) *)
+      }
+  | EGenCompanionCall of
+      { instance : string option (* Instance identifier if using inst:func() syntax *)
+      ; companion_name : string (* Name of the companion function *)
+      ; parent_generic_path : path (* Path to the parent generic function *)
+      ; args : exp list (* Processed arguments *)
       }
   | ETypeIntrinsic of
       { intrinsic : type_intrinsic (* Which intrinsic: typedefault, typemax, typemin *)
@@ -237,6 +244,7 @@ type generic_function =
   ; param_order : param_kind list (* Original order of parameters - maps call position to param *)
   ; t : fun_type (* Keep as fun_type for function definitions *)
   ; body : Syntax.stmt (* Store the unprocessed body *)
+  ; next : Syntax.function_def option (* Companion 'and' functions *)
   ; loc : Loc.t
   ; tags : tag list
   ; type_index : int (* Index for type ordering - captured at definition time *)
@@ -472,11 +480,25 @@ let rec print_exp (e : exp) =
     let path = print_path path in
     let elems = Pla.map_sep Pla.commaspace printElem elems in
     {%pla|<#path#> { <#elems#> }|}
-  | EGenCall { generic_path; args; explicit_args } ->
+  | EGenCall { instance; generic_path; args; explicit_args } ->
     let all_args = explicit_args @ args in
     let args = Pla.map_sep Pla.commaspace print_exp all_args in
     let path = print_path generic_path in
-    {%pla|<#path#>@generic(<#args#>)|}
+    let inst =
+      match instance with
+      | None -> Pla.unit
+      | Some i -> Pla.string (i ^ ":")
+    in
+    {%pla|<#inst#><#path#>@generic(<#args#>)|}
+  | EGenCompanionCall { instance; companion_name; parent_generic_path; args } ->
+    let args = Pla.map_sep Pla.commaspace print_exp args in
+    let path = print_path parent_generic_path in
+    let inst =
+      match instance with
+      | None -> Pla.unit
+      | Some i -> Pla.string (i ^ ":")
+    in
+    {%pla|<#inst#><#path#>@companion:<#companion_name#s>(<#args#>)|}
   | ETypeIntrinsic { intrinsic; type_param } ->
     let intrinsic_name =
       match intrinsic with

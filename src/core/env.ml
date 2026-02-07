@@ -644,17 +644,21 @@ let createContextForFunctionWithIndex (env : env) name loc (type_index : int) : 
 
 let addAliasToContext (env : env) name loc : env =
   match getCurrentContext env with
-  | Some (ctx, { descr = Record members; _ }) when not (Map.is_empty members) ->
+  | Some (ctx, { descr = Record members; _ }) when not (Map.is_empty members) -> (
     let m = getCurrentModule env in
-    let report found =
-      Error.raiseError ("A context with the same name already exists at " ^ Loc.to_string_readable found.loc) loc
-    in
     let type_name = name ^ "_type" in
-    let path = getPath m type_name loc in
-    let index = getGlobalTick () in
-    let t = { descr = Alias (path, ctx); path; index; loc; generated = true } in
-    let _ = Map.update report type_name t m.types in
-    env
+    (* Check if alias already exists - skip if it does (can happen with multiple instantiations of generics) *)
+    match Map.find type_name m.types with
+    | Some _ -> env (* Alias already exists, skip *)
+    | None ->
+      let path = getPath m type_name loc in
+      let index = getGlobalTick () in
+      let t = { descr = Alias (path, ctx); path; index; loc; generated = true } in
+      let report found =
+        Error.raiseError ("A context with the same name already exists at " ^ Loc.to_string_readable found.loc) loc
+      in
+      let _ = Map.update report type_name t m.types in
+      env)
   | _ -> env
 
 
@@ -958,6 +962,9 @@ let lookFunctionCall (env : env) (path : path) (loc : Loc.t) : f =
   | None -> Error.raiseError ("A function with the name '" ^ pathString path ^ "' could not be found") loc
 
 
+(** Try to find a function without raising an error *)
+let tryLookFunctionCall (env : env) (path : path) : f option = findFunction (lookupPath env path)
+
 (* Operator lookup using the new generic lookup system *)
 let lookOperator (env : env) (op : string) : f =
   let op_path : path = { id = op; n = None; loc = Loc.default } in
@@ -995,6 +1002,49 @@ let addGeneric (env : env) (generic : Typed.generic_function) : env =
 
 (* Generic lookup using the new generic lookup system *)
 let lookupGeneric (env : env) (path : path) : Typed.generic_function option = findGeneric (lookupPath env path)
+
+(** Check if a name matches a companion function in the given generic's next chain *)
+let rec hasCompanionNamed (name : string) (next : Pparser.Syntax.function_def option) : bool =
+  match next with
+  | None -> false
+  | Some def ->
+    if String.equal def.name name then
+      true
+    else
+      hasCompanionNamed name def.next
+
+
+(** Look up a generic function by companion name.
+    Returns the parent generic function if the given name is a companion of any generic. *)
+let lookupGenericByCompanion (env : env) (path : path) : Typed.generic_function option =
+  (* Get the module to search in *)
+  let module_name =
+    match path.n with
+    | Some n -> n
+    | None -> (
+      match env.location with
+      | InModule name -> name
+      | InContext (name, _) -> name
+      | InFunction (name, _) -> name
+      | Top -> "")
+  in
+  match Map.find module_name env.modules with
+  | None -> None
+  | Some m ->
+    (* Search through all generic functions in this module *)
+    let companion_name = path.id in
+    Map.fold
+      (fun _gen_name generic acc ->
+        match acc with
+        | Some _ -> acc
+        | None ->
+          if hasCompanionNamed companion_name generic.Typed.next then
+            Some generic
+          else
+            acc)
+      None
+      m.generics
+
 
 let addInstantiation (env : env) (instantiation : Typed.generic_instantiation) : env =
   let module_name =
