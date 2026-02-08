@@ -1,29 +1,13 @@
 import math
 import random as random_module
 
-def eps():
-    return 1e-18
-
-def pi():
-    return 3.1415926535897932384
+# Runtime functions (simple builtins like eps, pi, clip, sin, cos, etc. are inlined)
 
 def random():
     return random_module.random()
 
 def irandom():
     return int(random_module.random() * 4294967296)
-
-def clip(x, low, high):
-    return low if x < low else (high if x > high else x)
-
-def not_(x):
-    return 0 if x != 0 else 1
-
-def real(x):
-    return float(x)
-
-def int_(x):
-    return int(x)
 
 def int_to_float(i):
     return float(i)
@@ -47,7 +31,7 @@ def Tables_sineTable1_raw_c2(index):
    return Tables_sineTable1_c2[index]
 
 def Tables_sineTable1(x):
-   index = clip(float_to_int((x * 31.0)), 0, 31)
+   index = ((0) if (float_to_int((x * 31.0))) < (0) else ((31) if (float_to_int((x * 31.0))) > (31) else (float_to_int((x * 31.0)))))
    return (Tables_sineTable1_c0[index] + (x * (Tables_sineTable1_c1[index] + (Tables_sineTable1_c2[index] * x))))
 
 
@@ -60,7 +44,7 @@ def Tables_sineTable2_raw_c1(index):
    return Tables_sineTable2_c1[index]
 
 def Tables_sineTable2(x):
-   index = clip(float_to_int((x * 31.0)), 0, 31)
+   index = ((0) if (float_to_int((x * 31.0))) < (0) else ((31) if (float_to_int((x * 31.0))) > (31) else (float_to_int((x * 31.0)))))
    return (Tables_sineTable2_c0[index] + (x * Tables_sineTable2_c1[index]))
 
 
@@ -73,9 +57,9 @@ def Tables_sineTable3_raw_c1(index):
    return Tables_sineTable3_c1[index]
 
 def Tables_sineTable3(x):
-   value = clip((x * 32.0), 0.0, 32.0)
+   value = ((0.0) if ((x * 32.0)) < (0.0) else ((32.0) if ((x * 32.0)) > (32.0) else ((x * 32.0))))
    index = int(value)
-   decimal = (value - floor(value))
+   decimal = (value - math.floor(value))
    return (Tables_sineTable3_c0[index] + (Tables_sineTable3_c1[index] * decimal))
 
 

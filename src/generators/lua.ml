@@ -104,20 +104,12 @@ else
     function rshift(a, b) return math.floor(a / (2 ^ b)) end
 end
 
--- Core runtime functions
+-- Core runtime functions (simple builtins like eps, pi, clip, real, int, bool are inlined)
 function ifExpressionValue(cond,then_,else_) if cond then return then_ else return else_ end end
 function ifExpression(cond,then_,else_) if cond then return then_() else return else_() end end
-function eps()              return 1e-18 end
-function pi()               return 3.1415926535897932384 end
 function random()           return math.random() end
 function irandom()          return math.floor(math.random() * 4294967296) end
-function clip(x,low,high)   if x > high then return high else if x < low then return low else return x end end end
-function real(x)            return x end
-function int(x)             if type(x) == "boolean" then x = x and 1 or 0 end local int_part,_ = math.modf(x) return int_part end
-function int16(x)           if type(x) == "boolean" then x = x and 1 or 0 end local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end
-function bool(x)            return x ~= 0 and x ~= false end
-function set(a, i, v)       a[i+1]=v end
-function get(a, i)          return a[i+1] end
+function int16(x)           local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end
 function intDiv(a, b)       return math.floor(a / b) end
 function list_clear(t)      for k in pairs(t) do t[k] = nil end end
 
@@ -182,9 +174,10 @@ let rec print_exp e =
     let index = i + 1 in
     {%pla|<#e#>[<#index#i>]|}
   | EIndex { e; index } ->
+    (* Inline index+1 to avoid function call overhead in standard Lua *)
     let e = print_exp e in
     let index = print_exp index in
-    {%pla|get(<#e#>, <#index#>)|}
+    {%pla|<#e#>[(<#index#>) + 1]|}
   | EArray l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
   | ECall { path; args } -> (
     (* Use optimized functions when available *)
@@ -227,14 +220,38 @@ let rec print_exp e =
     | "list_get", [ l; i ] ->
       let l = print_exp l in
       let i = print_exp i in
-      (* Use get() helper for 1-based indexing *)
-      {%pla|get(<#l#>, <#i#>)|}
+      (* Inline index+1 to avoid function call overhead *)
+      {%pla|<#l#>[(<#i#>) + 1]|}
     | "list_set", [ l; i; v ] ->
       let l = print_exp l in
       let i = print_exp i in
       let v = print_exp v in
       (* Lua is 1-based *)
       {%pla|<#l#>[<#i#> + 1] = <#v#>|}
+    (* Inline simple builtins to avoid function call overhead *)
+    | "eps", [] -> {%pla|1e-18|}
+    | "pi", [] -> {%pla|3.1415926535897932384|}
+    | "real", [ x ] ->
+      let x = print_exp x in
+      {%pla|(<#x#>)|}
+    | "int", [ x ] ->
+      (* Inline int conversion using math.modf (truncates towards zero) *)
+      let x = print_exp x in
+      {%pla|(math.modf(<#x#>))|}
+    | "bool", [ x ] ->
+      (* Inline bool conversion *)
+      let x = print_exp x in
+      {%pla|((<#x#>) ~= 0 and (<#x#>) ~= false)|}
+    | "not_", [ x ] ->
+      (* Inline logical not *)
+      let x = print_exp x in
+      {%pla|(not (<#x#>))|}
+    | "clip", [ x; low; high ] ->
+      (* Inline clip as: (x > high) and high or ((x < low) and low or x) *)
+      let x = print_exp x in
+      let low = print_exp low in
+      let high = print_exp high in
+      {%pla|((<#x#>) > (<#high#>) and (<#high#>) or ((<#x#>) < (<#low#>) and (<#low#>) or (<#x#>)))|}
     | _ ->
       let args = Pla.map_sep Pla.commaspace print_exp args in
       {%pla|<#path#s>(<#args#>)|})

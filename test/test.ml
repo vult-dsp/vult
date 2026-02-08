@@ -222,6 +222,7 @@ let passes_files =
   ; "external_calls.vult"
   ; "output_references.vult"
   ; "nested_if.vult"
+  ; "companion_instances.vult"
   ]
 
 

@@ -1,21 +1,7 @@
 
+// Runtime functions (simple builtins like eps, pi, clip, real, int_, sin, cos, etc. are inlined)
 this.random = function()         { return Math.random(); };
 this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };
-this.eps  = function()           { return 1e-18 };
-this.pi   = function()           { return 3.1415926535897932384; }
-this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
-this.not  = function(x)          { return x==0?1:0; };
-this.real = function(x)          { return x; };
-this.int_  = function(x)         { return x|0; };
-this.sin  = function(x)          { return Math.sin(x); };
-this.cos  = function(x)          { return Math.cos(x); };
-this.abs  = function(x)          { return Math.abs(x); };
-this.exp  = function(x)          { return Math.exp(x); };
-this.floor = function(x)          { return Math.floor(x); };
-this.tan  = function(x)          { return Math.tan(x); };
-this.tanh = function(x)          { return Math.tanh(x); };
-this.pow  = function(a,b)         { return Math.pow(a,b); };
-this.sqrt = function(x)          { return x; };
 this.int_to_float = function(i)  { return i; };
 this.float_to_int = function(i)  { return Math.floor(i); };
 this.initializeArray = function(v, size){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
@@ -35,7 +21,7 @@ this.Bitcrush_factor_raw_c2 = function (index) {
 };
 
 this.Bitcrush_factor = function (cv) {
-   var index = this.clip(this.float_to_int((cv * 127.0)), (0|0), (127|0));
+   var index = ((this.float_to_int((cv * 127.0))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((cv * 127.0))) > ((127|0)) ? ((127|0)) : (this.float_to_int((cv * 127.0)))));
    return (Bitcrush_factor_c0[index] + (cv * (Bitcrush_factor_c1[index] + (Bitcrush_factor_c2[index] * cv))));
 };
 
@@ -46,8 +32,8 @@ this.Bitcrush_process = function (i, cv) {
    } else {
       {
          var b = this.Bitcrush_factor(cv);
-         var x = this.int_((b * i));
-         out = (this.real(x) / b);
+         var x = (((b * i))|0);
+         out = ((x) / b);
       }
    }
    return out;

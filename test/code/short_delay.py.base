@@ -1,29 +1,13 @@
 import math
 import random as random_module
 
-def eps():
-    return 1e-18
-
-def pi():
-    return 3.1415926535897932384
+# Runtime functions (simple builtins like eps, pi, clip, sin, cos, etc. are inlined)
 
 def random():
     return random_module.random()
 
 def irandom():
     return int(random_module.random() * 4294967296)
-
-def clip(x, low, high):
-    return low if x < low else (high if x > high else x)
-
-def not_(x):
-    return 0 if x != 0 else 1
-
-def real(x):
-    return float(x)
-
-def int_(x):
-    return int(x)
 
 def int_to_float(i):
     return float(i)
@@ -87,7 +71,7 @@ def Saturate_tanh_table_raw_c2(index):
    return Saturate_tanh_table_c2[index]
 
 def Saturate_tanh_table(x):
-   index = clip(float_to_int(((x + 24.0) * 5.0)), 0, 240)
+   index = ((0) if (float_to_int(((x + 24.0) * 5.0))) < (0) else ((240) if (float_to_int(((x + 24.0) * 5.0))) > (240) else (float_to_int(((x + 24.0) * 5.0)))))
    return (Saturate_tanh_table_c0[index] + (x * (Saturate_tanh_table_c1[index] + (Saturate_tanh_table_c2[index] * x))))
 
 
@@ -118,8 +102,8 @@ def Short_delay_soft(_ctx, x1):
 
 
 def Short_delay_do(_ctx, x, time_in, feedback_in):
-   time = clip(time_in, 0.0, 1.0)
-   feedback = clip(feedback_in, 0.0, 1.0)
+   time = ((0.0) if (time_in) < (0.0) else ((1.0) if (time_in) > (1.0) else (time_in)))
+   feedback = ((0.0) if (feedback_in) < (0.0) else ((1.0) if (feedback_in) > (1.0) else (feedback_in)))
    index_r = (22050.0 * time)
    index_i = int(math.floor(index_r))
    delta = ((-index_i) + _ctx["write_pos"])
@@ -128,7 +112,7 @@ def Short_delay_do(_ctx, x, time_in, feedback_in):
       read_pos = (22050 + delta)
    else:
       read_pos = delta
-   decimal = (index_r + (-real(index_i)))
+   decimal = (index_r + (-float(index_i)))
    x1 = _ctx["buffer"][read_pos]
    x2 = _ctx["buffer"][((1 + read_pos) % 22050)]
    ret = (x1 + (decimal * (x2 + (-x1))))

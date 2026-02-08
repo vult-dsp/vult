@@ -1,29 +1,13 @@
 import math
 import random as random_module
 
-def eps():
-    return 1e-18
-
-def pi():
-    return 3.1415926535897932384
+# Runtime functions (simple builtins like eps, pi, clip, sin, cos, etc. are inlined)
 
 def random():
     return random_module.random()
 
 def irandom():
     return int(random_module.random() * 4294967296)
-
-def clip(x, low, high):
-    return low if x < low else (high if x > high else x)
-
-def not_(x):
-    return 0 if x != 0 else 1
-
-def real(x):
-    return float(x)
-
-def int_(x):
-    return int(x)
 
 def int_to_float(i):
     return float(i)
@@ -47,7 +31,7 @@ def Bitcrush_factor_raw_c2(index):
    return Bitcrush_factor_c2[index]
 
 def Bitcrush_factor(cv):
-   index = clip(float_to_int((cv * 127.0)), 0, 127)
+   index = ((0) if (float_to_int((cv * 127.0))) < (0) else ((127) if (float_to_int((cv * 127.0))) > (127) else (float_to_int((cv * 127.0)))))
    return (Bitcrush_factor_c0[index] + (cv * (Bitcrush_factor_c1[index] + (Bitcrush_factor_c2[index] * cv))))
 
 
@@ -58,7 +42,7 @@ def Bitcrush_process(i, cv):
    else:
       b = Bitcrush_factor(cv)
       x = int((b * i))
-      out = (real(x) / b)
+      out = (float(x) / b)
 
    return out
 

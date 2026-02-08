@@ -72,20 +72,12 @@ else
     function rshift(a, b) return math.floor(a / (2 ^ b)) end
 end
 
--- Core runtime functions
+-- Core runtime functions (simple builtins like eps, pi, clip, real, int, bool are inlined)
 function ifExpressionValue(cond,then_,else_) if cond then return then_ else return else_ end end
 function ifExpression(cond,then_,else_) if cond then return then_() else return else_() end end
-function eps()              return 1e-18 end
-function pi()               return 3.1415926535897932384 end
 function random()           return math.random() end
 function irandom()          return math.floor(math.random() * 4294967296) end
-function clip(x,low,high)   if x > high then return high else if x < low then return low else return x end end end
-function real(x)            return x end
-function int(x)             if type(x) == "boolean" then x = x and 1 or 0 end local int_part,_ = math.modf(x) return int_part end
-function int16(x)           if type(x) == "boolean" then x = x and 1 or 0 end local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end
-function bool(x)            return x ~= 0 and x ~= false end
-function set(a, i, v)       a[i+1]=v end
-function get(a, i)          return a[i+1] end
+function int16(x)           local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end
 function intDiv(a, b)       return math.floor(a / b) end
 function list_clear(t)      for k in pairs(t) do t[k] = nil end end
 
@@ -128,40 +120,40 @@ Util_pitchToRate_1024_c0 = {};
 Util_pitchToRate_1024_c1 = {};
 Util_pitchToRate_1024_c2 = {};
 function Util_pitchToRate_1024_raw_c0(index)
-   return get(Util_pitchToRate_1024_c0, index)
+   return Util_pitchToRate_1024_c0[(index) + 1]
 end
 
 function Util_pitchToRate_1024_raw_c1(index)
-   return get(Util_pitchToRate_1024_c1, index)
+   return Util_pitchToRate_1024_c1[(index) + 1]
 end
 
 function Util_pitchToRate_1024_raw_c2(index)
-   return get(Util_pitchToRate_1024_c2, index)
+   return Util_pitchToRate_1024_c2[(index) + 1]
 end
 
 function Util_pitchToRate_1024(pitch)
-   local index = clip(math.floor((pitch * 0.244094)), 0, 31)
-   return (get(Util_pitchToRate_1024_c0, index) + (pitch * (get(Util_pitchToRate_1024_c1, index) + (get(Util_pitchToRate_1024_c2, index) * pitch))))
+   local index = ((math.floor((pitch * 0.244094))) > (31) and (31) or ((math.floor((pitch * 0.244094))) < (0) and (0) or (math.floor((pitch * 0.244094)))))
+   return (Util_pitchToRate_1024_c0[(index) + 1] + (pitch * (Util_pitchToRate_1024_c1[(index) + 1] + (Util_pitchToRate_1024_c2[(index) + 1] * pitch))))
 end
 
 Util_cvToRate_1024_c0 = {};
 Util_cvToRate_1024_c1 = {};
 Util_cvToRate_1024_c2 = {};
 function Util_cvToRate_1024_raw_c0(index)
-   return get(Util_cvToRate_1024_c0, index)
+   return Util_cvToRate_1024_c0[(index) + 1]
 end
 
 function Util_cvToRate_1024_raw_c1(index)
-   return get(Util_cvToRate_1024_c1, index)
+   return Util_cvToRate_1024_c1[(index) + 1]
 end
 
 function Util_cvToRate_1024_raw_c2(index)
-   return get(Util_cvToRate_1024_c2, index)
+   return Util_cvToRate_1024_c2[(index) + 1]
 end
 
 function Util_cvToRate_1024(cv)
-   local index = clip(math.floor((cv * 34.444444)), 0, 31)
-   return (get(Util_cvToRate_1024_c0, index) + (cv * (get(Util_cvToRate_1024_c1, index) + (get(Util_cvToRate_1024_c2, index) * cv))))
+   local index = ((math.floor((cv * 34.444444))) > (31) and (31) or ((math.floor((cv * 34.444444))) < (0) and (0) or (math.floor((cv * 34.444444)))))
+   return (Util_cvToRate_1024_c0[(index) + 1] + (cv * (Util_cvToRate_1024_c1[(index) + 1] + (Util_cvToRate_1024_c2[(index) + 1] * cv))))
 end
 
 function Tricore_default(_ctx)
@@ -202,20 +194,20 @@ Svf_calc_g_c0 = {};
 Svf_calc_g_c1 = {};
 Svf_calc_g_c2 = {};
 function Svf_calc_g_raw_c0(index)
-   return get(Svf_calc_g_c0, index)
+   return Svf_calc_g_c0[(index) + 1]
 end
 
 function Svf_calc_g_raw_c1(index)
-   return get(Svf_calc_g_c1, index)
+   return Svf_calc_g_c1[(index) + 1]
 end
 
 function Svf_calc_g_raw_c2(index)
-   return get(Svf_calc_g_c2, index)
+   return Svf_calc_g_c2[(index) + 1]
 end
 
 function Svf_calc_g(cv)
-   local index = clip(math.floor((cv * 141.111111)), 0, 127)
-   return (get(Svf_calc_g_c0, index) + (cv * (get(Svf_calc_g_c1, index) + (get(Svf_calc_g_c2, index) * cv))))
+   local index = ((math.floor((cv * 141.111111))) > (127) and (127) or ((math.floor((cv * 141.111111))) < (0) and (0) or (math.floor((cv * 141.111111)))))
+   return (Svf_calc_g_c0[(index) + 1] + (cv * (Svf_calc_g_c1[(index) + 1] + (Svf_calc_g_c2[(index) + 1] * cv))))
 end
 
 function Svf_default(_ctx)
@@ -321,24 +313,24 @@ Util_cvToperiod_c0 = {};
 Util_cvToperiod_c1 = {};
 Util_cvToperiod_c2 = {};
 function Util_cvToperiod_raw_c0(index)
-   return get(Util_cvToperiod_c0, index)
+   return Util_cvToperiod_c0[(index) + 1]
 end
 
 function Util_cvToperiod_raw_c1(index)
-   return get(Util_cvToperiod_c1, index)
+   return Util_cvToperiod_c1[(index) + 1]
 end
 
 function Util_cvToperiod_raw_c2(index)
-   return get(Util_cvToperiod_c2, index)
+   return Util_cvToperiod_c2[(index) + 1]
 end
 
 function Util_cvToperiod(cv)
-   local index = clip(math.floor((cv * 31.0)), 0, 31)
-   return (get(Util_cvToperiod_c0, index) + (cv * (get(Util_cvToperiod_c1, index) + (get(Util_cvToperiod_c2, index) * cv))))
+   local index = ((math.floor((cv * 31.0))) > (31) and (31) or ((math.floor((cv * 31.0))) < (0) and (0) or (math.floor((cv * 31.0)))))
+   return (Util_cvToperiod_c0[(index) + 1] + (cv * (Util_cvToperiod_c1[(index) + 1] + (Util_cvToperiod_c2[(index) + 1] * cv))))
 end
 
 function Blit_pulse_start(_ctx)
-   _ctx.m = (1 + lshift(int(Util_cvToperiod(0.0)), 1))
+   _ctx.m = (1 + lshift((math.modf(Util_cvToperiod(0.0))), 1))
    _ctx.scale = (1.0 + (2.0 * Util_cvToperiod(0.0)))
 end
 
@@ -359,40 +351,40 @@ Util_pitchToRate_c0 = {};
 Util_pitchToRate_c1 = {};
 Util_pitchToRate_c2 = {};
 function Util_pitchToRate_raw_c0(index)
-   return get(Util_pitchToRate_c0, index)
+   return Util_pitchToRate_c0[(index) + 1]
 end
 
 function Util_pitchToRate_raw_c1(index)
-   return get(Util_pitchToRate_c1, index)
+   return Util_pitchToRate_c1[(index) + 1]
 end
 
 function Util_pitchToRate_raw_c2(index)
-   return get(Util_pitchToRate_c2, index)
+   return Util_pitchToRate_c2[(index) + 1]
 end
 
 function Util_pitchToRate(pitch)
-   local index = clip(math.floor((pitch * 0.244094)), 0, 31)
-   return (get(Util_pitchToRate_c0, index) + (pitch * (get(Util_pitchToRate_c1, index) + (get(Util_pitchToRate_c2, index) * pitch))))
+   local index = ((math.floor((pitch * 0.244094))) > (31) and (31) or ((math.floor((pitch * 0.244094))) < (0) and (0) or (math.floor((pitch * 0.244094)))))
+   return (Util_pitchToRate_c0[(index) + 1] + (pitch * (Util_pitchToRate_c1[(index) + 1] + (Util_pitchToRate_c2[(index) + 1] * pitch))))
 end
 
 Util_cvToRate_c0 = {};
 Util_cvToRate_c1 = {};
 Util_cvToRate_c2 = {};
 function Util_cvToRate_raw_c0(index)
-   return get(Util_cvToRate_c0, index)
+   return Util_cvToRate_c0[(index) + 1]
 end
 
 function Util_cvToRate_raw_c1(index)
-   return get(Util_cvToRate_c1, index)
+   return Util_cvToRate_c1[(index) + 1]
 end
 
 function Util_cvToRate_raw_c2(index)
-   return get(Util_cvToRate_c2, index)
+   return Util_cvToRate_c2[(index) + 1]
 end
 
 function Util_cvToRate(cv)
-   local index = clip(math.floor((cv * 141.111111)), 0, 127)
-   return (get(Util_cvToRate_c0, index) + (cv * (get(Util_cvToRate_c1, index) + (get(Util_cvToRate_c2, index) * cv))))
+   local index = ((math.floor((cv * 141.111111))) > (127) and (127) or ((math.floor((cv * 141.111111))) < (0) and (0) or (math.floor((cv * 141.111111)))))
+   return (Util_cvToRate_c0[(index) + 1] + (cv * (Util_cvToRate_c1[(index) + 1] + (Util_cvToRate_c2[(index) + 1] * cv))))
 end
 
 function Blit_init(_ctx)
@@ -581,20 +573,20 @@ Util_cvTokHz_c0 = {};
 Util_cvTokHz_c1 = {};
 Util_cvTokHz_c2 = {};
 function Util_cvTokHz_raw_c0(index)
-   return get(Util_cvTokHz_c0, index)
+   return Util_cvTokHz_c0[(index) + 1]
 end
 
 function Util_cvTokHz_raw_c1(index)
-   return get(Util_cvTokHz_c1, index)
+   return Util_cvTokHz_c1[(index) + 1]
 end
 
 function Util_cvTokHz_raw_c2(index)
-   return get(Util_cvTokHz_c2, index)
+   return Util_cvTokHz_c2[(index) + 1]
 end
 
 function Util_cvTokHz(cv)
-   local index = clip(math.floor((cv * 31.0)), 0, 31)
-   return (get(Util_cvTokHz_c0, index) + (cv * (get(Util_cvTokHz_c1, index) + (get(Util_cvTokHz_c2, index) * cv))))
+   local index = ((math.floor((cv * 31.0))) > (31) and (31) or ((math.floor((cv * 31.0))) < (0) and (0) or (math.floor((cv * 31.0)))))
+   return (Util_cvTokHz_c0[(index) + 1] + (cv * (Util_cvTokHz_c1[(index) + 1] + (Util_cvTokHz_c2[(index) + 1] * cv))))
 end
 
 function Tricore_process(_ctx, cv, reset, disable)
@@ -669,20 +661,20 @@ Saturate_soft_tanh_table_c0 = {};
 Saturate_soft_tanh_table_c1 = {};
 Saturate_soft_tanh_table_c2 = {};
 function Saturate_soft_tanh_table_raw_c0(index)
-   return get(Saturate_soft_tanh_table_c0, index)
+   return Saturate_soft_tanh_table_c0[(index) + 1]
 end
 
 function Saturate_soft_tanh_table_raw_c1(index)
-   return get(Saturate_soft_tanh_table_c1, index)
+   return Saturate_soft_tanh_table_c1[(index) + 1]
 end
 
 function Saturate_soft_tanh_table_raw_c2(index)
-   return get(Saturate_soft_tanh_table_c2, index)
+   return Saturate_soft_tanh_table_c2[(index) + 1]
 end
 
 function Saturate_soft_tanh_table(x)
-   local index = clip(math.floor(((x + 24.0) * 5.0)), 0, 240)
-   return (get(Saturate_soft_tanh_table_c0, index) + (x * (get(Saturate_soft_tanh_table_c1, index) + (get(Saturate_soft_tanh_table_c2, index) * x))))
+   local index = ((math.floor(((x + 24.0) * 5.0))) > (240) and (240) or ((math.floor(((x + 24.0) * 5.0))) < (0) and (0) or (math.floor(((x + 24.0) * 5.0)))))
+   return (Saturate_soft_tanh_table_c0[(index) + 1] + (x * (Saturate_soft_tanh_table_c1[(index) + 1] + (Saturate_soft_tanh_table_c2[(index) + 1] * x))))
 end
 
 function Saturate_soft_process(x)
@@ -706,7 +698,7 @@ function Svf_process(_ctx, x, cv, q, sel)
    if (Util_change(_ctx.inst_1b0a2, cv) or Util_change(_ctx.inst_2b0a2, q)) then
       do
          _ctx.g = Svf_calc_g(cv)
-         _ctx.r = (1.0 / (2.0 * (q + eps())))
+         _ctx.r = (1.0 / (2.0 * (q + 1e-18)))
          _ctx.inv_den = (1.0 / (1.0 + ((2.0 * (_ctx.r * _ctx.g)) + (_ctx.g * _ctx.g))))
       end
    end
@@ -746,20 +738,20 @@ Saturate_tanh_table_c0 = {};
 Saturate_tanh_table_c1 = {};
 Saturate_tanh_table_c2 = {};
 function Saturate_tanh_table_raw_c0(index)
-   return get(Saturate_tanh_table_c0, index)
+   return Saturate_tanh_table_c0[(index) + 1]
 end
 
 function Saturate_tanh_table_raw_c1(index)
-   return get(Saturate_tanh_table_c1, index)
+   return Saturate_tanh_table_c1[(index) + 1]
 end
 
 function Saturate_tanh_table_raw_c2(index)
-   return get(Saturate_tanh_table_c2, index)
+   return Saturate_tanh_table_c2[(index) + 1]
 end
 
 function Saturate_tanh_table(x)
-   local index = clip(math.floor(((x + 24.0) * 5.0)), 0, 240)
-   return (get(Saturate_tanh_table_c0, index) + (x * (get(Saturate_tanh_table_c1, index) + (get(Saturate_tanh_table_c2, index) * x))))
+   local index = ((math.floor(((x + 24.0) * 5.0))) > (240) and (240) or ((math.floor(((x + 24.0) * 5.0))) < (0) and (0) or (math.floor(((x + 24.0) * 5.0)))))
+   return (Saturate_tanh_table_c0[(index) + 1] + (x * (Saturate_tanh_table_c1[(index) + 1] + (Saturate_tanh_table_c2[(index) + 1] * x))))
 end
 
 function Saturate_process(x)
@@ -837,20 +829,20 @@ Tables_nsine_c0 = {};
 Tables_nsine_c1 = {};
 Tables_nsine_c2 = {};
 function Tables_nsine_raw_c0(index)
-   return get(Tables_nsine_c0, index)
+   return Tables_nsine_c0[(index) + 1]
 end
 
 function Tables_nsine_raw_c1(index)
-   return get(Tables_nsine_c1, index)
+   return Tables_nsine_c1[(index) + 1]
 end
 
 function Tables_nsine_raw_c2(index)
-   return get(Tables_nsine_c2, index)
+   return Tables_nsine_c2[(index) + 1]
 end
 
 function Tables_nsine(x)
-   local index = clip(math.floor((x * 127.0)), 0, 127)
-   return (get(Tables_nsine_c0, index) + (x * (get(Tables_nsine_c1, index) + (get(Tables_nsine_c2, index) * x))))
+   local index = ((math.floor((x * 127.0))) > (127) and (127) or ((math.floor((x * 127.0))) < (0) and (0) or (math.floor((x * 127.0)))))
+   return (Tables_nsine_c0[(index) + 1] + (x * (Tables_nsine_c1[(index) + 1] + (Tables_nsine_c2[(index) + 1] * x))))
 end
 
 function Phase_process(_ctx, cv, reset)
@@ -882,18 +874,18 @@ end
 function Blit_pulse_train(_ctx, cv, phase)
    if Util_change(_ctx.inst_1b05e, cv) then
       do
-         _ctx.m = (1 + lshift(int(Util_cvToperiod(cv)), 1))
+         _ctx.m = (1 + lshift((math.modf(Util_cvToperiod(cv))), 1))
          _ctx.scale = (2.0 * Util_cvToperiod(cv))
       end
    end
    local pi_phase = (0.5 * phase)
    local denominator = Tables_nsine(pi_phase)
    local out = 0.0
-   if (denominator <= eps()) then
+   if (denominator <= 1e-18) then
       out = 1.0
    else
       do
-         local m_phase = ((pi_phase * real(_ctx.m)) % 1.0)
+         local m_phase = ((pi_phase * (_ctx.m)) % 1.0)
          local numerator = Tables_nsine(m_phase)
          out = (numerator / (denominator * _ctx.scale))
       end
@@ -985,7 +977,7 @@ function Adsr_do(_ctx, gate, a, d, s, r)
          _ctx.target = (1024.0 * s)
       end
    end
-   return (Util_smooth(_ctx.inst_295a0, _ctx.scale) * clip((0.000976 * _ctx.out), 0.0, 1.0))
+   return (Util_smooth(_ctx.inst_295a0, _ctx.scale) * (((0.000976 * _ctx.out)) > (1.0) and (1.0) or (((0.000976 * _ctx.out)) < (0.0) and (0.0) or ((0.000976 * _ctx.out)))))
 end
 
 function Adsr_process(_ctx, gate)
@@ -1000,16 +992,16 @@ end
 
 function Adsr_controlChange(_ctx, control, value, channel)
    if (control == 1) then
-      _ctx.knob1 = (0.007874 * real(value))
+      _ctx.knob1 = (0.007874 * (value))
    end
    if (control == 2) then
-      _ctx.knob2 = (0.007874 * real(value))
+      _ctx.knob2 = (0.007874 * (value))
    end
    if (control == 3) then
-      _ctx.knob3 = (0.007874 * real(value))
+      _ctx.knob3 = (0.007874 * (value))
    end
    if (control == 4) then
-      _ctx.knob4 = (0.007874 * real(value))
+      _ctx.knob4 = (0.007874 * (value))
    end
 end
 
@@ -1043,43 +1035,43 @@ end
 
 function Voice_4_controlChange(_ctx, control, value, channel)
    if (control == 30) then
-      _ctx.level1 = (0.007874 * real(value))
+      _ctx.level1 = (0.007874 * (value))
    end
    if (control == 31) then
-      _ctx.level2 = (0.007874 * real(value))
+      _ctx.level2 = (0.007874 * (value))
    end
    if (control == 32) then
-      _ctx.level3 = (0.007874 * real(value))
+      _ctx.level3 = (0.007874 * (value))
    end
    if (control == 33) then
-      _ctx.level4 = (0.007874 * real(value))
+      _ctx.level4 = (0.007874 * (value))
    end
    if (control == 34) then
-      _ctx.pw1 = (0.007874 * real(value))
+      _ctx.pw1 = (0.007874 * (value))
    end
    if (control == 35) then
-      _ctx.pw2 = (0.007874 * real(value))
+      _ctx.pw2 = (0.007874 * (value))
    end
    if (control == 36) then
-      _ctx.pw3 = (0.000787 * real(value))
+      _ctx.pw3 = (0.000787 * (value))
    end
    if (control == 37) then
-      _ctx.pw4 = (0.007874 * real(value))
+      _ctx.pw4 = (0.007874 * (value))
    end
    if (control == 38) then
-      _ctx.lfo_rate = Util_map(real(value), 0.0, 127.0, -0.4, 0.1)
+      _ctx.lfo_rate = Util_map((value), 0.0, 127.0, -0.4, 0.1)
    end
    if (control == 39) then
-      _ctx.lfo_shape = (0.023622 * real(value))
+      _ctx.lfo_shape = (0.023622 * (value))
    end
    if (control == 40) then
-      _ctx.lfo_pw = Util_map(real(value), 0.0, 127.0, -1.0, 1.0)
+      _ctx.lfo_pw = Util_map((value), 0.0, 127.0, -1.0, 1.0)
    end
    if (control == 41) then
-      _ctx.lfo_cv = Util_map(real(value), 0.0, 127.0, -0.1, 0.1)
+      _ctx.lfo_cv = Util_map((value), 0.0, 127.0, -0.1, 0.1)
    end
    if (control == 42) then
-      _ctx.lfo_flt = Util_map(real(value), 0.0, 127.0, -0.3, 0.3)
+      _ctx.lfo_flt = Util_map((value), 0.0, 127.0, -0.3, 0.3)
    end
    if (control == 43) then
       if (value > 0) then
@@ -1089,25 +1081,25 @@ function Voice_4_controlChange(_ctx, control, value, channel)
       end
    end
    if (control == 44) then
-      _ctx.flt_cut = Util_map(real(value), 0.0, 127.0, -0.2, 0.5)
+      _ctx.flt_cut = Util_map((value), 0.0, 127.0, -0.2, 0.5)
    end
    if (control == 45) then
-      _ctx.flt_res = (0.007874 * real(value))
+      _ctx.flt_res = (0.007874 * (value))
    end
    if (control == 46) then
       _ctx.flt_shape = intDiv(lshift(value, 2), 127)
    end
    if (control == 47) then
-      _ctx.attack = (0.007874 * real(value))
+      _ctx.attack = (0.007874 * (value))
    end
    if (control == 48) then
-      _ctx.decay = (0.007874 * real(value))
+      _ctx.decay = (0.007874 * (value))
    end
    if (control == 49) then
-      _ctx.sustain = (0.007874 * real(value))
+      _ctx.sustain = (0.007874 * (value))
    end
    if (control == 50) then
-      _ctx.release = (0.007874 * real(value))
+      _ctx.release = (0.007874 * (value))
    end
 end
 

@@ -72,20 +72,12 @@ else
     function rshift(a, b) return math.floor(a / (2 ^ b)) end
 end
 
--- Core runtime functions
+-- Core runtime functions (simple builtins like eps, pi, clip, real, int, bool are inlined)
 function ifExpressionValue(cond,then_,else_) if cond then return then_ else return else_ end end
 function ifExpression(cond,then_,else_) if cond then return then_() else return else_() end end
-function eps()              return 1e-18 end
-function pi()               return 3.1415926535897932384 end
 function random()           return math.random() end
 function irandom()          return math.floor(math.random() * 4294967296) end
-function clip(x,low,high)   if x > high then return high else if x < low then return low else return x end end end
-function real(x)            return x end
-function int(x)             if type(x) == "boolean" then x = x and 1 or 0 end local int_part,_ = math.modf(x) return int_part end
-function int16(x)           if type(x) == "boolean" then x = x and 1 or 0 end local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end
-function bool(x)            return x ~= 0 and x ~= false end
-function set(a, i, v)       a[i+1]=v end
-function get(a, i)          return a[i+1] end
+function int16(x)           local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end
 function intDiv(a, b)       return math.floor(a / b) end
 function list_clear(t)      for k in pairs(t) do t[k] = nil end end
 
@@ -98,9 +90,9 @@ function FixedAndFloat_test1()
    local from_int = fix16(int_value)
    local from_real = fix16(real_value)
    local from_bool = fix16(bool_value)
-   local to_int = int(fixed_value)
-   local to_real = real(fixed_value)
-   local to_bool = bool(fixed_value)
+   local to_int = (math.modf(fixed_value))
+   local to_real = (fixed_value)
+   local to_bool = ((fixed_value) ~= 0 and (fixed_value) ~= false)
    from_int = 0.0
    from_real = 0.0
    from_bool = 0.0
@@ -112,57 +104,57 @@ end
 FixedAndFloat_take_fix_return_fixed_c0 = {};
 FixedAndFloat_take_fix_return_fixed_c1 = {};
 function FixedAndFloat_take_fix_return_fixed_raw_c0(index)
-   return get(FixedAndFloat_take_fix_return_fixed_c0, index)
+   return FixedAndFloat_take_fix_return_fixed_c0[(index) + 1]
 end
 
 function FixedAndFloat_take_fix_return_fixed_raw_c1(index)
-   return get(FixedAndFloat_take_fix_return_fixed_c1, index)
+   return FixedAndFloat_take_fix_return_fixed_c1[(index) + 1]
 end
 
 function FixedAndFloat_take_fix_return_fixed(x)
-   local value = clip((x * 32.0), 0.0, 32.0)
-   local index = int(value)
+   local value = (((x * 32.0)) > (32.0) and (32.0) or (((x * 32.0)) < (0.0) and (0.0) or ((x * 32.0))))
+   local index = (math.modf(value))
    local decimal = (value - floor(value))
-   return (get(FixedAndFloat_take_fix_return_fixed_c0, index) + (get(FixedAndFloat_take_fix_return_fixed_c1, index) * decimal))
+   return (FixedAndFloat_take_fix_return_fixed_c0[(index) + 1] + (FixedAndFloat_take_fix_return_fixed_c1[(index) + 1] * decimal))
 end
 
 FixedAndFloat_take_fix_return_real_c0 = {};
 FixedAndFloat_take_fix_return_real_c1 = {};
 FixedAndFloat_take_fix_return_real_c2 = {};
 function FixedAndFloat_take_fix_return_real_raw_c0(index)
-   return get(FixedAndFloat_take_fix_return_real_c0, index)
+   return FixedAndFloat_take_fix_return_real_c0[(index) + 1]
 end
 
 function FixedAndFloat_take_fix_return_real_raw_c1(index)
-   return get(FixedAndFloat_take_fix_return_real_c1, index)
+   return FixedAndFloat_take_fix_return_real_c1[(index) + 1]
 end
 
 function FixedAndFloat_take_fix_return_real_raw_c2(index)
-   return get(FixedAndFloat_take_fix_return_real_c2, index)
+   return FixedAndFloat_take_fix_return_real_c2[(index) + 1]
 end
 
 function FixedAndFloat_take_fix_return_real(x)
-   local index = clip(fix_to_int((x * 31.0)), 0, 31)
-   return (get(FixedAndFloat_take_fix_return_real_c0, index) + (fix_to_float(x) * (get(FixedAndFloat_take_fix_return_real_c1, index) + (get(FixedAndFloat_take_fix_return_real_c2, index) * fix_to_float(x)))))
+   local index = ((fix_to_int((x * 31.0))) > (31) and (31) or ((fix_to_int((x * 31.0))) < (0) and (0) or (fix_to_int((x * 31.0)))))
+   return (FixedAndFloat_take_fix_return_real_c0[(index) + 1] + (fix_to_float(x) * (FixedAndFloat_take_fix_return_real_c1[(index) + 1] + (FixedAndFloat_take_fix_return_real_c2[(index) + 1] * fix_to_float(x)))))
 end
 
 FixedAndFloat_take_real_return_fixed_c0 = {};
 FixedAndFloat_take_real_return_fixed_c1 = {};
 FixedAndFloat_take_real_return_fixed_c2 = {};
 function FixedAndFloat_take_real_return_fixed_raw_c0(index)
-   return get(FixedAndFloat_take_real_return_fixed_c0, index)
+   return FixedAndFloat_take_real_return_fixed_c0[(index) + 1]
 end
 
 function FixedAndFloat_take_real_return_fixed_raw_c1(index)
-   return get(FixedAndFloat_take_real_return_fixed_c1, index)
+   return FixedAndFloat_take_real_return_fixed_c1[(index) + 1]
 end
 
 function FixedAndFloat_take_real_return_fixed_raw_c2(index)
-   return get(FixedAndFloat_take_real_return_fixed_c2, index)
+   return FixedAndFloat_take_real_return_fixed_c2[(index) + 1]
 end
 
 function FixedAndFloat_take_real_return_fixed(x)
-   local index = clip(math.floor((x * 31.0)), 0, 31)
-   return (get(FixedAndFloat_take_real_return_fixed_c0, index) + (float_to_fix(x) * (get(FixedAndFloat_take_real_return_fixed_c1, index) + (get(FixedAndFloat_take_real_return_fixed_c2, index) * float_to_fix(x)))))
+   local index = ((math.floor((x * 31.0))) > (31) and (31) or ((math.floor((x * 31.0))) < (0) and (0) or (math.floor((x * 31.0)))))
+   return (FixedAndFloat_take_real_return_fixed_c0[(index) + 1] + (float_to_fix(x) * (FixedAndFloat_take_real_return_fixed_c1[(index) + 1] + (FixedAndFloat_take_real_return_fixed_c2[(index) + 1] * float_to_fix(x)))))
 end
 

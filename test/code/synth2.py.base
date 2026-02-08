@@ -1,29 +1,13 @@
 import math
 import random as random_module
 
-def eps():
-    return 1e-18
-
-def pi():
-    return 3.1415926535897932384
+# Runtime functions (simple builtins like eps, pi, clip, sin, cos, etc. are inlined)
 
 def random():
     return random_module.random()
 
 def irandom():
     return int(random_module.random() * 4294967296)
-
-def clip(x, low, high):
-    return low if x < low else (high if x > high else x)
-
-def not_(x):
-    return 0 if x != 0 else 1
-
-def real(x):
-    return float(x)
-
-def int_(x):
-    return int(x)
 
 def int_to_float(i):
     return float(i)
@@ -262,9 +246,9 @@ def Synth2_osc(_ctx, pitch, pw, wave):
    _ctx["phase"] = (_ctx["phase"] + _ctx["rate"])
    if (_ctx["phase"] > 1.0):
       _ctx["phase"] = (-1.0 + _ctx["phase"])
-   _ctx["state_pulse"] = clip((tmp1 + ((-tmp2) + (0.9995 * _ctx["state_pulse"]))), -1.0, 1.0)
-   _ctx["state_saw"] = clip(((0.5 * ((tmp1 + (tmp2 + (-2.0 * _ctx["rate"]))) / shift05)) + (0.9995 * _ctx["state_saw"])), -1.0, 1.0)
-   _ctx["state_triang"] = clip(((0.9995 * _ctx["state_triang"]) + (2.0 * (_ctx["state_pulse"] * _ctx["rate"]))), -1.0, 1.0)
+   _ctx["state_pulse"] = ((-1.0) if ((tmp1 + ((-tmp2) + (0.9995 * _ctx["state_pulse"])))) < (-1.0) else ((1.0) if ((tmp1 + ((-tmp2) + (0.9995 * _ctx["state_pulse"])))) > (1.0) else ((tmp1 + ((-tmp2) + (0.9995 * _ctx["state_pulse"]))))))
+   _ctx["state_saw"] = ((-1.0) if (((0.5 * ((tmp1 + (tmp2 + (-2.0 * _ctx["rate"]))) / shift05)) + (0.9995 * _ctx["state_saw"]))) < (-1.0) else ((1.0) if (((0.5 * ((tmp1 + (tmp2 + (-2.0 * _ctx["rate"]))) / shift05)) + (0.9995 * _ctx["state_saw"]))) > (1.0) else (((0.5 * ((tmp1 + (tmp2 + (-2.0 * _ctx["rate"]))) / shift05)) + (0.9995 * _ctx["state_saw"])))))
+   _ctx["state_triang"] = ((-1.0) if (((0.9995 * _ctx["state_triang"]) + (2.0 * (_ctx["state_pulse"] * _ctx["rate"])))) < (-1.0) else ((1.0) if (((0.9995 * _ctx["state_triang"]) + (2.0 * (_ctx["state_pulse"] * _ctx["rate"])))) > (1.0) else (((0.9995 * _ctx["state_triang"]) + (2.0 * (_ctx["state_pulse"] * _ctx["rate"]))))))
    if (wave < 0.333333):
       _ctx["output"] = _ctx["state_pulse"]
    else:
@@ -273,7 +257,7 @@ def Synth2_osc(_ctx, pitch, pw, wave):
       else:
          _ctx["output"] = (2.0 * ((1.0 + pw) * _ctx["state_triang"]))
    _ctx["output"] = Synth2_dcblock(_ctx["inst_24fe5"], _ctx["output"])
-   return clip((0.25 * _ctx["output"]), -1.0, 1.0)
+   return ((-1.0) if ((0.25 * _ctx["output"])) < (-1.0) else ((1.0) if ((0.25 * _ctx["output"])) > (1.0) else ((0.25 * _ctx["output"]))))
 
 
 def Synth2_svf_step(_ctx, input, g, q, sel):
@@ -281,8 +265,8 @@ def Synth2_svf_step(_ctx, input, g, q, sel):
    high = (input + ((-low) + (-(q * _ctx["dband"]))))
    band = ((g * high) + _ctx["dband"])
    notch = (high + low)
-   _ctx["dband"] = clip(band, -1.0, 1.0)
-   _ctx["dlow"] = clip(low, -1.0, 1.0)
+   _ctx["dband"] = ((-1.0) if (band) < (-1.0) else ((1.0) if (band) > (1.0) else (band)))
+   _ctx["dlow"] = ((-1.0) if (low) < (-1.0) else ((1.0) if (low) > (1.0) else (low)))
    output = 0.0
    if (sel == 0):
       output = low
@@ -298,8 +282,8 @@ def Synth2_svf_step(_ctx, input, g, q, sel):
 
 
 def Synth2_svf(_ctx, input, fc, q, sel):
-   fc = clip(fc, 0.0, 1.0)
-   q = clip(q, 0.0, 1.0)
+   fc = ((0.0) if (fc) < (0.0) else ((1.0) if (fc) > (1.0) else (fc)))
+   q = ((0.0) if (q) < (0.0) else ((1.0) if (q) > (1.0) else (q)))
    fix_q = (2.0 + (2.0 * (-q)))
    if Synth2_change(_ctx["inst_177a7"], fc):
       _ctx["g"] = (0.5 * fc)
@@ -369,13 +353,13 @@ def Synth2_process(_ctx, i):
 
 
 def Synth2_noteOn(_ctx, note, velocity, channel):
-   _ctx["pitch"] = real(Synth2_mono_noteOn(_ctx["monoin"], note))
+   _ctx["pitch"] = float(Synth2_mono_noteOn(_ctx["monoin"], note))
 
 def Synth2_noteOff(_ctx, note, channel):
-   _ctx["pitch"] = real(Synth2_mono_noteOff(_ctx["monoin"], note))
+   _ctx["pitch"] = float(Synth2_mono_noteOff(_ctx["monoin"], note))
 
 def Synth2_controlChange(_ctx, control, value, channel):
-   value_0_1 = (0.007874 * real(value))
+   value_0_1 = (0.007874 * float(value))
    value_m1_1 = (-1.0 + (2.0 * value_0_1))
    if (control == 30):
       _ctx["volume"] = value_0_1

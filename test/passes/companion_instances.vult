@@ -1,0 +1,33 @@
+// Test that multiple companion functions get separate instances of stateful functions.
+//
+// This test prevents regression of a bug where all `and` companion functions that
+// called the same stateful generic function would incorrectly share a single instance.
+// The bug was in elaboration.ml's checkMemExists function which checked f.locals
+// instead of the context record where Inst variables are actually stored.
+//
+// Expected: setA, setB, and setC each get their own instance of change_real
+// (inst_14d3e, inst_24d3e, inst_34d3e) so they can independently track changes.
+
+fun change(x:'t) : bool {
+    mem pre_x : 't;
+    val v:bool = pre_x <> x;
+    pre_x = x;
+    return v;
+}
+
+fun process(input:real) : real {
+    mem a, b, c;
+    return a + b + c + input;
+}
+and setA(value:real) {
+    if (change(value))
+        a = value;
+}
+and setB(value:real) {
+    if (change(value))
+        b = value;
+}
+and setC(value:real) {
+    if (change(value))
+        c = value;
+}

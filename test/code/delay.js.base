@@ -1,21 +1,7 @@
 
+// Runtime functions (simple builtins like eps, pi, clip, real, int_, sin, cos, etc. are inlined)
 this.random = function()         { return Math.random(); };
 this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };
-this.eps  = function()           { return 1e-18 };
-this.pi   = function()           { return 3.1415926535897932384; }
-this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
-this.not  = function(x)          { return x==0?1:0; };
-this.real = function(x)          { return x; };
-this.int_  = function(x)         { return x|0; };
-this.sin  = function(x)          { return Math.sin(x); };
-this.cos  = function(x)          { return Math.cos(x); };
-this.abs  = function(x)          { return Math.abs(x); };
-this.exp  = function(x)          { return Math.exp(x); };
-this.floor = function(x)          { return Math.floor(x); };
-this.tan  = function(x)          { return Math.tan(x); };
-this.tanh = function(x)          { return Math.tanh(x); };
-this.pow  = function(a,b)         { return Math.pow(a,b); };
-this.sqrt = function(x)          { return x; };
 this.int_to_float = function(i)  { return i; };
 this.float_to_int = function(i)  { return Math.floor(i); };
 this.initializeArray = function(v, size){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
@@ -165,7 +151,7 @@ this.Delay_each = function (_ctx, n) {
 };
 
 this.Delay_pitchToRate = function (d) {
-   return (0.000185 * this.exp((0.057762 * d)));
+   return (0.000185 * Math.exp((0.057762 * d)));
 };
 
 this.Delay_phasor = function (_ctx, pitch, reset) {
@@ -189,7 +175,7 @@ this.Delay_lfo = function (_ctx, f, gate) {
    if ((_ctx.phase > 1.0)) {
       _ctx.phase = (-1.0 + _ctx.phase);
    }
-   return (-0.5 + this.sin((6.283185 * _ctx.phase)));
+   return (-0.5 + Math.sin((6.283185 * _ctx.phase)));
 };
 
 this.Delay_phd_osc = function (_ctx, pitch, detune) {
@@ -198,15 +184,15 @@ this.Delay_phd_osc = function (_ctx, pitch, detune) {
    var reset = (((-phase1) + _ctx.pre_phase1) > 0.5);
    _ctx.pre_phase1 = phase1;
    var phase2 = this.Delay_phasor(_ctx.inst_371c4, (pitch + (32.0 * this.Delay_smooth(_ctx.inst_277c4, detune))), reset);
-   var sine = this.sin((6.283185 * phase2));
+   var sine = Math.sin((6.283185 * phase2));
    return (comp * sine);
 };
 
 this.Delay_delay = function (_ctx, x, time, feedback) {
-   time = this.clip(time, 0.0, 1.0);
-   feedback = this.clip(feedback, 0.0, 1.0);
+   time = ((time) < (0.0) ? (0.0) : ((time) > (1.0) ? (1.0) : (time)));
+   feedback = ((feedback) < (0.0) ? (0.0) : ((feedback) > (1.0) ? (1.0) : (feedback)));
    var index_r = (30000.0 * time);
-   var index_i = this.int_(this.floor(index_r));
+   var index_i = ((Math.floor(index_r))|0);
    var delta = ((-index_i) + _ctx.write_pos);
    var read_pos = (0|0);
    if ((delta < (0|0))) {
@@ -214,12 +200,12 @@ this.Delay_delay = function (_ctx, x, time, feedback) {
    } else {
       read_pos = delta;
    }
-   var decimal = (index_r + (-this.real(index_i)));
+   var decimal = (index_r + (-(index_i)));
    var x1 = _ctx.buffer[read_pos];
    var x2 = _ctx.buffer[(((1|0) + read_pos) % (30000|0))];
    var ret = (x1 + (decimal * (x2 + (-x1))));
    _ctx.write_pos = (((1|0) + _ctx.write_pos) % (30000|0));
-   _ctx.buffer[_ctx.write_pos] = this.clip((x + (feedback * ret)), -1.0, 1.0);
+   _ctx.buffer[_ctx.write_pos] = (((x + (feedback * ret))) < (-1.0) ? (-1.0) : (((x + (feedback * ret))) > (1.0) ? (1.0) : ((x + (feedback * ret)))));
    return ret;
 };
 
@@ -289,11 +275,11 @@ this.Delay_process = function (_ctx, input) {
 };
 
 this.Delay_noteOn = function (_ctx, note, velocity, channel) {
-   _ctx.pitch = this.real(this.Delay_mono_noteOn(_ctx.notes, note));
+   _ctx.pitch = (this.Delay_mono_noteOn(_ctx.notes, note));
 };
 
 this.Delay_noteOff = function (_ctx, note, channel) {
-   _ctx.pitch = this.real(this.Delay_mono_noteOff(_ctx.notes, note));
+   _ctx.pitch = (this.Delay_mono_noteOff(_ctx.notes, note));
 };
 
 this.Delay_controlChange = function (_ctx, control, value, channel) {

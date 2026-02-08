@@ -1,21 +1,7 @@
 
+// Runtime functions (simple builtins like eps, pi, clip, real, int_, sin, cos, etc. are inlined)
 this.random = function()         { return Math.random(); };
 this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };
-this.eps  = function()           { return 1e-18 };
-this.pi   = function()           { return 3.1415926535897932384; }
-this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
-this.not  = function(x)          { return x==0?1:0; };
-this.real = function(x)          { return x; };
-this.int_  = function(x)         { return x|0; };
-this.sin  = function(x)          { return Math.sin(x); };
-this.cos  = function(x)          { return Math.cos(x); };
-this.abs  = function(x)          { return Math.abs(x); };
-this.exp  = function(x)          { return Math.exp(x); };
-this.floor = function(x)          { return Math.floor(x); };
-this.tan  = function(x)          { return Math.tan(x); };
-this.tanh = function(x)          { return Math.tanh(x); };
-this.pow  = function(a,b)         { return Math.pow(a,b); };
-this.sqrt = function(x)          { return x; };
 this.int_to_float = function(i)  { return i; };
 this.float_to_int = function(i)  { return Math.floor(i); };
 this.initializeArray = function(v, size){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
@@ -199,7 +185,7 @@ this.Synth2_each = function (_ctx, n) {
 };
 
 this.Synth2_near_zero = function (x) {
-   return (this.abs(x) < 0.02);
+   return (Math.abs(x) < 0.02);
 };
 
 this.Synth2_dcblock = function (_ctx, x0) {
@@ -221,18 +207,18 @@ this.Synth2_lpfilter = function (_ctx, x) {
 };
 
 this.Synth2_pitchToRate = function (d) {
-   return (0.000185 * this.exp((0.057762 * d)));
+   return (0.000185 * Math.exp((0.057762 * d)));
 };
 
 this.Synth2_pulse_train = function (m, phase) {
    var pi_phase = (3.141592 * phase);
-   var denominator1 = this.sin(pi_phase);
+   var denominator1 = Math.sin(pi_phase);
    var tmp1 = 0.0;
    if (this.Synth2_near_zero(denominator1)) {
       tmp1 = 1.0;
    } else {
       {
-         tmp1 = this.sin((m * pi_phase));
+         tmp1 = Math.sin((m * pi_phase));
          tmp1 = (tmp1 / (denominator1 * m));
       }
    }
@@ -250,7 +236,7 @@ this.Synth2_osc = function (_ctx, pitch, pw, wave) {
       {
          _ctx.rate = this.Synth2_pitchToRate(fixed_pitch);
          var p = (1.0 / _ctx.rate);
-         var maxHarmonics = this.floor((0.5 * p));
+         var maxHarmonics = Math.floor((0.5 * p));
          _ctx.m = (1.0 + (2.0 * maxHarmonics));
       }
    }
@@ -265,9 +251,9 @@ this.Synth2_osc = function (_ctx, pitch, pw, wave) {
    if ((_ctx.phase > 1.0)) {
       _ctx.phase = (-1.0 + _ctx.phase);
    }
-   _ctx.state_pulse = this.clip((tmp1 + ((-tmp2) + (0.9995 * _ctx.state_pulse))), -1.0, 1.0);
-   _ctx.state_saw = this.clip(((0.5 * ((tmp1 + (tmp2 + (-2.0 * _ctx.rate))) / shift05)) + (0.9995 * _ctx.state_saw)), -1.0, 1.0);
-   _ctx.state_triang = this.clip(((0.9995 * _ctx.state_triang) + (2.0 * (_ctx.state_pulse * _ctx.rate))), -1.0, 1.0);
+   _ctx.state_pulse = (((tmp1 + ((-tmp2) + (0.9995 * _ctx.state_pulse)))) < (-1.0) ? (-1.0) : (((tmp1 + ((-tmp2) + (0.9995 * _ctx.state_pulse)))) > (1.0) ? (1.0) : ((tmp1 + ((-tmp2) + (0.9995 * _ctx.state_pulse))))));
+   _ctx.state_saw = ((((0.5 * ((tmp1 + (tmp2 + (-2.0 * _ctx.rate))) / shift05)) + (0.9995 * _ctx.state_saw))) < (-1.0) ? (-1.0) : ((((0.5 * ((tmp1 + (tmp2 + (-2.0 * _ctx.rate))) / shift05)) + (0.9995 * _ctx.state_saw))) > (1.0) ? (1.0) : (((0.5 * ((tmp1 + (tmp2 + (-2.0 * _ctx.rate))) / shift05)) + (0.9995 * _ctx.state_saw)))));
+   _ctx.state_triang = ((((0.9995 * _ctx.state_triang) + (2.0 * (_ctx.state_pulse * _ctx.rate)))) < (-1.0) ? (-1.0) : ((((0.9995 * _ctx.state_triang) + (2.0 * (_ctx.state_pulse * _ctx.rate)))) > (1.0) ? (1.0) : (((0.9995 * _ctx.state_triang) + (2.0 * (_ctx.state_pulse * _ctx.rate))))));
    if ((wave < 0.333333)) {
       _ctx.output = _ctx.state_pulse;
    } else {
@@ -278,7 +264,7 @@ this.Synth2_osc = function (_ctx, pitch, pw, wave) {
       }
    }
    _ctx.output = this.Synth2_dcblock(_ctx.inst_24fe5, _ctx.output);
-   return this.clip((0.25 * _ctx.output), -1.0, 1.0);
+   return (((0.25 * _ctx.output)) < (-1.0) ? (-1.0) : (((0.25 * _ctx.output)) > (1.0) ? (1.0) : ((0.25 * _ctx.output))));
 };
 
 this.Synth2_svf_step = function (_ctx, input, g, q, sel) {
@@ -286,8 +272,8 @@ this.Synth2_svf_step = function (_ctx, input, g, q, sel) {
    var high = (input + ((-low) + (-(q * _ctx.dband))));
    var band = ((g * high) + _ctx.dband);
    var notch = (high + low);
-   _ctx.dband = this.clip(band, -1.0, 1.0);
-   _ctx.dlow = this.clip(low, -1.0, 1.0);
+   _ctx.dband = ((band) < (-1.0) ? (-1.0) : ((band) > (1.0) ? (1.0) : (band)));
+   _ctx.dlow = ((low) < (-1.0) ? (-1.0) : ((low) > (1.0) ? (1.0) : (low)));
    var output = 0.0;
    if ((sel == (0|0))) {
       output = low;
@@ -306,8 +292,8 @@ this.Synth2_svf_step = function (_ctx, input, g, q, sel) {
 };
 
 this.Synth2_svf = function (_ctx, input, fc, q, sel) {
-   fc = this.clip(fc, 0.0, 1.0);
-   q = this.clip(q, 0.0, 1.0);
+   fc = ((fc) < (0.0) ? (0.0) : ((fc) > (1.0) ? (1.0) : (fc)));
+   q = ((q) < (0.0) ? (0.0) : ((q) > (1.0) ? (1.0) : (q)));
    var fix_q = (2.0 + (2.0 * (-q)));
    if (this.Synth2_change(_ctx.inst_177a7, fc)) {
       _ctx.g = (0.5 * fc);
@@ -328,7 +314,7 @@ this.Synth2_lfo = function (_ctx, f, gate) {
    if ((_ctx.phase > 1.0)) {
       _ctx.phase = (-1.0 + _ctx.phase);
    }
-   return (0.5 + this.sin((6.283185 * _ctx.phase)));
+   return (0.5 + Math.sin((6.283185 * _ctx.phase)));
 };
 
 this.Synth2_mono_noteOn = function (_ctx, n) {
@@ -396,15 +382,15 @@ this.Synth2_process = function (_ctx, i) {
 };
 
 this.Synth2_noteOn = function (_ctx, note, velocity, channel) {
-   _ctx.pitch = this.real(this.Synth2_mono_noteOn(_ctx.monoin, note));
+   _ctx.pitch = (this.Synth2_mono_noteOn(_ctx.monoin, note));
 };
 
 this.Synth2_noteOff = function (_ctx, note, channel) {
-   _ctx.pitch = this.real(this.Synth2_mono_noteOff(_ctx.monoin, note));
+   _ctx.pitch = (this.Synth2_mono_noteOff(_ctx.monoin, note));
 };
 
 this.Synth2_controlChange = function (_ctx, control, value, channel) {
-   var value_0_1 = (0.007874 * this.real(value));
+   var value_0_1 = (0.007874 * (value));
    var value_m1_1 = (-1.0 + (2.0 * value_0_1));
    if ((control == (30|0))) {
       _ctx.volume = value_0_1;

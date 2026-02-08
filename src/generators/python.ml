@@ -28,29 +28,13 @@ let runtime =
   {%pla|import math
 import random as random_module
 
-def eps():
-    return 1e-18
-
-def pi():
-    return 3.1415926535897932384
+# Runtime functions (simple builtins like eps, pi, clip, sin, cos, etc. are inlined)
 
 def random():
     return random_module.random()
 
 def irandom():
     return int(random_module.random() * 4294967296)
-
-def clip(x, low, high):
-    return low if x < low else (high if x > high else x)
-
-def not_(x):
-    return 0 if x != 0 else 1
-
-def real(x):
-    return float(x)
-
-def int_(x):
-    return int(x)
 
 def int_to_float(i):
     return float(i)
@@ -149,6 +133,52 @@ let rec print_exp (e : exp) =
     let i = print_exp i in
     let v = print_exp v in
     {%pla|<#l#>.__setitem__(<#i#>, <#v#>)|}
+  (* Inline simple builtins to avoid function call overhead *)
+  | ECall { path = "eps"; args = [] } -> {%pla|1e-18|}
+  | ECall { path = "pi"; args = [] } -> {%pla|3.1415926535897932384|}
+  | ECall { path = "real"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|float(<#x#>)|}
+  | ECall { path = "int_"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|int(<#x#>)|}
+  | ECall { path = "not_"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|(0 if (<#x#>) != 0 else 1)|}
+  | ECall { path = "clip"; args = [ x; low; high ] } ->
+    let x = print_exp x in
+    let low = print_exp low in
+    let high = print_exp high in
+    {%pla|((<#low#>) if (<#x#>) < (<#low#>) else ((<#high#>) if (<#x#>) > (<#high#>) else (<#x#>)))|}
+  (* Inline math functions *)
+  | ECall { path = "sin"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|math.sin(<#x#>)|}
+  | ECall { path = "cos"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|math.cos(<#x#>)|}
+  | ECall { path = "abs"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|abs(<#x#>)|}
+  | ECall { path = "exp"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|math.exp(<#x#>)|}
+  | ECall { path = "floor"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|math.floor(<#x#>)|}
+  | ECall { path = "tan"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|math.tan(<#x#>)|}
+  | ECall { path = "tanh"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|math.tanh(<#x#>)|}
+  | ECall { path = "sqrt"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|math.sqrt(<#x#>)|}
+  | ECall { path = "pow"; args = [ a; b ] } ->
+    let a = print_exp a in
+    let b = print_exp b in
+    {%pla|math.pow(<#a#>, <#b#>)|}
   | ECall { path; args } ->
     let args = Pla.map_sep Pla.commaspace print_exp args in
     {%pla|<#path#s>(<#args#>)|}

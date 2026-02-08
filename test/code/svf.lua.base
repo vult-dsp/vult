@@ -72,20 +72,12 @@ else
     function rshift(a, b) return math.floor(a / (2 ^ b)) end
 end
 
--- Core runtime functions
+-- Core runtime functions (simple builtins like eps, pi, clip, real, int, bool are inlined)
 function ifExpressionValue(cond,then_,else_) if cond then return then_ else return else_ end end
 function ifExpression(cond,then_,else_) if cond then return then_() else return else_() end end
-function eps()              return 1e-18 end
-function pi()               return 3.1415926535897932384 end
 function random()           return math.random() end
 function irandom()          return math.floor(math.random() * 4294967296) end
-function clip(x,low,high)   if x > high then return high else if x < low then return low else return x end end end
-function real(x)            return x end
-function int(x)             if type(x) == "boolean" then x = x and 1 or 0 end local int_part,_ = math.modf(x) return int_part end
-function int16(x)           if type(x) == "boolean" then x = x and 1 or 0 end local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end
-function bool(x)            return x ~= 0 and x ~= false end
-function set(a, i, v)       a[i+1]=v end
-function get(a, i)          return a[i+1] end
+function int16(x)           local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end
 function intDiv(a, b)       return math.floor(a / b) end
 function list_clear(t)      for k in pairs(t) do t[k] = nil end end
 
@@ -128,20 +120,20 @@ Svf_calc_g_c0 = {};
 Svf_calc_g_c1 = {};
 Svf_calc_g_c2 = {};
 function Svf_calc_g_raw_c0(index)
-   return get(Svf_calc_g_c0, index)
+   return Svf_calc_g_c0[(index) + 1]
 end
 
 function Svf_calc_g_raw_c1(index)
-   return get(Svf_calc_g_c1, index)
+   return Svf_calc_g_c1[(index) + 1]
 end
 
 function Svf_calc_g_raw_c2(index)
-   return get(Svf_calc_g_c2, index)
+   return Svf_calc_g_c2[(index) + 1]
 end
 
 function Svf_calc_g(cv)
-   local index = clip(math.floor((cv * 141.111111)), 0, 127)
-   return (get(Svf_calc_g_c0, index) + (cv * (get(Svf_calc_g_c1, index) + (get(Svf_calc_g_c2, index) * cv))))
+   local index = ((math.floor((cv * 141.111111))) > (127) and (127) or ((math.floor((cv * 141.111111))) < (0) and (0) or (math.floor((cv * 141.111111)))))
+   return (Svf_calc_g_c0[(index) + 1] + (cv * (Svf_calc_g_c1[(index) + 1] + (Svf_calc_g_c2[(index) + 1] * cv))))
 end
 
 function Svf_default(_ctx)
@@ -229,80 +221,80 @@ Util_pitchToRate_1024_c0 = {};
 Util_pitchToRate_1024_c1 = {};
 Util_pitchToRate_1024_c2 = {};
 function Util_pitchToRate_1024_raw_c0(index)
-   return get(Util_pitchToRate_1024_c0, index)
+   return Util_pitchToRate_1024_c0[(index) + 1]
 end
 
 function Util_pitchToRate_1024_raw_c1(index)
-   return get(Util_pitchToRate_1024_c1, index)
+   return Util_pitchToRate_1024_c1[(index) + 1]
 end
 
 function Util_pitchToRate_1024_raw_c2(index)
-   return get(Util_pitchToRate_1024_c2, index)
+   return Util_pitchToRate_1024_c2[(index) + 1]
 end
 
 function Util_pitchToRate_1024(pitch)
-   local index = clip(math.floor((pitch * 0.244094)), 0, 31)
-   return (get(Util_pitchToRate_1024_c0, index) + (pitch * (get(Util_pitchToRate_1024_c1, index) + (get(Util_pitchToRate_1024_c2, index) * pitch))))
+   local index = ((math.floor((pitch * 0.244094))) > (31) and (31) or ((math.floor((pitch * 0.244094))) < (0) and (0) or (math.floor((pitch * 0.244094)))))
+   return (Util_pitchToRate_1024_c0[(index) + 1] + (pitch * (Util_pitchToRate_1024_c1[(index) + 1] + (Util_pitchToRate_1024_c2[(index) + 1] * pitch))))
 end
 
 Util_pitchToRate_c0 = {};
 Util_pitchToRate_c1 = {};
 Util_pitchToRate_c2 = {};
 function Util_pitchToRate_raw_c0(index)
-   return get(Util_pitchToRate_c0, index)
+   return Util_pitchToRate_c0[(index) + 1]
 end
 
 function Util_pitchToRate_raw_c1(index)
-   return get(Util_pitchToRate_c1, index)
+   return Util_pitchToRate_c1[(index) + 1]
 end
 
 function Util_pitchToRate_raw_c2(index)
-   return get(Util_pitchToRate_c2, index)
+   return Util_pitchToRate_c2[(index) + 1]
 end
 
 function Util_pitchToRate(pitch)
-   local index = clip(math.floor((pitch * 0.244094)), 0, 31)
-   return (get(Util_pitchToRate_c0, index) + (pitch * (get(Util_pitchToRate_c1, index) + (get(Util_pitchToRate_c2, index) * pitch))))
+   local index = ((math.floor((pitch * 0.244094))) > (31) and (31) or ((math.floor((pitch * 0.244094))) < (0) and (0) or (math.floor((pitch * 0.244094)))))
+   return (Util_pitchToRate_c0[(index) + 1] + (pitch * (Util_pitchToRate_c1[(index) + 1] + (Util_pitchToRate_c2[(index) + 1] * pitch))))
 end
 
 Util_cvToRate_1024_c0 = {};
 Util_cvToRate_1024_c1 = {};
 Util_cvToRate_1024_c2 = {};
 function Util_cvToRate_1024_raw_c0(index)
-   return get(Util_cvToRate_1024_c0, index)
+   return Util_cvToRate_1024_c0[(index) + 1]
 end
 
 function Util_cvToRate_1024_raw_c1(index)
-   return get(Util_cvToRate_1024_c1, index)
+   return Util_cvToRate_1024_c1[(index) + 1]
 end
 
 function Util_cvToRate_1024_raw_c2(index)
-   return get(Util_cvToRate_1024_c2, index)
+   return Util_cvToRate_1024_c2[(index) + 1]
 end
 
 function Util_cvToRate_1024(cv)
-   local index = clip(math.floor((cv * 34.444444)), 0, 31)
-   return (get(Util_cvToRate_1024_c0, index) + (cv * (get(Util_cvToRate_1024_c1, index) + (get(Util_cvToRate_1024_c2, index) * cv))))
+   local index = ((math.floor((cv * 34.444444))) > (31) and (31) or ((math.floor((cv * 34.444444))) < (0) and (0) or (math.floor((cv * 34.444444)))))
+   return (Util_cvToRate_1024_c0[(index) + 1] + (cv * (Util_cvToRate_1024_c1[(index) + 1] + (Util_cvToRate_1024_c2[(index) + 1] * cv))))
 end
 
 Util_cvToRate_c0 = {};
 Util_cvToRate_c1 = {};
 Util_cvToRate_c2 = {};
 function Util_cvToRate_raw_c0(index)
-   return get(Util_cvToRate_c0, index)
+   return Util_cvToRate_c0[(index) + 1]
 end
 
 function Util_cvToRate_raw_c1(index)
-   return get(Util_cvToRate_c1, index)
+   return Util_cvToRate_c1[(index) + 1]
 end
 
 function Util_cvToRate_raw_c2(index)
-   return get(Util_cvToRate_c2, index)
+   return Util_cvToRate_c2[(index) + 1]
 end
 
 function Util_cvToRate(cv)
-   local index = clip(math.floor((cv * 141.111111)), 0, 127)
-   return (get(Util_cvToRate_c0, index) + (cv * (get(Util_cvToRate_c1, index) + (get(Util_cvToRate_c2, index) * cv))))
+   local index = ((math.floor((cv * 141.111111))) > (127) and (127) or ((math.floor((cv * 141.111111))) < (0) and (0) or (math.floor((cv * 141.111111)))))
+   return (Util_cvToRate_c0[(index) + 1] + (cv * (Util_cvToRate_c1[(index) + 1] + (Util_cvToRate_c2[(index) + 1] * cv))))
 end
 
 function Util_pitchToCv(pitch)
@@ -313,60 +305,60 @@ Util_cvToperiod_c0 = {};
 Util_cvToperiod_c1 = {};
 Util_cvToperiod_c2 = {};
 function Util_cvToperiod_raw_c0(index)
-   return get(Util_cvToperiod_c0, index)
+   return Util_cvToperiod_c0[(index) + 1]
 end
 
 function Util_cvToperiod_raw_c1(index)
-   return get(Util_cvToperiod_c1, index)
+   return Util_cvToperiod_c1[(index) + 1]
 end
 
 function Util_cvToperiod_raw_c2(index)
-   return get(Util_cvToperiod_c2, index)
+   return Util_cvToperiod_c2[(index) + 1]
 end
 
 function Util_cvToperiod(cv)
-   local index = clip(math.floor((cv * 31.0)), 0, 31)
-   return (get(Util_cvToperiod_c0, index) + (cv * (get(Util_cvToperiod_c1, index) + (get(Util_cvToperiod_c2, index) * cv))))
+   local index = ((math.floor((cv * 31.0))) > (31) and (31) or ((math.floor((cv * 31.0))) < (0) and (0) or (math.floor((cv * 31.0)))))
+   return (Util_cvToperiod_c0[(index) + 1] + (cv * (Util_cvToperiod_c1[(index) + 1] + (Util_cvToperiod_c2[(index) + 1] * cv))))
 end
 
 Util_cvTokHz_c0 = {};
 Util_cvTokHz_c1 = {};
 Util_cvTokHz_c2 = {};
 function Util_cvTokHz_raw_c0(index)
-   return get(Util_cvTokHz_c0, index)
+   return Util_cvTokHz_c0[(index) + 1]
 end
 
 function Util_cvTokHz_raw_c1(index)
-   return get(Util_cvTokHz_c1, index)
+   return Util_cvTokHz_c1[(index) + 1]
 end
 
 function Util_cvTokHz_raw_c2(index)
-   return get(Util_cvTokHz_c2, index)
+   return Util_cvTokHz_c2[(index) + 1]
 end
 
 function Util_cvTokHz(cv)
-   local index = clip(math.floor((cv * 31.0)), 0, 31)
-   return (get(Util_cvTokHz_c0, index) + (cv * (get(Util_cvTokHz_c1, index) + (get(Util_cvTokHz_c2, index) * cv))))
+   local index = ((math.floor((cv * 31.0))) > (31) and (31) or ((math.floor((cv * 31.0))) < (0) and (0) or (math.floor((cv * 31.0)))))
+   return (Util_cvTokHz_c0[(index) + 1] + (cv * (Util_cvTokHz_c1[(index) + 1] + (Util_cvTokHz_c2[(index) + 1] * cv))))
 end
 
 Saturate_soft_tanh_table_c0 = {};
 Saturate_soft_tanh_table_c1 = {};
 Saturate_soft_tanh_table_c2 = {};
 function Saturate_soft_tanh_table_raw_c0(index)
-   return get(Saturate_soft_tanh_table_c0, index)
+   return Saturate_soft_tanh_table_c0[(index) + 1]
 end
 
 function Saturate_soft_tanh_table_raw_c1(index)
-   return get(Saturate_soft_tanh_table_c1, index)
+   return Saturate_soft_tanh_table_c1[(index) + 1]
 end
 
 function Saturate_soft_tanh_table_raw_c2(index)
-   return get(Saturate_soft_tanh_table_c2, index)
+   return Saturate_soft_tanh_table_c2[(index) + 1]
 end
 
 function Saturate_soft_tanh_table(x)
-   local index = clip(math.floor(((x + 24.0) * 5.0)), 0, 240)
-   return (get(Saturate_soft_tanh_table_c0, index) + (x * (get(Saturate_soft_tanh_table_c1, index) + (get(Saturate_soft_tanh_table_c2, index) * x))))
+   local index = ((math.floor(((x + 24.0) * 5.0))) > (240) and (240) or ((math.floor(((x + 24.0) * 5.0))) < (0) and (0) or (math.floor(((x + 24.0) * 5.0)))))
+   return (Saturate_soft_tanh_table_c0[(index) + 1] + (x * (Saturate_soft_tanh_table_c1[(index) + 1] + (Saturate_soft_tanh_table_c2[(index) + 1] * x))))
 end
 
 function Saturate_soft_process(x)
@@ -390,7 +382,7 @@ function Svf_process(_ctx, x, cv, q, sel)
    if (Util_change(_ctx.inst_1b0a2, cv) or Util_change(_ctx.inst_2b0a2, q)) then
       do
          _ctx.g = Svf_calc_g(cv)
-         _ctx.r = (1.0 / (2.0 * (q + eps())))
+         _ctx.r = (1.0 / (2.0 * (q + 1e-18)))
          _ctx.inv_den = (1.0 / (1.0 + ((2.0 * (_ctx.r * _ctx.g)) + (_ctx.g * _ctx.g))))
       end
    end

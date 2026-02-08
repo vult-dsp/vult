@@ -49,8 +49,12 @@ let rec unlink (t : type_) =
 
 let checkMemExists (env : env) name =
   let f = Env.getCurrentFunction env in
-  match Env.lookVarInScopes f.locals name with
-  | Some { kind = Mem _ | Inst; _ } -> true
+  (* Check context record where Inst/Mem variables are stored by addVar *)
+  match f.context with
+  | Some (_, { descr = Record members; _ }) -> (
+    match Env.Map.find name members with
+    | Some { kind = Mem _ | Inst; _ } -> true
+    | _ -> false)
   | _ -> false
 
 

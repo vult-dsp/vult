@@ -1,21 +1,7 @@
 
+// Runtime functions (simple builtins like eps, pi, clip, real, int_, sin, cos, etc. are inlined)
 this.random = function()         { return Math.random(); };
 this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };
-this.eps  = function()           { return 1e-18 };
-this.pi   = function()           { return 3.1415926535897932384; }
-this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
-this.not  = function(x)          { return x==0?1:0; };
-this.real = function(x)          { return x; };
-this.int_  = function(x)         { return x|0; };
-this.sin  = function(x)          { return Math.sin(x); };
-this.cos  = function(x)          { return Math.cos(x); };
-this.abs  = function(x)          { return Math.abs(x); };
-this.exp  = function(x)          { return Math.exp(x); };
-this.floor = function(x)          { return Math.floor(x); };
-this.tan  = function(x)          { return Math.tan(x); };
-this.tanh = function(x)          { return Math.tanh(x); };
-this.pow  = function(a,b)         { return Math.pow(a,b); };
-this.sqrt = function(x)          { return x; };
 this.int_to_float = function(i)  { return i; };
 this.float_to_int = function(i)  { return Math.floor(i); };
 this.initializeArray = function(v, size){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
@@ -81,7 +67,7 @@ this.Saturate_tanh_table_raw_c2 = function (index) {
 };
 
 this.Saturate_tanh_table = function (x) {
-   var index = this.clip(this.float_to_int(((x + 24.0) * 5.0)), (0|0), (240|0));
+   var index = ((this.float_to_int(((x + 24.0) * 5.0))) < ((0|0)) ? ((0|0)) : ((this.float_to_int(((x + 24.0) * 5.0))) > ((240|0)) ? ((240|0)) : (this.float_to_int(((x + 24.0) * 5.0)))));
    return (Saturate_tanh_table_c0[index] + (x * (Saturate_tanh_table_c1[index] + (Saturate_tanh_table_c2[index] * x))));
 };
 
@@ -113,10 +99,10 @@ this.Short_delay_soft = function (_ctx, x1) {
 };
 
 this.Short_delay_do = function (_ctx, x, time_in, feedback_in) {
-   var time = this.clip(time_in, 0.0, 1.0);
-   var feedback = this.clip(feedback_in, 0.0, 1.0);
+   var time = ((time_in) < (0.0) ? (0.0) : ((time_in) > (1.0) ? (1.0) : (time_in)));
+   var feedback = ((feedback_in) < (0.0) ? (0.0) : ((feedback_in) > (1.0) ? (1.0) : (feedback_in)));
    var index_r = (22050.0 * time);
-   var index_i = this.int_(this.floor(index_r));
+   var index_i = ((Math.floor(index_r))|0);
    var delta = ((-index_i) + _ctx.write_pos);
    var read_pos = (0|0);
    if ((delta < (0|0))) {
@@ -124,7 +110,7 @@ this.Short_delay_do = function (_ctx, x, time_in, feedback_in) {
    } else {
       read_pos = delta;
    }
-   var decimal = (index_r + (-this.real(index_i)));
+   var decimal = (index_r + (-(index_i)));
    var x1 = _ctx.buffer[read_pos];
    var x2 = _ctx.buffer[(((1|0) + read_pos) % (22050|0))];
    var ret = (x1 + (decimal * (x2 + (-x1))));

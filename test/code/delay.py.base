@@ -1,29 +1,13 @@
 import math
 import random as random_module
 
-def eps():
-    return 1e-18
-
-def pi():
-    return 3.1415926535897932384
+# Runtime functions (simple builtins like eps, pi, clip, sin, cos, etc. are inlined)
 
 def random():
     return random_module.random()
 
 def irandom():
     return int(random_module.random() * 4294967296)
-
-def clip(x, low, high):
-    return low if x < low else (high if x > high else x)
-
-def not_(x):
-    return 0 if x != 0 else 1
-
-def real(x):
-    return float(x)
-
-def int_(x):
-    return int(x)
 
 def int_to_float(i):
     return float(i)
@@ -203,8 +187,8 @@ def Delay_phd_osc(_ctx, pitch, detune):
 
 
 def Delay_delay(_ctx, x, time, feedback):
-   time = clip(time, 0.0, 1.0)
-   feedback = clip(feedback, 0.0, 1.0)
+   time = ((0.0) if (time) < (0.0) else ((1.0) if (time) > (1.0) else (time)))
+   feedback = ((0.0) if (feedback) < (0.0) else ((1.0) if (feedback) > (1.0) else (feedback)))
    index_r = (30000.0 * time)
    index_i = int(math.floor(index_r))
    delta = ((-index_i) + _ctx["write_pos"])
@@ -213,12 +197,12 @@ def Delay_delay(_ctx, x, time, feedback):
       read_pos = (30000 + delta)
    else:
       read_pos = delta
-   decimal = (index_r + (-real(index_i)))
+   decimal = (index_r + (-float(index_i)))
    x1 = _ctx["buffer"][read_pos]
    x2 = _ctx["buffer"][((1 + read_pos) % 30000)]
    ret = (x1 + (decimal * (x2 + (-x1))))
    _ctx["write_pos"] = ((1 + _ctx["write_pos"]) % 30000)
-   _ctx["buffer"][_ctx["write_pos"]] = clip((x + (feedback * ret)), -1.0, 1.0)
+   _ctx["buffer"][_ctx["write_pos"]] = ((-1.0) if ((x + (feedback * ret))) < (-1.0) else ((1.0) if ((x + (feedback * ret))) > (1.0) else ((x + (feedback * ret)))))
    return ret
 
 
@@ -273,10 +257,10 @@ def Delay_process(_ctx, input):
 
 
 def Delay_noteOn(_ctx, note, velocity, channel):
-   _ctx["pitch"] = real(Delay_mono_noteOn(_ctx["notes"], note))
+   _ctx["pitch"] = float(Delay_mono_noteOn(_ctx["notes"], note))
 
 def Delay_noteOff(_ctx, note, channel):
-   _ctx["pitch"] = real(Delay_mono_noteOff(_ctx["notes"], note))
+   _ctx["pitch"] = float(Delay_mono_noteOff(_ctx["notes"], note))
 
 def Delay_controlChange(_ctx, control, value, channel):
    if (control == 30):

@@ -1,29 +1,13 @@
 import math
 import random as random_module
 
-def eps():
-    return 1e-18
-
-def pi():
-    return 3.1415926535897932384
+# Runtime functions (simple builtins like eps, pi, clip, sin, cos, etc. are inlined)
 
 def random():
     return random_module.random()
 
 def irandom():
     return int(random_module.random() * 4294967296)
-
-def clip(x, low, high):
-    return low if x < low else (high if x > high else x)
-
-def not_(x):
-    return 0 if x != 0 else 1
-
-def real(x):
-    return float(x)
-
-def int_(x):
-    return int(x)
 
 def int_to_float(i):
     return float(i)
@@ -119,7 +103,7 @@ def Saturate_soft_tanh_table_raw_c2(index):
    return Saturate_soft_tanh_table_c2[index]
 
 def Saturate_soft_tanh_table(x):
-   index = clip(float_to_int(((x + 24.0) * 5.0)), 0, 240)
+   index = ((0) if (float_to_int(((x + 24.0) * 5.0))) < (0) else ((240) if (float_to_int(((x + 24.0) * 5.0))) > (240) else (float_to_int(((x + 24.0) * 5.0)))))
    return (Saturate_soft_tanh_table_c0[index] + (x * (Saturate_soft_tanh_table_c1[index] + (Saturate_soft_tanh_table_c2[index] * x))))
 
 
@@ -193,7 +177,7 @@ def Util_pitchToRate_1024_raw_c2(index):
    return Util_pitchToRate_1024_c2[index]
 
 def Util_pitchToRate_1024(pitch):
-   index = clip(float_to_int((pitch * 0.244094)), 0, 31)
+   index = ((0) if (float_to_int((pitch * 0.244094))) < (0) else ((31) if (float_to_int((pitch * 0.244094))) > (31) else (float_to_int((pitch * 0.244094)))))
    return (Util_pitchToRate_1024_c0[index] + (pitch * (Util_pitchToRate_1024_c1[index] + (Util_pitchToRate_1024_c2[index] * pitch))))
 
 
@@ -210,7 +194,7 @@ def Util_pitchToRate_raw_c2(index):
    return Util_pitchToRate_c2[index]
 
 def Util_pitchToRate(pitch):
-   index = clip(float_to_int((pitch * 0.244094)), 0, 31)
+   index = ((0) if (float_to_int((pitch * 0.244094))) < (0) else ((31) if (float_to_int((pitch * 0.244094))) > (31) else (float_to_int((pitch * 0.244094)))))
    return (Util_pitchToRate_c0[index] + (pitch * (Util_pitchToRate_c1[index] + (Util_pitchToRate_c2[index] * pitch))))
 
 
@@ -230,7 +214,7 @@ def Util_cvToRate_1024_raw_c2(index):
    return Util_cvToRate_1024_c2[index]
 
 def Util_cvToRate_1024(cv):
-   index = clip(float_to_int((cv * 34.444444)), 0, 31)
+   index = ((0) if (float_to_int((cv * 34.444444))) < (0) else ((31) if (float_to_int((cv * 34.444444))) > (31) else (float_to_int((cv * 34.444444)))))
    return (Util_cvToRate_1024_c0[index] + (cv * (Util_cvToRate_1024_c1[index] + (Util_cvToRate_1024_c2[index] * cv))))
 
 
@@ -247,7 +231,7 @@ def Util_cvToRate_raw_c2(index):
    return Util_cvToRate_c2[index]
 
 def Util_cvToRate(cv):
-   index = clip(float_to_int((cv * 141.111111)), 0, 127)
+   index = ((0) if (float_to_int((cv * 141.111111))) < (0) else ((127) if (float_to_int((cv * 141.111111))) > (127) else (float_to_int((cv * 141.111111)))))
    return (Util_cvToRate_c0[index] + (cv * (Util_cvToRate_c1[index] + (Util_cvToRate_c2[index] * cv))))
 
 
@@ -267,7 +251,7 @@ def Util_cvToperiod_raw_c2(index):
    return Util_cvToperiod_c2[index]
 
 def Util_cvToperiod(cv):
-   index = clip(float_to_int((cv * 31.0)), 0, 31)
+   index = ((0) if (float_to_int((cv * 31.0))) < (0) else ((31) if (float_to_int((cv * 31.0))) > (31) else (float_to_int((cv * 31.0)))))
    return (Util_cvToperiod_c0[index] + (cv * (Util_cvToperiod_c1[index] + (Util_cvToperiod_c2[index] * cv))))
 
 
@@ -284,7 +268,7 @@ def Util_cvTokHz_raw_c2(index):
    return Util_cvTokHz_c2[index]
 
 def Util_cvTokHz(cv):
-   index = clip(float_to_int((cv * 31.0)), 0, 31)
+   index = ((0) if (float_to_int((cv * 31.0))) < (0) else ((31) if (float_to_int((cv * 31.0))) > (31) else (float_to_int((cv * 31.0)))))
    return (Util_cvTokHz_c0[index] + (cv * (Util_cvTokHz_c1[index] + (Util_cvTokHz_c2[index] * cv))))
 
 
@@ -292,12 +276,12 @@ def Rescomb_delay(_ctx, x, cv):
    _ctx["write_pos"] = ((1 + _ctx["write_pos"]) % 675)
    _ctx["buffer"][_ctx["write_pos"]] = x
    r_size = 675.0
-   r_index = (((-Util_cvToperiod(cv)) + real(_ctx["write_pos"])) % r_size)
+   r_index = (((-Util_cvToperiod(cv)) + float(_ctx["write_pos"])) % r_size)
    if (r_index < 0.0):
       r_index = (r_index + r_size)
    t1 = (int(math.floor(r_index)) % 675)
    t2 = ((1 + t1) % 675)
-   decimal = (r_index + (-real(t1)))
+   decimal = (r_index + (-float(t1)))
    x1 = _ctx["buffer"][t1]
    x2 = _ctx["buffer"][t2]
    ret = (x1 + (decimal * (x2 + (-x1))))
@@ -317,7 +301,7 @@ def Rescomb_toneCurve_raw_c2(index):
    return Rescomb_toneCurve_c2[index]
 
 def Rescomb_toneCurve(tone):
-   index = clip(float_to_int(((tone + 1.2) * 26.25)), 0, 63)
+   index = ((0) if (float_to_int(((tone + 1.2) * 26.25))) < (0) else ((63) if (float_to_int(((tone + 1.2) * 26.25))) > (63) else (float_to_int(((tone + 1.2) * 26.25)))))
    return (Rescomb_toneCurve_c0[index] + (tone * (Rescomb_toneCurve_c1[index] + (Rescomb_toneCurve_c2[index] * tone))))
 
 

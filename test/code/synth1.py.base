@@ -1,29 +1,13 @@
 import math
 import random as random_module
 
-def eps():
-    return 1e-18
-
-def pi():
-    return 3.1415926535897932384
+# Runtime functions (simple builtins like eps, pi, clip, sin, cos, etc. are inlined)
 
 def random():
     return random_module.random()
 
 def irandom():
     return int(random_module.random() * 4294967296)
-
-def clip(x, low, high):
-    return low if x < low else (high if x > high else x)
-
-def not_(x):
-    return 0 if x != 0 else 1
-
-def real(x):
-    return float(x)
-
-def int_(x):
-    return int(x)
 
 def int_to_float(i):
     return float(i)
@@ -173,22 +157,22 @@ def Synth1_process(_ctx, input):
 def Synth1_noteOn(_ctx, note, velocity, channel):
    if (_ctx["count"] == 0):
       _ctx["n1"] = note
-      _ctx["pitch"] = real(note)
+      _ctx["pitch"] = float(note)
 
    else:
       if (_ctx["count"] == 1):
          _ctx["n2"] = note
-         _ctx["pitch"] = real(note)
+         _ctx["pitch"] = float(note)
 
       else:
          if (_ctx["count"] == 2):
             _ctx["n3"] = note
-            _ctx["pitch"] = real(note)
+            _ctx["pitch"] = float(note)
 
          else:
             if (_ctx["count"] == 3):
                _ctx["n4"] = note
-               _ctx["pitch"] = real(note)
+               _ctx["pitch"] = float(note)
 
    if (_ctx["count"] <= 4):
       _ctx["count"] = (1 + _ctx["count"])
@@ -232,13 +216,13 @@ def Synth1_noteOff(_ctx, note, channel):
    else:
       _ctx["gate"] = 0
    if (_ctx["count"] == 1):
-      _ctx["pitch"] = real(_ctx["n1"])
+      _ctx["pitch"] = float(_ctx["n1"])
    if (_ctx["count"] == 2):
-      _ctx["pitch"] = real(_ctx["n2"])
+      _ctx["pitch"] = float(_ctx["n2"])
    if (_ctx["count"] == 3):
-      _ctx["pitch"] = real(_ctx["n3"])
+      _ctx["pitch"] = float(_ctx["n3"])
    if (_ctx["count"] == 4):
-      _ctx["pitch"] = real(_ctx["n4"])
+      _ctx["pitch"] = float(_ctx["n4"])
 
 
 def Synth1_controlChange(_ctx, control, value, channel):

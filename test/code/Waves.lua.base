@@ -72,20 +72,12 @@ else
     function rshift(a, b) return math.floor(a / (2 ^ b)) end
 end
 
--- Core runtime functions
+-- Core runtime functions (simple builtins like eps, pi, clip, real, int, bool are inlined)
 function ifExpressionValue(cond,then_,else_) if cond then return then_ else return else_ end end
 function ifExpression(cond,then_,else_) if cond then return then_() else return else_() end end
-function eps()              return 1e-18 end
-function pi()               return 3.1415926535897932384 end
 function random()           return math.random() end
 function irandom()          return math.floor(math.random() * 4294967296) end
-function clip(x,low,high)   if x > high then return high else if x < low then return low else return x end end end
-function real(x)            return x end
-function int(x)             if type(x) == "boolean" then x = x and 1 or 0 end local int_part,_ = math.modf(x) return int_part end
-function int16(x)           if type(x) == "boolean" then x = x and 1 or 0 end local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end
-function bool(x)            return x ~= 0 and x ~= false end
-function set(a, i, v)       a[i+1]=v end
-function get(a, i)          return a[i+1] end
+function int16(x)           local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end
 function intDiv(a, b)       return math.floor(a / b) end
 function list_clear(t)      for k in pairs(t) do t[k] = nil end end
 
@@ -96,7 +88,7 @@ end
 
 function Waves_sineTable1(channel, index)
    if (channel == 0) then
-      return get(Waves_sineTable1_chan_0, (index % 256))
+      return Waves_sineTable1_chan_0[((index % 256)) + 1]
    end
    return 0.0
 end
@@ -109,20 +101,20 @@ function Waves_sineTable2_samples()
 end
 
 function Waves_sineTable2_raw_c0(index)
-   return get(Waves_sineTable2_c0, index)
+   return Waves_sineTable2_c0[(index) + 1]
 end
 
 function Waves_sineTable2_raw_c1(index)
-   return get(Waves_sineTable2_c1, index)
+   return Waves_sineTable2_c1[(index) + 1]
 end
 
 function Waves_sineTable2_raw_c2(index)
-   return get(Waves_sineTable2_c2, index)
+   return Waves_sineTable2_c2[(index) + 1]
 end
 
 function Waves_sineTable2(position)
-   local index = clip(math.floor((position * 255.0)), 0, 255)
-   return (get(Waves_sineTable2_c0, index) + (position * (get(Waves_sineTable2_c1, index) + (get(Waves_sineTable2_c2, index) * position))))
+   local index = ((math.floor((position * 255.0))) > (255) and (255) or ((math.floor((position * 255.0))) < (0) and (0) or (math.floor((position * 255.0)))))
+   return (Waves_sineTable2_c0[(index) + 1] + (position * (Waves_sineTable2_c1[(index) + 1] + (Waves_sineTable2_c2[(index) + 1] * position))))
 end
 
 function Waves_test1()

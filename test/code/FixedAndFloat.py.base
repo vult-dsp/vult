@@ -1,29 +1,13 @@
 import math
 import random as random_module
 
-def eps():
-    return 1e-18
-
-def pi():
-    return 3.1415926535897932384
+# Runtime functions (simple builtins like eps, pi, clip, sin, cos, etc. are inlined)
 
 def random():
     return random_module.random()
 
 def irandom():
     return int(random_module.random() * 4294967296)
-
-def clip(x, low, high):
-    return low if x < low else (high if x > high else x)
-
-def not_(x):
-    return 0 if x != 0 else 1
-
-def real(x):
-    return float(x)
-
-def int_(x):
-    return int(x)
 
 def int_to_float(i):
     return float(i)
@@ -44,7 +28,7 @@ def FixedAndFloat_test1():
    from_real = fix16(real_value)
    from_bool = fix16(bool_value)
    to_int = int(fixed_value)
-   to_real = real(fixed_value)
+   to_real = float(fixed_value)
    to_bool = bool(fixed_value)
    from_int = 0.0
    from_real = 0.0
@@ -63,9 +47,9 @@ def FixedAndFloat_take_fix_return_fixed_raw_c1(index):
    return FixedAndFloat_take_fix_return_fixed_c1[index]
 
 def FixedAndFloat_take_fix_return_fixed(x):
-   value = clip((x * 32.0), 0.0, 32.0)
+   value = ((0.0) if ((x * 32.0)) < (0.0) else ((32.0) if ((x * 32.0)) > (32.0) else ((x * 32.0))))
    index = int(value)
-   decimal = (value - floor(value))
+   decimal = (value - math.floor(value))
    return (FixedAndFloat_take_fix_return_fixed_c0[index] + (FixedAndFloat_take_fix_return_fixed_c1[index] * decimal))
 
 
@@ -82,7 +66,7 @@ def FixedAndFloat_take_fix_return_real_raw_c2(index):
    return FixedAndFloat_take_fix_return_real_c2[index]
 
 def FixedAndFloat_take_fix_return_real(x):
-   index = clip(fix_to_int((x * 31.0)), 0, 31)
+   index = ((0) if (fix_to_int((x * 31.0))) < (0) else ((31) if (fix_to_int((x * 31.0))) > (31) else (fix_to_int((x * 31.0)))))
    return (FixedAndFloat_take_fix_return_real_c0[index] + (fix_to_float(x) * (FixedAndFloat_take_fix_return_real_c1[index] + (FixedAndFloat_take_fix_return_real_c2[index] * fix_to_float(x)))))
 
 
@@ -99,7 +83,7 @@ def FixedAndFloat_take_real_return_fixed_raw_c2(index):
    return FixedAndFloat_take_real_return_fixed_c2[index]
 
 def FixedAndFloat_take_real_return_fixed(x):
-   index = clip(float_to_int((x * 31.0)), 0, 31)
+   index = ((0) if (float_to_int((x * 31.0))) < (0) else ((31) if (float_to_int((x * 31.0))) > (31) else (float_to_int((x * 31.0)))))
    return (FixedAndFloat_take_real_return_fixed_c0[index] + (float_to_fix(x) * (FixedAndFloat_take_real_return_fixed_c1[index] + (FixedAndFloat_take_real_return_fixed_c2[index] * float_to_fix(x)))))
 
 

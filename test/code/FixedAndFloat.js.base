@@ -1,21 +1,7 @@
 
+// Runtime functions (simple builtins like eps, pi, clip, real, int_, sin, cos, etc. are inlined)
 this.random = function()         { return Math.random(); };
 this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };
-this.eps  = function()           { return 1e-18 };
-this.pi   = function()           { return 3.1415926535897932384; }
-this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
-this.not  = function(x)          { return x==0?1:0; };
-this.real = function(x)          { return x; };
-this.int_  = function(x)         { return x|0; };
-this.sin  = function(x)          { return Math.sin(x); };
-this.cos  = function(x)          { return Math.cos(x); };
-this.abs  = function(x)          { return Math.abs(x); };
-this.exp  = function(x)          { return Math.exp(x); };
-this.floor = function(x)          { return Math.floor(x); };
-this.tan  = function(x)          { return Math.tan(x); };
-this.tanh = function(x)          { return Math.tanh(x); };
-this.pow  = function(a,b)         { return Math.pow(a,b); };
-this.sqrt = function(x)          { return x; };
 this.int_to_float = function(i)  { return i; };
 this.float_to_int = function(i)  { return Math.floor(i); };
 this.initializeArray = function(v, size){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
@@ -28,8 +14,8 @@ this.FixedAndFloat_test1 = function () {
    var from_int = this.fix16(int_value);
    var from_real = this.fix16(real_value);
    var from_bool = this.fix16(bool_value);
-   var to_int = this.int_(fixed_value);
-   var to_real = this.real(fixed_value);
+   var to_int = ((fixed_value)|0);
+   var to_real = (fixed_value);
    var to_bool = this.bool(fixed_value);
    from_int = 0.0;
    from_real = 0.0;
@@ -50,9 +36,9 @@ this.FixedAndFloat_take_fix_return_fixed_raw_c1 = function (index) {
 };
 
 this.FixedAndFloat_take_fix_return_fixed = function (x) {
-   var value = this.clip((x * 32.0), 0.0, 32.0);
-   var index = this.int_(value);
-   var decimal = (value - this.floor(value));
+   var value = (((x * 32.0)) < (0.0) ? (0.0) : (((x * 32.0)) > (32.0) ? (32.0) : ((x * 32.0))));
+   var index = ((value)|0);
+   var decimal = (value - Math.floor(value));
    return (FixedAndFloat_take_fix_return_fixed_c0[index] + (FixedAndFloat_take_fix_return_fixed_c1[index] * decimal));
 };
 
@@ -72,7 +58,7 @@ this.FixedAndFloat_take_fix_return_real_raw_c2 = function (index) {
 };
 
 this.FixedAndFloat_take_fix_return_real = function (x) {
-   var index = this.clip(this.fix_to_int((x * 31.0)), (0|0), (31|0));
+   var index = ((this.fix_to_int((x * 31.0))) < ((0|0)) ? ((0|0)) : ((this.fix_to_int((x * 31.0))) > ((31|0)) ? ((31|0)) : (this.fix_to_int((x * 31.0)))));
    return (FixedAndFloat_take_fix_return_real_c0[index] + (this.fix_to_float(x) * (FixedAndFloat_take_fix_return_real_c1[index] + (FixedAndFloat_take_fix_return_real_c2[index] * this.fix_to_float(x)))));
 };
 
@@ -92,7 +78,7 @@ this.FixedAndFloat_take_real_return_fixed_raw_c2 = function (index) {
 };
 
 this.FixedAndFloat_take_real_return_fixed = function (x) {
-   var index = this.clip(this.float_to_int((x * 31.0)), (0|0), (31|0));
+   var index = ((this.float_to_int((x * 31.0))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((x * 31.0))) > ((31|0)) ? ((31|0)) : (this.float_to_int((x * 31.0)))));
    return (FixedAndFloat_take_real_return_fixed_c0[index] + (this.float_to_fix(x) * (FixedAndFloat_take_real_return_fixed_c1[index] + (FixedAndFloat_take_real_return_fixed_c2[index] * this.float_to_fix(x)))));
 };
 

@@ -1,29 +1,13 @@
 import math
 import random as random_module
 
-def eps():
-    return 1e-18
-
-def pi():
-    return 3.1415926535897932384
+# Runtime functions (simple builtins like eps, pi, clip, sin, cos, etc. are inlined)
 
 def random():
     return random_module.random()
 
 def irandom():
     return int(random_module.random() * 4294967296)
-
-def clip(x, low, high):
-    return low if x < low else (high if x > high else x)
-
-def not_(x):
-    return 0 if x != 0 else 1
-
-def real(x):
-    return float(x)
-
-def int_(x):
-    return int(x)
 
 def int_to_float(i):
     return float(i)
@@ -72,9 +56,9 @@ def Noise_pinker(_ctx, x):
 
 def Noise_process(_ctx, color):
    _ctx["x1"] = ((7919 + (17389 * _ctx["x1"])) % 32768)
-   y1 = (3e-05 * real(_ctx["x1"]))
+   y1 = (3e-05 * float(_ctx["x1"]))
    _ctx["x2"] = ((12553 + (27449 * _ctx["x2"])) % 32768)
-   y2 = (3e-05 * real(_ctx["x2"]))
+   y2 = (3e-05 * float(_ctx["x2"]))
    out = 0.0
    if (color > 0.5):
       out = Noise_pinker(_ctx["inst_16d3d"], (y1 + (-y2)))

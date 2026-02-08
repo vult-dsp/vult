@@ -26,23 +26,9 @@ open Core.Prog
 
 let runtime =
   {%pla|
+// Runtime functions (simple builtins like eps, pi, clip, real, int_, sin, cos, etc. are inlined)
 this.random = function()         { return Math.random(); };
 this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };
-this.eps  = function()           { return 1e-18 };
-this.pi   = function()           { return 3.1415926535897932384; }
-this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
-this.not  = function(x)          { return x==0?1:0; };
-this.real = function(x)          { return x; };
-this.int_  = function(x)         { return x|0; };
-this.sin  = function(x)          { return Math.sin(x); };
-this.cos  = function(x)          { return Math.cos(x); };
-this.abs  = function(x)          { return Math.abs(x); };
-this.exp  = function(x)          { return Math.exp(x); };
-this.floor = function(x)          { return Math.floor(x); };
-this.tan  = function(x)          { return Math.tan(x); };
-this.tanh = function(x)          { return Math.tanh(x); };
-this.pow  = function(a,b)         { return Math.pow(a,b); };
-this.sqrt = function(x)          { return x; };
 this.int_to_float = function(i)  { return i; };
 this.float_to_int = function(i)  { return Math.floor(i); };
 this.initializeArray = function(v, size){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
@@ -142,6 +128,53 @@ let rec print_exp e =
     let i = print_exp i in
     let v = print_exp v in
     {%pla|(<#l#>[<#i#>] = <#v#>)|}
+  (* Inline simple builtins to avoid function call overhead *)
+  | ECall { path = "eps"; args = [] } -> {%pla|1e-18|}
+  | ECall { path = "pi"; args = [] } -> {%pla|3.1415926535897932384|}
+  | ECall { path = "real"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|(<#x#>)|}
+  | ECall { path = "int_"; args = [ x ] } ->
+    (* Bitwise OR with 0 truncates to 32-bit integer *)
+    let x = print_exp x in
+    {%pla|((<#x#>)|0)|}
+  | ECall { path = "not_"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|((<#x#>) == 0 ? 1 : 0)|}
+  | ECall { path = "clip"; args = [ x; low; high ] } ->
+    let x = print_exp x in
+    let low = print_exp low in
+    let high = print_exp high in
+    {%pla|((<#x#>) < (<#low#>) ? (<#low#>) : ((<#x#>) > (<#high#>) ? (<#high#>) : (<#x#>)))|}
+  (* Inline Math functions *)
+  | ECall { path = "sin"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|Math.sin(<#x#>)|}
+  | ECall { path = "cos"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|Math.cos(<#x#>)|}
+  | ECall { path = "abs"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|Math.abs(<#x#>)|}
+  | ECall { path = "exp"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|Math.exp(<#x#>)|}
+  | ECall { path = "floor"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|Math.floor(<#x#>)|}
+  | ECall { path = "tan"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|Math.tan(<#x#>)|}
+  | ECall { path = "tanh"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|Math.tanh(<#x#>)|}
+  | ECall { path = "sqrt"; args = [ x ] } ->
+    let x = print_exp x in
+    {%pla|Math.sqrt(<#x#>)|}
+  | ECall { path = "pow"; args = [ a; b ] } ->
+    let a = print_exp a in
+    let b = print_exp b in
+    {%pla|Math.pow(<#a#>, <#b#>)|}
   | ECall { path; args } ->
     let args = Pla.map_sep Pla.commaspace print_exp args in
     {%pla|this.<#path#s>(<#args#>)|}
