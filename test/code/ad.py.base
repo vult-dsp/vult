@@ -18,53 +18,96 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
+class Util_edge_type:
+    __slots__ = ['pre']
+    def __init__(self, pre=False):
+        self.pre = pre
+
+class Util_change_type:
+    __slots__ = ['pre_x']
+    def __init__(self, pre_x=0.0):
+        self.pre_x = pre_x
+
+class Util_dcblock_type:
+    __slots__ = ['x1', 'y1']
+    def __init__(self, x1=0.0, y1=0.0):
+        self.x1 = x1
+        self.y1 = y1
+
+class Util_smooth_type:
+    __slots__ = ['x']
+    def __init__(self, x=0.0):
+        self.x = x
+
+class Util_average2_type:
+    __slots__ = ['x0']
+    def __init__(self, x0=0.0):
+        self.x0 = x0
+
+class Ad_do_type:
+    __slots__ = ['inst_10452', 'out', 'rate', 'scale', 'state', 'target']
+    def __init__(self, inst_10452=Util_edge_type(), out=0.0, rate=0.0, scale=0.0, state=0, target=0.0):
+        self.inst_10452 = inst_10452
+        self.out = out
+        self.rate = rate
+        self.scale = scale
+        self.state = state
+        self.target = target
+
+class Ad_process_type:
+    __slots__ = ['inst_15232', 'knob1', 'knob2']
+    def __init__(self, inst_15232=Ad_do_type(), knob1=0.0, knob2=0.0):
+        self.inst_15232 = inst_15232
+        self.knob1 = knob1
+        self.knob2 = knob2
+
 def Util_edge_type_alloc():
-   _ctx = {}
-   _ctx["pre"] = False
+   _ctx = Util_edge_type()
+   _ctx.pre = False
    return _ctx
 
 
 def Util_change_type_alloc():
-   _ctx = {}
-   _ctx["pre_x"] = 0.0
+   _ctx = Util_change_type()
+   _ctx.pre_x = 0.0
    return _ctx
 
 
 def Util_dcblock_type_alloc():
-   _ctx = {}
-   _ctx["x1"] = 0.0
-   _ctx["y1"] = 0.0
+   _ctx = Util_dcblock_type()
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
    return _ctx
 
 
 def Util_smooth_type_alloc():
-   _ctx = {}
-   _ctx["x"] = 0.0
+   _ctx = Util_smooth_type()
+   _ctx.x = 0.0
    return _ctx
 
 
 def Util_average2_type_alloc():
-   _ctx = {}
-   _ctx["x0"] = 0.0
+   _ctx = Util_average2_type()
+   _ctx.x0 = 0.0
    return _ctx
 
 
 def Ad_do_type_alloc():
-   _ctx = {}
-   _ctx["inst_10452"] = Util_edge_type_alloc()
-   _ctx["out"] = 0.0
-   _ctx["rate"] = 0.0
-   _ctx["scale"] = 0.0
-   _ctx["state"] = 0
-   _ctx["target"] = 0.0
+   _ctx = Ad_do_type()
+   _ctx.inst_10452 = Util_edge_type_alloc()
+   _ctx.out = 0.0
+   _ctx.rate = 0.0
+   _ctx.scale = 0.0
+   _ctx.state = 0
+   _ctx.target = 0.0
    return _ctx
 
 
 def Ad_process_type_alloc():
-   _ctx = {}
-   _ctx["inst_15232"] = Ad_do_type_alloc()
-   _ctx["knob1"] = 0.0
-   _ctx["knob2"] = 0.0
+   _ctx = Ad_process_type()
+   _ctx.inst_15232 = Ad_do_type_alloc()
+   _ctx.knob1 = 0.0
+   _ctx.knob2 = 0.0
    return _ctx
 
 
@@ -81,14 +124,14 @@ def Ad_default_type_alloc(_ctx):
    return Ad_process_type_alloc()
 
 def Util_edge(_ctx, x):
-   ret = (x and (_ctx["pre"] == False))
-   _ctx["pre"] = x
+   ret = (x and (_ctx.pre == False))
+   _ctx.pre = x
    return ret
 
 
 def Util_change(_ctx, x):
-   v = (_ctx["pre_x"] != x)
-   _ctx["pre_x"] = x
+   v = (_ctx.pre_x != x)
+   _ctx.pre_x = x
    return v
 
 
@@ -96,20 +139,20 @@ def Util_map(x, x0, x1, y0, y1):
    return (y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))))
 
 def Util_dcblock(_ctx, x0):
-   y0 = (x0 + ((-_ctx["x1"]) + (0.995 * _ctx["y1"])))
-   _ctx["x1"] = x0
-   _ctx["y1"] = y0
+   y0 = (x0 + ((-_ctx.x1) + (0.995 * _ctx.y1)))
+   _ctx.x1 = x0
+   _ctx.y1 = y0
    return y0
 
 
 def Util_smooth(_ctx, input):
-   _ctx["x"] = ((0.005 * (input + (-_ctx["x"]))) + _ctx["x"])
-   return _ctx["x"]
+   _ctx.x = ((0.005 * (input + (-_ctx.x))) + _ctx.x)
+   return _ctx.x
 
 
 def Util_average2(_ctx, x1):
-   result = (0.5 * (x1 + _ctx["x0"]))
-   _ctx["x0"] = x1
+   result = (0.5 * (x1 + _ctx.x0))
+   _ctx.x0 = x1
    return result
 
 
@@ -234,26 +277,26 @@ def Ad_do(_ctx, gate, a, d):
    a_rate = (1.0 / (0.01 + (100.0 * a)))
    d_rate = (1.0 / (0.01 + (100.0 * d)))
    bgate = (gate > 0.0)
-   _ctx["out"] = ((0.004 * (((-_ctx["out"]) + _ctx["target"]) * _ctx["rate"])) + _ctx["out"])
-   if (_ctx["state"] == 0):
-      if Util_edge(_ctx["inst_10452"], bgate):
-         _ctx["state"] = 1
-         _ctx["scale"] = (0.2 * gate)
+   _ctx.out = ((0.004 * (((-_ctx.out) + _ctx.target) * _ctx.rate)) + _ctx.out)
+   if (_ctx.state == 0):
+      if Util_edge(_ctx.inst_10452, bgate):
+         _ctx.state = 1
+         _ctx.scale = (0.2 * gate)
 
-      _ctx["rate"] = d_rate
-      _ctx["target"] = 0.0
+      _ctx.rate = d_rate
+      _ctx.target = 0.0
 
-   if (_ctx["state"] == 1):
-      if ((bgate == False) or (_ctx["out"] > 1024.0)):
-         _ctx["state"] = 0
-      _ctx["rate"] = a_rate
-      _ctx["target"] = 1228.8
+   if (_ctx.state == 1):
+      if ((bgate == False) or (_ctx.out > 1024.0)):
+         _ctx.state = 0
+      _ctx.rate = a_rate
+      _ctx.target = 1228.8
 
-   return (((0.0) if ((0.000976 * _ctx["out"])) < (0.0) else ((1.0) if ((0.000976 * _ctx["out"])) > (1.0) else ((0.000976 * _ctx["out"])))) * _ctx["scale"])
+   return (((0.0) if ((0.000976 * _ctx.out)) < (0.0) else ((1.0) if ((0.000976 * _ctx.out)) > (1.0) else ((0.000976 * _ctx.out)))) * _ctx.scale)
 
 
 def Ad_process(_ctx, gate):
-   return Ad_do(_ctx["inst_15232"], gate, _ctx["knob1"], _ctx["knob2"])
+   return Ad_do(_ctx.inst_15232, gate, _ctx.knob1, _ctx.knob2)
 
 def Ad_noteOn(_ctx, note, velocity, channel):
    pass
@@ -263,13 +306,13 @@ def Ad_noteOff(_ctx, note, channel):
 
 def Ad_controlChange(_ctx, control, value, channel):
    if (control == 1):
-      _ctx["knob1"] = (0.007874 * float(value))
+      _ctx.knob1 = (0.007874 * float(value))
    if (control == 2):
-      _ctx["knob2"] = (0.007874 * float(value))
+      _ctx.knob2 = (0.007874 * float(value))
 
 
 def Ad_default(_ctx):
-   _ctx["knob1"] = 0.0
-   _ctx["knob2"] = 0.5
+   _ctx.knob1 = 0.0
+   _ctx.knob2 = 0.5
 
 

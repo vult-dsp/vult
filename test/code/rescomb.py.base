@@ -18,63 +18,109 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
+class Util_edge_type:
+    __slots__ = ['pre']
+    def __init__(self, pre=False):
+        self.pre = pre
+
+class Util_change_type:
+    __slots__ = ['pre_x']
+    def __init__(self, pre_x=0.0):
+        self.pre_x = pre_x
+
+class Util_dcblock_type:
+    __slots__ = ['x1', 'y1']
+    def __init__(self, x1=0.0, y1=0.0):
+        self.x1 = x1
+        self.y1 = y1
+
+class Util_smooth_type:
+    __slots__ = ['x']
+    def __init__(self, x=0.0):
+        self.x = x
+
+class Util_average2_type:
+    __slots__ = ['x0']
+    def __init__(self, x0=0.0):
+        self.x0 = x0
+
+class Rescomb_delay_type:
+    __slots__ = ['buffer', 'write_pos']
+    def __init__(self, buffer=[0.0] * 675, write_pos=0):
+        self.buffer = buffer
+        self.write_pos = write_pos
+
+class Rescomb_do_type:
+    __slots__ = ['inst_1b000', 'inst_26400', 'inst_3a900', 'output', 'stone']
+    def __init__(self, inst_1b000=Util_change_type(), inst_26400=Util_dcblock_type(), inst_3a900=Rescomb_delay_type(), output=0.0, stone=0.0):
+        self.inst_1b000 = inst_1b000
+        self.inst_26400 = inst_26400
+        self.inst_3a900 = inst_3a900
+        self.output = output
+        self.stone = stone
+
+class Rescomb_process_type:
+    __slots__ = ['inst_100b6']
+    def __init__(self, inst_100b6=Rescomb_do_type()):
+        self.inst_100b6 = inst_100b6
+
 def Util_edge_type_alloc():
-   _ctx = {}
-   _ctx["pre"] = False
+   _ctx = Util_edge_type()
+   _ctx.pre = False
    return _ctx
 
 
 def Util_change_type_alloc():
-   _ctx = {}
-   _ctx["pre_x"] = 0.0
+   _ctx = Util_change_type()
+   _ctx.pre_x = 0.0
    return _ctx
 
 
 def Util_dcblock_type_alloc():
-   _ctx = {}
-   _ctx["x1"] = 0.0
-   _ctx["y1"] = 0.0
+   _ctx = Util_dcblock_type()
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
    return _ctx
 
 
 def Util_smooth_type_alloc():
-   _ctx = {}
-   _ctx["x"] = 0.0
+   _ctx = Util_smooth_type()
+   _ctx.x = 0.0
    return _ctx
 
 
 def Util_average2_type_alloc():
-   _ctx = {}
-   _ctx["x0"] = 0.0
+   _ctx = Util_average2_type()
+   _ctx.x0 = 0.0
    return _ctx
 
 
 def Rescomb_delay_type_alloc():
    i_0 = 0
    temp = initializeArray(0.0, 675)
-   _ctx = {}
+   _ctx = Rescomb_delay_type()
    while (i_0 < 675):
       temp[i_0] = 0.0
       i_0 = (1 + i_0)
 
-   _ctx["buffer"] = temp
-   _ctx["write_pos"] = 0
+   _ctx.buffer = temp
+   _ctx.write_pos = 0
    return _ctx
 
 
 def Rescomb_do_type_alloc():
-   _ctx = {}
-   _ctx["inst_1b000"] = Util_change_type_alloc()
-   _ctx["inst_26400"] = Util_dcblock_type_alloc()
-   _ctx["inst_3a900"] = Rescomb_delay_type_alloc()
-   _ctx["output"] = 0.0
-   _ctx["stone"] = 0.0
+   _ctx = Rescomb_do_type()
+   _ctx.inst_1b000 = Util_change_type_alloc()
+   _ctx.inst_26400 = Util_dcblock_type_alloc()
+   _ctx.inst_3a900 = Rescomb_delay_type_alloc()
+   _ctx.output = 0.0
+   _ctx.stone = 0.0
    return _ctx
 
 
 def Rescomb_process_type_alloc():
-   _ctx = {}
-   _ctx["inst_100b6"] = Rescomb_do_type_alloc()
+   _ctx = Rescomb_process_type()
+   _ctx.inst_100b6 = Rescomb_do_type_alloc()
    return _ctx
 
 
@@ -123,14 +169,14 @@ def Saturate_soft_default():
    pass
 
 def Util_edge(_ctx, x):
-   ret = (x and (_ctx["pre"] == False))
-   _ctx["pre"] = x
+   ret = (x and (_ctx.pre == False))
+   _ctx.pre = x
    return ret
 
 
 def Util_change(_ctx, x):
-   v = (_ctx["pre_x"] != x)
-   _ctx["pre_x"] = x
+   v = (_ctx.pre_x != x)
+   _ctx.pre_x = x
    return v
 
 
@@ -138,20 +184,20 @@ def Util_map(x, x0, x1, y0, y1):
    return (y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))))
 
 def Util_dcblock(_ctx, x0):
-   y0 = (x0 + ((-_ctx["x1"]) + (0.995 * _ctx["y1"])))
-   _ctx["x1"] = x0
-   _ctx["y1"] = y0
+   y0 = (x0 + ((-_ctx.x1) + (0.995 * _ctx.y1)))
+   _ctx.x1 = x0
+   _ctx.y1 = y0
    return y0
 
 
 def Util_smooth(_ctx, input):
-   _ctx["x"] = ((0.005 * (input + (-_ctx["x"]))) + _ctx["x"])
-   return _ctx["x"]
+   _ctx.x = ((0.005 * (input + (-_ctx.x))) + _ctx.x)
+   return _ctx.x
 
 
 def Util_average2(_ctx, x1):
-   result = (0.5 * (x1 + _ctx["x0"]))
-   _ctx["x0"] = x1
+   result = (0.5 * (x1 + _ctx.x0))
+   _ctx.x0 = x1
    return result
 
 
@@ -273,17 +319,17 @@ def Util_cvTokHz(cv):
 
 
 def Rescomb_delay(_ctx, x, cv):
-   _ctx["write_pos"] = ((1 + _ctx["write_pos"]) % 675)
-   _ctx["buffer"][_ctx["write_pos"]] = x
+   _ctx.write_pos = ((1 + _ctx.write_pos) % 675)
+   _ctx.buffer[_ctx.write_pos] = x
    r_size = 675.0
-   r_index = (((-Util_cvToperiod(cv)) + float(_ctx["write_pos"])) % r_size)
+   r_index = (((-Util_cvToperiod(cv)) + float(_ctx.write_pos)) % r_size)
    if (r_index < 0.0):
       r_index = (r_index + r_size)
    t1 = (int(math.floor(r_index)) % 675)
    t2 = ((1 + t1) % 675)
    decimal = (r_index + (-float(t1)))
-   x1 = _ctx["buffer"][t1]
-   x2 = _ctx["buffer"][t2]
+   x1 = _ctx.buffer[t1]
+   x2 = _ctx.buffer[t2]
    ret = (x1 + (decimal * (x2 + (-x1))))
    return ret
 
@@ -306,16 +352,16 @@ def Rescomb_toneCurve(tone):
 
 
 def Rescomb_do(_ctx, in_, cv, tone, res):
-   if Util_change(_ctx["inst_1b000"], tone):
-      _ctx["stone"] = Rescomb_toneCurve(tone)
-   feedback = Util_dcblock(_ctx["inst_26400"], (res * _ctx["output"]))
+   if Util_change(_ctx.inst_1b000, tone):
+      _ctx.stone = Rescomb_toneCurve(tone)
+   feedback = Util_dcblock(_ctx.inst_26400, (res * _ctx.output))
    saturated_input = Saturate_soft_process((feedback + in_))
-   _ctx["output"] = (in_ + (Rescomb_delay(_ctx["inst_3a900"], saturated_input, cv) * _ctx["stone"]))
-   return Saturate_soft_process(_ctx["output"])
+   _ctx.output = (in_ + (Rescomb_delay(_ctx.inst_3a900, saturated_input, cv) * _ctx.stone))
+   return Saturate_soft_process(_ctx.output)
 
 
 def Rescomb_process(_ctx, in_, cv, tone, res):
-   return Rescomb_do(_ctx["inst_100b6"], in_, cv, tone, res)
+   return Rescomb_do(_ctx.inst_100b6, in_, cv, tone, res)
 
 def Rescomb_noteOn(_ctx, note, velocity, channel):
    pass

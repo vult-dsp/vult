@@ -18,34 +18,67 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
+class Util_edge_type:
+    __slots__ = ['pre']
+    def __init__(self, pre=False):
+        self.pre = pre
+
+class Util_change_type:
+    __slots__ = ['pre_x']
+    def __init__(self, pre_x=0.0):
+        self.pre_x = pre_x
+
+class Util_dcblock_type:
+    __slots__ = ['x1', 'y1']
+    def __init__(self, x1=0.0, y1=0.0):
+        self.x1 = x1
+        self.y1 = y1
+
+class Util_smooth_type:
+    __slots__ = ['x']
+    def __init__(self, x=0.0):
+        self.x = x
+
+class Util_average2_type:
+    __slots__ = ['x0']
+    def __init__(self, x0=0.0):
+        self.x0 = x0
+
+class Saw_ptr2_process_type:
+    __slots__ = ['inst_1b068', 'phase', 'rate']
+    def __init__(self, inst_1b068=Util_change_type(), phase=0.0, rate=0.0):
+        self.inst_1b068 = inst_1b068
+        self.phase = phase
+        self.rate = rate
+
 def Util_edge_type_alloc():
-   _ctx = {}
-   _ctx["pre"] = False
+   _ctx = Util_edge_type()
+   _ctx.pre = False
    return _ctx
 
 
 def Util_change_type_alloc():
-   _ctx = {}
-   _ctx["pre_x"] = 0.0
+   _ctx = Util_change_type()
+   _ctx.pre_x = 0.0
    return _ctx
 
 
 def Util_dcblock_type_alloc():
-   _ctx = {}
-   _ctx["x1"] = 0.0
-   _ctx["y1"] = 0.0
+   _ctx = Util_dcblock_type()
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
    return _ctx
 
 
 def Util_smooth_type_alloc():
-   _ctx = {}
-   _ctx["x"] = 0.0
+   _ctx = Util_smooth_type()
+   _ctx.x = 0.0
    return _ctx
 
 
 def Util_average2_type_alloc():
-   _ctx = {}
-   _ctx["x0"] = 0.0
+   _ctx = Util_average2_type()
+   _ctx.x0 = 0.0
    return _ctx
 
 
@@ -87,13 +120,13 @@ def Util_cvToRate(cv):
 
 
 def Saw_ptr2_default(_ctx):
-   _ctx["rate"] = Util_cvToRate(0.0)
+   _ctx.rate = Util_cvToRate(0.0)
 
 def Saw_ptr2_process_type_alloc():
-   _ctx = {}
-   _ctx["inst_1b068"] = Util_change_type_alloc()
-   _ctx["phase"] = 0.0
-   _ctx["rate"] = 0.0
+   _ctx = Saw_ptr2_process_type()
+   _ctx.inst_1b068 = Util_change_type_alloc()
+   _ctx.phase = 0.0
+   _ctx.rate = 0.0
    _ = Saw_ptr2_default(_ctx)
    return _ctx
 
@@ -111,14 +144,14 @@ def Saw_ptr2_default_type_alloc(_ctx):
    return Saw_ptr2_process_type_alloc()
 
 def Util_edge(_ctx, x):
-   ret = (x and (_ctx["pre"] == False))
-   _ctx["pre"] = x
+   ret = (x and (_ctx.pre == False))
+   _ctx.pre = x
    return ret
 
 
 def Util_change(_ctx, x):
-   v = (_ctx["pre_x"] != x)
-   _ctx["pre_x"] = x
+   v = (_ctx.pre_x != x)
+   _ctx.pre_x = x
    return v
 
 
@@ -126,20 +159,20 @@ def Util_map(x, x0, x1, y0, y1):
    return (y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))))
 
 def Util_dcblock(_ctx, x0):
-   y0 = (x0 + ((-_ctx["x1"]) + (0.995 * _ctx["y1"])))
-   _ctx["x1"] = x0
-   _ctx["y1"] = y0
+   y0 = (x0 + ((-_ctx.x1) + (0.995 * _ctx.y1)))
+   _ctx.x1 = x0
+   _ctx.y1 = y0
    return y0
 
 
 def Util_smooth(_ctx, input):
-   _ctx["x"] = ((0.005 * (input + (-_ctx["x"]))) + _ctx["x"])
-   return _ctx["x"]
+   _ctx.x = ((0.005 * (input + (-_ctx.x))) + _ctx.x)
+   return _ctx.x
 
 
 def Util_average2(_ctx, x1):
-   result = (0.5 * (x1 + _ctx["x0"]))
-   _ctx["x0"] = x1
+   result = (0.5 * (x1 + _ctx.x0))
+   _ctx.x0 = x1
    return result
 
 
@@ -224,27 +257,27 @@ def Util_cvTokHz(cv):
 
 
 def Saw_ptr2_process(_ctx, cv):
-   if Util_change(_ctx["inst_1b068"], cv):
-      _ctx["rate"] = Util_cvToRate(cv)
-   s1 = _ctx["rate"]
-   s2 = (s1 + _ctx["rate"])
-   _ctx["phase"] = (_ctx["phase"] + _ctx["rate"])
+   if Util_change(_ctx.inst_1b068, cv):
+      _ctx.rate = Util_cvToRate(cv)
+   s1 = _ctx.rate
+   s2 = (s1 + _ctx.rate)
+   _ctx.phase = (_ctx.phase + _ctx.rate)
    out = 0.0
-   if (_ctx["phase"] > 1.0):
-      _ctx["phase"] = (-1.0 + _ctx["phase"])
+   if (_ctx.phase > 1.0):
+      _ctx.phase = (-1.0 + _ctx.phase)
    else:
-      _ctx["phase"] = _ctx["phase"]
-   if (_ctx["phase"] < s1):
-      d = (_ctx["phase"] / _ctx["rate"])
+      _ctx.phase = _ctx.phase
+   if (_ctx.phase < s1):
+      d = (_ctx.phase / _ctx.rate)
       out = (1.0 + (d * (s2 + (-d))))
 
    else:
-      if (_ctx["phase"] < s2):
-         d = (_ctx["phase"] / _ctx["rate"])
+      if (_ctx.phase < s2):
+         d = (_ctx.phase / _ctx.rate)
          out = (3.0 + (d * (-4.0 + (d + s2))))
 
       else:
-         out = (-1.0 + (2.0 * _ctx["phase"]))
+         out = (-1.0 + (2.0 * _ctx.phase))
    return out
 
 

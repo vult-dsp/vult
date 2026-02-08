@@ -18,41 +18,53 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
+class DataTypes_point:
+    __slots__ = ['x', 'y']
+    def __init__(self, x=0.0, y=0.0):
+        self.x = x
+        self.y = y
+
+class DataTypes_test2_type:
+    __slots__ = ['p2', 'result']
+    def __init__(self, p2=DataTypes_point(), result=DataTypes_point()):
+        self.p2 = p2
+        self.result = result
+
 def DataTypes_point_alloc():
-   _ctx = {}
-   _ctx["x"] = 0.0
-   _ctx["y"] = 0.0
+   _ctx = DataTypes_point()
+   _ctx.x = 0.0
+   _ctx.y = 0.0
    return _ctx
 
 
 def DataTypes_test2_type_alloc():
-   _ctx = {}
-   _ctx["p2"] = DataTypes_point_alloc()
-   _ctx["result"] = DataTypes_point_alloc()
+   _ctx = DataTypes_test2_type()
+   _ctx.p2 = DataTypes_point_alloc()
+   _ctx.result = DataTypes_point_alloc()
    return _ctx
 
 
 def DataTypes_addPoint1(p1, p2):
-   p3 = DataTypes_point_alloc()
-   p3["x"] = (p1["x"] + p2["x"])
-   p3["y"] = (p1["y"] + p2["y"])
+   p3 = DataTypes_point()
+   p3.x = (p1.x + p2.x)
+   p3.y = (p1.y + p2.y)
    return p3
 
 
 def DataTypes_addPoint2(p1, p2, result):
-   result["x"] = (p1["x"] + p2["x"])
-   result["y"] = (p1["y"] + p2["y"])
+   result.x = (p1.x + p2.x)
+   result.y = (p1.y + p2.y)
 
 
 def DataTypes_test1():
-   p1 = DataTypes_point_alloc()
-   p2 = DataTypes_point_alloc()
+   p1 = DataTypes_point()
+   p2 = DataTypes_point()
    result = DataTypes_addPoint1(p1, p2)
    _ = DataTypes_addPoint2(p1, p2, result)
 
 
 def DataTypes_test2(_ctx):
-   p1 = DataTypes_point_alloc()
-   _ctx["result"] = DataTypes_addPoint1(p1, _ctx["p2"])
+   p1 = DataTypes_point()
+   _ctx.result = DataTypes_addPoint1(p1, _ctx.p2)
 
 

@@ -18,48 +18,95 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
+class Util_edge_type:
+    __slots__ = ['pre']
+    def __init__(self, pre=False):
+        self.pre = pre
+
+class Util_change_type:
+    __slots__ = ['pre_x']
+    def __init__(self, pre_x=0.0):
+        self.pre_x = pre_x
+
+class Util_dcblock_type:
+    __slots__ = ['x1', 'y1']
+    def __init__(self, x1=0.0, y1=0.0):
+        self.x1 = x1
+        self.y1 = y1
+
+class Util_smooth_type:
+    __slots__ = ['x']
+    def __init__(self, x=0.0):
+        self.x = x
+
+class Util_average2_type:
+    __slots__ = ['x0']
+    def __init__(self, x0=0.0):
+        self.x0 = x0
+
+class Monocv_mono_noteOn_type:
+    __slots__ = ['count', 'notes', 'pre']
+    def __init__(self, count=0, notes=[0.0] * 4, pre=0):
+        self.count = count
+        self.notes = notes
+        self.pre = pre
+
+class Monocv_process_type:
+    __slots__ = ['Monocv_process_ret_0', 'Monocv_process_ret_1', 'Monocv_process_ret_2', 'active_note', 'channel_in', 'cv', 'gate', 'inst_1b0d6', 'notes', 'vel']
+    def __init__(self, Monocv_process_ret_0=0.0, Monocv_process_ret_1=0.0, Monocv_process_ret_2=0.0, active_note=0, channel_in=0, cv=0.0, gate=0.0, inst_1b0d6=Util_change_type(), notes=Monocv_mono_noteOn_type(), vel=0.0):
+        self.Monocv_process_ret_0 = Monocv_process_ret_0
+        self.Monocv_process_ret_1 = Monocv_process_ret_1
+        self.Monocv_process_ret_2 = Monocv_process_ret_2
+        self.active_note = active_note
+        self.channel_in = channel_in
+        self.cv = cv
+        self.gate = gate
+        self.inst_1b0d6 = inst_1b0d6
+        self.notes = notes
+        self.vel = vel
+
 def Util_edge_type_alloc():
-   _ctx = {}
-   _ctx["pre"] = False
+   _ctx = Util_edge_type()
+   _ctx.pre = False
    return _ctx
 
 
 def Util_change_type_alloc():
-   _ctx = {}
-   _ctx["pre_x"] = 0.0
+   _ctx = Util_change_type()
+   _ctx.pre_x = 0.0
    return _ctx
 
 
 def Util_dcblock_type_alloc():
-   _ctx = {}
-   _ctx["x1"] = 0.0
-   _ctx["y1"] = 0.0
+   _ctx = Util_dcblock_type()
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
    return _ctx
 
 
 def Util_smooth_type_alloc():
-   _ctx = {}
-   _ctx["x"] = 0.0
+   _ctx = Util_smooth_type()
+   _ctx.x = 0.0
    return _ctx
 
 
 def Util_average2_type_alloc():
-   _ctx = {}
-   _ctx["x0"] = 0.0
+   _ctx = Util_average2_type()
+   _ctx.x0 = 0.0
    return _ctx
 
 
 def Monocv_mono_noteOn_type_alloc():
-   _ctx = {}
-   _ctx["count"] = 0
+   _ctx = Monocv_mono_noteOn_type()
+   _ctx.count = 0
    i_0 = 0
    temp = initializeArray(0, 4)
    while (i_0 < 4):
       temp[i_0] = 0
       i_0 = (1 + i_0)
 
-   _ctx["notes"] = temp
-   _ctx["pre"] = 0
+   _ctx.notes = temp
+   _ctx.pre = 0
    return _ctx
 
 
@@ -70,17 +117,17 @@ def Monocv_mono_isGateOn_type_alloc(_ctx):
    return Monocv_mono_noteOn_type_alloc()
 
 def Monocv_process_type_alloc():
-   _ctx = {}
-   _ctx["Monocv_process_ret_0"] = 0.0
-   _ctx["Monocv_process_ret_1"] = 0.0
-   _ctx["Monocv_process_ret_2"] = 0.0
-   _ctx["active_note"] = 0
-   _ctx["channel_in"] = 0
-   _ctx["cv"] = 0.0
-   _ctx["gate"] = 0.0
-   _ctx["inst_1b0d6"] = Util_change_type_alloc()
-   _ctx["notes"] = Monocv_mono_noteOn_type_alloc()
-   _ctx["vel"] = 0.0
+   _ctx = Monocv_process_type()
+   _ctx.Monocv_process_ret_0 = 0.0
+   _ctx.Monocv_process_ret_1 = 0.0
+   _ctx.Monocv_process_ret_2 = 0.0
+   _ctx.active_note = 0
+   _ctx.channel_in = 0
+   _ctx.cv = 0.0
+   _ctx.gate = 0.0
+   _ctx.inst_1b0d6 = Util_change_type_alloc()
+   _ctx.notes = Monocv_mono_noteOn_type_alloc()
+   _ctx.vel = 0.0
    return _ctx
 
 
@@ -97,14 +144,14 @@ def Monocv_default_type_alloc(_ctx):
    return Monocv_process_type_alloc()
 
 def Util_edge(_ctx, x):
-   ret = (x and (_ctx["pre"] == False))
-   _ctx["pre"] = x
+   ret = (x and (_ctx.pre == False))
+   _ctx.pre = x
    return ret
 
 
 def Util_change(_ctx, x):
-   v = (_ctx["pre_x"] != x)
-   _ctx["pre_x"] = x
+   v = (_ctx.pre_x != x)
+   _ctx.pre_x = x
    return v
 
 
@@ -112,20 +159,20 @@ def Util_map(x, x0, x1, y0, y1):
    return (y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))))
 
 def Util_dcblock(_ctx, x0):
-   y0 = (x0 + ((-_ctx["x1"]) + (0.995 * _ctx["y1"])))
-   _ctx["x1"] = x0
-   _ctx["y1"] = y0
+   y0 = (x0 + ((-_ctx.x1) + (0.995 * _ctx.y1)))
+   _ctx.x1 = x0
+   _ctx.y1 = y0
    return y0
 
 
 def Util_smooth(_ctx, input):
-   _ctx["x"] = ((0.005 * (input + (-_ctx["x"]))) + _ctx["x"])
-   return _ctx["x"]
+   _ctx.x = ((0.005 * (input + (-_ctx.x))) + _ctx.x)
+   return _ctx.x
 
 
 def Util_average2(_ctx, x1):
-   result = (0.5 * (x1 + _ctx["x0"]))
-   _ctx["x0"] = x1
+   result = (0.5 * (x1 + _ctx.x0))
+   _ctx.x0 = x1
    return result
 
 
@@ -247,23 +294,23 @@ def Util_cvTokHz(cv):
 
 
 def Monocv_mono_noteOn(_ctx, n):
-   if (_ctx["count"] < 4):
-      _ctx["notes"][_ctx["count"]] = n
-      _ctx["pre"] = n
-      if (_ctx["count"] < 4):
-         _ctx["count"] = (1 + _ctx["count"])
+   if (_ctx.count < 4):
+      _ctx.notes[_ctx.count] = n
+      _ctx.pre = n
+      if (_ctx.count < 4):
+         _ctx.count = (1 + _ctx.count)
 
-   return _ctx["pre"]
+   return _ctx.pre
 
 
 def Monocv_mono_noteOff(_ctx, n):
    found = False
    i = 0
    pos = 0
-   if (_ctx["count"] == 0):
-      return _ctx["pre"]
+   if (_ctx.count == 0):
+      return _ctx.pre
    while ((i < 4) and (found == False)):
-      if (_ctx["notes"][i] == n):
+      if (_ctx.notes[i] == n):
          pos = i
          found = True
 
@@ -272,47 +319,47 @@ def Monocv_mono_noteOff(_ctx, n):
    if found:
       k = (1 + pos)
       while (k < 4):
-         _ctx["notes"][(-1 + k)] = _ctx["notes"][k]
+         _ctx.notes[(-1 + k)] = _ctx.notes[k]
          k = (1 + k)
 
-      if (found and (_ctx["count"] > 0)):
-         _ctx["count"] = (-1 + _ctx["count"])
-         _ctx["pre"] = _ctx["notes"][(-1 + _ctx["count"])]
+      if (found and (_ctx.count > 0)):
+         _ctx.count = (-1 + _ctx.count)
+         _ctx.pre = _ctx.notes[(-1 + _ctx.count)]
 
 
-   return _ctx["pre"]
+   return _ctx.pre
 
 
 def Monocv_mono_isGateOn(_ctx):
-   return (_ctx["count"] > 0)
+   return (_ctx.count > 0)
 
 def Monocv_process(_ctx, c):
-   _ctx["channel_in"] = c
-   if Monocv_mono_isGateOn(_ctx["notes"]):
-      _ctx["gate"] = _ctx["vel"]
+   _ctx.channel_in = c
+   if Monocv_mono_isGateOn(_ctx.notes):
+      _ctx.gate = _ctx.vel
    else:
-      _ctx["gate"] = 0.0
-   note = float(_ctx["active_note"])
-   if Util_change(_ctx["inst_1b0d6"], note):
-      _ctx["cv"] = Util_pitchToCv(note)
-   _ctx["Monocv_process_ret_0"] = _ctx["cv"]
-   _ctx["Monocv_process_ret_1"] = _ctx["vel"]
-   _ctx["Monocv_process_ret_2"] = _ctx["gate"]
+      _ctx.gate = 0.0
+   note = float(_ctx.active_note)
+   if Util_change(_ctx.inst_1b0d6, note):
+      _ctx.cv = Util_pitchToCv(note)
+   _ctx.Monocv_process_ret_0 = _ctx.cv
+   _ctx.Monocv_process_ret_1 = _ctx.vel
+   _ctx.Monocv_process_ret_2 = _ctx.gate
    return None
 
 
 def Monocv_noteOn(_ctx, note, velocity, channel):
-   if (_ctx["channel_in"] == channel):
+   if (_ctx.channel_in == channel):
       if (velocity > 0):
-         _ctx["active_note"] = Monocv_mono_noteOn(_ctx["notes"], note)
-         _ctx["vel"] = (0.007874 * float(velocity))
+         _ctx.active_note = Monocv_mono_noteOn(_ctx.notes, note)
+         _ctx.vel = (0.007874 * float(velocity))
 
       else:
-         _ctx["active_note"] = Monocv_mono_noteOff(_ctx["notes"], note)
+         _ctx.active_note = Monocv_mono_noteOff(_ctx.notes, note)
 
 def Monocv_noteOff(_ctx, note, channel):
-   if (_ctx["channel_in"] == channel):
-      _ctx["active_note"] = Monocv_mono_noteOff(_ctx["notes"], note)
+   if (_ctx.channel_in == channel):
+      _ctx.active_note = Monocv_mono_noteOff(_ctx.notes, note)
 
 def Monocv_controlChange(_ctx, control, value, channel):
    pass

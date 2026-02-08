@@ -18,60 +18,108 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
+class ConstSpecialization_accumulate_type:
+    __slots__ = ['sum']
+    def __init__(self, sum=0.0):
+        self.sum = sum
+
+class ConstSpecialization_accumulate_real_2_type:
+    __slots__ = ['sum']
+    def __init__(self, sum=0.0):
+        self.sum = sum
+
+class ConstSpecialization_test_accumulate_spec_type:
+    __slots__ = ['inst_10ec4']
+    def __init__(self, inst_10ec4=ConstSpecialization_accumulate_real_2_type()):
+        self.inst_10ec4 = inst_10ec4
+
+class ConstSpecialization_test_accumulate_nonspec_type:
+    __slots__ = ['inst_17a3f']
+    def __init__(self, inst_17a3f=ConstSpecialization_accumulate_type()):
+        self.inst_17a3f = inst_17a3f
+
+class ConstSpecialization_scale_typed_real_2_type:
+    __slots__ = ['last']
+    def __init__(self, last=0.0):
+        self.last = last
+
+class ConstSpecialization_scale_typed_int_2_type:
+    __slots__ = ['last']
+    def __init__(self, last=0):
+        self.last = last
+
+class ConstSpecialization_test_typed_int_type:
+    __slots__ = ['inst_1c235']
+    def __init__(self, inst_1c235=ConstSpecialization_scale_typed_int_2_type()):
+        self.inst_1c235 = inst_1c235
+
+class ConstSpecialization_test_typed_real_type:
+    __slots__ = ['inst_15f7d']
+    def __init__(self, inst_15f7d=ConstSpecialization_scale_typed_real_2_type()):
+        self.inst_15f7d = inst_15f7d
+
+class ConstSpecialization_main_type:
+    __slots__ = ['inst_13dfa', 'inst_201fa', 'inst_3e2fa', 'inst_477fa']
+    def __init__(self, inst_13dfa=ConstSpecialization_test_accumulate_spec_type(), inst_201fa=ConstSpecialization_test_accumulate_nonspec_type(), inst_3e2fa=ConstSpecialization_test_typed_int_type(), inst_477fa=ConstSpecialization_test_typed_real_type()):
+        self.inst_13dfa = inst_13dfa
+        self.inst_201fa = inst_201fa
+        self.inst_3e2fa = inst_3e2fa
+        self.inst_477fa = inst_477fa
+
 def ConstSpecialization_accumulate_type_alloc():
-   _ctx = {}
-   _ctx["sum"] = 0.0
+   _ctx = ConstSpecialization_accumulate_type()
+   _ctx.sum = 0.0
    return _ctx
 
 
 def ConstSpecialization_accumulate_real_2_type_alloc():
-   _ctx = {}
-   _ctx["sum"] = 0.0
+   _ctx = ConstSpecialization_accumulate_real_2_type()
+   _ctx.sum = 0.0
    return _ctx
 
 
 def ConstSpecialization_test_accumulate_spec_type_alloc():
-   _ctx = {}
-   _ctx["inst_10ec4"] = ConstSpecialization_accumulate_real_2_type_alloc()
+   _ctx = ConstSpecialization_test_accumulate_spec_type()
+   _ctx.inst_10ec4 = ConstSpecialization_accumulate_real_2_type_alloc()
    return _ctx
 
 
 def ConstSpecialization_test_accumulate_nonspec_type_alloc():
-   _ctx = {}
-   _ctx["inst_17a3f"] = ConstSpecialization_accumulate_type_alloc()
+   _ctx = ConstSpecialization_test_accumulate_nonspec_type()
+   _ctx.inst_17a3f = ConstSpecialization_accumulate_type_alloc()
    return _ctx
 
 
 def ConstSpecialization_scale_typed_real_2_type_alloc():
-   _ctx = {}
-   _ctx["last"] = 0.0
+   _ctx = ConstSpecialization_scale_typed_real_2_type()
+   _ctx.last = 0.0
    return _ctx
 
 
 def ConstSpecialization_scale_typed_int_2_type_alloc():
-   _ctx = {}
-   _ctx["last"] = 0
+   _ctx = ConstSpecialization_scale_typed_int_2_type()
+   _ctx.last = 0
    return _ctx
 
 
 def ConstSpecialization_test_typed_int_type_alloc():
-   _ctx = {}
-   _ctx["inst_1c235"] = ConstSpecialization_scale_typed_int_2_type_alloc()
+   _ctx = ConstSpecialization_test_typed_int_type()
+   _ctx.inst_1c235 = ConstSpecialization_scale_typed_int_2_type_alloc()
    return _ctx
 
 
 def ConstSpecialization_test_typed_real_type_alloc():
-   _ctx = {}
-   _ctx["inst_15f7d"] = ConstSpecialization_scale_typed_real_2_type_alloc()
+   _ctx = ConstSpecialization_test_typed_real_type()
+   _ctx.inst_15f7d = ConstSpecialization_scale_typed_real_2_type_alloc()
    return _ctx
 
 
 def ConstSpecialization_main_type_alloc():
-   _ctx = {}
-   _ctx["inst_13dfa"] = ConstSpecialization_test_accumulate_spec_type_alloc()
-   _ctx["inst_201fa"] = ConstSpecialization_test_accumulate_nonspec_type_alloc()
-   _ctx["inst_3e2fa"] = ConstSpecialization_test_typed_int_type_alloc()
-   _ctx["inst_477fa"] = ConstSpecialization_test_typed_real_type_alloc()
+   _ctx = ConstSpecialization_main_type()
+   _ctx.inst_13dfa = ConstSpecialization_test_accumulate_spec_type_alloc()
+   _ctx.inst_201fa = ConstSpecialization_test_accumulate_nonspec_type_alloc()
+   _ctx.inst_3e2fa = ConstSpecialization_test_typed_int_type_alloc()
+   _ctx.inst_477fa = ConstSpecialization_test_typed_real_type_alloc()
    return _ctx
 
 
@@ -118,36 +166,36 @@ def ConstSpecialization_test_interleaved_nonspec(a):
    return ConstSpecialization_interleaved(5.0, a, 4.0, 3.0)
 
 def ConstSpecialization_accumulate_real_2(_ctx, x):
-   _ctx["sum"] = ((2.0 * x) + _ctx["sum"])
-   return _ctx["sum"]
+   _ctx.sum = ((2.0 * x) + _ctx.sum)
+   return _ctx.sum
 
 
 def ConstSpecialization_accumulate(_ctx, scale, x):
-   _ctx["sum"] = ((scale * x) + _ctx["sum"])
-   return _ctx["sum"]
+   _ctx.sum = ((scale * x) + _ctx.sum)
+   return _ctx.sum
 
 
 def ConstSpecialization_test_accumulate_spec(_ctx):
-   return ConstSpecialization_accumulate_real_2(_ctx["inst_10ec4"], 5.0)
+   return ConstSpecialization_accumulate_real_2(_ctx.inst_10ec4, 5.0)
 
 def ConstSpecialization_test_accumulate_nonspec(_ctx, s, x):
-   return ConstSpecialization_accumulate(_ctx["inst_17a3f"], s, x)
+   return ConstSpecialization_accumulate(_ctx.inst_17a3f, s, x)
 
 def ConstSpecialization_scale_typed_int_2(_ctx, x):
-   _ctx["last"] = x
+   _ctx.last = x
    return x
 
 
 def ConstSpecialization_scale_typed_real_2(_ctx, x):
-   _ctx["last"] = x
+   _ctx.last = x
    return x
 
 
 def ConstSpecialization_test_typed_int(_ctx):
-   return ConstSpecialization_scale_typed_int_2(_ctx["inst_1c235"], 42)
+   return ConstSpecialization_scale_typed_int_2(_ctx.inst_1c235, 42)
 
 def ConstSpecialization_test_typed_real(_ctx):
-   return ConstSpecialization_scale_typed_real_2(_ctx["inst_15f7d"], 3.14)
+   return ConstSpecialization_scale_typed_real_2(_ctx.inst_15f7d, 3.14)
 
 def ConstSpecialization_setArrayElement_array_of_real_size_4_real_1(m, value):
    m[1] = value
@@ -198,10 +246,10 @@ def ConstSpecialization_main(_ctx):
    r5 = ConstSpecialization_test_weighted_nonspec(0.5)
    r6 = ConstSpecialization_test_interleaved_spec()
    r7 = ConstSpecialization_test_interleaved_nonspec(1.5)
-   r8 = ConstSpecialization_test_accumulate_spec(_ctx["inst_13dfa"])
-   r9 = ConstSpecialization_test_accumulate_nonspec(_ctx["inst_201fa"], 3.0, 4.0)
-   r10 = ConstSpecialization_test_typed_int(_ctx["inst_3e2fa"])
-   r11 = ConstSpecialization_test_typed_real(_ctx["inst_477fa"])
+   r8 = ConstSpecialization_test_accumulate_spec(_ctx.inst_13dfa)
+   r9 = ConstSpecialization_test_accumulate_nonspec(_ctx.inst_201fa, 3.0, 4.0)
+   r10 = ConstSpecialization_test_typed_int(_ctx.inst_3e2fa)
+   r11 = ConstSpecialization_test_typed_real(_ctx.inst_477fa)
    inputs = initializeArray(0.0, 2)
    inputs[0] = 1.0
    inputs[1] = 2.0

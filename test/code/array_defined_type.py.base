@@ -18,28 +18,44 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
+class Array_defined_type_dot:
+    __slots__ = ['x', 'y']
+    def __init__(self, x=0.0, y=0.0):
+        self.x = x
+        self.y = y
+
+class Array_defined_type_foo_type:
+    __slots__ = ['p1']
+    def __init__(self, p1=[0.0] * 12):
+        self.p1 = p1
+
+class Array_defined_type_process_type:
+    __slots__ = ['inst_1c76a']
+    def __init__(self, inst_1c76a=Array_defined_type_foo_type()):
+        self.inst_1c76a = inst_1c76a
+
 def Array_defined_type_dot_alloc():
-   _ctx = {}
-   _ctx["x"] = 0.0
-   _ctx["y"] = 0.0
+   _ctx = Array_defined_type_dot()
+   _ctx.x = 0.0
+   _ctx.y = 0.0
    return _ctx
 
 
 def Array_defined_type_foo_type_alloc():
    i_0 = 0
    temp = None
-   _ctx = {}
+   _ctx = Array_defined_type_foo_type()
    while (i_0 < 12):
       temp[i_0] = Array_defined_type_dot_alloc()
       i_0 = (1 + i_0)
 
-   _ctx["p1"] = temp
+   _ctx.p1 = temp
    return _ctx
 
 
 def Array_defined_type_process_type_alloc():
-   _ctx = {}
-   _ctx["inst_1c76a"] = Array_defined_type_foo_type_alloc()
+   _ctx = Array_defined_type_process_type()
+   _ctx.inst_1c76a = Array_defined_type_foo_type_alloc()
    return _ctx
 
 
@@ -59,7 +75,7 @@ def Array_defined_type_foo(_ctx):
    pass
 
 def Array_defined_type_process(_ctx, input):
-   _ = Array_defined_type_foo(_ctx["inst_1c76a"])
+   _ = Array_defined_type_foo(_ctx.inst_1c76a)
    return input
 
 

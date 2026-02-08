@@ -78,7 +78,11 @@ let uoperator (op : uoperator) =
 
 let rec print_exp (e : exp) =
   match e.e with
-  | EEmptyValue -> Pla.string "{}"
+  | EEmptyValue -> (
+    (* Create class instance based on type *)
+    match e.t.t with
+    | TStruct { path; _ } -> {%pla|<#path#s>()|}
+    | _ -> Pla.string "None")
   | EUnit -> Pla.string "None"
   | EBool v ->
     Pla.string
@@ -201,18 +205,19 @@ let rec print_exp (e : exp) =
     {%pla|[<#l#>]|}
   | EMember (e, m) ->
     let e = print_exp e in
-    {%pla|<#e#>["<#m#s>"]|}
+    {%pla|<#e#>.<#m#s>|}
   | ETMember (e, i) ->
     let e = print_exp e in
     let m = i in
     {%pla|<#e#>[<#m#i>]|}
-  | ERecord { elems; _ } ->
+  | ERecord { path; elems } ->
+    (* Generate class instantiation with keyword arguments *)
     let printElem (n, v) =
       let v = print_exp v in
-      {%pla|"<#n#s>": <#v#>|}
+      {%pla|<#n#s>=<#v#>|}
     in
     let elems = Pla.map_sep Pla.commaspace printElem elems in
-    {%pla|{<#elems#>}|}
+    {%pla|<#path#s>(<#elems#>)|}
 
 
 let rec print_lexp (e : lexp) =
@@ -221,7 +226,7 @@ let rec print_lexp (e : lexp) =
   | LId s -> Pla.string s
   | LMember (e, m) ->
     let e = print_lexp e in
-    {%pla|<#e#>["<#m#s>"]|}
+    {%pla|<#e#>.<#m#s>|}
   | LIndex { e; index = { e = EInt i; _ } } ->
     let e = print_lexp e in
     let index = i in
@@ -241,14 +246,14 @@ let print_dexp (e : dexp) =
 
 let rec print_stmt (s : stmt) =
   match s.s with
-  (* if the name is _ctx, initialize as empty dict *)
-  | StmtDecl (({ d = DId ("_ctx", _); t = { t = TStruct _; _ }; _ } as lhs), None) ->
+  (* if the name is _ctx, create a class instance *)
+  | StmtDecl (({ d = DId ("_ctx", _); t = { t = TStruct { path; _ }; _ }; _ } as lhs), None) ->
     let lhs = print_dexp lhs in
-    {%pla|<#lhs#> = {}|}
-  (* needs allocation - call allocator function *)
+    {%pla|<#lhs#> = <#path#s>()|}
+  (* needs allocation - create class instance directly *)
   | StmtDecl (({ t = { t = TStruct { path; _ }; _ }; _ } as lhs), None) ->
     let lhs = print_dexp lhs in
-    {%pla|<#lhs#> = <#path#s>_alloc()|}
+    {%pla|<#lhs#> = <#path#s>()|}
   (* declaration without value - initialize to None *)
   | StmtDecl (lhs, None) ->
     let lhs = print_dexp lhs in
@@ -332,7 +337,43 @@ let print_top_stmt (args : Util.Args.args) (t : top_stmt) =
     let body = print_body body in
     {%pla|<#def#><#body#><#><#>|}
   | TopExternal _ -> Pla.unit
-  | TopType _ -> Pla.unit
+  | TopType { path; members } ->
+    (* Generate a class with __slots__ for better performance *)
+    let member_names = CCList.map (fun (name, _, _, _) -> {%pla|'<#name#s>'|}) members |> Pla.join_sep Pla.commaspace in
+    let getDefaultValue (t : type_) =
+      match t.t with
+      | TInt -> "0"
+      | TInt16 -> "0"
+      | TReal -> "0.0"
+      | TFix16 -> "0.0"
+      | TBool -> "False"
+      | TString -> "\"\""
+      | TStruct { path; _ } -> path ^ "()"
+      | TArray (size_opt, _) -> (
+        match size_opt with
+        | Some size -> Printf.sprintf "[0.0] * %d" size
+        | None -> "[]")
+      | TList _ -> "[]"
+      | _ -> "None"
+    in
+    (* Generate __init__ with keyword arguments for record literals *)
+    let init_params =
+      CCList.map
+        (fun (name, t, _, _) ->
+          let default = getDefaultValue t in
+          {%pla|<#name#s>=<#default#s>|})
+        members
+      |> Pla.join_sep Pla.commaspace
+    in
+    let init_assignments =
+      CCList.map (fun (name, _, _, _) -> {%pla|        self.<#name#s> = <#name#s>|}) members |> Pla.join_sep Pla.newline
+    in
+    {%pla|class <#path#s>:
+    __slots__ = [<#member_names#>]
+    def __init__(self, <#init_params#>):
+<#init_assignments#>
+
+|}
   | TopAlias _ -> Pla.unit
   | TopConstant (name, _, _, _, _) when args.test_mode -> {%pla|<#name#s> = {}<#>|}
   | TopConstant (name, _, _, rhs, _) ->

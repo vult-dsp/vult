@@ -18,55 +18,89 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
+class Array_return_foo3_type:
+    __slots__ = ['y']
+    def __init__(self, y=0):
+        self.y = y
+
+class Array_return_foo4_type:
+    __slots__ = ['y']
+    def __init__(self, y=0):
+        self.y = y
+
+class Array_return_foo5_type:
+    __slots__ = ['Array_return_foo5_ret_0', 'Array_return_foo5_ret_1']
+    def __init__(self, Array_return_foo5_ret_0=0, Array_return_foo5_ret_1=[0.0] * 3):
+        self.Array_return_foo5_ret_0 = Array_return_foo5_ret_0
+        self.Array_return_foo5_ret_1 = Array_return_foo5_ret_1
+
+class Array_return_foo6_type:
+    __slots__ = ['Array_return_foo6_ret_0', 'Array_return_foo6_ret_1']
+    def __init__(self, Array_return_foo6_ret_0=0, Array_return_foo6_ret_1=[0.0] * 3):
+        self.Array_return_foo6_ret_0 = Array_return_foo6_ret_0
+        self.Array_return_foo6_ret_1 = Array_return_foo6_ret_1
+
+class Array_return_s1:
+    __slots__ = ['x', 'y']
+    def __init__(self, x=0, y=0):
+        self.x = x
+        self.y = y
+
+class Array_return_foo7_type:
+    __slots__ = ['Array_return_foo7_ret_0', 'Array_return_foo7_ret_1']
+    def __init__(self, Array_return_foo7_ret_0=0, Array_return_foo7_ret_1=Array_return_s1()):
+        self.Array_return_foo7_ret_0 = Array_return_foo7_ret_0
+        self.Array_return_foo7_ret_1 = Array_return_foo7_ret_1
+
 def Array_return_foo3_type_alloc():
-   _ctx = {}
-   _ctx["y"] = 0
+   _ctx = Array_return_foo3_type()
+   _ctx.y = 0
    return _ctx
 
 
 def Array_return_foo4_type_alloc():
-   _ctx = {}
-   _ctx["y"] = 0
+   _ctx = Array_return_foo4_type()
+   _ctx.y = 0
    return _ctx
 
 
 def Array_return_foo5_type_alloc():
-   _ctx = {}
-   _ctx["Array_return_foo5_ret_0"] = 0
+   _ctx = Array_return_foo5_type()
+   _ctx.Array_return_foo5_ret_0 = 0
    i_0 = 0
    temp = initializeArray(0, 3)
    while (i_0 < 3):
       temp[i_0] = 0
       i_0 = (1 + i_0)
 
-   _ctx["Array_return_foo5_ret_1"] = temp
+   _ctx.Array_return_foo5_ret_1 = temp
    return _ctx
 
 
 def Array_return_foo6_type_alloc():
-   _ctx = {}
-   _ctx["Array_return_foo6_ret_0"] = 0
+   _ctx = Array_return_foo6_type()
+   _ctx.Array_return_foo6_ret_0 = 0
    i_0 = 0
    temp = initializeArray(0, 3)
    while (i_0 < 3):
       temp[i_0] = 0
       i_0 = (1 + i_0)
 
-   _ctx["Array_return_foo6_ret_1"] = temp
+   _ctx.Array_return_foo6_ret_1 = temp
    return _ctx
 
 
 def Array_return_s1_alloc():
-   _ctx = {}
-   _ctx["x"] = 0
-   _ctx["y"] = 0
+   _ctx = Array_return_s1()
+   _ctx.x = 0
+   _ctx.y = 0
    return _ctx
 
 
 def Array_return_foo7_type_alloc():
-   _ctx = {}
-   _ctx["Array_return_foo7_ret_0"] = 0
-   _ctx["Array_return_foo7_ret_1"] = Array_return_s1_alloc()
+   _ctx = Array_return_foo7_type()
+   _ctx.Array_return_foo7_ret_0 = 0
+   _ctx.Array_return_foo7_ret_1 = Array_return_s1_alloc()
    return _ctx
 
 
@@ -81,37 +115,37 @@ def Array_return_foo2():
 
 
 def Array_return_foo3(_ctx):
-   _ctx["y"] = 0
+   _ctx.y = 0
    _array_0 = [1, 2, 3]
    return _array_0
 
 
 def Array_return_foo4(_ctx):
-   _ctx["y"] = 0
+   _ctx.y = 0
    x = [1, 2, 3]
    return x
 
 
 def Array_return_foo5(_ctx):
    _array_0 = [1, 2, 3]
-   _ctx["Array_return_foo5_ret_0"] = 1
-   _ctx["Array_return_foo5_ret_1"] = _array_0
+   _ctx.Array_return_foo5_ret_0 = 1
+   _ctx.Array_return_foo5_ret_1 = _array_0
    return None
 
 
 def Array_return_foo6(_ctx):
    y = 1
    x = [1, 2, 3]
-   _ctx["Array_return_foo6_ret_0"] = y
-   _ctx["Array_return_foo6_ret_1"] = x
+   _ctx.Array_return_foo6_ret_0 = y
+   _ctx.Array_return_foo6_ret_1 = x
    return None
 
 
 def Array_return_foo7(_ctx):
    d = initializeArray(0, 4)
-   _ctx["Array_return_foo7_ret_0"] = d[0]
+   _ctx.Array_return_foo7_ret_0 = d[0]
    s = None
-   _ctx["Array_return_foo7_ret_1"] = s[0]
+   _ctx.Array_return_foo7_ret_1 = s[0]
    return None
 
 

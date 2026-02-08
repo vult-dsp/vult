@@ -18,34 +18,75 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
+class Util_edge_type:
+    __slots__ = ['pre']
+    def __init__(self, pre=False):
+        self.pre = pre
+
+class Util_change_type:
+    __slots__ = ['pre_x']
+    def __init__(self, pre_x=0.0):
+        self.pre_x = pre_x
+
+class Util_dcblock_type:
+    __slots__ = ['x1', 'y1']
+    def __init__(self, x1=0.0, y1=0.0):
+        self.x1 = x1
+        self.y1 = y1
+
+class Util_smooth_type:
+    __slots__ = ['x']
+    def __init__(self, x=0.0):
+        self.x = x
+
+class Util_average2_type:
+    __slots__ = ['x0']
+    def __init__(self, x0=0.0):
+        self.x0 = x0
+
+class Phase_process_type:
+    __slots__ = ['inst_1b08a', 'inst_2048a', 'phase', 'rate']
+    def __init__(self, inst_1b08a=Util_change_type(), inst_2048a=Util_edge_type(), phase=0.0, rate=0.0):
+        self.inst_1b08a = inst_1b08a
+        self.inst_2048a = inst_2048a
+        self.phase = phase
+        self.rate = rate
+
+class Sine_process_type:
+    __slots__ = ['inst_104ba', 'p', 'trig']
+    def __init__(self, inst_104ba=Util_edge_type(), p=Phase_process_type(), trig=False):
+        self.inst_104ba = inst_104ba
+        self.p = p
+        self.trig = trig
+
 def Util_edge_type_alloc():
-   _ctx = {}
-   _ctx["pre"] = False
+   _ctx = Util_edge_type()
+   _ctx.pre = False
    return _ctx
 
 
 def Util_change_type_alloc():
-   _ctx = {}
-   _ctx["pre_x"] = 0.0
+   _ctx = Util_change_type()
+   _ctx.pre_x = 0.0
    return _ctx
 
 
 def Util_dcblock_type_alloc():
-   _ctx = {}
-   _ctx["x1"] = 0.0
-   _ctx["y1"] = 0.0
+   _ctx = Util_dcblock_type()
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
    return _ctx
 
 
 def Util_smooth_type_alloc():
-   _ctx = {}
-   _ctx["x"] = 0.0
+   _ctx = Util_smooth_type()
+   _ctx.x = 0.0
    return _ctx
 
 
 def Util_average2_type_alloc():
-   _ctx = {}
-   _ctx["x0"] = 0.0
+   _ctx = Util_average2_type()
+   _ctx.x0 = 0.0
    return _ctx
 
 
@@ -87,14 +128,14 @@ def Util_cvToRate_1024(cv):
 
 
 def Phase_default(_ctx):
-   _ctx["rate"] = Util_cvToRate_1024(0.0)
+   _ctx.rate = Util_cvToRate_1024(0.0)
 
 def Phase_process_type_alloc():
-   _ctx = {}
-   _ctx["inst_1b08a"] = Util_change_type_alloc()
-   _ctx["inst_2048a"] = Util_edge_type_alloc()
-   _ctx["phase"] = 0.0
-   _ctx["rate"] = 0.0
+   _ctx = Phase_process_type()
+   _ctx.inst_1b08a = Util_change_type_alloc()
+   _ctx.inst_2048a = Util_edge_type_alloc()
+   _ctx.phase = 0.0
+   _ctx.rate = 0.0
    _ = Phase_default(_ctx)
    return _ctx
 
@@ -112,10 +153,10 @@ def Phase_default_type_alloc(_ctx):
    return Phase_process_type_alloc()
 
 def Sine_process_type_alloc():
-   _ctx = {}
-   _ctx["inst_104ba"] = Util_edge_type_alloc()
-   _ctx["p"] = Phase_process_type_alloc()
-   _ctx["trig"] = False
+   _ctx = Sine_process_type()
+   _ctx.inst_104ba = Util_edge_type_alloc()
+   _ctx.p = Phase_process_type_alloc()
+   _ctx.trig = False
    return _ctx
 
 
@@ -132,14 +173,14 @@ def Sine_default_type_alloc(_ctx):
    return Sine_process_type_alloc()
 
 def Util_edge(_ctx, x):
-   ret = (x and (_ctx["pre"] == False))
-   _ctx["pre"] = x
+   ret = (x and (_ctx.pre == False))
+   _ctx.pre = x
    return ret
 
 
 def Util_change(_ctx, x):
-   v = (_ctx["pre_x"] != x)
-   _ctx["pre_x"] = x
+   v = (_ctx.pre_x != x)
+   _ctx.pre_x = x
    return v
 
 
@@ -147,20 +188,20 @@ def Util_map(x, x0, x1, y0, y1):
    return (y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))))
 
 def Util_dcblock(_ctx, x0):
-   y0 = (x0 + ((-_ctx["x1"]) + (0.995 * _ctx["y1"])))
-   _ctx["x1"] = x0
-   _ctx["y1"] = y0
+   y0 = (x0 + ((-_ctx.x1) + (0.995 * _ctx.y1)))
+   _ctx.x1 = x0
+   _ctx.y1 = y0
    return y0
 
 
 def Util_smooth(_ctx, input):
-   _ctx["x"] = ((0.005 * (input + (-_ctx["x"]))) + _ctx["x"])
-   return _ctx["x"]
+   _ctx.x = ((0.005 * (input + (-_ctx.x))) + _ctx.x)
+   return _ctx.x
 
 
 def Util_average2(_ctx, x1):
-   result = (0.5 * (x1 + _ctx["x0"]))
-   _ctx["x0"] = x1
+   result = (0.5 * (x1 + _ctx.x0))
+   _ctx.x0 = x1
    return result
 
 
@@ -245,17 +286,17 @@ def Util_cvTokHz(cv):
 
 
 def Phase_process(_ctx, cv, reset):
-   if Util_change(_ctx["inst_1b08a"], cv):
-      _ctx["rate"] = Util_cvToRate_1024(cv)
-   if Util_edge(_ctx["inst_2048a"], (reset > 0.5)):
-      _ctx["phase"] = 0.0
+   if Util_change(_ctx.inst_1b08a, cv):
+      _ctx.rate = Util_cvToRate_1024(cv)
+   if Util_edge(_ctx.inst_2048a, (reset > 0.5)):
+      _ctx.phase = 0.0
    else:
-      _ctx["phase"] = (_ctx["phase"] + _ctx["rate"])
-   if (_ctx["phase"] > 1024.0):
-      _ctx["phase"] = (-1024.0 + _ctx["phase"])
+      _ctx.phase = (_ctx.phase + _ctx.rate)
+   if (_ctx.phase > 1024.0):
+      _ctx.phase = (-1024.0 + _ctx.phase)
    else:
-      _ctx["phase"] = _ctx["phase"]
-   return (0.000976 * _ctx["phase"])
+      _ctx.phase = _ctx.phase
+   return (0.000976 * _ctx.phase)
 
 
 def Phase_noteOn(_ctx, note, velocity, channel):
@@ -285,12 +326,12 @@ def Tables_nsine(x):
 
 
 def Sine_process(_ctx, cv, reset):
-   if Util_edge(_ctx["inst_104ba"], (reset > 0.5)):
-      _ctx["trig"] = True
-   phase = Phase_process(_ctx["p"], cv, 0.0)
-   if ((phase < 1e-18) and _ctx["trig"]):
-      _ctx["trig"] = False
-      _ = Phase_process(_ctx["p"], cv, 0.0)
+   if Util_edge(_ctx.inst_104ba, (reset > 0.5)):
+      _ctx.trig = True
+   phase = Phase_process(_ctx.p, cv, 0.0)
+   if ((phase < 1e-18) and _ctx.trig):
+      _ctx.trig = False
+      _ = Phase_process(_ctx.p, cv, 0.0)
 
    return Tables_nsine(phase)
 

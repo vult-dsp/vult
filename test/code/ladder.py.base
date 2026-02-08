@@ -18,74 +18,135 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
+class Util_edge_type:
+    __slots__ = ['pre']
+    def __init__(self, pre=False):
+        self.pre = pre
+
+class Util_change_type:
+    __slots__ = ['pre_x']
+    def __init__(self, pre_x=0.0):
+        self.pre_x = pre_x
+
+class Util_dcblock_type:
+    __slots__ = ['x1', 'y1']
+    def __init__(self, x1=0.0, y1=0.0):
+        self.x1 = x1
+        self.y1 = y1
+
+class Util_smooth_type:
+    __slots__ = ['x']
+    def __init__(self, x=0.0):
+        self.x = x
+
+class Util_average2_type:
+    __slots__ = ['x0']
+    def __init__(self, x0=0.0):
+        self.x0 = x0
+
+class Ladder_heun_type:
+    __slots__ = ['p0', 'p1', 'p2', 'p3']
+    def __init__(self, p0=0.0, p1=0.0, p2=0.0, p3=0.0):
+        self.p0 = p0
+        self.p1 = p1
+        self.p2 = p2
+        self.p3 = p3
+
+class Ladder_euler_type:
+    __slots__ = ['p0', 'p1', 'p2', 'p3']
+    def __init__(self, p0=0.0, p1=0.0, p2=0.0, p3=0.0):
+        self.p0 = p0
+        self.p1 = p1
+        self.p2 = p2
+        self.p3 = p3
+
+class Ladder_process_euler_type:
+    __slots__ = ['e', 'fh', 'inst_1b099']
+    def __init__(self, e=Ladder_euler_type(), fh=0.0, inst_1b099=Util_change_type()):
+        self.e = e
+        self.fh = fh
+        self.inst_1b099 = inst_1b099
+
+class Ladder_process_heun_type:
+    __slots__ = ['fh', 'h', 'inst_1b0a0']
+    def __init__(self, fh=0.0, h=Ladder_heun_type(), inst_1b0a0=Util_change_type()):
+        self.fh = fh
+        self.h = h
+        self.inst_1b0a0 = inst_1b0a0
+
+class Ladder_process_type:
+    __slots__ = ['inst_1a0c3']
+    def __init__(self, inst_1a0c3=Ladder_process_heun_type()):
+        self.inst_1a0c3 = inst_1a0c3
+
 def Util_edge_type_alloc():
-   _ctx = {}
-   _ctx["pre"] = False
+   _ctx = Util_edge_type()
+   _ctx.pre = False
    return _ctx
 
 
 def Util_change_type_alloc():
-   _ctx = {}
-   _ctx["pre_x"] = 0.0
+   _ctx = Util_change_type()
+   _ctx.pre_x = 0.0
    return _ctx
 
 
 def Util_dcblock_type_alloc():
-   _ctx = {}
-   _ctx["x1"] = 0.0
-   _ctx["y1"] = 0.0
+   _ctx = Util_dcblock_type()
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
    return _ctx
 
 
 def Util_smooth_type_alloc():
-   _ctx = {}
-   _ctx["x"] = 0.0
+   _ctx = Util_smooth_type()
+   _ctx.x = 0.0
    return _ctx
 
 
 def Util_average2_type_alloc():
-   _ctx = {}
-   _ctx["x0"] = 0.0
+   _ctx = Util_average2_type()
+   _ctx.x0 = 0.0
    return _ctx
 
 
 def Ladder_heun_type_alloc():
-   _ctx = {}
-   _ctx["p0"] = 0.0
-   _ctx["p1"] = 0.0
-   _ctx["p2"] = 0.0
-   _ctx["p3"] = 0.0
+   _ctx = Ladder_heun_type()
+   _ctx.p0 = 0.0
+   _ctx.p1 = 0.0
+   _ctx.p2 = 0.0
+   _ctx.p3 = 0.0
    return _ctx
 
 
 def Ladder_euler_type_alloc():
-   _ctx = {}
-   _ctx["p0"] = 0.0
-   _ctx["p1"] = 0.0
-   _ctx["p2"] = 0.0
-   _ctx["p3"] = 0.0
+   _ctx = Ladder_euler_type()
+   _ctx.p0 = 0.0
+   _ctx.p1 = 0.0
+   _ctx.p2 = 0.0
+   _ctx.p3 = 0.0
    return _ctx
 
 
 def Ladder_process_euler_type_alloc():
-   _ctx = {}
-   _ctx["e"] = Ladder_euler_type_alloc()
-   _ctx["fh"] = 0.0
-   _ctx["inst_1b099"] = Util_change_type_alloc()
+   _ctx = Ladder_process_euler_type()
+   _ctx.e = Ladder_euler_type_alloc()
+   _ctx.fh = 0.0
+   _ctx.inst_1b099 = Util_change_type_alloc()
    return _ctx
 
 
 def Ladder_process_heun_type_alloc():
-   _ctx = {}
-   _ctx["fh"] = 0.0
-   _ctx["h"] = Ladder_heun_type_alloc()
-   _ctx["inst_1b0a0"] = Util_change_type_alloc()
+   _ctx = Ladder_process_heun_type()
+   _ctx.fh = 0.0
+   _ctx.h = Ladder_heun_type_alloc()
+   _ctx.inst_1b0a0 = Util_change_type_alloc()
    return _ctx
 
 
 def Ladder_process_type_alloc():
-   _ctx = {}
-   _ctx["inst_1a0c3"] = Ladder_process_heun_type_alloc()
+   _ctx = Ladder_process_type()
+   _ctx.inst_1a0c3 = Ladder_process_heun_type_alloc()
    return _ctx
 
 
@@ -102,14 +163,14 @@ def Ladder_default_type_alloc(_ctx):
    return Ladder_process_type_alloc()
 
 def Util_edge(_ctx, x):
-   ret = (x and (_ctx["pre"] == False))
-   _ctx["pre"] = x
+   ret = (x and (_ctx.pre == False))
+   _ctx.pre = x
    return ret
 
 
 def Util_change(_ctx, x):
-   v = (_ctx["pre_x"] != x)
-   _ctx["pre_x"] = x
+   v = (_ctx.pre_x != x)
+   _ctx.pre_x = x
    return v
 
 
@@ -117,20 +178,20 @@ def Util_map(x, x0, x1, y0, y1):
    return (y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))))
 
 def Util_dcblock(_ctx, x0):
-   y0 = (x0 + ((-_ctx["x1"]) + (0.995 * _ctx["y1"])))
-   _ctx["x1"] = x0
-   _ctx["y1"] = y0
+   y0 = (x0 + ((-_ctx.x1) + (0.995 * _ctx.y1)))
+   _ctx.x1 = x0
+   _ctx.y1 = y0
    return y0
 
 
 def Util_smooth(_ctx, input):
-   _ctx["x"] = ((0.005 * (input + (-_ctx["x"]))) + _ctx["x"])
-   return _ctx["x"]
+   _ctx.x = ((0.005 * (input + (-_ctx.x))) + _ctx.x)
+   return _ctx.x
 
 
 def Util_average2(_ctx, x1):
-   result = (0.5 * (x1 + _ctx["x0"]))
-   _ctx["x0"] = x1
+   result = (0.5 * (x1 + _ctx.x0))
+   _ctx.x0 = x1
    return result
 
 
@@ -269,19 +330,19 @@ def Ladder_tune(cut):
 
 
 def Ladder_heun(_ctx, input, fh, res):
-   wt0 = Util_cubic_clipper((input + (-4.0 * (res * _ctx["p3"]))))
-   wt1 = Util_cubic_clipper(_ctx["p0"])
+   wt0 = Util_cubic_clipper((input + (-4.0 * (res * _ctx.p3))))
+   wt1 = Util_cubic_clipper(_ctx.p0)
    dpt0 = (fh * (wt0 + (-wt1)))
-   wt3 = Util_cubic_clipper(_ctx["p1"])
+   wt3 = Util_cubic_clipper(_ctx.p1)
    dpt1 = (fh * (wt1 + (-wt3)))
-   wt5 = Util_cubic_clipper(_ctx["p2"])
+   wt5 = Util_cubic_clipper(_ctx.p2)
    dpt2 = (fh * (wt3 + (-wt5)))
-   wt7 = Util_cubic_clipper(_ctx["p3"])
+   wt7 = Util_cubic_clipper(_ctx.p3)
    dpt3 = (fh * (wt5 + (-wt7)))
-   pt0 = (dpt0 + _ctx["p0"])
-   pt1 = (dpt1 + _ctx["p1"])
-   pt2 = (dpt2 + _ctx["p2"])
-   pt3 = (dpt3 + _ctx["p3"])
+   pt0 = (dpt0 + _ctx.p0)
+   pt1 = (dpt1 + _ctx.p1)
+   pt2 = (dpt2 + _ctx.p2)
+   pt3 = (dpt3 + _ctx.p3)
    w0 = Util_cubic_clipper((input + (-4.0 * (pt3 * res))))
    w1 = Util_cubic_clipper(pt0)
    dp0 = (fh * (w0 + (-w1)))
@@ -291,52 +352,52 @@ def Ladder_heun(_ctx, input, fh, res):
    dp2 = (fh * (w3 + (-w5)))
    w7 = Util_cubic_clipper(pt3)
    dp3 = (fh * (w5 + (-w7)))
-   _ctx["p0"] = ((0.5 * (dp0 + dpt0)) + _ctx["p0"])
-   _ctx["p1"] = ((0.5 * (dp1 + dpt1)) + _ctx["p1"])
-   _ctx["p2"] = ((0.5 * (dp2 + dpt2)) + _ctx["p2"])
-   _ctx["p3"] = ((0.5 * (dp3 + dpt3)) + _ctx["p3"])
-   return _ctx["p3"]
+   _ctx.p0 = ((0.5 * (dp0 + dpt0)) + _ctx.p0)
+   _ctx.p1 = ((0.5 * (dp1 + dpt1)) + _ctx.p1)
+   _ctx.p2 = ((0.5 * (dp2 + dpt2)) + _ctx.p2)
+   _ctx.p3 = ((0.5 * (dp3 + dpt3)) + _ctx.p3)
+   return _ctx.p3
 
 
 def Ladder_euler(_ctx, input, fh, res):
-   w0 = Util_cubic_clipper((input + (-4.0 * (res * _ctx["p3"]))))
-   w1 = Util_cubic_clipper(_ctx["p0"])
+   w0 = Util_cubic_clipper((input + (-4.0 * (res * _ctx.p3))))
+   w1 = Util_cubic_clipper(_ctx.p0)
    dpt0 = (fh * (w0 + (-w1)))
-   w3 = Util_cubic_clipper(_ctx["p1"])
+   w3 = Util_cubic_clipper(_ctx.p1)
    dpt1 = (fh * (w1 + (-w3)))
-   w5 = Util_cubic_clipper(_ctx["p2"])
+   w5 = Util_cubic_clipper(_ctx.p2)
    dpt2 = (fh * (w3 + (-w5)))
-   w7 = Util_cubic_clipper(_ctx["p3"])
+   w7 = Util_cubic_clipper(_ctx.p3)
    dpt3 = (fh * (w5 + (-w7)))
-   _ctx["p0"] = (dpt0 + _ctx["p0"])
-   _ctx["p1"] = (dpt1 + _ctx["p1"])
-   _ctx["p2"] = (dpt2 + _ctx["p2"])
-   _ctx["p3"] = (dpt3 + _ctx["p3"])
-   return _ctx["p3"]
+   _ctx.p0 = (dpt0 + _ctx.p0)
+   _ctx.p1 = (dpt1 + _ctx.p1)
+   _ctx.p2 = (dpt2 + _ctx.p2)
+   _ctx.p3 = (dpt3 + _ctx.p3)
+   return _ctx.p3
 
 
 def Ladder_process_euler(_ctx, input, cut, res):
-   if Util_change(_ctx["inst_1b099"], cut):
-      _ctx["fh"] = Ladder_tune(cut)
-   _ = Ladder_euler(_ctx["e"], input, _ctx["fh"], res)
-   _ = Ladder_euler(_ctx["e"], input, _ctx["fh"], res)
-   _ = Ladder_euler(_ctx["e"], input, _ctx["fh"], res)
-   out = Ladder_euler(_ctx["e"], input, _ctx["fh"], res)
+   if Util_change(_ctx.inst_1b099, cut):
+      _ctx.fh = Ladder_tune(cut)
+   _ = Ladder_euler(_ctx.e, input, _ctx.fh, res)
+   _ = Ladder_euler(_ctx.e, input, _ctx.fh, res)
+   _ = Ladder_euler(_ctx.e, input, _ctx.fh, res)
+   out = Ladder_euler(_ctx.e, input, _ctx.fh, res)
    return out
 
 
 def Ladder_process_heun(_ctx, input, cut, res):
-   if Util_change(_ctx["inst_1b0a0"], cut):
-      _ctx["fh"] = Ladder_tune(cut)
-   _ = Ladder_heun(_ctx["h"], input, _ctx["fh"], res)
-   _ = Ladder_heun(_ctx["h"], input, _ctx["fh"], res)
-   _ = Ladder_heun(_ctx["h"], input, _ctx["fh"], res)
-   out = Ladder_heun(_ctx["h"], input, _ctx["fh"], res)
+   if Util_change(_ctx.inst_1b0a0, cut):
+      _ctx.fh = Ladder_tune(cut)
+   _ = Ladder_heun(_ctx.h, input, _ctx.fh, res)
+   _ = Ladder_heun(_ctx.h, input, _ctx.fh, res)
+   _ = Ladder_heun(_ctx.h, input, _ctx.fh, res)
+   out = Ladder_heun(_ctx.h, input, _ctx.fh, res)
    return out
 
 
 def Ladder_process(_ctx, input, cut, res):
-   return Ladder_process_heun(_ctx["inst_1a0c3"], input, cut, res)
+   return Ladder_process_heun(_ctx.inst_1a0c3, input, cut, res)
 
 def Ladder_noteOn(_ctx, note, velocity, channel):
    pass

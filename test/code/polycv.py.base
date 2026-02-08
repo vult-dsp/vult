@@ -18,65 +18,127 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
+class Util_edge_type:
+    __slots__ = ['pre']
+    def __init__(self, pre=False):
+        self.pre = pre
+
+class Util_change_type:
+    __slots__ = ['pre_x']
+    def __init__(self, pre_x=0.0):
+        self.pre_x = pre_x
+
+class Util_dcblock_type:
+    __slots__ = ['x1', 'y1']
+    def __init__(self, x1=0.0, y1=0.0):
+        self.x1 = x1
+        self.y1 = y1
+
+class Util_smooth_type:
+    __slots__ = ['x']
+    def __init__(self, x=0.0):
+        self.x = x
+
+class Util_average2_type:
+    __slots__ = ['x0']
+    def __init__(self, x0=0.0):
+        self.x0 = x0
+
+class Polycv_poly_noteOn_type:
+    __slots__ = ['Polycv_polyState_ret_0', 'Polycv_polyState_ret_1', 'Polycv_polyState_ret_10', 'Polycv_polyState_ret_11', 'Polycv_polyState_ret_2', 'Polycv_polyState_ret_3', 'Polycv_polyState_ret_4', 'Polycv_polyState_ret_5', 'Polycv_polyState_ret_6', 'Polycv_polyState_ret_7', 'Polycv_polyState_ret_8', 'Polycv_polyState_ret_9', 'notes', 'vel']
+    def __init__(self, Polycv_polyState_ret_0=0.0, Polycv_polyState_ret_1=0.0, Polycv_polyState_ret_10=0.0, Polycv_polyState_ret_11=0.0, Polycv_polyState_ret_2=0.0, Polycv_polyState_ret_3=0.0, Polycv_polyState_ret_4=0.0, Polycv_polyState_ret_5=0.0, Polycv_polyState_ret_6=0.0, Polycv_polyState_ret_7=0.0, Polycv_polyState_ret_8=0.0, Polycv_polyState_ret_9=0.0, notes=[0.0] * 4, vel=[0.0] * 4):
+        self.Polycv_polyState_ret_0 = Polycv_polyState_ret_0
+        self.Polycv_polyState_ret_1 = Polycv_polyState_ret_1
+        self.Polycv_polyState_ret_10 = Polycv_polyState_ret_10
+        self.Polycv_polyState_ret_11 = Polycv_polyState_ret_11
+        self.Polycv_polyState_ret_2 = Polycv_polyState_ret_2
+        self.Polycv_polyState_ret_3 = Polycv_polyState_ret_3
+        self.Polycv_polyState_ret_4 = Polycv_polyState_ret_4
+        self.Polycv_polyState_ret_5 = Polycv_polyState_ret_5
+        self.Polycv_polyState_ret_6 = Polycv_polyState_ret_6
+        self.Polycv_polyState_ret_7 = Polycv_polyState_ret_7
+        self.Polycv_polyState_ret_8 = Polycv_polyState_ret_8
+        self.Polycv_polyState_ret_9 = Polycv_polyState_ret_9
+        self.notes = notes
+        self.vel = vel
+
+class Polycv_process_type:
+    __slots__ = ['Polycv_process_ret_0', 'Polycv_process_ret_1', 'Polycv_process_ret_10', 'Polycv_process_ret_11', 'Polycv_process_ret_2', 'Polycv_process_ret_3', 'Polycv_process_ret_4', 'Polycv_process_ret_5', 'Polycv_process_ret_6', 'Polycv_process_ret_7', 'Polycv_process_ret_8', 'Polycv_process_ret_9', 'channel_in', 'poly']
+    def __init__(self, Polycv_process_ret_0=0.0, Polycv_process_ret_1=0.0, Polycv_process_ret_10=0.0, Polycv_process_ret_11=0.0, Polycv_process_ret_2=0.0, Polycv_process_ret_3=0.0, Polycv_process_ret_4=0.0, Polycv_process_ret_5=0.0, Polycv_process_ret_6=0.0, Polycv_process_ret_7=0.0, Polycv_process_ret_8=0.0, Polycv_process_ret_9=0.0, channel_in=0, poly=Polycv_poly_noteOn_type()):
+        self.Polycv_process_ret_0 = Polycv_process_ret_0
+        self.Polycv_process_ret_1 = Polycv_process_ret_1
+        self.Polycv_process_ret_10 = Polycv_process_ret_10
+        self.Polycv_process_ret_11 = Polycv_process_ret_11
+        self.Polycv_process_ret_2 = Polycv_process_ret_2
+        self.Polycv_process_ret_3 = Polycv_process_ret_3
+        self.Polycv_process_ret_4 = Polycv_process_ret_4
+        self.Polycv_process_ret_5 = Polycv_process_ret_5
+        self.Polycv_process_ret_6 = Polycv_process_ret_6
+        self.Polycv_process_ret_7 = Polycv_process_ret_7
+        self.Polycv_process_ret_8 = Polycv_process_ret_8
+        self.Polycv_process_ret_9 = Polycv_process_ret_9
+        self.channel_in = channel_in
+        self.poly = poly
+
 def Util_edge_type_alloc():
-   _ctx = {}
-   _ctx["pre"] = False
+   _ctx = Util_edge_type()
+   _ctx.pre = False
    return _ctx
 
 
 def Util_change_type_alloc():
-   _ctx = {}
-   _ctx["pre_x"] = 0.0
+   _ctx = Util_change_type()
+   _ctx.pre_x = 0.0
    return _ctx
 
 
 def Util_dcblock_type_alloc():
-   _ctx = {}
-   _ctx["x1"] = 0.0
-   _ctx["y1"] = 0.0
+   _ctx = Util_dcblock_type()
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
    return _ctx
 
 
 def Util_smooth_type_alloc():
-   _ctx = {}
-   _ctx["x"] = 0.0
+   _ctx = Util_smooth_type()
+   _ctx.x = 0.0
    return _ctx
 
 
 def Util_average2_type_alloc():
-   _ctx = {}
-   _ctx["x0"] = 0.0
+   _ctx = Util_average2_type()
+   _ctx.x0 = 0.0
    return _ctx
 
 
 def Polycv_poly_noteOn_type_alloc():
-   _ctx = {}
-   _ctx["Polycv_polyState_ret_0"] = 0.0
-   _ctx["Polycv_polyState_ret_1"] = 0.0
-   _ctx["Polycv_polyState_ret_10"] = 0.0
-   _ctx["Polycv_polyState_ret_11"] = 0.0
-   _ctx["Polycv_polyState_ret_2"] = 0.0
-   _ctx["Polycv_polyState_ret_3"] = 0.0
-   _ctx["Polycv_polyState_ret_4"] = 0.0
-   _ctx["Polycv_polyState_ret_5"] = 0.0
-   _ctx["Polycv_polyState_ret_6"] = 0.0
-   _ctx["Polycv_polyState_ret_7"] = 0.0
-   _ctx["Polycv_polyState_ret_8"] = 0.0
-   _ctx["Polycv_polyState_ret_9"] = 0.0
+   _ctx = Polycv_poly_noteOn_type()
+   _ctx.Polycv_polyState_ret_0 = 0.0
+   _ctx.Polycv_polyState_ret_1 = 0.0
+   _ctx.Polycv_polyState_ret_10 = 0.0
+   _ctx.Polycv_polyState_ret_11 = 0.0
+   _ctx.Polycv_polyState_ret_2 = 0.0
+   _ctx.Polycv_polyState_ret_3 = 0.0
+   _ctx.Polycv_polyState_ret_4 = 0.0
+   _ctx.Polycv_polyState_ret_5 = 0.0
+   _ctx.Polycv_polyState_ret_6 = 0.0
+   _ctx.Polycv_polyState_ret_7 = 0.0
+   _ctx.Polycv_polyState_ret_8 = 0.0
+   _ctx.Polycv_polyState_ret_9 = 0.0
    i_0 = 0
    temp = initializeArray(0, 4)
    while (i_0 < 4):
       temp[i_0] = 0
       i_0 = (1 + i_0)
 
-   _ctx["notes"] = temp
+   _ctx.notes = temp
    i_1 = 0
    temp = initializeArray(0, 4)
    while (i_1 < 4):
       temp[i_1] = 0
       i_1 = (1 + i_1)
 
-   _ctx["vel"] = temp
+   _ctx.vel = temp
    return _ctx
 
 
@@ -87,21 +149,21 @@ def Polycv_polyState_type_alloc(_ctx):
    return Polycv_poly_noteOn_type_alloc()
 
 def Polycv_process_type_alloc():
-   _ctx = {}
-   _ctx["Polycv_process_ret_0"] = 0.0
-   _ctx["Polycv_process_ret_1"] = 0.0
-   _ctx["Polycv_process_ret_10"] = 0.0
-   _ctx["Polycv_process_ret_11"] = 0.0
-   _ctx["Polycv_process_ret_2"] = 0.0
-   _ctx["Polycv_process_ret_3"] = 0.0
-   _ctx["Polycv_process_ret_4"] = 0.0
-   _ctx["Polycv_process_ret_5"] = 0.0
-   _ctx["Polycv_process_ret_6"] = 0.0
-   _ctx["Polycv_process_ret_7"] = 0.0
-   _ctx["Polycv_process_ret_8"] = 0.0
-   _ctx["Polycv_process_ret_9"] = 0.0
-   _ctx["channel_in"] = 0
-   _ctx["poly"] = Polycv_poly_noteOn_type_alloc()
+   _ctx = Polycv_process_type()
+   _ctx.Polycv_process_ret_0 = 0.0
+   _ctx.Polycv_process_ret_1 = 0.0
+   _ctx.Polycv_process_ret_10 = 0.0
+   _ctx.Polycv_process_ret_11 = 0.0
+   _ctx.Polycv_process_ret_2 = 0.0
+   _ctx.Polycv_process_ret_3 = 0.0
+   _ctx.Polycv_process_ret_4 = 0.0
+   _ctx.Polycv_process_ret_5 = 0.0
+   _ctx.Polycv_process_ret_6 = 0.0
+   _ctx.Polycv_process_ret_7 = 0.0
+   _ctx.Polycv_process_ret_8 = 0.0
+   _ctx.Polycv_process_ret_9 = 0.0
+   _ctx.channel_in = 0
+   _ctx.poly = Polycv_poly_noteOn_type_alloc()
    return _ctx
 
 
@@ -118,14 +180,14 @@ def Polycv_default_type_alloc(_ctx):
    return Polycv_process_type_alloc()
 
 def Util_edge(_ctx, x):
-   ret = (x and (_ctx["pre"] == False))
-   _ctx["pre"] = x
+   ret = (x and (_ctx.pre == False))
+   _ctx.pre = x
    return ret
 
 
 def Util_change(_ctx, x):
-   v = (_ctx["pre_x"] != x)
-   _ctx["pre_x"] = x
+   v = (_ctx.pre_x != x)
+   _ctx.pre_x = x
    return v
 
 
@@ -133,20 +195,20 @@ def Util_map(x, x0, x1, y0, y1):
    return (y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))))
 
 def Util_dcblock(_ctx, x0):
-   y0 = (x0 + ((-_ctx["x1"]) + (0.995 * _ctx["y1"])))
-   _ctx["x1"] = x0
-   _ctx["y1"] = y0
+   y0 = (x0 + ((-_ctx.x1) + (0.995 * _ctx.y1)))
+   _ctx.x1 = x0
+   _ctx.y1 = y0
    return y0
 
 
 def Util_smooth(_ctx, input):
-   _ctx["x"] = ((0.005 * (input + (-_ctx["x"]))) + _ctx["x"])
-   return _ctx["x"]
+   _ctx.x = ((0.005 * (input + (-_ctx.x))) + _ctx.x)
+   return _ctx.x
 
 
 def Util_average2(_ctx, x1):
-   result = (0.5 * (x1 + _ctx["x0"]))
-   _ctx["x0"] = x1
+   result = (0.5 * (x1 + _ctx.x0))
+   _ctx.x0 = x1
    return result
 
 
@@ -280,9 +342,9 @@ def Polycv_poly_noteOn(_ctx, note, velocity):
    i = 0
    found = False
    while ((i < 4) and (found == False)):
-      if (_ctx["vel"][i] == 0):
-         _ctx["notes"][i] = note
-         _ctx["vel"][i] = velocity
+      if (_ctx.vel[i] == 0):
+         _ctx.notes[i] = note
+         _ctx.vel[i] = velocity
          found = True
 
       i = (1 + i)
@@ -293,8 +355,8 @@ def Polycv_poly_noteOff(_ctx, note):
    i = 0
    found = False
    while ((i < 4) and (found == False)):
-      if (_ctx["notes"][i] == note):
-         _ctx["vel"][i] = 0
+      if (_ctx.notes[i] == note):
+         _ctx.vel[i] = 0
          found = True
 
       i = (1 + i)
@@ -302,73 +364,73 @@ def Polycv_poly_noteOff(_ctx, note):
 
 
 def Polycv_polyState(_ctx):
-   note1 = Util_pitchToCv(float(_ctx["notes"][0]))
-   note2 = Util_pitchToCv(float(_ctx["notes"][1]))
-   note3 = Util_pitchToCv(float(_ctx["notes"][2]))
-   note4 = Util_pitchToCv(float(_ctx["notes"][3]))
-   vel1 = Polycv_velToCV(_ctx["vel"][0])
-   vel2 = Polycv_velToCV(_ctx["vel"][1])
-   vel3 = Polycv_velToCV(_ctx["vel"][2])
-   vel4 = Polycv_velToCV(_ctx["vel"][3])
-   gate1 = Polycv_velToGate(_ctx["vel"][0])
-   gate2 = Polycv_velToGate(_ctx["vel"][1])
-   gate3 = Polycv_velToGate(_ctx["vel"][2])
-   gate4 = Polycv_velToGate(_ctx["vel"][3])
-   _ctx["Polycv_polyState_ret_0"] = note1
-   _ctx["Polycv_polyState_ret_1"] = vel1
-   _ctx["Polycv_polyState_ret_2"] = gate1
-   _ctx["Polycv_polyState_ret_3"] = note2
-   _ctx["Polycv_polyState_ret_4"] = vel2
-   _ctx["Polycv_polyState_ret_5"] = gate2
-   _ctx["Polycv_polyState_ret_6"] = note3
-   _ctx["Polycv_polyState_ret_7"] = vel3
-   _ctx["Polycv_polyState_ret_8"] = gate3
-   _ctx["Polycv_polyState_ret_9"] = note4
-   _ctx["Polycv_polyState_ret_10"] = vel4
-   _ctx["Polycv_polyState_ret_11"] = gate4
+   note1 = Util_pitchToCv(float(_ctx.notes[0]))
+   note2 = Util_pitchToCv(float(_ctx.notes[1]))
+   note3 = Util_pitchToCv(float(_ctx.notes[2]))
+   note4 = Util_pitchToCv(float(_ctx.notes[3]))
+   vel1 = Polycv_velToCV(_ctx.vel[0])
+   vel2 = Polycv_velToCV(_ctx.vel[1])
+   vel3 = Polycv_velToCV(_ctx.vel[2])
+   vel4 = Polycv_velToCV(_ctx.vel[3])
+   gate1 = Polycv_velToGate(_ctx.vel[0])
+   gate2 = Polycv_velToGate(_ctx.vel[1])
+   gate3 = Polycv_velToGate(_ctx.vel[2])
+   gate4 = Polycv_velToGate(_ctx.vel[3])
+   _ctx.Polycv_polyState_ret_0 = note1
+   _ctx.Polycv_polyState_ret_1 = vel1
+   _ctx.Polycv_polyState_ret_2 = gate1
+   _ctx.Polycv_polyState_ret_3 = note2
+   _ctx.Polycv_polyState_ret_4 = vel2
+   _ctx.Polycv_polyState_ret_5 = gate2
+   _ctx.Polycv_polyState_ret_6 = note3
+   _ctx.Polycv_polyState_ret_7 = vel3
+   _ctx.Polycv_polyState_ret_8 = gate3
+   _ctx.Polycv_polyState_ret_9 = note4
+   _ctx.Polycv_polyState_ret_10 = vel4
+   _ctx.Polycv_polyState_ret_11 = gate4
    return None
 
 
 def Polycv_process(_ctx, c):
-   _ctx["channel_in"] = c
-   _ = Polycv_polyState(_ctx["poly"])
-   _call_temp_0 = _ctx["poly"]["Polycv_polyState_ret_0"]
-   _call_temp_1 = _ctx["poly"]["Polycv_polyState_ret_1"]
-   _call_temp_2 = _ctx["poly"]["Polycv_polyState_ret_2"]
-   _call_temp_3 = _ctx["poly"]["Polycv_polyState_ret_3"]
-   _call_temp_4 = _ctx["poly"]["Polycv_polyState_ret_4"]
-   _call_temp_5 = _ctx["poly"]["Polycv_polyState_ret_5"]
-   _call_temp_6 = _ctx["poly"]["Polycv_polyState_ret_6"]
-   _call_temp_7 = _ctx["poly"]["Polycv_polyState_ret_7"]
-   _call_temp_8 = _ctx["poly"]["Polycv_polyState_ret_8"]
-   _call_temp_9 = _ctx["poly"]["Polycv_polyState_ret_9"]
-   _call_temp_10 = _ctx["poly"]["Polycv_polyState_ret_10"]
-   _call_temp_11 = _ctx["poly"]["Polycv_polyState_ret_11"]
-   _ctx["Polycv_process_ret_0"] = _call_temp_0
-   _ctx["Polycv_process_ret_1"] = _call_temp_1
-   _ctx["Polycv_process_ret_2"] = _call_temp_2
-   _ctx["Polycv_process_ret_3"] = _call_temp_3
-   _ctx["Polycv_process_ret_4"] = _call_temp_4
-   _ctx["Polycv_process_ret_5"] = _call_temp_5
-   _ctx["Polycv_process_ret_6"] = _call_temp_6
-   _ctx["Polycv_process_ret_7"] = _call_temp_7
-   _ctx["Polycv_process_ret_8"] = _call_temp_8
-   _ctx["Polycv_process_ret_9"] = _call_temp_9
-   _ctx["Polycv_process_ret_10"] = _call_temp_10
-   _ctx["Polycv_process_ret_11"] = _call_temp_11
+   _ctx.channel_in = c
+   _ = Polycv_polyState(_ctx.poly)
+   _call_temp_0 = _ctx.poly.Polycv_polyState_ret_0
+   _call_temp_1 = _ctx.poly.Polycv_polyState_ret_1
+   _call_temp_2 = _ctx.poly.Polycv_polyState_ret_2
+   _call_temp_3 = _ctx.poly.Polycv_polyState_ret_3
+   _call_temp_4 = _ctx.poly.Polycv_polyState_ret_4
+   _call_temp_5 = _ctx.poly.Polycv_polyState_ret_5
+   _call_temp_6 = _ctx.poly.Polycv_polyState_ret_6
+   _call_temp_7 = _ctx.poly.Polycv_polyState_ret_7
+   _call_temp_8 = _ctx.poly.Polycv_polyState_ret_8
+   _call_temp_9 = _ctx.poly.Polycv_polyState_ret_9
+   _call_temp_10 = _ctx.poly.Polycv_polyState_ret_10
+   _call_temp_11 = _ctx.poly.Polycv_polyState_ret_11
+   _ctx.Polycv_process_ret_0 = _call_temp_0
+   _ctx.Polycv_process_ret_1 = _call_temp_1
+   _ctx.Polycv_process_ret_2 = _call_temp_2
+   _ctx.Polycv_process_ret_3 = _call_temp_3
+   _ctx.Polycv_process_ret_4 = _call_temp_4
+   _ctx.Polycv_process_ret_5 = _call_temp_5
+   _ctx.Polycv_process_ret_6 = _call_temp_6
+   _ctx.Polycv_process_ret_7 = _call_temp_7
+   _ctx.Polycv_process_ret_8 = _call_temp_8
+   _ctx.Polycv_process_ret_9 = _call_temp_9
+   _ctx.Polycv_process_ret_10 = _call_temp_10
+   _ctx.Polycv_process_ret_11 = _call_temp_11
    return None
 
 
 def Polycv_noteOn(_ctx, note, velocity, channel):
-   if (_ctx["channel_in"] == channel):
+   if (_ctx.channel_in == channel):
       if (velocity > 0):
-         _ = Polycv_poly_noteOn(_ctx["poly"], note, velocity)
+         _ = Polycv_poly_noteOn(_ctx.poly, note, velocity)
       else:
-         _ = Polycv_poly_noteOff(_ctx["poly"], note)
+         _ = Polycv_poly_noteOff(_ctx.poly, note)
 
 def Polycv_noteOff(_ctx, note, channel):
-   if (_ctx["channel_in"] == channel):
-      _ = Polycv_poly_noteOff(_ctx["poly"], note)
+   if (_ctx.channel_in == channel):
+      _ = Polycv_poly_noteOff(_ctx.poly, note)
 
 def Polycv_controlChange(_ctx, control, value, channel):
    pass

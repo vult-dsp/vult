@@ -18,48 +18,64 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
+class InstanceArray_counter_type:
+    __slots__ = ['total']
+    def __init__(self, total=0.0):
+        self.total = total
+
+class InstanceArray_test1_type:
+    __slots__ = ['instances']
+    def __init__(self, instances=[0.0] * 4):
+        self.instances = instances
+
+class InstanceArray_test2_type:
+    __slots__ = ['case1', 'case2']
+    def __init__(self, case1=InstanceArray_counter_type(), case2=InstanceArray_counter_type()):
+        self.case1 = case1
+        self.case2 = case2
+
 def InstanceArray_counter_type_alloc():
-   _ctx = {}
-   _ctx["total"] = 0.0
+   _ctx = InstanceArray_counter_type()
+   _ctx.total = 0.0
    return _ctx
 
 
 def InstanceArray_test1_type_alloc():
    i_0 = 0
    temp = None
-   _ctx = {}
+   _ctx = InstanceArray_test1_type()
    while (i_0 < 4):
       temp[i_0] = InstanceArray_counter_type_alloc()
       i_0 = (1 + i_0)
 
-   _ctx["instances"] = temp
+   _ctx.instances = temp
    return _ctx
 
 
 def InstanceArray_test2_type_alloc():
-   _ctx = {}
-   _ctx["case1"] = InstanceArray_counter_type_alloc()
-   _ctx["case2"] = InstanceArray_counter_type_alloc()
+   _ctx = InstanceArray_test2_type()
+   _ctx.case1 = InstanceArray_counter_type_alloc()
+   _ctx.case2 = InstanceArray_counter_type_alloc()
    return _ctx
 
 
 def InstanceArray_counter(_ctx):
-   _ctx["total"] = (1.0 + _ctx["total"])
-   return _ctx["total"]
+   _ctx.total = (1.0 + _ctx.total)
+   return _ctx.total
 
 
 def InstanceArray_test1(_ctx):
    sum = 0.0
    i__1 = 0
    while (i__1 < 4):
-      sum = (sum + InstanceArray_counter(_ctx["instances"][i__1]))
+      sum = (sum + InstanceArray_counter(_ctx.instances[i__1]))
       i__1 = (1 + i__1)
 
    return sum
 
 
 def InstanceArray_test2(_ctx):
-   _ = InstanceArray_counter(_ctx["case1"])
-   _ = InstanceArray_counter(_ctx["case2"])
+   _ = InstanceArray_counter(_ctx.case1)
+   _ = InstanceArray_counter(_ctx.case2)
 
 

@@ -18,31 +18,50 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
+class Short_delay_soft_type:
+    __slots__ = ['x2', 'x3', 'x4']
+    def __init__(self, x2=0.0, x3=0.0, x4=0.0):
+        self.x2 = x2
+        self.x3 = x3
+        self.x4 = x4
+
+class Short_delay_do_type:
+    __slots__ = ['buffer', 'write_pos']
+    def __init__(self, buffer=[0.0] * 22050, write_pos=0):
+        self.buffer = buffer
+        self.write_pos = write_pos
+
+class Short_delay_process_type:
+    __slots__ = ['inst_1593b', 'inst_2ba3b']
+    def __init__(self, inst_1593b=Short_delay_soft_type(), inst_2ba3b=Short_delay_do_type()):
+        self.inst_1593b = inst_1593b
+        self.inst_2ba3b = inst_2ba3b
+
 def Short_delay_soft_type_alloc():
-   _ctx = {}
-   _ctx["x2"] = 0.0
-   _ctx["x3"] = 0.0
-   _ctx["x4"] = 0.0
+   _ctx = Short_delay_soft_type()
+   _ctx.x2 = 0.0
+   _ctx.x3 = 0.0
+   _ctx.x4 = 0.0
    return _ctx
 
 
 def Short_delay_do_type_alloc():
    i_0 = 0
    temp = initializeArray(0.0, 22050)
-   _ctx = {}
+   _ctx = Short_delay_do_type()
    while (i_0 < 22050):
       temp[i_0] = 0.0
       i_0 = (1 + i_0)
 
-   _ctx["buffer"] = temp
-   _ctx["write_pos"] = 0
+   _ctx.buffer = temp
+   _ctx.write_pos = 0
    return _ctx
 
 
 def Short_delay_process_type_alloc():
-   _ctx = {}
-   _ctx["inst_1593b"] = Short_delay_soft_type_alloc()
-   _ctx["inst_2ba3b"] = Short_delay_do_type_alloc()
+   _ctx = Short_delay_process_type()
+   _ctx.inst_1593b = Short_delay_soft_type_alloc()
+   _ctx.inst_2ba3b = Short_delay_do_type_alloc()
    return _ctx
 
 
@@ -91,13 +110,13 @@ def Saturate_default():
    pass
 
 def Short_delay_soft(_ctx, x1):
-   o = (0.25 * (x1 + (_ctx["x2"] + (_ctx["x3"] + _ctx["x4"]))))
+   o = (0.25 * (x1 + (_ctx.x2 + (_ctx.x3 + _ctx.x4))))
    _t_temp_0 = x1
-   _t_temp_1 = _ctx["x2"]
-   _t_temp_2 = _ctx["x3"]
-   _ctx["x2"] = _t_temp_0
-   _ctx["x3"] = _t_temp_1
-   _ctx["x4"] = _t_temp_2
+   _t_temp_1 = _ctx.x2
+   _t_temp_2 = _ctx.x3
+   _ctx.x2 = _t_temp_0
+   _ctx.x3 = _t_temp_1
+   _ctx.x4 = _t_temp_2
    return o
 
 
@@ -106,23 +125,23 @@ def Short_delay_do(_ctx, x, time_in, feedback_in):
    feedback = ((0.0) if (feedback_in) < (0.0) else ((1.0) if (feedback_in) > (1.0) else (feedback_in)))
    index_r = (22050.0 * time)
    index_i = int(math.floor(index_r))
-   delta = ((-index_i) + _ctx["write_pos"])
+   delta = ((-index_i) + _ctx.write_pos)
    read_pos = 0
    if (delta < 0):
       read_pos = (22050 + delta)
    else:
       read_pos = delta
    decimal = (index_r + (-float(index_i)))
-   x1 = _ctx["buffer"][read_pos]
-   x2 = _ctx["buffer"][((1 + read_pos) % 22050)]
+   x1 = _ctx.buffer[read_pos]
+   x2 = _ctx.buffer[((1 + read_pos) % 22050)]
    ret = (x1 + (decimal * (x2 + (-x1))))
-   _ctx["write_pos"] = ((1 + _ctx["write_pos"]) % 22050)
-   _ctx["buffer"][_ctx["write_pos"]] = Saturate_process((x + (feedback * ret)))
+   _ctx.write_pos = ((1 + _ctx.write_pos) % 22050)
+   _ctx.buffer[_ctx.write_pos] = Saturate_process((x + (feedback * ret)))
    return ret
 
 
 def Short_delay_process(_ctx, x, time, feedback):
-   return Short_delay_do(_ctx["inst_2ba3b"], x, Short_delay_soft(_ctx["inst_1593b"], time), feedback)
+   return Short_delay_do(_ctx.inst_2ba3b, x, Short_delay_soft(_ctx.inst_1593b, time), feedback)
 
 def Short_delay_noteOn(_ctx, note, velocity, channel):
    pass

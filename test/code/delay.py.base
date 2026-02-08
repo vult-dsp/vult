@@ -18,78 +18,150 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
+class Delay_smooth_type:
+    __slots__ = ['x']
+    def __init__(self, x=0.0):
+        self.x = x
+
+class Delay_change_type:
+    __slots__ = ['pre_x']
+    def __init__(self, pre_x=0.0):
+        self.pre_x = pre_x
+
+class Delay_edge_type:
+    __slots__ = ['pre_x']
+    def __init__(self, pre_x=False):
+        self.pre_x = pre_x
+
+class Delay_each_type:
+    __slots__ = ['count']
+    def __init__(self, count=0):
+        self.count = count
+
+class Delay_phasor_type:
+    __slots__ = ['inst_18071', 'phase', 'rate']
+    def __init__(self, inst_18071=Delay_change_type(), phase=0.0, rate=0.0):
+        self.inst_18071 = inst_18071
+        self.phase = phase
+        self.rate = rate
+
+class Delay_lfo_type:
+    __slots__ = ['inst_11461', 'phase']
+    def __init__(self, inst_11461=Delay_edge_type(), phase=0.0):
+        self.inst_11461 = inst_11461
+        self.phase = phase
+
+class Delay_phd_osc_type:
+    __slots__ = ['inst_171c4', 'inst_277c4', 'inst_371c4', 'pre_phase1']
+    def __init__(self, inst_171c4=Delay_phasor_type(), inst_277c4=Delay_smooth_type(), inst_371c4=Delay_phasor_type(), pre_phase1=0.0):
+        self.inst_171c4 = inst_171c4
+        self.inst_277c4 = inst_277c4
+        self.inst_371c4 = inst_371c4
+        self.pre_phase1 = pre_phase1
+
+class Delay_delay_type:
+    __slots__ = ['buffer', 'write_pos']
+    def __init__(self, buffer=[0.0] * 30000, write_pos=0):
+        self.buffer = buffer
+        self.write_pos = write_pos
+
+class Delay_mono_noteOn_type:
+    __slots__ = ['count', 'notes', 'pre']
+    def __init__(self, count=0, notes=[0.0] * 4, pre=0):
+        self.count = count
+        self.notes = notes
+        self.pre = pre
+
+class Delay_process_type:
+    __slots__ = ['detune', 'feedback', 'inst_16101', 'inst_2c401', 'inst_37701', 'inst_47701', 'inst_57701', 'inst_68e01', 'lfo_amt', 'lfo_rate', 'notes', 'pitch', 'time', 'volume']
+    def __init__(self, detune=0.0, feedback=0.0, inst_16101=Delay_lfo_type(), inst_2c401=Delay_phd_osc_type(), inst_37701=Delay_smooth_type(), inst_47701=Delay_smooth_type(), inst_57701=Delay_smooth_type(), inst_68e01=Delay_delay_type(), lfo_amt=0.0, lfo_rate=0.0, notes=Delay_mono_noteOn_type(), pitch=0.0, time=0.0, volume=0.0):
+        self.detune = detune
+        self.feedback = feedback
+        self.inst_16101 = inst_16101
+        self.inst_2c401 = inst_2c401
+        self.inst_37701 = inst_37701
+        self.inst_47701 = inst_47701
+        self.inst_57701 = inst_57701
+        self.inst_68e01 = inst_68e01
+        self.lfo_amt = lfo_amt
+        self.lfo_rate = lfo_rate
+        self.notes = notes
+        self.pitch = pitch
+        self.time = time
+        self.volume = volume
+
 def Delay_smooth_type_alloc():
-   _ctx = {}
-   _ctx["x"] = 0.0
+   _ctx = Delay_smooth_type()
+   _ctx.x = 0.0
    return _ctx
 
 
 def Delay_change_type_alloc():
-   _ctx = {}
-   _ctx["pre_x"] = 0.0
+   _ctx = Delay_change_type()
+   _ctx.pre_x = 0.0
    return _ctx
 
 
 def Delay_edge_type_alloc():
-   _ctx = {}
-   _ctx["pre_x"] = False
+   _ctx = Delay_edge_type()
+   _ctx.pre_x = False
    return _ctx
 
 
 def Delay_each_type_alloc():
-   _ctx = {}
-   _ctx["count"] = 0
+   _ctx = Delay_each_type()
+   _ctx.count = 0
    return _ctx
 
 
 def Delay_phasor_type_alloc():
-   _ctx = {}
-   _ctx["inst_18071"] = Delay_change_type_alloc()
-   _ctx["phase"] = 0.0
-   _ctx["rate"] = 0.0
+   _ctx = Delay_phasor_type()
+   _ctx.inst_18071 = Delay_change_type_alloc()
+   _ctx.phase = 0.0
+   _ctx.rate = 0.0
    return _ctx
 
 
 def Delay_lfo_type_alloc():
-   _ctx = {}
-   _ctx["inst_11461"] = Delay_edge_type_alloc()
-   _ctx["phase"] = 0.0
+   _ctx = Delay_lfo_type()
+   _ctx.inst_11461 = Delay_edge_type_alloc()
+   _ctx.phase = 0.0
    return _ctx
 
 
 def Delay_phd_osc_type_alloc():
-   _ctx = {}
-   _ctx["inst_171c4"] = Delay_phasor_type_alloc()
-   _ctx["inst_277c4"] = Delay_smooth_type_alloc()
-   _ctx["inst_371c4"] = Delay_phasor_type_alloc()
-   _ctx["pre_phase1"] = 0.0
+   _ctx = Delay_phd_osc_type()
+   _ctx.inst_171c4 = Delay_phasor_type_alloc()
+   _ctx.inst_277c4 = Delay_smooth_type_alloc()
+   _ctx.inst_371c4 = Delay_phasor_type_alloc()
+   _ctx.pre_phase1 = 0.0
    return _ctx
 
 
 def Delay_delay_type_alloc():
    i_0 = 0
    temp = initializeArray(0.0, 30000)
-   _ctx = {}
+   _ctx = Delay_delay_type()
    while (i_0 < 30000):
       temp[i_0] = 0.0
       i_0 = (1 + i_0)
 
-   _ctx["buffer"] = temp
-   _ctx["write_pos"] = 0
+   _ctx.buffer = temp
+   _ctx.write_pos = 0
    return _ctx
 
 
 def Delay_mono_noteOn_type_alloc():
-   _ctx = {}
-   _ctx["count"] = 0
+   _ctx = Delay_mono_noteOn_type()
+   _ctx.count = 0
    i_0 = 0
    temp = initializeArray(0, 4)
    while (i_0 < 4):
       temp[i_0] = 0
       i_0 = (1 + i_0)
 
-   _ctx["notes"] = temp
-   _ctx["pre"] = 0
+   _ctx.notes = temp
+   _ctx.pre = 0
    return _ctx
 
 
@@ -100,21 +172,21 @@ def Delay_mono_isGateOn_type_alloc(_ctx):
    return Delay_mono_noteOn_type_alloc()
 
 def Delay_process_type_alloc():
-   _ctx = {}
-   _ctx["detune"] = 0.0
-   _ctx["feedback"] = 0.0
-   _ctx["inst_16101"] = Delay_lfo_type_alloc()
-   _ctx["inst_2c401"] = Delay_phd_osc_type_alloc()
-   _ctx["inst_37701"] = Delay_smooth_type_alloc()
-   _ctx["inst_47701"] = Delay_smooth_type_alloc()
-   _ctx["inst_57701"] = Delay_smooth_type_alloc()
-   _ctx["inst_68e01"] = Delay_delay_type_alloc()
-   _ctx["lfo_amt"] = 0.0
-   _ctx["lfo_rate"] = 0.0
-   _ctx["notes"] = Delay_mono_noteOn_type_alloc()
-   _ctx["pitch"] = 0.0
-   _ctx["time"] = 0.0
-   _ctx["volume"] = 0.0
+   _ctx = Delay_process_type()
+   _ctx.detune = 0.0
+   _ctx.feedback = 0.0
+   _ctx.inst_16101 = Delay_lfo_type_alloc()
+   _ctx.inst_2c401 = Delay_phd_osc_type_alloc()
+   _ctx.inst_37701 = Delay_smooth_type_alloc()
+   _ctx.inst_47701 = Delay_smooth_type_alloc()
+   _ctx.inst_57701 = Delay_smooth_type_alloc()
+   _ctx.inst_68e01 = Delay_delay_type_alloc()
+   _ctx.lfo_amt = 0.0
+   _ctx.lfo_rate = 0.0
+   _ctx.notes = Delay_mono_noteOn_type_alloc()
+   _ctx.pitch = 0.0
+   _ctx.time = 0.0
+   _ctx.volume = 0.0
    return _ctx
 
 
@@ -131,25 +203,25 @@ def Delay_default_type_alloc(_ctx):
    return Delay_process_type_alloc()
 
 def Delay_smooth(_ctx, input):
-   _ctx["x"] = ((0.005 * (input + (-_ctx["x"]))) + _ctx["x"])
-   return _ctx["x"]
+   _ctx.x = ((0.005 * (input + (-_ctx.x))) + _ctx.x)
+   return _ctx.x
 
 
 def Delay_change(_ctx, x):
-   v = (_ctx["pre_x"] != x)
-   _ctx["pre_x"] = x
+   v = (_ctx.pre_x != x)
+   _ctx.pre_x = x
    return v
 
 
 def Delay_edge(_ctx, x):
-   v = ((_ctx["pre_x"] != x) and (_ctx["pre_x"] == False))
-   _ctx["pre_x"] = x
+   v = ((_ctx.pre_x != x) and (_ctx.pre_x == False))
+   _ctx.pre_x = x
    return v
 
 
 def Delay_each(_ctx, n):
-   ret = (_ctx["count"] == 0)
-   _ctx["count"] = ((1 + _ctx["count"]) % n)
+   ret = (_ctx.count == 0)
+   _ctx.count = ((1 + _ctx.count) % n)
    return ret
 
 
@@ -157,31 +229,31 @@ def Delay_pitchToRate(d):
    return (0.000185 * math.exp((0.057762 * d)))
 
 def Delay_phasor(_ctx, pitch, reset):
-   if Delay_change(_ctx["inst_18071"], pitch):
-      _ctx["rate"] = Delay_pitchToRate(pitch)
+   if Delay_change(_ctx.inst_18071, pitch):
+      _ctx.rate = Delay_pitchToRate(pitch)
    if reset:
-      _ctx["phase"] = 0.0
+      _ctx.phase = 0.0
    else:
-      _ctx["phase"] = ((_ctx["phase"] + _ctx["rate"]) % 1.0)
-   return _ctx["phase"]
+      _ctx.phase = ((_ctx.phase + _ctx.rate) % 1.0)
+   return _ctx.phase
 
 
 def Delay_lfo(_ctx, f, gate):
    rate = (0.000226 * f)
-   if Delay_edge(_ctx["inst_11461"], gate):
-      _ctx["phase"] = 0.0
-   _ctx["phase"] = (rate + _ctx["phase"])
-   if (_ctx["phase"] > 1.0):
-      _ctx["phase"] = (-1.0 + _ctx["phase"])
-   return (-0.5 + math.sin((6.283185 * _ctx["phase"])))
+   if Delay_edge(_ctx.inst_11461, gate):
+      _ctx.phase = 0.0
+   _ctx.phase = (rate + _ctx.phase)
+   if (_ctx.phase > 1.0):
+      _ctx.phase = (-1.0 + _ctx.phase)
+   return (-0.5 + math.sin((6.283185 * _ctx.phase)))
 
 
 def Delay_phd_osc(_ctx, pitch, detune):
-   phase1 = Delay_phasor(_ctx["inst_171c4"], pitch, False)
+   phase1 = Delay_phasor(_ctx.inst_171c4, pitch, False)
    comp = (1.0 + (-phase1))
-   reset = (((-phase1) + _ctx["pre_phase1"]) > 0.5)
-   _ctx["pre_phase1"] = phase1
-   phase2 = Delay_phasor(_ctx["inst_371c4"], (pitch + (32.0 * Delay_smooth(_ctx["inst_277c4"], detune))), reset)
+   reset = (((-phase1) + _ctx.pre_phase1) > 0.5)
+   _ctx.pre_phase1 = phase1
+   phase2 = Delay_phasor(_ctx.inst_371c4, (pitch + (32.0 * Delay_smooth(_ctx.inst_277c4, detune))), reset)
    sine = math.sin((6.283185 * phase2))
    return (comp * sine)
 
@@ -191,39 +263,39 @@ def Delay_delay(_ctx, x, time, feedback):
    feedback = ((0.0) if (feedback) < (0.0) else ((1.0) if (feedback) > (1.0) else (feedback)))
    index_r = (30000.0 * time)
    index_i = int(math.floor(index_r))
-   delta = ((-index_i) + _ctx["write_pos"])
+   delta = ((-index_i) + _ctx.write_pos)
    read_pos = 0
    if (delta < 0):
       read_pos = (30000 + delta)
    else:
       read_pos = delta
    decimal = (index_r + (-float(index_i)))
-   x1 = _ctx["buffer"][read_pos]
-   x2 = _ctx["buffer"][((1 + read_pos) % 30000)]
+   x1 = _ctx.buffer[read_pos]
+   x2 = _ctx.buffer[((1 + read_pos) % 30000)]
    ret = (x1 + (decimal * (x2 + (-x1))))
-   _ctx["write_pos"] = ((1 + _ctx["write_pos"]) % 30000)
-   _ctx["buffer"][_ctx["write_pos"]] = ((-1.0) if ((x + (feedback * ret))) < (-1.0) else ((1.0) if ((x + (feedback * ret))) > (1.0) else ((x + (feedback * ret)))))
+   _ctx.write_pos = ((1 + _ctx.write_pos) % 30000)
+   _ctx.buffer[_ctx.write_pos] = ((-1.0) if ((x + (feedback * ret))) < (-1.0) else ((1.0) if ((x + (feedback * ret))) > (1.0) else ((x + (feedback * ret)))))
    return ret
 
 
 def Delay_mono_noteOn(_ctx, n):
-   if (_ctx["count"] < 4):
-      _ctx["notes"][_ctx["count"]] = n
-      _ctx["pre"] = n
-      if (_ctx["count"] < 4):
-         _ctx["count"] = (1 + _ctx["count"])
+   if (_ctx.count < 4):
+      _ctx.notes[_ctx.count] = n
+      _ctx.pre = n
+      if (_ctx.count < 4):
+         _ctx.count = (1 + _ctx.count)
 
-   return _ctx["pre"]
+   return _ctx.pre
 
 
 def Delay_mono_noteOff(_ctx, n):
    found = False
    i = 0
    pos = 0
-   if (_ctx["count"] == 0):
-      return _ctx["pre"]
+   if (_ctx.count == 0):
+      return _ctx.pre
    while ((i < 4) and (found == False)):
-      if (_ctx["notes"][i] == n):
+      if (_ctx.notes[i] == n):
          pos = i
          found = True
 
@@ -232,58 +304,58 @@ def Delay_mono_noteOff(_ctx, n):
    if found:
       k = (1 + pos)
       while (k < 4):
-         _ctx["notes"][(-1 + k)] = _ctx["notes"][k]
+         _ctx.notes[(-1 + k)] = _ctx.notes[k]
          k = (1 + k)
 
-      if (found and (_ctx["count"] > 0)):
-         _ctx["count"] = (-1 + _ctx["count"])
-         _ctx["pre"] = _ctx["notes"][(-1 + _ctx["count"])]
+      if (found and (_ctx.count > 0)):
+         _ctx.count = (-1 + _ctx.count)
+         _ctx.pre = _ctx.notes[(-1 + _ctx.count)]
 
 
-   return _ctx["pre"]
+   return _ctx.pre
 
 
 def Delay_mono_isGateOn(_ctx):
-   return (_ctx["count"] > 0)
+   return (_ctx.count > 0)
 
 def Delay_process(_ctx, input):
-   gate = Delay_mono_isGateOn(_ctx["notes"])
-   lfo_val = (Delay_lfo(_ctx["inst_16101"], _ctx["lfo_rate"], gate) * _ctx["lfo_amt"])
-   o1 = Delay_phd_osc(_ctx["inst_2c401"], _ctx["pitch"], (lfo_val + _ctx["detune"]))
-   amp = Delay_smooth(_ctx["inst_37701"], (1.0 if gate else 0.0))
+   gate = Delay_mono_isGateOn(_ctx.notes)
+   lfo_val = (Delay_lfo(_ctx.inst_16101, _ctx.lfo_rate, gate) * _ctx.lfo_amt)
+   o1 = Delay_phd_osc(_ctx.inst_2c401, _ctx.pitch, (lfo_val + _ctx.detune))
+   amp = Delay_smooth(_ctx.inst_37701, (1.0 if gate else 0.0))
    osc_out = (amp * o1)
-   delay_out = Delay_delay(_ctx["inst_68e01"], osc_out, Delay_smooth(_ctx["inst_47701"], _ctx["time"]), Delay_smooth(_ctx["inst_57701"], _ctx["feedback"]))
-   return (0.5 * ((delay_out + osc_out) * _ctx["volume"]))
+   delay_out = Delay_delay(_ctx.inst_68e01, osc_out, Delay_smooth(_ctx.inst_47701, _ctx.time), Delay_smooth(_ctx.inst_57701, _ctx.feedback))
+   return (0.5 * ((delay_out + osc_out) * _ctx.volume))
 
 
 def Delay_noteOn(_ctx, note, velocity, channel):
-   _ctx["pitch"] = float(Delay_mono_noteOn(_ctx["notes"], note))
+   _ctx.pitch = float(Delay_mono_noteOn(_ctx.notes, note))
 
 def Delay_noteOff(_ctx, note, channel):
-   _ctx["pitch"] = float(Delay_mono_noteOff(_ctx["notes"], note))
+   _ctx.pitch = float(Delay_mono_noteOff(_ctx.notes, note))
 
 def Delay_controlChange(_ctx, control, value, channel):
    if (control == 30):
-      _ctx["volume"] = (0.007874 * value)
+      _ctx.volume = (0.007874 * value)
    if (control == 31):
-      _ctx["detune"] = (0.007874 * value)
+      _ctx.detune = (0.007874 * value)
    if (control == 32):
-      _ctx["lfo_rate"] = (0.007874 * value)
+      _ctx.lfo_rate = (0.007874 * value)
    if (control == 33):
-      _ctx["lfo_amt"] = (-1.0 + (0.015748 * value))
+      _ctx.lfo_amt = (-1.0 + (0.015748 * value))
    if (control == 34):
-      _ctx["time"] = (0.007874 * value)
+      _ctx.time = (0.007874 * value)
    if (control == 35):
-      _ctx["feedback"] = (0.007874 * value)
+      _ctx.feedback = (0.007874 * value)
 
 
 def Delay_default(_ctx):
-   _ctx["volume"] = 1.0
-   _ctx["pitch"] = 45.0
-   _ctx["detune"] = 0.8
-   _ctx["lfo_rate"] = 0.07
-   _ctx["lfo_amt"] = -0.8
-   _ctx["time"] = 0.5
-   _ctx["feedback"] = 0.5
+   _ctx.volume = 1.0
+   _ctx.pitch = 45.0
+   _ctx.detune = 0.8
+   _ctx.lfo_rate = 0.07
+   _ctx.lfo_amt = -0.8
+   _ctx.time = 0.5
+   _ctx.feedback = 0.5
 
 

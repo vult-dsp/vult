@@ -18,15 +18,21 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
+class Record_init_point:
+    __slots__ = ['x', 'y']
+    def __init__(self, x=0.0, y=0.0):
+        self.x = x
+        self.y = y
+
 def Record_init_point_alloc():
-   _ctx = {}
-   _ctx["x"] = 0.0
-   _ctx["y"] = 0.0
+   _ctx = Record_init_point()
+   _ctx.x = 0.0
+   _ctx.y = 0.0
    return _ctx
 
 
 def Record_init_foo():
-   _record_0 = {"x": 0.0, "y": 0.0}
-   p1 = _record_0["x"]
+   _record_0 = Record_init_point(x=0.0, y=0.0)
+   p1 = _record_0.x
 
 

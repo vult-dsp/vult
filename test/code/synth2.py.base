@@ -18,97 +18,191 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
+class Synth2_change_type:
+    __slots__ = ['pre_x']
+    def __init__(self, pre_x=0.0):
+        self.pre_x = pre_x
+
+class Synth2_bchange_type:
+    __slots__ = ['pre_x']
+    def __init__(self, pre_x=False):
+        self.pre_x = pre_x
+
+class Synth2_edge_type:
+    __slots__ = ['pre_x']
+    def __init__(self, pre_x=False):
+        self.pre_x = pre_x
+
+class Synth2_each_type:
+    __slots__ = ['count']
+    def __init__(self, count=0):
+        self.count = count
+
+class Synth2_dcblock_type:
+    __slots__ = ['x1', 'y1']
+    def __init__(self, x1=0.0, y1=0.0):
+        self.x1 = x1
+        self.y1 = y1
+
+class Synth2_smooth_type:
+    __slots__ = ['x']
+    def __init__(self, x=0.0):
+        self.x = x
+
+class Synth2_lpfilter_type:
+    __slots__ = ['pre_x']
+    def __init__(self, pre_x=0.0):
+        self.pre_x = pre_x
+
+class Synth2_osc_type:
+    __slots__ = ['inst_177e5', 'inst_24fe5', 'm', 'output', 'phase', 'rate', 'state_pulse', 'state_saw', 'state_triang']
+    def __init__(self, inst_177e5=Synth2_change_type(), inst_24fe5=Synth2_dcblock_type(), m=0.0, output=0.0, phase=0.0, rate=0.0, state_pulse=0.0, state_saw=0.0, state_triang=0.0):
+        self.inst_177e5 = inst_177e5
+        self.inst_24fe5 = inst_24fe5
+        self.m = m
+        self.output = output
+        self.phase = phase
+        self.rate = rate
+        self.state_pulse = state_pulse
+        self.state_saw = state_saw
+        self.state_triang = state_triang
+
+class Synth2_svf_step_type:
+    __slots__ = ['dband', 'dlow']
+    def __init__(self, dband=0.0, dlow=0.0):
+        self.dband = dband
+        self.dlow = dlow
+
+class Synth2_svf_type:
+    __slots__ = ['g', 'inst_177a7', 'step']
+    def __init__(self, g=0.0, inst_177a7=Synth2_change_type(), step=Synth2_svf_step_type()):
+        self.g = g
+        self.inst_177a7 = inst_177a7
+        self.step = step
+
+class Synth2_lfo_type:
+    __slots__ = ['inst_1445f', 'inst_2cb5f', 'phase']
+    def __init__(self, inst_1445f=Synth2_edge_type(), inst_2cb5f=Synth2_each_type(), phase=0.0):
+        self.inst_1445f = inst_1445f
+        self.inst_2cb5f = inst_2cb5f
+        self.phase = phase
+
+class Synth2_mono_noteOn_type:
+    __slots__ = ['count', 'notes', 'pre']
+    def __init__(self, count=0, notes=[0.0] * 4, pre=0):
+        self.count = count
+        self.notes = notes
+        self.pre = pre
+
+class Synth2_process_type:
+    __slots__ = ['amp_s', 'cut', 'inst_15fb7', 'inst_2e5b7', 'inst_3dfb7', 'inst_4a7b7', 'lfo_amt', 'lfo_rate', 'monoin', 'pitch', 'pw', 'res', 'volume', 'wave']
+    def __init__(self, amp_s=0.0, cut=0.0, inst_15fb7=Synth2_lfo_type(), inst_2e5b7=Synth2_osc_type(), inst_3dfb7=Synth2_smooth_type(), inst_4a7b7=Synth2_svf_type(), lfo_amt=0.0, lfo_rate=0.0, monoin=Synth2_mono_noteOn_type(), pitch=0.0, pw=0.0, res=0.0, volume=0.0, wave=0.0):
+        self.amp_s = amp_s
+        self.cut = cut
+        self.inst_15fb7 = inst_15fb7
+        self.inst_2e5b7 = inst_2e5b7
+        self.inst_3dfb7 = inst_3dfb7
+        self.inst_4a7b7 = inst_4a7b7
+        self.lfo_amt = lfo_amt
+        self.lfo_rate = lfo_rate
+        self.monoin = monoin
+        self.pitch = pitch
+        self.pw = pw
+        self.res = res
+        self.volume = volume
+        self.wave = wave
+
 def Synth2_change_type_alloc():
-   _ctx = {}
-   _ctx["pre_x"] = 0.0
+   _ctx = Synth2_change_type()
+   _ctx.pre_x = 0.0
    return _ctx
 
 
 def Synth2_bchange_type_alloc():
-   _ctx = {}
-   _ctx["pre_x"] = False
+   _ctx = Synth2_bchange_type()
+   _ctx.pre_x = False
    return _ctx
 
 
 def Synth2_edge_type_alloc():
-   _ctx = {}
-   _ctx["pre_x"] = False
+   _ctx = Synth2_edge_type()
+   _ctx.pre_x = False
    return _ctx
 
 
 def Synth2_each_type_alloc():
-   _ctx = {}
-   _ctx["count"] = 0
+   _ctx = Synth2_each_type()
+   _ctx.count = 0
    return _ctx
 
 
 def Synth2_dcblock_type_alloc():
-   _ctx = {}
-   _ctx["x1"] = 0.0
-   _ctx["y1"] = 0.0
+   _ctx = Synth2_dcblock_type()
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
    return _ctx
 
 
 def Synth2_smooth_type_alloc():
-   _ctx = {}
-   _ctx["x"] = 0.0
+   _ctx = Synth2_smooth_type()
+   _ctx.x = 0.0
    return _ctx
 
 
 def Synth2_lpfilter_type_alloc():
-   _ctx = {}
-   _ctx["pre_x"] = 0.0
+   _ctx = Synth2_lpfilter_type()
+   _ctx.pre_x = 0.0
    return _ctx
 
 
 def Synth2_osc_type_alloc():
-   _ctx = {}
-   _ctx["inst_177e5"] = Synth2_change_type_alloc()
-   _ctx["inst_24fe5"] = Synth2_dcblock_type_alloc()
-   _ctx["m"] = 0.0
-   _ctx["output"] = 0.0
-   _ctx["phase"] = 0.0
-   _ctx["rate"] = 0.0
-   _ctx["state_pulse"] = 0.0
-   _ctx["state_saw"] = 0.0
-   _ctx["state_triang"] = 0.0
+   _ctx = Synth2_osc_type()
+   _ctx.inst_177e5 = Synth2_change_type_alloc()
+   _ctx.inst_24fe5 = Synth2_dcblock_type_alloc()
+   _ctx.m = 0.0
+   _ctx.output = 0.0
+   _ctx.phase = 0.0
+   _ctx.rate = 0.0
+   _ctx.state_pulse = 0.0
+   _ctx.state_saw = 0.0
+   _ctx.state_triang = 0.0
    return _ctx
 
 
 def Synth2_svf_step_type_alloc():
-   _ctx = {}
-   _ctx["dband"] = 0.0
-   _ctx["dlow"] = 0.0
+   _ctx = Synth2_svf_step_type()
+   _ctx.dband = 0.0
+   _ctx.dlow = 0.0
    return _ctx
 
 
 def Synth2_svf_type_alloc():
-   _ctx = {}
-   _ctx["g"] = 0.0
-   _ctx["inst_177a7"] = Synth2_change_type_alloc()
-   _ctx["step"] = Synth2_svf_step_type_alloc()
+   _ctx = Synth2_svf_type()
+   _ctx.g = 0.0
+   _ctx.inst_177a7 = Synth2_change_type_alloc()
+   _ctx.step = Synth2_svf_step_type_alloc()
    return _ctx
 
 
 def Synth2_lfo_type_alloc():
-   _ctx = {}
-   _ctx["inst_1445f"] = Synth2_edge_type_alloc()
-   _ctx["inst_2cb5f"] = Synth2_each_type_alloc()
-   _ctx["phase"] = 0.0
+   _ctx = Synth2_lfo_type()
+   _ctx.inst_1445f = Synth2_edge_type_alloc()
+   _ctx.inst_2cb5f = Synth2_each_type_alloc()
+   _ctx.phase = 0.0
    return _ctx
 
 
 def Synth2_mono_noteOn_type_alloc():
-   _ctx = {}
-   _ctx["count"] = 0
+   _ctx = Synth2_mono_noteOn_type()
+   _ctx.count = 0
    i_0 = 0
    temp = initializeArray(0, 4)
    while (i_0 < 4):
       temp[i_0] = 0
       i_0 = (1 + i_0)
 
-   _ctx["notes"] = temp
-   _ctx["pre"] = 0
+   _ctx.notes = temp
+   _ctx.pre = 0
    return _ctx
 
 
@@ -119,32 +213,32 @@ def Synth2_mono_isGateOn_type_alloc(_ctx):
    return Synth2_mono_noteOn_type_alloc()
 
 def Synth2_default(_ctx):
-   _ctx["volume"] = 1.0
-   _ctx["pw"] = 0.0
-   _ctx["pitch"] = 42.0
-   _ctx["cut"] = 1.0
-   _ctx["res"] = 0.0
-   _ctx["amp_s"] = 1.0
-   _ctx["lfo_amt"] = 0.5
-   _ctx["lfo_rate"] = 0.0
+   _ctx.volume = 1.0
+   _ctx.pw = 0.0
+   _ctx.pitch = 42.0
+   _ctx.cut = 1.0
+   _ctx.res = 0.0
+   _ctx.amp_s = 1.0
+   _ctx.lfo_amt = 0.5
+   _ctx.lfo_rate = 0.0
 
 
 def Synth2_process_type_alloc():
-   _ctx = {}
-   _ctx["amp_s"] = 0.0
-   _ctx["cut"] = 0.0
-   _ctx["inst_15fb7"] = Synth2_lfo_type_alloc()
-   _ctx["inst_2e5b7"] = Synth2_osc_type_alloc()
-   _ctx["inst_3dfb7"] = Synth2_smooth_type_alloc()
-   _ctx["inst_4a7b7"] = Synth2_svf_type_alloc()
-   _ctx["lfo_amt"] = 0.0
-   _ctx["lfo_rate"] = 0.0
-   _ctx["monoin"] = Synth2_mono_noteOn_type_alloc()
-   _ctx["pitch"] = 0.0
-   _ctx["pw"] = 0.0
-   _ctx["res"] = 0.0
-   _ctx["volume"] = 0.0
-   _ctx["wave"] = 0.0
+   _ctx = Synth2_process_type()
+   _ctx.amp_s = 0.0
+   _ctx.cut = 0.0
+   _ctx.inst_15fb7 = Synth2_lfo_type_alloc()
+   _ctx.inst_2e5b7 = Synth2_osc_type_alloc()
+   _ctx.inst_3dfb7 = Synth2_smooth_type_alloc()
+   _ctx.inst_4a7b7 = Synth2_svf_type_alloc()
+   _ctx.lfo_amt = 0.0
+   _ctx.lfo_rate = 0.0
+   _ctx.monoin = Synth2_mono_noteOn_type_alloc()
+   _ctx.pitch = 0.0
+   _ctx.pw = 0.0
+   _ctx.res = 0.0
+   _ctx.volume = 0.0
+   _ctx.wave = 0.0
    _ = Synth2_default(_ctx)
    return _ctx
 
@@ -165,26 +259,26 @@ def Synth2_minFixed():
    return 1.5e-05
 
 def Synth2_change(_ctx, x):
-   v = (_ctx["pre_x"] != x)
-   _ctx["pre_x"] = x
+   v = (_ctx.pre_x != x)
+   _ctx.pre_x = x
    return v
 
 
 def Synth2_bchange(_ctx, x):
-   v = (_ctx["pre_x"] != x)
-   _ctx["pre_x"] = x
+   v = (_ctx.pre_x != x)
+   _ctx.pre_x = x
    return v
 
 
 def Synth2_edge(_ctx, x):
-   v = ((_ctx["pre_x"] != x) and (_ctx["pre_x"] == True))
-   _ctx["pre_x"] = x
+   v = ((_ctx.pre_x != x) and (_ctx.pre_x == True))
+   _ctx.pre_x = x
    return v
 
 
 def Synth2_each(_ctx, n):
-   ret = (_ctx["count"] == 0)
-   _ctx["count"] = ((1 + _ctx["count"]) % n)
+   ret = (_ctx.count == 0)
+   _ctx.count = ((1 + _ctx.count) % n)
    return ret
 
 
@@ -192,20 +286,20 @@ def Synth2_near_zero(x):
    return (abs(x) < 0.02)
 
 def Synth2_dcblock(_ctx, x0):
-   y0 = (x0 + ((-_ctx["x1"]) + (0.995 * _ctx["y1"])))
-   _ctx["x1"] = x0
-   _ctx["y1"] = y0
+   y0 = (x0 + ((-_ctx.x1) + (0.995 * _ctx.y1)))
+   _ctx.x1 = x0
+   _ctx.y1 = y0
    return y0
 
 
 def Synth2_smooth(_ctx, input):
-   _ctx["x"] = ((0.005 * (input + (-_ctx["x"]))) + _ctx["x"])
-   return _ctx["x"]
+   _ctx.x = ((0.005 * (input + (-_ctx.x))) + _ctx.x)
+   return _ctx.x
 
 
 def Synth2_lpfilter(_ctx, x):
-   ret = (0.5 * (x + _ctx["pre_x"]))
-   _ctx["pre_x"] = x
+   ret = (0.5 * (x + _ctx.pre_x))
+   _ctx.pre_x = x
    return ret
 
 
@@ -231,42 +325,42 @@ def Synth2_osc(_ctx, pitch, pw, wave):
       fixed_pitch = pitch
    else:
       fixed_pitch = (12.0 + pitch)
-   if Synth2_change(_ctx["inst_177e5"], fixed_pitch):
-      _ctx["rate"] = Synth2_pitchToRate(fixed_pitch)
-      p = (1.0 / _ctx["rate"])
+   if Synth2_change(_ctx.inst_177e5, fixed_pitch):
+      _ctx.rate = Synth2_pitchToRate(fixed_pitch)
+      p = (1.0 / _ctx.rate)
       maxHarmonics = math.floor((0.5 * p))
-      _ctx["m"] = (1.0 + (2.0 * maxHarmonics))
+      _ctx.m = (1.0 + (2.0 * maxHarmonics))
 
    shift05 = (0.5 + (0.49 * pw))
-   shift = (shift05 + _ctx["phase"])
+   shift = (shift05 + _ctx.phase)
    if (shift > 1.0):
       shift = (-1.0 + shift)
-   tmp1 = Synth2_pulse_train(_ctx["m"], _ctx["phase"])
-   tmp2 = Synth2_pulse_train(_ctx["m"], shift)
-   _ctx["phase"] = (_ctx["phase"] + _ctx["rate"])
-   if (_ctx["phase"] > 1.0):
-      _ctx["phase"] = (-1.0 + _ctx["phase"])
-   _ctx["state_pulse"] = ((-1.0) if ((tmp1 + ((-tmp2) + (0.9995 * _ctx["state_pulse"])))) < (-1.0) else ((1.0) if ((tmp1 + ((-tmp2) + (0.9995 * _ctx["state_pulse"])))) > (1.0) else ((tmp1 + ((-tmp2) + (0.9995 * _ctx["state_pulse"]))))))
-   _ctx["state_saw"] = ((-1.0) if (((0.5 * ((tmp1 + (tmp2 + (-2.0 * _ctx["rate"]))) / shift05)) + (0.9995 * _ctx["state_saw"]))) < (-1.0) else ((1.0) if (((0.5 * ((tmp1 + (tmp2 + (-2.0 * _ctx["rate"]))) / shift05)) + (0.9995 * _ctx["state_saw"]))) > (1.0) else (((0.5 * ((tmp1 + (tmp2 + (-2.0 * _ctx["rate"]))) / shift05)) + (0.9995 * _ctx["state_saw"])))))
-   _ctx["state_triang"] = ((-1.0) if (((0.9995 * _ctx["state_triang"]) + (2.0 * (_ctx["state_pulse"] * _ctx["rate"])))) < (-1.0) else ((1.0) if (((0.9995 * _ctx["state_triang"]) + (2.0 * (_ctx["state_pulse"] * _ctx["rate"])))) > (1.0) else (((0.9995 * _ctx["state_triang"]) + (2.0 * (_ctx["state_pulse"] * _ctx["rate"]))))))
+   tmp1 = Synth2_pulse_train(_ctx.m, _ctx.phase)
+   tmp2 = Synth2_pulse_train(_ctx.m, shift)
+   _ctx.phase = (_ctx.phase + _ctx.rate)
+   if (_ctx.phase > 1.0):
+      _ctx.phase = (-1.0 + _ctx.phase)
+   _ctx.state_pulse = ((-1.0) if ((tmp1 + ((-tmp2) + (0.9995 * _ctx.state_pulse)))) < (-1.0) else ((1.0) if ((tmp1 + ((-tmp2) + (0.9995 * _ctx.state_pulse)))) > (1.0) else ((tmp1 + ((-tmp2) + (0.9995 * _ctx.state_pulse))))))
+   _ctx.state_saw = ((-1.0) if (((0.5 * ((tmp1 + (tmp2 + (-2.0 * _ctx.rate))) / shift05)) + (0.9995 * _ctx.state_saw))) < (-1.0) else ((1.0) if (((0.5 * ((tmp1 + (tmp2 + (-2.0 * _ctx.rate))) / shift05)) + (0.9995 * _ctx.state_saw))) > (1.0) else (((0.5 * ((tmp1 + (tmp2 + (-2.0 * _ctx.rate))) / shift05)) + (0.9995 * _ctx.state_saw)))))
+   _ctx.state_triang = ((-1.0) if (((0.9995 * _ctx.state_triang) + (2.0 * (_ctx.state_pulse * _ctx.rate)))) < (-1.0) else ((1.0) if (((0.9995 * _ctx.state_triang) + (2.0 * (_ctx.state_pulse * _ctx.rate)))) > (1.0) else (((0.9995 * _ctx.state_triang) + (2.0 * (_ctx.state_pulse * _ctx.rate))))))
    if (wave < 0.333333):
-      _ctx["output"] = _ctx["state_pulse"]
+      _ctx.output = _ctx.state_pulse
    else:
       if (wave < 0.666666):
-         _ctx["output"] = (2.0 * _ctx["state_saw"])
+         _ctx.output = (2.0 * _ctx.state_saw)
       else:
-         _ctx["output"] = (2.0 * ((1.0 + pw) * _ctx["state_triang"]))
-   _ctx["output"] = Synth2_dcblock(_ctx["inst_24fe5"], _ctx["output"])
-   return ((-1.0) if ((0.25 * _ctx["output"])) < (-1.0) else ((1.0) if ((0.25 * _ctx["output"])) > (1.0) else ((0.25 * _ctx["output"]))))
+         _ctx.output = (2.0 * ((1.0 + pw) * _ctx.state_triang))
+   _ctx.output = Synth2_dcblock(_ctx.inst_24fe5, _ctx.output)
+   return ((-1.0) if ((0.25 * _ctx.output)) < (-1.0) else ((1.0) if ((0.25 * _ctx.output)) > (1.0) else ((0.25 * _ctx.output))))
 
 
 def Synth2_svf_step(_ctx, input, g, q, sel):
-   low = ((g * _ctx["dband"]) + _ctx["dlow"])
-   high = (input + ((-low) + (-(q * _ctx["dband"]))))
-   band = ((g * high) + _ctx["dband"])
+   low = ((g * _ctx.dband) + _ctx.dlow)
+   high = (input + ((-low) + (-(q * _ctx.dband))))
+   band = ((g * high) + _ctx.dband)
    notch = (high + low)
-   _ctx["dband"] = ((-1.0) if (band) < (-1.0) else ((1.0) if (band) > (1.0) else (band)))
-   _ctx["dlow"] = ((-1.0) if (low) < (-1.0) else ((1.0) if (low) > (1.0) else (low)))
+   _ctx.dband = ((-1.0) if (band) < (-1.0) else ((1.0) if (band) > (1.0) else (band)))
+   _ctx.dlow = ((-1.0) if (low) < (-1.0) else ((1.0) if (low) > (1.0) else (low)))
    output = 0.0
    if (sel == 0):
       output = low
@@ -285,42 +379,42 @@ def Synth2_svf(_ctx, input, fc, q, sel):
    fc = ((0.0) if (fc) < (0.0) else ((1.0) if (fc) > (1.0) else (fc)))
    q = ((0.0) if (q) < (0.0) else ((1.0) if (q) > (1.0) else (q)))
    fix_q = (2.0 + (2.0 * (-q)))
-   if Synth2_change(_ctx["inst_177a7"], fc):
-      _ctx["g"] = (0.5 * fc)
-   x1 = Synth2_svf_step(_ctx["step"], input, _ctx["g"], fix_q, sel)
-   x2 = Synth2_svf_step(_ctx["step"], input, _ctx["g"], fix_q, sel)
+   if Synth2_change(_ctx.inst_177a7, fc):
+      _ctx.g = (0.5 * fc)
+   x1 = Synth2_svf_step(_ctx.step, input, _ctx.g, fix_q, sel)
+   x2 = Synth2_svf_step(_ctx.step, input, _ctx.g, fix_q, sel)
    return (0.5 * (x1 + x2))
 
 
 def Synth2_lfo(_ctx, f, gate):
    rate = ((100.0 * (f * Synth2_minFixed())) + Synth2_minFixed())
-   if Synth2_edge(_ctx["inst_1445f"], gate):
-      _ctx["phase"] = 0.0
-   if Synth2_each(_ctx["inst_2cb5f"], 4):
-      _ctx["phase"] = (rate + _ctx["phase"])
-   if (_ctx["phase"] > 1.0):
-      _ctx["phase"] = (-1.0 + _ctx["phase"])
-   return (0.5 + math.sin((6.283185 * _ctx["phase"])))
+   if Synth2_edge(_ctx.inst_1445f, gate):
+      _ctx.phase = 0.0
+   if Synth2_each(_ctx.inst_2cb5f, 4):
+      _ctx.phase = (rate + _ctx.phase)
+   if (_ctx.phase > 1.0):
+      _ctx.phase = (-1.0 + _ctx.phase)
+   return (0.5 + math.sin((6.283185 * _ctx.phase)))
 
 
 def Synth2_mono_noteOn(_ctx, n):
-   if (_ctx["count"] < 4):
-      _ctx["notes"][_ctx["count"]] = n
-      _ctx["pre"] = n
-      if (_ctx["count"] < 4):
-         _ctx["count"] = (1 + _ctx["count"])
+   if (_ctx.count < 4):
+      _ctx.notes[_ctx.count] = n
+      _ctx.pre = n
+      if (_ctx.count < 4):
+         _ctx.count = (1 + _ctx.count)
 
-   return _ctx["pre"]
+   return _ctx.pre
 
 
 def Synth2_mono_noteOff(_ctx, n):
    found = False
    i = 0
    pos = 0
-   if (_ctx["count"] == 0):
-      return _ctx["pre"]
+   if (_ctx.count == 0):
+      return _ctx.pre
    while ((i < 4) and (found == False)):
-      if (_ctx["notes"][i] == n):
+      if (_ctx.notes[i] == n):
          pos = i
          found = True
 
@@ -329,51 +423,51 @@ def Synth2_mono_noteOff(_ctx, n):
    if found:
       k = (1 + pos)
       while (k < 4):
-         _ctx["notes"][(-1 + k)] = _ctx["notes"][k]
+         _ctx.notes[(-1 + k)] = _ctx.notes[k]
          k = (1 + k)
 
-      if (found and (_ctx["count"] > 0)):
-         _ctx["count"] = (-1 + _ctx["count"])
-         _ctx["pre"] = _ctx["notes"][(-1 + _ctx["count"])]
+      if (found and (_ctx.count > 0)):
+         _ctx.count = (-1 + _ctx.count)
+         _ctx.pre = _ctx.notes[(-1 + _ctx.count)]
 
 
-   return _ctx["pre"]
+   return _ctx.pre
 
 
 def Synth2_mono_isGateOn(_ctx):
-   return (_ctx["count"] > 0)
+   return (_ctx.count > 0)
 
 def Synth2_process(_ctx, i):
-   gate = Synth2_mono_isGateOn(_ctx["monoin"])
-   lfo1 = (Synth2_lfo(_ctx["inst_15fb7"], _ctx["lfo_rate"], gate) * _ctx["lfo_amt"])
-   o1 = Synth2_osc(_ctx["inst_2e5b7"], _ctx["pitch"], (lfo1 + _ctx["pw"]), _ctx["wave"])
-   amp_env = Synth2_smooth(_ctx["inst_3dfb7"], (1.0 if gate else 0.0))
-   output = (amp_env * Synth2_svf(_ctx["inst_4a7b7"], o1, _ctx["cut"], _ctx["res"], 0))
-   return (output * _ctx["volume"])
+   gate = Synth2_mono_isGateOn(_ctx.monoin)
+   lfo1 = (Synth2_lfo(_ctx.inst_15fb7, _ctx.lfo_rate, gate) * _ctx.lfo_amt)
+   o1 = Synth2_osc(_ctx.inst_2e5b7, _ctx.pitch, (lfo1 + _ctx.pw), _ctx.wave)
+   amp_env = Synth2_smooth(_ctx.inst_3dfb7, (1.0 if gate else 0.0))
+   output = (amp_env * Synth2_svf(_ctx.inst_4a7b7, o1, _ctx.cut, _ctx.res, 0))
+   return (output * _ctx.volume)
 
 
 def Synth2_noteOn(_ctx, note, velocity, channel):
-   _ctx["pitch"] = float(Synth2_mono_noteOn(_ctx["monoin"], note))
+   _ctx.pitch = float(Synth2_mono_noteOn(_ctx.monoin, note))
 
 def Synth2_noteOff(_ctx, note, channel):
-   _ctx["pitch"] = float(Synth2_mono_noteOff(_ctx["monoin"], note))
+   _ctx.pitch = float(Synth2_mono_noteOff(_ctx.monoin, note))
 
 def Synth2_controlChange(_ctx, control, value, channel):
    value_0_1 = (0.007874 * float(value))
    value_m1_1 = (-1.0 + (2.0 * value_0_1))
    if (control == 30):
-      _ctx["volume"] = value_0_1
+      _ctx.volume = value_0_1
    if (control == 31):
-      _ctx["wave"] = value_0_1
+      _ctx.wave = value_0_1
    if (control == 32):
-      _ctx["pw"] = value_0_1
+      _ctx.pw = value_0_1
    if (control == 33):
-      _ctx["lfo_rate"] = value_0_1
+      _ctx.lfo_rate = value_0_1
    if (control == 34):
-      _ctx["lfo_amt"] = value_m1_1
+      _ctx.lfo_amt = value_m1_1
    if (control == 35):
-      _ctx["cut"] = value_0_1
+      _ctx.cut = value_0_1
    if (control == 36):
-      _ctx["res"] = value_0_1
+      _ctx.res = value_0_1
 
 

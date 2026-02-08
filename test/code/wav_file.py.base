@@ -18,6 +18,21 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
+class Wav_file_index_type:
+    __slots__ = ['i']
+    def __init__(self, i=0):
+        self.i = i
+
+class Wav_file_osc_wave_type:
+    __slots__ = ['inst_1e19a']
+    def __init__(self, inst_1e19a=Wav_file_index_type()):
+        self.inst_1e19a = inst_1e19a
+
+class Wav_file_process_type:
+    __slots__ = ['inst_19a53']
+    def __init__(self, inst_19a53=Wav_file_osc_wave_type()):
+        self.inst_19a53 = inst_19a53
+
 Wav_file_ext_wave_chan_0 = {}
 def Wav_file_ext_wave_samples():
    return 600
@@ -29,20 +44,20 @@ def Wav_file_ext_wave(channel, index):
 
 
 def Wav_file_index_type_alloc():
-   _ctx = {}
-   _ctx["i"] = 0
+   _ctx = Wav_file_index_type()
+   _ctx.i = 0
    return _ctx
 
 
 def Wav_file_osc_wave_type_alloc():
-   _ctx = {}
-   _ctx["inst_1e19a"] = Wav_file_index_type_alloc()
+   _ctx = Wav_file_osc_wave_type()
+   _ctx.inst_1e19a = Wav_file_index_type_alloc()
    return _ctx
 
 
 def Wav_file_process_type_alloc():
-   _ctx = {}
-   _ctx["inst_19a53"] = Wav_file_osc_wave_type_alloc()
+   _ctx = Wav_file_process_type()
+   _ctx.inst_19a53 = Wav_file_osc_wave_type_alloc()
    return _ctx
 
 
@@ -59,15 +74,15 @@ def Wav_file_default_type_alloc(_ctx):
    return Wav_file_process_type_alloc()
 
 def Wav_file_index(_ctx):
-   _ctx["i"] = ((1 + _ctx["i"]) % Wav_file_ext_wave_samples())
-   return _ctx["i"]
+   _ctx.i = ((1 + _ctx.i) % Wav_file_ext_wave_samples())
+   return _ctx.i
 
 
 def Wav_file_osc_wave(_ctx, cv):
-   return Wav_file_ext_wave(0, Wav_file_index(_ctx["inst_1e19a"]))
+   return Wav_file_ext_wave(0, Wav_file_index(_ctx.inst_1e19a))
 
 def Wav_file_process(_ctx, cv):
-   return Wav_file_osc_wave(_ctx["inst_19a53"], cv)
+   return Wav_file_osc_wave(_ctx.inst_19a53, cv)
 
 def Wav_file_noteOn(_ctx, note, velocity, channel):
    pass

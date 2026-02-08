@@ -18,65 +18,120 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
+class Synth1_smooth_type:
+    __slots__ = ['x']
+    def __init__(self, x=0.0):
+        self.x = x
+
+class Synth1_change_type:
+    __slots__ = ['pre_x']
+    def __init__(self, pre_x=0.0):
+        self.pre_x = pre_x
+
+class Synth1_edge_type:
+    __slots__ = ['pre_x']
+    def __init__(self, pre_x=0):
+        self.pre_x = pre_x
+
+class Synth1_each_type:
+    __slots__ = ['count']
+    def __init__(self, count=0):
+        self.count = count
+
+class Synth1_phasor_type:
+    __slots__ = ['inst_1be86', 'phase', 'rate']
+    def __init__(self, inst_1be86=Synth1_change_type(), phase=0.0, rate=0.0):
+        self.inst_1be86 = inst_1be86
+        self.phase = phase
+        self.rate = rate
+
+class Synth1_lfo_type:
+    __slots__ = ['inst_11e7d', 'phase']
+    def __init__(self, inst_11e7d=Synth1_edge_type(), phase=0.0):
+        self.inst_11e7d = inst_11e7d
+        self.phase = phase
+
+class Synth1_process_type:
+    __slots__ = ['count', 'detune', 'gate', 'inst_17d3d', 'inst_2863d', 'inst_3dc3d', 'inst_4863d', 'inst_5dc3d', 'inst_6dc3d', 'lfo_amt', 'lfo_rate', 'n1', 'n2', 'n3', 'n4', 'pitch', 'pre_phase1', 'volume']
+    def __init__(self, count=0, detune=0.0, gate=0, inst_17d3d=Synth1_lfo_type(), inst_2863d=Synth1_phasor_type(), inst_3dc3d=Synth1_smooth_type(), inst_4863d=Synth1_phasor_type(), inst_5dc3d=Synth1_smooth_type(), inst_6dc3d=Synth1_smooth_type(), lfo_amt=0.0, lfo_rate=0.0, n1=0, n2=0, n3=0, n4=0, pitch=0.0, pre_phase1=0.0, volume=0.0):
+        self.count = count
+        self.detune = detune
+        self.gate = gate
+        self.inst_17d3d = inst_17d3d
+        self.inst_2863d = inst_2863d
+        self.inst_3dc3d = inst_3dc3d
+        self.inst_4863d = inst_4863d
+        self.inst_5dc3d = inst_5dc3d
+        self.inst_6dc3d = inst_6dc3d
+        self.lfo_amt = lfo_amt
+        self.lfo_rate = lfo_rate
+        self.n1 = n1
+        self.n2 = n2
+        self.n3 = n3
+        self.n4 = n4
+        self.pitch = pitch
+        self.pre_phase1 = pre_phase1
+        self.volume = volume
+
 def Synth1_smooth_type_alloc():
-   _ctx = {}
-   _ctx["x"] = 0.0
+   _ctx = Synth1_smooth_type()
+   _ctx.x = 0.0
    return _ctx
 
 
 def Synth1_change_type_alloc():
-   _ctx = {}
-   _ctx["pre_x"] = 0.0
+   _ctx = Synth1_change_type()
+   _ctx.pre_x = 0.0
    return _ctx
 
 
 def Synth1_edge_type_alloc():
-   _ctx = {}
-   _ctx["pre_x"] = 0
+   _ctx = Synth1_edge_type()
+   _ctx.pre_x = 0
    return _ctx
 
 
 def Synth1_each_type_alloc():
-   _ctx = {}
-   _ctx["count"] = 0
+   _ctx = Synth1_each_type()
+   _ctx.count = 0
    return _ctx
 
 
 def Synth1_phasor_type_alloc():
-   _ctx = {}
-   _ctx["inst_1be86"] = Synth1_change_type_alloc()
-   _ctx["phase"] = 0.0
-   _ctx["rate"] = 0.0
+   _ctx = Synth1_phasor_type()
+   _ctx.inst_1be86 = Synth1_change_type_alloc()
+   _ctx.phase = 0.0
+   _ctx.rate = 0.0
    return _ctx
 
 
 def Synth1_lfo_type_alloc():
-   _ctx = {}
-   _ctx["inst_11e7d"] = Synth1_edge_type_alloc()
-   _ctx["phase"] = 0.0
+   _ctx = Synth1_lfo_type()
+   _ctx.inst_11e7d = Synth1_edge_type_alloc()
+   _ctx.phase = 0.0
    return _ctx
 
 
 def Synth1_process_type_alloc():
-   _ctx = {}
-   _ctx["count"] = 0
-   _ctx["detune"] = 0.0
-   _ctx["gate"] = 0
-   _ctx["inst_17d3d"] = Synth1_lfo_type_alloc()
-   _ctx["inst_2863d"] = Synth1_phasor_type_alloc()
-   _ctx["inst_3dc3d"] = Synth1_smooth_type_alloc()
-   _ctx["inst_4863d"] = Synth1_phasor_type_alloc()
-   _ctx["inst_5dc3d"] = Synth1_smooth_type_alloc()
-   _ctx["inst_6dc3d"] = Synth1_smooth_type_alloc()
-   _ctx["lfo_amt"] = 0.0
-   _ctx["lfo_rate"] = 0.0
-   _ctx["n1"] = 0
-   _ctx["n2"] = 0
-   _ctx["n3"] = 0
-   _ctx["n4"] = 0
-   _ctx["pitch"] = 0.0
-   _ctx["pre_phase1"] = 0.0
-   _ctx["volume"] = 0.0
+   _ctx = Synth1_process_type()
+   _ctx.count = 0
+   _ctx.detune = 0.0
+   _ctx.gate = 0
+   _ctx.inst_17d3d = Synth1_lfo_type_alloc()
+   _ctx.inst_2863d = Synth1_phasor_type_alloc()
+   _ctx.inst_3dc3d = Synth1_smooth_type_alloc()
+   _ctx.inst_4863d = Synth1_phasor_type_alloc()
+   _ctx.inst_5dc3d = Synth1_smooth_type_alloc()
+   _ctx.inst_6dc3d = Synth1_smooth_type_alloc()
+   _ctx.lfo_amt = 0.0
+   _ctx.lfo_rate = 0.0
+   _ctx.n1 = 0
+   _ctx.n2 = 0
+   _ctx.n3 = 0
+   _ctx.n4 = 0
+   _ctx.pitch = 0.0
+   _ctx.pre_phase1 = 0.0
+   _ctx.volume = 0.0
    return _ctx
 
 
@@ -93,25 +148,25 @@ def Synth1_default_type_alloc(_ctx):
    return Synth1_process_type_alloc()
 
 def Synth1_smooth(_ctx, input):
-   _ctx["x"] = ((0.005 * (input + (-_ctx["x"]))) + _ctx["x"])
-   return _ctx["x"]
+   _ctx.x = ((0.005 * (input + (-_ctx.x))) + _ctx.x)
+   return _ctx.x
 
 
 def Synth1_change(_ctx, x):
-   v = (_ctx["pre_x"] != x)
-   _ctx["pre_x"] = x
+   v = (_ctx.pre_x != x)
+   _ctx.pre_x = x
    return v
 
 
 def Synth1_edge(_ctx, x):
-   v = ((_ctx["pre_x"] != x) and (_ctx["pre_x"] == 0))
-   _ctx["pre_x"] = x
+   v = ((_ctx.pre_x != x) and (_ctx.pre_x == 0))
+   _ctx.pre_x = x
    return v
 
 
 def Synth1_each(_ctx, n):
-   ret = (_ctx["count"] == 0)
-   _ctx["count"] = ((1 + _ctx["count"]) % n)
+   ret = (_ctx.count == 0)
+   _ctx.count = ((1 + _ctx.count) % n)
    return ret
 
 
@@ -119,128 +174,128 @@ def Synth1_pitchToRate(d):
    return (0.000185 * math.exp((0.057762 * d)))
 
 def Synth1_phasor(_ctx, pitch, reset):
-   if Synth1_change(_ctx["inst_1be86"], pitch):
-      _ctx["rate"] = Synth1_pitchToRate(pitch)
+   if Synth1_change(_ctx.inst_1be86, pitch):
+      _ctx.rate = Synth1_pitchToRate(pitch)
    if reset:
-      _ctx["phase"] = 0.0
+      _ctx.phase = 0.0
    else:
-      _ctx["phase"] = ((_ctx["phase"] + _ctx["rate"]) % 1.0)
-   return _ctx["phase"]
+      _ctx.phase = ((_ctx.phase + _ctx.rate) % 1.0)
+   return _ctx.phase
 
 
 def Synth1_lfo(_ctx, f, gate):
    rate = (0.000226 * f)
-   if Synth1_edge(_ctx["inst_11e7d"], gate):
-      _ctx["phase"] = 0.0
-   _ctx["phase"] = (rate + _ctx["phase"])
-   if (_ctx["phase"] > 1.0):
-      _ctx["phase"] = (-1.0 + _ctx["phase"])
-   return (-0.5 + math.sin((6.283185 * _ctx["phase"])))
+   if Synth1_edge(_ctx.inst_11e7d, gate):
+      _ctx.phase = 0.0
+   _ctx.phase = (rate + _ctx.phase)
+   if (_ctx.phase > 1.0):
+      _ctx.phase = (-1.0 + _ctx.phase)
+   return (-0.5 + math.sin((6.283185 * _ctx.phase)))
 
 
 def Synth1_process(_ctx, input):
-   lfo_val = (Synth1_lfo(_ctx["inst_17d3d"], _ctx["lfo_rate"], _ctx["gate"]) * _ctx["lfo_amt"])
-   phase1 = Synth1_phasor(_ctx["inst_2863d"], _ctx["pitch"], False)
+   lfo_val = (Synth1_lfo(_ctx.inst_17d3d, _ctx.lfo_rate, _ctx.gate) * _ctx.lfo_amt)
+   phase1 = Synth1_phasor(_ctx.inst_2863d, _ctx.pitch, False)
    comp = (1.0 + (-phase1))
-   reset = (((-phase1) + _ctx["pre_phase1"]) > 0.5)
-   _ctx["pre_phase1"] = phase1
-   phase2 = Synth1_phasor(_ctx["inst_4863d"], ((32.0 * Synth1_smooth(_ctx["inst_3dc3d"], (lfo_val + _ctx["detune"]))) + _ctx["pitch"]), reset)
+   reset = (((-phase1) + _ctx.pre_phase1) > 0.5)
+   _ctx.pre_phase1 = phase1
+   phase2 = Synth1_phasor(_ctx.inst_4863d, ((32.0 * Synth1_smooth(_ctx.inst_3dc3d, (lfo_val + _ctx.detune))) + _ctx.pitch), reset)
    sine = math.sin((6.283185 * phase2))
    gate_value = 0.0
-   if (_ctx["gate"] > 0):
+   if (_ctx.gate > 0):
       gate_value = 1.0
    else:
       gate_value = 0.0
-   return (comp * (sine * (Synth1_smooth(_ctx["inst_5dc3d"], _ctx["volume"]) * Synth1_smooth(_ctx["inst_6dc3d"], gate_value))))
+   return (comp * (sine * (Synth1_smooth(_ctx.inst_5dc3d, _ctx.volume) * Synth1_smooth(_ctx.inst_6dc3d, gate_value))))
 
 
 def Synth1_noteOn(_ctx, note, velocity, channel):
-   if (_ctx["count"] == 0):
-      _ctx["n1"] = note
-      _ctx["pitch"] = float(note)
+   if (_ctx.count == 0):
+      _ctx.n1 = note
+      _ctx.pitch = float(note)
 
    else:
-      if (_ctx["count"] == 1):
-         _ctx["n2"] = note
-         _ctx["pitch"] = float(note)
+      if (_ctx.count == 1):
+         _ctx.n2 = note
+         _ctx.pitch = float(note)
 
       else:
-         if (_ctx["count"] == 2):
-            _ctx["n3"] = note
-            _ctx["pitch"] = float(note)
+         if (_ctx.count == 2):
+            _ctx.n3 = note
+            _ctx.pitch = float(note)
 
          else:
-            if (_ctx["count"] == 3):
-               _ctx["n4"] = note
-               _ctx["pitch"] = float(note)
+            if (_ctx.count == 3):
+               _ctx.n4 = note
+               _ctx.pitch = float(note)
 
-   if (_ctx["count"] <= 4):
-      _ctx["count"] = (1 + _ctx["count"])
-   if (_ctx["count"] > 0):
-      _ctx["gate"] = 1
+   if (_ctx.count <= 4):
+      _ctx.count = (1 + _ctx.count)
+   if (_ctx.count > 0):
+      _ctx.gate = 1
    else:
-      _ctx["gate"] = 0
+      _ctx.gate = 0
 
 
 def Synth1_noteOff(_ctx, note, channel):
    found = False
-   if (note == _ctx["n1"]):
-      _t_temp_0 = _ctx["n2"]
-      _t_temp_1 = _ctx["n3"]
-      _t_temp_2 = _ctx["n4"]
-      _ctx["n1"] = _t_temp_0
-      _ctx["n2"] = _t_temp_1
-      _ctx["n3"] = _t_temp_2
+   if (note == _ctx.n1):
+      _t_temp_0 = _ctx.n2
+      _t_temp_1 = _ctx.n3
+      _t_temp_2 = _ctx.n4
+      _ctx.n1 = _t_temp_0
+      _ctx.n2 = _t_temp_1
+      _ctx.n3 = _t_temp_2
       found = True
 
    else:
-      if (note == _ctx["n2"]):
-         _t_temp_3 = _ctx["n3"]
-         _t_temp_4 = _ctx["n4"]
-         _ctx["n2"] = _t_temp_3
-         _ctx["n3"] = _t_temp_4
+      if (note == _ctx.n2):
+         _t_temp_3 = _ctx.n3
+         _t_temp_4 = _ctx.n4
+         _ctx.n2 = _t_temp_3
+         _ctx.n3 = _t_temp_4
          found = True
 
       else:
-         if (note == _ctx["n3"]):
-            _ctx["n3"] = _ctx["n4"]
+         if (note == _ctx.n3):
+            _ctx.n3 = _ctx.n4
             found = True
 
          else:
-            if (note == _ctx["n4"]):
+            if (note == _ctx.n4):
                found = True
-   if (found and (_ctx["count"] > 0)):
-      _ctx["count"] = (-1 + _ctx["count"])
-   if (_ctx["count"] > 0):
-      _ctx["gate"] = 1
+   if (found and (_ctx.count > 0)):
+      _ctx.count = (-1 + _ctx.count)
+   if (_ctx.count > 0):
+      _ctx.gate = 1
    else:
-      _ctx["gate"] = 0
-   if (_ctx["count"] == 1):
-      _ctx["pitch"] = float(_ctx["n1"])
-   if (_ctx["count"] == 2):
-      _ctx["pitch"] = float(_ctx["n2"])
-   if (_ctx["count"] == 3):
-      _ctx["pitch"] = float(_ctx["n3"])
-   if (_ctx["count"] == 4):
-      _ctx["pitch"] = float(_ctx["n4"])
+      _ctx.gate = 0
+   if (_ctx.count == 1):
+      _ctx.pitch = float(_ctx.n1)
+   if (_ctx.count == 2):
+      _ctx.pitch = float(_ctx.n2)
+   if (_ctx.count == 3):
+      _ctx.pitch = float(_ctx.n3)
+   if (_ctx.count == 4):
+      _ctx.pitch = float(_ctx.n4)
 
 
 def Synth1_controlChange(_ctx, control, value, channel):
    if (control == 30):
-      _ctx["volume"] = (0.007874 * value)
+      _ctx.volume = (0.007874 * value)
    if (control == 31):
-      _ctx["detune"] = (0.007874 * value)
+      _ctx.detune = (0.007874 * value)
    if (control == 32):
-      _ctx["lfo_rate"] = (0.007874 * value)
+      _ctx.lfo_rate = (0.007874 * value)
    if (control == 33):
-      _ctx["lfo_amt"] = (-1.0 + (0.015748 * value))
+      _ctx.lfo_amt = (-1.0 + (0.015748 * value))
 
 
 def Synth1_default(_ctx):
-   _ctx["volume"] = 1.0
-   _ctx["pitch"] = 45.0
-   _ctx["detune"] = 0.8
-   _ctx["lfo_rate"] = 0.07
-   _ctx["lfo_amt"] = -0.8
+   _ctx.volume = 1.0
+   _ctx.pitch = 45.0
+   _ctx.detune = 0.8
+   _ctx.lfo_rate = 0.07
+   _ctx.lfo_amt = -0.8
 
 

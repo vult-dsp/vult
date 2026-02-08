@@ -18,38 +18,51 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
+class Multi_return_foo_type:
+    __slots__ = ['Multi_return_foo_ret_0', 'Multi_return_foo_ret_1']
+    def __init__(self, Multi_return_foo_ret_0=0.0, Multi_return_foo_ret_1=0.0):
+        self.Multi_return_foo_ret_0 = Multi_return_foo_ret_0
+        self.Multi_return_foo_ret_1 = Multi_return_foo_ret_1
+
+class Multi_return_bar_type:
+    __slots__ = ['Multi_return_bar_ret_0', 'Multi_return_bar_ret_1', 'inst_16585']
+    def __init__(self, Multi_return_bar_ret_0=0.0, Multi_return_bar_ret_1=0.0, inst_16585=Multi_return_foo_type()):
+        self.Multi_return_bar_ret_0 = Multi_return_bar_ret_0
+        self.Multi_return_bar_ret_1 = Multi_return_bar_ret_1
+        self.inst_16585 = inst_16585
+
 def Multi_return_foo_type_alloc():
-   _ctx = {}
-   _ctx["Multi_return_foo_ret_0"] = 0.0
-   _ctx["Multi_return_foo_ret_1"] = 0.0
+   _ctx = Multi_return_foo_type()
+   _ctx.Multi_return_foo_ret_0 = 0.0
+   _ctx.Multi_return_foo_ret_1 = 0.0
    return _ctx
 
 
 def Multi_return_bar_type_alloc():
-   _ctx = {}
-   _ctx["Multi_return_bar_ret_0"] = 0.0
-   _ctx["Multi_return_bar_ret_1"] = 0.0
-   _ctx["inst_16585"] = Multi_return_foo_type_alloc()
+   _ctx = Multi_return_bar_type()
+   _ctx.Multi_return_bar_ret_0 = 0.0
+   _ctx.Multi_return_bar_ret_1 = 0.0
+   _ctx.inst_16585 = Multi_return_foo_type_alloc()
    return _ctx
 
 
 def Multi_return_foo(_ctx, x):
    if (x > 0):
-      _ctx["Multi_return_foo_ret_0"] = 0.0
-      _ctx["Multi_return_foo_ret_1"] = 0.0
+      _ctx.Multi_return_foo_ret_0 = 0.0
+      _ctx.Multi_return_foo_ret_1 = 0.0
       return None
 
    else:
-      _ctx["Multi_return_foo_ret_0"] = 1.0
-      _ctx["Multi_return_foo_ret_1"] = 1.0
+      _ctx.Multi_return_foo_ret_0 = 1.0
+      _ctx.Multi_return_foo_ret_1 = 1.0
       return None
 
 
 def Multi_return_bar(_ctx):
-   _ = Multi_return_foo(_ctx["inst_16585"], 1)
-   x = [_ctx["inst_16585"]["Multi_return_foo_ret_0"], _ctx["inst_16585"]["Multi_return_foo_ret_1"]]
-   _ctx["Multi_return_bar_ret_0"] = x[0]
-   _ctx["Multi_return_bar_ret_1"] = x[1]
+   _ = Multi_return_foo(_ctx.inst_16585, 1)
+   x = [_ctx.inst_16585.Multi_return_foo_ret_0, _ctx.inst_16585.Multi_return_foo_ret_1]
+   _ctx.Multi_return_bar_ret_0 = x[0]
+   _ctx.Multi_return_bar_ret_1 = x[1]
    return None
 
 
