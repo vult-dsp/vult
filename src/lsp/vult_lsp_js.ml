@@ -27,8 +27,8 @@
 
 (* Simply include the main LSP server - it will auto-execute *)
 let () =
-  Printf.eprintf "🟡 Vult LSP Server - JavaScript Edition\n";
-  flush stderr;
+  Printf.eprintf "🟡 Vult LSP Server - JavaScript Edition\n" ;
+  flush stderr ;
   (* replaces all the native functions for the node.js versions *)
-  Node.NodeIO.replaceFunctions ();
+  Node.NodeIO.replaceFunctions () ;
   Vult_lsp_server.run ()

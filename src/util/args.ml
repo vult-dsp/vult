@@ -22,9 +22,7 @@
    THE SOFTWARE.
 *)
 
-type input =
-  | File of string
-  | Code of string * string
+type input = File of string | Code of string * string
 
 type output =
   | Version of string
@@ -40,243 +38,203 @@ type output =
   | AudioRendered of string
   | Errors of Error.t list
 
-type code =
-  | NoCode
-  | CppCode
-  | JSCode
-  | LuaCode
-  | JavaCode
-  | JuliaCode
-  | PythonCode
+type code = NoCode | CppCode | JSCode | LuaCode | JavaCode | JuliaCode | PythonCode
 
-type real_format =
-  | Float
-  | Fixed
+type real_format = Float | Fixed
 
 (** Stores the options passed to the command line *)
 type args =
-  { mutable files : input list
-  ; mutable dparse : bool
-  ; mutable dtyped : bool
-  ; mutable dlocs : bool
-  ; mutable dbytecode : bool
-  ; mutable dprog : bool
-  ; mutable dcode : bool
-  ; mutable eval : string option
-  ; mutable show_output : bool
-  ; mutable check : bool
-  ; mutable code : code
-  ; mutable output : string option
-  ; mutable real : real_format
-  ; mutable template : string option
-  ; mutable header : string option
-  ; mutable header_file : string option
-  ; mutable show_version : bool
-  ; mutable includes : string list
-  ; mutable deps : bool
-  ; mutable fs : float option
-  ; mutable tables : bool
-  ; mutable roots : string list
-  ; mutable shorten : bool
-  ; mutable force_write : bool
-  ; mutable prefix : string option
-  ; mutable output_prefix : string option
-  ; mutable debug : bool
-  ; mutable profile : bool
-  ; mutable split : bool
-  ; mutable test_mode : bool
-  ; mutable dump_sexpr : bool
-  ; mutable render : string option
-  }
+  { mutable files: input list
+  ; mutable dparse: bool
+  ; mutable dtyped: bool
+  ; mutable dlocs: bool
+  ; mutable dbytecode: bool
+  ; mutable dprog: bool
+  ; mutable dcode: bool
+  ; mutable eval: string option
+  ; mutable show_output: bool
+  ; mutable check: bool
+  ; mutable code: code
+  ; mutable output: string option
+  ; mutable real: real_format
+  ; mutable template: string option
+  ; mutable header: string option
+  ; mutable header_file: string option
+  ; mutable show_version: bool
+  ; mutable includes: string list
+  ; mutable deps: bool
+  ; mutable fs: float option
+  ; mutable tables: bool
+  ; mutable roots: string list
+  ; mutable shorten: bool
+  ; mutable force_write: bool
+  ; mutable prefix: string option
+  ; mutable output_prefix: string option
+  ; mutable debug: bool
+  ; mutable profile: bool
+  ; mutable split: bool
+  ; mutable test_mode: bool
+  ; mutable dump_sexpr: bool
+  ; mutable render: string option }
 
 let default_arguments : args =
-  { files = []
-  ; dparse = false
-  ; dtyped = false
-  ; dlocs = false
-  ; dbytecode = false
-  ; dprog = false
-  ; dcode = false
-  ; code = NoCode
-  ; eval = None
-  ; show_output = false
-  ; check = false
-  ; output = None
-  ; real = Float
-  ; template = None
-  ; header = None
-  ; header_file = None
-  ; show_version = false
-  ; includes = []
-  ; deps = false
-  ; fs = None
-  ; tables = true
-  ; roots = []
-  ; shorten = false
-  ; force_write = false
-  ; prefix = None
-  ; output_prefix = None
-  ; debug = false
-  ; profile = false
-  ; split = false
-  ; test_mode = false
-  ; dump_sexpr = false
-  ; render = None
-  }
+  { files= []
+  ; dparse= false
+  ; dtyped= false
+  ; dlocs= false
+  ; dbytecode= false
+  ; dprog= false
+  ; dcode= false
+  ; code= NoCode
+  ; eval= None
+  ; show_output= false
+  ; check= false
+  ; output= None
+  ; real= Float
+  ; template= None
+  ; header= None
+  ; header_file= None
+  ; show_version= false
+  ; includes= []
+  ; deps= false
+  ; fs= None
+  ; tables= true
+  ; roots= []
+  ; shorten= false
+  ; force_write= false
+  ; prefix= None
+  ; output_prefix= None
+  ; debug= false
+  ; profile= false
+  ; split= false
+  ; test_mode= false
+  ; dump_sexpr= false
+  ; render= None }
 
-
-type flags =
-  { flag : string
-  ; action : Arg.spec
-  ; comment : string
-  }
+type flags = {flag: string; action: Arg.spec; comment: string}
 
 let flags result =
-  [ { flag = "-code"
-    ; action =
+  [ { flag= "-code"
+    ; action=
         Arg.String
           (fun s ->
             result.code <-
-              (match s with
-              | "cpp" -> CppCode
-              | "lua" -> LuaCode
-              | "java" -> JavaCode
-              | "js" -> JSCode
-              | "julia" -> JuliaCode
-              | "python" -> PythonCode
+              ( match s with
+              | "cpp" ->
+                  CppCode
+              | "lua" ->
+                  LuaCode
+              | "java" ->
+                  JavaCode
+              | "js" ->
+                  JSCode
+              | "julia" ->
+                  JuliaCode
+              | "python" ->
+                  PythonCode
               | _ ->
-                print_endline ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js, julia, python");
-                exit (-1)))
-    ; comment = "language Generate code for the specified language (cpp, lua, java, js, julia, python)"
-    }
-  ; { flag = "-prefix"
-    ; action = Arg.String (fun prefix -> result.prefix <- Some prefix)
-    ; comment = "name Used to pass additional information to the code generator."
-    }
-  ; { flag = "-check"
-    ; action = Arg.Unit (fun () -> result.check <- true)
-    ; comment = " Checks the code without generating any code (default: off)"
-    }
-  ; { flag = "-o"
-    ; action = Arg.String (fun output -> result.output <- Some output)
-    ; comment = "output Defines the prefix of the output files"
-    }
-  ; { flag = "-force-write"
-    ; action = Arg.Unit (fun () -> result.force_write <- true)
-    ; comment = " Writes the generated files even if they are the same (default: off)"
-    }
-  ; { flag = "-real"
-    ; action =
+                  print_endline
+                    ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js, julia, python") ;
+                  exit (-1) ) )
+    ; comment= "language Generate code for the specified language (cpp, lua, java, js, julia, python)" }
+  ; { flag= "-prefix"
+    ; action= Arg.String (fun prefix -> result.prefix <- Some prefix)
+    ; comment= "name Used to pass additional information to the code generator." }
+  ; { flag= "-check"
+    ; action= Arg.Unit (fun () -> result.check <- true)
+    ; comment= " Checks the code without generating any code (default: off)" }
+  ; { flag= "-o"
+    ; action= Arg.String (fun output -> result.output <- Some output)
+    ; comment= "output Defines the prefix of the output files" }
+  ; { flag= "-force-write"
+    ; action= Arg.Unit (fun () -> result.force_write <- true)
+    ; comment= " Writes the generated files even if they are the same (default: off)" }
+  ; { flag= "-real"
+    ; action=
         Arg.String
           (fun real ->
             result.real <-
-              (match real with
-              | "float" -> Float
-              | "fixed" -> Fixed
+              ( match real with
+              | "float" ->
+                  Float
+              | "fixed" ->
+                  Fixed
               | _ ->
-                print_endline ("Unknown numeric formmat: " ^ real);
-                exit (-1)))
-    ; comment = " Defines the numeric type for the generated code: double, fixed"
-    }
-  ; { flag = "-samplerate"
-    ; action = Arg.Float (fun fs -> result.fs <- Some fs)
-    ; comment = "number When set, the function samplerate() is evaluated"
-    }
-  ; { flag = "-template"
-    ; action = Arg.String (fun template -> result.template <- Some template)
-    ; comment = "name Defines the template used to generate code (ccode only): pd, teensy"
-    }
-  ; { flag = "-header"
-    ; action = Arg.String (fun header -> result.header <- Some header)
-    ; comment = "name Adds the given text to the top of the generated files."
-    }
-  ; { flag = "-header-file"
-    ; action = Arg.String (fun header_file -> result.header_file <- Some header_file)
-    ; comment = "name Adds text in the given file as header to the generated files."
-    }
-  ; { flag = "-eval"; action = Arg.String (fun s -> result.eval <- Some s); comment = " Runs the code (default: off)" }
-  ; { flag = "-render"
-    ; action = Arg.String (fun s -> result.render <- Some s)
-    ; comment = " Renders audio from expression to WAV file"
-    }
-  ; { flag = "-show-output"
-    ; action = Arg.Bool (fun s -> result.show_output <- s)
-    ; comment = " Shows the values of constants when running the interpreter (default: off)"
-    }
-  ; { flag = "-tables"
-    ; action = Arg.Bool (fun b -> result.tables <- b)
-    ; comment = " Create lookup tables (default: on)"
-    }
-  ; { flag = "-shorten"
-    ; action = Arg.Unit (fun () -> result.shorten <- true)
-    ; comment = " Creates short function names (default: off)"
-    }
-  ; { flag = "-output-prefix"
-    ; action = Arg.String (fun prefix -> result.output_prefix <- Some prefix)
-    ; comment = "name Prefixes the functions with the given text."
-    }
-  ; { flag = "-i"
-    ; action = Arg.String (fun path -> result.includes <- path :: result.includes)
-    ; comment = "path Adds the given path to the list of places to look for modules"
-    }
-  ; { flag = "-root"
-    ; action = Arg.String (fun id -> result.roots <- id :: result.roots)
-    ; comment = "id Performs code cleanup keeping as roots the specified functions"
-    }
-  ; { flag = "-test"
-    ; action =
+                  print_endline ("Unknown numeric formmat: " ^ real) ;
+                  exit (-1) ) )
+    ; comment= " Defines the numeric type for the generated code: double, fixed" }
+  ; { flag= "-samplerate"
+    ; action= Arg.Float (fun fs -> result.fs <- Some fs)
+    ; comment= "number When set, the function samplerate() is evaluated" }
+  ; { flag= "-template"
+    ; action= Arg.String (fun template -> result.template <- Some template)
+    ; comment= "name Defines the template used to generate code (ccode only): pd, teensy" }
+  ; { flag= "-header"
+    ; action= Arg.String (fun header -> result.header <- Some header)
+    ; comment= "name Adds the given text to the top of the generated files." }
+  ; { flag= "-header-file"
+    ; action= Arg.String (fun header_file -> result.header_file <- Some header_file)
+    ; comment= "name Adds text in the given file as header to the generated files." }
+  ; {flag= "-eval"; action= Arg.String (fun s -> result.eval <- Some s); comment= " Runs the code (default: off)"}
+  ; { flag= "-render"
+    ; action= Arg.String (fun s -> result.render <- Some s)
+    ; comment= " Renders audio from expression to WAV file" }
+  ; { flag= "-show-output"
+    ; action= Arg.Bool (fun s -> result.show_output <- s)
+    ; comment= " Shows the values of constants when running the interpreter (default: off)" }
+  ; {flag= "-tables"; action= Arg.Bool (fun b -> result.tables <- b); comment= " Create lookup tables (default: on)"}
+  ; { flag= "-shorten"
+    ; action= Arg.Unit (fun () -> result.shorten <- true)
+    ; comment= " Creates short function names (default: off)" }
+  ; { flag= "-output-prefix"
+    ; action= Arg.String (fun prefix -> result.output_prefix <- Some prefix)
+    ; comment= "name Prefixes the functions with the given text." }
+  ; { flag= "-i"
+    ; action= Arg.String (fun path -> result.includes <- path :: result.includes)
+    ; comment= "path Adds the given path to the list of places to look for modules" }
+  ; { flag= "-root"
+    ; action= Arg.String (fun id -> result.roots <- id :: result.roots)
+    ; comment= "id Performs code cleanup keeping as roots the specified functions" }
+  ; { flag= "-test"
+    ; action=
         Arg.Unit
           (fun () ->
-            Vfloat.reduce_precision := true;
-            result.test_mode <- true)
-    ; comment = " Enters a special mode useful only for testing (default: off)"
-    }
-  ; { flag = "-split-files"
-    ; action = Arg.Unit (fun () -> result.split <- true)
-    ; comment = " Generates individual C++ files (default: off)"
-    }
-  ; { flag = "-dump-parsed"
-    ; action = Arg.Unit (fun () -> result.dparse <- true)
-    ; comment = " Dumps the parse tree (default: off)"
-    }
-  ; { flag = "-dump-bytecode"
-    ; action = Arg.Unit (fun () -> result.dbytecode <- true)
-    ; comment = " Dumps the bytecode (default: off)"
-    }
-  ; { flag = "-dump-prog"
-    ; action = Arg.Unit (fun () -> result.dprog <- true)
-    ; comment = " Dumps the processed program (default: off)"
-    }
-  ; { flag = "-dump-code"
-    ; action = Arg.Unit (fun () -> result.dcode <- true)
-    ; comment = " Dumps the processed program just before generating code (default: off)"
-    }
-  ; { flag = "-dump-typed"
-    ; action = Arg.Unit (fun () -> result.dtyped <- true)
-    ; comment = " Dumps the typed program (default: off)"
-    }
-  ; { flag = "-dump-locs"
-    ; action = Arg.Unit (fun () -> result.dlocs <- true)
-    ; comment = " Include locations in dumped output (default: off)"
-    }
-  ; { flag = "-deps"; action = Arg.Unit (fun () -> result.deps <- true); comment = " Prints all file dependencies" }
-  ; { flag = "-version"
-    ; action = Arg.Unit (fun () -> result.show_version <- true)
-    ; comment = " Show the version of vult"
-    }
-  ; { flag = "-debug"; action = Arg.Unit (fun () -> result.debug <- true); comment = "" }
-  ; { flag = "-profile"; action = Arg.Unit (fun () -> result.profile <- true); comment = "" }
-  ; { flag = "-dump-sexpr"
-    ; action = Arg.Unit (fun () -> result.dump_sexpr <- true)
-    ; comment = " Dump the parsed syntax tree as S-expressions for debugging (default: off)"
-    }
-  ]
-
+            Vfloat.reduce_precision := true ;
+            result.test_mode <- true )
+    ; comment= " Enters a special mode useful only for testing (default: off)" }
+  ; { flag= "-split-files"
+    ; action= Arg.Unit (fun () -> result.split <- true)
+    ; comment= " Generates individual C++ files (default: off)" }
+  ; { flag= "-dump-parsed"
+    ; action= Arg.Unit (fun () -> result.dparse <- true)
+    ; comment= " Dumps the parse tree (default: off)" }
+  ; { flag= "-dump-bytecode"
+    ; action= Arg.Unit (fun () -> result.dbytecode <- true)
+    ; comment= " Dumps the bytecode (default: off)" }
+  ; { flag= "-dump-prog"
+    ; action= Arg.Unit (fun () -> result.dprog <- true)
+    ; comment= " Dumps the processed program (default: off)" }
+  ; { flag= "-dump-code"
+    ; action= Arg.Unit (fun () -> result.dcode <- true)
+    ; comment= " Dumps the processed program just before generating code (default: off)" }
+  ; { flag= "-dump-typed"
+    ; action= Arg.Unit (fun () -> result.dtyped <- true)
+    ; comment= " Dumps the typed program (default: off)" }
+  ; { flag= "-dump-locs"
+    ; action= Arg.Unit (fun () -> result.dlocs <- true)
+    ; comment= " Include locations in dumped output (default: off)" }
+  ; {flag= "-deps"; action= Arg.Unit (fun () -> result.deps <- true); comment= " Prints all file dependencies"}
+  ; {flag= "-version"; action= Arg.Unit (fun () -> result.show_version <- true); comment= " Show the version of vult"}
+  ; {flag= "-debug"; action= Arg.Unit (fun () -> result.debug <- true); comment= ""}
+  ; {flag= "-profile"; action= Arg.Unit (fun () -> result.profile <- true); comment= ""}
+  ; { flag= "-dump-sexpr"
+    ; action= Arg.Unit (fun () -> result.dump_sexpr <- true)
+    ; comment= " Dump the parsed syntax tree as S-expressions for debugging (default: off)" } ]
 
 (** Returns a 'arguments' type containing the options passed in the command line *)
 let processArguments () : args =
-  let result = { default_arguments with files = [] } in
-  let opts = CCList.map (fun f -> f.flag, f.action, f.comment) (flags result) |> Arg.align in
+  let result = {default_arguments with files= []} in
+  let opts = CCList.map (fun f -> (f.flag, f.action, f.comment)) (flags result) |> Arg.align in
   let _ =
     Arg.parse opts (fun a -> result.files <- File a :: result.files) "Usage: vult file.vult [options]\noptions:"
   in

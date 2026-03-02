@@ -50,21 +50,20 @@ class type fs = object
 end
 
 (* declares the variable 'fs' as: fs = require('fs') *)
-let fs : fs Js.t = Js.Unsafe.fun_call (Js.Unsafe.js_expr "require") [| Js.Unsafe.inject (Js.string "fs") |]
+let fs : fs Js.t = Js.Unsafe.fun_call (Js.Unsafe.js_expr "require") [|Js.Unsafe.inject (Js.string "fs")|]
 
 (* declares the variable 'process' as: process = require('process') *)
 let process : process Js.t = Js.Unsafe.js_expr "process"
 
 let rec copyData size bytes array index =
-  if index > size then
-    bytes
+  if index > size then bytes
   else
     match Js.Optdef.to_option (Js.array_get array index) with
     | Some value ->
-      Bytes.set bytes index value;
-      copyData size bytes array (index + 1)
-    | None -> bytes
-
+        Bytes.set bytes index value ;
+        copyData size bytes array (index + 1)
+    | None ->
+        bytes
 
 (* This is a wrapper that allows calling the node.js function from ocaml *)
 let read_bytes_fn (path : string) : Buffer.t option =
@@ -78,9 +77,7 @@ let read_bytes_fn (path : string) : Buffer.t option =
     let buffer = Buffer.create size in
     let () = Buffer.add_bytes buffer contents in
     Some buffer
-  else
-    None
-
+  else None
 
 (* This is a wrapper that allows calling the node.js function from ocaml *)
 let read_fn (path : string) : string option =
@@ -89,15 +86,12 @@ let read_fn (path : string) : string option =
     let buffer = fs##readFileSync (Js.string path) in
     let contents = buffer##toString (Js.string "ascii") in
     Some (Js.to_string contents)
-  else
-    None
-
+  else None
 
 (* This is a wrapper that allows calling the node.js function from ocaml *)
 let write_fn (path : string) (text : string) : bool =
   let _ = fs##writeFileSync (Js.string path) (Js.string text) in
   Js.to_bool (fs##existsSync (Js.string path))
-
 
 (* This is a wrapper that allows calling the node.js function from ocaml *)
 let exists_fn (path : string) : bool = Js.to_bool (fs##existsSync (Js.string path))
@@ -107,8 +101,8 @@ let cwd_fn () : string = Js.to_string process##cwd
 
 (* replaces all the native functions for the node.js versions *)
 let replaceFunctions () =
-  FileIO.setRead read_fn;
-  FileIO.setWrite write_fn;
-  FileIO.setExists exists_fn;
-  FileIO.setCwd cwd_fn;
+  FileIO.setRead read_fn ;
+  FileIO.setWrite write_fn ;
+  FileIO.setExists exists_fn ;
+  FileIO.setCwd cwd_fn ;
   FileIO.setReadBytes read_bytes_fn

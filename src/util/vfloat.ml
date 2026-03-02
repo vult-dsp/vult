@@ -28,42 +28,37 @@ let crop (f : float) =
   if !reduce_precision then
     let ff = f *. 1000000.0 in
     floor ff /. 1000000.0
-  else
-    f
-
+  else f
 
 let adapt (f : float) =
   crop
   @@
   match Float.classify_float f with
-  | FP_normal -> f
-  | FP_subnormal -> f
-  | FP_zero -> 0.0
+  | FP_normal ->
+      f
+  | FP_subnormal ->
+      f
+  | FP_zero ->
+      0.0
   | FP_infinite ->
-    if f > 0.0 then
-      3.40282347E+38
-    else
-      -3.40282347E+38
-  | FP_nan -> failwith "nan"
-
+      if f > 0.0 then 3.40282347E+38 else -3.40282347E+38
+  | FP_nan ->
+      failwith "nan"
 
 let to_string (f : float) =
   let r =
-    Float.to_string
-    @@ crop
+    Float.to_string @@ crop
     @@
     match Float.classify_float f with
-    | FP_normal -> f
-    | FP_subnormal -> f
-    | FP_zero -> 0.0
+    | FP_normal ->
+        f
+    | FP_subnormal ->
+        f
+    | FP_zero ->
+        0.0
     | FP_infinite ->
-      if f > 0.0 then
-        3.40282347E+38
-      else
-        -3.40282347E+38
-    | FP_nan -> failwith "nan"
+        if f > 0.0 then 3.40282347E+38 else -3.40282347E+38
+    | FP_nan ->
+        failwith "nan"
   in
-  if String.ends_with ~suffix:"." r then
-    r ^ "0"
-  else
-    r
+  if String.ends_with ~suffix:"." r then r ^ "0" else r

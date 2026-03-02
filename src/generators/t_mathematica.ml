@@ -106,62 +106,41 @@
 open Core.Prog
 
 type function_info =
-  { name : string
-  ; module_name : string
-  ; has_ctx : bool
-  ; inputs : param list
-  ; outputs : type_ list
-  ; ctx_type : string option
-  }
+  {name: string; module_name: string; has_ctx: bool; inputs: param list; outputs: type_ list; ctx_type: string option}
 
 let getFunctionInfo (module_name : string) (f : function_def) =
   let outputs =
     match snd f.t with
-    | { t = TTuple elems; _ } -> elems
-    | { t = TVoid (Some elems); _ } -> elems
-    | { t = TVoid None; _ } -> []
-    | t -> [ t ]
+    | {t= TTuple elems; _} ->
+        elems
+    | {t= TVoid (Some elems); _} ->
+        elems
+    | {t= TVoid None; _} ->
+        []
+    | t ->
+        [t]
   in
   let has_ctx, inputs, ctx_type =
     match f.args with
-    | { name = "_ctx"; t = { t = TStruct { path; _ }; _ }; _ } :: inputs -> true, inputs, Some path
-    | inputs -> false, inputs, None
+    | {name= "_ctx"; t= {t= TStruct {path; _}; _}; _} :: inputs ->
+        (true, inputs, Some path)
+    | inputs ->
+        (false, inputs, None)
   in
   (* Debug: Let's be more permissive and include functions even without args/outputs *)
-  Some { name = f.name; module_name; has_ctx; inputs; outputs; ctx_type }
-
+  Some {name= f.name; module_name; has_ctx; inputs; outputs; ctx_type}
 
 let wolfram_type (t : type_) =
-  match t.t with
-  | TReal -> "Real"
-  | TInt -> "Integer"
-  | TBool -> "True|False"
-  | _ -> "Real" (* fallback *)
-
+  match t.t with TReal -> "Real" | TInt -> "Integer" | TBool -> "True|False" | _ -> "Real" (* fallback *)
 
 let c_type (t : type_) =
-  match t.t with
-  | TReal -> "mreal"
-  | TInt -> "mint"
-  | TBool -> "mbool"
-  | _ -> "mreal" (* fallback *)
-
+  match t.t with TReal -> "mreal" | TInt -> "mint" | TBool -> "mbool" | _ -> "mreal" (* fallback *)
 
 let get_argument_suffix (param : param) =
-  match param.t.t with
-  | TReal -> "Real"
-  | TInt -> "Integer"
-  | TBool -> "Boolean"
-  | _ -> "Real"
-
+  match param.t.t with TReal -> "Real" | TInt -> "Integer" | TBool -> "Boolean" | _ -> "Real"
 
 let get_type_suffix (typ : type_) =
-  match typ.t with
-  | TReal -> "Real"
-  | TInt -> "Integer"
-  | TBool -> "Boolean"
-  | _ -> "Real"
-
+  match typ.t with TReal -> "Real" | TInt -> "Integer" | TBool -> "Boolean" | _ -> "Real"
 
 let library_function_wrapper (func_info : function_info) =
   let fname = func_info.name in
@@ -172,66 +151,52 @@ let library_function_wrapper (func_info : function_info) =
     let param = List.nth func_info.inputs i in
     let suffix = get_argument_suffix param in
     let ctype = c_type param.t in
-    args_code := !args_code @ [ Printf.sprintf "    %s arg%d = MArgument_get%s(Args[%d]);" ctype i suffix i ]
-  done;
+    args_code := !args_code @ [Printf.sprintf "    %s arg%d = MArgument_get%s(Args[%d]);" ctype i suffix i]
+  done ;
   let args_str = String.concat "\n" !args_code in
   (* Generate call arguments *)
   let call_args = ref [] in
   for i = 0 to List.length func_info.inputs - 1 do
-    call_args := !call_args @ [ Printf.sprintf "arg%d" i ]
-  done;
+    call_args := !call_args @ [Printf.sprintf "arg%d" i]
+  done ;
   let call_args_str = String.concat ", " !call_args in
   (* Handle context management and function call *)
   let context_setup, function_call =
     if func_info.has_ctx then
       match func_info.ctx_type with
       | Some ctx_type ->
-        let ctx_var = String.lowercase_ascii fname ^ "_ctx" in
-        let setup =
-          Printf.sprintf
-            {|    if (!g_%s_initialized) {
+          let ctx_var = String.lowercase_ascii fname ^ "_ctx" in
+          let setup =
+            Printf.sprintf
+              {|    if (!g_%s_initialized) {
         g_%s = new %s();
         %s_init(*g_%s);
         g_%s_initialized = true;
     }|}
-            ctx_var
-            ctx_var
-            ctx_type
-            ctx_type
-            ctx_var
-            ctx_var
-        in
-        let call_with_ctx =
-          if call_args_str = "" then
-            Printf.sprintf "*g_%s" ctx_var
-          else
-            Printf.sprintf "*g_%s, %s" ctx_var call_args_str
-        in
-        setup, call_with_ctx
-      | None -> "", call_args_str
-    else
-      "", call_args_str
+              ctx_var ctx_var ctx_type ctx_type ctx_var ctx_var
+          in
+          let call_with_ctx =
+            if call_args_str = "" then Printf.sprintf "*g_%s" ctx_var
+            else Printf.sprintf "*g_%s, %s" ctx_var call_args_str
+          in
+          (setup, call_with_ctx)
+      | None ->
+          ("", call_args_str)
+    else ("", call_args_str)
   in
   (* Generate function call and result handling *)
   let call_and_result =
     match func_info.outputs with
-    | [] -> Printf.sprintf "%s\n    %s(%s);\n    MArgument_setInteger(Res, 0);" context_setup fname function_call
-    | [ output ] ->
-      let set_suffix = get_type_suffix output in
-      let ctype = c_type output in
-      Printf.sprintf
-        "%s\n    %s result = %s(%s);\n    MArgument_set%s(Res, result);"
-        context_setup
-        ctype
-        fname
-        function_call
-        set_suffix
+    | [] ->
+        Printf.sprintf "%s\n    %s(%s);\n    MArgument_setInteger(Res, 0);" context_setup fname function_call
+    | [output] ->
+        let set_suffix = get_type_suffix output in
+        let ctype = c_type output in
+        Printf.sprintf "%s\n    %s result = %s(%s);\n    MArgument_set%s(Res, result);" context_setup ctype fname
+          function_call set_suffix
     | _ ->
-      Printf.sprintf
-        "%s\n    // TODO: Handle multiple outputs\n    %s(%s);\n    MArgument_setReal(Res, 0.0);"
-        context_setup
-        fname
-        function_call
+        Printf.sprintf "%s\n    // TODO: Handle multiple outputs\n    %s(%s);\n    MArgument_setReal(Res, 0.0);"
+          context_setup fname function_call
   in
   Printf.sprintf
     {|
@@ -243,21 +208,17 @@ DLLEXPORT int %s_%s_wrapper(WolframLibraryData libData,
     
     return LIBRARY_NO_ERROR;
 }|}
-    module_name
-    fname
-    args_str
-    call_and_result
+    module_name fname args_str call_and_result
   |> Pla.string
-
 
 let reset_function (func_info : function_info) =
   if func_info.has_ctx then
     match func_info.ctx_type with
     | Some ctx_type ->
-      let fname = func_info.name in
-      let module_name = func_info.module_name in
-      let ctx_var = String.lowercase_ascii fname ^ "_ctx" in
-      {%pla|
+        let fname = func_info.name in
+        let module_name = func_info.module_name in
+        let ctx_var = String.lowercase_ascii fname ^ "_ctx" in
+        {%pla|
 DLLEXPORT int <#module_name#s>_<#fname#s>_reset(WolframLibraryData libData,
     mint Argc, MArgument *Args, MArgument Res) {
     
@@ -268,22 +229,20 @@ DLLEXPORT int <#module_name#s>_<#fname#s>_reset(WolframLibraryData libData,
     MArgument_setInteger(Res, 0);
     return LIBRARY_NO_ERROR;
 }|}
-    | None -> Pla.unit
-  else
-    Pla.unit
-
+    | None ->
+        Pla.unit
+  else Pla.unit
 
 let static_context_declaration (func_info : function_info) =
   if func_info.has_ctx then
     match func_info.ctx_type with
     | Some ctx_type ->
-      let ctx_var = String.lowercase_ascii func_info.name ^ "_ctx" in
-      {%pla|static <#ctx_type#s>* g_<#ctx_var#s> = nullptr;
+        let ctx_var = String.lowercase_ascii func_info.name ^ "_ctx" in
+        {%pla|static <#ctx_type#s>* g_<#ctx_var#s> = nullptr;
 static bool g_<#ctx_var#s>_initialized = false;|}
-    | None -> Pla.unit
-  else
-    Pla.unit
-
+    | None ->
+        Pla.unit
+  else Pla.unit
 
 let library_implementation (module_name : string) (functions : function_info list) =
   let static_declarations = CCList.map static_context_declaration functions |> Pla.join_sep_all Pla.newline in
@@ -314,7 +273,6 @@ DLLEXPORT void WolframLibrary_uninitialize(WolframLibraryData libData) {
     // TODO: Add cleanup for each static context
 }|}
 
-
 let mathematica_package (module_name : string) (functions : function_info list) =
   let lib_name = String.lowercase_ascii module_name in
   (* Generate Mathematica function definitions *)
@@ -327,13 +285,11 @@ let mathematica_package (module_name : string) (functions : function_info list) 
         let mathematica_fname = String.capitalize_ascii fname in
         (* Simple function without detailed type checking for now *)
         let func_def =
-          Printf.sprintf
-            {|%s[args___] := LibraryFunctionLoad[lib, "%s", {"Real"}, "Real"][args]|}
-            mathematica_fname
+          Printf.sprintf {|%s[args___] := LibraryFunctionLoad[lib, "%s", {"Real"}, "Real"][args]|} mathematica_fname
             wrapper_name
         in
-        function_defs := !function_defs @ [ func_def ])
-    functions;
+        function_defs := !function_defs @ [func_def] )
+    functions ;
   let functions_str = String.concat "\n\n" !function_defs in
   Printf.sprintf
     {|BeginPackage["%s`"]
@@ -348,20 +304,19 @@ Begin["`Private`"]
 
 End[]
 EndPackage[]|}
-    module_name
-    lib_name
-    functions_str
+    module_name lib_name functions_str
   |> Pla.string
-
 
 let getStmtInfo (module_name : string) (s : top_stmt) =
   match s.top with
   | TopFunction (def, _) -> (
     match getFunctionInfo module_name def with
-    | Some f -> Some f (* Include all functions for now, not just root functions *)
-    | _ -> None)
-  | _ -> None
-
+    | Some f ->
+        Some f (* Include all functions for now, not just root functions *)
+    | _ ->
+        None )
+  | _ ->
+      None
 
 let generate (module_name : string) (stmts : top_stmt list) =
   let functions = CCList.filter_map (getStmtInfo module_name) stmts in
@@ -369,4 +324,4 @@ let generate (module_name : string) (stmts : top_stmt list) =
   let _math_package = mathematica_package module_name functions in
   (* Return format: (cpp_content, other_content), (header_content, other_file_content) *)
   (* Put only LibraryLink implementation in cpp, no Mathematica package for now *)
-  (lib_impl, Pla.unit), (Pla.unit, Pla.unit)
+  ((lib_impl, Pla.unit), (Pla.unit, Pla.unit))

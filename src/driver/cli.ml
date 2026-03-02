@@ -29,126 +29,123 @@ open Generators
 
 let showResult (args : args) (output : output) =
   match output with
-  | Version v -> print_endline v
-  | Message v -> print_endline v
-  | Dependencies deps -> String.concat " " deps |> print_endline
-  | EvalResult v -> print_endline v
-  | AudioRendered msg -> print_endline msg
-  | ParsedCode v -> print_endline v
-  | Typed v -> print_endline v
-  | Prog v -> print_endline v
+  | Version v ->
+      print_endline v
+  | Message v ->
+      print_endline v
+  | Dependencies deps ->
+      String.concat " " deps |> print_endline
+  | EvalResult v ->
+      print_endline v
+  | AudioRendered msg ->
+      print_endline msg
+  | ParsedCode v ->
+      print_endline v
+  | Typed v ->
+      print_endline v
+  | Prog v ->
+      print_endline v
   | GeneratedCode files when args.output <> None ->
-    CCList.iter
-      (fun (text, filename) ->
-        let code = Pla.print text in
-        if args.force_write then
-          FileIO.write filename code |> ignore
-        else
-          FileIO.writeIfDifferent filename code |> ignore)
-      files
-  | GeneratedCode files -> CCList.iter (fun (text, _) -> print_endline (Pla.print text)) files
-  | Interpret v -> print_endline v
-  | CheckOk -> ()
+      CCList.iter
+        (fun (text, filename) ->
+          let code = Pla.print text in
+          if args.force_write then FileIO.write filename code |> ignore
+          else FileIO.writeIfDifferent filename code |> ignore )
+        files
+  | GeneratedCode files ->
+      CCList.iter (fun (text, _) -> print_endline (Pla.print text)) files
+  | Interpret v ->
+      print_endline v
+  | CheckOk ->
+      ()
   | Errors errors ->
-    let error_strings = Error.reportErrors errors in
-    prerr_endline error_strings;
-    exit 1
-
+      let error_strings = Error.reportErrors errors in
+      prerr_endline error_strings ; exit 1
 
 let generateCode args file_deps (stmts, vm, acc) =
   let stmts = Util.Profile.time "Generate Tables" (fun () -> Tables.create args vm stmts) in
   if args.code <> NoCode || args.dcode then
     let stmts = Util.Profile.time "Convert" (fun () -> Tocode.prog args stmts) in
-    let prog_out =
-      if args.dcode then
-        [ Prog (Pla.print (Prog.Print.print_prog stmts)) ]
-      else
-        []
-    in
+    let prog_out = if args.dcode then [Prog (Pla.print (Prog.Print.print_prog stmts))] else [] in
     let code =
       match args.code with
-      | NoCode -> []
+      | NoCode ->
+          []
       | CppCode ->
-        Util.Profile.time "Generate Code" (fun () -> Cpp.generate file_deps args.split args args.template stmts)
-      | LuaCode -> Lua.generate args stmts
-      | JSCode -> Js.generate args stmts
-      | JavaCode -> Java.generate args stmts
-      | JuliaCode -> Julia.generate args stmts
-      | PythonCode -> Python.generate args stmts
+          Util.Profile.time "Generate Code" (fun () -> Cpp.generate file_deps args.split args args.template stmts)
+      | LuaCode ->
+          Lua.generate args stmts
+      | JSCode ->
+          Js.generate args stmts
+      | JavaCode ->
+          Java.generate args stmts
+      | JuliaCode ->
+          Julia.generate args stmts
+      | PythonCode ->
+          Python.generate args stmts
     in
     (GeneratedCode code :: prog_out) @ acc
-  else
-    acc
-
+  else acc
 
 let compileCode (args : args) env stmts : Prog.top_stmt list * Interpreter.iprog * output list =
   let env, stmts = Toprog.convert args env stmts in
   let prog = Util.Profile.time "Passes" (fun () -> Passes.run args stmts) in
   let iprog = Util.Profile.time "Compile" (fun () -> Interpreter.transformProgram prog) in
-  let prog_out =
-    if args.dprog then
-      [ Prog (Pla.print (Prog.Print.print_prog prog)) ]
-    else
-      []
-  in
+  let prog_out = if args.dprog then [Prog (Pla.print (Prog.Print.print_prog prog))] else [] in
   let run =
     match args.eval with
     | Some fn ->
-      let result = Util.Profile.time "Eval" (fun () -> Interpreter.evaluateMainExpression args env iprog fn) in
-      let str = Interpreter.printDvalue result in
-      [ EvalResult str ]
-    | None -> []
+        let result = Util.Profile.time "Eval" (fun () -> Interpreter.evaluateMainExpression args env iprog fn) in
+        let str = Interpreter.printDvalue result in
+        [EvalResult str]
+    | None ->
+        []
   in
   let render_out =
     match args.render with
     | Some tag ->
-      let filename, duration =
-        Util.Profile.time "Render" (fun () -> Interpreter.renderAudioExpression args env iprog tag)
-      in
-      [ AudioRendered (Printf.sprintf "Audio rendered to: %s (%.3fs)" filename duration) ]
-    | None -> []
+        let filename, duration =
+          Util.Profile.time "Render" (fun () -> Interpreter.renderAudioExpression args env iprog tag)
+        in
+        [AudioRendered (Printf.sprintf "Audio rendered to: %s (%.3fs)" filename duration)]
+    | None ->
+        []
   in
-  prog, iprog, run @ prog_out @ render_out
-
+  (prog, iprog, run @ prog_out @ render_out)
 
 let version = String.sub Version.version 1 (String.length Version.version - 2)
 
 let driver (args : args) : output list =
   try
-    if args.show_version then
-      [ Version version ]
+    if args.show_version then [Version version]
     else
       (* Parse the files *)
       match args.files with
-      | [] -> [ Message ("vult " ^ version ^ " - https://github.com/vult-dsp/vult\nno input files") ]
+      | [] ->
+          [Message ("vult " ^ version ^ " - https://github.com/vult-dsp/vult\nno input files")]
       | _ ->
-        let parsed, file_deps = Util.Profile.time "Load files" (fun () -> Loader.loadFiles args args.files) in
-        if args.deps then
-          CCList.map (fun r -> r.Parse.file) parsed |> fun s -> [ Dependencies s ]
-        else if args.dparse then
-          CCList.map (fun (r : Parse.parsed_file) -> ParsedCode (Syntax.Print.print r.stmts)) parsed
-        else if args.dump_sexpr then
-          CCList.map
-            (fun (r : Parse.parsed_file) ->
-              ParsedCode (String.concat "\n" (CCList.map Syntax.SExpr.print_top_stmt r.stmts)))
-            parsed
-        else
-          let env, stmts =
-            Util.Profile.time "Typechecking" (fun () -> Typechecking.typecheck_and_elaborate args parsed)
-          in
-          if args.dtyped then
-            let () = Typed.print_exp_locs := args.dlocs in
-            [ Typed (Pla.print (Typed.print_prog stmts)) ]
+          let parsed, file_deps = Util.Profile.time "Load files" (fun () -> Loader.loadFiles args args.files) in
+          if args.deps then CCList.map (fun r -> r.Parse.file) parsed |> fun s -> [Dependencies s]
+          else if args.dparse then
+            CCList.map (fun (r : Parse.parsed_file) -> ParsedCode (Syntax.Print.print r.stmts)) parsed
+          else if args.dump_sexpr then
+            CCList.map
+              (fun (r : Parse.parsed_file) ->
+                ParsedCode (String.concat "\n" (CCList.map Syntax.SExpr.print_top_stmt r.stmts)) )
+              parsed
           else
-            compileCode args env stmts |> generateCode args file_deps
-  with
-  | Error.Errors errors when args.debug = false -> [ Errors errors ]
-
+            let env, stmts =
+              Util.Profile.time "Typechecking" (fun () -> Typechecking.typecheck_and_elaborate args parsed)
+            in
+            if args.dtyped then
+              let () = Typed.print_exp_locs := args.dlocs in
+              [Typed (Pla.print (Typed.print_prog stmts))]
+            else compileCode args env stmts |> generateCode args file_deps
+  with Error.Errors errors when args.debug = false -> [Errors errors]
 
 let main () =
   let args = processArguments () in
   let results = driver args in
-  CCList.iter (showResult args) results;
-  if args.profile then
-    Util.Profile.show ();
+  CCList.iter (showResult args) results ;
+  if args.profile then Util.Profile.show () ;
   exit 0

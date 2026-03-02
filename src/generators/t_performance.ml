@@ -34,19 +34,9 @@ let implPre (args : Util.Args.args) : Pla.t =
 #include <stdio.h>
 |}
 
-
 let implPost (args : Util.Args.args) : Pla.t =
-  let real =
-    if args.real = Fixed then
-      "fx"
-    else
-      "fl"
-  in
-  let module_name =
-    match args.files with
-    | Util.Args.File s :: _ -> Pparser.Parse.moduleName s
-    | _ -> "Top"
-  in
+  let real = if args.real = Fixed then "fx" else "fl" in
+  let module_name = match args.files with Util.Args.File s :: _ -> Pparser.Parse.moduleName s | _ -> "Top" in
   {%pla|
 int main(void)
 {
@@ -73,17 +63,11 @@ int main(void)
 }
 |}
 
-
 let generateC (args : Util.Args.args) : (Pla.t * Pla.t) * (Pla.t * Pla.t) =
-  (implPre args, implPost args), (Pla.unit, Pla.unit)
-
+  ((implPre args, implPost args), (Pla.unit, Pla.unit))
 
 let luaPost (args : Util.Args.args) =
-  let module_name =
-    match args.files with
-    | Util.Args.File s :: _ -> Pparser.Parse.moduleName s
-    | _ -> "Top"
-  in
+  let module_name = match args.files with Util.Args.File s :: _ -> Pparser.Parse.moduleName s | _ -> "Top" in
   {%pla|
      -- Performance measurement with LuaJIT detection
      local engine = isLuaJIT and "LuaJIT" or "Lua"
@@ -112,15 +96,10 @@ let luaPost (args : Util.Args.args) =
      print(string.format("<#module_name#s>\t%s\t%.2f ms/s", engine, finish / time))
      |}
 
-
-let generateLua (args : Util.Args.args) = Pla.unit, luaPost args
+let generateLua (args : Util.Args.args) = (Pla.unit, luaPost args)
 
 let jsPostWithLabel (args : Util.Args.args) (label : string) =
-  let module_name =
-    match args.files with
-    | Util.Args.File s :: _ -> Pparser.Parse.moduleName s
-    | _ -> "Top"
-  in
+  let module_name = match args.files with Util.Args.File s :: _ -> Pparser.Parse.moduleName s | _ -> "Top" in
   {%pla|
 var data = this.<#module_name#s>_process_type_alloc();
 this.<#module_name#s>_default(data);
@@ -141,21 +120,16 @@ var finish = Number(process.hrtime.bigint() - start) / 1000000 / time;
 console.log(`<#module_name#s>\t<#label#s>\t${finish.toFixed(2)} ms/s`)
 |}
 
-
 let jsPost (args : Util.Args.args) = jsPostWithLabel args "Js"
 
 let jsBunPost (args : Util.Args.args) = jsPostWithLabel args "Bun"
 
-let generateJs (args : Util.Args.args) = Pla.unit, jsPost args
+let generateJs (args : Util.Args.args) = (Pla.unit, jsPost args)
 
-let generateJsBun (args : Util.Args.args) = Pla.unit, jsBunPost args
+let generateJsBun (args : Util.Args.args) = (Pla.unit, jsBunPost args)
 
 let juliaPost (args : Util.Args.args) =
-  let module_name =
-    match args.files with
-    | Util.Args.File s :: _ -> Pparser.Parse.moduleName s
-    | _ -> "Top"
-  in
+  let module_name = match args.files with Util.Args.File s :: _ -> Pparser.Parse.moduleName s | _ -> "Top" in
   {%pla|
 # Performance measurement for <#module_name#s>
 function measure_performance()
@@ -199,19 +173,16 @@ end
 measure_performance()
 |}
 
-
-let generateJulia (args : Util.Args.args) = Pla.unit, juliaPost args
+let generateJulia (args : Util.Args.args) = (Pla.unit, juliaPost args)
 
 let javaPost (args : Util.Args.args) =
-  let module_name =
-    match args.files with
-    | Util.Args.File s :: _ -> Pparser.Parse.moduleName s
-    | _ -> "Top"
-  in
+  let module_name = match args.files with Util.Args.File s :: _ -> Pparser.Parse.moduleName s | _ -> "Top" in
   let class_name =
     match args.output with
-    | Some output -> String.capitalize_ascii (Filename.basename (Filename.remove_extension output))
-    | None -> "VultCode"
+    | Some output ->
+        String.capitalize_ascii (Filename.basename (Filename.remove_extension output))
+    | None ->
+        "VultCode"
   in
   {%pla|
 public class <#module_name#s>Perf {
@@ -250,15 +221,10 @@ public class <#module_name#s>Perf {
 }
 |}
 
-
-let generateJava (args : Util.Args.args) = Pla.unit, javaPost args
+let generateJava (args : Util.Args.args) = (Pla.unit, javaPost args)
 
 let pythonPost (args : Util.Args.args) =
-  let module_name =
-    match args.files with
-    | Util.Args.File s :: _ -> Pparser.Parse.moduleName s
-    | _ -> "Top"
-  in
+  let module_name = match args.files with Util.Args.File s :: _ -> Pparser.Parse.moduleName s | _ -> "Top" in
   {%pla|
 # Performance measurement for <#module_name#s>
 import time
@@ -300,5 +266,4 @@ def measure_performance():
 measure_performance()
 |}
 
-
-let generatePython (args : Util.Args.args) = Pla.unit, pythonPost args
+let generatePython (args : Util.Args.args) = (Pla.unit, pythonPost args)

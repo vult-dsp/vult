@@ -23,13 +23,7 @@
 *)
 open Util
 
-type tag_type =
-  | TypeInt
-  | TypeBool
-  | TypeReal
-  | TypeString
-  | TypeId
-  | TypeTypeIntrinsic
+type tag_type = TypeInt | TypeBool | TypeReal | TypeString | TypeId | TypeTypeIntrinsic
 
 type value =
   | Int of int
@@ -45,178 +39,155 @@ type tag_d =
   | TagBool of bool
   | TagReal of float
   | TagString of string
-  | TagCall of
-      { name : string
-      ; args : (string * tag * Loc.t) list
-      }
+  | TagCall of {name: string; args: (string * tag * Loc.t) list}
   | TagTypeIntrinsic of string * string (* intrinsic_name, type_param e.g., ("typemax", "t") *)
 
-and tag =
-  { g : tag_d
-  ; loc : Loc.t
-  }
+and tag = {g: tag_d; loc: Loc.t}
 
 type tags = tag list
 
 let rec print_tag t : Pla.t =
   match t.g with
-  | TagId id -> Pla.string id
-  | TagInt i -> Pla.int i
+  | TagId id ->
+      Pla.string id
+  | TagInt i ->
+      Pla.int i
   | TagBool b ->
-    Pla.string
-      (if b then
-         "true"
-       else
-         "false")
-  | TagReal f -> Pla.float f
-  | TagString s -> Pla.string_quoted s
-  | TagCall { name; args } ->
-    let args =
-      Pla.map_sep
-        Pla.commaspace
-        (fun (n, tag, _) ->
-          let tag = print_tag tag in
-          {%pla|<#n#s> = <#tag#>|})
-        args
-    in
-    {%pla|<#name#s>(<#args#>)|}
-  | TagTypeIntrinsic (intrinsic_name, type_param) -> {%pla|<#intrinsic_name#s>('<#type_param#s>)|}
-
+      Pla.string (if b then "true" else "false")
+  | TagReal f ->
+      Pla.float f
+  | TagString s ->
+      Pla.string_quoted s
+  | TagCall {name; args} ->
+      let args =
+        Pla.map_sep Pla.commaspace
+          (fun (n, tag, _) ->
+            let tag = print_tag tag in
+            {%pla|<#n#s> = <#tag#>|} )
+          args
+      in
+      {%pla|<#name#s>(<#args#>)|}
+  | TagTypeIntrinsic (intrinsic_name, type_param) ->
+      {%pla|<#intrinsic_name#s>('<#type_param#s>)|}
 
 let print_tags tags =
   match tags with
-  | [] -> Pla.unit
+  | [] ->
+      Pla.unit
   | _ ->
-    let tags = Pla.map_sep Pla.commaspace print_tag tags in
-    {%pla| @[<#tags#>]|}
-
+      let tags = Pla.map_sep Pla.commaspace print_tag tags in
+      {%pla| @[<#tags#>]|}
 
 let has (tags : tag list) n =
-  CCList.exists
-    (fun t ->
-      match t.g with
-      | TagCall { name; _ } -> name = n
-      | TagId name -> name = n
-      | _ -> false)
-    tags
-
+  CCList.exists (fun t -> match t.g with TagCall {name; _} -> name = n | TagId name -> name = n | _ -> false) tags
 
 let getType (tag : tag) : string =
   match tag.g with
-  | TagBool _ -> "integer"
-  | TagInt _ -> "integer"
-  | TagId _ -> "identifier"
-  | TagReal _ -> "real"
-  | TagCall _ -> "tag"
-  | TagString _ -> "string"
-  | TagTypeIntrinsic _ -> "type_intrinsic"
-
+  | TagBool _ ->
+      "integer"
+  | TagInt _ ->
+      "integer"
+  | TagId _ ->
+      "identifier"
+  | TagReal _ ->
+      "real"
+  | TagCall _ ->
+      "tag"
+  | TagString _ ->
+      "string"
+  | TagTypeIntrinsic _ ->
+      "type_intrinsic"
 
 let getTypeLiteral t : string =
   match t with
-  | TypeBool -> "bool"
-  | TypeInt -> "integer"
-  | TypeReal -> "real"
-  | TypeId -> "identifier"
-  | TypeString -> "string"
-  | TypeTypeIntrinsic -> "type_intrinsic"
-
+  | TypeBool ->
+      "bool"
+  | TypeInt ->
+      "integer"
+  | TypeReal ->
+      "real"
+  | TypeId ->
+      "identifier"
+  | TypeString ->
+      "string"
+  | TypeTypeIntrinsic ->
+      "type_intrinsic"
 
 let rec getParam (remaining : (string * tag * Loc.t) list) (args : (string * tag * Loc.t) list) (id : string) =
   match args with
-  | [] -> remaining, None
-  | (name, value, _) :: t when name = id -> remaining @ t, Some value
-  | h :: t -> getParam (h :: remaining) t id
-
+  | [] ->
+      (remaining, None)
+  | (name, value, _) :: t when name = id ->
+      (remaining @ t, Some value)
+  | h :: t ->
+      getParam (h :: remaining) t id
 
 let getTypedParam (args : (string * tag * Loc.t) list) (id, typ) =
   match getParam [] args id with
-  | r, Some { g = TagReal value; _ } when typ = TypeReal -> r, Some (Real value)
-  | r, Some { g = TagInt value; _ } when typ = TypeInt -> r, Some (Int value)
-  | r, Some { g = TagBool value; _ } when typ = TypeBool -> r, Some (Bool value)
-  | r, Some { g = TagId value; _ } when typ = TypeId -> r, Some (Id value)
-  | r, Some { g = TagString value; _ } when typ = TypeString -> r, Some (String value)
-  | r, Some { g = TagTypeIntrinsic (intrinsic, type_param); _ } when typ = TypeTypeIntrinsic ->
-    r, Some (TypeIntrinsic (intrinsic, type_param))
+  | r, Some {g= TagReal value; _} when typ = TypeReal ->
+      (r, Some (Real value))
+  | r, Some {g= TagInt value; _} when typ = TypeInt ->
+      (r, Some (Int value))
+  | r, Some {g= TagBool value; _} when typ = TypeBool ->
+      (r, Some (Bool value))
+  | r, Some {g= TagId value; _} when typ = TypeId ->
+      (r, Some (Id value))
+  | r, Some {g= TagString value; _} when typ = TypeString ->
+      (r, Some (String value))
+  | r, Some {g= TagTypeIntrinsic (intrinsic, type_param); _} when typ = TypeTypeIntrinsic ->
+      (r, Some (TypeIntrinsic (intrinsic, type_param)))
   (* Type intrinsics can match any numeric type - they'll be resolved later *)
-  | r, Some { g = TagTypeIntrinsic (intrinsic, type_param); _ } when typ = TypeInt || typ = TypeReal || typ = TypeBool
-    -> r, Some (TypeIntrinsic (intrinsic, type_param))
+  | r, Some {g= TagTypeIntrinsic (intrinsic, type_param); _} when typ = TypeInt || typ = TypeReal || typ = TypeBool ->
+      (r, Some (TypeIntrinsic (intrinsic, type_param)))
   | _, Some tag ->
-    let msg =
-      Printf.sprintf
-        "The parameter '%s' was expected to be of type '%s' but it is '%s'"
-        id
-        (getTypeLiteral typ)
-        (getType tag)
-    in
-    Error.raiseError msg tag.loc
-  | r, None -> r, None
-
+      let msg =
+        Printf.sprintf "The parameter '%s' was expected to be of type '%s' but it is '%s'" id (getTypeLiteral typ)
+          (getType tag)
+      in
+      Error.raiseError msg tag.loc
+  | r, None ->
+      (r, None)
 
 let getArguments tags n =
   CCList.find_map
     (fun t ->
-      match t.g with
-      | TagCall { name; args } when name = n -> Some args
-      | TagId name when name = n -> Some []
-      | _ -> None)
+      match t.g with TagCall {name; args} when name = n -> Some args | TagId name when name = n -> Some [] | _ -> None )
     tags
-
 
 let setArgument tags tag_name arg_name arg_value =
   CCList.map
     (fun (t : tag) ->
       match t.g with
-      | TagId name when name = tag_name -> { t with g = TagCall { name; args = [ arg_name, arg_value, t.loc ] } }
-      | TagCall { name; args } when name = tag_name ->
-        let found, args_rev =
-          CCList.fold_left
-            (fun (found, acc) (name, value, loc) ->
-              let value =
-                if name = arg_name then
-                  arg_value
-                else
-                  value
-              in
-              found, (name, value, loc) :: acc)
-            (false, [])
-            args
-        in
-        let args =
-          if found then
-            CCList.rev args_rev
-          else
-            CCList.rev ((arg_name, arg_value, t.loc) :: args_rev)
-        in
-        { t with g = TagCall { name; args } }
-      | _ -> t)
+      | TagId name when name = tag_name ->
+          {t with g= TagCall {name; args= [(arg_name, arg_value, t.loc)]}}
+      | TagCall {name; args} when name = tag_name ->
+          let found, args_rev =
+            CCList.fold_left
+              (fun (found, acc) (name, value, loc) ->
+                let value = if name = arg_name then arg_value else value in
+                (found, (name, value, loc) :: acc) )
+              (false, []) args
+          in
+          let args = if found then CCList.rev args_rev else CCList.rev ((arg_name, arg_value, t.loc) :: args_rev) in
+          {t with g= TagCall {name; args}}
+      | _ ->
+          t )
     tags
-
 
 let getParameterList tags name (params : (string * tag_type) list) : value option list =
   let rec loop remaning found params =
     match params with
-    | [] -> CCList.rev found
+    | [] ->
+        CCList.rev found
     | h :: t ->
-      let remaining, value = getTypedParam remaning h in
-      loop remaining (value :: found) t
+        let remaining, value = getTypedParam remaning h in
+        loop remaining (value :: found) t
   in
-  match getArguments tags name with
-  | Some args -> loop args [] params
-  | None -> []
+  match getArguments tags name with Some args -> loop args [] params | None -> []
 
+let getStringValueOr ~default v = match v with Some (String v) -> v | _ -> default
 
-let getStringValueOr ~default v =
-  match v with
-  | Some (String v) -> v
-  | _ -> default
-
-
-let getBoolValueOr ~default v =
-  match v with
-  | Some (Bool v) -> v
-  | _ -> default
-
+let getBoolValueOr ~default v = match v with Some (Bool v) -> v | _ -> default
 
 (* TODO *)
 let mergeTags (a : tags) b = a @ b

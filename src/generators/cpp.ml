@@ -24,498 +24,493 @@
 
 open Core.Prog
 
-type target =
-  | Header
-  | Tables
-  | Implementation
+type target = Header | Tables | Implementation
 
 let threshold = 4
 
-type state =
-  { args : Util.Args.args
-  ; prefixed : (string, string) Hashtbl.t
-  }
+type state = {args: Util.Args.args; prefixed: (string, string) Hashtbl.t}
 
 let isSmall stmts =
   let rec loop size stmts =
-    if size > threshold then
-      size
+    if size > threshold then size
     else
       match stmts with
-      | [] -> size
-      | { s = StmtDecl (_, None); _ } :: t -> loop size t
-      | { s = StmtDecl (_, Some _); _ } :: t -> loop (size + 1) t
-      | { s = StmtReturn _; _ } :: t -> loop size t
-      | { s = StmtBlock inner; _ } :: t ->
-        let size = loop size inner in
-        loop size t
-      | { s = StmtIf (_, then_, None); _ } :: t ->
-        let size = loop (size + 1) [ then_ ] in
-        loop size t
-      | { s = StmtIf (_, then_, Some else_); _ } :: t ->
-        let size = loop (size + 1) [ then_ ] in
-        let size = loop size [ else_ ] in
-        loop size t
-      | { s = StmtWhile (_, body); _ } :: t ->
-        let size = loop (size + 1) [ body ] in
-        loop size t
-      | { s = StmtBind _; _ } :: t -> loop (size + 1) t
-      | { s = StmtSwitch (_, cases, _); _ } :: t ->
-        let n = CCList.fold_left (fun n (_, body) -> n + loop 0 [ body ]) 0 cases in
-        loop (size + 1 + n) t
+      | [] ->
+          size
+      | {s= StmtDecl (_, None); _} :: t ->
+          loop size t
+      | {s= StmtDecl (_, Some _); _} :: t ->
+          loop (size + 1) t
+      | {s= StmtReturn _; _} :: t ->
+          loop size t
+      | {s= StmtBlock inner; _} :: t ->
+          let size = loop size inner in
+          loop size t
+      | {s= StmtIf (_, then_, None); _} :: t ->
+          let size = loop (size + 1) [then_] in
+          loop size t
+      | {s= StmtIf (_, then_, Some else_); _} :: t ->
+          let size = loop (size + 1) [then_] in
+          let size = loop size [else_] in
+          loop size t
+      | {s= StmtWhile (_, body); _} :: t ->
+          let size = loop (size + 1) [body] in
+          loop size t
+      | {s= StmtBind _; _} :: t ->
+          loop (size + 1) t
+      | {s= StmtSwitch (_, cases, _); _} :: t ->
+          let n = CCList.fold_left (fun n (_, body) -> n + loop 0 [body]) 0 cases in
+          loop (size + 1 + n) t
   in
   let size = loop 0 stmts in
   size <= threshold
 
-
 let isPowerOfTwo f =
   let n = f *. float_of_int 0x00010000 in
   let l = Float.log2 n in
-  if l = floor l then
-    Some (int_of_float (floor l) - 16)
-  else
-    None
-
+  if l = floor l then Some (int_of_float (floor l) - 16) else None
 
 let rec isBuiltinType (t : type_) =
   match t.t with
-  | TStruct _ -> false
-  | TArray (_, t) -> isBuiltinType t
-  | TTuple l -> CCList.for_all isBuiltinType l
-  | _ -> true
-
+  | TStruct _ ->
+      false
+  | TArray (_, t) ->
+      isBuiltinType t
+  | TTuple l ->
+      CCList.for_all isBuiltinType l
+  | _ ->
+      true
 
 let registerPrefix state name =
   match state.args.output_prefix with
-  | None -> name
+  | None ->
+      name
   | Some prefix ->
-    let prefixed_name = prefix ^ name in
-    let () = Hashtbl.add state.prefixed name prefixed_name in
-    prefixed_name
+      let prefixed_name = prefix ^ name in
+      let () = Hashtbl.add state.prefixed name prefixed_name in
+      prefixed_name
 
-
-let addPrefix state id =
-  match Hashtbl.find_opt state.prefixed id with
-  | None -> id
-  | Some prefix -> prefix
-
+let addPrefix state id = match Hashtbl.find_opt state.prefixed id with None -> id | Some prefix -> prefix
 
 let rec print_type_ state (t : type_) =
   match t.t with
-  | TEmptyType -> Pla.string "void*"
-  | TVoid _ -> Pla.string "void"
-  | TInt -> Pla.string "int32_t"
-  | TInt16 -> Pla.string "int16_t"
-  | TReal -> Pla.string "float"
-  | TBool -> Pla.string "bool"
-  | TString -> Pla.string "std::string"
-  | TFix16 -> Pla.string "fix16_t"
+  | TEmptyType ->
+      Pla.string "void*"
+  | TVoid _ ->
+      Pla.string "void"
+  | TInt ->
+      Pla.string "int32_t"
+  | TInt16 ->
+      Pla.string "int16_t"
+  | TReal ->
+      Pla.string "float"
+  | TBool ->
+      Pla.string "bool"
+  | TString ->
+      Pla.string "std::string"
+  | TFix16 ->
+      Pla.string "fix16_t"
   | TTuple l ->
-    let l = Pla.map_sep Pla.commaspace (print_type_ state) l in
-    {%pla|std::tuple<<#l#>>|}
+      let l = Pla.map_sep Pla.commaspace (print_type_ state) l in
+      {%pla|std::tuple<<#l#>>|}
   | TArray (Some dim, t) ->
-    let t = print_type_ state t in
-    {%pla|std::array<<#t#>, <#dim#i>>|}
+      let t = print_type_ state t in
+      {%pla|std::array<<#t#>, <#dim#i>>|}
   | TArray (None, t) ->
-    let t = print_type_ state t in
-    {%pla|std::array<<#t#>>|}
+      let t = print_type_ state t in
+      {%pla|std::array<<#t#>>|}
   | TList t ->
-    let t = print_type_ state t in
-    {%pla|std::vector<<#t#>>|}
-  | TStruct { path; _ } ->
-    let path = addPrefix state path in
-    {%pla|<#path#s>|}
-
+      let t = print_type_ state t in
+      {%pla|std::vector<<#t#>>|}
+  | TStruct {path; _} ->
+      let path = addPrefix state path in
+      {%pla|<#path#s>|}
 
 let operator (op : Core.Prog.operator) =
   match op with
-  | OpAdd -> Pla.string "+"
-  | OpSub -> Pla.string "-"
-  | OpMul -> Pla.string "*"
-  | OpDiv -> Pla.string "/"
-  | OpMod -> Pla.string "%"
-  | OpLand -> Pla.string "&&"
-  | OpLor -> Pla.string "||"
-  | OpBor -> Pla.string "|"
-  | OpBand -> Pla.string "&"
-  | OpBxor -> Pla.string "^"
-  | OpLsh -> Pla.string "<<"
-  | OpRsh -> Pla.string ">>"
-  | OpEq -> Pla.string "=="
-  | OpNe -> Pla.string "!="
-  | OpLt -> Pla.string "<"
-  | OpLe -> Pla.string "<="
-  | OpGt -> Pla.string ">"
-  | OpGe -> Pla.string ">="
-
+  | OpAdd ->
+      Pla.string "+"
+  | OpSub ->
+      Pla.string "-"
+  | OpMul ->
+      Pla.string "*"
+  | OpDiv ->
+      Pla.string "/"
+  | OpMod ->
+      Pla.string "%"
+  | OpLand ->
+      Pla.string "&&"
+  | OpLor ->
+      Pla.string "||"
+  | OpBor ->
+      Pla.string "|"
+  | OpBand ->
+      Pla.string "&"
+  | OpBxor ->
+      Pla.string "^"
+  | OpLsh ->
+      Pla.string "<<"
+  | OpRsh ->
+      Pla.string ">>"
+  | OpEq ->
+      Pla.string "=="
+  | OpNe ->
+      Pla.string "!="
+  | OpLt ->
+      Pla.string "<"
+  | OpLe ->
+      Pla.string "<="
+  | OpGt ->
+      Pla.string ">"
+  | OpGe ->
+      Pla.string ">="
 
 let parenthesize outer inner =
-  match outer, inner with
-  | None, _ -> false
-  | Some (OpAdd | OpSub), Some (OpDiv | OpMul) -> false
-  | Some OpAdd, Some OpAdd -> false
-  | Some OpMul, Some OpMul -> false
-  | _ -> true
+  match (outer, inner) with
+  | None, _ ->
+      false
+  | Some (OpAdd | OpSub), Some (OpDiv | OpMul) ->
+      false
+  | Some OpAdd, Some OpAdd ->
+      false
+  | Some OpMul, Some OpMul ->
+      false
+  | _ ->
+      true
 
-
-let uoperator (op : Core.Prog.uoperator) =
-  match op with
-  | UOpNeg -> Pla.string "-"
-  | UOpNot -> Pla.string "not"
-
+let uoperator (op : Core.Prog.uoperator) = match op with UOpNeg -> Pla.string "-" | UOpNot -> Pla.string "not"
 
 let rec print_exp state (prec : operator option) (e : exp) =
   match e.e with
   | EEmptyValue -> (
-    match e.t.t with
-    | TList _ -> Pla.string "{}"
-    | _ -> Pla.string "nullptr")
-  | EUnit -> Pla.string ""
+    match e.t.t with TList _ -> Pla.string "{}" | _ -> Pla.string "nullptr" )
+  | EUnit ->
+      Pla.string ""
   | EBool v ->
-    Pla.string
-      (if v then
-         "true"
-       else
-         "false")
-  | EInt n -> {%pla|<#n#i>|}
+      Pla.string (if v then "true" else "false")
+  | EInt n ->
+      {%pla|<#n#i>|}
   | EReal n ->
-    let n = Util.Vfloat.adapt n in
-    {%pla|<#n#f>f|}
+      let n = Util.Vfloat.adapt n in
+      {%pla|<#n#f>f|}
   | EFixed n ->
-    let n = Common.toFixed n in
-    {%pla|<#n#s>|}
-  | EString s -> Pla.string_quoted s
+      let n = Common.toFixed n in
+      {%pla|<#n#s>|}
+  | EString s ->
+      Pla.string_quoted s
   | EId id -> (
-    match Hashtbl.find_opt state.prefixed id with
-    | None -> Pla.string id
-    | Some id -> Pla.string id)
-  | EIndex { e; index } ->
-    let e = print_exp state prec e in
-    let index = print_exp state prec index in
-    {%pla|<#e#>[static_cast<uint32_t>(<#index#>)]|}
+    match Hashtbl.find_opt state.prefixed id with None -> Pla.string id | Some id -> Pla.string id )
+  | EIndex {e; index} ->
+      let e = print_exp state prec e in
+      let index = print_exp state prec index in
+      {%pla|<#e#>[static_cast<uint32_t>(<#index#>)]|}
   | EArray l ->
-    let rows = Common.splitArray 100 l in
-    let l = Pla.map_sep {%pla|,<#>|} (Pla.map_sep Pla.commaspace (print_exp state prec)) rows in
-    {%pla|{ <#l#> }|}
-  | ECall { path = "fix_mul"; args = [ ({ e = EFixed n1; _ } as e1); e2 ]; _ } -> (
+      let rows = Common.splitArray 100 l in
+      let l = Pla.map_sep {%pla|,<#>|} (Pla.map_sep Pla.commaspace (print_exp state prec)) rows in
+      {%pla|{ <#l#> }|}
+  | ECall {path= "fix_mul"; args= [({e= EFixed n1; _} as e1); e2]; _} -> (
     match isPowerOfTwo n1 with
     | None ->
-      let args = Pla.map_sep Pla.commaspace (print_exp state prec) [ e1; e2 ] in
-      {%pla|fix_mul(<#args#>)|}
-    | Some 0 -> print_exp state prec e2
+        let args = Pla.map_sep Pla.commaspace (print_exp state prec) [e1; e2] in
+        {%pla|fix_mul(<#args#>)|}
+    | Some 0 ->
+        print_exp state prec e2
     | Some n when n > 0 ->
-      let inner = Some OpMul in
-      let se2 = print_exp state inner e2 in
-      {%pla|(<#se2#> << <#n#i>)|}
+        let inner = Some OpMul in
+        let se2 = print_exp state inner e2 in
+        {%pla|(<#se2#> << <#n#i>)|}
     | Some n ->
-      let n = -n in
-      let inner = Some OpMul in
-      let se2 = print_exp state inner e2 in
-      {%pla|(<#se2#> >> <#n#i>)|})
-  | ECall { path = "fix_mul"; args = [ e1; ({ e = EFixed n2; _ } as e2) ]; _ } -> (
+        let n = -n in
+        let inner = Some OpMul in
+        let se2 = print_exp state inner e2 in
+        {%pla|(<#se2#> >> <#n#i>)|} )
+  | ECall {path= "fix_mul"; args= [e1; ({e= EFixed n2; _} as e2)]; _} -> (
     match isPowerOfTwo n2 with
     | None ->
-      let args = Pla.map_sep Pla.commaspace (print_exp state prec) [ e1; e2 ] in
-      {%pla|fix_mul(<#args#>)|}
-    | Some 0 -> print_exp state prec e1
+        let args = Pla.map_sep Pla.commaspace (print_exp state prec) [e1; e2] in
+        {%pla|fix_mul(<#args#>)|}
+    | Some 0 ->
+        print_exp state prec e1
     | Some n when n > 0 ->
-      let inner = Some OpMul in
-      let se1 = print_exp state inner e1 in
-      {%pla|(<#se1#> << <#n#i>)|}
+        let inner = Some OpMul in
+        let se1 = print_exp state inner e1 in
+        {%pla|(<#se1#> << <#n#i>)|}
     | Some n ->
-      let n = -n in
-      let inner = Some OpMul in
-      let se1 = print_exp state inner e1 in
-      {%pla|(<#se1#> >> <#n#i>)|})
-  | ECall { path = "size"; args = [ e1 ] } ->
-    let e1 = print_exp state prec e1 in
-    {%pla|static_cast<int32_t>(<#e1#>.size())|}
-  | ECall { path = "length"; args = [ e1 ] } ->
-    let e1 = print_exp state prec e1 in
-    {%pla|static_cast<int32_t>(<#e1#>.size())|}
+        let n = -n in
+        let inner = Some OpMul in
+        let se1 = print_exp state inner e1 in
+        {%pla|(<#se1#> >> <#n#i>)|} )
+  | ECall {path= "size"; args= [e1]} ->
+      let e1 = print_exp state prec e1 in
+      {%pla|static_cast<int32_t>(<#e1#>.size())|}
+  | ECall {path= "length"; args= [e1]} ->
+      let e1 = print_exp state prec e1 in
+      {%pla|static_cast<int32_t>(<#e1#>.size())|}
   (* List operations *)
-  | ECall { path = "list_size"; args = [ e1 ] } ->
-    let e1 = print_exp state prec e1 in
-    {%pla|static_cast<int32_t>(<#e1#>.size())|}
-  | ECall { path = "list_capacity"; args = [ e1 ] } ->
-    let e1 = print_exp state prec e1 in
-    {%pla|static_cast<int32_t>(<#e1#>.capacity())|}
-  | ECall { path = "list_append"; args = [ l; v ] } ->
-    let l = print_exp state prec l in
-    let v = print_exp state prec v in
-    {%pla|<#l#>.push_back(<#v#>)|}
-  | ECall { path = "list_insert"; args = [ l; i; v ] } ->
-    let l = print_exp state prec l in
-    let i = print_exp state prec i in
-    let v = print_exp state prec v in
-    {%pla|<#l#>.insert(<#l#>.begin() + <#i#>, <#v#>)|}
-  | ECall { path = "list_remove"; args = [ l; i ] } ->
-    let l = print_exp state prec l in
-    let i = print_exp state prec i in
-    {%pla|<#l#>.erase(<#l#>.begin() + <#i#>)|}
-  | ECall { path = "list_clear"; args = [ e1 ] } ->
-    let e1 = print_exp state prec e1 in
-    {%pla|<#e1#>.clear()|}
-  | ECall { path = "list_reserve"; args = [ l; n ] } ->
-    let l = print_exp state prec l in
-    let n = print_exp state prec n in
-    {%pla|<#l#>.reserve(<#n#>)|}
-  | ECall { path = "list_get"; args = [ l; i ] } ->
-    let l = print_exp state prec l in
-    let i = print_exp state prec i in
-    {%pla|<#l#>[static_cast<uint32_t>(<#i#>)]|}
-  | ECall { path = "list_set"; args = [ l; i; v ] } ->
-    let l = print_exp state prec l in
-    let i = print_exp state prec i in
-    let v = print_exp state prec v in
-    {%pla|(<#l#>[static_cast<uint32_t>(<#i#>)] = <#v#>)|}
-  | ECall { path = "not"; args = [ e1 ] } ->
-    let e1 = print_exp state prec e1 in
-    {%pla|!(<#e1#>)|}
-  | ECall { path; args = fargs } ->
-    let path = addPrefix state path in
-    let args = Pla.map_sep Pla.commaspace (print_exp state prec) fargs in
-    {%pla|<#path#s>(<#args#>)|}
+  | ECall {path= "list_size"; args= [e1]} ->
+      let e1 = print_exp state prec e1 in
+      {%pla|static_cast<int32_t>(<#e1#>.size())|}
+  | ECall {path= "list_capacity"; args= [e1]} ->
+      let e1 = print_exp state prec e1 in
+      {%pla|static_cast<int32_t>(<#e1#>.capacity())|}
+  | ECall {path= "list_append"; args= [l; v]} ->
+      let l = print_exp state prec l in
+      let v = print_exp state prec v in
+      {%pla|<#l#>.push_back(<#v#>)|}
+  | ECall {path= "list_insert"; args= [l; i; v]} ->
+      let l = print_exp state prec l in
+      let i = print_exp state prec i in
+      let v = print_exp state prec v in
+      {%pla|<#l#>.insert(<#l#>.begin() + <#i#>, <#v#>)|}
+  | ECall {path= "list_remove"; args= [l; i]} ->
+      let l = print_exp state prec l in
+      let i = print_exp state prec i in
+      {%pla|<#l#>.erase(<#l#>.begin() + <#i#>)|}
+  | ECall {path= "list_clear"; args= [e1]} ->
+      let e1 = print_exp state prec e1 in
+      {%pla|<#e1#>.clear()|}
+  | ECall {path= "list_reserve"; args= [l; n]} ->
+      let l = print_exp state prec l in
+      let n = print_exp state prec n in
+      {%pla|<#l#>.reserve(<#n#>)|}
+  | ECall {path= "list_get"; args= [l; i]} ->
+      let l = print_exp state prec l in
+      let i = print_exp state prec i in
+      {%pla|<#l#>[static_cast<uint32_t>(<#i#>)]|}
+  | ECall {path= "list_set"; args= [l; i; v]} ->
+      let l = print_exp state prec l in
+      let i = print_exp state prec i in
+      let v = print_exp state prec v in
+      {%pla|(<#l#>[static_cast<uint32_t>(<#i#>)] = <#v#>)|}
+  | ECall {path= "not"; args= [e1]} ->
+      let e1 = print_exp state prec e1 in
+      {%pla|!(<#e1#>)|}
+  | ECall {path; args= fargs} ->
+      let path = addPrefix state path in
+      let args = Pla.map_sep Pla.commaspace (print_exp state prec) fargs in
+      {%pla|<#path#s>(<#args#>)|}
   | EUnOp (op, e) ->
-    let e = print_exp state None e in
-    let op = uoperator op in
-    {%pla|(<#op#> <#e#>)|}
+      let e = print_exp state None e in
+      let op = uoperator op in
+      {%pla|(<#op#> <#e#>)|}
   | EOp (op, e1, e2) ->
-    let inner = Some op in
-    let se1 = print_exp state inner e1 in
-    let se2 = print_exp state inner e2 in
-    let op = operator op in
-    if parenthesize prec inner then
-      {%pla|(<#se1#> <#op#> <#se2#>)|}
-    else
-      {%pla|<#se1#> <#op#> <#se2#>|}
-  | EIf { cond; then_; else_ } ->
-    let cond = print_exp state prec cond in
-    let then_ = print_exp state prec then_ in
-    let else_ = print_exp state prec else_ in
-    {%pla|(<#cond#> ? <#then_#> : <#else_#>)|}
+      let inner = Some op in
+      let se1 = print_exp state inner e1 in
+      let se2 = print_exp state inner e2 in
+      let op = operator op in
+      if parenthesize prec inner then {%pla|(<#se1#> <#op#> <#se2#>)|} else {%pla|<#se1#> <#op#> <#se2#>|}
+  | EIf {cond; then_; else_} ->
+      let cond = print_exp state prec cond in
+      let then_ = print_exp state prec then_ in
+      let else_ = print_exp state prec else_ in
+      {%pla|(<#cond#> ? <#then_#> : <#else_#>)|}
   | ETuple l ->
-    let l = Pla.map_sep Pla.commaspace (print_exp state prec) l in
-    {%pla|std::make_tuple(<#l#>)|}
+      let l = Pla.map_sep Pla.commaspace (print_exp state prec) l in
+      {%pla|std::make_tuple(<#l#>)|}
   | EMember (e, m) ->
-    let e = print_exp state prec e in
-    {%pla|<#e#>.<#m#s>|}
+      let e = print_exp state prec e in
+      {%pla|<#e#>.<#m#s>|}
   | ETMember (e, m) ->
-    let e = print_exp state prec e in
-    {%pla|std::get<<#m#i>>(<#e#>)|}
-  | ERecord { elems; _ } ->
-    let printElem (_, v) =
-      let v = print_exp state None v in
-      {%pla|<#v#>|}
-    in
-    let elems = Pla.map_sep Pla.commaspace printElem elems in
-    {%pla|{ <#elems#> }|}
-
+      let e = print_exp state prec e in
+      {%pla|std::get<<#m#i>>(<#e#>)|}
+  | ERecord {elems; _} ->
+      let printElem (_, v) =
+        let v = print_exp state None v in
+        {%pla|<#v#>|}
+      in
+      let elems = Pla.map_sep Pla.commaspace printElem elems in
+      {%pla|{ <#elems#> }|}
 
 let rec print_lexp state e =
   match e.l with
-  | LWild -> Pla.string "_"
-  | LId s -> Pla.string s
+  | LWild ->
+      Pla.string "_"
+  | LId s ->
+      Pla.string s
   | LMember (e, m) ->
-    let e = print_lexp state e in
-    {%pla|<#e#>.<#m#s>|}
-  | LIndex { e; index } ->
-    let e = print_lexp state e in
-    let index = print_exp state None index in
-    {%pla|<#e#>[static_cast<uint32_t>(<#index#>)]|}
-  | _ -> failwith "print_lexp: LTuple not implemented"
+      let e = print_lexp state e in
+      {%pla|<#e#>.<#m#s>|}
+  | LIndex {e; index} ->
+      let e = print_lexp state e in
+      let index = print_exp state None index in
+      {%pla|<#e#>[static_cast<uint32_t>(<#index#>)]|}
+  | _ ->
+      failwith "print_lexp: LTuple not implemented"
 
-
-let print_dexp (e : dexp) =
-  match e.d with
-  | DId (id, _) -> {%pla|<#id#s>|}
-
+let print_dexp (e : dexp) = match e.d with DId (id, _) -> {%pla|<#id#s>|}
 
 let print_member state (n, (t : type_), _, _) =
   let type_str = print_type_ state t in
   (* Add mutable keyword for list members so they can be modified even when context is const *)
   match t.t with
-  | TList _ -> {%pla|mutable <#type_str#> <#n#s>;|}
-  | _ -> {%pla|<#type_str#> <#n#s>;|}
-
-
-let print_arg state i ({ name; t; const; _ } : param) =
-  let const =
-    if const then
-      Pla.string "const "
-    else
-      Pla.unit
-  in
-  match t.t with
-  | TArray (_, { t = TArray _; _ }) -> failwith "array of arrays are not implemented"
-  | TArray (Some dim, ({ t = TStruct _; _ } as sub)) ->
-    let sub = print_type_ state sub in
-    {%pla|<#const#>std::array<<#sub#>, <#dim#i>>& <#name#s>|}
-  | TArray (Some dim, sub) ->
-    let sub = print_type_ state sub in
-    {%pla|<#const#>std::array<<#sub#>, <#dim#i>>& <#name#s>|}
-  | TArray (None, sub) ->
-    let sub = print_type_ state sub in
-    {%pla|<#const#>std::array<<#sub#>, SIZE_<#i#i>>& <#name#s>|}
-  | TStruct { path; _ } ->
-    let path = addPrefix state path in
-    {%pla|<#const#><#path#s>& <#name#s>|}
+  | TList _ ->
+      {%pla|mutable <#type_str#> <#n#s>;|}
   | _ ->
-    let t = print_type_ state t in
-    {%pla|<#t#> <#name#s>|}
+      {%pla|<#type_str#> <#n#s>;|}
 
+let print_arg state i ({name; t; const; _} : param) =
+  let const = if const then Pla.string "const " else Pla.unit in
+  match t.t with
+  | TArray (_, {t= TArray _; _}) ->
+      failwith "array of arrays are not implemented"
+  | TArray (Some dim, ({t= TStruct _; _} as sub)) ->
+      let sub = print_type_ state sub in
+      {%pla|<#const#>std::array<<#sub#>, <#dim#i>>& <#name#s>|}
+  | TArray (Some dim, sub) ->
+      let sub = print_type_ state sub in
+      {%pla|<#const#>std::array<<#sub#>, <#dim#i>>& <#name#s>|}
+  | TArray (None, sub) ->
+      let sub = print_type_ state sub in
+      {%pla|<#const#>std::array<<#sub#>, SIZE_<#i#i>>& <#name#s>|}
+  | TStruct {path; _} ->
+      let path = addPrefix state path in
+      {%pla|<#const#><#path#s>& <#name#s>|}
+  | _ ->
+      let t = print_type_ state t in
+      {%pla|<#t#> <#name#s>|}
 
 let print_decl state (n, (t : type_)) =
   match t.t with
-  | TArray (_, { t = TArray _; _ }) -> failwith "array of arrays are not implemented"
-  | TArray (Some dim, ({ t = TStruct _; _ } as sub)) ->
-    let sub = print_type_ state sub in
-    {%pla|std::array<<#sub#>, <#dim#i>> &<#n#s>|}
+  | TArray (_, {t= TArray _; _}) ->
+      failwith "array of arrays are not implemented"
+  | TArray (Some dim, ({t= TStruct _; _} as sub)) ->
+      let sub = print_type_ state sub in
+      {%pla|std::array<<#sub#>, <#dim#i>> &<#n#s>|}
   | TArray (Some dim, sub) ->
-    let sub = print_type_ state sub in
-    {%pla|std::array<<#sub#>, <#dim#i>> &<#n#s>|}
-  | TArray (None, _) -> failwith "Cpp.print_decl: array without dimensions"
-  | TStruct { path; _ } ->
-    if t.const then
-      {%pla|const <#path#s> &<#n#s>|}
-    else
-      {%pla|<#path#s> &<#n#s>|}
+      let sub = print_type_ state sub in
+      {%pla|std::array<<#sub#>, <#dim#i>> &<#n#s>|}
+  | TArray (None, _) ->
+      failwith "Cpp.print_decl: array without dimensions"
+  | TStruct {path; _} ->
+      if t.const then {%pla|const <#path#s> &<#n#s>|} else {%pla|<#path#s> &<#n#s>|}
   | _ ->
-    let t = print_type_ state t in
-    {%pla|<#t#> <#n#s>|}
-
+      let t = print_type_ state t in
+      {%pla|<#t#> <#n#s>|}
 
 let print_decl_alloc state (n, (t : type_)) =
   match t.t with
-  | TArray (_, { t = TArray _; _ }) -> failwith "array of arrays are not implemented"
-  | TArray (Some dim, ({ t = TStruct _; _ } as sub)) ->
-    let sub = print_type_ state sub in
-    {%pla|std::array<<#sub#>, <#dim#i>> <#n#s>|}
+  | TArray (_, {t= TArray _; _}) ->
+      failwith "array of arrays are not implemented"
+  | TArray (Some dim, ({t= TStruct _; _} as sub)) ->
+      let sub = print_type_ state sub in
+      {%pla|std::array<<#sub#>, <#dim#i>> <#n#s>|}
   | TArray (Some dim, sub) ->
-    let sub = print_type_ state sub in
-    {%pla|std::array<<#sub#>, <#dim#i>> <#n#s>|}
-  | TArray (None, _) -> failwith "Cpp.print_decl_alloc: array without dimensions"
-  | TStruct { path; _ } ->
-    if t.const then
-      {%pla|const <#path#s> <#n#s>|}
-    else
-      {%pla|<#path#s> <#n#s>|}
+      let sub = print_type_ state sub in
+      {%pla|std::array<<#sub#>, <#dim#i>> <#n#s>|}
+  | TArray (None, _) ->
+      failwith "Cpp.print_decl_alloc: array without dimensions"
+  | TStruct {path; _} ->
+      if t.const then {%pla|const <#path#s> <#n#s>|} else {%pla|<#path#s> <#n#s>|}
   | _ ->
-    let t = print_type_ state t in
-    {%pla|<#t#> <#n#s>|}
-
+      let t = print_type_ state t in
+      {%pla|<#t#> <#n#s>|}
 
 let arrayCopyFunction (t : type_) =
   match t.t with
-  | TReal -> "float_copy_array"
-  | TInt -> "int_copy_array"
-  | TFix16 -> "fix_copy_array"
-  | TBool -> "bool_copy_array"
-  | _ -> failwith "not a valid array copy"
-
+  | TReal ->
+      "float_copy_array"
+  | TInt ->
+      "int_copy_array"
+  | TFix16 ->
+      "fix_copy_array"
+  | TBool ->
+      "bool_copy_array"
+  | _ ->
+      failwith "not a valid array copy"
 
 let rec print_stmt state s =
   match s.s with
   (* declares and initializes a structure *)
-  | StmtDecl (({ t = { t = TStruct { path; _ }; _ }; _ } as lhs), None) ->
-    let t = print_type_ state lhs.t in
-    let lhs = print_dexp lhs in
-    {%pla|<#t#> <#lhs#>;<#><#path#s>_init(<#lhs#>);|}
-  | StmtDecl ({ d = DId (n, _); t; _ }, None) ->
-    let t = print_decl_alloc state (n, t) in
-    {%pla|<#t#>;|}
+  | StmtDecl (({t= {t= TStruct {path; _}; _}; _} as lhs), None) ->
+      let t = print_type_ state lhs.t in
+      let lhs = print_dexp lhs in
+      {%pla|<#t#> <#lhs#>;<#><#path#s>_init(<#lhs#>);|}
+  | StmtDecl ({d= DId (n, _); t; _}, None) ->
+      let t = print_decl_alloc state (n, t) in
+      {%pla|<#t#>;|}
   (* Special case when initializing an array. Here we declare the variable and not a reference *)
-  | StmtDecl ({ d = DId (n, _); t; _ }, Some ({ e = EArray _; _ } as rhs)) ->
-    let t = print_decl_alloc state (n, t) in
-    let rhs = print_exp state None rhs in
-    {%pla|<#t#> = <#rhs#>;|}
+  | StmtDecl ({d= DId (n, _); t; _}, Some ({e= EArray _; _} as rhs)) ->
+      let t = print_decl_alloc state (n, t) in
+      let rhs = print_exp state None rhs in
+      {%pla|<#t#> = <#rhs#>;|}
   (* Special case when initializing an array using initializeArray. Here we declare the variable and not a reference *)
-  | StmtDecl ({ d = DId (n, _); t; _ }, Some { e = ECall { path = "initializeArray"; args = [ def; _ ] }; _ }) ->
-    let t = print_decl_alloc state (n, t) in
-    let def = print_exp state None def in
-    {%pla|<#t#>; for (auto& elem : <#n#s>) { elem = <#def#>; }|}
+  | StmtDecl ({d= DId (n, _); t; _}, Some {e= ECall {path= "initializeArray"; args= [def; _]}; _}) ->
+      let t = print_decl_alloc state (n, t) in
+      let def = print_exp state None def in
+      {%pla|<#t#>; for (auto& elem : <#n#s>) { elem = <#def#>; }|}
   (* Special case for structures. When the structure is the result of a function call we need to declare it *)
-  | StmtDecl ({ d = DId (n, _); t = { t = TStruct _; _ } as t; _ }, Some ({ e = ECall _; _ } as rhs)) ->
-    let t = print_decl_alloc state (n, t) in
-    let rhs = print_exp state None rhs in
-    {%pla|<#t#> = <#rhs#>;|}
+  | StmtDecl ({d= DId (n, _); t= {t= TStruct _; _} as t; _}, Some ({e= ECall _; _} as rhs)) ->
+      let t = print_decl_alloc state (n, t) in
+      let rhs = print_exp state None rhs in
+      {%pla|<#t#> = <#rhs#>;|}
   (* Special case for structures. When initializing a structure we should not declare a reference *)
-  | StmtDecl ({ d = DId (n, _); t = { t = TStruct _; _ } as t; _ }, Some ({ e = ERecord _; _ } as rhs)) ->
-    let t = print_decl_alloc state (n, t) in
-    let rhs = print_exp state None rhs in
-    {%pla|<#t#> = <#rhs#>;|}
+  | StmtDecl ({d= DId (n, _); t= {t= TStruct _; _} as t; _}, Some ({e= ERecord _; _} as rhs)) ->
+      let t = print_decl_alloc state (n, t) in
+      let rhs = print_exp state None rhs in
+      {%pla|<#t#> = <#rhs#>;|}
   (* For other case we use refences in the case of structures and arrays *)
-  | StmtDecl ({ d = DId (n, _); t; _ }, Some rhs) ->
-    let t = print_decl state (n, t) in
-    let rhs = print_exp state None rhs in
-    {%pla|<#t#> = <#rhs#>;|}
-  | StmtBind ({ l = LWild; _ }, rhs) ->
-    let rhs = print_exp state None rhs in
-    {%pla|<#rhs#>;|}
+  | StmtDecl ({d= DId (n, _); t; _}, Some rhs) ->
+      let t = print_decl state (n, t) in
+      let rhs = print_exp state None rhs in
+      {%pla|<#t#> = <#rhs#>;|}
+  | StmtBind ({l= LWild; _}, rhs) ->
+      let rhs = print_exp state None rhs in
+      {%pla|<#rhs#>;|}
   | StmtBind (lhs, rhs) ->
-    let lhs = print_lexp state lhs in
-    let rhs = print_exp state None rhs in
-    {%pla|<#lhs#> = <#rhs#>;|}
+      let lhs = print_lexp state lhs in
+      let rhs = print_exp state None rhs in
+      {%pla|<#lhs#> = <#rhs#>;|}
   | StmtReturn e ->
-    let e = print_exp state None e in
-    {%pla|return <#e#>;|}
+      let e = print_exp state None e in
+      {%pla|return <#e#>;|}
   | StmtIf (cond, then_, None) ->
-    let cond = print_exp state None cond in
-    let then_ = print_block state then_ in
-    {%pla|if (<#cond#>) <#then_#>|}
+      let cond = print_exp state None cond in
+      let then_ = print_block state then_ in
+      {%pla|if (<#cond#>) <#then_#>|}
   | StmtIf (cond, then_, Some else_) ->
-    let cond = print_exp state None cond in
-    let then_ = print_block state then_ in
-    let else_ = print_block state else_ in
-    {%pla|if (<#cond#>) <#then_#><#>else <#else_#>|}
+      let cond = print_exp state None cond in
+      let then_ = print_block state then_ in
+      let else_ = print_block state else_ in
+      {%pla|if (<#cond#>) <#then_#><#>else <#else_#>|}
   | StmtWhile (cond, stmt) ->
-    let cond = print_exp state None cond in
-    let stmt = print_block state stmt in
-    {%pla|while (<#cond#>) <#stmt#>|}
+      let cond = print_exp state None cond in
+      let stmt = print_block state stmt in
+      {%pla|while (<#cond#>) <#stmt#>|}
   | StmtBlock stmts ->
-    let stmt = Pla.map_sep_all Pla.newline (print_stmt state) stmts in
-    {%pla|{<#stmt#+>}|}
+      let stmt = Pla.map_sep_all Pla.newline (print_stmt state) stmts in
+      {%pla|{<#stmt#+>}|}
   | StmtSwitch (e, cases, default_case) ->
-    let e = print_exp state None e in
-    let break = Pla.string "break;" in
-    let cases =
-      Pla.map_sep_all
-        Pla.newline
-        (fun (e1, body) ->
-          let e1 = print_exp state None e1 in
-          let body = print_stmt state body in
-          {%pla|case <#e1#>:<#body#+><#break#+>|})
-        cases
-    in
-    let default_case =
-      Option.map
-        (fun body ->
-          let body = print_stmt state body in
-          Pla.indent {%pla|default:<#body#+><#break#+>|})
-        default_case
-    in
-    let default_case = Option.value default_case ~default:Pla.unit in
-    {%pla| switch (<#e#>) {<#cases#+><#default_case#><#>}|}
-
+      let e = print_exp state None e in
+      let break = Pla.string "break;" in
+      let cases =
+        Pla.map_sep_all Pla.newline
+          (fun (e1, body) ->
+            let e1 = print_exp state None e1 in
+            let body = print_stmt state body in
+            {%pla|case <#e1#>:<#body#+><#break#+>|} )
+          cases
+      in
+      let default_case =
+        Option.map
+          (fun body ->
+            let body = print_stmt state body in
+            Pla.indent {%pla|default:<#body#+><#break#+>|} )
+          default_case
+      in
+      let default_case = Option.value default_case ~default:Pla.unit in
+      {%pla| switch (<#e#>) {<#cases#+><#default_case#><#>}|}
 
 and print_block state body =
   match body with
-  | { s = StmtBlock stmts; _ } ->
-    let stmts = Pla.map_sep_all Pla.newline (print_stmt state) stmts in
-    {%pla|{<#stmts#+>}|}
+  | {s= StmtBlock stmts; _} ->
+      let stmts = Pla.map_sep_all Pla.newline (print_stmt state) stmts in
+      {%pla|{<#stmts#+>}|}
   | _ ->
-    let stmt = print_stmt state body in
-    {%pla|{<#stmt#+><#>}|}
-
+      let stmt = print_stmt state body in
+      {%pla|{<#stmt#+><#>}|}
 
 let isTemplate (args : param list) =
-  CCList.exists
-    (fun (a : param) ->
-      match a.t with
-      | { t = TArray (None, _); _ } -> true
-      | _ -> false)
-    args
-
+  CCList.exists (fun (a : param) -> match a.t with {t= TArray (None, _); _} -> true | _ -> false) args
 
 let print_function_def state (def : function_def) =
   let name = Pla.string (registerPrefix state def.name) in
@@ -523,116 +518,117 @@ let print_function_def state (def : function_def) =
   let template_args =
     def.args
     |> CCList.mapi (fun i (arg : param) ->
-           match arg.t with
-           | { t = TArray (None, _); _ } -> Some ("std::size_t SIZE_" ^ string_of_int i)
-           | _ -> None)
+        match arg.t with {t= TArray (None, _); _} -> Some ("std::size_t SIZE_" ^ string_of_int i) | _ -> None )
     |> CCList.filter_map (fun v -> v)
   in
   let template_decl =
     match template_args with
-    | [] -> Pla.unit
+    | [] ->
+        Pla.unit
     | _ ->
-      let args = Pla.map_sep Pla.commaspace Pla.string template_args in
-      {%pla|template<<#args#>><#>|}
+        let args = Pla.map_sep Pla.commaspace Pla.string template_args in
+        {%pla|template<<#args#>><#>|}
   in
   let ret = print_type_ state (snd def.t) in
-  template_decl, {%pla|<#ret#> <#name#>(<#args#>)|}
-
+  (template_decl, {%pla|<#ret#> <#name#>(<#args#>)|})
 
 let print_top_stmt state ~allow_inline (target : target) t =
-  match t.top, target with
+  match (t.top, target) with
   | TopFunction (def, body), Header ->
-    let inline = (allow_inline && isSmall [ body ]) || isTemplate def.args in
-    let template, def = print_function_def state def in
-    if inline then
-      let body = print_block state body in
-      {%pla|<#template#>static_inline <#def#> <#body#><#><#>|}
-    else
-      {%pla|<#def#>;<#><#>|}
-  | TopFunction (def, body), Implementation ->
-    let inline = (allow_inline && isSmall [ body ]) || isTemplate def.args in
-    if inline then
-      Pla.unit
-    else
+      let inline = (allow_inline && isSmall [body]) || isTemplate def.args in
       let template, def = print_function_def state def in
-      let body = print_block state body in
-      {%pla|<#template#><#def#> <#body#><#><#>|}
-  | TopFunction _, _ -> Pla.unit
+      if inline then
+        let body = print_block state body in
+        {%pla|<#template#>static_inline <#def#> <#body#><#><#>|}
+      else {%pla|<#def#>;<#><#>|}
+  | TopFunction (def, body), Implementation ->
+      let inline = (allow_inline && isSmall [body]) || isTemplate def.args in
+      if inline then Pla.unit
+      else
+        let template, def = print_function_def state def in
+        let body = print_block state body in
+        {%pla|<#template#><#def#> <#body#><#><#>|}
+  | TopFunction _, _ ->
+      Pla.unit
   | TopExternal (def, None), Header ->
-    let template, def = print_function_def state def in
-    {%pla|<#template#>extern <#def#>;<#>|}
+      let template, def = print_function_def state def in
+      {%pla|<#template#>extern <#def#>;<#>|}
   | TopExternal (def, Some link_name), Header ->
-    let args = CCList.mapi (print_arg state) def.args |> Pla.join_sep Pla.commaspace in
-    let ret = print_type_ state (snd def.t) in
-    {%pla|extern <#ret#> <#link_name#s>(<#args#>);<#>|}
-  | TopExternal _, _ -> Pla.unit
-  | TopType { path; members }, Header ->
-    let path = registerPrefix state path in
-    let members = Pla.map_sep {%pla|<#>|} (print_member state) members in
-    {%pla|typedef struct <#path#s> {<#members#+><#>} <#path#s>;<#><#>|}
-  | TopAlias { path; alias_of }, Header ->
-    let path = registerPrefix state path in
-    let alias_of = addPrefix state alias_of in
-    {%pla|typedef struct <#alias_of#s> <#path#s>;<#><#>|}
-  | TopType _, _ -> Pla.unit
-  | TopAlias _, _ -> Pla.unit
+      let args = CCList.mapi (print_arg state) def.args |> Pla.join_sep Pla.commaspace in
+      let ret = print_type_ state (snd def.t) in
+      {%pla|extern <#ret#> <#link_name#s>(<#args#>);<#>|}
+  | TopExternal _, _ ->
+      Pla.unit
+  | TopType {path; members}, Header ->
+      let path = registerPrefix state path in
+      let members = Pla.map_sep {%pla|<#>|} (print_member state) members in
+      {%pla|typedef struct <#path#s> {<#members#+><#>} <#path#s>;<#><#>|}
+  | TopAlias {path; alias_of}, Header ->
+      let path = registerPrefix state path in
+      let alias_of = addPrefix state alias_of in
+      {%pla|typedef struct <#alias_of#s> <#path#s>;<#><#>|}
+  | TopType _, _ ->
+      Pla.unit
+  | TopAlias _, _ ->
+      Pla.unit
   | TopConstant (name, _, t, rhs, _), Tables when isBuiltinType t ->
-    let prefixed_name = registerPrefix state name in
-    let t = print_type_ state t in
-    let rhs = print_exp state None rhs in
-    {%pla|static const <#t#> <#prefixed_name#s> = <#rhs#+>;<#><#>|}
+      let prefixed_name = registerPrefix state name in
+      let t = print_type_ state t in
+      let rhs = print_exp state None rhs in
+      {%pla|static const <#t#> <#prefixed_name#s> = <#rhs#+>;<#><#>|}
   | TopConstant (name, _, t, rhs, _), Header when not (isBuiltinType t) ->
-    let prefixed_name = registerPrefix state name in
-    let t = print_type_ state t in
-    let rhs = print_exp state None rhs in
-    {%pla|static const <#t#> <#prefixed_name#s> = <#rhs#+>;<#><#>|}
+      let prefixed_name = registerPrefix state name in
+      let t = print_type_ state t in
+      let rhs = print_exp state None rhs in
+      {%pla|static const <#t#> <#prefixed_name#s> = <#rhs#+>;<#><#>|}
   | TopConstant (name, _, _, _, _), _ ->
-    let _ = registerPrefix state name in
-    Pla.unit
-
+      let _ = registerPrefix state name in
+      Pla.unit
 
 let print_prog args ~allow_inline target t = Pla.map_join (print_top_stmt args ~allow_inline target) t
 
 let makeIfdef file =
   let def = CCString.replace ~sub:"." ~by:"_" (String.uppercase_ascii (Filename.basename file)) in
-  {%pla|
+  ({%pla|
 #ifndef <#def#s>
 #define <#def#s>
 |}, {%pla|
 #endif // <#def#s>
-|}
+|})
 
-
-let getLibName output =
-  match output with
-  | None -> "MyLib"
-  | Some name -> Filename.basename name
-
+let getLibName output = match output with None -> "MyLib" | Some name -> Filename.basename name
 
 let getTemplateCode (name : string option) (args : Util.Args.args) (stmts : top_stmt list) =
   match name with
-  | Some "pd" -> T_pd.generate (getLibName args.output) stmts
-  | Some "performance" -> T_performance.generateC args
-  | Some "mathematica" -> T_mathematica.generate (getLibName args.output) stmts
-  | None -> (Pla.unit, Pla.unit), (Pla.unit, Pla.unit)
-  | Some name -> Util.Error.raiseErrorMsg ("Unknown template '" ^ name ^ "'")
-
+  | Some "pd" ->
+      T_pd.generate (getLibName args.output) stmts
+  | Some "performance" ->
+      T_performance.generateC args
+  | Some "mathematica" ->
+      T_mathematica.generate (getLibName args.output) stmts
+  | None ->
+      ((Pla.unit, Pla.unit), (Pla.unit, Pla.unit))
+  | Some name ->
+      Util.Error.raiseErrorMsg ("Unknown template '" ^ name ^ "'")
 
 let generateIncludeList stmts = Pla.map_sep_all Pla.newline (fun (file, _) -> {%pla|#include "<#file#s>.h"|}) stmts
 
 let getLegend (args : Util.Args.args) =
-  match args.header, args.header_file with
-  | None, None -> Common.legend
-  | Some text, _ -> Pla.string text
+  match (args.header, args.header_file) with
+  | None, None ->
+      Common.legend
+  | Some text, _ ->
+      Pla.string text
   | _, Some file -> (
     match Util.FileIO.read file with
-    | None -> Common.legend
-    | Some text -> Pla.wrap (Pla.string "/*") (Pla.string "*/") (Pla.string text))
-
+    | None ->
+        Common.legend
+    | Some text ->
+        Pla.wrap (Pla.string "/*") (Pla.string "*/") (Pla.string text) )
 
 let generateSplit file_deps (args : Util.Args.args) template (stmts : top_stmt list) =
   let legend = getLegend args in
-  let state = { args; prefixed = Hashtbl.create 16 } in
+  let state = {args; prefixed= Hashtbl.create 16} in
   let dir = CCOption.map_or ~default:"" (fun file -> Filename.dirname file) args.output in
   let main_header_file = Common.setExt ".h" args.output in
   let impl_file = Common.setExt ".cpp" args.output in
@@ -653,27 +649,26 @@ let generateSplit file_deps (args : Util.Args.args) template (stmts : top_stmt l
       {%pla|<#legend#><#ifdef#><#>#include "vultin.hpp"<#><#dependencies#><#><#><#header#><#endif#>|}
     in
     let impl = {%pla|<#legend#><#><#>#include "<#header_file_base#s>"<#><#><#tables#><#><#><#impl#>|} in
-    [ header, header_file; impl, impl_file ]
+    [(header, header_file); (impl, impl_file)]
   in
   let (timpl_start, timpl_end), (theader_start, theader_end) = getTemplateCode template args stmts in
   let stmts = Common.splitByFile stmts in
   let files = CCList.flat_map generateClassic stmts in
   let include_list = generateIncludeList stmts in
-  (Pla.join [ timpl_start; timpl_end ], impl_file)
-  :: (Pla.join [ theader_start; include_list; theader_end ], main_header_file)
+  (Pla.join [timpl_start; timpl_end], impl_file)
+  :: (Pla.join [theader_start; include_list; theader_end], main_header_file)
   :: files
-
 
 let generateSingle (args : Util.Args.args) template (stmts : top_stmt list) =
   let legend = getLegend args in
-  let state = { args; prefixed = Hashtbl.create 16 } in
+  let state = {args; prefixed= Hashtbl.create 16} in
   let allow_inline = true in
   let header = print_prog state ~allow_inline Header stmts in
   let impl = print_prog state ~allow_inline Implementation stmts in
   let tables = print_prog state ~allow_inline Tables stmts in
   let (timpl_start, timpl_end), (theader_start, theader_end) = getTemplateCode template args stmts in
-  let impl = Pla.join [ timpl_start; impl; timpl_end ] in
-  let header = Pla.join [ theader_start; header; theader_end ] in
+  let impl = Pla.join [timpl_start; impl; timpl_end] in
+  let header = Pla.join [theader_start; header; theader_end] in
   let header_file = Common.setExt ".h" args.output in
   let tables_file = Common.setExt ".tables.h" args.output in
   let impl_file = Common.setExt ".cpp" args.output in
@@ -688,11 +683,7 @@ let generateSingle (args : Util.Args.args) template (stmts : top_stmt list) =
     let ifdef, endif = makeIfdef tables_file in
     {%pla|<#legend#><#ifdef#><#tables#><#endif#>|}
   in
-  [ header, header_file; impl, impl_file; tables, tables_file ]
-
+  [(header, header_file); (impl, impl_file); (tables, tables_file)]
 
 let generate file_deps split output template (stmts : top_stmt list) =
-  if split then
-    generateSplit file_deps output template stmts
-  else
-    generateSingle output template stmts
+  if split then generateSplit file_deps output template stmts else generateSingle output template stmts

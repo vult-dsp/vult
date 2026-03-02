@@ -115,314 +115,337 @@ function list_clear(t)      for k in pairs(t) do t[k] = nil end end
 
 |}
 
-
 let rec isValueOrIf (e : exp) =
   match e.e with
-  | EUnit | EBool _ | EInt _ | EReal _ | EString _ | EId _ | EMember _ | EFixed _ -> true
-  | EUnOp (_, e) -> isValueOrIf e
-  | EOp (_, e1, e2) -> isValueOrIf e1 && isValueOrIf e2
-  | EIndex { e; index } -> isValueOrIf e && isValueOrIf index
-  | EIf { then_; else_; _ } -> isValueOrIf then_ && isValueOrIf else_
-  | _ -> false
-
+  | EUnit | EBool _ | EInt _ | EReal _ | EString _ | EId _ | EMember _ | EFixed _ ->
+      true
+  | EUnOp (_, e) ->
+      isValueOrIf e
+  | EOp (_, e1, e2) ->
+      isValueOrIf e1 && isValueOrIf e2
+  | EIndex {e; index} ->
+      isValueOrIf e && isValueOrIf index
+  | EIf {then_; else_; _} ->
+      isValueOrIf then_ && isValueOrIf else_
+  | _ ->
+      false
 
 let operator (op : operator) =
   match op with
-  | OpAdd -> Pla.string "+"
-  | OpSub -> Pla.string "-"
-  | OpMul -> Pla.string "*"
-  | OpDiv -> Pla.string "/"
-  | OpMod -> Pla.string "%"
-  | OpLand -> Pla.string "and"
-  | OpLor -> Pla.string "or"
-  | OpBor -> Pla.string "|"
-  | OpBand -> Pla.string "&"
-  | OpBxor -> Pla.string "^"
-  | OpLsh -> Pla.string "<<"
-  | OpRsh -> Pla.string ">>"
-  | OpEq -> Pla.string "=="
-  | OpNe -> Pla.string "~="
-  | OpLt -> Pla.string "<"
-  | OpLe -> Pla.string "<="
-  | OpGt -> Pla.string ">"
-  | OpGe -> Pla.string ">="
+  | OpAdd ->
+      Pla.string "+"
+  | OpSub ->
+      Pla.string "-"
+  | OpMul ->
+      Pla.string "*"
+  | OpDiv ->
+      Pla.string "/"
+  | OpMod ->
+      Pla.string "%"
+  | OpLand ->
+      Pla.string "and"
+  | OpLor ->
+      Pla.string "or"
+  | OpBor ->
+      Pla.string "|"
+  | OpBand ->
+      Pla.string "&"
+  | OpBxor ->
+      Pla.string "^"
+  | OpLsh ->
+      Pla.string "<<"
+  | OpRsh ->
+      Pla.string ">>"
+  | OpEq ->
+      Pla.string "=="
+  | OpNe ->
+      Pla.string "~="
+  | OpLt ->
+      Pla.string "<"
+  | OpLe ->
+      Pla.string "<="
+  | OpGt ->
+      Pla.string ">"
+  | OpGe ->
+      Pla.string ">="
 
-
-let uoperator (op : uoperator) =
-  match op with
-  | UOpNeg -> Pla.string "-"
-  | UOpNot -> Pla.string "not"
-
+let uoperator (op : uoperator) = match op with UOpNeg -> Pla.string "-" | UOpNot -> Pla.string "not"
 
 let rec print_exp e =
   match e.e with
-  | EEmptyValue -> Pla.string "{}"
-  | EUnit -> Pla.string ""
+  | EEmptyValue ->
+      Pla.string "{}"
+  | EUnit ->
+      Pla.string ""
   | EBool v ->
-    Pla.string
-      (if v then
-         "true"
-       else
-         "false")
-  | EInt n -> Pla.int n
-  | EReal n -> Pla.string (Util.Vfloat.to_string n)
-  | EFixed n -> Pla.string (Util.Vfloat.to_string n)
-  | EString s -> Pla.string_quoted s
-  | EId id -> Pla.string id
-  | EIndex { e; index = { e = EInt i; _ } } ->
-    let e = print_exp e in
-    let index = i + 1 in
-    {%pla|<#e#>[<#index#i>]|}
-  | EIndex { e; index } ->
-    (* Inline index+1 to avoid function call overhead in standard Lua *)
-    let e = print_exp e in
-    let index = print_exp index in
-    {%pla|<#e#>[(<#index#>) + 1]|}
-  | EArray l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
-  | ECall { path; args } -> (
+      Pla.string (if v then "true" else "false")
+  | EInt n ->
+      Pla.int n
+  | EReal n ->
+      Pla.string (Util.Vfloat.to_string n)
+  | EFixed n ->
+      Pla.string (Util.Vfloat.to_string n)
+  | EString s ->
+      Pla.string_quoted s
+  | EId id ->
+      Pla.string id
+  | EIndex {e; index= {e= EInt i; _}} ->
+      let e = print_exp e in
+      let index = i + 1 in
+      {%pla|<#e#>[<#index#i>]|}
+  | EIndex {e; index} ->
+      (* Inline index+1 to avoid function call overhead in standard Lua *)
+      let e = print_exp e in
+      let index = print_exp index in
+      {%pla|<#e#>[(<#index#>) + 1]|}
+  | EArray l ->
+      Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
+  | ECall {path; args} -> (
     (* Use optimized functions when available *)
-    match path, args with
-    | "lshift", [ a; b ] ->
-      let a = print_exp a in
-      let b = print_exp b in
-      {%pla|lshift(<#a#>, <#b#>)|}
-    | "rshift", [ a; b ] ->
-      let a = print_exp a in
-      let b = print_exp b in
-      {%pla|rshift(<#a#>, <#b#>)|}
+    match (path, args) with
+    | "lshift", [a; b] ->
+        let a = print_exp a in
+        let b = print_exp b in
+        {%pla|lshift(<#a#>, <#b#>)|}
+    | "rshift", [a; b] ->
+        let a = print_exp a in
+        let b = print_exp b in
+        {%pla|rshift(<#a#>, <#b#>)|}
     | ("sin" | "cos" | "abs" | "exp" | "floor" | "tan" | "tanh" | "sqrt"), _ ->
-      let args = Pla.map_sep Pla.commaspace print_exp args in
-      {%pla|<#path#s>(<#args#>)|}
+        let args = Pla.map_sep Pla.commaspace print_exp args in
+        {%pla|<#path#s>(<#args#>)|}
     (* List operations *)
-    | "list_size", [ e1 ] ->
-      let e1 = print_exp e1 in
-      {%pla|#<#e1#>|}
-    | "list_capacity", [ _ ] -> {%pla|2147483647|}
-    | "list_append", [ l; v ] ->
-      let l = print_exp l in
-      let v = print_exp v in
-      {%pla|table.insert(<#l#>, <#v#>)|}
-    | "list_insert", [ l; i; v ] ->
-      let l = print_exp l in
-      let i = print_exp i in
-      let v = print_exp v in
-      {%pla|table.insert(<#l#>, <#i#> + 1, <#v#>)|}
-    | "list_remove", [ l; i ] ->
-      let l = print_exp l in
-      let i = print_exp i in
-      {%pla|table.remove(<#l#>, <#i#> + 1)|}
-    | "list_clear", [ e1 ] ->
-      let e1 = print_exp e1 in
-      {%pla|list_clear(<#e1#>)|}
-    | "list_reserve", [ _; _ ] ->
-      (* No-op for Lua *)
-      {%pla|nil|}
-    | "list_get", [ l; i ] ->
-      let l = print_exp l in
-      let i = print_exp i in
-      (* Inline index+1 to avoid function call overhead *)
-      {%pla|<#l#>[(<#i#>) + 1]|}
-    | "list_set", [ l; i; v ] ->
-      let l = print_exp l in
-      let i = print_exp i in
-      let v = print_exp v in
-      (* Lua is 1-based *)
-      {%pla|<#l#>[<#i#> + 1] = <#v#>|}
+    | "list_size", [e1] ->
+        let e1 = print_exp e1 in
+        {%pla|#<#e1#>|}
+    | "list_capacity", [_] ->
+        {%pla|2147483647|}
+    | "list_append", [l; v] ->
+        let l = print_exp l in
+        let v = print_exp v in
+        {%pla|table.insert(<#l#>, <#v#>)|}
+    | "list_insert", [l; i; v] ->
+        let l = print_exp l in
+        let i = print_exp i in
+        let v = print_exp v in
+        {%pla|table.insert(<#l#>, <#i#> + 1, <#v#>)|}
+    | "list_remove", [l; i] ->
+        let l = print_exp l in
+        let i = print_exp i in
+        {%pla|table.remove(<#l#>, <#i#> + 1)|}
+    | "list_clear", [e1] ->
+        let e1 = print_exp e1 in
+        {%pla|list_clear(<#e1#>)|}
+    | "list_reserve", [_; _] ->
+        (* No-op for Lua *)
+        {%pla|nil|}
+    | "list_get", [l; i] ->
+        let l = print_exp l in
+        let i = print_exp i in
+        (* Inline index+1 to avoid function call overhead *)
+        {%pla|<#l#>[(<#i#>) + 1]|}
+    | "list_set", [l; i; v] ->
+        let l = print_exp l in
+        let i = print_exp i in
+        let v = print_exp v in
+        (* Lua is 1-based *)
+        {%pla|<#l#>[<#i#> + 1] = <#v#>|}
     (* Inline simple builtins to avoid function call overhead *)
-    | "eps", [] -> {%pla|1e-18|}
-    | "pi", [] -> {%pla|3.1415926535897932384|}
-    | "real", [ x ] ->
-      let x = print_exp x in
-      {%pla|(<#x#>)|}
-    | "int", [ x ] ->
-      (* Inline int conversion using math.modf (truncates towards zero) *)
-      let x = print_exp x in
-      {%pla|(math.modf(<#x#>))|}
-    | "bool", [ x ] ->
-      (* Inline bool conversion *)
-      let x = print_exp x in
-      {%pla|((<#x#>) ~= 0 and (<#x#>) ~= false)|}
-    | "not_", [ x ] ->
-      (* Inline logical not *)
-      let x = print_exp x in
-      {%pla|(not (<#x#>))|}
-    | "clip", [ x; low; high ] ->
-      (* Inline clip as: (x > high) and high or ((x < low) and low or x) *)
-      let x = print_exp x in
-      let low = print_exp low in
-      let high = print_exp high in
-      {%pla|((<#x#>) > (<#high#>) and (<#high#>) or ((<#x#>) < (<#low#>) and (<#low#>) or (<#x#>)))|}
+    | "eps", [] ->
+        {%pla|1e-18|}
+    | "pi", [] ->
+        {%pla|3.1415926535897932384|}
+    | "real", [x] ->
+        let x = print_exp x in
+        {%pla|(<#x#>)|}
+    | "int", [x] ->
+        (* Inline int conversion using math.modf (truncates towards zero) *)
+        let x = print_exp x in
+        {%pla|(math.modf(<#x#>))|}
+    | "bool", [x] ->
+        (* Inline bool conversion *)
+        let x = print_exp x in
+        {%pla|((<#x#>) ~= 0 and (<#x#>) ~= false)|}
+    | "not_", [x] ->
+        (* Inline logical not *)
+        let x = print_exp x in
+        {%pla|(not (<#x#>))|}
+    | "clip", [x; low; high] ->
+        (* Inline clip as: (x > high) and high or ((x < low) and low or x) *)
+        let x = print_exp x in
+        let low = print_exp low in
+        let high = print_exp high in
+        {%pla|((<#x#>) > (<#high#>) and (<#high#>) or ((<#x#>) < (<#low#>) and (<#low#>) or (<#x#>)))|}
     | _ ->
-      let args = Pla.map_sep Pla.commaspace print_exp args in
-      {%pla|<#path#s>(<#args#>)|})
+        let args = Pla.map_sep Pla.commaspace print_exp args in
+        {%pla|<#path#s>(<#args#>)|} )
   | EUnOp (op, e) ->
-    let e = print_exp e in
-    let op = uoperator op in
-    {%pla|(<#op#><#e#>)|}
+      let e = print_exp e in
+      let op = uoperator op in
+      {%pla|(<#op#><#e#>)|}
   | EOp (op, e1, e2) -> (
-    let se1 = print_exp e1 in
-    let se2 = print_exp e2 in
-    match op with
-    (* Use optimized bit shift functions (LuaJIT uses bit library, standard Lua uses arithmetic) *)
-    | OpLsh -> {%pla|lshift(<#se1#>, <#se2#>)|}
-    | OpRsh -> {%pla|rshift(<#se1#>, <#se2#>)|}
-    | _ ->
-      let op = operator op in
-      {%pla|(<#se1#> <#op#> <#se2#>)|})
-  | EIf { cond; then_; else_ } when isValueOrIf then_ && isValueOrIf else_ ->
-    let cond = print_exp cond in
-    let then_ = print_exp then_ in
-    let else_ = print_exp else_ in
-    {%pla|ifExpressionValue(<#cond#>, <#then_#>, <#else_#>)|}
-  | EIf { cond; then_; else_ } ->
-    let cond = print_exp cond in
-    let then_ = print_exp then_ in
-    let else_ = print_exp else_ in
-    {%pla|ifExpression(<#cond#>, (function () return <#then_#> end), (function () return <#else_#> end))|}
+      let se1 = print_exp e1 in
+      let se2 = print_exp e2 in
+      match op with
+      (* Use optimized bit shift functions (LuaJIT uses bit library, standard Lua uses arithmetic) *)
+      | OpLsh ->
+          {%pla|lshift(<#se1#>, <#se2#>)|}
+      | OpRsh ->
+          {%pla|rshift(<#se1#>, <#se2#>)|}
+      | _ ->
+          let op = operator op in
+          {%pla|(<#se1#> <#op#> <#se2#>)|} )
+  | EIf {cond; then_; else_} when isValueOrIf then_ && isValueOrIf else_ ->
+      let cond = print_exp cond in
+      let then_ = print_exp then_ in
+      let else_ = print_exp else_ in
+      {%pla|ifExpressionValue(<#cond#>, <#then_#>, <#else_#>)|}
+  | EIf {cond; then_; else_} ->
+      let cond = print_exp cond in
+      let then_ = print_exp then_ in
+      let else_ = print_exp else_ in
+      {%pla|ifExpression(<#cond#>, (function () return <#then_#> end), (function () return <#else_#> end))|}
   | ETuple l ->
-    let l = Pla.map_sep Pla.commaspace print_exp l in
-    {%pla|{ <#l#> }|}
+      let l = Pla.map_sep Pla.commaspace print_exp l in
+      {%pla|{ <#l#> }|}
   | EMember (e, m) ->
-    let e = print_exp e in
-    {%pla|<#e#>.<#m#s>|}
+      let e = print_exp e in
+      {%pla|<#e#>.<#m#s>|}
   | ETMember (e, i) ->
-    let e = print_exp e in
-    let m = i + 1 in
-    {%pla|<#e#>[<#m#i>]|}
-  | ERecord { elems; _ } ->
-    let printElem (n, v) =
-      let v = print_exp v in
-      {%pla|<#n#s> = <#v#>|}
-    in
-    let elems = Pla.map_sep Pla.commaspace printElem elems in
-    {%pla|{ <#elems#> }|}
-
+      let e = print_exp e in
+      let m = i + 1 in
+      {%pla|<#e#>[<#m#i>]|}
+  | ERecord {elems; _} ->
+      let printElem (n, v) =
+        let v = print_exp v in
+        {%pla|<#n#s> = <#v#>|}
+      in
+      let elems = Pla.map_sep Pla.commaspace printElem elems in
+      {%pla|{ <#elems#> }|}
 
 let rec print_lexp e =
   match e.l with
-  | LWild -> Pla.string "_wild"
-  | LId s -> Pla.string s
+  | LWild ->
+      Pla.string "_wild"
+  | LId s ->
+      Pla.string s
   | LMember (e, m) ->
-    let e = print_lexp e in
-    {%pla|<#e#>.<#m#s>|}
-  | LIndex { e; index = { e = EInt i; _ } } ->
-    let e = print_lexp e in
-    let index = i + 1 in
-    {%pla|<#e#>[<#index#i>]|}
-  | LIndex { e; index } ->
-    let e = print_lexp e in
-    let index = print_exp index in
-    {%pla|<#e#>[<#index#> + 1]|}
-  | _ -> failwith "Lua:print_lexp LTuple"
-
+      let e = print_lexp e in
+      {%pla|<#e#>.<#m#s>|}
+  | LIndex {e; index= {e= EInt i; _}} ->
+      let e = print_lexp e in
+      let index = i + 1 in
+      {%pla|<#e#>[<#index#i>]|}
+  | LIndex {e; index} ->
+      let e = print_lexp e in
+      let index = print_exp index in
+      {%pla|<#e#>[<#index#> + 1]|}
+  | _ ->
+      failwith "Lua:print_lexp LTuple"
 
 let print_dexp (e : dexp) =
-  match e.d with
-  | DId (id, None) -> {%pla|<#id#s>|}
-  | DId (id, Some dim) -> {%pla|<#id#s>[<#dim#i>]|}
-
+  match e.d with DId (id, None) -> {%pla|<#id#s>|} | DId (id, Some dim) -> {%pla|<#id#s>[<#dim#i>]|}
 
 let rec print_stmt (s : stmt) =
   match s.s with
   (* if the name is _ctx, do not call the allocator*)
-  | StmtDecl (({ d = DId ("_ctx", _); t = { t = TStruct _; _ }; _ } as lhs), None) ->
-    let lhs = print_dexp lhs in
-    {%pla|local <#lhs#> = {};|}
+  | StmtDecl (({d= DId ("_ctx", _); t= {t= TStruct _; _}; _} as lhs), None) ->
+      let lhs = print_dexp lhs in
+      {%pla|local <#lhs#> = {};|}
   (* needs allocation *)
-  | StmtDecl (({ t = { t = TStruct { path; _ }; _ }; _ } as lhs), None) ->
-    let lhs = print_dexp lhs in
-    {%pla|local <#lhs#> = <#path#s>_alloc();|}
+  | StmtDecl (({t= {t= TStruct {path; _}; _}; _} as lhs), None) ->
+      let lhs = print_dexp lhs in
+      {%pla|local <#lhs#> = <#path#s>_alloc();|}
   | StmtDecl (lhs, None) ->
-    let lhs = print_dexp lhs in
-    {%pla|local <#lhs#>|}
+      let lhs = print_dexp lhs in
+      {%pla|local <#lhs#>|}
   | StmtDecl (lhs, Some rhs) ->
-    let lhs = print_dexp lhs in
-    let rhs = print_exp rhs in
-    {%pla|local <#lhs#> = <#rhs#>|}
-  | StmtBind ({ l = LWild; _ }, rhs) ->
-    let rhs = print_exp rhs in
-    {%pla|<#rhs#>|}
+      let lhs = print_dexp lhs in
+      let rhs = print_exp rhs in
+      {%pla|local <#lhs#> = <#rhs#>|}
+  | StmtBind ({l= LWild; _}, rhs) ->
+      let rhs = print_exp rhs in
+      {%pla|<#rhs#>|}
   | StmtBind (lhs, rhs) ->
-    let lhs = print_lexp lhs in
-    let rhs = print_exp rhs in
-    {%pla|<#lhs#> = <#rhs#>|}
+      let lhs = print_lexp lhs in
+      let rhs = print_exp rhs in
+      {%pla|<#lhs#> = <#rhs#>|}
   | StmtReturn e ->
-    let e = print_exp e in
-    {%pla|return <#e#>|}
+      let e = print_exp e in
+      {%pla|return <#e#>|}
   | StmtIf (cond, then_, None) ->
-    let e = print_exp cond in
-    let then_ = print_stmt then_ in
-    {%pla|if <#e#> then<#then_#+><#>end|}
+      let e = print_exp cond in
+      let then_ = print_stmt then_ in
+      {%pla|if <#e#> then<#then_#+><#>end|}
   | StmtIf (cond, then_, Some else_) ->
-    let cond = print_exp cond in
-    let then_ = print_stmt then_ in
-    let else_ = print_stmt else_ in
-    {%pla|if <#cond#> then<#then_#+><#>else<#else_#+><#>end|}
+      let cond = print_exp cond in
+      let then_ = print_stmt then_ in
+      let else_ = print_stmt else_ in
+      {%pla|if <#cond#> then<#then_#+><#>else<#else_#+><#>end|}
   | StmtWhile (cond, stmt) ->
-    let cond = print_exp cond in
-    let stmt = print_stmt stmt in
-    {%pla|while <#cond#> do<#stmt#+><#>end|}
+      let cond = print_exp cond in
+      let stmt = print_stmt stmt in
+      {%pla|while <#cond#> do<#stmt#+><#>end|}
   | StmtBlock stmts ->
-    let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
-    {%pla|do<#stmt#+>end|}
+      let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
+      {%pla|do<#stmt#+>end|}
   | StmtSwitch (e1, cases, default) -> (
-    let if_ =
-      CCList.fold_right
-        (fun (e2, body) else_ ->
-          let cond = C.eeq e1 e2 in
-          Some (C.sif cond body else_))
-        cases
-        default
-    in
-    match if_ with
-    | None -> Pla.unit
-    | Some if_ -> print_stmt if_)
+      let if_ =
+        CCList.fold_right
+          (fun (e2, body) else_ ->
+            let cond = C.eeq e1 e2 in
+            Some (C.sif cond body else_) )
+          cases default
+      in
+      match if_ with None -> Pla.unit | Some if_ -> print_stmt if_ )
 
-
-let print_arg ({ name; _ } : param) = {%pla|<#name#s>|}
+let print_arg ({name; _} : param) = {%pla|<#name#s>|}
 
 let print_function_def (def : function_def) =
   let name = def.name in
   let args = Pla.map_sep Pla.commaspace print_arg def.args in
   {%pla|function <#name#s>(<#args#>)|}
 
-
 let print_body body =
   match body.s with
   | StmtBlock stmts ->
-    let stmts = Pla.map_sep_all Pla.newline print_stmt stmts in
-    {%pla|<#stmts#+>end|}
+      let stmts = Pla.map_sep_all Pla.newline print_stmt stmts in
+      {%pla|<#stmts#+>end|}
   | _ ->
-    let stmt = print_stmt body in
-    {%pla|<#stmt#+><#>end|}
-
+      let stmt = print_stmt body in
+      {%pla|<#stmt#+><#>end|}
 
 let print_top_stmt (args : Util.Args.args) t =
   match t.top with
   | TopFunction (def, body) ->
-    let def = print_function_def def in
-    let body = print_body body in
-    {%pla|<#def#><#body#><#><#>|}
-  | TopExternal _ -> Pla.unit
-  | TopType _ -> Pla.unit
-  | TopAlias _ -> Pla.unit
-  | TopConstant (name, _, _, _, _) when args.test_mode -> {%pla|<#name#s> = {};<#>|}
+      let def = print_function_def def in
+      let body = print_body body in
+      {%pla|<#def#><#body#><#><#>|}
+  | TopExternal _ ->
+      Pla.unit
+  | TopType _ ->
+      Pla.unit
+  | TopAlias _ ->
+      Pla.unit
+  | TopConstant (name, _, _, _, _) when args.test_mode ->
+      {%pla|<#name#s> = {};<#>|}
   | TopConstant (name, _, _, rhs, _) ->
-    let rhs = print_exp rhs in
-    {%pla|local <#name#s> = <#rhs#><#>|}
-
+      let rhs = print_exp rhs in
+      {%pla|local <#name#s> = <#rhs#><#>|}
 
 let print_prog args t = Pla.map_join (print_top_stmt args) t
 
 let getTemplateCode (args : Util.Args.args) =
   match args.template with
-  | None -> Pla.unit, Pla.unit
-  | Some "performance" -> T_performance.generateLua args
-  | Some name -> Util.Error.raiseErrorMsg ("Unknown template '" ^ name ^ "'")
-
+  | None ->
+      (Pla.unit, Pla.unit)
+  | Some "performance" ->
+      T_performance.generateLua args
+  | Some name ->
+      Util.Error.raiseErrorMsg ("Unknown template '" ^ name ^ "'")
 
 let generate (args : Util.Args.args) (stmts : top_stmt list) =
   let file = Common.setExt ".lua" args.output in
   let code = print_prog args stmts in
   let pre, post = getTemplateCode args in
-  [ {%pla|<#runtime#><#pre#><#code#><#post#>|}, file ]
+  [({%pla|<#runtime#><#pre#><#code#><#post#>|}, file)]

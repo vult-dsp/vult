@@ -22,18 +22,13 @@
    THE SOFTWARE.
 *)
 
-type buffer =
-  { data : Buffer.t
-  ; mutable index : int
-  ; size : int
-  }
+type buffer = {data: Buffer.t; mutable index: int; size: int}
 
 (** Returns a character from the buffer and increases the index *)
 let get (buffer : buffer) : char =
   let c = Buffer.nth buffer.data buffer.index in
-  buffer.index <- buffer.index + 1;
+  buffer.index <- buffer.index + 1 ;
   c
-
 
 (** Returns a character (as integer) from the buffer *)
 let get_int (buffer : buffer) : int32 = Int32.of_int (Char.code (get buffer))
@@ -47,14 +42,12 @@ let read2 (buffer : buffer) : int32 =
   let b2 = get_int buffer in
   shift_or b1 b2
 
-
 (** Reads three characters (24 bits) as an int *)
 let read3 (buffer : buffer) : int32 =
   let b1 = get_int buffer in
   let b2 = get_int buffer in
   let b3 = get_int buffer in
   b3 |> shift_or b2 |> shift_or b1
-
 
 (** Reads four characters (32 bits) as an int *)
 let read4 (buffer : buffer) : int32 =
@@ -64,7 +57,6 @@ let read4 (buffer : buffer) : int32 =
   let b4 = get_int buffer in
   b4 |> shift_or b3 |> shift_or b2 |> shift_or b1
 
-
 (** Reads four characters as a string *)
 let read4_chars (buffer : buffer) : string =
   let c1 = get buffer in
@@ -72,34 +64,24 @@ let read4_chars (buffer : buffer) : string =
   let c3 = get buffer in
   let c4 = get buffer in
   let result = Bytes.create 4 in
-  Bytes.set result 0 c1;
-  Bytes.set result 1 c2;
-  Bytes.set result 2 c3;
-  Bytes.set result 3 c4;
-  Bytes.to_string result
-
+  Bytes.set result 0 c1 ; Bytes.set result 1 c2 ; Bytes.set result 2 c3 ; Bytes.set result 3 c4 ; Bytes.to_string result
 
 (** Moves chunk by chunk until it finds the "data" chunk *)
 let searchData (buffer : buffer) : bool =
   let rec skipData n =
-    if n = 0 then
-      ()
+    if n = 0 then ()
     else
       let _ = get buffer in
       skipData (n - 1)
   in
   let rec loop () =
-    if read4_chars buffer = "data" then
-      true
+    if read4_chars buffer = "data" then true
     else
       let size = read4 buffer |> Int32.to_int in
       let () = skipData size in
       loop ()
   in
-  match loop () with
-  | found -> found
-  | exception Invalid_argument _ -> false
-
+  match loop () with found -> found | exception Invalid_argument _ -> false
 
 (** constants to convert 16 bits to a float *)
 let max_16 = (2.0 ** 16.0) /. 2.0
@@ -111,11 +93,8 @@ let mask_16 = Int32.shift_left Int32.minus_one 15
 (** Reads a 16 bit valua as a float *)
 let readSample16 (buffer : buffer) : float =
   let v = read2 buffer in
-  if Int32.logand sign_16 v <> Int32.zero then
-    Int32.to_float (Int32.logor mask_16 v) /. max_16
-  else
-    Int32.to_float v /. max_16
-
+  if Int32.logand sign_16 v <> Int32.zero then Int32.to_float (Int32.logor mask_16 v) /. max_16
+  else Int32.to_float v /. max_16
 
 (** constants to convert 24 bits to a float *)
 let max_24 = (2.0 ** 24.0) /. 2.0
@@ -127,100 +106,81 @@ let mask_24 = Int32.shift_left Int32.minus_one 23
 (** Reads a 24 bit valua as a float *)
 let readSample24 (buffer : buffer) : float =
   let v = read3 buffer in
-  if Int32.logand sign_24 v <> Int32.zero then
-    Int32.to_float (Int32.logor mask_24 v) /. max_24
-  else
-    Int32.to_float v /. max_24
-
+  if Int32.logand sign_24 v <> Int32.zero then Int32.to_float (Int32.logor mask_24 v) /. max_24
+  else Int32.to_float v /. max_24
 
 let getReadSampleFunction (bits : int32) : (buffer -> float, string) result =
   match Int32.to_int bits with
-  | 16 -> Ok readSample16
-  | 24 -> Ok readSample24
-  | _ -> Error ("Wave file encoded in an unsupported bits per sample: " ^ string_of_int (Int32.to_int bits))
-
+  | 16 ->
+      Ok readSample16
+  | 24 ->
+      Ok readSample24
+  | _ ->
+      Error ("Wave file encoded in an unsupported bits per sample: " ^ string_of_int (Int32.to_int bits))
 
 (** Reads the given number of samples into the data arrays *)
 let readSamples (buffer : buffer) (channels : int) (size : int) (data : float array array) (read_fn : buffer -> float) :
     int =
   (* iterates reading the channels *)
   let rec loop_channels index channel =
-    if channel >= channels then
-      true
+    if channel >= channels then true
     else
       try
         let value = read_fn buffer in
         let channel_data = data.(channel) in
         let () = channel_data.(index) <- value in
         loop_channels index (channel + 1)
-      with
-      | Invalid_argument _ -> false
+      with Invalid_argument _ -> false
   in
   (* iterates reading the samples *)
   let rec loop_samples index =
-    if index >= size then
-      size
-    else if loop_channels index 0 then
-      loop_samples (index + 1)
-    else
-      index - 1
+    if index >= size then size else if loop_channels index 0 then loop_samples (index + 1) else index - 1
   in
   loop_samples 0
 
-
 (** Performs checks for valid wav format *)
 let checkFormat (buffer : buffer) =
-  if not (read4_chars buffer = "RIFF") then
-    Error "Not a valid file"
+  if not (read4_chars buffer = "RIFF") then Error "Not a valid file"
   else
     let chunk_size = read4 buffer in
-    if chunk_size < Int32.of_int 4 then
-      Error "Invalid chunk size"
-    else if not (read4_chars buffer = "WAVE") then
-      Error "Not a supported wav file"
-    else if not (read4_chars buffer = "fmt ") then
-      Error "Not a supported wav file"
+    if chunk_size < Int32.of_int 4 then Error "Invalid chunk size"
+    else if not (read4_chars buffer = "WAVE") then Error "Not a supported wav file"
+    else if not (read4_chars buffer = "fmt ") then Error "Not a supported wav file"
     else
       let sub_chunk_size = read4 buffer in
       let audio_format = read2 buffer in
-      if sub_chunk_size <> Int32.of_int 16 || audio_format <> Int32.one then
-        Error "Input file is not in PCM format"
-      else
-        Ok ()
+      if sub_chunk_size <> Int32.of_int 16 || audio_format <> Int32.one then Error "Input file is not in PCM format"
+      else Ok ()
 
-
-type wave =
-  { channels : int
-  ; samples : int
-  ; data : float array array
-  }
+type wave = {channels: int; samples: int; data: float array array}
 
 (** Reads a wav file and returns an array containing the channels *)
 let read (file : string) : (wave, string) result =
   match FileIO.read_bytes file with
-  | None -> Error "failed to open the file"
+  | None ->
+      Error "failed to open the file"
   | Some data -> (
-    let buffer = { index = 0; size = Buffer.length data; data } in
-    match checkFormat buffer with
-    | Error _ as error -> error
-    | Ok () -> (
-      let channels = read2 buffer |> Int32.to_int in
-      let _sample_rate = read4 buffer in
-      let _byte_rate = read4 buffer in
-      let _block_align = read2 buffer in
-      let bits_per_sample = read2 buffer in
-      match getReadSampleFunction bits_per_sample with
-      | Error _ as e -> e
-      | Ok sample_fn ->
-        if not (searchData buffer) then
-          Error "the file does not contain data"
-        else
-          let size = read4 buffer |> Int32.to_int in
-          let no_samples = size / channels / (Int32.to_int bits_per_sample / 8) in
-          let data = Array.init channels (fun _ -> Array.make no_samples 0.0) in
-          let samples = readSamples buffer channels no_samples data sample_fn in
-          Ok { channels; samples; data }))
-
+      let buffer = {index= 0; size= Buffer.length data; data} in
+      match checkFormat buffer with
+      | Error _ as error ->
+          error
+      | Ok () -> (
+          let channels = read2 buffer |> Int32.to_int in
+          let _sample_rate = read4 buffer in
+          let _byte_rate = read4 buffer in
+          let _block_align = read2 buffer in
+          let bits_per_sample = read2 buffer in
+          match getReadSampleFunction bits_per_sample with
+          | Error _ as e ->
+              e
+          | Ok sample_fn ->
+              if not (searchData buffer) then Error "the file does not contain data"
+              else
+                let size = read4 buffer |> Int32.to_int in
+                let no_samples = size / channels / (Int32.to_int bits_per_sample / 8) in
+                let data = Array.init channels (fun _ -> Array.make no_samples 0.0) in
+                let samples = readSamples buffer channels no_samples data sample_fn in
+                Ok {channels; samples; data} ) )
 
 (** Writing WAV files *)
 
@@ -229,28 +189,24 @@ let write_byte (buffer : Buffer.t) (value : int) : unit = Buffer.add_char buffer
 
 (** Writes a 16-bit little-endian integer to the buffer *)
 let write_int16 (buffer : Buffer.t) (value : int) : unit =
-  write_byte buffer (value land 0xFF);
+  write_byte buffer (value land 0xFF) ;
   write_byte buffer ((value lsr 8) land 0xFF)
-
 
 (** Writes a 32-bit little-endian integer to the buffer *)
 let write_int32 (buffer : Buffer.t) (value : int32) : unit =
   let v = Int32.to_int value in
-  write_byte buffer (v land 0xFF);
-  write_byte buffer ((v lsr 8) land 0xFF);
-  write_byte buffer ((v lsr 16) land 0xFF);
+  write_byte buffer (v land 0xFF) ;
+  write_byte buffer ((v lsr 8) land 0xFF) ;
+  write_byte buffer ((v lsr 16) land 0xFF) ;
   write_byte buffer ((v lsr 24) land 0xFF)
-
 
 (** Writes a 4-character string to the buffer *)
 let write_string4 (buffer : Buffer.t) (str : string) : unit =
-  if String.length str <> 4 then
-    failwith ("Expected 4-character string, got: " ^ str)
+  if String.length str <> 4 then failwith ("Expected 4-character string, got: " ^ str)
   else
     for i = 0 to 3 do
       Buffer.add_char buffer str.[i]
     done
-
 
 (** Converts a float sample to 16-bit signed integer *)
 let float_to_int16 (sample : float) : int =
@@ -258,12 +214,10 @@ let float_to_int16 (sample : float) : int =
   let scaled = clamped *. max_16 in
   int_of_float scaled
 
-
 (** Writes a single 16-bit sample to the buffer *)
 let write_sample16 (buffer : Buffer.t) (sample : float) : unit =
   let int_sample = float_to_int16 sample in
   write_int16 buffer int_sample
-
 
 (** Writes the WAV file header *)
 let write_header (buffer : Buffer.t) (channels : int) (samples : int) (sample_rate : int) : unit =
@@ -273,39 +227,32 @@ let write_header (buffer : Buffer.t) (channels : int) (samples : int) (sample_ra
   let data_size = samples * channels * (bits_per_sample / 8) in
   let file_size = 36 + data_size in
   (* RIFF header *)
-  write_string4 buffer "RIFF";
-  write_int32 buffer (Int32.of_int file_size);
-  write_string4 buffer "WAVE";
+  write_string4 buffer "RIFF" ;
+  write_int32 buffer (Int32.of_int file_size) ;
+  write_string4 buffer "WAVE" ;
   (* Format chunk *)
-  write_string4 buffer "fmt ";
-  write_int32 buffer 16l;
+  write_string4 buffer "fmt " ;
+  write_int32 buffer 16l ;
   (* Sub-chunk size *)
-  write_int16 buffer 1;
+  write_int16 buffer 1 ;
   (* Audio format (PCM) *)
-  write_int16 buffer channels;
-  write_int32 buffer (Int32.of_int sample_rate);
-  write_int32 buffer (Int32.of_int byte_rate);
-  write_int16 buffer block_align;
-  write_int16 buffer bits_per_sample;
+  write_int16 buffer channels ;
+  write_int32 buffer (Int32.of_int sample_rate) ;
+  write_int32 buffer (Int32.of_int byte_rate) ;
+  write_int16 buffer block_align ;
+  write_int16 buffer bits_per_sample ;
   (* Data chunk *)
-  write_string4 buffer "data";
+  write_string4 buffer "data" ;
   write_int32 buffer (Int32.of_int data_size)
-
 
 (** Writes sample data to the buffer *)
 let write_samples (buffer : Buffer.t) (data : float array array) : unit =
   let channels = Array.length data in
-  let samples =
-    if channels > 0 then
-      Array.length data.(0)
-    else
-      0
-  in
+  let samples = if channels > 0 then Array.length data.(0) else 0 in
   (* Verify all channels have the same length *)
   for i = 1 to channels - 1 do
-    if Array.length data.(i) <> samples then
-      failwith "All channels must have the same number of samples"
-  done;
+    if Array.length data.(i) <> samples then failwith "All channels must have the same number of samples"
+  done ;
   (* Write samples interleaved by channel *)
   for sample_idx = 0 to samples - 1 do
     for channel = 0 to channels - 1 do
@@ -313,49 +260,40 @@ let write_samples (buffer : Buffer.t) (data : float array array) : unit =
     done
   done
 
-
 (** Writes a WAV file with the given data *)
 let write (filename : string) (data : float array array) ?(sample_rate : int = 44100) () : (unit, string) result =
   try
     let channels = Array.length data in
     (* Validate input *)
-    if channels = 0 then
-      Error "No channels provided"
-    else if channels > 2 then
-      Error "Only mono and stereo files are supported"
+    if channels = 0 then Error "No channels provided"
+    else if channels > 2 then Error "Only mono and stereo files are supported"
     else
-      let samples =
-        if channels > 0 then
-          Array.length data.(0)
-        else
-          0
-      in
-      if samples = 0 then
-        Error "No samples provided"
+      let samples = if channels > 0 then Array.length data.(0) else 0 in
+      if samples = 0 then Error "No samples provided"
       else
         (* Create buffer and write WAV data *)
         let buffer = Buffer.create ((samples * channels * 2) + 44) in
-        write_header buffer channels samples sample_rate;
-        write_samples buffer data;
+        write_header buffer channels samples sample_rate ;
+        write_samples buffer data ;
         (* Write to file *)
         let content = Buffer.contents buffer in
         match FileIO.write_bytes filename content with
-        | true -> Ok ()
-        | false -> Error ("Failed to write file: " ^ filename)
+        | true ->
+            Ok ()
+        | false ->
+            Error ("Failed to write file: " ^ filename)
   with
-  | Failure msg -> Error msg
-  | exn -> Error ("Unexpected error: " ^ Printexc.to_string exn)
-
+  | Failure msg ->
+      Error msg
+  | exn ->
+      Error ("Unexpected error: " ^ Printexc.to_string exn)
 
 (** Convenience function to write a mono WAV file *)
 let write_mono (filename : string) (data : float array) ?(sample_rate : int = 44100) () : (unit, string) result =
-  write filename [| data |] ~sample_rate ()
-
+  write filename [|data|] ~sample_rate ()
 
 (** Convenience function to write a stereo WAV file *)
 let write_stereo (filename : string) (left : float array) (right : float array) ?(sample_rate : int = 44100) () :
     (unit, string) result =
-  if Array.length left <> Array.length right then
-    Error "Left and right channels must have the same length"
-  else
-    write filename [| left; right |] ~sample_rate ()
+  if Array.length left <> Array.length right then Error "Left and right channels must have the same length"
+  else write filename [|left; right|] ~sample_rate ()
