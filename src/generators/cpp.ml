@@ -405,19 +405,6 @@ let print_decl_alloc state (n, (t : type_)) =
       let t = print_type_ state t in
       {%pla|<#t#> <#n#s>|}
 
-let arrayCopyFunction (t : type_) =
-  match t.t with
-  | TReal ->
-      "float_copy_array"
-  | TInt ->
-      "int_copy_array"
-  | TFix16 ->
-      "fix_copy_array"
-  | TBool ->
-      "bool_copy_array"
-  | _ ->
-      failwith "not a valid array copy"
-
 let rec print_stmt state s =
   match s.s with
   (* declares and initializes a structure *)

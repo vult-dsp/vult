@@ -221,24 +221,6 @@ module Cpp = struct
         Some "float_to_bool"
     | "bool", [TFix16], _ ->
         Some "fix_to_bool"
-    (* get *)
-    | "get", [TArray (_, {t= TReal; _}); TInt], TReal ->
-        Some "float_get"
-    | "get", [TArray (_, {t= TFix16; _}); TInt], TFix16 ->
-        Some "fix_get"
-    | "get", [TArray (_, {t= TInt; _}); TInt], TInt ->
-        Some "int_get"
-    | "get", [TArray (_, {t= TInt16; _}); TInt], TInt16 ->
-        Some "int16_get"
-    (* set *)
-    | "set", [TArray (_, {t= TReal; _}); TInt; TReal], TVoid None ->
-        Some "float_set"
-    | "set", [TArray (_, {t= TFix16; _}); TInt; TFix16], TVoid None ->
-        Some "fix_set"
-    | "set", [TArray (_, {t= TInt; _}); TInt; TInt], TVoid None ->
-        Some "int_set"
-    | "set", [TArray (_, {t= TInt16; _}); TInt; TInt16], TVoid None ->
-        Some "int16_set"
     (* serialization *)
     | "deserialize_float", _, TFix16 ->
         Some "deserialize_int"

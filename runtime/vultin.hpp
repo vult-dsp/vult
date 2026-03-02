@@ -60,6 +60,8 @@ static_inline float fix_to_float(fix16_t a) { return (float)a / FIX16_ONE; }
 static_inline bool fix_to_bool(fix16_t a) { return a != 0; }
 static_inline fix16_t float_to_fix(float a) {
   float temp = a * FIX16_ONE;
+  if (temp >= (float)FIX16_MAX) return FIX16_MAX;
+  if (temp <= (float)FIX16_MIN) return FIX16_MIN;
   return (fix16_t)temp;
 }
 static_inline bool float_to_bool(float a) { return a != 0.0f; }
@@ -73,14 +75,6 @@ static_inline std::string bool_to_string(bool a) {
     return std::string("false");
 }
 
-static_inline fix16_t short_to_fix(int16_t x) { return (fix16_t)x; }
-
-static_inline int16_t fix_to_short(fix16_t x) {
-  return (int16_t)((x >= (int32_t)0x00010000 ? (int32_t)0x00010000 - 1 : x) / (int32_t)2);
-}
-
-static_inline float short_to_float(int16_t x) { return (float)x / 0x00010000; }
-
 static_inline float int_to_float(int a) { return (float)a; }
 
 static_inline bool int_to_bool(int a) { return a != 0; }
@@ -91,7 +85,11 @@ static_inline fix16_t bool_to_fix(bool a) { return a ? float_to_fix(1.0) : float
 
 static_inline int float_to_int(float a) { return (int)a; }
 
-static_inline fix16_t int_to_fix(int a) { return a * FIX16_ONE; }
+static_inline fix16_t int_to_fix(int a) {
+  if (a > 32767) return FIX16_MAX;
+  if (a < -32768) return FIX16_MIN;
+  return a * FIX16_ONE;
+}
 
 static_inline fix16_t fix_to_fix(fix16_t a) { return a; }
 
@@ -119,8 +117,7 @@ static_inline int16_t int16_mul(int16_t a, int16_t b) { return int_to_int16((int
 static_inline int16_t int16_div(int16_t a, int16_t b) { return b == 0 ? 0 : int_to_int16((int)a / (int)b); }
 static_inline int16_t int16_mod(int16_t a, int16_t b) { return b == 0 ? 0 : (int16_t)((int)a % (int)b); }
 
-static_inline int16_t int16_clip(int16_t v, int16_t minv, int16_t maxv) { return v > maxv ? maxv : (v < minv ? minv : v); }
-static_inline int16_t int16_abs(int16_t a) { return a < 0 ? -a : a; }
+static_inline int16_t int16_abs(int16_t a) { return a == -32768 ? 32767 : (a < 0 ? -a : a); }
 static_inline int16_t int16_min(int16_t a, int16_t b) { return a < b ? a : b; }
 static_inline int16_t int16_max(int16_t a, int16_t b) { return a > b ? a : b; }
 
@@ -141,25 +138,16 @@ static_inline fix16_t fix_div(fix16_t a, fix16_t b) {
   return result;
 }
 
-static_inline fix16_t fix_mac(fix16_t x, fix16_t y, fix16_t z) { return x + fix_mul(y, z); }
-
-static_inline fix16_t fix_msu(fix16_t x, fix16_t y, fix16_t z) { return -x + fix_mul(y, z); }
-
-static_inline fix16_t fix_minus(fix16_t x) { return -x; }
-
-static_inline fix16_t fix_abs(fix16_t x) { return x < 0 ? (-x) : x; }
-
-static_inline fix16_t fix_min(fix16_t a, fix16_t b) { return a < b ? a : b; }
-
-static_inline fix16_t fix_max(fix16_t a, fix16_t b) { return a > b ? a : b; }
+static_inline fix16_t fix_abs(fix16_t x) {
+  if (x == FIX16_MIN) return FIX16_MAX;
+  return x < 0 ? -x : x;
+}
 
 static_inline fix16_t fix_clip(fix16_t v, fix16_t minv, fix16_t maxv) {
   return v > maxv ? maxv : (v < minv ? minv : v);
 }
 
 static_inline fix16_t fix_floor(fix16_t x) { return (x & (fix16_t)0xFFFF0000); }
-
-static_inline fix16_t fix_not(fix16_t x) { return ~x; }
 
 static_inline float float_eps() { return 1e-18f; }
 
@@ -168,10 +156,6 @@ static_inline fix16_t fix_eps() { return 1; }
 static_inline float float_pi() { return 3.1415926535897932384f; }
 
 static_inline fix16_t fix_pi() { return 205887; }
-
-static_inline float float_mac(float x, float y, float z) { return x + (y * z); }
-
-static_inline float float_msu(float x, float y, float z) { return -x + (y * z); }
 
 fix16_t fix_exp(fix16_t inValue);
 
@@ -195,24 +179,10 @@ static_inline float float_clip(float value, float low, float high) {
   return value < low ? low : (value > high ? high : value);
 }
 
-static_inline uint8_t bool_not(uint8_t x) { return !x; }
-
-/* Tables */
-static_inline fix16_t *fix_wrap_array(const fix16_t x[]) { return (fix16_t *)x; };
-static_inline float *float_wrap_array(const float x[]) { return (float *)x; };
-static_inline int16_t *int16_wrap_array(const int16_t x[]) { return (int16_t *)x; };
-
 /* Random numbers */
 float float_random();
 fix16_t fix_random();
 int int_random();
-
-/* Print values */
-void float_print(float value);
-void fix_print(fix16_t value);
-void int_print(int value);
-void string_print(char *value);
-void bool_print(uint8_t value);
 
 /* Serialization */
 

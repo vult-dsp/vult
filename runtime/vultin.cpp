@@ -28,7 +28,6 @@ NOTE: The code for the fixed-point operations is based on the project:
 
 */
 #include "vultin.hpp"
-#include "stdio.h"
 
 fix16_t fix_exp(fix16_t inValue) {
   if (inValue == 0)
@@ -60,6 +59,7 @@ fix16_t fix_exp(fix16_t inValue) {
 
 fix16_t fix_sin(fix16_t x0) {
   fix16_t x1 = (x0 % 0x6487e /* 6.283185 */);
+  if (x1 < 0) x1 += 0x6487e; // normalize to [0, 2*pi)
   uint8_t sign = (x1 > 0x3243f /* 3.141593 */);
   fix16_t x2 = (x1 % 0x3243f /* 3.141593 */);
   fix16_t x3;
@@ -90,6 +90,7 @@ fix16_t fix_tanh(fix16_t inAngle) {
 }
 
 fix16_t fix_sqrt(fix16_t inValue) {
+  if (inValue == FIX16_MIN) inValue = FIX16_MIN + 1;
   uint8_t neg = (inValue < 0);
   uint32_t num = (uint32_t)(neg ? -inValue : inValue);
   uint32_t result = 0;
@@ -154,12 +155,6 @@ fix16_t fix_random() {
 
 int int_random() { return (int)rand(); }
 
-void float_print(float value) { printf("%f\n", value); }
-void fix_print(fix16_t value) { printf("%f\n", fix_to_float(value)); }
-void int_print(int value) { printf("%i\n", value); }
-void string_print(char *value) { printf("%s\n", value); }
-void bool_print(uint8_t value) { printf("%s\n", value ? "true" : "false"); }
-
 void push_byte(CustomBuffer &buffer, uint8_t byte) {
   if (!buffer.calculate_size) {
     buffer.data.push_back(byte);
@@ -173,7 +168,7 @@ void modify_byte(CustomBuffer &buffer, int32_t index, uint8_t byte) {
 }
 
 uint8_t read_byte(CustomBuffer &buffer, int32_t index) {
-  if (index < 0 || (size_t)index > buffer.data.size()) {
+  if (index < 0 || (size_t)index >= buffer.data.size()) {
     buffer.error = true;
     return 0;
   }
@@ -361,7 +356,9 @@ CustomTypeDescr search_type_description(CustomBuffer &buffer, std::string name) 
       }
     } else
       break;
+    int32_t prev_index = index;
     index = next_object(buffer, index);
+    if (index <= prev_index) { buffer.error = true; break; }
   }
 
   return CustomTypeDescr{position};
@@ -376,7 +373,9 @@ int32_t goto_data(CustomBuffer &buffer) {
       position = index;
       break;
     }
+    int32_t prev_index = index;
     index = next_object(buffer, index);
+    if (index <= prev_index) { buffer.error = true; break; }
   }
   return position;
 }
