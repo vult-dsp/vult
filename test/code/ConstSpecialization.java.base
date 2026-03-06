@@ -1,0 +1,499 @@
+
+package vult.com.constspecialization;
+
+import java.util.Arrays;
+import java.util.Random;
+import vult.com.external.*;
+
+public class ConstSpecialization {
+
+
+static int clip(int x, int minv, int maxv) {
+    if(x > maxv)
+        return maxv;
+    else if(x < minv)
+        return minv;
+    else return x;
+}
+
+static float clip(float x, float minv, float maxv) {
+    if(x > maxv)
+        return maxv;
+    else if(x < minv)
+        return minv;
+    else return x;
+}
+
+static int[] makeArray(int size, int init) {
+    int a[] = new int[size];
+    Arrays.fill(a, init);
+    return a;
+}
+
+static float[] makeArray(int size, float init) {
+    float a[] = new float[size];
+    Arrays.fill(a, init);
+    return a;
+}
+
+static boolean[] makeArray(int size, boolean init) {
+    boolean a[] = new boolean[size];
+    Arrays.fill(a, init);
+    return a;
+}
+
+static boolean not(boolean x) {
+    return !x;
+}
+
+static float int_to_float(int x) {
+    return (float)x;
+}
+
+static float bool_to_float(boolean x) {
+    return x ? 1.0f : 0.0f;
+}
+
+static int float_to_int(float x) {
+    return (int)x;
+}
+
+static short int16(int x) {
+    return (short)Math.max(-32768, Math.min(32767, x));
+}
+
+static short int16(float x) {
+    return (short)Math.max(-32768, Math.min(32767, (int)x));
+}
+
+static float floor(float x) {
+    return (float)Math.floor(x);
+}
+
+Random rand = new Random();
+
+float random() {
+    return rand.nextFloat();
+}
+
+int irandom() {
+    return rand.nextInt();
+}
+
+static float get(float[] a, int i) {
+    return a[i];
+}
+
+static void set(float[] a, int i, float val) {
+    a[i] = val;
+}
+
+static int get(int[] a, int i) {
+    return a[i];
+}
+
+static void set(int[] a, int i, int val) {
+    a[i] = val;
+}
+
+static float[] wrap_array(float x[]) {
+    return x;
+}
+
+static int[] wrap_array(int x[]) {
+    return x;
+}
+
+static float cosh(float x) {
+    return (float)Math.cosh(x);
+}
+
+static float cos(float x) {
+    return (float)Math.cos(x);
+}
+
+static float sin(float x) {
+    return (float)Math.sin(x);
+}
+
+static float sinh(float x) {
+    return (float)Math.sinh(x);
+}
+
+static float tan(float x) {
+    return (float)Math.tan(x);
+}
+
+static float tanh(float x) {
+    return (float)Math.tanh(x);
+}
+
+static float sqrt(float x) {
+    return (float)Math.sqrt(x);
+}
+
+static float pow(float x, float y) {
+    return (float)Math.pow(x, y);
+}
+
+static float exp(float x) {
+    return (float)Math.exp(x);
+}
+
+static float log(float x) {
+    return (float)Math.log(x);
+}
+
+static float log10(float x) {
+    return (float)Math.log10(x);
+}
+
+static float abs(float x) {
+    return Math.abs(x);
+}
+
+static int abs(int x) {
+    return Math.abs(x);
+}
+
+static float[] initializeArray(float v, int size) {
+    float[] a = new float[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static int[] initializeArray(int v, int size) {
+    int[] a = new int[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static boolean[] initializeArray(boolean v, int size) {
+    boolean[] a = new boolean[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static float eps() {
+    return 1e-18f;
+}
+
+static float pi() {
+    return 3.1415926535897932384f;
+}
+
+static int float_to_fix(float x) {
+    return (int)(x * 65536.0f);
+}
+
+static int fix_to_int(int x) {
+    return x >> 16;
+}
+
+static float fix_to_float(int x) {
+    return ((float)x) / 65536.0f;
+}
+
+
+public static class ConstSpecialization_accumulate_type {
+   public float sum;
+
+   public ConstSpecialization_accumulate_type() {
+      this.sum = 0.0f;
+   }
+   public ConstSpecialization_accumulate_type(float sum) {
+      this.sum = sum;
+   }}public static class ConstSpecialization_accumulate_real_2_type {
+   public float sum;
+
+   public ConstSpecialization_accumulate_real_2_type() {
+      this.sum = 0.0f;
+   }
+   public ConstSpecialization_accumulate_real_2_type(float sum) {
+      this.sum = sum;
+   }}public static class ConstSpecialization_test_accumulate_spec_type {
+   public ConstSpecialization_accumulate_real_2_type inst_10ec4;
+
+   public ConstSpecialization_test_accumulate_spec_type() {
+      this.inst_10ec4 = new ConstSpecialization_accumulate_real_2_type();
+   }
+   public ConstSpecialization_test_accumulate_spec_type(ConstSpecialization_accumulate_real_2_type inst_10ec4) {
+      this.inst_10ec4 = inst_10ec4;
+   }}public static class ConstSpecialization_test_accumulate_nonspec_type {
+   public ConstSpecialization_accumulate_type inst_17a3f;
+
+   public ConstSpecialization_test_accumulate_nonspec_type() {
+      this.inst_17a3f = new ConstSpecialization_accumulate_type();
+   }
+   public ConstSpecialization_test_accumulate_nonspec_type(ConstSpecialization_accumulate_type inst_17a3f) {
+      this.inst_17a3f = inst_17a3f;
+   }}public static class ConstSpecialization_scale_typed_real_2_type {
+   public float last;
+
+   public ConstSpecialization_scale_typed_real_2_type() {
+      this.last = 0.0f;
+   }
+   public ConstSpecialization_scale_typed_real_2_type(float last) {
+      this.last = last;
+   }}public static class ConstSpecialization_scale_typed_int_2_type {
+   public int last;
+
+   public ConstSpecialization_scale_typed_int_2_type() {
+      this.last = 0;
+   }
+   public ConstSpecialization_scale_typed_int_2_type(int last) {
+      this.last = last;
+   }}public static class ConstSpecialization_test_typed_int_type {
+   public ConstSpecialization_scale_typed_int_2_type inst_1c235;
+
+   public ConstSpecialization_test_typed_int_type() {
+      this.inst_1c235 = new ConstSpecialization_scale_typed_int_2_type();
+   }
+   public ConstSpecialization_test_typed_int_type(ConstSpecialization_scale_typed_int_2_type inst_1c235) {
+      this.inst_1c235 = inst_1c235;
+   }}public static class ConstSpecialization_test_typed_real_type {
+   public ConstSpecialization_scale_typed_real_2_type inst_15f7d;
+
+   public ConstSpecialization_test_typed_real_type() {
+      this.inst_15f7d = new ConstSpecialization_scale_typed_real_2_type();
+   }
+   public ConstSpecialization_test_typed_real_type(ConstSpecialization_scale_typed_real_2_type inst_15f7d) {
+      this.inst_15f7d = inst_15f7d;
+   }}public static class ConstSpecialization_main_type {
+   public ConstSpecialization_test_accumulate_spec_type inst_13dfa;
+   public ConstSpecialization_test_accumulate_nonspec_type inst_201fa;
+   public ConstSpecialization_test_typed_int_type inst_3e2fa;
+   public ConstSpecialization_test_typed_real_type inst_477fa;
+
+   public ConstSpecialization_main_type() {
+      this.inst_13dfa = new ConstSpecialization_test_accumulate_spec_type();
+      this.inst_201fa = new ConstSpecialization_test_accumulate_nonspec_type();
+      this.inst_3e2fa = new ConstSpecialization_test_typed_int_type();
+      this.inst_477fa = new ConstSpecialization_test_typed_real_type();
+   }
+   public ConstSpecialization_main_type(ConstSpecialization_test_accumulate_spec_type inst_13dfa, ConstSpecialization_test_accumulate_nonspec_type inst_201fa, ConstSpecialization_test_typed_int_type inst_3e2fa, ConstSpecialization_test_typed_real_type inst_477fa) {
+      this.inst_13dfa = inst_13dfa;
+      this.inst_201fa = inst_201fa;
+      this.inst_3e2fa = inst_3e2fa;
+      this.inst_477fa = inst_477fa;
+   }}private ConstSpecialization_accumulate_type ConstSpecialization_accumulate_type_alloc() {
+   ConstSpecialization_accumulate_type _ctx = new ConstSpecialization_accumulate_type();
+   _ctx.sum = 0.0f;
+   return _ctx;
+}
+
+private ConstSpecialization_accumulate_real_2_type ConstSpecialization_accumulate_real_2_type_alloc() {
+   ConstSpecialization_accumulate_real_2_type _ctx = new ConstSpecialization_accumulate_real_2_type();
+   _ctx.sum = 0.0f;
+   return _ctx;
+}
+
+private ConstSpecialization_test_accumulate_spec_type ConstSpecialization_test_accumulate_spec_type_alloc() {
+   ConstSpecialization_test_accumulate_spec_type _ctx = new ConstSpecialization_test_accumulate_spec_type();
+   _ctx.inst_10ec4 = ConstSpecialization_accumulate_real_2_type_alloc();
+   return _ctx;
+}
+
+private ConstSpecialization_test_accumulate_nonspec_type ConstSpecialization_test_accumulate_nonspec_type_alloc() {
+   ConstSpecialization_test_accumulate_nonspec_type _ctx = new ConstSpecialization_test_accumulate_nonspec_type();
+   _ctx.inst_17a3f = ConstSpecialization_accumulate_type_alloc();
+   return _ctx;
+}
+
+private ConstSpecialization_scale_typed_real_2_type ConstSpecialization_scale_typed_real_2_type_alloc() {
+   ConstSpecialization_scale_typed_real_2_type _ctx = new ConstSpecialization_scale_typed_real_2_type();
+   _ctx.last = 0.0f;
+   return _ctx;
+}
+
+private ConstSpecialization_scale_typed_int_2_type ConstSpecialization_scale_typed_int_2_type_alloc() {
+   ConstSpecialization_scale_typed_int_2_type _ctx = new ConstSpecialization_scale_typed_int_2_type();
+   _ctx.last = 0;
+   return _ctx;
+}
+
+private ConstSpecialization_test_typed_int_type ConstSpecialization_test_typed_int_type_alloc() {
+   ConstSpecialization_test_typed_int_type _ctx = new ConstSpecialization_test_typed_int_type();
+   _ctx.inst_1c235 = ConstSpecialization_scale_typed_int_2_type_alloc();
+   return _ctx;
+}
+
+private ConstSpecialization_test_typed_real_type ConstSpecialization_test_typed_real_type_alloc() {
+   ConstSpecialization_test_typed_real_type _ctx = new ConstSpecialization_test_typed_real_type();
+   _ctx.inst_15f7d = ConstSpecialization_scale_typed_real_2_type_alloc();
+   return _ctx;
+}
+
+private ConstSpecialization_main_type ConstSpecialization_main_type_alloc() {
+   ConstSpecialization_main_type _ctx = new ConstSpecialization_main_type();
+   _ctx.inst_13dfa = ConstSpecialization_test_accumulate_spec_type_alloc();
+   _ctx.inst_201fa = ConstSpecialization_test_accumulate_nonspec_type_alloc();
+   _ctx.inst_3e2fa = ConstSpecialization_test_typed_int_type_alloc();
+   _ctx.inst_477fa = ConstSpecialization_test_typed_real_type_alloc();
+   return _ctx;
+}
+
+private int ConstSpecialization_add_n_int_5(int x) {
+   return (5 + x);
+}
+
+private int ConstSpecialization_add_n_int_100(int x) {
+   return (100 + x);
+}
+
+private int ConstSpecialization_add_n(int n, int x) {
+   return (n + x);
+}
+
+private int ConstSpecialization_test_specialized_5() {
+   return ConstSpecialization_add_n_int_5(10);
+}
+
+private int ConstSpecialization_test_specialized_100() {
+   return ConstSpecialization_add_n_int_100(10);
+}
+
+private int ConstSpecialization_test_nonspec(int n) {
+   return ConstSpecialization_add_n(n, 10);
+}
+
+private float ConstSpecialization_weighted_real_real_0_3_0_7(float x, float y) {
+   return ((0.3f * x) + (0.7f * y));
+}
+
+private float ConstSpecialization_weighted(float w1, float w2, float x, float y) {
+   return ((w1 * x) + (w2 * y));
+}
+
+private float ConstSpecialization_test_weighted_spec() {
+   return ConstSpecialization_weighted_real_real_0_3_0_7(10.0f, 20.0f);
+}
+
+private float ConstSpecialization_test_weighted_nonspec(float w) {
+   return ConstSpecialization_weighted(w, 0.7f, 10.0f, 20.0f);
+}
+
+private float ConstSpecialization_interleaved_real_real_2_3(float x, float y) {
+   return ((2.0f * x) + (3.0f * y));
+}
+
+private float ConstSpecialization_interleaved(float x, float a, float y, float b) {
+   return ((a * x) + (b * y));
+}
+
+private float ConstSpecialization_test_interleaved_spec() {
+   return ConstSpecialization_interleaved_real_real_2_3(5.0f, 4.0f);
+}
+
+private float ConstSpecialization_test_interleaved_nonspec(float a) {
+   return ConstSpecialization_interleaved(5.0f, a, 4.0f, 3.0f);
+}
+
+private float ConstSpecialization_accumulate_real_2(ConstSpecialization_accumulate_real_2_type _ctx, float x) {
+   _ctx.sum = ((2.0f * x) + _ctx.sum);
+   return _ctx.sum;
+}
+
+private float ConstSpecialization_accumulate(ConstSpecialization_accumulate_type _ctx, float scale, float x) {
+   _ctx.sum = ((scale * x) + _ctx.sum);
+   return _ctx.sum;
+}
+
+private float ConstSpecialization_test_accumulate_spec(ConstSpecialization_test_accumulate_spec_type _ctx) {
+   return ConstSpecialization_accumulate_real_2(_ctx.inst_10ec4, 5.0f);
+}
+
+private float ConstSpecialization_test_accumulate_nonspec(ConstSpecialization_test_accumulate_nonspec_type _ctx, float s, float x) {
+   return ConstSpecialization_accumulate(_ctx.inst_17a3f, s, x);
+}
+
+private int ConstSpecialization_scale_typed_int_2(ConstSpecialization_scale_typed_int_2_type _ctx, int x) {
+   _ctx.last = x;
+   return x;
+}
+
+private float ConstSpecialization_scale_typed_real_2(ConstSpecialization_scale_typed_real_2_type _ctx, float x) {
+   _ctx.last = x;
+   return x;
+}
+
+private int ConstSpecialization_test_typed_int(ConstSpecialization_test_typed_int_type _ctx) {
+   return ConstSpecialization_scale_typed_int_2(_ctx.inst_1c235, 42);
+}
+
+private float ConstSpecialization_test_typed_real(ConstSpecialization_test_typed_real_type _ctx) {
+   return ConstSpecialization_scale_typed_real_2(_ctx.inst_15f7d, 3.14f);
+}
+
+private void ConstSpecialization_setArrayElement_array_of_real_size_4_real_1(float[] m, float value) {
+   m[1] = value;
+}
+
+private void ConstSpecialization_setArrayElement_array_of_real_size_4_real_0(float[] m, float value) {
+   m[0] = value;
+}
+
+private void ConstSpecialization_test_array_mutation(float[] m, float[] x) {
+   ConstSpecialization_setArrayElement_array_of_real_size_4_real_0(m, x[0]);
+   ConstSpecialization_setArrayElement_array_of_real_size_4_real_1(m, x[1]);
+}
+
+private void ConstSpecialization_setMatrix2_array_of_real_size_4_real_0_1(float[] m, float value) {
+   m[2] = value;
+}
+
+private void ConstSpecialization_setMatrix2_array_of_real_size_4_real_0_0(float[] m, float value) {
+   m[0] = value;
+}
+
+private void ConstSpecialization_setMatrix2(float[] m, int row, int col, float value) {
+   m[(row + (col << 1))] = value;
+}
+
+private float ConstSpecialization_getMatrix2(float[] m, int row, int col) {
+   return m[(row + (col << 1))];
+}
+
+private void ConstSpecialization_test_matrix_mutation(float[] m, float[] x) {
+   ConstSpecialization_setMatrix2_array_of_real_size_4_real_0_0(m, x[0]);
+   ConstSpecialization_setMatrix2_array_of_real_size_4_real_0_1(m, x[1]);
+}
+
+private void ConstSpecialization_eliminate_row(float[] m, int row, int col) {
+   float k = ConstSpecialization_getMatrix2(m, row, col);
+   ConstSpecialization_setMatrix2(m, row, col, (1.0f + k));
+}
+
+private void ConstSpecialization_process_matrix(float[] m) {
+   int row = 0;
+   while ((row < 2)) {
+      {
+         ConstSpecialization_eliminate_row(m, row, 0);
+         row = (1 + row);
+      }
+   }
+}
+
+private void ConstSpecialization_main(ConstSpecialization_main_type _ctx) {
+   int r1 = ConstSpecialization_test_specialized_5();
+   int r2 = ConstSpecialization_test_specialized_100();
+   int r3 = ConstSpecialization_test_nonspec(50);
+   float r4 = ConstSpecialization_test_weighted_spec();
+   float r5 = ConstSpecialization_test_weighted_nonspec(0.5f);
+   float r6 = ConstSpecialization_test_interleaved_spec();
+   float r7 = ConstSpecialization_test_interleaved_nonspec(1.5f);
+   float r8 = ConstSpecialization_test_accumulate_spec(_ctx.inst_13dfa);
+   float r9 = ConstSpecialization_test_accumulate_nonspec(_ctx.inst_201fa, 3.0f, 4.0f);
+   int r10 = ConstSpecialization_test_typed_int(_ctx.inst_3e2fa);
+   float r11 = ConstSpecialization_test_typed_real(_ctx.inst_477fa);
+   float[] inputs = initializeArray(0.0f, 2);
+   inputs[0] = 1.0f;
+   inputs[1] = 2.0f;
+   float[] arr = initializeArray(0.0f, 4);
+   ConstSpecialization_test_array_mutation(arr, inputs);
+   ConstSpecialization_test_matrix_mutation(arr, inputs);
+   ConstSpecialization_process_matrix(arr);
+}
+
+
+}

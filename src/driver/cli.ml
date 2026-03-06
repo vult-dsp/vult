@@ -49,7 +49,8 @@ let showResult (args : args) (output : output) =
       CCList.iter
         (fun (text, filename) ->
           let code = Pla.print text in
-          if args.force_write then FileIO.write filename code |> ignore
+          if Filename.check_suffix filename ".table" then FileIO.write_bytes filename code |> ignore
+          else if args.force_write then FileIO.write filename code |> ignore
           else FileIO.writeIfDifferent filename code |> ignore )
         files
   | GeneratedCode files ->

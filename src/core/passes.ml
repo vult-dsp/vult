@@ -1139,6 +1139,216 @@ module Sort = struct
     types @ constants @ externals @ functions
 end
 
+module DeadCodeElimination = struct
+  let nameOfTopStmt (s : top_stmt) : string =
+    match s.top with
+    | TopFunction ({name; _}, _) | TopExternal ({name; _}, _) ->
+        name
+    | TopType {path; _} | TopAlias {path; _} ->
+        path
+    | TopConstant (name, _, _, _, _) ->
+        name
+
+  let rec depsOfType (acc : Set.t) (t : type_) : Set.t =
+    match t.t with
+    | TStruct {path; members; _} ->
+        let acc = Set.add path acc in
+        List.fold_left (fun acc (_, mt, _, _) -> depsOfType acc mt) acc members
+    | TArray (_, elem) ->
+        depsOfType acc elem
+    | TList elem ->
+        depsOfType acc elem
+    | TTuple elems ->
+        List.fold_left depsOfType acc elems
+    | TVoid (Some elems) ->
+        List.fold_left depsOfType acc elems
+    | TVoid None | TInt | TInt16 | TReal | TString | TBool | TFix16 | TEmptyType ->
+        acc
+
+  let rec depsOfExp (constants : Set.t) (acc : Set.t) (e : exp) : Set.t =
+    let acc = depsOfType acc e.t in
+    match e.e with
+    | ECall {path; args} ->
+        let acc = Set.add path acc in
+        List.fold_left (depsOfExp constants) acc args
+    | ERecord {path; elems} ->
+        let acc = Set.add path acc in
+        List.fold_left (fun acc (_, v) -> depsOfExp constants acc v) acc elems
+    | EId name ->
+        if Set.mem name constants then Set.add name acc else acc
+    | EUnOp (_, e1) ->
+        depsOfExp constants acc e1
+    | EOp (_, e1, e2) ->
+        let acc = depsOfExp constants acc e1 in
+        depsOfExp constants acc e2
+    | EIndex {e= e1; index} ->
+        let acc = depsOfExp constants acc e1 in
+        depsOfExp constants acc index
+    | EArray elems ->
+        List.fold_left (depsOfExp constants) acc elems
+    | EIf {cond; then_; else_} ->
+        let acc = depsOfExp constants acc cond in
+        let acc = depsOfExp constants acc then_ in
+        depsOfExp constants acc else_
+    | ETuple elems ->
+        List.fold_left (depsOfExp constants) acc elems
+    | EMember (e1, _) | ETMember (e1, _) ->
+        depsOfExp constants acc e1
+    | EUnit | EEmptyValue | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ ->
+        acc
+
+  let depsOfLexp (constants : Set.t) (acc : Set.t) (l : lexp) : Set.t =
+    let rec aux (acc : Set.t) (l : lexp) : Set.t =
+      let acc = depsOfType acc l.t in
+      match l.l with
+      | LWild | LId _ ->
+          acc
+      | LMember (l1, _) ->
+          aux acc l1
+      | LIndex {e= l1; index} ->
+          let acc = aux acc l1 in
+          depsOfExp constants acc index
+      | LTuple ls ->
+          List.fold_left aux acc ls
+    in
+    aux acc l
+
+  let rec depsOfStmt (constants : Set.t) (acc : Set.t) (s : stmt) : Set.t =
+    match s.s with
+    | StmtDecl (d, init) -> (
+        let acc = depsOfType acc d.t in
+        match init with None -> acc | Some e -> depsOfExp constants acc e )
+    | StmtBind (l, e) ->
+        let acc = depsOfLexp constants acc l in
+        depsOfExp constants acc e
+    | StmtReturn e ->
+        depsOfExp constants acc e
+    | StmtBlock stmts ->
+        List.fold_left (depsOfStmt constants) acc stmts
+    | StmtIf (cond, then_, else_) -> (
+        let acc = depsOfExp constants acc cond in
+        let acc = depsOfStmt constants acc then_ in
+        match else_ with None -> acc | Some s -> depsOfStmt constants acc s )
+    | StmtWhile (cond, body) ->
+        let acc = depsOfExp constants acc cond in
+        depsOfStmt constants acc body
+    | StmtSwitch (cond, cases, default) -> (
+        let acc = depsOfExp constants acc cond in
+        let acc =
+          List.fold_left
+            (fun acc (e, s) ->
+              let acc = depsOfExp constants acc e in
+              depsOfStmt constants acc s )
+            acc cases
+        in
+        match default with None -> acc | Some s -> depsOfStmt constants acc s )
+
+  let depsOfParams (acc : Set.t) (params : param list) : Set.t =
+    List.fold_left (fun acc (p : param) -> depsOfType acc p.t) acc params
+
+  let depsOfReturnType (acc : Set.t) (t : type_ list * type_) : Set.t =
+    let acc = List.fold_left depsOfType acc (fst t) in
+    depsOfType acc (snd t)
+
+  let buildDependencyGraph (constants : Set.t) (prog : prog) : Set.t Map.t =
+    List.fold_left
+      (fun graph (s : top_stmt) ->
+        let name = nameOfTopStmt s in
+        let deps =
+          match s.top with
+          | TopFunction (def, body) ->
+              let acc = depsOfParams Set.empty def.args in
+              let acc = depsOfReturnType acc def.t in
+              depsOfStmt constants acc body
+          | TopExternal (def, _) ->
+              let acc = depsOfParams Set.empty def.args in
+              depsOfReturnType acc def.t
+          | TopType {members; _} ->
+              List.fold_left (fun acc (_, mt, _, _) -> depsOfType acc mt) Set.empty members
+          | TopAlias {alias_of; _} ->
+              Set.singleton alias_of
+          | TopConstant (_, _, t, e, _) ->
+              let acc = depsOfType Set.empty t in
+              depsOfExp constants acc e
+        in
+        Map.add name deps graph )
+      Map.empty prog
+
+  let contextTypeOfFunction (def : function_def) : string option =
+    match def.args with {t= {t= TStruct {path; _}; _}; _} :: _ -> Some path | _ -> None
+
+  let findRoots (prog : prog) (all_names : Set.t) : Set.t =
+    (* Phase 1: Collect context types of is_root functions *)
+    let root_context_types =
+      List.fold_left
+        (fun acc (s : top_stmt) ->
+          match s.top with
+          | TopFunction (def, _) when def.info.is_root -> (
+            match contextTypeOfFunction def with Some path -> Set.add path acc | None -> acc )
+          | _ ->
+              acc )
+        Set.empty prog
+    in
+    (* Phase 2: Mark roots *)
+    List.fold_left
+      (fun roots (s : top_stmt) ->
+        match s.top with
+        (* All is_root functions *)
+        | TopFunction (def, _) when def.info.is_root ->
+            Set.add def.name roots
+        | TopExternal (def, _) when def.info.is_root ->
+            Set.add def.name roots
+        (* Functions whose first param is a root context type *)
+        | TopFunction (def, _) | TopExternal (def, _) -> (
+          match contextTypeOfFunction def with
+          | Some path when Set.mem path root_context_types ->
+              Set.add def.name roots
+          | _ ->
+              roots )
+        (* Root context types themselves *)
+        | TopType {path; _} when Set.mem path root_context_types ->
+            (* Also add _init and _alloc companions if they exist *)
+            let roots = Set.add path roots in
+            let init_name = path ^ "_init" in
+            let alloc_name = path ^ "_alloc" in
+            let roots = if Set.mem init_name all_names then Set.add init_name roots else roots in
+            if Set.mem alloc_name all_names then Set.add alloc_name roots else roots
+        | TopAlias {path; _} when Set.mem path root_context_types ->
+            Set.add path roots
+        | _ ->
+            roots )
+      Set.empty prog
+
+  let reachable (graph : Set.t Map.t) (roots : Set.t) : Set.t =
+    let rec dfs (visited : Set.t) (name : string) : Set.t =
+      if Set.mem name visited then visited
+      else
+        let visited = Set.add name visited in
+        match Map.find_opt name graph with
+        | None ->
+            visited
+        | Some deps ->
+            Set.fold (fun dep visited -> dfs visited dep) deps visited
+    in
+    Set.fold (fun root visited -> dfs visited root) roots Set.empty
+
+  let run (args : Util.Args.args) (prog : prog) : prog =
+    match args.roots with
+    | [] ->
+        prog
+    | _ ->
+        let all_names = List.fold_left (fun acc s -> Set.add (nameOfTopStmt s) acc) Set.empty prog in
+        let constants =
+          List.fold_left
+            (fun acc (s : top_stmt) -> match s.top with TopConstant (name, _, _, _, _) -> Set.add name acc | _ -> acc)
+            Set.empty prog
+        in
+        let graph = buildDependencyGraph constants prog in
+        let roots = findRoots prog all_names in
+        let reachable_set = reachable graph roots in
+        List.filter (fun s -> Set.mem (nameOfTopStmt s) reachable_set) prog
+end
+
 let passes =
   Location.mapper
   |> Mapper.seq (Markers.mapper Enabled)
@@ -1172,6 +1382,7 @@ let rec apply env state prog n =
 let run args (prog : prog) : prog =
   let _, prog = apply (default_env args) (Mapper.defaultState (default_data ())) prog 0 in
   let prog = Sort.run args prog in
+  let prog = DeadCodeElimination.run args prog in
   prog
 
 let simplifyExp (e : exp) : exp =

@@ -69,6 +69,10 @@ static float int_to_float(int x) {
     return (float)x;
 }
 
+static float bool_to_float(boolean x) {
+    return x ? 1.0f : 0.0f;
+}
+
 static int float_to_int(float x) {
     return (int)x;
 }
@@ -85,13 +89,13 @@ static float floor(float x) {
     return (float)Math.floor(x);
 }
 
-static Random rand = new Random();
+Random rand = new Random();
 
-static float random() {
+float random() {
     return rand.nextFloat();
 }
 
-static int irandom() {
+int irandom() {
     return rand.nextInt();
 }
 
@@ -197,7 +201,42 @@ static float pi() {
     return 3.1415926535897932384f;
 }
 
+static int float_to_fix(float x) {
+    return (int)(x * 65536.0f);
+}
+
+static int fix_to_int(int x) {
+    return x >> 16;
+}
+
+static float fix_to_float(int x) {
+    return ((float)x) / 65536.0f;
+}
+
 |}
+
+let rec typeName (t : type_) : string =
+  match t.t with
+  | TInt ->
+      "int"
+  | TInt16 ->
+      "int16"
+  | TReal ->
+      "real"
+  | TBool ->
+      "bool"
+  | TString ->
+      "string"
+  | TFix16 ->
+      "fix16"
+  | TArray (_, t) ->
+      "array_" ^ typeName t
+  | TTuple l ->
+      "tuple_" ^ String.concat "_" (List.map typeName l)
+  | _ ->
+      "obj"
+
+let tupleName (l : type_ list) : string = "_tuple_" ^ String.concat "_" (List.map typeName l) ^ "_"
 
 let rec isValueOrIf (e : exp) =
   match e.e with
@@ -269,9 +308,8 @@ let rec print_type_ (t : type_) =
       Pla.string "String"
   | TFix16 ->
       Pla.string "int"
-  | TTuple _ ->
-      (* Java doesn't have built-in tuples, we'll need custom classes for this *)
-      failwith "Tuples not supported in Java generator"
+  | TTuple l ->
+      Pla.string (tupleName l)
   | TArray (Some _, t) ->
       let t = print_type_ t in
       {%pla|<#t#>[]|}
@@ -385,9 +423,10 @@ let rec print_exp e =
       let then_ = print_exp then_ in
       let else_ = print_exp else_ in
       {%pla|(<#cond#> ? <#then_#> : <#else_#>)|}
-  | ETuple _ ->
-      (* For tuples, we'd need to create custom tuple classes *)
-      failwith "Tuples not supported in Java generator"
+  | ETuple l ->
+      let class_name = match e.t.t with TTuple tl -> tupleName tl | _ -> "_tuple_" in
+      let l = Pla.map_sep Pla.commaspace print_exp l in
+      {%pla|new <#class_name#s>(<#l#>)|}
   | EMember (e, m) ->
       let e = print_exp e in
       {%pla|<#e#>.<#m#s>|}
@@ -415,7 +454,7 @@ let rec print_lexp e =
       let e = print_lexp e in
       let index = print_exp index in
       {%pla|<#e#>[<#index#>]|}
-  | _ ->
+  | LTuple _ ->
       failwith "Java:print_lexp LTuple"
 
 let print_dexp (e : dexp) =
@@ -444,6 +483,9 @@ let rec getInitValue (t : type_) =
       else {%pla|makeArray(<#size#i>, <#elem_init#>)|}
   | TStruct {path; _} ->
       {%pla|new <#path#s>()|}
+  | TTuple l ->
+      let class_name = tupleName l in
+      {%pla|new <#class_name#s>()|}
   | _ ->
       Pla.string "null"
 
@@ -521,7 +563,7 @@ let print_function_def ?(force_public = false) ?(is_performance = false) (def : 
       if suffix = "_alloc" || suffix = "_default" then "public" else "private"
     else "private"
   in
-  let static_keyword = if is_performance then "" else "static " in
+  let static_keyword = "" in
   {%pla|<#visibility#s> <#static_keyword#s><#ret#> <#name#s>(<#args#>) {|}
 
 let print_body body =
@@ -570,11 +612,25 @@ let print_type_alias alias_name base_name =
     public <#alias_name#s>() { super(); }
 }|}
 
-let print_top_stmt (args : Util.Args.args) t =
+let print_top_stmt (args : Util.Args.args) root_context_types t =
   match t.top with
   | TopFunction (func_def, body) ->
       let is_performance = args.template = Some "performance" in
-      let force_public = is_performance in
+      let is_root_adjacent =
+        match func_def.args with
+        | {t= {t= TStruct {path; _}; _}; _} :: _ ->
+            List.exists (String.equal path) root_context_types
+        | _ ->
+            false
+      in
+      let is_root_alloc =
+        match (func_def.args, (snd func_def.t).t) with
+        | [], TStruct {path; _} ->
+            CCString.suffix ~suf:"_type_alloc" func_def.name && List.exists (String.equal path) root_context_types
+        | _ ->
+            false
+      in
+      let force_public = is_performance || is_root_adjacent || is_root_alloc in
       let def = print_function_def ~force_public ~is_performance func_def in
       let name = func_def.name in
       (* Check if this is a type alias allocation function *)
@@ -602,10 +658,21 @@ let print_top_stmt (args : Util.Args.args) t =
       print_struct_def descr
   | TopAlias _ ->
       Pla.unit
-  | TopConstant (name, _, t, rhs, _) ->
-      let t = print_type_ t in
-      let rhs = print_exp rhs in
-      {%pla|public static final <#t#> <#name#s> = <#rhs#>;<#>|}
+  | TopConstant (name, _, t, rhs, _) -> (
+    match (rhs.e, t.t, args.java_bin_tables) with
+    | EArray elems, TArray (_, elem_t), true ->
+        let size = List.length elems in
+        let elem_type = print_type_ elem_t in
+        let buffer_type = match elem_t.t with TReal -> "java.nio.FloatBuffer" | _ -> "java.nio.IntBuffer" in
+        {%pla|<#elem_type#>[] <#name#s>;
+public void set_<#name#s>(<#buffer_type#s> buffer) {
+   <#name#s> = new <#elem_type#>[<#size#i>];
+   buffer.get(<#name#s>);
+}<#>|}
+    | _ ->
+        let t = print_type_ t in
+        let rhs = print_exp rhs in
+        {%pla|public static final <#t#> <#name#s> = <#rhs#>;<#>|} )
 
 (* Extract the base type from a function call in the return statement *)
 let extract_base_type_from_call = function
@@ -660,11 +727,177 @@ let collect_type_aliases stmts =
   in
   List.iter collect_from_stmt stmts ; !aliases
 
+let binarizeElement (e : exp) : string =
+  match e.e with
+  | EReal n ->
+      Util.Binarize.float_to_bin_string n
+  | EFixed n ->
+      Util.Binarize.float_to_bin_string n
+  | EInt n ->
+      Util.Binarize.int_to_bin_string n
+  | _ ->
+      failwith "Java:binarizeElement: unsupported element type"
+
+let generateTableData (args : Util.Args.args) (stmts : top_stmt list) : (Pla.t * string) list =
+  if not args.java_bin_tables then []
+  else
+    let base =
+      match args.output with
+      | Some output ->
+          Filename.dirname output ^ "/" ^ Filename.basename output
+      | None ->
+          "output"
+    in
+    CCList.filter_map
+      (fun (stmt : top_stmt) ->
+        match stmt.top with
+        | TopConstant (name, _, _, {e= EArray elems; _}, _) ->
+            let table_name = base ^ "_" ^ name ^ ".table" in
+            let binary = String.concat "" (CCList.map binarizeElement elems) in
+            Some (Pla.string binary, table_name)
+        | _ ->
+            None )
+      stmts
+
+let collectTupleTypes (stmts : top_stmt list) : type_ list list =
+  let tuples = ref [] in
+  let add_tuple (l : type_ list) : unit =
+    let name = tupleName l in
+    if not (List.exists (fun existing -> String.equal (tupleName existing) name) !tuples) then tuples := l :: !tuples
+  in
+  let rec collect_type (t : type_) : unit =
+    match t.t with
+    | TTuple l ->
+        add_tuple l ; List.iter collect_type l
+    | TArray (_, t) ->
+        collect_type t
+    | TList t ->
+        collect_type t
+    | _ ->
+        ()
+  in
+  let rec collect_exp (e : exp) : unit =
+    collect_type e.t ;
+    match e.e with
+    | ETuple l ->
+        List.iter collect_exp l
+    | ECall {args; _} ->
+        List.iter collect_exp args
+    | EUnOp (_, e) ->
+        collect_exp e
+    | EOp (_, e1, e2) ->
+        collect_exp e1 ; collect_exp e2
+    | EIndex {e; index} ->
+        collect_exp e ; collect_exp index
+    | EArray l ->
+        List.iter collect_exp l
+    | EIf {cond; then_; else_} ->
+        collect_exp cond ; collect_exp then_ ; collect_exp else_
+    | EMember (e, _) | ETMember (e, _) ->
+        collect_exp e
+    | ERecord {elems; _} ->
+        List.iter (fun (_, v) -> collect_exp v) elems
+    | _ ->
+        ()
+  in
+  let rec collect_lexp (le : lexp) : unit =
+    match le.l with
+    | LMember (e, _) ->
+        collect_lexp e
+    | LIndex {e; index} ->
+        collect_lexp e ; collect_exp index
+    | LTuple l ->
+        List.iter collect_lexp l
+    | _ ->
+        ()
+  in
+  let rec collect_stmt (s : stmt) : unit =
+    match s.s with
+    | StmtDecl (d, rhs) ->
+        collect_type d.t ; Option.iter collect_exp rhs
+    | StmtBind (lhs, rhs) ->
+        collect_lexp lhs ; collect_exp rhs
+    | StmtReturn e ->
+        collect_exp e
+    | StmtIf (cond, then_, else_) ->
+        collect_exp cond ; collect_stmt then_ ; Option.iter collect_stmt else_
+    | StmtWhile (cond, body) ->
+        collect_exp cond ; collect_stmt body
+    | StmtBlock stmts ->
+        List.iter collect_stmt stmts
+    | StmtSwitch (e, cases, default) ->
+        collect_exp e ;
+        List.iter (fun (e, s) -> collect_exp e ; collect_stmt s) cases ;
+        Option.iter collect_stmt default
+  in
+  let collect_top (t : top_stmt) : unit =
+    match t.top with
+    | TopFunction (def, body) ->
+        collect_type (snd def.t) ;
+        List.iter (fun (p : param) -> collect_type p.t) def.args ;
+        collect_stmt body
+    | TopType descr ->
+        List.iter (fun (_, t, _, _) -> collect_type t) descr.members
+    | TopConstant (_, _, t, rhs, _) ->
+        collect_type t ; collect_exp rhs
+    | TopExternal _ | TopAlias _ ->
+        ()
+  in
+  List.iter collect_top stmts ; List.rev !tuples
+
+let print_tuple_class (types : type_ list) : Pla.t =
+  let class_name = tupleName types in
+  let fields =
+    Pla.map_sep_all Pla.newline
+      (fun (i, t) ->
+        let t_str = print_type_ t in
+        {%pla|public <#t_str#> field<#i#i>;|} )
+      (List.mapi (fun i t -> (i, t)) types)
+  in
+  let default_init =
+    Pla.map_sep_all Pla.newline
+      (fun (i, t) ->
+        let init = getInitValue t in
+        {%pla|this.field<#i#i> = <#init#>;|} )
+      (List.mapi (fun i t -> (i, t)) types)
+  in
+  let params =
+    Pla.map_sep Pla.commaspace
+      (fun (i, t) ->
+        let t_str = print_type_ t in
+        {%pla|<#t_str#> field<#i#i>|} )
+      (List.mapi (fun i t -> (i, t)) types)
+  in
+  let param_init =
+    Pla.map_sep_all Pla.newline (fun i -> {%pla|this.field<#i#i> = field<#i#i>;|}) (List.mapi (fun i _ -> i) types)
+  in
+  {%pla|public static class <#class_name#s> {<#fields#+><#>
+   public <#class_name#s>() {<#default_init#+><#>   }
+   public <#class_name#s>(<#params#>) {<#param_init#+><#>   }
+}<#>|}
+
 let print_prog args t =
+  let root_context_types =
+    List.fold_left
+      (fun acc s ->
+        match s.top with
+        | TopFunction (def, _) when def.info.is_root -> (
+          match def.args with
+          | {t= {t= TStruct {path; _}; _}; _} :: _ ->
+              if List.exists (String.equal path) acc then acc else path :: acc
+          | _ ->
+              acc )
+        | _ ->
+            acc )
+      [] t
+  in
   let aliases = collect_type_aliases t in
-  let main_code = Pla.map_join (print_top_stmt args) t in
+  let tuple_types = collectTupleTypes t in
+  let tuple_code = Pla.map_sep_all Pla.newline print_tuple_class tuple_types in
+  let main_code = Pla.map_join (print_top_stmt args root_context_types) t in
   let alias_code = Pla.map_sep_all Pla.newline (fun (alias, base) -> print_type_alias alias base) aliases in
-  if aliases = [] then main_code else {%pla|<#main_code#><#alias_code#+>|}
+  let code = match tuple_types with [] -> main_code | _ -> {%pla|<#tuple_code#><#main_code#>|} in
+  if aliases = [] then code else {%pla|<#code#><#alias_code#+>|}
 
 let getTemplateCode (args : Util.Args.args) =
   match args.template with
@@ -684,9 +917,24 @@ let generate (args : Util.Args.args) (stmts : top_stmt list) =
     | None ->
         "VultCode"
   in
-  let package_name = match args.output_prefix with Some prefix -> prefix | None -> "vult" in
+  let package_name, external_import =
+    match args.java_prefix with
+    | Some prefix ->
+        let module_name =
+          match args.output with
+          | Some output ->
+              String.lowercase_ascii (Filename.basename (Filename.remove_extension output))
+          | None ->
+              "vult"
+        in
+        (prefix ^ "." ^ module_name, {%pla|import <#prefix#s>.external.*;<#>|})
+    | None ->
+        let name = match args.output_prefix with Some prefix -> prefix | None -> "vult" in
+        (name, Pla.unit)
+  in
   let code = print_prog args stmts in
   let pre, post = getTemplateCode args in
+  let table_data = generateTableData args stmts in
   match args.template with
   | Some "performance" ->
       (* For performance template, generate two files: main class and performance test *)
@@ -696,7 +944,7 @@ package <#package_name#s>;
 
 import java.util.Arrays;
 import java.util.Random;
-
+<#external_import#>
 public class <#class_name#s> {
 <#runtime#>
 <#code#>
@@ -709,7 +957,7 @@ package <#package_name#s>;
 
 <#post#>
 |} in
-      [(main_code, file); (perf_code, perf_file)]
+      [(main_code, file); (perf_code, perf_file)] @ table_data
   | _ ->
       (* Regular template or no template *)
       let full_code =
@@ -718,11 +966,11 @@ package <#package_name#s>;
 
 import java.util.Arrays;
 import java.util.Random;
-
+<#external_import#>
 public class <#class_name#s> {
 <#runtime#>
 <#pre#><#code#><#post#>
 }
 |}
       in
-      [(full_code, file)]
+      [(full_code, file)] @ table_data

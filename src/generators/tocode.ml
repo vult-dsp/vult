@@ -297,14 +297,22 @@ let top_stmt (context : context) (top : Core.Prog.top_stmt) : top_stmt option =
       let path = Replacements.keyword context.args.code path in
       Some {top= TopConstant (path, dims, t, e, tags); loc}
 
-let registerExternalNames (stmts : Core.Prog.top_stmt list) =
+let registerExternalNames (args : Util.Args.args) (stmts : Core.Prog.top_stmt list) =
   CCList.fold_left
     (fun acc s ->
-      match s with Core.Prog.{top= TopExternal (def, Some name); _} -> Map.add def.name name acc | _ -> acc )
+      match s with
+      | Core.Prog.{top= TopExternal (def, Some name); _} when args.code = JavaCode ->
+          Map.add def.name ("External." ^ name) acc
+      | Core.Prog.{top= TopExternal (def, Some name); _} ->
+          Map.add def.name name acc
+      | Core.Prog.{top= TopExternal (def, None); _} when args.code = JavaCode ->
+          Map.add def.name ("External." ^ def.name) acc
+      | _ ->
+          acc )
     Map.empty stmts
 
 let prog args stmts =
-  let ext_names = registerExternalNames stmts in
+  let ext_names = registerExternalNames args stmts in
   let context = {args; ext_names} in
   let _, stmts =
     (Mapper.mapper_list_expand Mapper.top_stmt) ApplyReplacements.mapper context (Mapper.defaultState ()) stmts

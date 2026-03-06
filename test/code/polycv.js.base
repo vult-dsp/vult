@@ -51,23 +51,23 @@ this.Polycv_poly_noteOn_type_alloc = function () {
    _ctx.Polycv_polyState_ret_8 = 0.0;
    _ctx.Polycv_polyState_ret_9 = 0.0;
    var i_0 = (0|0);
-   var temp = this.initializeArray((0|0), (4|0));
+   var temp_1 = this.initializeArray((0|0), (4|0));
    while ((i_0 < (4|0))) {
       {
-         temp[i_0] = (0|0);
+         temp_1[i_0] = (0|0);
          i_0 = ((1|0) + i_0);
       }
    }
-   _ctx.notes = temp;
-   var i_1 = (0|0);
-   var temp = this.initializeArray((0|0), (4|0));
-   while ((i_1 < (4|0))) {
+   _ctx.notes = temp_1;
+   var i_2 = (0|0);
+   var temp_3 = this.initializeArray((0|0), (4|0));
+   while ((i_2 < (4|0))) {
       {
-         temp[i_1] = (0|0);
-         i_1 = ((1|0) + i_1);
+         temp_3[i_2] = (0|0);
+         i_2 = ((1|0) + i_2);
       }
    }
-   _ctx.vel = temp;
+   _ctx.vel = temp_3;
    return _ctx;
 };
 

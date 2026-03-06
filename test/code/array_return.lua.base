@@ -97,14 +97,14 @@ function Array_return_foo5_type_alloc()
    local _ctx = {};
    _ctx.Array_return_foo5_ret_0 = 0
    local i_0 = 0
-   local temp = initializeArray(0, 3)
+   local temp_1 = initializeArray(0, 3)
    while (i_0 < 3) do
       do
-         temp[i_0 + 1] = 0
+         temp_1[i_0 + 1] = 0
          i_0 = (1 + i_0)
       end
    end
-   _ctx.Array_return_foo5_ret_1 = temp
+   _ctx.Array_return_foo5_ret_1 = temp_1
    return _ctx
 end
 
@@ -112,14 +112,14 @@ function Array_return_foo6_type_alloc()
    local _ctx = {};
    _ctx.Array_return_foo6_ret_0 = 0
    local i_0 = 0
-   local temp = initializeArray(0, 3)
+   local temp_1 = initializeArray(0, 3)
    while (i_0 < 3) do
       do
-         temp[i_0 + 1] = 0
+         temp_1[i_0 + 1] = 0
          i_0 = (1 + i_0)
       end
    end
-   _ctx.Array_return_foo6_ret_1 = temp
+   _ctx.Array_return_foo6_ret_1 = temp_1
    return _ctx
 end
 

@@ -1,248 +1,307 @@
+
 package vult.com.wav_file;
 
 import java.util.Arrays;
 import java.util.Random;
 import vult.com.external.*;
 
-public class wav_file {
+public class Wav_file {
+
 
 static int clip(int x, int minv, int maxv) {
-   if(x > maxv)
-      return maxv;
-   else if(x < minv)
-      return minv;
-   else return x;
+    if(x > maxv)
+        return maxv;
+    else if(x < minv)
+        return minv;
+    else return x;
 }
 
 static float clip(float x, float minv, float maxv) {
-   if(x > maxv)
-      return maxv;
-   else if(x < minv)
-      return minv;
-   else return x;
+    if(x > maxv)
+        return maxv;
+    else if(x < minv)
+        return minv;
+    else return x;
 }
 
-int[] makeArray(int size, int init) {
-   int a[] = new int[size];
-   Arrays.fill(a, init);
-   return a;
+static int[] makeArray(int size, int init) {
+    int a[] = new int[size];
+    Arrays.fill(a, init);
+    return a;
 }
 
-float[] makeArray(int size, float init) {
-   float a[] = new float[size];
-   Arrays.fill(a, init);
-   return a;
+static float[] makeArray(int size, float init) {
+    float a[] = new float[size];
+    Arrays.fill(a, init);
+    return a;
 }
 
-boolean[] makeArray(int size, boolean init) {
-   boolean a[] = new boolean[size];
-   Arrays.fill(a, init);
-   return a;
-}
-
-int int_to_fix16(int a) { return a * 0x00010000; }
-
-int fix16_to_int(int a) { return (a >> 16); }
-
-int fix16_add(int x, int y) { return x + y; }
-
-int fix16_sub(int x, int y) { return x - y; }
-
-int fix16_minus(int x) { return -x; }
-
-float fix16_to_float(int a) { return (float)a / 0x00010000; }
-int float_to_fix16(float a) {
-   float temp = a * 0x00010000;
-   return (int)temp;
-}
-
-int fix16_mul(int x, int y) {
-   long res = (long)x * (long)y;
-   return (int)(res >> 16);
-}
-
-int fix16_div(int a, int b) {
-   if (b == 0)
-      return 0;
-   int result = (int)(((long)a << 16) / b);
-   return result;
+static boolean[] makeArray(int size, boolean init) {
+    boolean a[] = new boolean[size];
+    Arrays.fill(a, init);
+    return a;
 }
 
 static boolean not(boolean x) {
-   return !x;
+    return !x;
 }
 
 static float int_to_float(int x) {
-   return (float)x;
+    return (float)x;
 }
 
-int float_to_int(float x) {
-   return (int)x;
+static float bool_to_float(boolean x) {
+    return x ? 1.0f : 0.0f;
 }
 
-float floor(float x) {
-   return (float)Math.floor(x);
+static int float_to_int(float x) {
+    return (int)x;
 }
 
-static Random rand = new Random();
+static short int16(int x) {
+    return (short)Math.max(-32768, Math.min(32767, x));
+}
+
+static short int16(float x) {
+    return (short)Math.max(-32768, Math.min(32767, (int)x));
+}
+
+static float floor(float x) {
+    return (float)Math.floor(x);
+}
+
+Random rand = new Random();
 
 float random() {
-   return rand.nextFloat();
+    return rand.nextFloat();
 }
 
 int irandom() {
-   return rand.nextInt();
+    return rand.nextInt();
 }
 
-float get(float[] a, int i) {
-   return a[i];
+static float get(float[] a, int i) {
+    return a[i];
 }
 
-void set(float[] a, int i, float val) {
-   a[i] = val;
+static void set(float[] a, int i, float val) {
+    a[i] = val;
 }
 
-int get(int[] a, int i) {
-   return a[i];
+static int get(int[] a, int i) {
+    return a[i];
 }
 
-void set(int[] a, int i, int val) {
-   a[i] = val;
+static void set(int[] a, int i, int val) {
+    a[i] = val;
 }
 
-float[] wrap_array(float x[]) {
-   return x;
+static float[] wrap_array(float x[]) {
+    return x;
 }
 
-int[] wrap_array(int x[]) {
-   return x;
+static int[] wrap_array(int x[]) {
+    return x;
 }
 
-float cosh(float x) {
-   return (float)Math.cosh(x);
+static float cosh(float x) {
+    return (float)Math.cosh(x);
 }
 
-float cos(float x) {
-   return (float)Math.cos(x);
+static float cos(float x) {
+    return (float)Math.cos(x);
 }
 
-float sin(float x) {
-   return (float)Math.sin(x);
+static float sin(float x) {
+    return (float)Math.sin(x);
 }
 
-float sinh(float x) {
-   return (float)Math.sinh(x);
+static float sinh(float x) {
+    return (float)Math.sinh(x);
 }
 
-float tan(float x) {
-   return (float)Math.tan(x);
+static float tan(float x) {
+    return (float)Math.tan(x);
 }
 
-float tanh(float x) {
-   return (float)Math.tanh(x);
+static float tanh(float x) {
+    return (float)Math.tanh(x);
 }
 
-float sqrt(float x) {
-   return (float)Math.sqrt(x);
+static float sqrt(float x) {
+    return (float)Math.sqrt(x);
 }
 
-float pow(float x, float y) {
-   return (float)Math.pow(x, y);
+static float pow(float x, float y) {
+    return (float)Math.pow(x, y);
 }
 
-float exp(float x) {
-   return (float)Math.exp(x);
+static float exp(float x) {
+    return (float)Math.exp(x);
+}
+
+static float log(float x) {
+    return (float)Math.log(x);
+}
+
+static float log10(float x) {
+    return (float)Math.log10(x);
+}
+
+static float abs(float x) {
+    return Math.abs(x);
+}
+
+static int abs(int x) {
+    return Math.abs(x);
+}
+
+static float[] initializeArray(float v, int size) {
+    float[] a = new float[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static int[] initializeArray(int v, int size) {
+    int[] a = new int[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static boolean[] initializeArray(boolean v, int size) {
+    boolean[] a = new boolean[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static float eps() {
+    return 1e-18f;
+}
+
+static float pi() {
+    return 3.1415926535897932384f;
+}
+
+static int float_to_fix(float x) {
+    return (int)(x * 65536.0f);
+}
+
+static int fix_to_int(int x) {
+    return x >> 16;
+}
+
+static float fix_to_float(int x) {
+    return ((float)x) / 65536.0f;
 }
 
 
-float Wav_file_ext_wave_chan_0[];
-         public void set_Wav_file_ext_wave_chan_0(java.nio.FloatBuffer buffer){
-            Wav_file_ext_wave_chan_0 = new float[600];
-            buffer.get(Wav_file_ext_wave_chan_0);
-            }
-private class Wav_file__ctx_type_2 {
+public static class Wav_file_index_type {
    public int i;
- 
-   Wav_file__ctx_type_2(){ this.i = 0;
-    } 
-   Wav_file__ctx_type_2(int i){ this.i = i;
-    } }
 
-private class Wav_file__ctx_type_3 {
-   public Wav_file__ctx_type_2 _inst177;
- 
-   Wav_file__ctx_type_3(){ this._inst177 = new Wav_file__ctx_type_2();
-    } 
-   Wav_file__ctx_type_3(Wav_file__ctx_type_2 _inst177){ this._inst177 = _inst177;
-    } }
+   public Wav_file_index_type() {
+      this.i = 0;
+   }
+   public Wav_file_index_type(int i) {
+      this.i = i;
+   }}public static class Wav_file_osc_wave_type {
+   public Wav_file_index_type inst_1e19a;
 
-private class Wav_file__ctx_type_4 {
-   public Wav_file__ctx_type_3 _inst1a1;
- 
-   Wav_file__ctx_type_4(){ this._inst1a1 = new Wav_file__ctx_type_3();
-    } 
-   Wav_file__ctx_type_4(Wav_file__ctx_type_3 _inst1a1){ this._inst1a1 = _inst1a1;
-    } }
+   public Wav_file_osc_wave_type() {
+      this.inst_1e19a = new Wav_file_index_type();
+   }
+   public Wav_file_osc_wave_type(Wav_file_index_type inst_1e19a) {
+      this.inst_1e19a = inst_1e19a;
+   }}public static class Wav_file_process_type {
+   public Wav_file_osc_wave_type inst_19a53;
 
-private int Wav_file_ext_wave_samples(){return 600;}
+   public Wav_file_process_type() {
+      this.inst_19a53 = new Wav_file_osc_wave_type();
+   }
+   public Wav_file_process_type(Wav_file_osc_wave_type inst_19a53) {
+      this.inst_19a53 = inst_19a53;
+   }}public static final float[] Wav_file_ext_wave_chan_0 = new float[]{0.007659f, 0.051208f, 0.096405f, 0.144195f, 0.194366f, 0.246826f, 0.300781f, 0.355194f, 0.408538f, 0.459075f, 0.503967f, 0.536529f, 0.562957f, 0.631896f, 0.686767f, 0.734954f, 0.780822f, 0.824707f, 0.865417f, 0.901641f, 0.932403f, 0.957275f, 0.976226f, 0.98941f, 0.997253f, 0.999969f, 0.998046f, 0.991699f, 0.981353f, 0.967468f, 0.950469f, 0.930816f, 0.908843f, 0.884765f, 0.858367f, 0.830291f, 0.8013f, 0.770996f, 0.738861f, 0.704864f, 0.66867f, 0.629882f, 0.588317f, 0.543731f, 0.496154f, 0.445526f, 0.392059f, 0.335906f, 0.277282f, 0.216705f, 0.154602f, 0.091674f, 0.028717f, -0.033509f, -0.094269f, -0.15268f, -0.208008f, -0.259186f, -0.305146f, -0.343964f, -0.367646f, -0.405976f, -0.454438f, -0.492554f, -0.525971f, -0.557129f, -0.586274f, -0.612732f, -0.635956f, -0.655701f, -0.671906f, -0.684632f, -0.694153f, -0.700593f, -0.704041f, -0.70456f, -0.70224f, -0.697144f, -0.689393f, -0.679169f, -0.666688f, -0.652039f, -0.635468f, -0.617127f, -0.597168f, -0.575745f, -0.552948f, -0.528901f, -0.503754f, -0.47754f, -0.45044f, -0.422577f, -0.394013f, -0.364899f, -0.335358f, -0.305512f, -0.275422f, -0.24524f, -0.215119f, -0.18509f, -0.155304f, -0.125794f, -0.096741f, -0.068146f, -0.040192f, -0.012909f, 0.01361f, 0.039367f, 0.064178f, 0.088104f, 0.110992f, 0.132781f, 0.153503f, 0.173034f, 0.191375f, 0.208435f, 0.224243f, 0.238708f, 0.251708f, 0.263275f, 0.273162f, 0.280731f, 0.285797f, 0.296539f, 0.304992f, 0.311981f, 0.318267f, 0.324096f, 0.329528f, 0.33432f, 0.33847f, 0.341949f, 0.344848f, 0.347106f, 0.348876f, 0.350036f, 0.350708f, 0.35086f, 0.350555f, 0.349792f, 0.348571f, 0.346893f, 0.344879f, 0.342498f, 0.339782f, 0.336761f, 0.333496f, 0.329956f, 0.326171f, 0.322082f, 0.317871f, 0.313354f, 0.308654f, 0.30371f, 0.298522f, 0.293151f, 0.287567f, 0.281707f, 0.275634f, 0.269348f, 0.262756f, 0.25595f, 0.24887f, 0.241485f, 0.233795f, 0.22586f, 0.217559f, 0.208953f, 0.200042f, 0.190795f, 0.181182f, 0.171264f, 0.16098f, 0.15036f, 0.139404f, 0.128143f, 0.116516f, 0.104614f, 0.092407f, 0.079925f, 0.067169f, 0.054229f, 0.041015f, 0.027618f, 0.014038f, 0.000335f, -0.013489f, -0.027405f, -0.041382f, -0.05539f, -0.069459f, -0.083466f, -0.097474f, -0.11142f, -0.125214f, -0.138917f, -0.152497f, -0.165925f, -0.179139f, -0.1922f, -0.205048f, -0.217621f, -0.22995f, -0.242066f, -0.253907f, -0.265473f, -0.276734f, -0.28769f, -0.29831f, -0.308655f, -0.318635f, -0.328309f, -0.337647f, -0.346558f, -0.355103f, -0.363282f, -0.371033f, -0.378327f, -0.385224f, -0.391602f, -0.397492f, -0.402863f, -0.407715f, -0.411988f, -0.415711f, -0.418763f, -0.421204f, -0.423005f, -0.424103f, -0.4245f, -0.424195f, -0.423188f, -0.421448f, -0.418946f, -0.415711f, -0.411744f, -0.407074f, -0.401642f, -0.395569f, -0.388825f, -0.381379f, -0.373353f, -0.364716f, -0.35553f, -0.345795f, -0.335633f, -0.325013f, -0.314057f, -0.302765f, -0.291169f, -0.279389f, -0.267487f, -0.255463f, -0.24347f, -0.231507f, -0.219605f, -0.207917f, -0.196442f, -0.185242f, -0.174347f, -0.163819f, -0.153687f, -0.143982f, -0.134644f, -0.125733f, -0.117188f, -0.108918f, -0.100892f, -0.092896f, -0.084748f, -0.075684f, -0.06543f, -0.06128f, -0.056458f, -0.051545f, -0.04715f, -0.043335f, -0.04004f, -0.036957f, -0.033997f, -0.030945f, -0.02768f, -0.023987f, -0.019867f, -0.015046f, -0.00943f, -0.002869f, 0.00473f, 0.013641f, 0.023956f, 0.035705f, 0.049011f, 0.064025f, 0.080841f, 0.099487f, 0.120178f, 0.143066f, 0.168487f, 0.19934f, 0.23526f, 0.268218f, 0.295715f, 0.321258f, 0.343261f, 0.361175f, 0.403167f, 0.44165f, 0.479431f, 0.518615f, 0.559204f, 0.600097f, 0.640441f, 0.679138f, 0.715515f, 0.748901f, 0.778839f, 0.804901f, 0.826812f, 0.84436f, 0.857421f, 0.866027f, 0.870208f, 0.8703f, 0.866455f, 0.859161f, 0.848785f, 0.835723f, 0.820404f, 0.803192f, 0.784423f, 0.764343f, 0.743194f, 0.72113f, 0.698272f, 0.67456f, 0.649963f, 0.624481f, 0.597869f, 0.570007f, 0.540679f, 0.509643f, 0.476623f, 0.441467f, 0.404022f, 0.364044f, 0.321533f, 0.276458f, 0.228881f, 0.178955f, 0.126953f, 0.073242f, 0.018249f, -0.037507f, -0.093506f, -0.14914f, -0.203766f, -0.256684f, -0.307221f, -0.354615f, -0.398194f, -0.436921f, -0.469239f, -0.489014f, -0.516663f, -0.559052f, -0.591126f, -0.618744f, -0.644562f, -0.668793f, -0.690918f, -0.71048f, -0.727051f, -0.740632f, -0.751282f, -0.759186f, -0.764466f, -0.767182f, -0.767426f, -0.765259f, -0.760651f, -0.753846f, -0.744904f, -0.733948f, -0.721222f, -0.70691f, -0.691071f, -0.673859f, -0.655427f, -0.635865f, -0.615265f, -0.593689f, -0.57129f, -0.548096f, -0.524262f, -0.499756f, -0.474762f, -0.44928f, -0.423493f, -0.39737f, -0.371003f, -0.344483f, -0.317902f, -0.29126f, -0.264649f, -0.238099f, -0.21164f, -0.185334f, -0.159302f, -0.133515f, -0.108002f, -0.082825f, -0.058045f, -0.033692f, -0.009766f, 0.013641f, 0.03659f, 0.05899f, 0.080749f, 0.101989f, 0.122589f, 0.142547f, 0.161834f, 0.18048f, 0.198425f, 0.215698f, 0.232238f, 0.248077f, 0.263244f, 0.277648f, 0.291412f, 0.304412f, 0.316772f, 0.32843f, 0.339416f, 0.349731f, 0.359436f, 0.368499f, 0.376983f, 0.384887f, 0.392181f, 0.398956f, 0.405181f, 0.410858f, 0.416076f, 0.420776f, 0.425018f, 0.428802f, 0.432128f, 0.434967f, 0.437408f, 0.439392f, 0.440948f, 0.442047f, 0.442687f, 0.442901f, 0.442657f, 0.441955f, 0.440765f, 0.439086f, 0.436889f, 0.434234f, 0.430999f, 0.427246f, 0.422973f, 0.418121f, 0.412689f, 0.406707f, 0.400115f, 0.392974f, 0.385284f, 0.376983f, 0.368164f, 0.358734f, 0.348815f, 0.338348f, 0.327392f, 0.315948f, 0.304016f, 0.291717f, 0.278961f, 0.265808f, 0.252349f, 0.238555f, 0.224517f, 0.210144f, 0.195556f, 0.180755f, 0.165771f, 0.150634f, 0.135345f, 0.119934f, 0.104431f, 0.088897f, 0.073242f, 0.057586f, 0.0419f, 0.026214f, 0.010559f, -0.005036f, -0.02063f, -0.036133f, -0.051606f, -0.066926f, -0.082154f, -0.097321f, -0.112275f, -0.127167f, -0.141907f, -0.156464f, -0.170838f, -0.18509f, -0.199128f, -0.212983f, -0.226594f, -0.240021f, -0.253205f, -0.266114f, -0.278748f, -0.291108f, -0.303101f, -0.31482f, -0.326111f, -0.337067f, -0.347565f, -0.357605f, -0.367127f, -0.37616f, -0.384614f, -0.392487f, -0.39972f, -0.406373f, -0.412262f, -0.417511f, -0.421998f, -0.425751f, -0.428711f, -0.430939f, -0.432404f, -0.433045f, -0.432953f, -0.432129f, -0.430512f, -0.428254f, -0.425232f, -0.421601f, -0.417359f, -0.412568f, -0.407288f, -0.401551f, -0.395447f, -0.389039f, -0.382386f, -0.37558f, -0.368744f, -0.361878f, -0.355103f, -0.348572f, -0.342316f, -0.336518f, -0.331208f, -0.32663f, -0.32306f, -0.320862f, -0.323487f, -0.329651f, -0.332367f, -0.332612f, -0.333497f, -0.335022f, -0.337586f, -0.341004f, -0.345093f, -0.34964f, -0.354401f, -0.35907f, -0.363495f, -0.367371f, -0.370606f, -0.372925f, -0.374238f, -0.374329f, -0.373047f, -0.370301f, -0.366028f, -0.360138f, -0.35257f, -0.343323f, -0.332306f, -0.31955f, -0.305024f, -0.288727f, -0.27063f, -0.250611f, -0.228669f, -0.204651f, -0.178345f, -0.149537f, -0.117737f, -0.080445f, -0.036957f};
+private int Wav_file_ext_wave_samples() {
+   return 600;
+}
 
-private float Wav_file_ext_wave(int channel, int index){
-   if(channel == 0){ return wrap_array(Wav_file_ext_wave_chan_0)[(index % 600)]; }
+private float Wav_file_ext_wave(int channel, int index) {
+   if ((channel == 0)) {
+      return Wav_file_ext_wave_chan_0[(index % 600)];
+   }
    return 0.0f;
 }
 
-private Wav_file__ctx_type_2 Wav_file__ctx_type_2_init(){
-   Wav_file__ctx_type_2 _ctx = new Wav_file__ctx_type_2(); 
+private Wav_file_index_type Wav_file_index_type_alloc() {
+   Wav_file_index_type _ctx = new Wav_file_index_type();
    _ctx.i = 0;
    return _ctx;
 }
 
-private Wav_file__ctx_type_2 Wav_file_index_init(){return Wav_file__ctx_type_2_init();}
+private Wav_file_osc_wave_type Wav_file_osc_wave_type_alloc() {
+   Wav_file_osc_wave_type _ctx = new Wav_file_osc_wave_type();
+   _ctx.inst_1e19a = Wav_file_index_type_alloc();
+   return _ctx;
+}
 
-private int Wav_file_index(Wav_file__ctx_type_2 _ctx){
+private Wav_file_process_type Wav_file_process_type_alloc() {
+   Wav_file_process_type _ctx = new Wav_file_process_type();
+   _ctx.inst_19a53 = Wav_file_osc_wave_type_alloc();
+   return _ctx;
+}
+
+private Wav_file_noteOn_type Wav_file_noteOn_type_alloc(Wav_file_noteOn_type _ctx) {
+   return new Wav_file_noteOn_type();
+}
+
+private Wav_file_noteOff_type Wav_file_noteOff_type_alloc(Wav_file_noteOff_type _ctx) {
+   return new Wav_file_noteOff_type();
+}
+
+private Wav_file_controlChange_type Wav_file_controlChange_type_alloc(Wav_file_controlChange_type _ctx) {
+   return new Wav_file_controlChange_type();
+}
+
+private Wav_file_default_type Wav_file_default_type_alloc(Wav_file_default_type _ctx) {
+   return new Wav_file_default_type();
+}
+
+private int Wav_file_index(Wav_file_index_type _ctx) {
    _ctx.i = ((1 + _ctx.i) % Wav_file_ext_wave_samples());
    return _ctx.i;
 }
 
-private Wav_file__ctx_type_3 Wav_file__ctx_type_3_init(){
-   Wav_file__ctx_type_3 _ctx = new Wav_file__ctx_type_3(); 
-   _ctx._inst177 = Wav_file__ctx_type_2_init();
-   return _ctx;
+private float Wav_file_osc_wave(Wav_file_osc_wave_type _ctx, float cv) {
+   return Wav_file_ext_wave(0, Wav_file_index(_ctx.inst_1e19a));
 }
 
-private Wav_file__ctx_type_3 Wav_file_osc_wave_init(){return Wav_file__ctx_type_3_init();}
-
-private float Wav_file_osc_wave(Wav_file__ctx_type_3 _ctx, float cv){return Wav_file_ext_wave(0,Wav_file_index(_ctx._inst177));}
-
-private Wav_file__ctx_type_4 Wav_file__ctx_type_4_init(){
-   Wav_file__ctx_type_4 _ctx = new Wav_file__ctx_type_4(); 
-   _ctx._inst1a1 = Wav_file__ctx_type_3_init();
-   return _ctx;
+private float Wav_file_process(Wav_file_process_type _ctx, float cv) {
+   return Wav_file_osc_wave(_ctx.inst_19a53, cv);
 }
 
-private Wav_file__ctx_type_4 Wav_file_process_init(){return Wav_file__ctx_type_4_init();}
-
-private float Wav_file_process(Wav_file__ctx_type_4 _ctx, float cv){return Wav_file_osc_wave(_ctx._inst1a1,cv);}
-
-private Wav_file__ctx_type_4 Wav_file_noteOn_init(){return Wav_file__ctx_type_4_init();}
-
-private void Wav_file_noteOn(Wav_file__ctx_type_4 _ctx, int note, int velocity, int channel){
+private void Wav_file_noteOn(Wav_file_process_type _ctx, int note, int velocity, int channel) {
 }
 
-private Wav_file__ctx_type_4 Wav_file_noteOff_init(){return Wav_file__ctx_type_4_init();}
-
-private void Wav_file_noteOff(Wav_file__ctx_type_4 _ctx, int note, int channel){
+private void Wav_file_noteOff(Wav_file_process_type _ctx, int note, int channel) {
 }
 
-private Wav_file__ctx_type_4 Wav_file_controlChange_init(){return Wav_file__ctx_type_4_init();}
-
-private void Wav_file_controlChange(Wav_file__ctx_type_4 _ctx, int control, int value, int channel){
+private void Wav_file_controlChange(Wav_file_process_type _ctx, int control, int value, int channel) {
 }
 
-private Wav_file__ctx_type_4 Wav_file_default_init(){return Wav_file__ctx_type_4_init();}
-
-private void Wav_file_default(Wav_file__ctx_type_4 _ctx){
+private void Wav_file_default(Wav_file_process_type _ctx) {
 }
 
+
+   public static class Wav_file_default_type extends Wav_file_process_type {
+       public Wav_file_default_type() { super(); }
+   }
+   public static class Wav_file_controlChange_type extends Wav_file_process_type {
+       public Wav_file_controlChange_type() { super(); }
+   }
+   public static class Wav_file_noteOff_type extends Wav_file_process_type {
+       public Wav_file_noteOff_type() { super(); }
+   }
+   public static class Wav_file_noteOn_type extends Wav_file_process_type {
+       public Wav_file_noteOn_type() { super(); }
+   }
 
 }

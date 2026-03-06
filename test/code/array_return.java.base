@@ -1,0 +1,360 @@
+
+package vult.com.array_return;
+
+import java.util.Arrays;
+import java.util.Random;
+import vult.com.external.*;
+
+public class Array_return {
+
+
+static int clip(int x, int minv, int maxv) {
+    if(x > maxv)
+        return maxv;
+    else if(x < minv)
+        return minv;
+    else return x;
+}
+
+static float clip(float x, float minv, float maxv) {
+    if(x > maxv)
+        return maxv;
+    else if(x < minv)
+        return minv;
+    else return x;
+}
+
+static int[] makeArray(int size, int init) {
+    int a[] = new int[size];
+    Arrays.fill(a, init);
+    return a;
+}
+
+static float[] makeArray(int size, float init) {
+    float a[] = new float[size];
+    Arrays.fill(a, init);
+    return a;
+}
+
+static boolean[] makeArray(int size, boolean init) {
+    boolean a[] = new boolean[size];
+    Arrays.fill(a, init);
+    return a;
+}
+
+static boolean not(boolean x) {
+    return !x;
+}
+
+static float int_to_float(int x) {
+    return (float)x;
+}
+
+static float bool_to_float(boolean x) {
+    return x ? 1.0f : 0.0f;
+}
+
+static int float_to_int(float x) {
+    return (int)x;
+}
+
+static short int16(int x) {
+    return (short)Math.max(-32768, Math.min(32767, x));
+}
+
+static short int16(float x) {
+    return (short)Math.max(-32768, Math.min(32767, (int)x));
+}
+
+static float floor(float x) {
+    return (float)Math.floor(x);
+}
+
+Random rand = new Random();
+
+float random() {
+    return rand.nextFloat();
+}
+
+int irandom() {
+    return rand.nextInt();
+}
+
+static float get(float[] a, int i) {
+    return a[i];
+}
+
+static void set(float[] a, int i, float val) {
+    a[i] = val;
+}
+
+static int get(int[] a, int i) {
+    return a[i];
+}
+
+static void set(int[] a, int i, int val) {
+    a[i] = val;
+}
+
+static float[] wrap_array(float x[]) {
+    return x;
+}
+
+static int[] wrap_array(int x[]) {
+    return x;
+}
+
+static float cosh(float x) {
+    return (float)Math.cosh(x);
+}
+
+static float cos(float x) {
+    return (float)Math.cos(x);
+}
+
+static float sin(float x) {
+    return (float)Math.sin(x);
+}
+
+static float sinh(float x) {
+    return (float)Math.sinh(x);
+}
+
+static float tan(float x) {
+    return (float)Math.tan(x);
+}
+
+static float tanh(float x) {
+    return (float)Math.tanh(x);
+}
+
+static float sqrt(float x) {
+    return (float)Math.sqrt(x);
+}
+
+static float pow(float x, float y) {
+    return (float)Math.pow(x, y);
+}
+
+static float exp(float x) {
+    return (float)Math.exp(x);
+}
+
+static float log(float x) {
+    return (float)Math.log(x);
+}
+
+static float log10(float x) {
+    return (float)Math.log10(x);
+}
+
+static float abs(float x) {
+    return Math.abs(x);
+}
+
+static int abs(int x) {
+    return Math.abs(x);
+}
+
+static float[] initializeArray(float v, int size) {
+    float[] a = new float[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static int[] initializeArray(int v, int size) {
+    int[] a = new int[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static boolean[] initializeArray(boolean v, int size) {
+    boolean[] a = new boolean[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static float eps() {
+    return 1e-18f;
+}
+
+static float pi() {
+    return 3.1415926535897932384f;
+}
+
+static int float_to_fix(float x) {
+    return (int)(x * 65536.0f);
+}
+
+static int fix_to_int(int x) {
+    return x >> 16;
+}
+
+static float fix_to_float(int x) {
+    return ((float)x) / 65536.0f;
+}
+
+
+public static class Array_return_foo3_type {
+   public int y;
+
+   public Array_return_foo3_type() {
+      this.y = 0;
+   }
+   public Array_return_foo3_type(int y) {
+      this.y = y;
+   }}public static class Array_return_foo4_type {
+   public int y;
+
+   public Array_return_foo4_type() {
+      this.y = 0;
+   }
+   public Array_return_foo4_type(int y) {
+      this.y = y;
+   }}public static class Array_return_foo5_type {
+   public int Array_return_foo5_ret_0;
+   public int[] Array_return_foo5_ret_1;
+
+   public Array_return_foo5_type() {
+      this.Array_return_foo5_ret_0 = 0;
+      this.Array_return_foo5_ret_1 = new int[]{0,0,0};
+   }
+   public Array_return_foo5_type(int Array_return_foo5_ret_0, int[] Array_return_foo5_ret_1) {
+      this.Array_return_foo5_ret_0 = Array_return_foo5_ret_0;
+      this.Array_return_foo5_ret_1 = Array_return_foo5_ret_1;
+   }}public static class Array_return_foo6_type {
+   public int Array_return_foo6_ret_0;
+   public int[] Array_return_foo6_ret_1;
+
+   public Array_return_foo6_type() {
+      this.Array_return_foo6_ret_0 = 0;
+      this.Array_return_foo6_ret_1 = new int[]{0,0,0};
+   }
+   public Array_return_foo6_type(int Array_return_foo6_ret_0, int[] Array_return_foo6_ret_1) {
+      this.Array_return_foo6_ret_0 = Array_return_foo6_ret_0;
+      this.Array_return_foo6_ret_1 = Array_return_foo6_ret_1;
+   }}public static class Array_return_s1 {
+   public int x;
+   public int y;
+
+   public Array_return_s1() {
+      this.x = 0;
+      this.y = 0;
+   }
+   public Array_return_s1(int x, int y) {
+      this.x = x;
+      this.y = y;
+   }}public static class Array_return_foo7_type {
+   public int Array_return_foo7_ret_0;
+   public Array_return_s1 Array_return_foo7_ret_1;
+
+   public Array_return_foo7_type() {
+      this.Array_return_foo7_ret_0 = 0;
+      this.Array_return_foo7_ret_1 = new Array_return_s1();
+   }
+   public Array_return_foo7_type(int Array_return_foo7_ret_0, Array_return_s1 Array_return_foo7_ret_1) {
+      this.Array_return_foo7_ret_0 = Array_return_foo7_ret_0;
+      this.Array_return_foo7_ret_1 = Array_return_foo7_ret_1;
+   }}private Array_return_foo3_type Array_return_foo3_type_alloc() {
+   Array_return_foo3_type _ctx = new Array_return_foo3_type();
+   _ctx.y = 0;
+   return _ctx;
+}
+
+private Array_return_foo4_type Array_return_foo4_type_alloc() {
+   Array_return_foo4_type _ctx = new Array_return_foo4_type();
+   _ctx.y = 0;
+   return _ctx;
+}
+
+private Array_return_foo5_type Array_return_foo5_type_alloc() {
+   Array_return_foo5_type _ctx = new Array_return_foo5_type();
+   _ctx.Array_return_foo5_ret_0 = 0;
+   int i_0 = 0;
+   int[] temp_1 = initializeArray(0, 3);
+   while ((i_0 < 3)) {
+      {
+         temp_1[i_0] = 0;
+         i_0 = (1 + i_0);
+      }
+   }
+   _ctx.Array_return_foo5_ret_1 = temp_1;
+   return _ctx;
+}
+
+private Array_return_foo6_type Array_return_foo6_type_alloc() {
+   Array_return_foo6_type _ctx = new Array_return_foo6_type();
+   _ctx.Array_return_foo6_ret_0 = 0;
+   int i_0 = 0;
+   int[] temp_1 = initializeArray(0, 3);
+   while ((i_0 < 3)) {
+      {
+         temp_1[i_0] = 0;
+         i_0 = (1 + i_0);
+      }
+   }
+   _ctx.Array_return_foo6_ret_1 = temp_1;
+   return _ctx;
+}
+
+private Array_return_s1 Array_return_s1_alloc() {
+   Array_return_s1 _ctx = new Array_return_s1();
+   _ctx.x = 0;
+   _ctx.y = 0;
+   return _ctx;
+}
+
+private Array_return_foo7_type Array_return_foo7_type_alloc() {
+   Array_return_foo7_type _ctx = new Array_return_foo7_type();
+   _ctx.Array_return_foo7_ret_0 = 0;
+   _ctx.Array_return_foo7_ret_1 = Array_return_s1_alloc();
+   return _ctx;
+}
+
+private int[] Array_return_foo1() {
+   int[] _array_0 = new float[]{1, 2, 3};
+   return _array_0;
+}
+
+private int[] Array_return_foo2() {
+   int[] x = new float[]{1, 2, 3};
+   return x;
+}
+
+private int[] Array_return_foo3(Array_return_foo3_type _ctx) {
+   _ctx.y = 0;
+   int[] _array_0 = new float[]{1, 2, 3};
+   return _array_0;
+}
+
+private int[] Array_return_foo4(Array_return_foo4_type _ctx) {
+   _ctx.y = 0;
+   int[] x = new float[]{1, 2, 3};
+   return x;
+}
+
+private void Array_return_foo5(Array_return_foo5_type _ctx) {
+   int[] _array_0 = new float[]{1, 2, 3};
+   _ctx.Array_return_foo5_ret_0 = 1;
+   _ctx.Array_return_foo5_ret_1 = _array_0;
+   return ;
+}
+
+private void Array_return_foo6(Array_return_foo6_type _ctx) {
+   int y = 1;
+   int[] x = new float[]{1, 2, 3};
+   _ctx.Array_return_foo6_ret_0 = y;
+   _ctx.Array_return_foo6_ret_1 = x;
+   return ;
+}
+
+private void Array_return_foo7(Array_return_foo7_type _ctx) {
+   int[] d = initializeArray(0, 4);
+   _ctx.Array_return_foo7_ret_0 = d[0];
+   Array_return_s1[] s = new Array_return_s1[]{new Array_return_s1(),new Array_return_s1(),new Array_return_s1(),new Array_return_s1()};
+   _ctx.Array_return_foo7_ret_1 = s[0];
+   return ;
+}
+
+
+}

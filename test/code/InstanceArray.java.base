@@ -1,0 +1,275 @@
+
+package vult.com.instancearray;
+
+import java.util.Arrays;
+import java.util.Random;
+import vult.com.external.*;
+
+public class InstanceArray {
+
+
+static int clip(int x, int minv, int maxv) {
+    if(x > maxv)
+        return maxv;
+    else if(x < minv)
+        return minv;
+    else return x;
+}
+
+static float clip(float x, float minv, float maxv) {
+    if(x > maxv)
+        return maxv;
+    else if(x < minv)
+        return minv;
+    else return x;
+}
+
+static int[] makeArray(int size, int init) {
+    int a[] = new int[size];
+    Arrays.fill(a, init);
+    return a;
+}
+
+static float[] makeArray(int size, float init) {
+    float a[] = new float[size];
+    Arrays.fill(a, init);
+    return a;
+}
+
+static boolean[] makeArray(int size, boolean init) {
+    boolean a[] = new boolean[size];
+    Arrays.fill(a, init);
+    return a;
+}
+
+static boolean not(boolean x) {
+    return !x;
+}
+
+static float int_to_float(int x) {
+    return (float)x;
+}
+
+static float bool_to_float(boolean x) {
+    return x ? 1.0f : 0.0f;
+}
+
+static int float_to_int(float x) {
+    return (int)x;
+}
+
+static short int16(int x) {
+    return (short)Math.max(-32768, Math.min(32767, x));
+}
+
+static short int16(float x) {
+    return (short)Math.max(-32768, Math.min(32767, (int)x));
+}
+
+static float floor(float x) {
+    return (float)Math.floor(x);
+}
+
+Random rand = new Random();
+
+float random() {
+    return rand.nextFloat();
+}
+
+int irandom() {
+    return rand.nextInt();
+}
+
+static float get(float[] a, int i) {
+    return a[i];
+}
+
+static void set(float[] a, int i, float val) {
+    a[i] = val;
+}
+
+static int get(int[] a, int i) {
+    return a[i];
+}
+
+static void set(int[] a, int i, int val) {
+    a[i] = val;
+}
+
+static float[] wrap_array(float x[]) {
+    return x;
+}
+
+static int[] wrap_array(int x[]) {
+    return x;
+}
+
+static float cosh(float x) {
+    return (float)Math.cosh(x);
+}
+
+static float cos(float x) {
+    return (float)Math.cos(x);
+}
+
+static float sin(float x) {
+    return (float)Math.sin(x);
+}
+
+static float sinh(float x) {
+    return (float)Math.sinh(x);
+}
+
+static float tan(float x) {
+    return (float)Math.tan(x);
+}
+
+static float tanh(float x) {
+    return (float)Math.tanh(x);
+}
+
+static float sqrt(float x) {
+    return (float)Math.sqrt(x);
+}
+
+static float pow(float x, float y) {
+    return (float)Math.pow(x, y);
+}
+
+static float exp(float x) {
+    return (float)Math.exp(x);
+}
+
+static float log(float x) {
+    return (float)Math.log(x);
+}
+
+static float log10(float x) {
+    return (float)Math.log10(x);
+}
+
+static float abs(float x) {
+    return Math.abs(x);
+}
+
+static int abs(int x) {
+    return Math.abs(x);
+}
+
+static float[] initializeArray(float v, int size) {
+    float[] a = new float[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static int[] initializeArray(int v, int size) {
+    int[] a = new int[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static boolean[] initializeArray(boolean v, int size) {
+    boolean[] a = new boolean[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static float eps() {
+    return 1e-18f;
+}
+
+static float pi() {
+    return 3.1415926535897932384f;
+}
+
+static int float_to_fix(float x) {
+    return (int)(x * 65536.0f);
+}
+
+static int fix_to_int(int x) {
+    return x >> 16;
+}
+
+static float fix_to_float(int x) {
+    return ((float)x) / 65536.0f;
+}
+
+
+public static class InstanceArray_counter_type {
+   public float total;
+
+   public InstanceArray_counter_type() {
+      this.total = 0.0f;
+   }
+   public InstanceArray_counter_type(float total) {
+      this.total = total;
+   }}public static class InstanceArray_test1_type {
+   public InstanceArray_counter_type[] instances;
+
+   public InstanceArray_test1_type() {
+      this.instances = new InstanceArray_counter_type[]{new InstanceArray_counter_type(),new InstanceArray_counter_type(),new InstanceArray_counter_type(),new InstanceArray_counter_type()};
+   }
+   public InstanceArray_test1_type(InstanceArray_counter_type[] instances) {
+      this.instances = instances;
+   }}public static class InstanceArray_test2_type {
+   public InstanceArray_counter_type case1;
+   public InstanceArray_counter_type case2;
+
+   public InstanceArray_test2_type() {
+      this.case1 = new InstanceArray_counter_type();
+      this.case2 = new InstanceArray_counter_type();
+   }
+   public InstanceArray_test2_type(InstanceArray_counter_type case1, InstanceArray_counter_type case2) {
+      this.case1 = case1;
+      this.case2 = case2;
+   }}private InstanceArray_counter_type InstanceArray_counter_type_alloc() {
+   InstanceArray_counter_type _ctx = new InstanceArray_counter_type();
+   _ctx.total = 0.0f;
+   return _ctx;
+}
+
+private InstanceArray_test1_type InstanceArray_test1_type_alloc() {
+   int i_0 = 0;
+   InstanceArray_counter_type[] temp_1 = new InstanceArray_counter_type[]{new InstanceArray_counter_type(),new InstanceArray_counter_type(),new InstanceArray_counter_type(),new InstanceArray_counter_type()};
+   InstanceArray_test1_type _ctx = new InstanceArray_test1_type();
+   while ((i_0 < 4)) {
+      {
+         temp_1[i_0] = InstanceArray_counter_type_alloc();
+         i_0 = (1 + i_0);
+      }
+   }
+   _ctx.instances = temp_1;
+   return _ctx;
+}
+
+private InstanceArray_test2_type InstanceArray_test2_type_alloc() {
+   InstanceArray_test2_type _ctx = new InstanceArray_test2_type();
+   _ctx.case1 = InstanceArray_counter_type_alloc();
+   _ctx.case2 = InstanceArray_counter_type_alloc();
+   return _ctx;
+}
+
+private float InstanceArray_counter(InstanceArray_counter_type _ctx) {
+   _ctx.total = (1.0f + _ctx.total);
+   return _ctx.total;
+}
+
+private float InstanceArray_test1(InstanceArray_test1_type _ctx) {
+   float sum = 0.0f;
+   int i__1 = 0;
+   while ((i__1 < 4)) {
+      {
+         sum = (sum + InstanceArray_counter(_ctx.instances[i__1]));
+         i__1 = (1 + i__1);
+      }
+   }
+   return sum;
+}
+
+private void InstanceArray_test2(InstanceArray_test2_type _ctx) {
+   InstanceArray_counter(_ctx.case1);
+   InstanceArray_counter(_ctx.case2);
+}
+
+
+}

@@ -16,14 +16,14 @@ this.Gates_gates_noteOn_type_alloc = function () {
    _ctx.Gates_gates_state_ret_6 = 0.0;
    _ctx.Gates_gates_state_ret_7 = 0.0;
    var i_0 = (0|0);
-   var temp = this.initializeArray((0|0), (8|0));
+   var temp_1 = this.initializeArray((0|0), (8|0));
    while ((i_0 < (8|0))) {
       {
-         temp[i_0] = (0|0);
+         temp_1[i_0] = (0|0);
          i_0 = ((1|0) + i_0);
       }
    }
-   _ctx.vel = temp;
+   _ctx.vel = temp_1;
    return _ctx;
 };
 

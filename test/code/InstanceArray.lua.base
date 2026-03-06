@@ -89,15 +89,15 @@ end
 
 function InstanceArray_test1_type_alloc()
    local i_0 = 0
-   local temp
+   local temp_1
    local _ctx = {};
    while (i_0 < 4) do
       do
-         temp[i_0 + 1] = InstanceArray_counter_type_alloc()
+         temp_1[i_0 + 1] = InstanceArray_counter_type_alloc()
          i_0 = (1 + i_0)
       end
    end
-   _ctx.instances = temp
+   _ctx.instances = temp_1
    return _ctx
 end
 

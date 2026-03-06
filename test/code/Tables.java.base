@@ -1,0 +1,266 @@
+
+package vult.com.tables;
+
+import java.util.Arrays;
+import java.util.Random;
+import vult.com.external.*;
+
+public class Tables {
+
+
+static int clip(int x, int minv, int maxv) {
+    if(x > maxv)
+        return maxv;
+    else if(x < minv)
+        return minv;
+    else return x;
+}
+
+static float clip(float x, float minv, float maxv) {
+    if(x > maxv)
+        return maxv;
+    else if(x < minv)
+        return minv;
+    else return x;
+}
+
+static int[] makeArray(int size, int init) {
+    int a[] = new int[size];
+    Arrays.fill(a, init);
+    return a;
+}
+
+static float[] makeArray(int size, float init) {
+    float a[] = new float[size];
+    Arrays.fill(a, init);
+    return a;
+}
+
+static boolean[] makeArray(int size, boolean init) {
+    boolean a[] = new boolean[size];
+    Arrays.fill(a, init);
+    return a;
+}
+
+static boolean not(boolean x) {
+    return !x;
+}
+
+static float int_to_float(int x) {
+    return (float)x;
+}
+
+static float bool_to_float(boolean x) {
+    return x ? 1.0f : 0.0f;
+}
+
+static int float_to_int(float x) {
+    return (int)x;
+}
+
+static short int16(int x) {
+    return (short)Math.max(-32768, Math.min(32767, x));
+}
+
+static short int16(float x) {
+    return (short)Math.max(-32768, Math.min(32767, (int)x));
+}
+
+static float floor(float x) {
+    return (float)Math.floor(x);
+}
+
+Random rand = new Random();
+
+float random() {
+    return rand.nextFloat();
+}
+
+int irandom() {
+    return rand.nextInt();
+}
+
+static float get(float[] a, int i) {
+    return a[i];
+}
+
+static void set(float[] a, int i, float val) {
+    a[i] = val;
+}
+
+static int get(int[] a, int i) {
+    return a[i];
+}
+
+static void set(int[] a, int i, int val) {
+    a[i] = val;
+}
+
+static float[] wrap_array(float x[]) {
+    return x;
+}
+
+static int[] wrap_array(int x[]) {
+    return x;
+}
+
+static float cosh(float x) {
+    return (float)Math.cosh(x);
+}
+
+static float cos(float x) {
+    return (float)Math.cos(x);
+}
+
+static float sin(float x) {
+    return (float)Math.sin(x);
+}
+
+static float sinh(float x) {
+    return (float)Math.sinh(x);
+}
+
+static float tan(float x) {
+    return (float)Math.tan(x);
+}
+
+static float tanh(float x) {
+    return (float)Math.tanh(x);
+}
+
+static float sqrt(float x) {
+    return (float)Math.sqrt(x);
+}
+
+static float pow(float x, float y) {
+    return (float)Math.pow(x, y);
+}
+
+static float exp(float x) {
+    return (float)Math.exp(x);
+}
+
+static float log(float x) {
+    return (float)Math.log(x);
+}
+
+static float log10(float x) {
+    return (float)Math.log10(x);
+}
+
+static float abs(float x) {
+    return Math.abs(x);
+}
+
+static int abs(int x) {
+    return Math.abs(x);
+}
+
+static float[] initializeArray(float v, int size) {
+    float[] a = new float[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static int[] initializeArray(int v, int size) {
+    int[] a = new int[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static boolean[] initializeArray(boolean v, int size) {
+    boolean[] a = new boolean[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static float eps() {
+    return 1e-18f;
+}
+
+static float pi() {
+    return 3.1415926535897932384f;
+}
+
+static int float_to_fix(float x) {
+    return (int)(x * 65536.0f);
+}
+
+static int fix_to_int(int x) {
+    return x >> 16;
+}
+
+static float fix_to_float(int x) {
+    return ((float)x) / 65536.0f;
+}
+
+
+public static final float[] Tables_sineTable1_c0 = new float[]{0.0f, -0.003686f, -0.017568f, -0.045669f, -0.088126f, -0.140184f, -0.191688f, -0.227146f, -0.226404f, -0.165918f, -0.020566f, 0.234109f, 0.619364f, 1.150608f, 1.834834f, 2.668345f, 3.634958f, 4.704899f, 5.834507f, 6.966885f, 8.03354f, 8.957025f, 9.654495f, 10.04208f, 10.039854f, 9.577187f, 8.598173f, 7.066837f, 4.971785f, 2.329978f, -0.810661f, -4.370077f};
+public static final float[] Tables_sineTable1_c1 = new float[]{6.303303f, 6.539734f, 6.985116f, 7.586249f, 8.26765f, 8.936459f, 9.488578f, 9.815677f, 9.812709f, 9.3855f, 8.45799f, 6.978712f, 4.926117f, 2.312411f, -0.814346f, -4.370077f, -8.236531f, -12.265124f, -16.282644f, -20.098617f, -23.514014f, -26.33091f, -28.362657f, -29.444064f, -29.441096f, -28.259579f, -25.852441f, -22.225076f, -17.438484f, -11.609939f, -4.911044f, 2.436849f};
+public static final float[] Tables_sineTable1_c2 = new float[]{-1.933228f, -5.72539f, -9.297528f, -12.512367f, -15.246364f, -17.394451f, -18.874079f, -19.628387f, -19.628387f, -18.874079f, -17.394451f, -15.246364f, -12.512367f, -9.297528f, -5.72539f, -1.933228f, 1.933227f, 5.725389f, 9.297527f, 12.512366f, 15.246363f, 17.39445f, 18.874078f, 19.628386f, 19.628386f, 18.874078f, 17.39445f, 15.246363f, 12.512366f, 9.297527f, 5.725389f, 1.933227f};
+private float Tables_sineTable1_raw_c0(int index) {
+   return Tables_sineTable1_c0[index];
+}
+
+private float Tables_sineTable1_raw_c1(int index) {
+   return Tables_sineTable1_c1[index];
+}
+
+private float Tables_sineTable1_raw_c2(int index) {
+   return Tables_sineTable1_c2[index];
+}
+
+private float Tables_sineTable1(float x) {
+   int index = clip(float_to_int((x * 31.0f)), 0, 31);
+   return (Tables_sineTable1_c0[index] + (x * (Tables_sineTable1_c1[index] + (Tables_sineTable1_c2[index] * x))));
+}
+
+public static final float[] Tables_sineTable2_c0 = new float[]{0.0f, 0.007497f, 0.036909f, 0.10096f, 0.209655f, 0.36942f, 0.582445f, 0.846282f, 1.153717f, 1.492937f, 1.847978f, 2.19946f, 2.525545f, 2.803098f, 3.008986f, 3.121445f, 3.121445f, 2.993992f, 2.729278f, 2.323624f, 1.780149f, 1.109138f, 0.328046f, -0.538847f, -1.461154f, -2.403429f, -3.326538f, -4.189267f, -4.950131f, -5.569288f, -6.010477f, -6.242891f};
+public static final float[] Tables_sineTable2_c1 = new float[]{6.24289f, 6.002979f, 5.532377f, 4.849169f, 3.97961f, 2.957117f, 1.820983f, 0.614871f, -0.614872f, -1.820984f, -2.957118f, -3.979611f, -4.84917f, -5.532378f, -6.00298f, -6.242891f, -6.242891f, -6.00298f, -5.532378f, -4.84917f, -3.979611f, -2.957118f, -1.820984f, -0.614872f, 0.614871f, 1.820983f, 2.957117f, 3.97961f, 4.849169f, 5.532377f, 6.002979f, 6.24289f};
+private float Tables_sineTable2_raw_c0(int index) {
+   return Tables_sineTable2_c0[index];
+}
+
+private float Tables_sineTable2_raw_c1(int index) {
+   return Tables_sineTable2_c1[index];
+}
+
+private float Tables_sineTable2(float x) {
+   int index = clip(float_to_int((x * 31.0f)), 0, 31);
+   return (Tables_sineTable2_c0[index] + (x * Tables_sineTable2_c1[index]));
+}
+
+public static final int[] Tables_sineTable3_c0 = new float[]{0x0 /* 0.000000 */, 0x3072 /* 0.189251 */, 0x5f25 /* 0.371662 */, 0x8a67 /* 0.540641 */, 0xb0a9 /* 0.690079 */, 0xd088 /* 0.814576 */, 0xe8dd /* 0.909632 */, 0xf8c8 /* 0.971812 */, 0xffb5 /* 0.998867 */, 0xfd64 /* 0.989821 */, 0xf1eb /* 0.945001 */, 0xddb3 /* 0.866025 */, 0xc178 /* 0.755750 */, 0x9e3f /* 0.618159 */, 0x754e /* 0.458227 */, 0x481f /* 0.281733 */, 0x1855 /* 0.095056 */, -0x1855 /* -0.095056 */, -0x481f /* -0.281733 */, -0x754e /* -0.458227 */, -0x9e3f /* -0.618159 */, -0xc178 /* -0.755750 */, -0xddb3 /* -0.866025 */, -0xf1eb /* -0.945001 */, -0xfd64 /* -0.989821 */, -0xffb5 /* -0.998867 */, -0xf8c8 /* -0.971812 */, -0xe8dd /* -0.909632 */, -0xd088 /* -0.814576 */, -0xb0a9 /* -0.690079 */, -0x8a67 /* -0.540641 */, -0x5f25 /* -0.371662 */, -0x3072 /* -0.189251 */, -0x0 /* -0.000000 */};
+public static final int[] Tables_sineTable3_c1 = new float[]{0x3072 /* 0.189251 */, 0x2eb2 /* 0.182411 */, 0x2b42 /* 0.168978 */, 0x2641 /* 0.149438 */, 0x1fdf /* 0.124497 */, 0x1855 /* 0.095056 */, 0xfeb /* 0.062180 */, 0x6ed /* 0.027056 */, -0x250 /* -0.009046 */, -0xb79 /* -0.044821 */, -0x1437 /* -0.078975 */, -0x1c3b /* -0.110276 */, -0x2339 /* -0.137591 */, -0x28f1 /* -0.159932 */, -0x2d2e /* -0.176494 */, -0x2fca /* -0.186677 */, -0x30ab /* -0.190112 */, -0x2fca /* -0.186677 */, -0x2d2e /* -0.176494 */, -0x28f1 /* -0.159932 */, -0x2339 /* -0.137591 */, -0x1c3b /* -0.110276 */, -0x1437 /* -0.078975 */, -0xb79 /* -0.044821 */, -0x250 /* -0.009046 */, 0x6ed /* 0.027056 */, 0xfeb /* 0.062180 */, 0x1855 /* 0.095056 */, 0x1fdf /* 0.124497 */, 0x2641 /* 0.149438 */, 0x2b42 /* 0.168978 */, 0x2eb2 /* 0.182411 */, 0x3072 /* 0.189251 */, 0x0 /* 0.000000 */};
+private int Tables_sineTable3_raw_c0(int index) {
+   return Tables_sineTable3_c0[index];
+}
+
+private int Tables_sineTable3_raw_c1(int index) {
+   return Tables_sineTable3_c1[index];
+}
+
+private int Tables_sineTable3(int x) {
+   int value = clip((x * 0x200000 /* 32.000000 */), 0x0 /* 0.000000 */, 0x200000 /* 32.000000 */);
+   int index = (int)(value);
+   int decimal = (value - floor(value));
+   return (Tables_sineTable3_c0[index] + (Tables_sineTable3_c1[index] * decimal));
+}
+
+public static final int[] Tables_power2_table = new float[]{0x1000 /* 0.062500 */, 0x2000 /* 0.125000 */, 0x4000 /* 0.250000 */, 0x8000 /* 0.500000 */, 0x10000 /* 1.000000 */, 0x20000 /* 2.000000 */, 0x40000 /* 4.000000 */, 0x80000 /* 8.000000 */, 0x100000 /* 16.000000 */};
+private int Tables_power2(int x) {
+   return Tables_power2_table[(int_clip(x, -4, 4) + 4)];
+}
+
+public static final int[] Tables_square_table = new float[]{16, 9, 4, 1, 0, 1, 4, 9, 16};
+private int Tables_square(int x) {
+   return Tables_square_table[(int_clip(x, -4, 4) + 4)];
+}
+
+public static final short[] Tables_square16_table = new float[]{16, 9, 4, 1, 0, 1, 4, 9, 16};
+private short Tables_square16(short x) {
+   return Tables_square16_table[(int_clip(x, -4, 4) + 4)];
+}
+
+
+}

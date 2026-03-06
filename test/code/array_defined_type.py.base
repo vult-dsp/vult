@@ -43,13 +43,13 @@ def Array_defined_type_dot_alloc():
 
 def Array_defined_type_foo_type_alloc():
    i_0 = 0
-   temp = None
+   temp_1 = None
    _ctx = Array_defined_type_foo_type()
    while (i_0 < 12):
-      temp[i_0] = Array_defined_type_dot_alloc()
+      temp_1[i_0] = Array_defined_type_dot_alloc()
       i_0 = (1 + i_0)
 
-   _ctx.p1 = temp
+   _ctx.p1 = temp_1
    return _ctx
 
 

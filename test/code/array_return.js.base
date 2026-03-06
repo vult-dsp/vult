@@ -21,14 +21,14 @@ this.Array_return_foo5_type_alloc = function () {
    var _ctx = {};
    _ctx.Array_return_foo5_ret_0 = (0|0);
    var i_0 = (0|0);
-   var temp = this.initializeArray((0|0), (3|0));
+   var temp_1 = this.initializeArray((0|0), (3|0));
    while ((i_0 < (3|0))) {
       {
-         temp[i_0] = (0|0);
+         temp_1[i_0] = (0|0);
          i_0 = ((1|0) + i_0);
       }
    }
-   _ctx.Array_return_foo5_ret_1 = temp;
+   _ctx.Array_return_foo5_ret_1 = temp_1;
    return _ctx;
 };
 
@@ -36,14 +36,14 @@ this.Array_return_foo6_type_alloc = function () {
    var _ctx = {};
    _ctx.Array_return_foo6_ret_0 = (0|0);
    var i_0 = (0|0);
-   var temp = this.initializeArray((0|0), (3|0));
+   var temp_1 = this.initializeArray((0|0), (3|0));
    while ((i_0 < (3|0))) {
       {
-         temp[i_0] = (0|0);
+         temp_1[i_0] = (0|0);
          i_0 = ((1|0) + i_0);
       }
    }
-   _ctx.Array_return_foo6_ret_1 = temp;
+   _ctx.Array_return_foo6_ret_1 = temp_1;
    return _ctx;
 };
 

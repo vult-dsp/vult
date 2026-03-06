@@ -4,6 +4,7 @@
  (name util)
  (public_name vult.util)
  (modules
+  Binarize
   Components
   Error
   FileIO

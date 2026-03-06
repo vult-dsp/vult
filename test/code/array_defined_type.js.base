@@ -14,15 +14,15 @@ this.Array_defined_type_dot_alloc = function () {
 
 this.Array_defined_type_foo_type_alloc = function () {
    var i_0 = (0|0);
-   var temp;
+   var temp_1;
    var _ctx = {};
    while ((i_0 < (12|0))) {
       {
-         temp[i_0] = this.Array_defined_type_dot_alloc();
+         temp_1[i_0] = this.Array_defined_type_dot_alloc();
          i_0 = ((1|0) + i_0);
       }
    }
-   _ctx.p1 = temp;
+   _ctx.p1 = temp_1;
    return _ctx;
 };
 

@@ -75,7 +75,9 @@ type args =
   ; mutable split: bool
   ; mutable test_mode: bool
   ; mutable dump_sexpr: bool
-  ; mutable render: string option }
+  ; mutable render: string option
+  ; mutable java_bin_tables: bool
+  ; mutable java_prefix: string option }
 
 let default_arguments : args =
   { files= []
@@ -109,7 +111,9 @@ let default_arguments : args =
   ; split= false
   ; test_mode= false
   ; dump_sexpr= false
-  ; render= None }
+  ; render= None
+  ; java_bin_tables= false
+  ; java_prefix= None }
 
 type flags = {flag: string; action: Arg.spec; comment: string}
 
@@ -229,7 +233,13 @@ let flags result =
   ; {flag= "-profile"; action= Arg.Unit (fun () -> result.profile <- true); comment= ""}
   ; { flag= "-dump-sexpr"
     ; action= Arg.Unit (fun () -> result.dump_sexpr <- true)
-    ; comment= " Dump the parsed syntax tree as S-expressions for debugging (default: off)" } ]
+    ; comment= " Dump the parsed syntax tree as S-expressions for debugging (default: off)" }
+  ; { flag= "-java-bin-tables"
+    ; action= Arg.Unit (fun () -> result.java_bin_tables <- true)
+    ; comment= " Write large array constants as binary .table files for Java (default: off)" }
+  ; { flag= "-java-prefix"
+    ; action= Arg.String (fun prefix -> result.java_prefix <- Some prefix)
+    ; comment= "prefix Sets the Java package prefix and adds an external import (e.g., vult.com)" } ]
 
 (** Returns a 'arguments' type containing the options passed in the command line *)
 let processArguments () : args =

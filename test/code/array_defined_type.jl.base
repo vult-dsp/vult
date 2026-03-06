@@ -38,15 +38,15 @@ end
 
 function Array_defined_type_foo_type_alloc()
    i_0 = Int32(0)
-   temp = nothing
+   temp_1 = nothing
    _ctx = Array_defined_type_foo_type()
    while (i_0 < Int32(12))
       begin
-         @inbounds temp[i_0 + 1] = Array_defined_type_dot_alloc()
+         @inbounds temp_1[i_0 + 1] = Array_defined_type_dot_alloc()
          i_0 = (Int32(1) + i_0)
       end
    end
-   _ctx.p1 = temp
+   _ctx.p1 = temp_1
    return _ctx
 end
 

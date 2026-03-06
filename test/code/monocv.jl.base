@@ -111,14 +111,14 @@ function Monocv_mono_noteOn_type_alloc()
    _ctx = Monocv_mono_noteOn_type()
    _ctx.count = Int32(0)
    i_0 = Int32(0)
-   temp = fill(Int32(0), Int32(4))
+   temp_1 = fill(Int32(0), Int32(4))
    while (i_0 < Int32(4))
       begin
-         @inbounds temp[i_0 + 1] = Int32(0)
+         @inbounds temp_1[i_0 + 1] = Int32(0)
          i_0 = (Int32(1) + i_0)
       end
    end
-   _ctx.notes = temp
+   _ctx.notes = temp_1
    _ctx.pre = Int32(0)
    return _ctx
 end

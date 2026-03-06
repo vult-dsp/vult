@@ -520,7 +520,7 @@ module CliTest = struct
     | "wl" ->
         ("-code wl", [(".wl", ".wl.base")])
     | "java" ->
-        ("-code java -prefix vult.com", [(".java", ".java.base")])
+        ("-code java -java-prefix vult.com", [(".java", ".java.base")])
     | _ ->
         failwith "Unknown target to run test"
 
@@ -579,7 +579,7 @@ module CliTest = struct
       | "python" ->
           ({args with code= PythonCode}, [(".py", ".py.base")])
       | "java" ->
-          ({args with code= JavaCode; prefix= Some "vult.com"}, [(".java", ".java.base")])
+          ({args with code= JavaCode; java_prefix= Some "vult.com"}, [(".java", ".java.base")])
       | _ ->
           failwith "Unknown target to run test"
     in
@@ -640,7 +640,7 @@ module Templates = struct
           ( {args with template= Some template; code= CppCode}
           , [(".cpp", ".cpp.float.base." ^ template); (".h", ".h.float.base." ^ template)] )
       | "java" ->
-          ( {args with template= Some template; code= JavaCode; prefix= Some "vult.com"}
+          ( {args with template= Some template; code= JavaCode; java_prefix= Some "vult.com"}
           , [(".java", ".java.base." ^ template)] )
       | "js" ->
           ({args with template= Some template; code= JSCode}, [(".js", ".js.base." ^ template)])
@@ -854,6 +854,7 @@ let suite =
        ; CliTest.get all_files Native "js"
        ; CliTest.get all_files Native "julia"
        ; CliTest.get all_files Native "python"
+       ; CliTest.get all_files Native "java"
        ; CliTest.get all_files Node "float"
        ; CliTest.get all_files Node "fixed"
        ; CliTest.get all_files Node "lua"

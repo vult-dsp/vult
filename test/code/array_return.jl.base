@@ -75,14 +75,14 @@ function Array_return_foo5_type_alloc()
    _ctx = Array_return_foo5_type()
    _ctx.Array_return_foo5_ret_0 = Int32(0)
    i_0 = Int32(0)
-   temp = fill(Int32(0), Int32(3))
+   temp_1 = fill(Int32(0), Int32(3))
    while (i_0 < Int32(3))
       begin
-         @inbounds temp[i_0 + 1] = Int32(0)
+         @inbounds temp_1[i_0 + 1] = Int32(0)
          i_0 = (Int32(1) + i_0)
       end
    end
-   _ctx.Array_return_foo5_ret_1 = temp
+   _ctx.Array_return_foo5_ret_1 = temp_1
    return _ctx
 end
 
@@ -90,14 +90,14 @@ function Array_return_foo6_type_alloc()
    _ctx = Array_return_foo6_type()
    _ctx.Array_return_foo6_ret_0 = Int32(0)
    i_0 = Int32(0)
-   temp = fill(Int32(0), Int32(3))
+   temp_1 = fill(Int32(0), Int32(3))
    while (i_0 < Int32(3))
       begin
-         @inbounds temp[i_0 + 1] = Int32(0)
+         @inbounds temp_1[i_0 + 1] = Int32(0)
          i_0 = (Int32(1) + i_0)
       end
    end
-   _ctx.Array_return_foo6_ret_1 = temp
+   _ctx.Array_return_foo6_ret_1 = temp_1
    return _ctx
 end
 

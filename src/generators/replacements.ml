@@ -241,6 +241,81 @@ module Cpp = struct
         None
 end
 
+module Java = struct
+  let keywords =
+    [ "abstract"
+    ; "assert"
+    ; "boolean"
+    ; "byte"
+    ; "case"
+    ; "catch"
+    ; "char"
+    ; "class"
+    ; "const"
+    ; "continue"
+    ; "default"
+    ; "do"
+    ; "double"
+    ; "else"
+    ; "enum"
+    ; "extends"
+    ; "final"
+    ; "finally"
+    ; "float"
+    ; "for"
+    ; "goto"
+    ; "if"
+    ; "implements"
+    ; "import"
+    ; "instanceof"
+    ; "interface"
+    ; "long"
+    ; "native"
+    ; "new"
+    ; "package"
+    ; "private"
+    ; "protected"
+    ; "public"
+    ; "return"
+    ; "short"
+    ; "static"
+    ; "strictfp"
+    ; "super"
+    ; "switch"
+    ; "synchronized"
+    ; "this"
+    ; "throw"
+    ; "throws"
+    ; "transient"
+    ; "try"
+    ; "void"
+    ; "volatile"
+    ; "while" ]
+    |> Util.Maps.Set.of_list
+
+  let fun_to_fun (path : string) (args : type_ list) (ret : type_) =
+    let args = CCList.map (fun (t : type_) -> t.t) args in
+    match (path, args, (getReturnType ret).t) with
+    | "samplerate", [], TReal ->
+        Some "External.samplerate"
+    | "fix16", [TFix16], _ ->
+        Some "fix_to_fix"
+    | "fix16", [TReal], _ ->
+        Some "float_to_fix"
+    | "fix16", [TInt], _ ->
+        Some "int_to_fix"
+    | "fix16", [TInt16], _ ->
+        Some "int16_to_fix"
+    | "fix16", [TBool], _ ->
+        Some "bool_to_fix"
+    | "real", [TBool], TReal ->
+        Some "bool_to_float"
+    | _ ->
+        None
+
+  let op_to_fun (_op : Core.Prog.operator) (_e1 : type_) (_e2 : type_) (_ret : type_) = None
+end
+
 module Lua = struct
   let keywords =
     ["and"; "break"; "do"; "elseif"; "end"; "for"; "function"; "in"; "local"; "nil"; "or"; "repeat"; "return"; "until"]
@@ -542,6 +617,8 @@ let fun_to_fun (lang : Util.Args.code) (path : string) (args : type_ list) (ret 
   match lang with
   | CppCode ->
       Cpp.fun_to_fun path args ret
+  | JavaCode ->
+      Java.fun_to_fun path args ret
   | LuaCode ->
       Lua.fun_to_fun path args ret
   | JSCode ->
@@ -557,6 +634,8 @@ let op_to_fun (lang : Util.Args.code) (op : Core.Prog.operator) (e1 : type_) (e2
   match lang with
   | CppCode ->
       Cpp.op_to_fun op e1 e2 ret
+  | JavaCode ->
+      Java.op_to_fun op e1 e2 ret
   | LuaCode ->
       Lua.op_to_fun op e1 e2 ret
   | JSCode ->
@@ -572,6 +651,8 @@ let keyword (lang : Util.Args.code) id =
   match lang with
   | CppCode ->
       if Util.Maps.Set.mem id Cpp.keywords then id ^ "_" else id
+  | JavaCode ->
+      if Util.Maps.Set.mem id Java.keywords then id ^ "_" else id
   | LuaCode ->
       if Util.Maps.Set.mem id Lua.keywords then id ^ "_" else id
   | JSCode ->

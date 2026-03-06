@@ -13,15 +13,15 @@ this.Array_instance_counter_type_alloc = function () {
 
 this.Array_instance_foo_type_alloc = function () {
    var i_0 = (0|0);
-   var temp;
+   var temp_1;
    var _ctx = {};
    while ((i_0 < (2|0))) {
       {
-         temp[i_0] = this.Array_instance_counter_type_alloc();
+         temp_1[i_0] = this.Array_instance_counter_type_alloc();
          i_0 = ((1|0) + i_0);
       }
    }
-   _ctx.x = temp;
+   _ctx.x = temp_1;
    return _ctx;
 };
 

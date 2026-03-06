@@ -127,23 +127,23 @@ function Polycv_poly_noteOn_type_alloc()
    _ctx.Polycv_polyState_ret_8 = 0.0
    _ctx.Polycv_polyState_ret_9 = 0.0
    local i_0 = 0
-   local temp = initializeArray(0, 4)
+   local temp_1 = initializeArray(0, 4)
    while (i_0 < 4) do
       do
-         temp[i_0 + 1] = 0
+         temp_1[i_0 + 1] = 0
          i_0 = (1 + i_0)
       end
    end
-   _ctx.notes = temp
-   local i_1 = 0
-   local temp = initializeArray(0, 4)
-   while (i_1 < 4) do
+   _ctx.notes = temp_1
+   local i_2 = 0
+   local temp_3 = initializeArray(0, 4)
+   while (i_2 < 4) do
       do
-         temp[i_1 + 1] = 0
-         i_1 = (1 + i_1)
+         temp_3[i_2 + 1] = 0
+         i_2 = (1 + i_2)
       end
    end
-   _ctx.vel = temp
+   _ctx.vel = temp_3
    return _ctx
 end
 

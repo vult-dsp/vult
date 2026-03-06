@@ -137,23 +137,23 @@ function Polycv_poly_noteOn_type_alloc()
    _ctx.Polycv_polyState_ret_8 = Float32(0.0)
    _ctx.Polycv_polyState_ret_9 = Float32(0.0)
    i_0 = Int32(0)
-   temp = fill(Int32(0), Int32(4))
+   temp_1 = fill(Int32(0), Int32(4))
    while (i_0 < Int32(4))
       begin
-         @inbounds temp[i_0 + 1] = Int32(0)
+         @inbounds temp_1[i_0 + 1] = Int32(0)
          i_0 = (Int32(1) + i_0)
       end
    end
-   _ctx.notes = temp
-   i_1 = Int32(0)
-   temp = fill(Int32(0), Int32(4))
-   while (i_1 < Int32(4))
+   _ctx.notes = temp_1
+   i_2 = Int32(0)
+   temp_3 = fill(Int32(0), Int32(4))
+   while (i_2 < Int32(4))
       begin
-         @inbounds temp[i_1 + 1] = Int32(0)
-         i_1 = (Int32(1) + i_1)
+         @inbounds temp_3[i_2 + 1] = Int32(0)
+         i_2 = (Int32(1) + i_2)
       end
    end
-   _ctx.vel = temp
+   _ctx.vel = temp_3
    return _ctx
 end
 

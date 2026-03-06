@@ -222,8 +222,9 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) (init_value : exp op
       let index = {e= EId i; t= int_t; loc} in
       let one = {e= EInt 1; t= int_t; loc} in
       let cond = {e= EOp (OpLt, index, {e= EInt size; t= int_t; loc}); t; loc} in
-      let rhs_temp = {e= EId "temp"; t; loc} in
-      let lhs_temp = {l= LId "temp"; t; loc} in
+      let temp = "temp_" ^ string_of_int (getTick ()) in
+      let rhs_temp = {e= EId temp; t; loc} in
+      let lhs_temp = {l= LId temp; t; loc} in
       let bind =
         let lhs = {l= LIndex {e= lhs_temp; index}; t= subt; loc} in
         let rhs = {e= EIndex {e= rhs_temp; index}; t= subt; loc} in
@@ -234,7 +235,7 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) (init_value : exp op
       let body = {s= StmtBlock [bind; incr]; loc} in
       let loop = {s= StmtWhile (cond, body); loc} in
       let decl = {s= StmtDecl ({d= DId (i, None); t= int_t; loc}, None); loc} in
-      let decl_array = {s= StmtDecl ({d= DId ("temp", None); t; loc}, None); loc} in
+      let decl_array = {s= StmtDecl ({d= DId (temp, None); t; loc}, None); loc} in
       let init = {s= StmtBind ({l= LId i; t= int_t; loc}, {e= EInt 0; t= int_t; loc}); loc} in
       let transfer = {s= StmtBind (lhs, rhs_temp); loc} in
       {s= StmtBlock [decl_array; decl; init; loop; transfer]; loc}

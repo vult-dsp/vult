@@ -1,0 +1,259 @@
+
+package vult.com.datatypes;
+
+import java.util.Arrays;
+import java.util.Random;
+import vult.com.external.*;
+
+public class DataTypes {
+
+
+static int clip(int x, int minv, int maxv) {
+    if(x > maxv)
+        return maxv;
+    else if(x < minv)
+        return minv;
+    else return x;
+}
+
+static float clip(float x, float minv, float maxv) {
+    if(x > maxv)
+        return maxv;
+    else if(x < minv)
+        return minv;
+    else return x;
+}
+
+static int[] makeArray(int size, int init) {
+    int a[] = new int[size];
+    Arrays.fill(a, init);
+    return a;
+}
+
+static float[] makeArray(int size, float init) {
+    float a[] = new float[size];
+    Arrays.fill(a, init);
+    return a;
+}
+
+static boolean[] makeArray(int size, boolean init) {
+    boolean a[] = new boolean[size];
+    Arrays.fill(a, init);
+    return a;
+}
+
+static boolean not(boolean x) {
+    return !x;
+}
+
+static float int_to_float(int x) {
+    return (float)x;
+}
+
+static float bool_to_float(boolean x) {
+    return x ? 1.0f : 0.0f;
+}
+
+static int float_to_int(float x) {
+    return (int)x;
+}
+
+static short int16(int x) {
+    return (short)Math.max(-32768, Math.min(32767, x));
+}
+
+static short int16(float x) {
+    return (short)Math.max(-32768, Math.min(32767, (int)x));
+}
+
+static float floor(float x) {
+    return (float)Math.floor(x);
+}
+
+Random rand = new Random();
+
+float random() {
+    return rand.nextFloat();
+}
+
+int irandom() {
+    return rand.nextInt();
+}
+
+static float get(float[] a, int i) {
+    return a[i];
+}
+
+static void set(float[] a, int i, float val) {
+    a[i] = val;
+}
+
+static int get(int[] a, int i) {
+    return a[i];
+}
+
+static void set(int[] a, int i, int val) {
+    a[i] = val;
+}
+
+static float[] wrap_array(float x[]) {
+    return x;
+}
+
+static int[] wrap_array(int x[]) {
+    return x;
+}
+
+static float cosh(float x) {
+    return (float)Math.cosh(x);
+}
+
+static float cos(float x) {
+    return (float)Math.cos(x);
+}
+
+static float sin(float x) {
+    return (float)Math.sin(x);
+}
+
+static float sinh(float x) {
+    return (float)Math.sinh(x);
+}
+
+static float tan(float x) {
+    return (float)Math.tan(x);
+}
+
+static float tanh(float x) {
+    return (float)Math.tanh(x);
+}
+
+static float sqrt(float x) {
+    return (float)Math.sqrt(x);
+}
+
+static float pow(float x, float y) {
+    return (float)Math.pow(x, y);
+}
+
+static float exp(float x) {
+    return (float)Math.exp(x);
+}
+
+static float log(float x) {
+    return (float)Math.log(x);
+}
+
+static float log10(float x) {
+    return (float)Math.log10(x);
+}
+
+static float abs(float x) {
+    return Math.abs(x);
+}
+
+static int abs(int x) {
+    return Math.abs(x);
+}
+
+static float[] initializeArray(float v, int size) {
+    float[] a = new float[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static int[] initializeArray(int v, int size) {
+    int[] a = new int[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static boolean[] initializeArray(boolean v, int size) {
+    boolean[] a = new boolean[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static float eps() {
+    return 1e-18f;
+}
+
+static float pi() {
+    return 3.1415926535897932384f;
+}
+
+static int float_to_fix(float x) {
+    return (int)(x * 65536.0f);
+}
+
+static int fix_to_int(int x) {
+    return x >> 16;
+}
+
+static float fix_to_float(int x) {
+    return ((float)x) / 65536.0f;
+}
+
+
+public static class DataTypes_point {
+   public float x;
+   public float y;
+
+   public DataTypes_point() {
+      this.x = 0.0f;
+      this.y = 0.0f;
+   }
+   public DataTypes_point(float x, float y) {
+      this.x = x;
+      this.y = y;
+   }}public static class DataTypes_test2_type {
+   public DataTypes_point p2;
+   public DataTypes_point result;
+
+   public DataTypes_test2_type() {
+      this.p2 = new DataTypes_point();
+      this.result = new DataTypes_point();
+   }
+   public DataTypes_test2_type(DataTypes_point p2, DataTypes_point result) {
+      this.p2 = p2;
+      this.result = result;
+   }}private DataTypes_point DataTypes_point_alloc() {
+   DataTypes_point _ctx = new DataTypes_point();
+   _ctx.x = 0.0f;
+   _ctx.y = 0.0f;
+   return _ctx;
+}
+
+private DataTypes_test2_type DataTypes_test2_type_alloc() {
+   DataTypes_test2_type _ctx = new DataTypes_test2_type();
+   _ctx.p2 = DataTypes_point_alloc();
+   _ctx.result = DataTypes_point_alloc();
+   return _ctx;
+}
+
+private DataTypes_point DataTypes_addPoint1(DataTypes_point p1, DataTypes_point p2) {
+   DataTypes_point p3 = new DataTypes_point();
+   p3.x = (p1.x + p2.x);
+   p3.y = (p1.y + p2.y);
+   return p3;
+}
+
+private void DataTypes_addPoint2(DataTypes_point p1, DataTypes_point p2, DataTypes_point result) {
+   result.x = (p1.x + p2.x);
+   result.y = (p1.y + p2.y);
+}
+
+private void DataTypes_test1() {
+   DataTypes_point p1 = new DataTypes_point();
+   DataTypes_point p2 = new DataTypes_point();
+   DataTypes_point result = DataTypes_addPoint1(p1, p2);
+   DataTypes_addPoint2(p1, p2, result);
+}
+
+private void DataTypes_test2(DataTypes_test2_type _ctx) {
+   DataTypes_point p1 = new DataTypes_point();
+   _ctx.result = DataTypes_addPoint1(p1, _ctx.p2);
+}
+
+
+}
