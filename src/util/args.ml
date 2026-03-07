@@ -77,7 +77,8 @@ type args =
   ; mutable dump_sexpr: bool
   ; mutable render: string option
   ; mutable java_bin_tables: bool
-  ; mutable java_prefix: string option }
+  ; mutable java_prefix: string option
+  ; mutable use_bytecode: bool }
 
 let default_arguments : args =
   { files= []
@@ -113,7 +114,8 @@ let default_arguments : args =
   ; dump_sexpr= false
   ; render= None
   ; java_bin_tables= false
-  ; java_prefix= None }
+  ; java_prefix= None
+  ; use_bytecode= false }
 
 type flags = {flag: string; action: Arg.spec; comment: string}
 
@@ -237,6 +239,9 @@ let flags result =
   ; { flag= "-java-bin-tables"
     ; action= Arg.Unit (fun () -> result.java_bin_tables <- true)
     ; comment= " Write large array constants as binary .table files for Java (default: off)" }
+  ; { flag= "-use-bytecode"
+    ; action= Arg.Unit (fun () -> result.use_bytecode <- true)
+    ; comment= " Use bytecode VM for -eval and -render instead of interpreter (default: off)" }
   ; { flag= "-java-prefix"
     ; action= Arg.String (fun prefix -> result.java_prefix <- Some prefix)
     ; comment= "prefix Sets the Java package prefix and adds an external import (e.g., vult.com)" } ]

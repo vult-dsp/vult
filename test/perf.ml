@@ -178,6 +178,8 @@ let generatePython (filename : string) (output : string) : unit =
 
 let realString f = match f with Fixed -> "fixed" | Float -> "float"
 
+[@@@warning "-32"]
+
 let runC real_type vultfile =
   try
     let output = Filename.chop_extension (Filename.basename vultfile) in
@@ -259,8 +261,6 @@ let runPython vultfile =
     Sys.chdir init_dir
   with e -> showError e
 
-[@@@warning "-32"]
-
 let runJava vultfile =
   try
     let output = Filename.chop_extension (Filename.basename vultfile) in
@@ -320,6 +320,33 @@ let runInterpreter vultfile =
     let error_strings = Util.Error.reportErrors errors in
     prerr_endline error_strings ; exit 1
 
+let runBytecode vultfile =
+  try
+    let module_name = Pparser.Parse.moduleName vultfile in
+    let args =
+      { default_arguments with
+        files=
+          [Code ("Perf.vult", "fun main() { iter(i, 5 * 44100) { " ^ module_name ^ ".process(0.0); } }"); File vultfile]
+      ; eval= Some "Perf.main"
+      ; use_bytecode= true
+      ; includes }
+    in
+    let parsed, _ = Driver.Loader.loadFiles args args.files in
+    let env, stmts = Core.Typechecking.typecheck_and_elaborate args parsed in
+    let env, stmts = Core.Toprog.convert args env stmts in
+    let stmts = Core.Passes.run args stmts in
+    let bc_prog = Vm.Compiler.compile stmts in
+    let t1 = Sys.time () in
+    let _result = Vm.Exec.evaluateMainExpression args env bc_prog "Perf.main()" in
+    let t2 = Sys.time () in
+    print_endline (Printf.sprintf "%s\tBytecode\t%f ms/s" module_name ((t2 -. t1) /. 5.0 *. 1000.0))
+  with
+  | Util.Error.Errors errors ->
+      let error_strings = Util.Error.reportErrors errors in
+      prerr_endline error_strings ; exit 1
+  | Vm.Exec.VM_error msg ->
+      prerr_endline (Printf.sprintf "Bytecode VM error in %s: %s" vultfile msg)
+
 let main () =
   CCList.iter
     (fun f ->
@@ -332,7 +359,8 @@ let main () =
       runJulia f ;
       runPython f ;
       runJava f ;
-      runInterpreter f )
+      runInterpreter f ;
+      runBytecode f )
     files
 ;;
 

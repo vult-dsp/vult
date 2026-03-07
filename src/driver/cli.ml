@@ -93,26 +93,61 @@ let compileCode (args : args) env stmts : Prog.top_stmt list * Interpreter.iprog
   let prog = Util.Profile.time "Passes" (fun () -> Passes.run args stmts) in
   let iprog = Util.Profile.time "Compile" (fun () -> Interpreter.transformProgram prog) in
   let prog_out = if args.dprog then [Prog (Pla.print (Prog.Print.print_prog prog))] else [] in
+  let bytecode_out =
+    if args.dbytecode || args.use_bytecode then
+      let bc_prog = Util.Profile.time "Bytecode Compile" (fun () -> Vm.Compiler.compile prog) in
+      let dump_out = if args.dbytecode then [Prog (Vm.Bytecode.dump bc_prog)] else [] in
+      let bc_run =
+        if args.use_bytecode then
+          match args.eval with
+          | Some fn ->
+              let result =
+                Util.Profile.time "Bytecode Eval" (fun () -> Vm.Exec.evaluateMainExpression args env bc_prog fn)
+              in
+              [EvalResult (Vm.Bytecode.printValue result)]
+          | None ->
+              []
+        else []
+      in
+      let bc_render =
+        if args.use_bytecode then
+          match args.render with
+          | Some tag ->
+              let filename, duration =
+                Util.Profile.time "Bytecode Render" (fun () -> Vm.Exec.renderAudioExpression args env bc_prog tag)
+              in
+              [AudioRendered (Printf.sprintf "Audio rendered to: %s (%.3fs)" filename duration)]
+          | None ->
+              []
+        else []
+      in
+      dump_out @ bc_run @ bc_render
+    else []
+  in
   let run =
-    match args.eval with
-    | Some fn ->
-        let result = Util.Profile.time "Eval" (fun () -> Interpreter.evaluateMainExpression args env iprog fn) in
-        let str = Interpreter.printDvalue result in
-        [EvalResult str]
-    | None ->
-        []
+    if args.use_bytecode then []
+    else
+      match args.eval with
+      | Some fn ->
+          let result = Util.Profile.time "Eval" (fun () -> Interpreter.evaluateMainExpression args env iprog fn) in
+          let str = Interpreter.printDvalue result in
+          [EvalResult str]
+      | None ->
+          []
   in
   let render_out =
-    match args.render with
-    | Some tag ->
-        let filename, duration =
-          Util.Profile.time "Render" (fun () -> Interpreter.renderAudioExpression args env iprog tag)
-        in
-        [AudioRendered (Printf.sprintf "Audio rendered to: %s (%.3fs)" filename duration)]
-    | None ->
-        []
+    if args.use_bytecode then []
+    else
+      match args.render with
+      | Some tag ->
+          let filename, duration =
+            Util.Profile.time "Render" (fun () -> Interpreter.renderAudioExpression args env iprog tag)
+          in
+          [AudioRendered (Printf.sprintf "Audio rendered to: %s (%.3fs)" filename duration)]
+      | None ->
+          []
   in
-  (prog, iprog, run @ prog_out @ render_out)
+  (prog, iprog, run @ render_out @ prog_out @ bytecode_out)
 
 let version = String.sub Version.version 1 (String.length Version.version - 2)
 

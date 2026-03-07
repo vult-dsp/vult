@@ -1,10 +1,11 @@
 (library
- (name driver)
- (modules Loader Cli)
- (libraries generators util pparser core vm pla)
+ (name vm)
+ (modules Bytecode Compiler Exec)
+ (libraries core util pparser pla)
+ (flags
+  (:standard -w -30))
  (preprocess
   (pps pla.ppx))
- (flags -w -30)
  (ocamlopt_flags -O3 -unbox-closures)
  (instrumentation
   (backend bisect_ppx)))
