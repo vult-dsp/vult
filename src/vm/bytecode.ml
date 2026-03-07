@@ -140,6 +140,12 @@ type instruction =
   | MakeRecord of int * int
   (* External calls *)
   | CallExternal of string * int
+  (* Fused member access opcodes *)
+  | LoadLocalMember of int * int
+  | StoreLocalMember of int * int
+  (* Fused dup+store opcodes *)
+  | DupStoreLocal of int
+  | DupStoreLocalMember of int * int
 
 (* Compiled function *)
 type bc_func = {name: string; entry_pc: int; n_args: int; n_locals: int}
@@ -252,6 +258,14 @@ let op_unpack_tuple = 49
 let op_make_record = 50
 
 let op_call_external = 51
+
+let op_load_local_member = 52
+
+let op_store_local_member = 53
+
+let op_dup_store_local = 54
+
+let op_dup_store_local_member = 55
 
 (* Encode binop_tag to int *)
 let encodeBinopTag (tag : binop_tag) : int =
@@ -467,6 +481,14 @@ let encodeInstruction (instr : instruction) (acc : int list) : int list =
   | CallExternal (name, nargs) ->
       (* Encode external name as hash for dispatch *)
       nargs :: Hashtbl.hash name :: op_call_external :: acc
+  | LoadLocalMember (local_idx, member_idx) ->
+      member_idx :: local_idx :: op_load_local_member :: acc
+  | StoreLocalMember (local_idx, member_idx) ->
+      member_idx :: local_idx :: op_store_local_member :: acc
+  | DupStoreLocal idx ->
+      idx :: op_dup_store_local :: acc
+  | DupStoreLocalMember (local_idx, member_idx) ->
+      member_idx :: local_idx :: op_dup_store_local_member :: acc
 
 (* Encode instruction list to int array *)
 let encode (instrs : instruction list) : int array =
@@ -519,6 +541,12 @@ let instrSize (instr : instruction) : int =
   | MakeRecord _ ->
       3
   | CallExternal _ ->
+      3
+  | LoadLocalMember _ | StoreLocalMember _ ->
+      3
+  | DupStoreLocal _ ->
+      2
+  | DupStoreLocalMember _ ->
       3
 
 (* Print a value for output *)
@@ -754,6 +782,14 @@ let printInstruction (instr : instruction) : string =
       Printf.sprintf "MakeRecord %d %d" struct_idx n
   | CallExternal (name, nargs) ->
       Printf.sprintf "CallExternal %s %d" name nargs
+  | LoadLocalMember (local_idx, member_idx) ->
+      Printf.sprintf "LoadLocalMember %d %d" local_idx member_idx
+  | StoreLocalMember (local_idx, member_idx) ->
+      Printf.sprintf "StoreLocalMember %d %d" local_idx member_idx
+  | DupStoreLocal idx ->
+      Printf.sprintf "DupStoreLocal %d" idx
+  | DupStoreLocalMember (local_idx, member_idx) ->
+      Printf.sprintf "DupStoreLocalMember %d %d" local_idx member_idx
 
 (* Dump an entire program *)
 let dump (prog : bc_prog) : string =

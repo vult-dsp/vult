@@ -367,6 +367,13 @@ let rec compileExp (st : compile_state) (exp : Prog.exp) : unit =
       else stateEmit st NegInt
   | EUnOp (UOpNot, e) ->
       compileExp st e ; stateEmit st Not
+  | EOp (OpAdd, e1, {e= EUnOp (UOpNeg, inner); _}) ->
+      (* a + (-b) => a - b *)
+      compileExp st e1 ;
+      compileExp st inner ;
+      if isInt16Type e1.t then stateEmit st SubInt16
+      else if isRealType e1.t || isRealType inner.t then stateEmit st SubReal
+      else stateEmit st SubInt
   | EOp (op, e1, e2) ->
       compileExp st e1 ; compileExp st e2 ; compileOp st op e1.t e2.t
   | EIndex {e; index} ->
@@ -387,6 +394,18 @@ let rec compileExp (st : compile_state) (exp : Prog.exp) : unit =
   | ETuple elems ->
       CCList.iter (compileExp st) elems ;
       stateEmit st (MakeTuple (CCList.length elems))
+  | EMember ({e= EId name; t= {t= TStruct descr; _}; _}, member_name) -> (
+      (* Fused LoadLocalMember when accessing a member of a local variable *)
+      let member_idx = getMemberIndex descr member_name in
+      match Hashtbl.find_opt st.var_to_index name with
+      | Some var_idx ->
+          stateEmit st (LoadLocalMember (var_idx, member_idx))
+      | None -> (
+        match Hashtbl.find_opt st.constant_names name with
+        | Some const_idx ->
+            stateEmit st (Loadc const_idx) ; stateEmit st (MemberLoad member_idx)
+        | None ->
+            error ("Variable or constant not found: " ^ name) ) )
   | EMember (e, member_name) -> (
     match e.t.t with
     | TStruct descr ->
@@ -573,7 +592,7 @@ and compileLexpMemberStore (st : compile_state) (parent : Prog.lexp) (member_idx
   | LId name -> (
     match Hashtbl.find_opt st.var_to_index name with
     | Some var_idx ->
-        stateEmit st (LoadLocal var_idx) ; stateEmit st (MemberStore member_idx)
+        stateEmit st (StoreLocalMember (var_idx, member_idx))
     | None ->
         error ("Variable not found: " ^ name) )
   | LMember (grandparent, gp_member_name) -> (
@@ -676,11 +695,19 @@ and compileStmt (st : compile_state) (stmt : Prog.stmt) : unit =
             let var_idx = stateAddVar st name in
             stateEmit st (StoreLocal var_idx)
         | None ->
-            (* Initialize with default value based on type *)
+            (* Initialize with default value based on type.
+               For scalar types (int, real, bool, string), skip emitting the default:
+               the locals slot is already Void from frame setup, and StmtBind will
+               assign the real value before the variable is read. For compound types
+               (struct, array, tuple, list), we must emit the default to create the
+               proper container structure. *)
             let typ = match dim_opt with Some dim -> {dexp.t with t= TArray (Some dim, dexp.t)} | None -> dexp.t in
-            emitDefaultValue st typ ;
-            let var_idx = stateAddVar st name in
-            stateEmit st (StoreLocal var_idx) ) )
+            let needs_default = match typ.t with TStruct _ | TArray _ | TTuple _ | TList _ -> true | _ -> false in
+            if needs_default then begin
+              emitDefaultValue st typ ;
+              let var_idx = stateAddVar st name in
+              stateEmit st (StoreLocal var_idx)
+            end ) )
   | StmtBind (lexp, exp) ->
       compileExp st exp ; compileLexp st lexp
   | StmtReturn exp ->
@@ -864,6 +891,7 @@ let compile (prog : Prog.top_stmt list) : bc_prog =
   let code = builderToArray st.builder in
   let constants = Array.of_list (CCList.rev st.constants) in
   let functions = Array.of_list (CCList.rev st.functions) in
+  let code, functions = Optimize.optimize code functions in
   let function_names = Hashtbl.create (Array.length functions) in
   Array.iter
     (fun (f : bc_func) -> Hashtbl.replace function_names f.name (Hashtbl.find st.function_names f.name))
@@ -889,6 +917,7 @@ let extendProgram (existing : bc_prog) (prog : Prog.top_stmt list) : bc_prog =
   let code = builderToArray st.builder in
   let constants = Array.of_list (CCList.rev st.constants) in
   let functions = Array.of_list (CCList.rev st.functions) in
+  let code, functions = Optimize.optimize code functions in
   let function_names = Hashtbl.create (Array.length functions) in
   Array.iteri (fun i (f : bc_func) -> Hashtbl.replace function_names f.name i) functions ;
   {code; constants; functions; function_names}

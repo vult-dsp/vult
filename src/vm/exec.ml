@@ -984,6 +984,57 @@ let run (vm : vm_state) : value =
           done ;
           ipush Void ;
           loop ()
+      | 52 ->
+          (* LoadLocalMember: fused LoadLocal + MemberLoad *)
+          let local_idx = Array.unsafe_get code (vm.pc + 1) in
+          let member_idx = Array.unsafe_get code (vm.pc + 2) in
+          vm.pc <- vm.pc + 3 ;
+          let s = Array.unsafe_get locals (vm.fp + local_idx) in
+          ( match s with
+          | Struct fields ->
+              ipush (Array.unsafe_get fields member_idx)
+          | Array fields ->
+              ipush (Array.unsafe_get fields member_idx)
+          | _ ->
+              error (Printf.sprintf "LoadLocalMember: not a struct (local=%d, member=%d)" local_idx member_idx) ) ;
+          loop ()
+      | 53 ->
+          (* StoreLocalMember: fused LoadLocal + MemberStore *)
+          let local_idx = Array.unsafe_get code (vm.pc + 1) in
+          let member_idx = Array.unsafe_get code (vm.pc + 2) in
+          vm.pc <- vm.pc + 3 ;
+          let v = ipop () in
+          let s = Array.unsafe_get locals (vm.fp + local_idx) in
+          ( match s with
+          | Struct fields ->
+              Array.unsafe_set fields member_idx v
+          | Array fields ->
+              Array.unsafe_set fields member_idx v
+          | _ ->
+              error (Printf.sprintf "StoreLocalMember: not a struct (local=%d, member=%d)" local_idx member_idx) ) ;
+          loop ()
+      | 54 ->
+          (* DupStoreLocal: dup TOS, store copy to local *)
+          let idx = Array.unsafe_get code (vm.pc + 1) in
+          vm.pc <- vm.pc + 2 ;
+          let v = Array.unsafe_get stack (vm.sp - 1) in
+          Array.unsafe_set locals (vm.fp + idx) v ;
+          loop ()
+      | 55 ->
+          (* DupStoreLocalMember: dup TOS, store copy to struct member *)
+          let local_idx = Array.unsafe_get code (vm.pc + 1) in
+          let member_idx = Array.unsafe_get code (vm.pc + 2) in
+          vm.pc <- vm.pc + 3 ;
+          let v = Array.unsafe_get stack (vm.sp - 1) in
+          let s = Array.unsafe_get locals (vm.fp + local_idx) in
+          ( match s with
+          | Struct fields ->
+              Array.unsafe_set fields member_idx v
+          | Array fields ->
+              Array.unsafe_set fields member_idx v
+          | _ ->
+              error "DupStoreLocalMember: not a struct" ) ;
+          loop ()
       | _ ->
           error (Printf.sprintf "Unknown opcode: %d at pc=%d" opcode vm.pc)
   in
