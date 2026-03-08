@@ -161,7 +161,8 @@ type compile_state =
   ; mutable next_const: int
   ; mutable functions: bc_func list (* in reverse *)
   ; mutable next_func: int
-  ; external_name_map: (int, string) Hashtbl.t (* hash -> name for externals *) }
+  ; external_name_map: (int, string) Hashtbl.t (* hash -> name for externals *)
+  ; constant_exps: (string, Prog.exp) Hashtbl.t (* constants that need runtime evaluation *) }
 
 let createState () : compile_state =
   { builder= createBuilder ()
@@ -175,7 +176,8 @@ let createState () : compile_state =
   ; next_const= 0
   ; functions= []
   ; next_func= 0
-  ; external_name_map= Hashtbl.create 16 }
+  ; external_name_map= Hashtbl.create 16
+  ; constant_exps= Hashtbl.create 16 }
 
 let stateEmit (st : compile_state) (instr : instruction) : unit = builderEmit st.builder instr
 
@@ -358,8 +360,12 @@ let rec compileExp (st : compile_state) (exp : Prog.exp) : unit =
       match Hashtbl.find_opt st.constant_names name with
       | Some const_idx ->
           stateEmit st (Loadc const_idx)
-      | None ->
-          error ("Variable or constant not found: " ^ name) ) )
+      | None -> (
+        match Hashtbl.find_opt st.constant_exps name with
+        | Some const_exp ->
+            compileExp st const_exp
+        | None ->
+            error ("Variable or constant not found: " ^ name) ) ) )
   | EUnOp (UOpNeg, e) ->
       compileExp st e ;
       if isInt16Type exp.t then stateEmit st NegInt16
@@ -404,8 +410,12 @@ let rec compileExp (st : compile_state) (exp : Prog.exp) : unit =
         match Hashtbl.find_opt st.constant_names name with
         | Some const_idx ->
             stateEmit st (Loadc const_idx) ; stateEmit st (MemberLoad member_idx)
-        | None ->
-            error ("Variable or constant not found: " ^ name) ) )
+        | None -> (
+          match Hashtbl.find_opt st.constant_exps name with
+          | Some const_exp ->
+              compileExp st const_exp ; stateEmit st (MemberLoad member_idx)
+          | None ->
+              error ("Variable or constant not found: " ^ name) ) ) )
   | EMember (e, member_name) -> (
     match e.t.t with
     | TStruct descr ->
@@ -774,12 +784,16 @@ let rec compileTopStmt (st : compile_state) (top : Prog.top_stmt) : unit =
   | TopType descr ->
       Hashtbl.replace st.struct_types descr.path descr
   | TopConstant (name, _, _, exp, _) ->
-      let const_idx = st.next_const in
-      Hashtbl.replace st.constant_names name const_idx ;
-      (* Try to evaluate constant at compile time *)
       let value = evalConstantExp st exp in
-      let _idx = stateAddConstant st value in
-      ignore _idx
+      if value <> Void then begin
+        let const_idx = st.next_const in
+        Hashtbl.replace st.constant_names name const_idx ;
+        let _idx = stateAddConstant st value in
+        ignore _idx
+      end
+      else
+        (* Store expression for runtime evaluation when referenced *)
+        Hashtbl.replace st.constant_exps name exp
   | TopFunction (def, body) ->
       (* Register function index before compiling body (for recursion) *)
       let func_idx = st.next_func in
@@ -881,6 +895,52 @@ and evalConstantExp (st : compile_state) (exp : Prog.exp) : value =
         Real (a *. b)
     | _ ->
         Void )
+  | EOp (OpDiv, e1, e2) -> (
+    match (evalConstantExp st e1, evalConstantExp st e2) with
+    | Int a, Int b when b <> 0 ->
+        Int (a / b)
+    | Int16 a, Int16 b when b <> 0 ->
+        Int16 (a / b)
+    | Real a, Real b when b <> 0.0 ->
+        Real (a /. b)
+    | _ ->
+        Void )
+  | EOp (OpMod, e1, e2) -> (
+    match (evalConstantExp st e1, evalConstantExp st e2) with
+    | Int a, Int b when b <> 0 ->
+        Int (a mod b)
+    | Int16 a, Int16 b when b <> 0 ->
+        Int16 (a mod b)
+    | Real a, Real b when b <> 0.0 ->
+        Real (mod_float a b)
+    | _ ->
+        Void )
+  | EOp (OpLsh, e1, e2) -> (
+    match (evalConstantExp st e1, evalConstantExp st e2) with
+    | Int a, Int b ->
+        Int (a lsl b)
+    | Int16 a, Int16 b ->
+        Int16 (max (-32768) (min 32767 (a lsl b)))
+    | _ ->
+        Void )
+  | EOp (OpRsh, e1, e2) -> (
+    match (evalConstantExp st e1, evalConstantExp st e2) with
+    | Int a, Int b ->
+        Int (a asr b)
+    | Int16 a, Int16 b ->
+        Int16 (a asr b)
+    | _ ->
+        Void )
+  | EUnOp (UOpNeg, e) -> (
+    match evalConstantExp st e with
+    | Int a ->
+        Int (-a)
+    | Int16 a ->
+        Int16 (max (-32768) (min 32767 (-a)))
+    | Real a ->
+        Real (-.a)
+    | _ ->
+        Void )
   | _ ->
       Void
 
@@ -891,6 +951,7 @@ let compile (prog : Prog.top_stmt list) : bc_prog =
   let code = builderToArray st.builder in
   let constants = Array.of_list (CCList.rev st.constants) in
   let functions = Array.of_list (CCList.rev st.functions) in
+  let code, functions = Inline.inline code functions in
   let code, functions = Optimize.optimize code functions in
   let function_names = Hashtbl.create (Array.length functions) in
   Array.iter
@@ -917,6 +978,7 @@ let extendProgram (existing : bc_prog) (prog : Prog.top_stmt list) : bc_prog =
   let code = builderToArray st.builder in
   let constants = Array.of_list (CCList.rev st.constants) in
   let functions = Array.of_list (CCList.rev st.functions) in
+  let code, functions = Inline.inline code functions in
   let code, functions = Optimize.optimize code functions in
   let function_names = Hashtbl.create (Array.length functions) in
   Array.iteri (fun i (f : bc_func) -> Hashtbl.replace function_names f.name i) functions ;

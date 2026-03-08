@@ -471,16 +471,31 @@ let instantiate_generic_function (iargs : Args.args) (env : env) (state : instan
       constant_params
   in
   let regular_args_array = Array.of_list generic_func.args in
+  let generic_params_array = Array.of_list generic_func.generic_params in
   let constant_args_array = Array.of_list constant_args in
   let all_args_for_body =
-    CCList.map
+    CCList.filter_map
       (fun pk ->
         match pk with
         | Typed.PKArg i ->
             let arg = regular_args_array.(i) in
-            if i < CCList.length fresh_arg_types then {arg with t= CCList.nth fresh_arg_types i} else arg
+            if i < CCList.length fresh_arg_types then Some {arg with t= CCList.nth fresh_arg_types i} else Some arg
         | Typed.PKGeneric i ->
-            if i < Array.length constant_args_array then constant_args_array.(i)
+            if i < Array.length generic_params_array then
+              match generic_params_array.(i) with
+              | Typed.GParamConstant _ ->
+                  (* Count how many GParamConstant entries precede index i *)
+                  let constant_index =
+                    let count = ref 0 in
+                    for j = 0 to i - 1 do
+                      match generic_params_array.(j) with Typed.GParamConstant _ -> incr count | _ -> ()
+                    done ;
+                    !count
+                  in
+                  if constant_index < Array.length constant_args_array then Some constant_args_array.(constant_index)
+                  else failwith "Invalid constant param index in param_order"
+              | Typed.GParamType _ | Typed.GParamFunction _ ->
+                  None
             else failwith "Invalid generic param index in param_order" )
       generic_func.param_order
   in
@@ -668,15 +683,31 @@ let rec process_exp_instantiation (iargs : Args.args) (env : env) (state : insta
                 generic_func.param_order
             else
               let regular_args_array = Array.of_list processed_regular_args in
+              let generic_params_array = Array.of_list generic_func.generic_params in
               let explicit_args_array = Array.of_list processed_explicit_args in
-              CCList.map
+              CCList.filter_map
                 (fun pk ->
                   match pk with
                   | Typed.PKArg i ->
-                      if i < Array.length regular_args_array then regular_args_array.(i)
+                      if i < Array.length regular_args_array then Some regular_args_array.(i)
                       else failwith "Invalid arg index in param_order"
                   | Typed.PKGeneric i ->
-                      if i < Array.length explicit_args_array then explicit_args_array.(i)
+                      if i < Array.length generic_params_array then
+                        match generic_params_array.(i) with
+                        | Typed.GParamConstant _ ->
+                            (* Count how many GParamConstant entries precede index i *)
+                            let constant_index =
+                              let count = ref 0 in
+                              for j = 0 to i - 1 do
+                                match generic_params_array.(j) with Typed.GParamConstant _ -> incr count | _ -> ()
+                              done ;
+                              !count
+                            in
+                            if constant_index < Array.length explicit_args_array then
+                              Some explicit_args_array.(constant_index)
+                            else failwith "Invalid constant param index in param_order"
+                        | Typed.GParamType _ | Typed.GParamFunction _ ->
+                            None
                       else failwith "Invalid generic param index in param_order" )
                 generic_func.param_order
           in

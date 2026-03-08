@@ -1,6 +1,6 @@
 (library
  (name vm)
- (modules Bytecode Optimize Compiler Exec)
+ (modules Bytecode Optimize Inline Compiler Exec)
  (libraries core util pparser pla)
  (flags
   (:standard -w -30))

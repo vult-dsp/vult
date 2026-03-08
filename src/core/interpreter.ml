@@ -947,7 +947,108 @@ let rec evalConstantExpression (constants : dvalue array) (exp : iexp) : dvalue 
         DReal (a +. b)
     | _ ->
         error "Type mismatch in constant real addition" )
-  (* Add more arithmetic operations as needed *)
+  (* Subtraction *)
+  | IESubInt (e1, e2) -> (
+    match (evalConstantExpression constants e1, evalConstantExpression constants e2) with
+    | DInt a, DInt b ->
+        DInt (a - b)
+    | _ ->
+        error "Type mismatch in constant integer subtraction" )
+  | IESubInt16 (e1, e2) -> (
+    match (evalConstantExpression constants e1, evalConstantExpression constants e2) with
+    | DInt16 a, DInt16 b ->
+        let result = a - b in
+        let clamped = max (-32768) (min 32767 result) in
+        DInt16 clamped
+    | _ ->
+        error "Type mismatch in constant int16 subtraction" )
+  | IESubReal (e1, e2) -> (
+    match (evalConstantExpression constants e1, evalConstantExpression constants e2) with
+    | DReal a, DReal b ->
+        DReal (a -. b)
+    | _ ->
+        error "Type mismatch in constant real subtraction" )
+  (* Multiplication *)
+  | IEMulInt (e1, e2) -> (
+    match (evalConstantExpression constants e1, evalConstantExpression constants e2) with
+    | DInt a, DInt b ->
+        DInt (a * b)
+    | _ ->
+        error "Type mismatch in constant integer multiplication" )
+  | IEMulInt16 (e1, e2) -> (
+    match (evalConstantExpression constants e1, evalConstantExpression constants e2) with
+    | DInt16 a, DInt16 b ->
+        let result = a * b in
+        let clamped = max (-32768) (min 32767 result) in
+        DInt16 clamped
+    | _ ->
+        error "Type mismatch in constant int16 multiplication" )
+  | IEMulReal (e1, e2) -> (
+    match (evalConstantExpression constants e1, evalConstantExpression constants e2) with
+    | DReal a, DReal b ->
+        DReal (a *. b)
+    | _ ->
+        error "Type mismatch in constant real multiplication" )
+  (* Division *)
+  | IEDivInt (e1, e2) -> (
+    match (evalConstantExpression constants e1, evalConstantExpression constants e2) with
+    | DInt a, DInt b ->
+        DInt (a / b)
+    | _ ->
+        error "Type mismatch in constant integer division" )
+  | IEDivInt16 (e1, e2) -> (
+    match (evalConstantExpression constants e1, evalConstantExpression constants e2) with
+    | DInt16 a, DInt16 b ->
+        let result = a / b in
+        let clamped = max (-32768) (min 32767 result) in
+        DInt16 clamped
+    | _ ->
+        error "Type mismatch in constant int16 division" )
+  | IEDivReal (e1, e2) -> (
+    match (evalConstantExpression constants e1, evalConstantExpression constants e2) with
+    | DReal a, DReal b ->
+        DReal (a /. b)
+    | _ ->
+        error "Type mismatch in constant real division" )
+  (* Negation *)
+  | IEUnOp (UOpNeg, e) -> (
+    match evalConstantExpression constants e with
+    | DInt i ->
+        DInt (-i)
+    | DInt16 i ->
+        DInt16 (max (-32768) (min 32767 (-i)))
+    | DReal f ->
+        DReal (-.f)
+    | _ ->
+        error "Type mismatch in constant negation" )
+  (* Boolean not *)
+  | IEUnOp (UOpNot, e) -> (
+    match evalConstantExpression constants e with
+    | DBool b ->
+        DBool (not b)
+    | DInt i ->
+        DBool (i = 0)
+    | DInt16 i ->
+        DBool (i = 0)
+    | _ ->
+        error "Type mismatch in constant boolean not" )
+  (* Bit shifts *)
+  | IEOp (OpLsh, e1, e2) -> (
+    match (evalConstantExpression constants e1, evalConstantExpression constants e2) with
+    | DInt a, DInt b ->
+        DInt (a lsl b)
+    | DInt16 a, DInt16 b ->
+        DInt16 (max (-32768) (min 32767 (a lsl b)))
+    | _ ->
+        error "Type mismatch in constant left shift" )
+  | IEOp (OpRsh, e1, e2) -> (
+    match (evalConstantExpression constants e1, evalConstantExpression constants e2) with
+    | DInt a, DInt b ->
+        DInt (a lsr b)
+    | DInt16 a, DInt16 b ->
+        DInt16 (a lsr b)
+    | _ ->
+        error "Type mismatch in constant right shift" )
   | IEArray elems ->
       let values = Array.of_list (CCList.map (evalConstantExpression constants) elems) in
       DArray values
@@ -969,7 +1070,7 @@ let transformStatement (prog : iprog) (stmt : top_stmt) : unit =
   | TopType descr ->
       prog.struct_types <- Map.add descr.path descr prog.struct_types
   | TopConstant (name, _, _, exp, _) -> (
-      let const_idx = Array.length prog.iconstants in
+      let const_idx = prog.iconstants_count in
       prog.constant_names <- Map.add name const_idx prog.constant_names ;
       (* Create context for transforming the constant expression *)
       let ctx =
@@ -1000,9 +1101,11 @@ let transformStatement (prog : iprog) (stmt : top_stmt) : unit =
         in
         addConstant prog (Unevaluated (iexp, eval_ctx)) )
   | TopFunction (def, body) ->
-      (* Assign function index before transforming the body to support recursion *)
-      let func_idx = Map.cardinal prog.ifunction_names in
-      prog.ifunction_names <- Map.add def.name func_idx prog.ifunction_names ;
+      (* If not already registered (e.g. by the first pass in extendProgram), assign an index *)
+      if not (Map.mem def.name prog.ifunction_names) then begin
+        let func_idx = Map.cardinal prog.ifunction_names in
+        prog.ifunction_names <- Map.add def.name func_idx prog.ifunction_names
+      end ;
       (* Now transform the function body with the updated function mapping *)
       let ifunc =
         transformFunction prog.struct_types prog.constant_names prog.ifunction_names prog.external_functions def body
@@ -1014,7 +1117,19 @@ let transformStatement (prog : iprog) (stmt : top_stmt) : unit =
       () (* Type aliases don't need special handling in the interpreter *)
 
 let extendProgram iprog (prog : top_stmt list) =
-  (* Single pass: process statements in order *)
+  (* First pass: register all function names so constants can reference functions defined later *)
+  CCList.iter
+    (fun (stmt : top_stmt) ->
+      match stmt.top with
+      | TopFunction (def, _) ->
+          if not (Map.mem def.name iprog.ifunction_names) then begin
+            let func_idx = Map.cardinal iprog.ifunction_names in
+            iprog.ifunction_names <- Map.add def.name func_idx iprog.ifunction_names
+          end
+      | _ ->
+          () )
+    prog ;
+  (* Second pass: process all statements (function bodies, constants, types, etc.) *)
   CCList.iter (transformStatement iprog) prog ;
   (* Update lazy evaluation contexts with the completed function array *)
   for idx = 0 to iprog.iconstants_count - 1 do

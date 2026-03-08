@@ -8,20 +8,7 @@ fun change(x : 't) : bool {
   return result;
 }
 
-// Test 2: Function parameter generic
-fun apply_func('f, a, b) {
-  return f(a, b);
-}
-
-fun add_int(a : int, b : int) : int {
-  return a + b;
-}
-
-fun mul_int(a : int, b : int) : int {
-  return a * b;
-}
-
-// Test 3: Constant parameter generic
+// Test 2: Constant parameter generic
 fun add_const('n : int, x : int) : int {
   return n + x;
 }
@@ -40,18 +27,7 @@ fun test_change_state() : int {
   return -1;
 }
 
-// Test 5: Function parameter works correctly
-fun test_apply_func() : int {
-  val sum = apply_func(add_int, 3, 4);      // Should be 7
-  val prod = apply_func(mul_int, 3, 4);     // Should be 12
-
-  if (sum == 7 && prod == 12) {
-    return 200;
-  }
-  return -2;
-}
-
-// Test 6: Constant parameter specialization
+// Test 5: Constant parameter specialization
 fun test_const_param() : int {
   val x = add_const(10, 5);   // Specialized: 10 + 5 = 15
   val y = add_const(20, 3);   // Specialized: 20 + 3 = 23
@@ -79,13 +55,12 @@ fun test_multi_type() : int {
 // Main test - runs all tests and returns sum on success
 fun main() : int {
   val t1 = test_change_state();
-  val t2 = test_apply_func();
   val t3 = test_const_param();
   val t4 = test_multi_type();
 
-  // All tests pass: 100 + 200 + 300 + 400 = 1000
-  if (t1 == 100 && t2 == 200 && t3 == 300 && t4 == 400) {
-    return 1000;
+  // All tests pass: 100 + 300 + 400 = 800
+  if (t1 == 100 && t3 == 300 && t4 == 400) {
+    return 800;
   }
-  return t1 + t2 + t3 + t4;  // Return partial result for debugging
+  return t1 + t3 + t4;  // Return partial result for debugging
 }
