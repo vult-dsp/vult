@@ -20,7 +20,7 @@ jobs:
           - macos-latest
           - windows-latest
         ocaml-compiler:
-          - 4
+          - 5
 
     runs-on: ${{ matrix.os }}
 
@@ -41,7 +41,7 @@ jobs:
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: _build/default/src/vult.exe
-          
+
       - name: Save Js VultcJs Artifacts
         uses: actions/upload-artifact@v4
         if: runner.os == 'Linux'
