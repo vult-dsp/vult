@@ -28,10 +28,7 @@ exception VM_error of string
 
 let error (msg : string) : 'a = raise (VM_error msg)
 
-(* Call frame for function returns *)
-type call_frame = {return_pc: int; saved_fp: int; saved_sp: int; saved_locals_sp: int}
-
-(* VM state *)
+(* VM state — call stack uses parallel int arrays to avoid heap allocation *)
 type vm_state =
   { code: int array (* encoded bytecode *)
   ; mutable pc: int (* program counter into encoded array *)
@@ -40,7 +37,10 @@ type vm_state =
   ; locals: value array (* all frames contiguous *)
   ; mutable fp: int (* frame pointer *)
   ; mutable locals_sp: int (* next free slot in locals *)
-  ; call_stack: call_frame array (* call stack *)
+  ; cs_return_pcs: int array (* call stack: return PCs *)
+  ; cs_saved_fps: int array (* call stack: saved frame pointers *)
+  ; cs_saved_sps: int array (* call stack: saved stack pointers *)
+  ; cs_saved_locals_sps: int array (* call stack: saved locals stack pointers *)
   ; mutable csp: int (* call stack pointer *)
   ; constants: value array (* constant pool *)
   ; functions: bc_func array (* function table *)
@@ -58,7 +58,10 @@ let createVM ?(sample_rate : float option) (prog : bc_prog) : vm_state =
   ; locals= Array.make 65536 Void
   ; fp= 0
   ; locals_sp= 0
-  ; call_stack= Array.make 1024 {return_pc= 0; saved_fp= 0; saved_sp= 0; saved_locals_sp= 0}
+  ; cs_return_pcs= Array.make 1024 0
+  ; cs_saved_fps= Array.make 1024 0
+  ; cs_saved_sps= Array.make 1024 0
+  ; cs_saved_locals_sps= Array.make 1024 0
   ; csp= 0
   ; constants= prog.constants
   ; functions= prog.functions
@@ -473,7 +476,10 @@ let run (vm : vm_state) : value =
   let locals = vm.locals in
   let constants = vm.constants in
   let functions = vm.functions in
-  let call_stack = vm.call_stack in
+  let cs_return_pcs = vm.cs_return_pcs in
+  let cs_saved_fps = vm.cs_saved_fps in
+  let cs_saved_sps = vm.cs_saved_sps in
+  let cs_saved_locals_sps = vm.cs_saved_locals_sps in
   let[@inline] ipush (v : value) : unit =
     let sp = vm.sp in
     Array.unsafe_set stack sp v ;
@@ -812,19 +818,18 @@ let run (vm : vm_state) : value =
           let nargs = Array.unsafe_get code (vm.pc + 2) in
           vm.pc <- vm.pc + 3 ;
           let func = Array.unsafe_get functions func_idx in
-          (* Save call frame *)
-          Array.unsafe_set call_stack vm.csp
-            {return_pc= vm.pc; saved_fp= vm.fp; saved_sp= vm.sp - nargs; saved_locals_sp= vm.locals_sp} ;
-          vm.csp <- vm.csp + 1 ;
+          (* Save call frame using parallel int arrays — zero allocation *)
+          let csp = vm.csp in
+          Array.unsafe_set cs_return_pcs csp vm.pc ;
+          Array.unsafe_set cs_saved_fps csp vm.fp ;
+          Array.unsafe_set cs_saved_sps csp (vm.sp - nargs) ;
+          Array.unsafe_set cs_saved_locals_sps csp vm.locals_sp ;
+          vm.csp <- csp + 1 ;
           (* Set up new frame at the next free slot in locals *)
           let new_fp = vm.locals_sp in
           (* Copy args from stack to locals *)
           for i = 0 to nargs - 1 do
             Array.unsafe_set locals (new_fp + i) (Array.unsafe_get stack (vm.sp - nargs + i))
-          done ;
-          (* Initialize remaining locals to Void *)
-          for i = nargs to func.n_locals - 1 do
-            Array.unsafe_set locals (new_fp + i) Void
           done ;
           vm.sp <- vm.sp - nargs ;
           vm.fp <- new_fp ;
@@ -836,12 +841,12 @@ let run (vm : vm_state) : value =
           let result = ipop () in
           if vm.csp <= 0 then result
           else begin
-            vm.csp <- vm.csp - 1 ;
-            let frame = Array.unsafe_get call_stack vm.csp in
-            vm.pc <- frame.return_pc ;
-            vm.fp <- frame.saved_fp ;
-            vm.sp <- frame.saved_sp ;
-            vm.locals_sp <- frame.saved_locals_sp ;
+            let csp = vm.csp - 1 in
+            vm.csp <- csp ;
+            vm.pc <- Array.unsafe_get cs_return_pcs csp ;
+            vm.fp <- Array.unsafe_get cs_saved_fps csp ;
+            vm.sp <- Array.unsafe_get cs_saved_sps csp ;
+            vm.locals_sp <- Array.unsafe_get cs_saved_locals_sps csp ;
             ipush result ;
             loop ()
           end
@@ -849,12 +854,12 @@ let run (vm : vm_state) : value =
           (* ReturnVoid *)
           if vm.csp <= 0 then Void
           else begin
-            vm.csp <- vm.csp - 1 ;
-            let frame = Array.unsafe_get call_stack vm.csp in
-            vm.pc <- frame.return_pc ;
-            vm.fp <- frame.saved_fp ;
-            vm.sp <- frame.saved_sp ;
-            vm.locals_sp <- frame.saved_locals_sp ;
+            let csp = vm.csp - 1 in
+            vm.csp <- csp ;
+            vm.pc <- Array.unsafe_get cs_return_pcs csp ;
+            vm.fp <- Array.unsafe_get cs_saved_fps csp ;
+            vm.sp <- Array.unsafe_get cs_saved_sps csp ;
+            vm.locals_sp <- Array.unsafe_get cs_saved_locals_sps csp ;
             ipush Void ;
             loop ()
           end
@@ -1034,6 +1039,233 @@ let run (vm : vm_state) : value =
               Array.unsafe_set fields member_idx v
           | _ ->
               error "DupStoreLocalMember: not a struct" ) ;
+          loop ()
+      | 56 ->
+          (* Call0 — no arguments *)
+          let func_idx = Array.unsafe_get code (vm.pc + 1) in
+          vm.pc <- vm.pc + 2 ;
+          let func = Array.unsafe_get functions func_idx in
+          let csp = vm.csp in
+          Array.unsafe_set cs_return_pcs csp vm.pc ;
+          Array.unsafe_set cs_saved_fps csp vm.fp ;
+          Array.unsafe_set cs_saved_sps csp vm.sp ;
+          Array.unsafe_set cs_saved_locals_sps csp vm.locals_sp ;
+          vm.csp <- csp + 1 ;
+          let new_fp = vm.locals_sp in
+          vm.fp <- new_fp ;
+          vm.locals_sp <- new_fp + func.n_locals ;
+          vm.pc <- func.entry_pc ;
+          loop ()
+      | 57 ->
+          (* Call1 — one argument *)
+          let func_idx = Array.unsafe_get code (vm.pc + 1) in
+          vm.pc <- vm.pc + 2 ;
+          let func = Array.unsafe_get functions func_idx in
+          let csp = vm.csp in
+          Array.unsafe_set cs_return_pcs csp vm.pc ;
+          Array.unsafe_set cs_saved_fps csp vm.fp ;
+          Array.unsafe_set cs_saved_sps csp (vm.sp - 1) ;
+          Array.unsafe_set cs_saved_locals_sps csp vm.locals_sp ;
+          vm.csp <- csp + 1 ;
+          let new_fp = vm.locals_sp in
+          Array.unsafe_set locals new_fp (Array.unsafe_get stack (vm.sp - 1)) ;
+          vm.sp <- vm.sp - 1 ;
+          vm.fp <- new_fp ;
+          vm.locals_sp <- new_fp + func.n_locals ;
+          vm.pc <- func.entry_pc ;
+          loop ()
+      | 58 ->
+          (* Call2 — two arguments *)
+          let func_idx = Array.unsafe_get code (vm.pc + 1) in
+          vm.pc <- vm.pc + 2 ;
+          let func = Array.unsafe_get functions func_idx in
+          let csp = vm.csp in
+          Array.unsafe_set cs_return_pcs csp vm.pc ;
+          Array.unsafe_set cs_saved_fps csp vm.fp ;
+          Array.unsafe_set cs_saved_sps csp (vm.sp - 2) ;
+          Array.unsafe_set cs_saved_locals_sps csp vm.locals_sp ;
+          vm.csp <- csp + 1 ;
+          let new_fp = vm.locals_sp in
+          Array.unsafe_set locals new_fp (Array.unsafe_get stack (vm.sp - 2)) ;
+          Array.unsafe_set locals (new_fp + 1) (Array.unsafe_get stack (vm.sp - 1)) ;
+          vm.sp <- vm.sp - 2 ;
+          vm.fp <- new_fp ;
+          vm.locals_sp <- new_fp + func.n_locals ;
+          vm.pc <- func.entry_pc ;
+          loop ()
+      | 59 ->
+          (* Call3 — three arguments *)
+          let func_idx = Array.unsafe_get code (vm.pc + 1) in
+          vm.pc <- vm.pc + 2 ;
+          let func = Array.unsafe_get functions func_idx in
+          let csp = vm.csp in
+          Array.unsafe_set cs_return_pcs csp vm.pc ;
+          Array.unsafe_set cs_saved_fps csp vm.fp ;
+          Array.unsafe_set cs_saved_sps csp (vm.sp - 3) ;
+          Array.unsafe_set cs_saved_locals_sps csp vm.locals_sp ;
+          vm.csp <- csp + 1 ;
+          let new_fp = vm.locals_sp in
+          Array.unsafe_set locals new_fp (Array.unsafe_get stack (vm.sp - 3)) ;
+          Array.unsafe_set locals (new_fp + 1) (Array.unsafe_get stack (vm.sp - 2)) ;
+          Array.unsafe_set locals (new_fp + 2) (Array.unsafe_get stack (vm.sp - 1)) ;
+          vm.sp <- vm.sp - 3 ;
+          vm.fp <- new_fp ;
+          vm.locals_sp <- new_fp + func.n_locals ;
+          vm.pc <- func.entry_pc ;
+          loop ()
+      | 60 ->
+          (* LoadLocal0 *)
+          vm.pc <- vm.pc + 1 ;
+          ipush (Array.unsafe_get locals vm.fp) ;
+          loop ()
+      | 61 ->
+          (* LoadLocal1 *)
+          vm.pc <- vm.pc + 1 ;
+          ipush (Array.unsafe_get locals (vm.fp + 1)) ;
+          loop ()
+      | 62 ->
+          (* LoadLocal2 *)
+          vm.pc <- vm.pc + 1 ;
+          ipush (Array.unsafe_get locals (vm.fp + 2)) ;
+          loop ()
+      | 63 ->
+          (* LoadLocal3 *)
+          vm.pc <- vm.pc + 1 ;
+          ipush (Array.unsafe_get locals (vm.fp + 3)) ;
+          loop ()
+      | 64 ->
+          (* StoreLocal0 *)
+          vm.pc <- vm.pc + 1 ;
+          Array.unsafe_set locals vm.fp (ipop ()) ;
+          loop ()
+      | 65 ->
+          (* StoreLocal1 *)
+          vm.pc <- vm.pc + 1 ;
+          Array.unsafe_set locals (vm.fp + 1) (ipop ()) ;
+          loop ()
+      | 66 ->
+          (* StoreLocal2 *)
+          vm.pc <- vm.pc + 1 ;
+          Array.unsafe_set locals (vm.fp + 2) (ipop ()) ;
+          loop ()
+      | 67 ->
+          (* StoreLocal3 *)
+          vm.pc <- vm.pc + 1 ;
+          Array.unsafe_set locals (vm.fp + 3) (ipop ()) ;
+          loop ()
+      | 68 ->
+          (* Loadc0 *)
+          vm.pc <- vm.pc + 1 ;
+          ipush (Array.unsafe_get constants 0) ;
+          loop ()
+      | 69 ->
+          (* Loadc1 *)
+          vm.pc <- vm.pc + 1 ;
+          ipush (Array.unsafe_get constants 1) ;
+          loop ()
+      | 70 ->
+          (* Loadc2 *)
+          vm.pc <- vm.pc + 1 ;
+          ipush (Array.unsafe_get constants 2) ;
+          loop ()
+      | 71 ->
+          (* Loadc3 *)
+          vm.pc <- vm.pc + 1 ;
+          ipush (Array.unsafe_get constants 3) ;
+          loop ()
+      | 72 ->
+          (* DupStoreLocal0 *)
+          vm.pc <- vm.pc + 1 ;
+          Array.unsafe_set locals vm.fp (Array.unsafe_get stack (vm.sp - 1)) ;
+          loop ()
+      | 73 ->
+          (* DupStoreLocal1 *)
+          vm.pc <- vm.pc + 1 ;
+          Array.unsafe_set locals (vm.fp + 1) (Array.unsafe_get stack (vm.sp - 1)) ;
+          loop ()
+      | 74 ->
+          (* DupStoreLocal2 *)
+          vm.pc <- vm.pc + 1 ;
+          Array.unsafe_set locals (vm.fp + 2) (Array.unsafe_get stack (vm.sp - 1)) ;
+          loop ()
+      | 75 ->
+          (* DupStoreLocal3 *)
+          vm.pc <- vm.pc + 1 ;
+          Array.unsafe_set locals (vm.fp + 3) (Array.unsafe_get stack (vm.sp - 1)) ;
+          loop ()
+      | 76 ->
+          (* LtIntJumpIfFalse *)
+          let target = Array.unsafe_get code (vm.pc + 1) in
+          vm.pc <- vm.pc + 2 ;
+          let b = ipop () in
+          let a = ipop () in
+          ( match (a, b) with
+          | Int x, Int y ->
+              if not (x < y) then vm.pc <- target
+          | _ ->
+              error "LtIntJumpIfFalse: type mismatch" ) ;
+          loop ()
+      | 77 ->
+          (* GtIntJumpIfFalse *)
+          let target = Array.unsafe_get code (vm.pc + 1) in
+          vm.pc <- vm.pc + 2 ;
+          let b = ipop () in
+          let a = ipop () in
+          ( match (a, b) with
+          | Int x, Int y ->
+              if not (x > y) then vm.pc <- target
+          | _ ->
+              error "GtIntJumpIfFalse: type mismatch" ) ;
+          loop ()
+      | 78 ->
+          (* EqIntJumpIfFalse *)
+          let target = Array.unsafe_get code (vm.pc + 1) in
+          vm.pc <- vm.pc + 2 ;
+          let b = ipop () in
+          let a = ipop () in
+          ( match (a, b) with
+          | Int x, Int y ->
+              if x <> y then vm.pc <- target
+          | Bool x, Bool y ->
+              if x <> y then vm.pc <- target
+          | _ ->
+              error "EqIntJumpIfFalse: type mismatch" ) ;
+          loop ()
+      | 79 ->
+          (* LtRealJumpIfFalse *)
+          let target = Array.unsafe_get code (vm.pc + 1) in
+          vm.pc <- vm.pc + 2 ;
+          let b = ipop () in
+          let a = ipop () in
+          ( match (a, b) with
+          | Real x, Real y ->
+              if not (x < y) then vm.pc <- target
+          | _ ->
+              error "LtRealJumpIfFalse: type mismatch" ) ;
+          loop ()
+      | 80 ->
+          (* GtRealJumpIfFalse *)
+          let target = Array.unsafe_get code (vm.pc + 1) in
+          vm.pc <- vm.pc + 2 ;
+          let b = ipop () in
+          let a = ipop () in
+          ( match (a, b) with
+          | Real x, Real y ->
+              if not (x > y) then vm.pc <- target
+          | _ ->
+              error "GtRealJumpIfFalse: type mismatch" ) ;
+          loop ()
+      | 81 ->
+          (* EqRealJumpIfFalse *)
+          let target = Array.unsafe_get code (vm.pc + 1) in
+          vm.pc <- vm.pc + 2 ;
+          let b = ipop () in
+          let a = ipop () in
+          ( match (a, b) with
+          | Real x, Real y ->
+              if not (Float.equal x y) then vm.pc <- target
+          | _ ->
+              error "EqRealJumpIfFalse: type mismatch" ) ;
           loop ()
       | _ ->
           error (Printf.sprintf "Unknown opcode: %d at pc=%d" opcode vm.pc)

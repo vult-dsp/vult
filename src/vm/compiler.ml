@@ -196,6 +196,10 @@ let stateAddConstant (st : compile_state) (v : value) : int =
   st.next_const <- st.next_const + 1 ;
   idx
 
+(* Emit a Loadc instruction, using specialized opcodes for indices 0-3 *)
+let stateEmitLoadc (st : compile_state) (idx : int) : unit =
+  stateEmit st (match idx with 0 -> Loadc0 | 1 -> Loadc1 | 2 -> Loadc2 | 3 -> Loadc3 | _ -> Loadc idx)
+
 let stateAddVar (st : compile_state) (name : string) : int =
   match Hashtbl.find_opt st.var_to_index name with
   | Some idx ->
@@ -327,39 +331,50 @@ let rec compileExp (st : compile_state) (exp : Prog.exp) : unit =
   match exp.e with
   | EUnit ->
       let idx = stateAddConstant st Void in
-      stateEmit st (Loadc idx)
+      stateEmitLoadc st idx
   | EEmptyValue -> (
     match exp.t.t with
     | TList _ ->
         let idx = stateAddConstant st (List (ref [])) in
-        stateEmit st (Loadc idx)
+        stateEmitLoadc st idx
     | _ ->
         let idx = stateAddConstant st Void in
-        stateEmit st (Loadc idx) )
+        stateEmitLoadc st idx )
   | EBool b ->
       let idx = stateAddConstant st (Bool b) in
-      stateEmit st (Loadc idx)
+      stateEmitLoadc st idx
   | EInt i ->
       let v = if isInt16Type exp.t then Int16 i else Int i in
       let idx = stateAddConstant st v in
-      stateEmit st (Loadc idx)
+      stateEmitLoadc st idx
   | EReal f ->
       let idx = stateAddConstant st (Real f) in
-      stateEmit st (Loadc idx)
+      stateEmitLoadc st idx
   | EFixed f ->
       let idx = stateAddConstant st (Real f) in
-      stateEmit st (Loadc idx)
+      stateEmitLoadc st idx
   | EString s ->
       let idx = stateAddConstant st (String s) in
-      stateEmit st (Loadc idx)
+      stateEmitLoadc st idx
   | EId name -> (
     match Hashtbl.find_opt st.var_to_index name with
     | Some var_idx ->
-        stateEmit st (LoadLocal var_idx)
+        stateEmit st
+          ( match var_idx with
+          | 0 ->
+              LoadLocal0
+          | 1 ->
+              LoadLocal1
+          | 2 ->
+              LoadLocal2
+          | 3 ->
+              LoadLocal3
+          | _ ->
+              LoadLocal var_idx )
     | None -> (
       match Hashtbl.find_opt st.constant_names name with
       | Some const_idx ->
-          stateEmit st (Loadc const_idx)
+          stateEmitLoadc st const_idx
       | None -> (
         match Hashtbl.find_opt st.constant_exps name with
         | Some const_exp ->
@@ -444,7 +459,7 @@ let rec compileExp (st : compile_state) (exp : Prog.exp) : unit =
                 compileExp st exp
             | None ->
                 let idx = stateAddConstant st Void in
-                stateEmit st (Loadc idx) )
+                stateEmitLoadc st idx )
           member_values ;
         stateEmit st (MakeStruct n_members)
     | None ->
@@ -552,9 +567,19 @@ and compileCall (st : compile_state) (path : string) (args : exp list) (result_t
       end
       else
         match Hashtbl.find_opt st.function_names path with
-        | Some func_idx ->
+        | Some func_idx -> (
             CCList.iter (compileExp st) args ;
-            stateEmit st (Call (func_idx, nargs))
+            match nargs with
+            | 0 ->
+                stateEmit st (Call0 func_idx)
+            | 1 ->
+                stateEmit st (Call1 func_idx)
+            | 2 ->
+                stateEmit st (Call2 func_idx)
+            | 3 ->
+                stateEmit st (Call3 func_idx)
+            | _ ->
+                stateEmit st (Call (func_idx, nargs)) )
         | None ->
             if Hashtbl.mem st.external_functions path then begin
               CCList.iter (compileExp st) args ;
@@ -571,7 +596,18 @@ and compileLexp (st : compile_state) (lexp : Prog.lexp) : unit =
   | LId name -> (
     match Hashtbl.find_opt st.var_to_index name with
     | Some var_idx ->
-        stateEmit st (StoreLocal var_idx)
+        stateEmit st
+          ( match var_idx with
+          | 0 ->
+              StoreLocal0
+          | 1 ->
+              StoreLocal1
+          | 2 ->
+              StoreLocal2
+          | 3 ->
+              StoreLocal3
+          | _ ->
+              StoreLocal var_idx )
     | None ->
         error ("Variable not found in left-value: " ^ name) )
   | LMember (parent_lexp, member_name) -> (
@@ -656,22 +692,22 @@ let rec emitDefaultValue (st : compile_state) (typ : Prog.type_) : unit =
   match typ.t with
   | TVoid _ ->
       let idx = stateAddConstant st Void in
-      stateEmit st (Loadc idx)
+      stateEmitLoadc st idx
   | TInt ->
       let idx = stateAddConstant st (Int 0) in
-      stateEmit st (Loadc idx)
+      stateEmitLoadc st idx
   | TInt16 ->
       let idx = stateAddConstant st (Int16 0) in
-      stateEmit st (Loadc idx)
+      stateEmitLoadc st idx
   | TReal | TFix16 ->
       let idx = stateAddConstant st (Real 0.0) in
-      stateEmit st (Loadc idx)
+      stateEmitLoadc st idx
   | TBool ->
       let idx = stateAddConstant st (Bool false) in
-      stateEmit st (Loadc idx)
+      stateEmitLoadc st idx
   | TString ->
       let idx = stateAddConstant st (String "") in
-      stateEmit st (Loadc idx)
+      stateEmitLoadc st idx
   | TArray (Some size, elem_type) ->
       for _ = 1 to size do
         emitDefaultValue st elem_type
@@ -681,7 +717,7 @@ let rec emitDefaultValue (st : compile_state) (typ : Prog.type_) : unit =
       stateEmit st (MakeArray 0)
   | TList _ ->
       let idx = stateAddConstant st (List (ref [])) in
-      stateEmit st (Loadc idx)
+      stateEmitLoadc st idx
   | TStruct descr ->
       CCList.iter (fun (_, mtyp, _, _) -> emitDefaultValue st mtyp) descr.members ;
       stateEmit st (MakeStruct (CCList.length descr.members))
@@ -690,7 +726,7 @@ let rec emitDefaultValue (st : compile_state) (typ : Prog.type_) : unit =
       stateEmit st (MakeTuple (CCList.length types))
   | TEmptyType ->
       let idx = stateAddConstant st Void in
-      stateEmit st (Loadc idx)
+      stateEmitLoadc st idx
 
 (* Compile a statement *)
 and compileStmt (st : compile_state) (stmt : Prog.stmt) : unit =
@@ -703,7 +739,18 @@ and compileStmt (st : compile_state) (stmt : Prog.stmt) : unit =
         | Some init_exp ->
             compileExp st init_exp ;
             let var_idx = stateAddVar st name in
-            stateEmit st (StoreLocal var_idx)
+            stateEmit st
+              ( match var_idx with
+              | 0 ->
+                  StoreLocal0
+              | 1 ->
+                  StoreLocal1
+              | 2 ->
+                  StoreLocal2
+              | 3 ->
+                  StoreLocal3
+              | _ ->
+                  StoreLocal var_idx )
         | None ->
             (* Initialize with default value based on type.
                For scalar types (int, real, bool, string), skip emitting the default:
@@ -716,7 +763,18 @@ and compileStmt (st : compile_state) (stmt : Prog.stmt) : unit =
             if needs_default then begin
               emitDefaultValue st typ ;
               let var_idx = stateAddVar st name in
-              stateEmit st (StoreLocal var_idx)
+              stateEmit st
+                ( match var_idx with
+                | 0 ->
+                    StoreLocal0
+                | 1 ->
+                    StoreLocal1
+                | 2 ->
+                    StoreLocal2
+                | 3 ->
+                    StoreLocal3
+                | _ ->
+                    StoreLocal var_idx )
             end ) )
   | StmtBind (lexp, exp) ->
       compileExp st exp ; compileLexp st lexp

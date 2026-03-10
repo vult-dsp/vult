@@ -56,6 +56,10 @@ let buildJumpTargets (instrs : instruction array) (funcs : bc_func array) : (int
       match instr with
       | Jump target | JumpIfFalse target | JumpIfTrue target ->
           Hashtbl.replace targets target ()
+      | LtIntJumpIfFalse target | GtIntJumpIfFalse target | EqIntJumpIfFalse target ->
+          Hashtbl.replace targets target ()
+      | LtRealJumpIfFalse target | GtRealJumpIfFalse target | EqRealJumpIfFalse target ->
+          Hashtbl.replace targets target ()
       | _ ->
           () )
     instrs ;
@@ -90,10 +94,60 @@ let applyRules (instrs : instruction array) (funcs : bc_func array) : instructio
           old_to_new.(!i + 1) <- !buf_len ;
           add (DupStoreLocal n1) ;
           i := !i + 2
+      | StoreLocal0, LoadLocal0 ->
+          old_to_new.(!i) <- !buf_len ;
+          old_to_new.(!i + 1) <- !buf_len ;
+          add DupStoreLocal0 ;
+          i := !i + 2
+      | StoreLocal1, LoadLocal1 ->
+          old_to_new.(!i) <- !buf_len ;
+          old_to_new.(!i + 1) <- !buf_len ;
+          add DupStoreLocal1 ;
+          i := !i + 2
+      | StoreLocal2, LoadLocal2 ->
+          old_to_new.(!i) <- !buf_len ;
+          old_to_new.(!i + 1) <- !buf_len ;
+          add DupStoreLocal2 ;
+          i := !i + 2
+      | StoreLocal3, LoadLocal3 ->
+          old_to_new.(!i) <- !buf_len ;
+          old_to_new.(!i + 1) <- !buf_len ;
+          add DupStoreLocal3 ;
+          i := !i + 2
       | StoreLocalMember (l1, m1), LoadLocalMember (l2, m2) when l1 = l2 && m1 = m2 ->
           old_to_new.(!i) <- !buf_len ;
           old_to_new.(!i + 1) <- !buf_len ;
           add (DupStoreLocalMember (l1, m1)) ;
+          i := !i + 2
+      | LtInt, JumpIfFalse target ->
+          old_to_new.(!i) <- !buf_len ;
+          old_to_new.(!i + 1) <- !buf_len ;
+          add (LtIntJumpIfFalse target) ;
+          i := !i + 2
+      | GtInt, JumpIfFalse target ->
+          old_to_new.(!i) <- !buf_len ;
+          old_to_new.(!i + 1) <- !buf_len ;
+          add (GtIntJumpIfFalse target) ;
+          i := !i + 2
+      | EqInt, JumpIfFalse target ->
+          old_to_new.(!i) <- !buf_len ;
+          old_to_new.(!i + 1) <- !buf_len ;
+          add (EqIntJumpIfFalse target) ;
+          i := !i + 2
+      | LtReal, JumpIfFalse target ->
+          old_to_new.(!i) <- !buf_len ;
+          old_to_new.(!i + 1) <- !buf_len ;
+          add (LtRealJumpIfFalse target) ;
+          i := !i + 2
+      | GtReal, JumpIfFalse target ->
+          old_to_new.(!i) <- !buf_len ;
+          old_to_new.(!i + 1) <- !buf_len ;
+          add (GtRealJumpIfFalse target) ;
+          i := !i + 2
+      | EqReal, JumpIfFalse target ->
+          old_to_new.(!i) <- !buf_len ;
+          old_to_new.(!i + 1) <- !buf_len ;
+          add (EqRealJumpIfFalse target) ;
           i := !i + 2
       | NegReal, AddReal ->
           old_to_new.(!i) <- !buf_len ;
@@ -163,6 +217,18 @@ let fixupCode (old_instrs : instruction array) (new_instrs : instruction array) 
           JumpIfFalse (translate target)
       | JumpIfTrue target ->
           JumpIfTrue (translate target)
+      | LtIntJumpIfFalse target ->
+          LtIntJumpIfFalse (translate target)
+      | GtIntJumpIfFalse target ->
+          GtIntJumpIfFalse (translate target)
+      | EqIntJumpIfFalse target ->
+          EqIntJumpIfFalse (translate target)
+      | LtRealJumpIfFalse target ->
+          LtRealJumpIfFalse (translate target)
+      | GtRealJumpIfFalse target ->
+          GtRealJumpIfFalse (translate target)
+      | EqRealJumpIfFalse target ->
+          EqRealJumpIfFalse (translate target)
       | other ->
           other )
     new_instrs

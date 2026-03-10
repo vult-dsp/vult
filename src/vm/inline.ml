@@ -89,6 +89,24 @@ let normalizeBody (code : instruction array) (start_idx : int) (end_idx : int) (
       | JumpIfTrue target ->
           let target_idx = Hashtbl.find pc_to_index target in
           JumpIfTrue (target_idx - start_idx)
+      | LtIntJumpIfFalse target ->
+          let target_idx = Hashtbl.find pc_to_index target in
+          LtIntJumpIfFalse (target_idx - start_idx)
+      | GtIntJumpIfFalse target ->
+          let target_idx = Hashtbl.find pc_to_index target in
+          GtIntJumpIfFalse (target_idx - start_idx)
+      | EqIntJumpIfFalse target ->
+          let target_idx = Hashtbl.find pc_to_index target in
+          EqIntJumpIfFalse (target_idx - start_idx)
+      | LtRealJumpIfFalse target ->
+          let target_idx = Hashtbl.find pc_to_index target in
+          LtRealJumpIfFalse (target_idx - start_idx)
+      | GtRealJumpIfFalse target ->
+          let target_idx = Hashtbl.find pc_to_index target in
+          GtRealJumpIfFalse (target_idx - start_idx)
+      | EqRealJumpIfFalse target ->
+          let target_idx = Hashtbl.find pc_to_index target in
+          EqRealJumpIfFalse (target_idx - start_idx)
       | Return ->
           Jump body_len
       | _ ->
@@ -124,18 +142,64 @@ let buildCallerMap (code : instruction array) (funcs : bc_func array) : int arra
 
 (* Remap local indices in an instruction by adding an offset.
    Does not modify jump targets (those use body-relative indices). *)
+let remapLoadLocal (i : int) (offset : int) : instruction =
+  let idx = i + offset in
+  match idx with 0 -> LoadLocal0 | 1 -> LoadLocal1 | 2 -> LoadLocal2 | 3 -> LoadLocal3 | _ -> LoadLocal idx
+
+let remapStoreLocal (i : int) (offset : int) : instruction =
+  let idx = i + offset in
+  match idx with 0 -> StoreLocal0 | 1 -> StoreLocal1 | 2 -> StoreLocal2 | 3 -> StoreLocal3 | _ -> StoreLocal idx
+
+let remapDupStoreLocal (i : int) (offset : int) : instruction =
+  let idx = i + offset in
+  match idx with
+  | 0 ->
+      DupStoreLocal0
+  | 1 ->
+      DupStoreLocal1
+  | 2 ->
+      DupStoreLocal2
+  | 3 ->
+      DupStoreLocal3
+  | _ ->
+      DupStoreLocal idx
+
 let remapLocals (instr : instruction) (offset : int) : instruction =
   match instr with
   | LoadLocal i ->
-      LoadLocal (i + offset)
+      remapLoadLocal i offset
   | StoreLocal i ->
-      StoreLocal (i + offset)
+      remapStoreLocal i offset
+  | LoadLocal0 ->
+      remapLoadLocal 0 offset
+  | LoadLocal1 ->
+      remapLoadLocal 1 offset
+  | LoadLocal2 ->
+      remapLoadLocal 2 offset
+  | LoadLocal3 ->
+      remapLoadLocal 3 offset
+  | StoreLocal0 ->
+      remapStoreLocal 0 offset
+  | StoreLocal1 ->
+      remapStoreLocal 1 offset
+  | StoreLocal2 ->
+      remapStoreLocal 2 offset
+  | StoreLocal3 ->
+      remapStoreLocal 3 offset
   | LoadLocalMember (i, m) ->
       LoadLocalMember (i + offset, m)
   | StoreLocalMember (i, m) ->
       StoreLocalMember (i + offset, m)
   | DupStoreLocal i ->
-      DupStoreLocal (i + offset)
+      remapDupStoreLocal i offset
+  | DupStoreLocal0 ->
+      remapDupStoreLocal 0 offset
+  | DupStoreLocal1 ->
+      remapDupStoreLocal 1 offset
+  | DupStoreLocal2 ->
+      remapDupStoreLocal 2 offset
+  | DupStoreLocal3 ->
+      remapDupStoreLocal 3 offset
   | DupStoreLocalMember (i, m) ->
       DupStoreLocalMember (i + offset, m)
   | UnpackTuple (n, offsets) ->
@@ -170,7 +234,24 @@ let inline (code : instruction array) (funcs : bc_func array) : instruction arra
     in
     for i = 0 to old_len - 1 do
       match old_code.(i) with
-      | Call (func_idx, nargs) when Hashtbl.mem candidates func_idx ->
+      | (Call (_, _) | Call0 _ | Call1 _ | Call2 _ | Call3 _) as call_instr
+        when let fi = match call_instr with Call (f, _) | Call0 f | Call1 f | Call2 f | Call3 f -> f | _ -> -1 in
+             Hashtbl.mem candidates fi ->
+          let func_idx, nargs =
+            match call_instr with
+            | Call (f, n) ->
+                (f, n)
+            | Call0 f ->
+                (f, 0)
+            | Call1 f ->
+                (f, 1)
+            | Call2 f ->
+                (f, 2)
+            | Call3 f ->
+                (f, 3)
+            | _ ->
+                (-1, 0)
+          in
           let body = Hashtbl.find candidates func_idx in
           let caller_idx = caller_map.(i) in
           old_to_new.(i) <- !buf_len ;
@@ -188,7 +269,15 @@ let inline (code : instruction array) (funcs : bc_func array) : instruction arra
                 let new_idx = !buf_len in
                 let remapped = remapLocals instr base in
                 ( match remapped with
-                | Jump _ | JumpIfFalse _ | JumpIfTrue _ ->
+                | Jump _
+                | JumpIfFalse _
+                | JumpIfTrue _
+                | LtIntJumpIfFalse _
+                | GtIntJumpIfFalse _
+                | EqIntJumpIfFalse _
+                | LtRealJumpIfFalse _
+                | GtRealJumpIfFalse _
+                | EqRealJumpIfFalse _ ->
                     Hashtbl.replace inlined_jumps new_idx body_emit_start
                 | _ ->
                     () ) ;
@@ -196,7 +285,7 @@ let inline (code : instruction array) (funcs : bc_func array) : instruction arra
               body ;
             extra_locals.(caller_idx) <- extra_locals.(caller_idx) + callee.n_locals
           end
-          else add (Call (func_idx, nargs))
+          else add call_instr
       | instr ->
           old_to_new.(i) <- !buf_len ;
           add instr
@@ -245,6 +334,30 @@ let inline (code : instruction array) (funcs : bc_func array) : instruction arra
           | JumpIfTrue target ->
               if Hashtbl.mem inlined_jumps i then JumpIfTrue (translateInlined target (Hashtbl.find inlined_jumps i))
               else JumpIfTrue (translateOld target)
+          | LtIntJumpIfFalse target ->
+              if Hashtbl.mem inlined_jumps i then
+                LtIntJumpIfFalse (translateInlined target (Hashtbl.find inlined_jumps i))
+              else LtIntJumpIfFalse (translateOld target)
+          | GtIntJumpIfFalse target ->
+              if Hashtbl.mem inlined_jumps i then
+                GtIntJumpIfFalse (translateInlined target (Hashtbl.find inlined_jumps i))
+              else GtIntJumpIfFalse (translateOld target)
+          | EqIntJumpIfFalse target ->
+              if Hashtbl.mem inlined_jumps i then
+                EqIntJumpIfFalse (translateInlined target (Hashtbl.find inlined_jumps i))
+              else EqIntJumpIfFalse (translateOld target)
+          | LtRealJumpIfFalse target ->
+              if Hashtbl.mem inlined_jumps i then
+                LtRealJumpIfFalse (translateInlined target (Hashtbl.find inlined_jumps i))
+              else LtRealJumpIfFalse (translateOld target)
+          | GtRealJumpIfFalse target ->
+              if Hashtbl.mem inlined_jumps i then
+                GtRealJumpIfFalse (translateInlined target (Hashtbl.find inlined_jumps i))
+              else GtRealJumpIfFalse (translateOld target)
+          | EqRealJumpIfFalse target ->
+              if Hashtbl.mem inlined_jumps i then
+                EqRealJumpIfFalse (translateInlined target (Hashtbl.find inlined_jumps i))
+              else EqRealJumpIfFalse (translateOld target)
           | other ->
               other )
         new_code

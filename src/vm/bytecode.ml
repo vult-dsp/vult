@@ -146,6 +146,36 @@ type instruction =
   (* Fused dup+store opcodes *)
   | DupStoreLocal of int
   | DupStoreLocalMember of int * int
+  (* Specialized call opcodes for common arities *)
+  | Call0 of int
+  | Call1 of int
+  | Call2 of int
+  | Call3 of int
+  (* Specialized local access opcodes for indices 0-3 *)
+  | LoadLocal0
+  | LoadLocal1
+  | LoadLocal2
+  | LoadLocal3
+  | StoreLocal0
+  | StoreLocal1
+  | StoreLocal2
+  | StoreLocal3
+  | Loadc0
+  | Loadc1
+  | Loadc2
+  | Loadc3
+  (* Specialized dup+store for indices 0-3 *)
+  | DupStoreLocal0
+  | DupStoreLocal1
+  | DupStoreLocal2
+  | DupStoreLocal3
+  (* Fused compare+branch opcodes *)
+  | LtIntJumpIfFalse of int
+  | GtIntJumpIfFalse of int
+  | EqIntJumpIfFalse of int
+  | LtRealJumpIfFalse of int
+  | GtRealJumpIfFalse of int
+  | EqRealJumpIfFalse of int
 
 (* Compiled function *)
 type bc_func = {name: string; entry_pc: int; n_args: int; n_locals: int}
@@ -266,6 +296,58 @@ let op_store_local_member = 53
 let op_dup_store_local = 54
 
 let op_dup_store_local_member = 55
+
+let op_call0 = 56
+
+let op_call1 = 57
+
+let op_call2 = 58
+
+let op_call3 = 59
+
+let op_load_local0 = 60
+
+let op_load_local1 = 61
+
+let op_load_local2 = 62
+
+let op_load_local3 = 63
+
+let op_store_local0 = 64
+
+let op_store_local1 = 65
+
+let op_store_local2 = 66
+
+let op_store_local3 = 67
+
+let op_loadc0 = 68
+
+let op_loadc1 = 69
+
+let op_loadc2 = 70
+
+let op_loadc3 = 71
+
+let op_dup_store_local0 = 72
+
+let op_dup_store_local1 = 73
+
+let op_dup_store_local2 = 74
+
+let op_dup_store_local3 = 75
+
+let op_lt_int_jump_if_false = 76
+
+let op_gt_int_jump_if_false = 77
+
+let op_eq_int_jump_if_false = 78
+
+let op_lt_real_jump_if_false = 79
+
+let op_gt_real_jump_if_false = 80
+
+let op_eq_real_jump_if_false = 81
 
 (* Encode binop_tag to int *)
 let encodeBinopTag (tag : binop_tag) : int =
@@ -489,6 +571,58 @@ let encodeInstruction (instr : instruction) (acc : int list) : int list =
       idx :: op_dup_store_local :: acc
   | DupStoreLocalMember (local_idx, member_idx) ->
       member_idx :: local_idx :: op_dup_store_local_member :: acc
+  | Call0 func_idx ->
+      func_idx :: op_call0 :: acc
+  | Call1 func_idx ->
+      func_idx :: op_call1 :: acc
+  | Call2 func_idx ->
+      func_idx :: op_call2 :: acc
+  | Call3 func_idx ->
+      func_idx :: op_call3 :: acc
+  | LoadLocal0 ->
+      op_load_local0 :: acc
+  | LoadLocal1 ->
+      op_load_local1 :: acc
+  | LoadLocal2 ->
+      op_load_local2 :: acc
+  | LoadLocal3 ->
+      op_load_local3 :: acc
+  | StoreLocal0 ->
+      op_store_local0 :: acc
+  | StoreLocal1 ->
+      op_store_local1 :: acc
+  | StoreLocal2 ->
+      op_store_local2 :: acc
+  | StoreLocal3 ->
+      op_store_local3 :: acc
+  | Loadc0 ->
+      op_loadc0 :: acc
+  | Loadc1 ->
+      op_loadc1 :: acc
+  | Loadc2 ->
+      op_loadc2 :: acc
+  | Loadc3 ->
+      op_loadc3 :: acc
+  | DupStoreLocal0 ->
+      op_dup_store_local0 :: acc
+  | DupStoreLocal1 ->
+      op_dup_store_local1 :: acc
+  | DupStoreLocal2 ->
+      op_dup_store_local2 :: acc
+  | DupStoreLocal3 ->
+      op_dup_store_local3 :: acc
+  | LtIntJumpIfFalse target ->
+      target :: op_lt_int_jump_if_false :: acc
+  | GtIntJumpIfFalse target ->
+      target :: op_gt_int_jump_if_false :: acc
+  | EqIntJumpIfFalse target ->
+      target :: op_eq_int_jump_if_false :: acc
+  | LtRealJumpIfFalse target ->
+      target :: op_lt_real_jump_if_false :: acc
+  | GtRealJumpIfFalse target ->
+      target :: op_gt_real_jump_if_false :: acc
+  | EqRealJumpIfFalse target ->
+      target :: op_eq_real_jump_if_false :: acc
 
 (* Encode instruction list to int array *)
 let encode (instrs : instruction list) : int array =
@@ -548,6 +682,20 @@ let instrSize (instr : instruction) : int =
       2
   | DupStoreLocalMember _ ->
       3
+  | Call0 _ | Call1 _ | Call2 _ | Call3 _ ->
+      2
+  | LoadLocal0 | LoadLocal1 | LoadLocal2 | LoadLocal3 ->
+      1
+  | StoreLocal0 | StoreLocal1 | StoreLocal2 | StoreLocal3 ->
+      1
+  | Loadc0 | Loadc1 | Loadc2 | Loadc3 ->
+      1
+  | DupStoreLocal0 | DupStoreLocal1 | DupStoreLocal2 | DupStoreLocal3 ->
+      1
+  | LtIntJumpIfFalse _ | GtIntJumpIfFalse _ | EqIntJumpIfFalse _ ->
+      2
+  | LtRealJumpIfFalse _ | GtRealJumpIfFalse _ | EqRealJumpIfFalse _ ->
+      2
 
 (* Print a value for output *)
 let rec printValue (v : value) : string =
@@ -790,6 +938,58 @@ let printInstruction (instr : instruction) : string =
       Printf.sprintf "DupStoreLocal %d" idx
   | DupStoreLocalMember (local_idx, member_idx) ->
       Printf.sprintf "DupStoreLocalMember %d %d" local_idx member_idx
+  | Call0 func_idx ->
+      Printf.sprintf "Call0 %d" func_idx
+  | Call1 func_idx ->
+      Printf.sprintf "Call1 %d" func_idx
+  | Call2 func_idx ->
+      Printf.sprintf "Call2 %d" func_idx
+  | Call3 func_idx ->
+      Printf.sprintf "Call3 %d" func_idx
+  | LoadLocal0 ->
+      "LoadLocal0"
+  | LoadLocal1 ->
+      "LoadLocal1"
+  | LoadLocal2 ->
+      "LoadLocal2"
+  | LoadLocal3 ->
+      "LoadLocal3"
+  | StoreLocal0 ->
+      "StoreLocal0"
+  | StoreLocal1 ->
+      "StoreLocal1"
+  | StoreLocal2 ->
+      "StoreLocal2"
+  | StoreLocal3 ->
+      "StoreLocal3"
+  | Loadc0 ->
+      "Loadc0"
+  | Loadc1 ->
+      "Loadc1"
+  | Loadc2 ->
+      "Loadc2"
+  | Loadc3 ->
+      "Loadc3"
+  | DupStoreLocal0 ->
+      "DupStoreLocal0"
+  | DupStoreLocal1 ->
+      "DupStoreLocal1"
+  | DupStoreLocal2 ->
+      "DupStoreLocal2"
+  | DupStoreLocal3 ->
+      "DupStoreLocal3"
+  | LtIntJumpIfFalse target ->
+      Printf.sprintf "LtIntJumpIfFalse %d" target
+  | GtIntJumpIfFalse target ->
+      Printf.sprintf "GtIntJumpIfFalse %d" target
+  | EqIntJumpIfFalse target ->
+      Printf.sprintf "EqIntJumpIfFalse %d" target
+  | LtRealJumpIfFalse target ->
+      Printf.sprintf "LtRealJumpIfFalse %d" target
+  | GtRealJumpIfFalse target ->
+      Printf.sprintf "GtRealJumpIfFalse %d" target
+  | EqRealJumpIfFalse target ->
+      Printf.sprintf "EqRealJumpIfFalse %d" target
 
 (* Dump an entire program *)
 let dump (prog : bc_prog) : string =
