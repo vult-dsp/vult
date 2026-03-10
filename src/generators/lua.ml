@@ -435,17 +435,19 @@ let print_top_stmt (args : Util.Args.args) t =
 
 let print_prog args t = Pla.map_join (print_top_stmt args) t
 
-let getTemplateCode (args : Util.Args.args) =
+let getTemplateCode (args : Util.Args.args) (stmts : top_stmt list) =
   match args.template with
   | None ->
       (Pla.unit, Pla.unit)
   | Some "performance" ->
       T_performance.generateLua args
+  | Some "vcv-prototype" ->
+      T_vcv_prototype.generate args stmts
   | Some name ->
       Util.Error.raiseErrorMsg ("Unknown template '" ^ name ^ "'")
 
 let generate (args : Util.Args.args) (stmts : top_stmt list) =
   let file = Common.setExt ".lua" args.output in
   let code = print_prog args stmts in
-  let pre, post = getTemplateCode args in
+  let pre, post = getTemplateCode args stmts in
   [({%pla|<#runtime#><#pre#><#code#><#post#>|}, file)]

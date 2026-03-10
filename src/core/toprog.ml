@@ -449,10 +449,28 @@ let getInitializersFromModule table m =
 let createInitizerTable (env : env) =
   Env.Map.fold (fun _ m s -> getInitializersFromModule s m) Maps.Map.empty env.modules
 
+(* Generate TopExternal stubs for extension builtins so the interpreter treats them as external calls *)
+let extensionExternals (iargs : Args.args) : top_stmt list =
+  let extensionOfString (s : string) : Env.extension option =
+    match s with "vcv-prototype" -> Some Env.VCVPrototype | _ -> None
+  in
+  let implicit =
+    match (iargs.code, iargs.template) with Args.LuaCode, Some "vcv-prototype" -> [Env.VCVPrototype] | _ -> []
+  in
+  let explicit = CCList.filter_map extensionOfString iargs.extensions in
+  let extensions = CCList.sort_uniq ~cmp:compare (implicit @ explicit) in
+  let extension_builtins = CCList.concat_map Env.builtins_for_extension extensions in
+  CCList.map
+    (fun (name, _) ->
+      let def : function_def = {name; args= []; t= ([], C.void_t); loc= Loc.default; tags= []; info= default_info} in
+      {top= TopExternal (def, None); loc= Loc.default} )
+    extension_builtins
+
 let convert (iargs : Args.args) env stmts =
   let stmts = main env stmts in
   let types, functions = CCList.partition isType stmts in
   let custom_initializers = createInitizerTable env in
   let initializers = CCList.map Initializer.(createInitFunction custom_initializers iargs) types in
   let serializers = Serializer.createSerializers types in
-  (env, types @ initializers @ serializers @ functions)
+  let ext_builtins = extensionExternals iargs in
+  (env, types @ initializers @ serializers @ ext_builtins @ functions)

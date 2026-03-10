@@ -1,0 +1,10 @@
+fun process(input_cv:real) {
+   mem phase;
+   val knob_cv = getKnob(1) - 0.5;
+   val freq = 440.0 * (input_cv + knob_cv);
+   val delta = sampletime() * freq;
+   phase = phase + delta;
+   if (phase > 1.0) phase = phase - 1.0;
+   return sin(2.0 * pi() * phase);
+}
+and update() { }

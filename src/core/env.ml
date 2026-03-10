@@ -161,6 +161,21 @@ type in_context = env
 
 type in_func = env
 
+type extension = VCVPrototype
+
+let vcv_prototype_builtins : (string * (unit -> Typed.fun_type)) list =
+  Typed.
+    [ ("sampletime", C.unit_real)
+    ; ("display", C.string_unit)
+    ; ("stringAppend", C.string_string_string)
+    ; ("getKnob", C.int_real)
+    ; ("getSwitch", C.int_bool)
+    ; ("setLight", C.int_real_real_real_unit)
+    ; ("setSwitchLight", C.int_real_real_real_unit) ]
+
+let builtins_for_extension (ext : extension) : (string * (unit -> Typed.fun_type)) list =
+  match ext with VCVPrototype -> vcv_prototype_builtins
+
 let builtin_functions =
   Typed.
     [ ("size", C.array_size)
@@ -1048,4 +1063,12 @@ let lookType (env : env) (path : path) (loc : Loc.t) : t =
   | None ->
       Error.raiseError ("A type with the name '" ^ pathString path ^ "' could not be found") loc
 
-let empty () = {modules= Map.empty (); builtin_functions; builtin_types; location= Top}
+let builtin_functions_with_extensions (extensions : extension list) : (unit -> Typed.fun_type) Map.t =
+  CCList.fold_left
+    (fun m ext ->
+      CCList.iter (fun (name, t) -> m := Maps.Map.add name t !m) (builtins_for_extension ext) ;
+      m )
+    builtin_functions extensions
+
+let empty ?(extensions : extension list = []) () : env =
+  {modules= Map.empty (); builtin_functions= builtin_functions_with_extensions extensions; builtin_types; location= Top}

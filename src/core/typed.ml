@@ -809,6 +809,28 @@ module C = struct
     let loc = Loc.default in
     let t = string ~loc in
     ([t; t], t)
+
+  (* VCV Prototype builtins *)
+  let int_real () : fun_type =
+    let loc = Loc.default in
+    ([int ~loc], real ~loc)
+
+  let int_bool () : fun_type =
+    let loc = Loc.default in
+    ([int ~loc], bool ~loc)
+
+  let string_unit () : fun_type =
+    let loc = Loc.default in
+    ([string ~loc], unit ~loc)
+
+  let string_string_string () : fun_type =
+    let loc = Loc.default in
+    let t = string ~loc in
+    ([t; t], t)
+
+  let int_real_real_real_unit () : fun_type =
+    let loc = Loc.default in
+    ([int ~loc; real ~loc; real ~loc; real ~loc], unit ~loc)
 end
 
 let rec setConstness (c : constness) (v : bool) =

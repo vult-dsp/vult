@@ -16,6 +16,7 @@
   T_browser
   T_webaudio
   T_worklet
+  T_vcv_prototype
   Replacements)
  (libraries core pparser pla str util)
  (flags

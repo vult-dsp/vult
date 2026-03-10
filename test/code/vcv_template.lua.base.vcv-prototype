@@ -1,0 +1,186 @@
+
+-- LuaJIT detection and optimization
+local isLuaJIT = type(jit) == "table" and jit.version
+
+-- Optimized array creation for LuaJIT using FFI
+local initializeArray
+if isLuaJIT then
+    local ffi = require("ffi")
+    ffi.cdef[[
+        typedef struct { double data[1]; } vult_array_t;
+    ]]
+    
+    function initializeArray(v, n) 
+        if type(v) == "number" then
+            -- Use FFI for numeric arrays in LuaJIT
+            local arr = ffi.new("double[?]", n)
+            for i = 0, n-1 do arr[i] = v end
+            return setmetatable({}, {
+                __index = function(t, k) return arr[k-1] end,
+                __newindex = function(t, k, v) arr[k-1] = v end,
+                __len = function() return n end
+            })
+        else
+            -- Fallback for non-numeric values
+            local a = {} 
+            for i=1, n do a[i] = v end 
+            return a 
+        end
+    end
+else
+    -- Standard Lua implementation
+    function initializeArray(v, n) 
+        local a = {} 
+        for i=1, n do a[i] = v end 
+        return a 
+    end
+end
+
+-- Math functions with LuaJIT optimizations
+local sin, cos, abs, exp, floor, tan, tanh, sqrt
+if isLuaJIT then
+    -- LuaJIT has faster math operations
+    sin = math.sin
+    cos = math.cos
+    abs = math.abs
+    exp = math.exp
+    floor = math.floor
+    tan = math.tan
+    tanh = math.tanh
+    sqrt = math.sqrt
+else
+    -- Standard Lua (same functions but explicit for potential future optimizations)
+    sin = math.sin
+    cos = math.cos
+    abs = math.abs
+    exp = math.exp
+    floor = math.floor
+    tan = math.tan
+    tanh = math.tanh
+    sqrt = math.sqrt
+end
+
+-- Bit operations optimized for LuaJIT
+local lshift, rshift
+if isLuaJIT then
+    local bit = require("bit")
+    lshift = bit.lshift
+    rshift = bit.rshift
+else
+    -- Fallback to arithmetic operations for standard Lua
+    function lshift(a, b) return a * (2 ^ b) end
+    function rshift(a, b) return math.floor(a / (2 ^ b)) end
+end
+
+-- Core runtime functions (simple builtins like eps, pi, clip, real, int, bool are inlined)
+function ifExpressionValue(cond,then_,else_) if cond then return then_ else return else_ end end
+function ifExpression(cond,then_,else_) if cond then return then_() else return else_() end end
+function random()           return math.random() end
+function irandom()          return math.floor(math.random() * 4294967296) end
+function int16(x)           local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end
+function intDiv(a, b)       return math.floor(a / b) end
+function list_clear(t)      for k in pairs(t) do t[k] = nil end end
+
+
+-- VCV Prototype functions
+local global_block = {}
+
+function stringAppend(s1, s2)
+   return s1 .. s2
+end
+
+function string(n)
+   return tostring(n)
+end
+
+function getKnob(i)
+   if i > 6 or i < 1 then
+      return 0.0
+   else
+      return global_block.knobs[i]
+   end
+end
+
+function getSwitch(i)
+   if i > 6 or i < 1 then
+      return false
+   else
+      return global_block.switches[i]
+   end
+end
+
+function setLight(i, r, g, b)
+   if not(i > 6 or i < 1) then
+      global_block.lights[i][1] = r
+      global_block.lights[i][2] = g
+      global_block.lights[i][3] = b
+   end
+end
+
+function setSwitchLight(i, r, g, b)
+   if not(i > 6 or i < 1) then
+      global_block.switchLights[i][1] = r
+      global_block.switchLights[i][2] = g
+      global_block.switchLights[i][3] = b
+   end
+end
+
+function samplerate()
+   return global_block.sampleRate
+end
+
+function sampletime()
+   return global_block.sampleTime
+end
+
+config.frameDivider = 1
+config.bufferSize = 32
+function Vcv_template_process_type_alloc()
+   local _ctx = {};
+   _ctx.Vcv_template_process_ret_0 = 0.0
+   _ctx.Vcv_template_process_ret_1 = 0.0
+   _ctx.Vcv_template_process_ret_2 = 0.0
+   _ctx.sub = 0.0
+   _ctx.sum = 0.0
+   return _ctx
+end
+
+function Vcv_template_update_type_alloc(_ctx)
+   return Vcv_template_process_type_alloc()
+end
+
+function Vcv_template_process(_ctx, in1, in2)
+   _ctx.sum = (((in1 + in2)) > (1.0) and (1.0) or (((in1 + in2)) < (-1.0) and (-1.0) or ((in1 + in2))))
+   _ctx.sub = (((in1 + (-in2))) > (1.0) and (1.0) or (((in1 + (-in2))) < (-1.0) and (-1.0) or ((in1 + (-in2)))))
+   _ctx.Vcv_template_process_ret_0 = _ctx.sum
+   _ctx.Vcv_template_process_ret_1 = _ctx.sub
+   _ctx.Vcv_template_process_ret_2 = (_ctx.sum * _ctx.sub)
+   return 
+end
+
+function Vcv_template_update(_ctx)
+   display("test")
+   setLight(1, 1.0, 0.0, 0.0)
+   setSwitchLight(1, 0.0, 1.0, 0.0)
+end
+
+
+function display(s)
+   print(s)
+end
+
+local processor = Vcv_template_process_type_alloc()
+
+
+function process(block)
+   global_block = block
+   Vcv_template_update(processor)
+   for i=1,block.bufferSize do
+      local in1 = block.inputs[1][i] / 10.0
+      local in2 = block.inputs[2][i] / 10.0
+      Vcv_template_process(processor, in1, in2)
+      block.outputs[1][i] = 10.0 * processor.Vcv_template_process_ret_0
+      block.outputs[2][i] = 10.0 * processor.Vcv_template_process_ret_1
+      block.outputs[3][i] = 10.0 * processor.Vcv_template_process_ret_2
+   end
+end

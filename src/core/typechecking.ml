@@ -1931,7 +1931,21 @@ let typecheck_single (iargs : Args.args) (env : env) (h : Parse.parsed_file) : e
 (* Type checking only - does NOT elaborate generics.
    Returns typed AST with EGenCall nodes preserved.
    Caller should call Elaboration.elaborate before code generation. *)
+let extensionOfString (s : string) : Env.extension option =
+  match s with "vcv-prototype" -> Some Env.VCVPrototype | _ -> None
+
+let getExtensions (args : Args.args) : Env.extension list =
+  (* Implicit extensions from template selection *)
+  let implicit =
+    match (args.code, args.template) with Args.LuaCode, Some "vcv-prototype" -> [Env.VCVPrototype] | _ -> []
+  in
+  (* Explicit extensions from -extension flags *)
+  let explicit = CCList.filter_map extensionOfString args.extensions in
+  (* Deduplicate *)
+  CCList.sort_uniq ~cmp:compare (implicit @ explicit)
+
 let typecheck (iargs : Args.args) (parsed : Parse.parsed_file list) : env * (string * top_stmt list) list =
+  let extensions = getExtensions iargs in
   let env, module_stmts =
     CCList.fold_left
       (fun (env, acc) (h : Parse.parsed_file) ->
@@ -1939,7 +1953,7 @@ let typecheck (iargs : Args.args) (parsed : Parse.parsed_file list) : env * (str
         let env, stmt = top_stmt_list iargs env h.stmts in
         let env = Env.exitModule env in
         (env, (h.name, stmt) :: acc) )
-      (Env.empty (), [])
+      (Env.empty ~extensions (), [])
       parsed
   in
   (env, CCList.rev module_stmts)

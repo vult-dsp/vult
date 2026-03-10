@@ -78,7 +78,8 @@ type args =
   ; mutable render: string option
   ; mutable java_bin_tables: bool
   ; mutable java_prefix: string option
-  ; mutable use_bytecode: bool }
+  ; mutable use_bytecode: bool
+  ; mutable extensions: string list }
 
 let default_arguments : args =
   { files= []
@@ -115,7 +116,8 @@ let default_arguments : args =
   ; render= None
   ; java_bin_tables= false
   ; java_prefix= None
-  ; use_bytecode= false }
+  ; use_bytecode= false
+  ; extensions= [] }
 
 type flags = {flag: string; action: Arg.spec; comment: string}
 
@@ -244,7 +246,10 @@ let flags result =
     ; comment= " Use bytecode VM for -eval and -render instead of interpreter (default: off)" }
   ; { flag= "-java-prefix"
     ; action= Arg.String (fun prefix -> result.java_prefix <- Some prefix)
-    ; comment= "prefix Sets the Java package prefix and adds an external import (e.g., vult.com)" } ]
+    ; comment= "prefix Sets the Java package prefix and adds an external import (e.g., vult.com)" }
+  ; { flag= "-extension"
+    ; action= Arg.String (fun ext -> result.extensions <- ext :: result.extensions)
+    ; comment= "name Enables the specified language extension (e.g., vcv-prototype)" } ]
 
 (** Returns a 'arguments' type containing the options passed in the command line *)
 let processArguments () : args =

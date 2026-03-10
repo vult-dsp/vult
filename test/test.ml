@@ -151,6 +151,8 @@ let errors_files =
 let template_files =
   ["sf_f.vult"; "sff_f.vult"; "sff_ff.vult"; "sfi_fi.vult"; "af_f.vult"; "aff_f.vult"; "aff_ff.vult"; "afi_fi.vult"]
 
+let vcv_template_files = ["vcv_template.vult"; "vcv_vco.vult"]
+
 let perf_files =
   [ "saw_eptr_perf.vult"
   ; "saw_ptr1_perf.vult"
@@ -630,7 +632,9 @@ module Templates = struct
     let basefile = Filename.chop_extension (Filename.basename fullfile) in
     let moduleName = String.capitalize_ascii basefile in
     let output = in_tmp_dir basefile in
-    let roots = match code_type with "js" -> [] | _ -> [moduleName ^ ".process"] in
+    let roots =
+      match (code_type, template) with "js", _ -> [] | _, "vcv-prototype" -> [] | _ -> [moduleName ^ ".process"]
+    in
     let args = Args.{default_arguments with includes; roots} in
     let args, ext =
       match code_type with
@@ -845,6 +849,7 @@ let suite =
        ; Templates.get template_files "browser" "js"
        ; Templates.get template_files "webaudio" "js"
        ; Templates.get template_files "worklet" "js"
+       ; Templates.get vcv_template_files "vcv-prototype" "lua"
          (*    ; Templates.get template_files "max" "float"
                ; Templates.get template_files "max" "fixed"
                ; Templates.get template_files "modelica" "float"
