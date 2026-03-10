@@ -630,7 +630,8 @@ module Templates = struct
     let basefile = Filename.chop_extension (Filename.basename fullfile) in
     let moduleName = String.capitalize_ascii basefile in
     let output = in_tmp_dir basefile in
-    let args = Args.{default_arguments with includes; roots= [moduleName ^ ".process"]} in
+    let roots = match code_type with "js" -> [] | _ -> [moduleName ^ ".process"] in
+    let args = Args.{default_arguments with includes; roots} in
     let args, ext =
       match code_type with
       | "fixed" ->
@@ -841,13 +842,14 @@ let suite =
        ; PassesTest.get passes_files
        ; Templates.get template_files "pd" "float"
        ; Templates.get template_files "pd" "fixed"
+       ; Templates.get template_files "browser" "js"
+       ; Templates.get template_files "webaudio" "js"
+       ; Templates.get template_files "worklet" "js"
          (*    ; Templates.get template_files "max" "float"
                ; Templates.get template_files "max" "fixed"
                ; Templates.get template_files "modelica" "float"
                ; Templates.get template_files "modelica" "fixed"
-               ; Templates.get template_files "teensy" "fixed"
-               ; Templates.get template_files "webaudio" "js"
-               ; Templates.get template_files "browser" "js"*)
+               ; Templates.get template_files "teensy" "fixed" *)
        ; CliTest.get all_files Native "float"
        ; CliTest.get all_files Native "fixed"
        ; CliTest.get all_files Native "lua"

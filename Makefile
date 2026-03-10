@@ -25,6 +25,14 @@ jscompiler:
 	js_of_ocaml --custom-header="#!/usr/bin/env node" --disable use-js-string _build/default/src/vultjs.bc -o vult.js
 	chmod +x vult.js
 
+vultweb:
+	dune build src/js/vultweb.bc $(FORMAT)
+	js_of_ocaml --target-env=browser --disable use-js-string _build/default/src/js/vultweb.bc -o vultweb.js
+
+vultlib:
+	dune build src/js/vultlib_js.bc $(FORMAT)
+	js_of_ocaml --target-env=browser --disable use-js-string _build/default/src/js/vultlib_js.bc -o vultlib.js
+
 lsp:
 	dune build src/lsp/vult_lsp_exe.exe src/lsp/vult_lsp_js.bc $(FORMAT)
 	js_of_ocaml --custom-header="#!/usr/bin/env node" --disable use-js-string _build/default/src/lsp/vult_lsp_js.bc -o vult_lsp_js.js

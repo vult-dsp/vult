@@ -1,0 +1,22 @@
+(library
+ (name vultlib)
+ (modules Vultlib)
+ (libraries driver js_of_ocaml)
+ (preprocess
+  (pps js_of_ocaml-ppx)))
+
+(executable
+ (name vultweb)
+ (modules Vultweb)
+ (modes byte)
+ (libraries vultlib)
+ (preprocess
+  (pps js_of_ocaml-ppx)))
+
+(executable
+ (name vultlib_js)
+ (modules Vultlib_js)
+ (modes byte)
+ (libraries vultlib)
+ (preprocess
+  (pps js_of_ocaml-ppx)))

@@ -344,7 +344,7 @@ let print_top_stmt (args : Util.Args.args) t =
 
 let print_prog args t = Pla.map_join (print_top_stmt args) t
 
-let getTemplateCode (args : Util.Args.args) =
+let getTemplateCode (args : Util.Args.args) (stmts : top_stmt list) =
   match args.template with
   | None ->
       (Pla.unit, Pla.unit)
@@ -352,11 +352,19 @@ let getTemplateCode (args : Util.Args.args) =
       T_performance.generateJs args
   | Some "performance-bun" ->
       T_performance.generateJsBun args
+  | Some "browser" ->
+      T_browser.generateBrowser args stmts
+  | Some "node" ->
+      T_browser.generateNode args stmts
+  | Some "webaudio" ->
+      T_webaudio.generate args stmts
+  | Some "worklet" ->
+      T_worklet.generate args stmts
   | Some name ->
       Util.Error.raiseErrorMsg ("Unknown template '" ^ name ^ "'")
 
 let generate (args : Util.Args.args) (stmts : top_stmt list) =
   let file = Common.setExt ".js" args.output in
   let code = print_prog args stmts in
-  let pre, post = getTemplateCode args in
-  [({%pla|<#runtime#><#pre#><#code#><#post#>|}, file)]
+  let pre, post = getTemplateCode args stmts in
+  [({%pla|<#pre#><#runtime#><#code#><#post#>|}, file)]

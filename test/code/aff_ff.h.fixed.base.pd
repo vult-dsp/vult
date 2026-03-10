@@ -44,5 +44,17 @@ static_inline void Aff_ff_process(Aff_ff_process_type& _ctx, fix16_t a, fix16_t 
    return ;
 }
 
+static_inline void Aff_ff_noteOn(Aff_ff_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
+}
+
+static_inline void Aff_ff_noteOff(Aff_ff_process_type& _ctx, int32_t note, int32_t channel) {
+}
+
+static_inline void Aff_ff_controlChange(Aff_ff_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+}
+
+static_inline void Aff_ff_default(Aff_ff_process_type& _ctx) {
+}
+
 
 #endif // AFF_FF_H

@@ -41,5 +41,17 @@ static_inline void Sff_ff_process(Sff_ff_process_type& _ctx, float a, float b) {
    return ;
 }
 
+static_inline void Sff_ff_noteOn(Sff_ff_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
+}
+
+static_inline void Sff_ff_noteOff(Sff_ff_process_type& _ctx, int32_t note, int32_t channel) {
+}
+
+static_inline void Sff_ff_controlChange(Sff_ff_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+}
+
+static_inline void Sff_ff_default(Sff_ff_process_type& _ctx) {
+}
+
 
 #endif // SFF_FF_H

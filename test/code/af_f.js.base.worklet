@@ -1,7 +1,8 @@
+class VultProcessor extends AudioWorkletProcessor {
+   constructor() {
+      super();
+      this.vult = new (function() {
 
-(function(audioContext) {
-   var code = function () {
-   
 // Runtime functions (simple builtins like eps, pi, clip, real, int_, sin, cos, etc. are inlined)
 this.random = function()         { return Math.random(); };
 this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };
@@ -49,41 +50,21 @@ this.Af_f_default = function (_ctx) {
 
 
       this.context = this.Af_f_process_type_alloc();
+      this.Af_f_default(this.context);
+      })();
+      this.port.onmessage = (e) => {
+         if (e.data.type === 'noteOn') this.vult.Af_f_noteOn(this.vult.context, e.data.note, e.data.velocity, e.data.channel);
+         if (e.data.type === 'noteOff') this.vult.Af_f_noteOff(this.vult.context, e.data.note, e.data.channel);
+         if (e.data.type === 'controlChange') this.vult.Af_f_controlChange(this.vult.context, e.data.control, e.data.value, e.data.channel);
       };
-   var processor = new code ();
-   processor.Af_f_default(processor.context);
-   var node = audioContext.createScriptProcessor(0, 1, 1);
-   node.inputs = 1;
-   node.outputs = 1;
-   node.onaudioprocess = function (e) {
-
-
-   var in_0 = e.inputBuffer.getChannelData(0); 
-
-
-   var out_0 = e.outputBuffer.getChannelData(0); 
-
-
-   for (var n = 0; n < e.inputBuffer.length; n++) {
-            var ret = processor.Af_f_process(processor.context, in_0[n]); 
-out_0[n] = ret;  
    }
+   process(inputs, outputs, parameters) {
+      const input = inputs[0];
+      const output = outputs[0];
+      for (var i = 0; i < 128; i++) {
+         output[0][i] = this.vult.Af_f_process(this.vult.context, input[0] ? input[0][i] : 0);
+      }
+      return true;
    }
-
-
-   node.noteOn = function(note, velocity, channel){
-      if(velocity > 0) processor.Af_f_noteOn(processor.context,note,velocity,channel);
-      else processor.Af_f_noteOff(processor.context,note,channel);
-   }
-
-
-   node.noteOff = function(note, channel) {
-      processor.Af_f_noteOff(processor.context,note,channel);
-   }
-
-
-   node.controlChange = function(control, value, channel) {
-      processor.Af_f_controlChange(processor.context,control,value,channel);
-   }
-   return node;
-   })
+}
+registerProcessor('vult-processor', VultProcessor);

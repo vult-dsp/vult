@@ -38,5 +38,17 @@ static_inline fix16_t Af_f_process(Af_f_process_type& _ctx, fix16_t input) {
    return fix_mul(input, input);
 }
 
+static_inline void Af_f_noteOn(Af_f_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
+}
+
+static_inline void Af_f_noteOff(Af_f_process_type& _ctx, int32_t note, int32_t channel) {
+}
+
+static_inline void Af_f_controlChange(Af_f_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+}
+
+static_inline void Af_f_default(Af_f_process_type& _ctx) {
+}
+
 
 #endif // AF_F_H

@@ -13,6 +13,9 @@
   T_pd
   T_performance
   T_mathematica
+  T_browser
+  T_webaudio
+  T_worklet
   Replacements)
  (libraries core pparser pla str util)
  (flags

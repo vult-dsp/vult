@@ -35,22 +35,90 @@ jobs:
 
       - run: opam install . --deps-only
 
-      - run: opam exec -- make compiler jscompiler
+      - run: opam exec -- make compiler jscompiler vultweb vultlib
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: _build/default/src/vult.exe
 
-      - name: Save Js VultcJs Artifacts
+      - name: Save vult.js artifact
         uses: actions/upload-artifact@v4
         if: runner.os == 'Linux'
         with:
           name: vult.js
           path: vult.js
 
+      - name: Save vultweb.js artifact
+        uses: actions/upload-artifact@v4
+        if: runner.os == 'Linux'
+        with:
+          name: vultweb.js
+          path: vultweb.js
+
+      - name: Save vultlib.js artifact
+        uses: actions/upload-artifact@v4
+        if: runner.os == 'Linux'
+        with:
+          name: vultlib.js
+          path: vultlib.js
+
       - name: Upload the build artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}-${{ matrix.ocaml-compiler }}-vult.exe
           path: _build/default/src/vult.exe
+
+  pre-release:
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/v1'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout tree
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release
+
+          cp artifacts/vult.js/vult.js release/
+          cp artifacts/vultweb.js/vultweb.js release/
+          cp artifacts/vultlib.js/vultlib.js release/
+
+          cp artifacts/ubuntu-latest-5-vult.exe/vult.exe vult
+          zip release/vult-linux.zip vult
+          rm vult
+
+          cp artifacts/macos-latest-5-vult.exe/vult.exe vult
+          zip release/vult-macos.zip vult
+          rm vult
+
+          cp artifacts/windows-latest-5-vult.exe/vult.exe vult.exe
+          zip release/vult-windows.zip vult.exe
+          rm vult.exe
+
+      - name: Create or update pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1-latest
+          name: "v1 Pre-release"
+          body: |
+            Automated pre-release from the `v1` branch.
+
+            **Commit:** ${{ github.sha }}
+            **Date:** ${{ github.event.head_commit.timestamp }}
+
+            This is a development build and may be unstable.
+          prerelease: true
+          make_latest: false
+          files: release/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

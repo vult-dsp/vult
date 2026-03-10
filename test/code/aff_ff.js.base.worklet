@@ -1,4 +1,7 @@
-function vultProcess() {
+class VultProcessor extends AudioWorkletProcessor {
+   constructor() {
+      super();
+      this.vult = new (function() {
 
 // Runtime functions (simple builtins like eps, pi, clip, real, int_, sin, cos, etc. are inlined)
 this.random = function()         { return Math.random(); };
@@ -50,11 +53,24 @@ this.Aff_ff_default = function (_ctx) {
 };
 
 
-   if(this.Aff_ff_process_type_alloc)  this.context =  this.Aff_ff_process_type_alloc(); else this.context = {};
-   if(this.Aff_ff_default)      this.Aff_ff_default(this.context);
-   this.liveNoteOn        = function(note,velocity,channel) { if(this.Aff_ff_noteOn)        this.Aff_ff_noteOn(this.context,note,velocity,channel); };
-   this.liveNoteOff       = function(note,velocity,channel) { if(this.Aff_ff_noteOff)       this.Aff_ff_noteOff(this.context,note,velocity,channel); };
-   this.liveControlChange = function(note,velocity,channel) { if(this.Aff_ff_controlChange) this.Aff_ff_controlChange(this.context,note,velocity,channel); };
-   this.liveProcess       = function(input)         { if(this.Aff_ff_process)       return this.Aff_ff_process(this.context,input); else return 0; };
-   this.liveDefault       = function() { if(this.Aff_ff_default)      return this.Aff_ff_default(this.context); };
+      this.context = this.Aff_ff_process_type_alloc();
+      this.Aff_ff_default(this.context);
+      })();
+      this.port.onmessage = (e) => {
+         if (e.data.type === 'noteOn') this.vult.Aff_ff_noteOn(this.vult.context, e.data.note, e.data.velocity, e.data.channel);
+         if (e.data.type === 'noteOff') this.vult.Aff_ff_noteOff(this.vult.context, e.data.note, e.data.channel);
+         if (e.data.type === 'controlChange') this.vult.Aff_ff_controlChange(this.vult.context, e.data.control, e.data.value, e.data.channel);
+      };
    }
+   process(inputs, outputs, parameters) {
+      const input = inputs[0];
+      const output = outputs[0];
+      for (var i = 0; i < 128; i++) {
+         this.vult.Aff_ff_process(this.vult.context, input[0] ? input[0][i] : 0, input[1] ? input[1][i] : 0);
+         output[0][i] = this.vult.Aff_ff_process_ret_0(this.vult.context);
+output[1][i] = this.vult.Aff_ff_process_ret_1(this.vult.context);
+      }
+      return true;
+   }
+}
+registerProcessor('vult-processor', VultProcessor);

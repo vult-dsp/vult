@@ -44,5 +44,17 @@ static_inline void Afi_fi_process(Afi_fi_process_type& _ctx, fix16_t a, int32_t 
    return ;
 }
 
+static_inline void Afi_fi_noteOn(Afi_fi_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
+}
+
+static_inline void Afi_fi_noteOff(Afi_fi_process_type& _ctx, int32_t note, int32_t channel) {
+}
+
+static_inline void Afi_fi_controlChange(Afi_fi_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+}
+
+static_inline void Afi_fi_default(Afi_fi_process_type& _ctx) {
+}
+
 
 #endif // AFI_FI_H
