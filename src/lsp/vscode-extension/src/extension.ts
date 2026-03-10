@@ -62,7 +62,7 @@ async function findLspServer(context: vscode.ExtensionContext): Promise<{path: s
   }
   
   // Fallback to bundled JavaScript version
-  const jsServerPath = path.join(context.extensionPath, 'vult_lsp_js.js');
+  const jsServerPath = path.join(context.extensionPath, 'vult-lsp.js');
   if (fs.existsSync(jsServerPath)) {
     console.log(`Using bundled JavaScript Vult Language Server: ${jsServerPath}`);
     return { path: jsServerPath, isNative: false };
