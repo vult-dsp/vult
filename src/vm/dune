@@ -7,5 +7,10 @@
  (preprocess
   (pps pla.ppx))
  (ocamlopt_flags -O3 -unbox-closures)
+ (foreign_stubs
+  (language c)
+  (names vm_c_stubs)
+  (flags
+   (:standard -O3 -ffast-math)))
  (instrumentation
   (backend bisect_ppx)))

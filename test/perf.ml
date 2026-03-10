@@ -328,7 +328,7 @@ let runBytecode vultfile =
         files=
           [Code ("Perf.vult", "fun main() { iter(i, 5 * 44100) { " ^ module_name ^ ".process(0.0); } }"); File vultfile]
       ; eval= Some "Perf.main"
-      ; use_bytecode= true
+      ; eval_backend= OcamlVM
       ; includes }
     in
     let parsed, _ = Driver.Loader.loadFiles args args.files in
@@ -347,7 +347,37 @@ let runBytecode vultfile =
   | Vm.Exec.VM_error msg ->
       prerr_endline (Printf.sprintf "Bytecode VM error in %s: %s" vultfile msg)
 
+let runBytecodeC vultfile =
+  try
+    let module_name = Pparser.Parse.moduleName vultfile in
+    let args =
+      { default_arguments with
+        files=
+          [Code ("Perf.vult", "fun main() { iter(i, 5 * 44100) { " ^ module_name ^ ".process(0.0); } }"); File vultfile]
+      ; eval= Some "Perf.main"
+      ; eval_backend= CVM
+      ; includes }
+    in
+    let parsed, _ = Driver.Loader.loadFiles args args.files in
+    let env, stmts = Core.Typechecking.typecheck_and_elaborate args parsed in
+    let env, stmts = Core.Toprog.convert args env stmts in
+    let stmts = Core.Passes.run args stmts in
+    let bc_prog = Vm.Compiler.compile stmts in
+    let t1 = Sys.time () in
+    let _result = Vm.Exec.evaluateMainExpressionC args env bc_prog "Perf.main()" in
+    let t2 = Sys.time () in
+    print_endline (Printf.sprintf "%s\tBytecode-C\t%f ms/s" module_name ((t2 -. t1) /. 5.0 *. 1000.0))
+  with
+  | Util.Error.Errors errors ->
+      let error_strings = Util.Error.reportErrors errors in
+      prerr_endline error_strings ; exit 1
+  | Vm.Exec.VM_error msg ->
+      prerr_endline (Printf.sprintf "Bytecode-C VM error in %s: %s" vultfile msg)
+
+let use_c_vm = ref false
+
 let main () =
+  let () = Arg.parse [("--c-vm", Arg.Set use_c_vm, "Enable C VM bytecode benchmarks")] (fun _ -> ()) "perf [--c-vm]" in
   CCList.iter
     (fun f ->
       runC Float f ;
@@ -360,7 +390,8 @@ let main () =
       runPython f ;
       runJava f ;
       runInterpreter f ;
-      runBytecode f )
+      runBytecode f ;
+      if !use_c_vm then runBytecodeC f )
     files
 ;;
 

@@ -40,6 +40,8 @@ type output =
 
 type code = NoCode | CppCode | JSCode | LuaCode | JavaCode | JuliaCode | PythonCode
 
+type eval_backend = Interpreter | OcamlVM | CVM
+
 type real_format = Float | Fixed
 
 (** Stores the options passed to the command line *)
@@ -78,7 +80,7 @@ type args =
   ; mutable render: string option
   ; mutable java_bin_tables: bool
   ; mutable java_prefix: string option
-  ; mutable use_bytecode: bool
+  ; mutable eval_backend: eval_backend
   ; mutable extensions: string list }
 
 let default_arguments : args =
@@ -116,7 +118,7 @@ let default_arguments : args =
   ; render= None
   ; java_bin_tables= false
   ; java_prefix= None
-  ; use_bytecode= false
+  ; eval_backend= Interpreter
   ; extensions= [] }
 
 type flags = {flag: string; action: Arg.spec; comment: string}
@@ -241,9 +243,25 @@ let flags result =
   ; { flag= "-java-bin-tables"
     ; action= Arg.Unit (fun () -> result.java_bin_tables <- true)
     ; comment= " Write large array constants as binary .table files for Java (default: off)" }
+  ; { flag= "-backend"
+    ; action=
+        Arg.String
+          (fun s ->
+            result.eval_backend <-
+              ( match s with
+              | "interpreter" ->
+                  Interpreter
+              | "ocaml-vm" ->
+                  OcamlVM
+              | "c-vm" ->
+                  CVM
+              | _ ->
+                  print_endline ("Unknown backend '" ^ s ^ "'. The valid options are: interpreter, ocaml-vm, c-vm") ;
+                  exit (-1) ) )
+    ; comment= "name Select evaluation backend: interpreter, ocaml-vm, c-vm (default: interpreter)" }
   ; { flag= "-use-bytecode"
-    ; action= Arg.Unit (fun () -> result.use_bytecode <- true)
-    ; comment= " Use bytecode VM for -eval and -render instead of interpreter (default: off)" }
+    ; action= Arg.Unit (fun () -> result.eval_backend <- CVM)
+    ; comment= " (deprecated) Alias for -backend c-vm" }
   ; { flag= "-java-prefix"
     ; action= Arg.String (fun prefix -> result.java_prefix <- Some prefix)
     ; comment= "prefix Sets the Java package prefix and adds an external import (e.g., vult.com)" }

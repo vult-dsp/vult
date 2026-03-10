@@ -93,61 +93,69 @@ let compileCode (args : args) env stmts : Prog.top_stmt list * Interpreter.iprog
   let prog = Util.Profile.time "Passes" (fun () -> Passes.run args stmts) in
   let iprog = Util.Profile.time "Compile" (fun () -> Interpreter.transformProgram prog) in
   let prog_out = if args.dprog then [Prog (Pla.print (Prog.Print.print_prog prog))] else [] in
-  let bytecode_out =
-    if args.dbytecode || args.use_bytecode then
-      let bc_prog = Util.Profile.time "Bytecode Compile" (fun () -> Vm.Compiler.compile prog) in
-      let dump_out = if args.dbytecode then [Prog (Vm.Bytecode.dump bc_prog)] else [] in
-      let bc_run =
-        if args.use_bytecode then
-          match args.eval with
-          | Some fn ->
-              let result =
-                Util.Profile.time "Bytecode Eval" (fun () -> Vm.Exec.evaluateMainExpression args env bc_prog fn)
-              in
-              [EvalResult (Vm.Bytecode.printValue result)]
-          | None ->
-              []
-        else []
-      in
-      let bc_render =
-        if args.use_bytecode then
-          match args.render with
-          | Some tag ->
-              let filename, duration =
-                Util.Profile.time "Bytecode Render" (fun () -> Vm.Exec.renderAudioExpression args env bc_prog tag)
-              in
-              [AudioRendered (Printf.sprintf "Audio rendered to: %s (%.3fs)" filename duration)]
-          | None ->
-              []
-        else []
-      in
-      dump_out @ bc_run @ bc_render
+  (* Resolve effective backend: fall back to Interpreter under js_of_ocaml *)
+  let effective_backend : eval_backend =
+    match args.eval_backend with
+    | CVM | OcamlVM -> (
+      match Sys.backend_type with Other s when String.equal s "js_of_ocaml" -> Interpreter | _ -> args.eval_backend )
+    | b ->
+        b
+  in
+  (* Lazily compile bytecode only when needed *)
+  let bc_prog_lazy = lazy (Util.Profile.time "Bytecode Compile" (fun () -> Vm.Compiler.compile prog)) in
+  let bytecode_dump =
+    if args.dbytecode then
+      let bc_prog = Lazy.force bc_prog_lazy in
+      [Prog (Vm.Bytecode.dump bc_prog)]
     else []
   in
-  let run =
-    if args.use_bytecode then []
-    else
-      match args.eval with
-      | Some fn ->
+  let eval_out =
+    match args.eval with
+    | Some fn -> (
+      match effective_backend with
+      | Interpreter ->
           let result = Util.Profile.time "Eval" (fun () -> Interpreter.evaluateMainExpression args env iprog fn) in
-          let str = Interpreter.printDvalue result in
-          [EvalResult str]
-      | None ->
-          []
+          [EvalResult (Interpreter.printDvalue result)]
+      | OcamlVM ->
+          let bc_prog = Lazy.force bc_prog_lazy in
+          let result =
+            Util.Profile.time "Bytecode Eval" (fun () -> Vm.Exec.evaluateMainExpression args env bc_prog fn)
+          in
+          [EvalResult (Vm.Bytecode.printValue result)]
+      | CVM ->
+          let bc_prog = Lazy.force bc_prog_lazy in
+          let result =
+            Util.Profile.time "Bytecode Eval" (fun () -> Vm.Exec.evaluateMainExpressionC args env bc_prog fn)
+          in
+          [EvalResult (Vm.Bytecode.printValue result)] )
+    | None ->
+        []
   in
   let render_out =
-    if args.use_bytecode then []
-    else
-      match args.render with
-      | Some tag ->
+    match args.render with
+    | Some tag -> (
+      match effective_backend with
+      | Interpreter ->
           let filename, duration =
             Util.Profile.time "Render" (fun () -> Interpreter.renderAudioExpression args env iprog tag)
           in
           [AudioRendered (Printf.sprintf "Audio rendered to: %s (%.3fs)" filename duration)]
-      | None ->
-          []
+      | OcamlVM ->
+          let bc_prog = Lazy.force bc_prog_lazy in
+          let filename, duration =
+            Util.Profile.time "Bytecode Render" (fun () -> Vm.Exec.renderAudioExpression args env bc_prog tag)
+          in
+          [AudioRendered (Printf.sprintf "Audio rendered to: %s (%.3fs)" filename duration)]
+      | CVM ->
+          let bc_prog = Lazy.force bc_prog_lazy in
+          let filename, duration =
+            Util.Profile.time "Bytecode Render" (fun () -> Vm.Exec.renderAudioExpressionC args env bc_prog tag)
+          in
+          [AudioRendered (Printf.sprintf "Audio rendered to: %s (%.3fs)" filename duration)] )
+    | None ->
+        []
   in
-  (prog, iprog, run @ render_out @ prog_out @ bytecode_out)
+  (prog, iprog, eval_out @ render_out @ prog_out @ bytecode_dump)
 
 let version = String.sub Version.version 1 (String.length Version.version - 2)
 

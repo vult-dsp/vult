@@ -1368,3 +1368,79 @@ and valueToInterpreterDvalue (v : value) : Core.Interpreter.dvalue =
       Core.Interpreter.DList (ref (CCList.map valueToInterpreterDvalue !lr))
   | Struct arr ->
       Core.Interpreter.DStruct (Array.map valueToInterpreterDvalue arr)
+
+(* ========== C VM dispatch loop ========== *)
+
+type c_vm_handle
+
+external c_prepare_program : int array -> value array -> int array -> int array -> int array -> c_vm_handle
+  = "caml_c_prepare_program"
+
+external c_run_function : c_vm_handle -> int -> value list -> float -> value = "caml_c_run_function"
+
+let prepareCProgram (prog : bc_prog) : c_vm_handle =
+  let encoded : int array = encode (Array.to_list prog.code) in
+  let entry_pcs : int array = Array.map (fun (f : bc_func) -> f.entry_pc) prog.functions in
+  let n_args : int array = Array.map (fun (f : bc_func) -> f.n_args) prog.functions in
+  let n_locals : int array = Array.map (fun (f : bc_func) -> f.n_locals) prog.functions in
+  c_prepare_program encoded prog.constants entry_pcs n_args n_locals
+
+let runFunctionC (handle : c_vm_handle) (func_idx : int) (args : value list) (sample_rate : float) : value =
+  c_run_function handle func_idx args sample_rate
+
+let evaluateMainExpressionC (args : Util.Args.args) (env : Core.Env.in_top) (bc_prog : bc_prog) (exp_str : string) :
+    value =
+  let e = Pparser.Parse.parseString (Some "Main_.vult") (Pla.print {%pla|fun _main_() return <#exp_str#s>;|}) in
+  let env, main = Core.Typechecking.typecheck_single args env e in
+  let _, main = Core.Toprog.convert args env main in
+  let main = Core.Passes.run args main in
+  let bc_prog = Compiler.extendProgram bc_prog main in
+  let main_func_name = "Main___main_" in
+  match Hashtbl.find_opt bc_prog.function_names main_func_name with
+  | Some func_idx ->
+      let sample_rate : float = match args.fs with Some sr -> sr | None -> 44100.0 in
+      let handle : c_vm_handle = prepareCProgram bc_prog in
+      let call_args : value list =
+        let alloc_name = main_func_name ^ "_type_alloc" in
+        match Hashtbl.find_opt bc_prog.function_names alloc_name with
+        | Some alloc_idx ->
+            let state : value = runFunctionC handle alloc_idx [] sample_rate in
+            [state]
+        | None ->
+            []
+      in
+      runFunctionC handle func_idx call_args sample_rate
+  | None ->
+      error "Could not execute the expression"
+
+let renderAudioExpressionC (args : Util.Args.args) (env : Core.Env.in_top) (bc_prog : bc_prog) (tag_string : string) :
+    string * float =
+  let start_time = Sys.time () in
+  let params = Core.Interpreter.parseRenderParams tag_string in
+  args.fs <- Some (float_of_int params.samplerate) ;
+  let wrapper_code = Core.Interpreter.generateRenderWrapper params in
+  let e = Pparser.Parse.parseString (Some "Render_.vult") wrapper_code in
+  let env, main = Core.Typechecking.typecheck_single args env e in
+  let _, main = Core.Toprog.convert args env main in
+  let main = Core.Passes.run args main in
+  let bc_prog = Compiler.extendProgram bc_prog main in
+  let main_func_name = "Render___main" in
+  match Hashtbl.find_opt bc_prog.function_names main_func_name with
+  | Some func_idx ->
+      let sample_rate : float = float_of_int params.samplerate in
+      let handle : c_vm_handle = prepareCProgram bc_prog in
+      let call_args : value list =
+        let alloc_name = main_func_name ^ "_type_alloc" in
+        match Hashtbl.find_opt bc_prog.function_names alloc_name with
+        | Some alloc_idx ->
+            let state : value = runFunctionC handle alloc_idx [] sample_rate in
+            [state]
+        | None ->
+            []
+      in
+      let result : value = runFunctionC handle func_idx call_args sample_rate in
+      let () = Core.Interpreter.writeResultToWav (valueToInterpreterDvalue result) params in
+      let end_time = Sys.time () in
+      (params.file, end_time -. start_time)
+  | None ->
+      error "Could not execute render function"

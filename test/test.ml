@@ -713,6 +713,7 @@ module InterpretPerf = struct
         { default_arguments with
           files= [Code ("intepret.vult", code)]
         ; eval= Some "Intepret.run()"
+        ; eval_backend= CVM
         ; includes= in_test_directory "perf" :: includes }
     in
     let results = Driver.Cli.driver args in
@@ -731,6 +732,7 @@ module Interpret = struct
       Args.
         { default_arguments with
           eval= Some (moduleName fullfile ^ ".main()")
+        ; eval_backend= CVM
         ; includes= in_test_directory "interpreter" :: includes }
     in
     let results = Driver.Cli.driver args in
@@ -781,7 +783,7 @@ fun main() : real {
       Printf.sprintf "render(file=\"%s\", samplerate=%d, time=%f, exp=\"Test_sine.main()\")" temp_file sample_rate
         duration
     in
-    let args = Args.{default_arguments with files= [File vult_file]; render= Some render_tag} in
+    let args = Args.{default_arguments with files= [File vult_file]; render= Some render_tag; eval_backend= CVM} in
     (* Execute rendering *)
     let results = Driver.Cli.driver args in
     (* Check for errors first *)
