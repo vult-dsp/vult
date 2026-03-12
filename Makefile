@@ -34,14 +34,10 @@ vultlib:
 	js_of_ocaml --target-env=browser --disable use-js-string _build/default/src/js/vultlib_js.bc -o vultlib.js
 
 lsp:
-	dune build src/lsp/vult_lsp_exe.exe src/lsp/vult_lsp_js.bc $(FORMAT)
-	cp -f _build/default/src/lsp/vult_lsp_exe.exe vult-lsp
+	dune build src/lsp/vult_lsp_js.bc $(FORMAT)
 	js_of_ocaml --custom-header="#!/usr/bin/env node" --disable use-js-string _build/default/src/lsp/vult_lsp_js.bc -o vult-lsp.js
 	chmod +x vult-lsp.js
 	cp vult-lsp.js src/lsp/vscode-extension/
-
-lsp-install:
-	cp ./vult-lsp $(PREFIX)/vult-lsp
 
 #web:
 #	$(OCB) src/js/vultweb.byte
@@ -81,7 +77,7 @@ all: version compiler lsp jscompiler test perf
 
 clean:
 	dune clean
-	rm -f vult.js vultweb.js vultlib.js vult-lsp.js vult-lsp
+	rm -f vult.js vultweb.js vultlib.js vult-lsp.js
 	rm -f bisect*.out
 	rm -rf bisect_coverage
 	rm -rf _build

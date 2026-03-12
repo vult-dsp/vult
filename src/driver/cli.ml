@@ -187,9 +187,12 @@ let driver (args : args) : output list =
             else compileCode args env stmts |> generateCode args file_deps
   with Error.Errors errors when args.debug = false -> [Errors errors]
 
-let main () =
-  let args = processArguments () in
+let run (args : args) : unit =
   let results = driver args in
   CCList.iter (showResult args) results ;
   if args.profile then Util.Profile.show () ;
   exit 0
+
+let main () =
+  let args = processArguments () in
+  run args

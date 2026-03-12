@@ -354,3 +354,149 @@ let generateJulia (files : js_file_code Js.t Js.js_array Js.t) (opts : options J
     JS usage: [vult.generatePython(\[{file: "synth.vult", code: "..."}\], {output: "synth"})] *)
 let generatePython (files : js_file_code Js.t Js.js_array Js.t) (opts : options Js.t) : Js.Unsafe.any Js.js_array Js.t =
   codeGeneration files opts Args.PythonCode
+
+(** {2 LSP / Editor Integration API}
+
+    These functions expose language intelligence features for use in web-based editors
+    (CodeMirror, Monaco, Ace, etc.) without needing a full LSP server.
+
+    {3 Semantic Tokens}
+    - [getSemanticTokens(code)] — returns a flat int array in LSP delta-encoded format:
+      each group of 5 ints is [\[deltaLine, deltaStartChar, length, tokenType, tokenModifiers\]].
+      Token types: 0=variable, 1=comment, 2=keyword, 3=type, 4=number, 5=string, 6=operator,
+      7=punctuation, 8=function.
+
+    {3 Diagnostics}
+    - [getDiagnostics(code)] — returns an array of [{message, severity, startLine, startCol, endLine, endCol}].
+      Severity: 1=error, 2=warning, 3=info, 4=hint. Lines and columns are 0-based.
+
+    {3 Completions}
+    - [getCompletions(code)] — returns an array of [{label, kind, detail, documentation}].
+      Kind values follow LSP CompletionItemKind: 3=function, 7=struct, 13=enum, 14=keyword,
+      20=enum_member, 21=constant.
+
+    {3 Document Symbols}
+    - [getDocumentSymbols(code)] — returns an array of [{name, kind, startLine, startCol, endLine, endCol}].
+      Kind values follow LSP SymbolKind: 10=enum, 12=function, 14=constant, 22=enum_member, 23=struct.
+
+    {3 Hover}
+    - [getHoverInfo(code, line, col)] — returns a type signature string or [null].
+      Line is 1-based, column is 0-based (matching Vult's internal convention). *)
+
+(** Helper: parse a code string into statements. Returns an empty list on error. *)
+let parseCode (code : string) : Pparser.Syntax.top_stmt list =
+  try
+    let args = {Args.default_arguments with files= [Args.Code ("live.vult", code)]; check= true} in
+    let parsed, _ = Driver.Loader.loadFiles args args.files in
+    CCList.flatten @@ CCList.map (fun (p : Pparser.Parse.parsed_file) -> p.stmts) parsed
+  with _ -> []
+
+(** Helper: typecheck a code string into typed statements. Returns [None] on error. *)
+let typecheckCode (code : string) : Core.Typed.top_stmt list option =
+  try
+    let args = {Args.default_arguments with files= [Args.Code ("live.vult", code)]; check= true} in
+    let parsed, _ = Driver.Loader.loadFiles args args.files in
+    let _env, stmts = Core.Typechecking.typecheck_and_elaborate args parsed in
+    Some stmts
+  with _ -> None
+
+(** Returns a delta-encoded int array of semantic tokens for syntax highlighting.
+
+    JS usage: [vult.getSemanticTokens("fun foo(x:real):real return x + 1.0;")] *)
+let getSemanticTokens (code_string : Js.js_string Js.t) : int Js.js_array Js.t =
+  let code = Js.to_string code_string in
+  let tokens = Vult_lsp.SemanticTokens.get_semantic_tokens code in
+  tokens |> Array.of_list |> Js.array
+
+(** Returns an array of diagnostic objects from type checking.
+
+    JS usage: [vult.getDiagnostics("fun foo(x:real):real return x + 1;")] *)
+let getDiagnostics (code_string : Js.js_string Js.t) : Js.Unsafe.any Js.js_array Js.t =
+  let code = Js.to_string code_string in
+  let diagnostics = Vult_lsp.Diagnostics.get_diagnostics code "live.vult" in
+  let convert_diagnostic (d : Yojson.Safe.t) : Js.Unsafe.any =
+    let open Yojson.Safe.Util in
+    let range = d |> member "range" in
+    let start_pos = range |> member "start" in
+    let end_pos = range |> member "end" in
+    Js.Unsafe.inject
+      (object%js
+         val message = Js.string (d |> member "message" |> to_string)
+
+         val severity = d |> member "severity" |> to_int
+
+         val startLine = start_pos |> member "line" |> to_int
+
+         val startCol = start_pos |> member "character" |> to_int
+
+         val endLine = end_pos |> member "line" |> to_int
+
+         val endCol = end_pos |> member "character" |> to_int
+      end )
+  in
+  diagnostics |> CCList.map convert_diagnostic |> Array.of_list |> Js.array
+
+(** Returns an array of completion items from the parsed AST.
+
+    JS usage: [vult.getCompletions("fun foo(x:real):real return x + 1.0;")] *)
+let getCompletions (code_string : Js.js_string Js.t) : Js.Unsafe.any Js.js_array Js.t =
+  let code = Js.to_string code_string in
+  let stmts = parseCode code in
+  let completions = Vult_lsp.Completion.get_completions stmts in
+  let convert_completion (c : Vult_lsp.Completion.completion_item) : Js.Unsafe.any =
+    Js.Unsafe.inject
+      (object%js
+         val label = Js.string c.label
+
+         val kind = c.kind
+
+         val detail = Js.Optdef.option (Option.map Js.string c.detail)
+
+         val documentation = Js.Optdef.option (Option.map Js.string c.documentation)
+      end )
+  in
+  completions |> CCList.map convert_completion |> Array.of_list |> Js.array
+
+(** Returns an array of document symbol objects from the parsed AST.
+
+    JS usage: [vult.getDocumentSymbols("fun foo(x:real):real return x + 1.0;")] *)
+let getDocumentSymbols (code_string : Js.js_string Js.t) : Js.Unsafe.any Js.js_array Js.t =
+  let code = Js.to_string code_string in
+  let stmts = parseCode code in
+  let symbols = Vult_lsp.DocumentSymbols.get_document_symbols stmts in
+  let convert_symbol (s : Yojson.Safe.t) : Js.Unsafe.any =
+    let open Yojson.Safe.Util in
+    let range = s |> member "range" in
+    let start_pos = range |> member "start" in
+    let end_pos = range |> member "end" in
+    Js.Unsafe.inject
+      (object%js
+         val name = Js.string (s |> member "name" |> to_string)
+
+         val kind = s |> member "kind" |> to_int
+
+         val startLine = start_pos |> member "line" |> to_int
+
+         val startCol = start_pos |> member "character" |> to_int
+
+         val endLine = end_pos |> member "line" |> to_int
+
+         val endCol = end_pos |> member "character" |> to_int
+      end )
+  in
+  symbols |> CCList.map convert_symbol |> Array.of_list |> Js.array
+
+(** Returns a type signature string for the symbol at the given position, or [null].
+
+    JS usage: [vult.getHoverInfo("fun foo(x:real):real return x + 1.0;", 1, 8)] *)
+let getHoverInfo (code_string : Js.js_string Js.t) (line : int) (col : int) : Js.js_string Js.t Js.opt =
+  let code = Js.to_string code_string in
+  match typecheckCode code with
+  | Some typed_stmts -> (
+    match Vult_lsp.Hover.get_hover_info typed_stmts line col with
+    | Some text ->
+        Js.some (Js.string text)
+    | None ->
+        Js.null )
+  | None ->
+      Js.null

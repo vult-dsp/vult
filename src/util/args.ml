@@ -81,7 +81,8 @@ type args =
   ; mutable java_bin_tables: bool
   ; mutable java_prefix: string option
   ; mutable eval_backend: eval_backend
-  ; mutable extensions: string list }
+  ; mutable extensions: string list
+  ; mutable lsp: bool }
 
 let default_arguments : args =
   { files= []
@@ -119,7 +120,8 @@ let default_arguments : args =
   ; java_bin_tables= false
   ; java_prefix= None
   ; eval_backend= Interpreter
-  ; extensions= [] }
+  ; extensions= []
+  ; lsp= false }
 
 type flags = {flag: string; action: Arg.spec; comment: string}
 
@@ -267,7 +269,10 @@ let flags result =
     ; comment= "prefix Sets the Java package prefix and adds an external import (e.g., vult.com)" }
   ; { flag= "-extension"
     ; action= Arg.String (fun ext -> result.extensions <- ext :: result.extensions)
-    ; comment= "name Enables the specified language extension (e.g., vcv-prototype)" } ]
+    ; comment= "name Enables the specified language extension (e.g., vcv-prototype)" }
+  ; { flag= "-lsp"
+    ; action= Arg.Unit (fun () -> result.lsp <- true)
+    ; comment= " Starts the language server (default: off)" } ]
 
 (** Returns a 'arguments' type containing the options passed in the command line *)
 let processArguments () : args =

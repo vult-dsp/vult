@@ -42,7 +42,6 @@ jobs:
         with:
           subject-path: |
             _build/default/src/vult.exe
-            vult-lsp
 
       - name: Save vult.js artifact
         uses: actions/upload-artifact@v4
@@ -78,12 +77,6 @@ jobs:
           name: ${{ matrix.os }}-${{ matrix.ocaml-compiler }}-vult.exe
           path: _build/default/src/vult.exe
 
-      - name: Upload the LSP build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.os }}-${{ matrix.ocaml-compiler }}-vult-lsp
-          path: vult-lsp
-
   pre-release:
     needs: build-and-test
     if: github.event_name == 'push' && github.ref == 'refs/heads/v1'
@@ -110,19 +103,16 @@ jobs:
           cp artifacts/vult-lsp.js/vult-lsp.js release/
 
           cp artifacts/ubuntu-latest-5-vult.exe/vult.exe vult
-          cp artifacts/ubuntu-latest-5-vult-lsp/vult-lsp vult-lsp
-          zip release/vult-linux.zip vult vult-lsp
-          rm vult vult-lsp
+          zip release/vult-linux.zip vult
+          rm vult
 
           cp artifacts/macos-latest-5-vult.exe/vult.exe vult
-          cp artifacts/macos-latest-5-vult-lsp/vult-lsp vult-lsp
-          zip release/vult-macos.zip vult vult-lsp
-          rm vult vult-lsp
+          zip release/vult-macos.zip vult
+          rm vult
 
           cp artifacts/windows-latest-5-vult.exe/vult.exe vult.exe
-          cp artifacts/windows-latest-5-vult-lsp/vult-lsp vult-lsp.exe
-          zip release/vult-windows.zip vult.exe vult-lsp.exe
-          rm vult.exe vult-lsp.exe
+          zip release/vult-windows.zip vult.exe
+          rm vult.exe
 
       - name: Create or update pre-release
         uses: softprops/action-gh-release@v2

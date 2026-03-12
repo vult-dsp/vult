@@ -1,7 +1,7 @@
 (library
  (name vultlib)
  (modules Vultlib)
- (libraries driver js_of_ocaml)
+ (libraries driver vult_lsp js_of_ocaml)
  (preprocess
   (pps js_of_ocaml-ppx)))
 

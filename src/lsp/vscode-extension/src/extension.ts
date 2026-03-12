@@ -14,7 +14,7 @@ let client: LanguageClient;
 // Function to check if native LSP server is available in PATH
 async function checkNativeLspInPath(): Promise<string | null> {
   return new Promise((resolve) => {
-    const process = spawn('which', ['vult-lsp'], { shell: true });
+    const process = spawn('which', ['vult'], { shell: true });
     let output = '';
     
     process.stdout.on('data', (data) => {
@@ -68,7 +68,7 @@ async function findLspServer(context: vscode.ExtensionContext): Promise<{path: s
     return { path: jsServerPath, isNative: false };
   }
   
-  throw new Error('No Vult Language Server found. Please install vult-lsp or build the project.');
+  throw new Error('No Vult Language Server found. Please install vult or build the project.');
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -81,19 +81,21 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Server options - different for native vs JavaScript
     const serverOptions: ServerOptions = isNative ? {
-      // Native executable
-      run: { 
-        command: serverPath, 
+      // Native executable with -lsp flag
+      run: {
+        command: serverPath,
+        args: ['-lsp'],
         transport: TransportKind.stdio,
-        options: { 
+        options: {
           shell: false,
           env: { ...process.env }
         }
       },
-      debug: { 
-        command: serverPath, 
+      debug: {
+        command: serverPath,
+        args: ['-lsp'],
         transport: TransportKind.stdio,
-        options: { 
+        options: {
           shell: false,
           env: { ...process.env }
         }
