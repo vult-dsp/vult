@@ -168,7 +168,7 @@ static vm_obj* alloc_obj(arena *a, int type, int length) {
     return obj;
 }
 
-static vm_string* alloc_string(arena *a, const char *data, int length) {
+static vm_string* vm_alloc_string(arena *a, const char *data, int length) {
     vm_string *s = (vm_string*)arena_alloc(a, sizeof(vm_string) + length + 1);
     s->length = length;
     memcpy(s->data, data, length);
@@ -227,7 +227,7 @@ static vm_val ocaml_to_vm_val(arena *a, value v) {
     case 4: { /* String */
         value s = Field(v, 0);
         int len = caml_string_length(s);
-        vm_string *vs = alloc_string(a, String_val(s), len);
+        vm_string *vs = vm_alloc_string(a, String_val(s), len);
         return from_string(vs);
     }
     case 5: { /* Array */
@@ -415,7 +415,7 @@ static vm_string* vm_val_to_string(arena *a, vm_val v) {
     int pos = 0;
     print_vm_val_buf(buf, &pos, sizeof(buf), v);
     buf[pos] = '\0';
-    return alloc_string(a, buf, pos);
+    return vm_alloc_string(a, buf, pos);
 }
 
 /* ========== Builtin functions ========== */
