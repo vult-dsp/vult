@@ -199,8 +199,8 @@ public static final String Constants_str = "hello";
 public static final int Constants_num = 1;
 public static final int[] Constants_some_array = new float[]{Constants_num, 2, 3, 4};
 private void Constants_foo() {
-   int i = Constants_num;
-   String s = Constants_str;
+   int i = 1;
+   String s = "hello";
    int x = Constants_some_array[0];
 }
 

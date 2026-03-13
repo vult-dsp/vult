@@ -10,8 +10,8 @@ Constants`str = {};
 Constants`num = {};
 Constants`some`array = {};
 Constants`foo[] := Module[{ x, s, i }, 
-   i = Constants`num;
-   s = Constants`str;
+   i = 1;
+   s = "hello";
    x = Constants`some`array[[1]];
 ]
 

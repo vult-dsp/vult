@@ -29,8 +29,32 @@ typedef struct Af_f_process_type {
    int32_t x;
 } Af_f_process_type;
 
+typedef struct Af_f_process_type Af_f_noteOn_type;
+
+typedef struct Af_f_process_type Af_f_noteOff_type;
+
+typedef struct Af_f_process_type Af_f_controlChange_type;
+
+typedef struct Af_f_process_type Af_f_default_type;
+
 static_inline void Af_f_process_type_init(Af_f_process_type& _ctx) {
    _ctx.x = 0;
+}
+
+static_inline void Af_f_noteOn_type_init(Af_f_noteOn_type& _ctx) {
+   Af_f_process_type_init(_ctx);
+}
+
+static_inline void Af_f_noteOff_type_init(Af_f_noteOff_type& _ctx) {
+   Af_f_process_type_init(_ctx);
+}
+
+static_inline void Af_f_controlChange_type_init(Af_f_controlChange_type& _ctx) {
+   Af_f_process_type_init(_ctx);
+}
+
+static_inline void Af_f_default_type_init(Af_f_default_type& _ctx) {
+   Af_f_process_type_init(_ctx);
 }
 
 static_inline float Af_f_process(Af_f_process_type& _ctx, float input) {

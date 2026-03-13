@@ -9,8 +9,8 @@ var Constants_str = {};
 var Constants_num = {};
 var Constants_some_array = {};
 this.Constants_foo = function () {
-   var i = Constants_num;
-   var s = Constants_str;
+   var i = (1|0);
+   var s = "hello";
    var x = Constants_some_array[0];
 };
 

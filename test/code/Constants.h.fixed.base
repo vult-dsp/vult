@@ -6,8 +6,8 @@
 #include "Constants.tables.h"
 
 static_inline void Constants_foo() {
-   int32_t i = Constants_num;
-   std::string s = Constants_str;
+   int32_t i = 1;
+   std::string s = "hello";
    int32_t x = Constants_some_array[static_cast<uint32_t>(0)];
 }
 

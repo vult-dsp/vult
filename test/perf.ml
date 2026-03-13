@@ -391,7 +391,7 @@ let main () =
       runJava f ;
       runInterpreter f ;
       runBytecode f ;
-      if !use_c_vm then runBytecodeC f )
+      runBytecodeC f )
     files
 ;;
 

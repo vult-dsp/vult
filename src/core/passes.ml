@@ -25,7 +25,12 @@
 open Prog
 open Util.Maps
 
-type data = {repeat: bool; ticks: (string, int) Hashtbl.t; function_deps: Set.t Map.t; type_deps: Set.t Map.t}
+type data =
+  { repeat: bool
+  ; ticks: (string, int) Hashtbl.t
+  ; function_deps: Set.t Map.t
+  ; type_deps: Set.t Map.t
+  ; constants: exp Map.t }
 
 type env =
   { in_if_exp: bool
@@ -40,7 +45,8 @@ type env =
 
 type enabled_disabled = Enabled | Disabled
 
-let default_data () : data = {repeat= false; ticks= Hashtbl.create 16; function_deps= Map.empty; type_deps= Map.empty}
+let default_data () : data =
+  {repeat= false; ticks= Hashtbl.create 16; function_deps= Map.empty; type_deps= Map.empty; constants= Map.empty}
 
 let default_env args : env =
   { args
@@ -67,6 +73,40 @@ let currentFunction env =
       failwith "function has no context"
 
 let isValue (e : exp) = match e.e with EReal _ | EInt _ | EBool _ | EFixed _ -> true | _ -> false
+
+module ConstantPropagation = struct
+  let isLiteral (e : exp) : bool =
+    match e.e with EReal _ | EInt _ | EBool _ | EFixed _ | EString _ -> true | _ -> false
+
+  let top_stmt =
+    Mapper.makeExpander
+    @@ fun _env state (top : top_stmt) ->
+    match top with
+    | {top= TopConstant (name, _, _, e, _); _} when isLiteral e ->
+        let data = Mapper.getData state in
+        let constants = Map.add name e data.constants in
+        let state = Mapper.setData state {data with constants} in
+        (state, [top])
+    | _ ->
+        (state, [top])
+
+  let exp =
+    Mapper.make
+    @@ fun env state (e : exp) ->
+    match e with
+    | {e= EId name; t; loc} when env.in_function -> (
+        let data = Mapper.getData state in
+        match Map.find_opt name data.constants with
+        | Some lit ->
+            (reapply state, {e= lit.e; t; loc})
+        | None ->
+            (state, e) )
+    | _ ->
+        (state, e)
+
+  let mapper (enabled : enabled_disabled) =
+    if enabled = Enabled then {Mapper.identity with exp; top_stmt} else Mapper.identity
+end
 
 let getTick (env : env) (state : data Mapper.state) =
   let name = match env.current_function with None -> "" | Some def -> def.name in
@@ -524,6 +564,93 @@ module Builtin = struct
         (reapply state, {e with e= EReal (sqrt v)})
     | {e= ECall {path= "sqrt"; args= [{e= EFixed v; _}]}; _} ->
         (reapply state, {e with e= EFixed (sqrt v)})
+    (* tan *)
+    | {e= ECall {path= "tan"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (tan v)})
+    | {e= ECall {path= "tan"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (tan v)})
+    (* tanh *)
+    | {e= ECall {path= "tanh"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (tanh v)})
+    | {e= ECall {path= "tanh"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (tanh v)})
+    (* sinh *)
+    | {e= ECall {path= "sinh"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (sinh v)})
+    | {e= ECall {path= "sinh"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (sinh v)})
+    (* cosh *)
+    | {e= ECall {path= "cosh"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (cosh v)})
+    | {e= ECall {path= "cosh"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (cosh v)})
+    (* asin *)
+    | {e= ECall {path= "asin"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (asin v)})
+    | {e= ECall {path= "asin"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (asin v)})
+    (* acos *)
+    | {e= ECall {path= "acos"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (acos v)})
+    | {e= ECall {path= "acos"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (acos v)})
+    (* atan *)
+    | {e= ECall {path= "atan"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (atan v)})
+    | {e= ECall {path= "atan"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (atan v)})
+    (* atan2 *)
+    | {e= ECall {path= "atan2"; args= [{e= EReal y; _}; {e= EReal x; _}]}; _} ->
+        (reapply state, {e with e= EReal (atan2 y x)})
+    | {e= ECall {path= "atan2"; args= [{e= EFixed y; _}; {e= EFixed x; _}]}; _} ->
+        (reapply state, {e with e= EFixed (atan2 y x)})
+    (* pow *)
+    | {e= ECall {path= "pow"; args= [{e= EReal b; _}; {e= EReal p; _}]}; _} ->
+        (reapply state, {e with e= EReal (Float.pow b p)})
+    | {e= ECall {path= "pow"; args= [{e= EFixed b; _}; {e= EFixed p; _}]}; _} ->
+        (reapply state, {e with e= EFixed (Float.pow b p)})
+    (* log *)
+    | {e= ECall {path= "log"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (log v)})
+    | {e= ECall {path= "log"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (log v)})
+    (* log10 *)
+    | {e= ECall {path= "log10"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (log10 v)})
+    | {e= ECall {path= "log10"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (log10 v)})
+    (* floor *)
+    | {e= ECall {path= "floor"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (floor v)})
+    | {e= ECall {path= "floor"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (floor v)})
+    (* ceil *)
+    | {e= ECall {path= "ceil"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (ceil v)})
+    | {e= ECall {path= "ceil"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (ceil v)})
+    (* min *)
+    | {e= ECall {path= "min"; args= [{e= EReal a; _}; {e= EReal b; _}]}; _} ->
+        (reapply state, {e with e= EReal (Float.min a b)})
+    | {e= ECall {path= "min"; args= [{e= EFixed a; _}; {e= EFixed b; _}]}; _} ->
+        (reapply state, {e with e= EFixed (Float.min a b)})
+    | {e= ECall {path= "min"; args= [{e= EInt a; _}; {e= EInt b; _}]}; _} ->
+        (reapply state, {e with e= EInt (Int.min a b)})
+    (* max *)
+    | {e= ECall {path= "max"; args= [{e= EReal a; _}; {e= EReal b; _}]}; _} ->
+        (reapply state, {e with e= EReal (Float.max a b)})
+    | {e= ECall {path= "max"; args= [{e= EFixed a; _}; {e= EFixed b; _}]}; _} ->
+        (reapply state, {e with e= EFixed (Float.max a b)})
+    | {e= ECall {path= "max"; args= [{e= EInt a; _}; {e= EInt b; _}]}; _} ->
+        (reapply state, {e with e= EInt (Int.max a b)})
+    (* clip *)
+    | {e= ECall {path= "clip"; args= [{e= EReal v; _}; {e= EReal lo; _}; {e= EReal hi; _}]}; _} ->
+        (reapply state, {e with e= EReal (Float.max lo (Float.min v hi))})
+    | {e= ECall {path= "clip"; args= [{e= EFixed v; _}; {e= EFixed lo; _}; {e= EFixed hi; _}]}; _} ->
+        (reapply state, {e with e= EFixed (Float.max lo (Float.min v hi))})
+    | {e= ECall {path= "clip"; args= [{e= EInt v; _}; {e= EInt lo; _}; {e= EInt hi; _}]}; _} ->
+        (reapply state, {e with e= EInt (Int.max lo (Int.min v hi))})
+    (* not *)
     | {e= ECall {path= "not"; args= [e1]}; loc; _} ->
         (reapply state, {e with e= EOp (OpEq, e1, {e= EBool false; t= {t= TBool; const= false; loc}; loc})})
     | {e= ECall {path= "size"; args= [{t= {t= TArray (Some size, _); _}; _}]}; loc; _} ->
@@ -1250,32 +1377,60 @@ module DeadCodeElimination = struct
     let acc = List.fold_left depsOfType acc (fst t) in
     depsOfType acc (snd t)
 
-  let buildDependencyGraph (constants : Set.t) (prog : prog) : Set.t Map.t =
-    List.fold_left
-      (fun graph (s : top_stmt) ->
-        let name = nameOfTopStmt s in
-        let deps =
-          match s.top with
-          | TopFunction (def, body) ->
-              let acc = depsOfParams Set.empty def.args in
-              let acc = depsOfReturnType acc def.t in
-              depsOfStmt constants acc body
-          | TopExternal (def, _) ->
-              let acc = depsOfParams Set.empty def.args in
-              depsOfReturnType acc def.t
-          | TopType {members; _} ->
-              List.fold_left (fun acc (_, mt, _, _) -> depsOfType acc mt) Set.empty members
-          | TopAlias {alias_of; _} ->
-              Set.singleton alias_of
-          | TopConstant (_, _, t, e, _) ->
-              let acc = depsOfType Set.empty t in
-              depsOfExp constants acc e
-        in
-        Map.add name deps graph )
-      Map.empty prog
-
   let contextTypeOfFunction (def : function_def) : string option =
     match def.args with {t= {t= TStruct {path; _}; _}; _} :: _ -> Some path | _ -> None
+
+  let addDep (graph : Set.t Map.t) (from_name : string) (to_name : string) : Set.t Map.t =
+    let deps = match Map.find_opt from_name graph with None -> Set.empty | Some s -> s in
+    Map.add from_name (Set.add to_name deps) graph
+
+  let buildDependencyGraph (constants : Set.t) (prog : prog) : Set.t Map.t =
+    let graph =
+      List.fold_left
+        (fun graph (s : top_stmt) ->
+          let name = nameOfTopStmt s in
+          let deps =
+            match s.top with
+            | TopFunction (def, body) ->
+                let acc = depsOfParams Set.empty def.args in
+                let acc = depsOfReturnType acc def.t in
+                depsOfStmt constants acc body
+            | TopExternal (def, _) ->
+                let acc = depsOfParams Set.empty def.args in
+                depsOfReturnType acc def.t
+            | TopType {members; _} ->
+                List.fold_left (fun acc (_, mt, _, _) -> depsOfType acc mt) Set.empty members
+            | TopAlias {alias_of; _} ->
+                Set.singleton alias_of
+            | TopConstant (_, _, t, e, _) ->
+                let acc = depsOfType Set.empty t in
+                depsOfExp constants acc e
+          in
+          Map.add name deps graph )
+        Map.empty prog
+    in
+    (* Reverse alias edges: when a base type is reachable, its aliases become reachable.
+       This ensures that and-grouped functions sharing context types via aliases are preserved. *)
+    let graph =
+      List.fold_left
+        (fun graph (s : top_stmt) ->
+          match s.top with TopAlias {path; alias_of} -> addDep graph alias_of path | _ -> graph )
+        graph prog
+    in
+    (* Reverse context-type edges: when a context type is reachable, functions using it
+       as their first parameter become reachable. This preserves and-grouped functions
+       whose context types are aliases of a root function's context type. *)
+    let graph =
+      List.fold_left
+        (fun graph (s : top_stmt) ->
+          match s.top with
+          | TopFunction (def, _) | TopExternal (def, _) -> (
+            match contextTypeOfFunction def with Some ctx_type -> addDep graph ctx_type def.name | None -> graph )
+          | _ ->
+              graph )
+        graph prog
+    in
+    graph
 
   let findRoots (prog : prog) (all_names : Set.t) : Set.t =
     (* Phase 1: Collect context types of is_root functions *)
@@ -1353,6 +1508,7 @@ let passes =
   Location.mapper
   |> Mapper.seq (Markers.mapper Enabled)
   |> Mapper.seq (Canonize.mapper Enabled)
+  |> Mapper.seq (ConstantPropagation.mapper Enabled)
   |> Mapper.seq (StrengthReduction.mapper Enabled)
   |> Mapper.seq (Simplify.mapper Enabled)
   |> Mapper.seq (Builtin.mapper Enabled)
