@@ -1564,7 +1564,7 @@ and compileCall (ctx : compile_ctx) (path : string) (args : exp list) : compiled
 
 (* Checks if a function call should be inlined *)
 and shouldInline (param_names : string list) (body_exp : exp) (args : exp list) : bool =
-  progExpSize body_exp <= 15
+  progExpSize body_exp <= 30
   && (not (CCList.exists (fun pn -> containsProgCall pn body_exp) param_names))
   &&
   (* For params used >1 time, the arg must be simple *)
@@ -1935,8 +1935,16 @@ let processStatement (prog : iprog) (stmt : top_stmt) : unit =
       match body.s with
       | StmtBlock [{s= StmtReturn ret_exp; _}] | StmtReturn ret_exp ->
           let param_names = CCList.map (fun (p : param) -> p.name) def.args in
-          if progExpSize ret_exp <= 15 && not (containsProgCall def.name ret_exp) then
+          if progExpSize ret_exp <= 30 && not (containsProgCall def.name ret_exp) then
             prog.inlinable <- Map.add def.name (param_names, ret_exp) prog.inlinable
+      | StmtBlock [{s= StmtDecl ({d= DId (let_name, _); _}, Some init_exp); _}; {s= StmtReturn ret_exp; _}] ->
+          let param_names = CCList.map (fun (p : param) -> p.name) def.args in
+          if not (CCList.mem ~eq:String.equal let_name param_names) then begin
+            let subst = Map.singleton let_name init_exp in
+            let expanded = substituteProgExp subst ret_exp in
+            if progExpSize expanded <= 30 && not (containsProgCall def.name expanded) then
+              prog.inlinable <- Map.add def.name (param_names, expanded) prog.inlinable
+          end
       | _ ->
           () )
 
