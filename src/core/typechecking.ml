@@ -57,9 +57,9 @@ let linkType ~from ~into =
   pickLoc from into ;
   true
 
-let rec unlink (t : type_) = match t.tx with TELink t -> unlink t | _ -> t
+let unlink = Typed.unlink
 
-let path_string (p : Syntax.path) : string = match p with {id; n= None; _} -> id | {id; n= Some n; _} -> n ^ "_" ^ id
+let pathString = Typed.pathString
 
 (* Tries to unity the given type with all the elements of the set, if they can be unified we increase the counter *)
 let rec pushTypeToSet (set : (type_ * int) list) (elem : type_) =
@@ -302,47 +302,7 @@ let propagateVariability env loc (args : Typed.arg list option) (exp_args : exp 
           (fun (arg : arg) (exp : exp) -> if isTypeConst arg.t = false then markExpMutable env exp loc)
           args exp_args
 
-(* Convert type to mangled name for specialized function names *)
-(* Used by toprog.ml for generating specialized function names *)
-let rec type_to_mangled_name (t : Typed.type_) : string =
-  match (unlink t).tx with
-  | TEId {id; n= None; _} ->
-      id
-  | TEId {id; n= Some module_name; _} ->
-      module_name ^ "_" ^ id
-  | TEFunction (arg_types, ret_type) ->
-      let args_str = CCList.map type_to_mangled_name arg_types |> String.concat "_" in
-      let ret_str = type_to_mangled_name ret_type in
-      "fn_" ^ args_str ^ "_to_" ^ ret_str
-  | TEComposed (name, type_args) ->
-      let args_str = CCList.map type_to_mangled_name type_args |> String.concat "_" in
-      if args_str = "" then name else name ^ "_of_" ^ args_str
-  | TEUnbound (Some id) ->
-      "unbound" ^ string_of_int id
-  | TEUnbound None ->
-      "unbound"
-  | TEOption type_list -> (
-    (* For option types, try to find a concrete type that has been constrained *)
-    (* This is a simplified approach - in practice, we should use the actual constrained types *)
-    match type_list with
-    | [single_type] ->
-        type_to_mangled_name single_type (* Use the single concrete type *)
-    | multiple_types -> (
-        (* Try to find a non-option type in the list *)
-        let non_option_types =
-          CCList.filter (fun t -> match (unlink t).tx with TEOption _ -> false | _ -> true) multiple_types
-        in
-        match non_option_types with
-        | concrete_type :: _ ->
-            type_to_mangled_name concrete_type
-        | [] ->
-            "opt_" ^ (CCList.map type_to_mangled_name type_list |> String.concat "_") ) )
-  | TENoReturn ->
-      "noreturn"
-  | TESize i ->
-      "size_" ^ string_of_int i
-  | TELink _ ->
-      "link" (* Should not happen after unlink *)
+let typeToMangledName = Typed.typeToMangledName
 
 let rec addContextArg (env : env) instance (f : Env.f) args loc =
   if Env.isFunctionActive f then (
@@ -381,8 +341,8 @@ let rec addContextArg (env : env) instance (f : Env.f) args loc =
     | _, None ->
         let number =
           Printf.sprintf "%.2x%.2x"
-            (0xFF land Hashtbl.hash (path_string fpath))
-            (0xFF land Hashtbl.hash (path_string cpath))
+            (0xFF land Hashtbl.hash (pathString fpath))
+            (0xFF land Hashtbl.hash (pathString cpath))
         in
         let rec generateName () =
           let n = Env.getFunctionTick env in
@@ -791,13 +751,11 @@ and exp ?(context = normal_context) ?(in_constant_context = false) (env : env) (
                   | Syntax.{id; n= None; loc} ->
                       (id, loc)
                   | {loc; _} ->
-                      Error.raiseError ("The name '" ^ path_string id ^ "' is not a valid member of a data type.") loc
+                      Error.raiseError ("The name '" ^ pathString id ^ "' is not a valid member of a data type.") loc
                 in
                 match Env.Map.find id members with
                 | None ->
-                    Error.raiseError
-                      ("The name '" ^ id ^ "' does not belong to type '" ^ path_string path ^ "'.")
-                      id_loc
+                    Error.raiseError ("The name '" ^ id ^ "' does not belong to type '" ^ pathString path ^ "'.") id_loc
                 | Some var ->
                     unifyRaise v.loc var.t v.t ;
                     (env, (id, v) :: acc) )
@@ -806,7 +764,7 @@ and exp ?(context = normal_context) ?(in_constant_context = false) (env : env) (
           let elems = CCList.sort (fun (id1, _) (id2, _) -> String.compare id1 id2) elems_rev in
           (env, {e= ERecord {path= t.path; elems}; t= Typed.C.path_t loc t.path; loc})
       | _ ->
-          Error.raiseError ("The path '" ^ path_string path ^ "' is not a type.") loc )
+          Error.raiseError ("The path '" ^ pathString path ^ "' is not a type.") loc )
   | {e= SETypeIntrinsic (intrinsic_name, type_param); loc} ->
       (* Type intrinsics - convert to typed representation *)
       (* The type is unbound here and will be resolved during generic instantiation *)
@@ -1038,158 +996,13 @@ let makeIfOfMatch env e cases =
   in
   match if_stmt with None -> failwith "makeIfOfMatch" | Some stmt -> stmt
 
-let resolve_type_intrinsic_inline = Typed.resolve_type_intrinsic_inline
+let resolveTypeIntrinsicInline = Typed.resolveTypeIntrinsicInline
 
-(** Resolves type intrinsics in an expression tree using the type substitution map.
-    This is called after processing an expression to replace ETypeIntrinsic nodes
-    with concrete values. *)
-let rec resolve_type_intrinsics_in_exp (type_substitution_map : (string * type_) list) (e : Typed.exp) : Typed.exp =
-  match e.e with
-  | ETypeIntrinsic {intrinsic; type_param} -> (
-    (* Look up the type parameter in the substitution map *)
-    match CCList.assoc_opt ~eq:String.equal type_param type_substitution_map with
-    | Some concrete_type ->
-        resolve_type_intrinsic_inline intrinsic concrete_type e.loc
-    | None ->
-        Error.raiseError (Printf.sprintf "Type parameter '%s' not found in generic bindings" type_param) e.loc )
-  | ECall {instance; path; args} ->
-      let args = CCList.map (resolve_type_intrinsics_in_exp type_substitution_map) args in
-      {e with e= ECall {instance; path; args}}
-  | EOp (op, e1, e2) ->
-      let e1 = resolve_type_intrinsics_in_exp type_substitution_map e1 in
-      let e2 = resolve_type_intrinsics_in_exp type_substitution_map e2 in
-      {e with e= EOp (op, e1, e2)}
-  | EUnOp (op, e1) ->
-      let e1 = resolve_type_intrinsics_in_exp type_substitution_map e1 in
-      {e with e= EUnOp (op, e1)}
-  | EIf {cond; then_; else_} ->
-      let cond = resolve_type_intrinsics_in_exp type_substitution_map cond in
-      let then_ = resolve_type_intrinsics_in_exp type_substitution_map then_ in
-      let else_ = resolve_type_intrinsics_in_exp type_substitution_map else_ in
-      {e with e= EIf {cond; then_; else_}}
-  | EIndex {e= arr; index} ->
-      let arr = resolve_type_intrinsics_in_exp type_substitution_map arr in
-      let index = resolve_type_intrinsics_in_exp type_substitution_map index in
-      {e with e= EIndex {e= arr; index}}
-  | EArray elems ->
-      let elems = CCList.map (resolve_type_intrinsics_in_exp type_substitution_map) elems in
-      {e with e= EArray elems}
-  | ETuple elems ->
-      let elems = CCList.map (resolve_type_intrinsics_in_exp type_substitution_map) elems in
-      {e with e= ETuple elems}
-  | EMember (e1, m) ->
-      let e1 = resolve_type_intrinsics_in_exp type_substitution_map e1 in
-      {e with e= EMember (e1, m)}
-  | ERecord {path; elems} ->
-      let elems = CCList.map (fun (n, v) -> (n, resolve_type_intrinsics_in_exp type_substitution_map v)) elems in
-      {e with e= ERecord {path; elems}}
-  | EGenCall {instance; generic_path; args; explicit_args} ->
-      let args = CCList.map (resolve_type_intrinsics_in_exp type_substitution_map) args in
-      let explicit_args = CCList.map (resolve_type_intrinsics_in_exp type_substitution_map) explicit_args in
-      {e with e= EGenCall {instance; generic_path; args; explicit_args}}
-  | EGenCompanionCall {instance; companion_name; parent_generic_path; args} ->
-      let args = CCList.map (resolve_type_intrinsics_in_exp type_substitution_map) args in
-      {e with e= EGenCompanionCall {instance; companion_name; parent_generic_path; args}}
-  | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ | EConst _ ->
-      e
+let resolveTypeIntrinsicsInExp = Typed.resolveTypeIntrinsicsInExp
 
-(** Substitutes constant parameter references with their literal values in expressions.
-    This is used for specialized generic functions where constant params are inlined. *)
-let rec substitute_constants_in_exp (constant_map : (string * Typed.exp) list) (e : Typed.exp) : Typed.exp =
-  match e.e with
-  | EId name -> (
-    (* Check if this identifier is a constant parameter that should be substituted *)
-    match CCList.assoc_opt ~eq:String.equal name constant_map with
-    | Some const_exp ->
-        {const_exp with loc= e.loc; t= e.t}
-    | None ->
-        e )
-  | ECall {instance; path; args} ->
-      let args = CCList.map (substitute_constants_in_exp constant_map) args in
-      {e with e= ECall {instance; path; args}}
-  | EOp (op, e1, e2) ->
-      let e1 = substitute_constants_in_exp constant_map e1 in
-      let e2 = substitute_constants_in_exp constant_map e2 in
-      {e with e= EOp (op, e1, e2)}
-  | EUnOp (op, e1) ->
-      let e1 = substitute_constants_in_exp constant_map e1 in
-      {e with e= EUnOp (op, e1)}
-  | EIf {cond; then_; else_} ->
-      let cond = substitute_constants_in_exp constant_map cond in
-      let then_ = substitute_constants_in_exp constant_map then_ in
-      let else_ = substitute_constants_in_exp constant_map else_ in
-      {e with e= EIf {cond; then_; else_}}
-  | EIndex {e= arr; index} ->
-      let arr = substitute_constants_in_exp constant_map arr in
-      let index = substitute_constants_in_exp constant_map index in
-      {e with e= EIndex {e= arr; index}}
-  | EArray elems ->
-      let elems = CCList.map (substitute_constants_in_exp constant_map) elems in
-      {e with e= EArray elems}
-  | ETuple elems ->
-      let elems = CCList.map (substitute_constants_in_exp constant_map) elems in
-      {e with e= ETuple elems}
-  | EMember (e1, m) ->
-      let e1 = substitute_constants_in_exp constant_map e1 in
-      {e with e= EMember (e1, m)}
-  | ERecord {path; elems} ->
-      let elems = CCList.map (fun (n, v) -> (n, substitute_constants_in_exp constant_map v)) elems in
-      {e with e= ERecord {path; elems}}
-  | EGenCall {instance; generic_path; args; explicit_args} ->
-      let args = CCList.map (substitute_constants_in_exp constant_map) args in
-      let explicit_args = CCList.map (substitute_constants_in_exp constant_map) explicit_args in
-      {e with e= EGenCall {instance; generic_path; args; explicit_args}}
-  | EGenCompanionCall {instance; companion_name; parent_generic_path; args} ->
-      let args = CCList.map (substitute_constants_in_exp constant_map) args in
-      {e with e= EGenCompanionCall {instance; companion_name; parent_generic_path; args}}
-  | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EConst _ | ETypeIntrinsic _ ->
-      e
+let resolveTypeIntrinsicsInStmt = Typed.resolveTypeIntrinsicsInStmt
 
-(** Substitutes constant parameter references in a left-hand side expression.
-    This handles cases like array indices that contain constant parameters. *)
-let rec substitute_constants_in_lexp (constant_map : (string * Typed.exp) list) (l : Typed.lexp) : Typed.lexp =
-  match l.l with
-  | LWild ->
-      l
-  | LId _ ->
-      l
-  | LMember (e, member_name) ->
-      let e = substitute_constants_in_lexp constant_map e in
-      {l with l= LMember (e, member_name)}
-  | LIndex {e; index} ->
-      let e = substitute_constants_in_lexp constant_map e in
-      let index = substitute_constants_in_exp constant_map index in
-      {l with l= LIndex {e; index}}
-  | LTuple lexps ->
-      let lexps = CCList.map (substitute_constants_in_lexp constant_map) lexps in
-      {l with l= LTuple lexps}
-
-(** Substitutes constant parameter references in a statement tree. *)
-let rec substitute_constants_in_stmt (constant_map : (string * Typed.exp) list) (s : Typed.stmt) : Typed.stmt =
-  match s.s with
-  | StmtVal _ ->
-      s
-  | StmtMem (_, _) ->
-      s
-  | StmtBind (lhs, rhs) ->
-      let lhs = substitute_constants_in_lexp constant_map lhs in
-      let rhs = substitute_constants_in_exp constant_map rhs in
-      {s with s= StmtBind (lhs, rhs)}
-  | StmtReturn e ->
-      let e = substitute_constants_in_exp constant_map e in
-      {s with s= StmtReturn e}
-  | StmtIf (cond, then_, else_opt) ->
-      let cond = substitute_constants_in_exp constant_map cond in
-      let then_ = substitute_constants_in_stmt constant_map then_ in
-      let else_opt = Option.map (substitute_constants_in_stmt constant_map) else_opt in
-      {s with s= StmtIf (cond, then_, else_opt)}
-  | StmtWhile (cond, body) ->
-      let cond = substitute_constants_in_exp constant_map cond in
-      let body = substitute_constants_in_stmt constant_map body in
-      {s with s= StmtWhile (cond, body)}
-  | StmtBlock stmts ->
-      let stmts = CCList.map (substitute_constants_in_stmt constant_map) stmts in
-      {s with s= StmtBlock stmts}
+let substituteConstantsInStmt = Typed.substituteConstantsInStmt
 
 (* Type substitution version of stmt for processing specialized function bodies *)
 let rec stmt_with_type_substitution (env : env) (type_substitution_map : (string * type_) list) (return : type_)
@@ -1226,34 +1039,8 @@ let rec stmt_with_type_substitution (env : env) (type_substitution_map : (string
   (* Use the same stmt function but with our type-substituting dexp *)
   let env, stmts = stmt_generic env dexp_with_substitution return s in
   (* Resolve any type intrinsics in the resulting statements *)
-  let stmts = CCList.map (resolve_type_intrinsics_in_stmt type_substitution_map) stmts in
+  let stmts = CCList.map (resolveTypeIntrinsicsInStmt type_substitution_map) stmts in
   (env, stmts)
-
-(** Resolves type intrinsics in a statement tree. *)
-and resolve_type_intrinsics_in_stmt (type_substitution_map : (string * type_) list) (s : Typed.stmt) : Typed.stmt =
-  match s.s with
-  | StmtVal _ ->
-      s (* Declaration doesn't have expressions *)
-  | StmtMem (_, _) ->
-      s (* Mem declaration doesn't have expressions *)
-  | StmtBind (lhs, rhs) ->
-      let rhs = resolve_type_intrinsics_in_exp type_substitution_map rhs in
-      {s with s= StmtBind (lhs, rhs)}
-  | StmtReturn e ->
-      let e = resolve_type_intrinsics_in_exp type_substitution_map e in
-      {s with s= StmtReturn e}
-  | StmtIf (cond, then_, else_opt) ->
-      let cond = resolve_type_intrinsics_in_exp type_substitution_map cond in
-      let then_ = resolve_type_intrinsics_in_stmt type_substitution_map then_ in
-      let else_opt = Option.map (resolve_type_intrinsics_in_stmt type_substitution_map) else_opt in
-      {s with s= StmtIf (cond, then_, else_opt)}
-  | StmtWhile (cond, body) ->
-      let cond = resolve_type_intrinsics_in_exp type_substitution_map cond in
-      let body = resolve_type_intrinsics_in_stmt type_substitution_map body in
-      {s with s= StmtWhile (cond, body)}
-  | StmtBlock stmts ->
-      let stmts = CCList.map (resolve_type_intrinsics_in_stmt type_substitution_map) stmts in
-      {s with s= StmtBlock stmts}
 
 and type_in_m_with_substitution (env : env) (type_substitution_map : (string * type_) list) (t : Syntax.type_) =
   match t with
@@ -1520,7 +1307,7 @@ let registerMultiReturnMem (env : env) name t loc =
   let _, ret = t in
   match unlink ret with
   | {tx= TEComposed ("tuple", elems); _} ->
-      let names = CCList.mapi (fun i t -> (path_string name ^ "_ret_" ^ string_of_int i, t)) elems in
+      let names = CCList.mapi (fun i t -> (pathString name ^ "_ret_" ^ string_of_int i, t)) elems in
       CCList.fold_left (fun env (name, t) -> Env.addReturnVar env name t loc) env names
   | _ ->
       env
