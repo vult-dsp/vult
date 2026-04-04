@@ -117,7 +117,7 @@ static_inline int16_t int16_mul(int16_t a, int16_t b) { return int_to_int16((int
 static_inline int16_t int16_div(int16_t a, int16_t b) { return b == 0 ? 0 : int_to_int16((int)a / (int)b); }
 static_inline int16_t int16_mod(int16_t a, int16_t b) { return b == 0 ? 0 : (int16_t)((int)a % (int)b); }
 
-static_inline int16_t int16_abs(int16_t a) { return a == -32768 ? 32767 : (a < 0 ? -a : a); }
+static_inline int16_t int16_abs(int16_t a) { return a == -32768 ? 32767 : (a < 0 ? (int16_t)(-a) : a); }
 static_inline int16_t int16_min(int16_t a, int16_t b) { return a < b ? a : b; }
 static_inline int16_t int16_max(int16_t a, int16_t b) { return a > b ? a : b; }
 

@@ -94,22 +94,22 @@ let resolveTypeIntrinsic (intrinsic : string) (t : type_) : exp =
       {e= EString ""; t; loc}
   (* typemax - numeric types only *)
   | "typemax", TInt ->
-      {e= EInt 2147483647; t; loc}
+      {e= EInt Int.max_int; t; loc}
   | "typemax", TInt16 ->
       {e= EInt 32767; t; loc}
   | "typemax", TReal ->
-      {e= EReal 3.40282347e+38; t; loc}
+      {e= EReal Float.max_float; t; loc}
   | "typemax", TFix16 ->
       {e= EFixed 32767.99998; t; loc}
   | "typemax", TBool ->
       {e= EBool true; t; loc}
   (* typemin - numeric types only *)
   | "typemin", TInt ->
-      {e= EInt (-2147483648); t; loc}
+      {e= EInt Int.min_int; t; loc}
   | "typemin", TInt16 ->
       {e= EInt (-32768); t; loc}
   | "typemin", TReal ->
-      {e= EReal (-3.40282347e+38); t; loc}
+      {e= EReal Float.min_float; t; loc}
   | "typemin", TFix16 ->
       {e= EFixed (-32768.0); t; loc}
   | "typemin", TBool ->
