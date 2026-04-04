@@ -604,6 +604,66 @@ let compile_binop_rr_cp (r1 : compiled_result) (r2 : compiled_result) (op : floa
   | _ ->
       CDynamic (compile_binop_rr (to_closure r1) (to_closure r2) op err)
 
+let compile_ternop_rr_cp (r1 : compiled_result) (r2 : compiled_result) (r3 : compiled_result) (err : string) :
+    compiled_result =
+  match (r1, r2, r3) with
+  | CConstant (DReal a), CConstant (DReal b), CConstant (DReal c) ->
+      CConstant (DReal (a +. b +. c))
+  | CVar idx1, CVar idx2, CVar idx3 ->
+      CDynamic
+        (fun ctx stack fs ->
+          match
+            ( Array.unsafe_get stack.stack (fs + idx1)
+            , Array.unsafe_get stack.stack (fs + idx2)
+            , Array.unsafe_get stack.stack (fs + idx3) )
+          with
+          | DReal a, DReal b, DReal c ->
+              DReal (a +. b +. c)
+          | _ ->
+              error_with_context ctx err )
+  | _ ->
+      let f1 = to_closure r1 in
+      let f2 = to_closure r2 in
+      let f3 = to_closure r3 in
+      CDynamic
+        (fun ctx stack fs ->
+          match (f1 ctx stack fs, f2 ctx stack fs, f3 ctx stack fs) with
+          | DReal a, DReal b, DReal c ->
+              DReal (a +. b +. c)
+          | _ ->
+              error_with_context ctx err )
+
+let compile_quaternop_rr_cp (r1 : compiled_result) (r2 : compiled_result) (r3 : compiled_result) (r4 : compiled_result)
+    (err : string) : compiled_result =
+  match (r1, r2, r3, r4) with
+  | CConstant (DReal a), CConstant (DReal b), CConstant (DReal c), CConstant (DReal d) ->
+      CConstant (DReal (a +. b +. c +. d))
+  | CVar idx1, CVar idx2, CVar idx3, CVar idx4 ->
+      CDynamic
+        (fun ctx stack fs ->
+          match
+            ( Array.unsafe_get stack.stack (fs + idx1)
+            , Array.unsafe_get stack.stack (fs + idx2)
+            , Array.unsafe_get stack.stack (fs + idx3)
+            , Array.unsafe_get stack.stack (fs + idx4) )
+          with
+          | DReal a, DReal b, DReal c, DReal d ->
+              DReal (a +. b +. c +. d)
+          | _ ->
+              error_with_context ctx err )
+  | _ ->
+      let f1 = to_closure r1 in
+      let f2 = to_closure r2 in
+      let f3 = to_closure r3 in
+      let f4 = to_closure r4 in
+      CDynamic
+        (fun ctx stack fs ->
+          match (f1 ctx stack fs, f2 ctx stack fs, f3 ctx stack fs, f4 ctx stack fs) with
+          | DReal a, DReal b, DReal c, DReal d ->
+              DReal (a +. b +. c +. d)
+          | _ ->
+              error_with_context ctx err )
+
 let compile_unary_r_cp (r1 : compiled_result) (op : float -> float) (err : string) : compiled_result =
   match r1 with
   | CConstant (DReal f) ->
@@ -748,6 +808,16 @@ let rec compileExp (ctx : compile_ctx) (exp : exp) : compiled_result =
       | None ->
           error ("Variable or constant not found: " ^ name) ) )
   (* -- Specialized arithmetic operations based on types -- *)
+  (* -- Fused 4-way real addition: (((a + b) + c) + d) -- *)
+  | EOp
+      ( OpAdd
+      , {e= EOp (OpAdd, {e= EOp (OpAdd, e1, e2); t= {t= TReal | TFix16; _}; _}, e3); t= {t= TReal | TFix16; _}; _}
+      , e4 ) ->
+      compile_quaternop_rr_cp (compileExp ctx e1) (compileExp ctx e2) (compileExp ctx e3) (compileExp ctx e4)
+        "Type mismatch in real addition"
+  (* -- Fused 3-way real addition: ((a + b) + c) -- *)
+  | EOp (OpAdd, {e= EOp (OpAdd, e1, e2); t= {t= TReal | TFix16; _}; _}, e3) ->
+      compile_ternop_rr_cp (compileExp ctx e1) (compileExp ctx e2) (compileExp ctx e3) "Type mismatch in real addition"
   | EOp (OpAdd, e1, e2) when isInt16Type e1.t && isInt16Type e2.t ->
       compile_binop_i16_cp (compileExp ctx e1) (compileExp ctx e2) ( + ) "Type mismatch in int16 addition"
   | EOp (OpAdd, e1, e2) when isIntType e1.t && isIntType e2.t ->

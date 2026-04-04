@@ -152,53 +152,7 @@ let create_instantiation_state () : instantiation_state =
 
 (* ========== Type Intrinsic Resolution ========== *)
 
-(** Resolves a type intrinsic to a concrete expression during generic instantiation. *)
-let resolve_type_intrinsic_inline (intrinsic : Typed.type_intrinsic) (concrete_type : Typed.type_) (loc : Loc.t) :
-    Typed.exp =
-  let t = concrete_type in
-  let unlinked = unlink concrete_type in
-  match (intrinsic, unlinked.tx) with
-  | TypeDefault, TEId {id= "int"; _} ->
-      {e= EInt 0; t; loc}
-  | TypeDefault, TEId {id= "int16"; _} ->
-      {e= EInt 0; t; loc}
-  | TypeDefault, TEId {id= "real"; _} ->
-      {e= EReal 0.0; t; loc}
-  | TypeDefault, TEId {id= "fix16"; _} ->
-      {e= EFixed 0.0; t; loc}
-  | TypeDefault, TEId {id= "bool"; _} ->
-      {e= EBool false; t; loc}
-  | TypeDefault, TEId {id= "string"; _} ->
-      {e= EString ""; t; loc}
-  | TypeMax, TEId {id= "int"; _} ->
-      {e= EInt Int.max_int; t; loc}
-  | TypeMax, TEId {id= "int16"; _} ->
-      {e= EInt 32767; t; loc}
-  | TypeMax, TEId {id= "real"; _} ->
-      {e= EReal Float.max_float; t; loc}
-  | TypeMax, TEId {id= "fix16"; _} ->
-      {e= EFixed 32767.99998; t; loc}
-  | TypeMax, TEId {id= "bool"; _} ->
-      {e= EBool true; t; loc}
-  | TypeMin, TEId {id= "int"; _} ->
-      {e= EInt Int.min_int; t; loc}
-  | TypeMin, TEId {id= "int16"; _} ->
-      {e= EInt (-32768); t; loc}
-  | TypeMin, TEId {id= "real"; _} ->
-      {e= EReal Float.min_float; t; loc}
-  | TypeMin, TEId {id= "fix16"; _} ->
-      {e= EFixed (-32768.0); t; loc}
-  | TypeMin, TEId {id= "bool"; _} ->
-      {e= EBool false; t; loc}
-  | TypeMax, _ ->
-      let type_str = Pla.print (Typed.print_type_ concrete_type) in
-      Error.raiseError (Printf.sprintf "typemax() is not supported for type '%s'" type_str) loc
-  | TypeMin, _ ->
-      let type_str = Pla.print (Typed.print_type_ concrete_type) in
-      Error.raiseError (Printf.sprintf "typemin() is not supported for type '%s'" type_str) loc
-  | TypeDefault, _ ->
-      let type_str = Pla.print (Typed.print_type_ concrete_type) in
-      Error.raiseError (Printf.sprintf "typedefault() is not supported for type '%s'" type_str) loc
+let resolve_type_intrinsic_inline = Typed.resolve_type_intrinsic_inline
 
 (** Resolves type intrinsics in an expression tree using the type substitution map. *)
 let rec resolve_type_intrinsics_in_exp (type_substitution_map : (string * type_) list) (e : Typed.exp) : Typed.exp =

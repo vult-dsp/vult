@@ -997,3 +997,53 @@ let copy_types_with_unbound_mapping (types : type_ list) : type_ list * (type_ *
   (* Extract the mapping as a list of (original, fresh) pairs *)
   let mapping = TypeHashtbl.fold (fun orig fresh acc -> (orig, fresh) :: acc) memo [] in
   (fresh_types, mapping)
+
+(** Follows TELink chains to get the underlying type. *)
+let rec unlink (t : type_) : type_ = match t.tx with TELink t -> unlink t | _ -> t
+
+(** Resolves a type intrinsic to a concrete expression for a given type. *)
+let resolve_type_intrinsic_inline (intrinsic : type_intrinsic) (concrete_type : type_) (loc : Loc.t) : exp =
+  let t = concrete_type in
+  let unlinked = unlink concrete_type in
+  match (intrinsic, unlinked.tx) with
+  | TypeDefault, TEId {id= "int"; _} ->
+      {e= EInt 0; t; loc}
+  | TypeDefault, TEId {id= "int16"; _} ->
+      {e= EInt 0; t; loc}
+  | TypeDefault, TEId {id= "real"; _} ->
+      {e= EReal 0.0; t; loc}
+  | TypeDefault, TEId {id= "fix16"; _} ->
+      {e= EFixed 0.0; t; loc}
+  | TypeDefault, TEId {id= "bool"; _} ->
+      {e= EBool false; t; loc}
+  | TypeDefault, TEId {id= "string"; _} ->
+      {e= EString ""; t; loc}
+  | TypeMax, TEId {id= "int"; _} ->
+      {e= EInt Int.max_int; t; loc}
+  | TypeMax, TEId {id= "int16"; _} ->
+      {e= EInt 32767; t; loc}
+  | TypeMax, TEId {id= "real"; _} ->
+      {e= EReal Float.max_float; t; loc}
+  | TypeMax, TEId {id= "fix16"; _} ->
+      {e= EFixed 32767.99998; t; loc}
+  | TypeMax, TEId {id= "bool"; _} ->
+      {e= EBool true; t; loc}
+  | TypeMin, TEId {id= "int"; _} ->
+      {e= EInt Int.min_int; t; loc}
+  | TypeMin, TEId {id= "int16"; _} ->
+      {e= EInt (-32768); t; loc}
+  | TypeMin, TEId {id= "real"; _} ->
+      {e= EReal Float.min_float; t; loc}
+  | TypeMin, TEId {id= "fix16"; _} ->
+      {e= EFixed (-32768.0); t; loc}
+  | TypeMin, TEId {id= "bool"; _} ->
+      {e= EBool false; t; loc}
+  | TypeMax, _ ->
+      let type_str = Pla.print (print_type_ concrete_type) in
+      Error.raiseError (Printf.sprintf "typemax() is not supported for type '%s'" type_str) loc
+  | TypeMin, _ ->
+      let type_str = Pla.print (print_type_ concrete_type) in
+      Error.raiseError (Printf.sprintf "typemin() is not supported for type '%s'" type_str) loc
+  | TypeDefault, _ ->
+      let type_str = Pla.print (print_type_ concrete_type) in
+      Error.raiseError (Printf.sprintf "typedefault() is not supported for type '%s'" type_str) loc
