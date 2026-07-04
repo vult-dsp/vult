@@ -53,6 +53,13 @@ let os : string =
   | _ ->
       failwith "cannot get os"
 
+let isInstalled (cmd : string) : bool =
+  let check =
+    if os = "Windows" then Printf.sprintf "where %s > NUL 2>&1" cmd
+    else Printf.sprintf "command -v %s > /dev/null 2>&1" cmd
+  in
+  Sys.command check = 0
+
 let files =
   [ "test/perf/saw_eptr_perf.vult"
   ; "test/perf/saw_ptr1_perf.vult"
@@ -378,17 +385,27 @@ let use_c_vm = ref false
 
 let main () =
   let () = Arg.parse [("--c-vm", Arg.Set use_c_vm, "Enable C VM bytecode benchmarks")] (fun _ -> ()) "perf [--c-vm]" in
+  let benchmarks =
+    [ (["g++"], fun f -> runC Float f ; runC Fixed f)
+    ; (["lua"], runStandardLua)
+    ; (["luajit"], runLua)
+    ; (["node"], runJs)
+    ; (["bun"], runBun)
+    ; (["julia"], runJulia)
+    ; (["python3"], runPython)
+    ; (["javac"; "java"], runJava) ]
+  in
+  let available =
+    CCList.filter
+      (fun (tools, _) ->
+        let missing = CCList.filter (fun tool -> not (isInstalled tool)) tools in
+        if missing <> [] then Printf.eprintf "Skipping benchmarks: %s not installed\n%!" (String.concat ", " missing) ;
+        missing = [] )
+      benchmarks
+  in
   CCList.iter
     (fun f ->
-      runC Float f ;
-      runC Fixed f ;
-      runStandardLua f ;
-      runLua f ;
-      runJs f ;
-      runBun f ;
-      runJulia f ;
-      runPython f ;
-      runJava f ;
+      CCList.iter (fun (_, run) -> run f) available ;
       runInterpreter f ;
       runBytecode f ;
       runBytecodeC f )
