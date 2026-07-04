@@ -1657,11 +1657,15 @@ let removeExistingTypes set types =
   let f s = match s with {top= TopType {path; _}; _} when Set.mem path set -> false | _ -> true in
   CCList.filter f types
 
+(* Typechecks and elaborates a single file against an already-elaborated environment.
+   Used to evaluate expressions (e.g. -eval) in the context of an existing program:
+   generic calls reuse the specializations the program already created. *)
 let typecheck_single (iargs : Args.args) (env : env) (h : Parse.parsed_file) : env * top_stmt list =
   let set = createExistingTypeSet (createTypes env) in
   let env = Env.enterModule env h.name in
   let env, stmt = top_stmt_list iargs env h.stmts in
   let env = Env.exitModule env in
+  let stmt = Elaboration.elaborate ~reuse_existing:true iargs env [(h.name, stmt)] in
   let types = removeExistingTypes set (createTypes env) in
   (env, stmt @ types)
 

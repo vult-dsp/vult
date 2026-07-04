@@ -1,0 +1,51 @@
+// Regression test: generics called across modules. A qualified call
+// (Module.generic()) and an unqualified call inside the defining module must
+// share one specialization instead of instantiating it twice.
+
+fun test_shared_specialization() : int {
+  val a = Xmod_generics_lib.local_user();  // instantiates tw for int via an unqualified call
+  val b = Xmod_generics_lib.tw(21);        // qualified call: must reuse the same specialization
+
+  if (a == 42 && b == 42) {
+    return 100;
+  }
+  return -1;
+}
+
+fun test_new_type_qualified() : int {
+  val c = Xmod_generics_lib.tw(0.5);       // real specialization created from another module
+
+  if (c == 1.0) {
+    return 200;
+  }
+  return -2;
+}
+
+fun test_stateful_cross_module() : int {
+  // Stateful generic instantiated both inside its module and from here
+  val i = 0;
+  val local = 0.0;
+  val remote = 0.0;
+  while (i < 2) {
+    local = Xmod_generics_lib.stateful_user();  // instance inside the library function
+    remote = Xmod_generics_lib.track(0.25);     // instance in this function
+    i = i + 1;
+  }
+
+  if (local == 0.5 && remote == 0.5) {
+    return 300;
+  }
+  return -3;
+}
+
+fun main() : int {
+  val t1 = test_shared_specialization();
+  val t2 = test_new_type_qualified();
+  val t3 = test_stateful_cross_module();
+
+  // All tests pass: 100 + 200 + 300 = 600
+  if (t1 == 100 && t2 == 200 && t3 == 300) {
+    return 600;
+  }
+  return t1 + t2 + t3;
+}

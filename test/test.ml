@@ -188,6 +188,7 @@ let interpreter =
   ; "generics.vult"
   ; "generics_comprehensive.vult"
   ; "generics_context_chains.vult"
+  ; "generics_cross_module.vult"
   ; "generics_lhs_index_call.vult"
   ; "generics_multiple_types.vult"
   ; "generics_nested.vult"
@@ -735,29 +736,74 @@ module InterpretPerf = struct
 end
 
 module Interpret = struct
-  let run file _context =
+  let run file backend _context =
     let fullfile = checkFile (in_test_directory ("interpreter/" ^ file)) in
     let moduleName file = Filename.basename file |> Filename.chop_extension |> String.capitalize_ascii in
     let args =
       Args.
         { default_arguments with
-          eval= Some (moduleName fullfile ^ ".main()")
-        ; eval_backend= CVM
+          files= [File fullfile]
+        ; eval= Some (moduleName fullfile ^ ".main()")
+        ; eval_backend= backend
         ; includes= in_test_directory "interpreter" :: includes }
     in
     let results = Driver.Cli.driver args in
+    let got_result = ref false in
     CCList.iter
       (fun result ->
         match result with
         | Args.Errors errors ->
             assert_failure (Error.reportErrors errors)
         | Args.EvalResult int ->
+            got_result := true ;
             if int_of_string int > 0 then () else assert_failure ("Evaluation returned: " ^ int)
         | _ ->
             () )
-      results
+      results ;
+    if not !got_result then assert_failure "The evaluation produced no result"
 
-  let get files = "run" >::: CCList.map (fun file -> Filename.basename file >:: run file) files
+  (* Every file is evaluated with both backends so their semantics cannot diverge *)
+  let get files =
+    "run"
+    >::: CCList.map (fun file -> Filename.basename file ^ ".cvm" >:: run file Args.CVM) files
+         @ CCList.map (fun file -> Filename.basename file ^ ".interp" >:: run file Args.Interpreter) files
+end
+
+module EvalGenericTest = struct
+  (* Generic functions called directly in the evaluated expression must be elaborated:
+     they either reuse a specialization the program created or instantiate a new one *)
+  let run file expression expected _context =
+    let fullfile = checkFile (in_test_directory ("interpreter/" ^ file)) in
+    let args =
+      Args.
+        { default_arguments with
+          files= [File fullfile]
+        ; eval= Some expression
+        ; eval_backend= Interpreter
+        ; includes= in_test_directory "interpreter" :: includes }
+    in
+    let results = Driver.Cli.driver args in
+    let got = ref None in
+    CCList.iter
+      (fun result ->
+        match result with
+        | Args.Errors errors ->
+            assert_failure (Error.reportErrors errors)
+        | Args.EvalResult v ->
+            got := Some v
+        | _ ->
+            () )
+      results ;
+    match !got with
+    | Some v ->
+        assert_equal ~printer:(fun s -> s) expected v
+    | None ->
+        assert_failure "The evaluation produced no result"
+
+  let get () =
+    "eval_generics"
+    >::: [ "reused_specialization" >:: run "type_intrinsics.vult" "Type_intrinsics.get_max(0)" "2147483647"
+         ; "new_specialization" >:: run "generics_comprehensive.vult" "Generics_comprehensive.change(true)" "true" ]
 end
 
 module RenderTest = struct
@@ -882,6 +928,7 @@ let suite =
        ; RandomCompileTest.get test_random_code
        ; InterpretPerf.get perf_files
        ; Interpret.get interpreter
+       ; EvalGenericTest.get ()
        ; RenderTest.get () ]
 
 let () =

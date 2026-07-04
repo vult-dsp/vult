@@ -173,14 +173,18 @@ type instantiation_state =
            whether a recursive call was emitted before knowing the function needs a context. *)
   ; call_instance_names: (string, string) Hashtbl.t
         (* Instance names generated per call site, so re-processing a call reuses the same instance *)
+  ; reuse_env_specializations: bool
+        (* When elaborating code against an already-elaborated program (e.g. an expression given
+           to -eval), specializations that already exist in the environment are reused *)
   ; mutable pending_generic_calls: Typed.exp list }
 
-let create_instantiation_state () : instantiation_state =
+let create_instantiation_state (reuse_env_specializations : bool) : instantiation_state =
   { instantiated= Hashtbl.create 16
   ; pending_functions= []
   ; functions_needing_context= Hashtbl.create 16
   ; in_progress= Hashtbl.create 4
   ; call_instance_names= Hashtbl.create 16
+  ; reuse_env_specializations
   ; pending_generic_calls= [] }
 
 let resolveTypeIntrinsicsInStmt = Typed.resolveTypeIntrinsicsInStmt
@@ -504,47 +508,76 @@ and process_exp_instantiation (iargs : Args.args) (env : env) (state : instantia
           let resolved_arg_types = CCList.map (fun (a : Typed.exp) -> unlink a.t) args in
           let has_explicit = CCList.length explicit_args > 0 in
           let all_constants = has_explicit && CCList.for_all is_constant_literal explicit_args in
-          let signature =
-            if all_constants then build_specialized_signature_string generic_name resolved_arg_types explicit_args
-            else if has_explicit then build_nonspec_signature_string generic_name resolved_arg_types explicit_args
-            else build_signature_string generic_name resolved_arg_types
+          let specialized_name =
+            if all_constants then build_specialized_signature_string generic_func.name resolved_arg_types explicit_args
+            else if has_explicit then build_nonspec_signature_string generic_func.name resolved_arg_types explicit_args
+            else build_signature_string generic_func.name resolved_arg_types
           in
+          let generic_module = generic_path.n in
+          (* The deduplication key includes the module that owns the generic so a qualified and
+             an unqualified call to the same generic map to the same specialization, and
+             same-named generics in different modules do not collide *)
+          let owner_module = match generic_module with Some m -> m | None -> (Env.getCurrentModule env).name in
+          let signature = owner_module ^ "." ^ specialized_name in
           let specialized_def, in_progress =
             match Hashtbl.find_opt state.instantiated signature with
             | Some (def, _) ->
                 (def, Hashtbl.find_opt state.in_progress signature)
-            | None ->
-                let specialized_name =
-                  if all_constants then
-                    build_specialized_signature_string generic_func.name resolved_arg_types explicit_args
-                  else if has_explicit then
-                    build_nonspec_signature_string generic_func.name resolved_arg_types explicit_args
-                  else build_signature_string generic_func.name resolved_arg_types
-                in
-                let generic_module = generic_path.n in
+            | None -> (
                 let env_for_instantiation =
                   match generic_module with Some module_name -> Env.enterModule env module_name | None -> env
                 in
-                let def, processed_body =
-                  instantiate_generic_function iargs env_for_instantiation state generic_func signature specialized_name
-                    resolved_arg_types explicit_args loc
+                let existing =
+                  if state.reuse_env_specializations then
+                    Env.tryLookFunctionCall env_for_instantiation {id= specialized_name; n= None; loc}
+                  else None
                 in
-                let target_module =
-                  match def.name.n with
-                  | Some m ->
-                      m
-                  | None -> (
-                    match generic_module with
-                    | Some m ->
-                        m
-                    | None ->
-                        let m = Env.getCurrentModule env in
-                        m.name )
-                in
-                Hashtbl.replace state.instantiated signature (def, processed_body) ;
-                state.pending_functions <-
-                  (target_module, generic_func.name, def, processed_body) :: state.pending_functions ;
-                (def, None)
+                match existing with
+                | Some f ->
+                    (* The specialization was created by a previous elaboration of the program:
+                       reuse it instead of instantiating it again *)
+                    let base_args = match f.args with Some a -> a | None -> [] in
+                    let def_args =
+                      if Env.isFunctionActive f then
+                        match Env.lookVarInScopes f.locals context_name with
+                        | Some var ->
+                            ({name= context_name; t= var.t; loc} : Typed.arg) :: base_args
+                        | None ->
+                            base_args
+                      else base_args
+                    in
+                    let def : Typed.function_def =
+                      { name= f.path
+                      ; args= def_args
+                      ; t= (CCList.map (fun (a : Typed.arg) -> a.t) def_args, snd f.t)
+                      ; loc= generic_func.loc
+                      ; tags= generic_func.tags
+                      ; is_root= false
+                      ; next= None }
+                    in
+                    Hashtbl.replace state.instantiated signature (def, {s= StmtBlock []; loc}) ;
+                    (def, None)
+                | None ->
+                    let def, processed_body =
+                      instantiate_generic_function iargs env_for_instantiation state generic_func signature
+                        specialized_name resolved_arg_types explicit_args loc
+                    in
+                    let target_module =
+                      match def.name.n with
+                      | Some m ->
+                          m
+                      | None -> (
+                        match generic_module with
+                        | Some m ->
+                            m
+                        | None ->
+                            let m = Env.getCurrentModule env in
+                            m.name )
+                    in
+                    Hashtbl.replace state.instantiated signature (def, processed_body) ;
+                    state.pending_functions <-
+                      (target_module, generic_func.name, def, processed_body) :: state.pending_functions ;
+                    (def, None) )
           in
           let processed_regular_args = CCList.map (process_exp_instantiation iargs env state) args in
           let processed_explicit_args = CCList.map (process_exp_instantiation iargs env state) explicit_args in
@@ -1063,13 +1096,16 @@ let replace_placeholders_in_module (state : instantiation_state) (module_name : 
     This transforms EGenCall nodes to ECall nodes by creating specialized
     versions of generic functions with concrete types.
 
+    @param reuse_existing
+      Reuse specializations already present in the environment. Used when elaborating code
+      against an already-elaborated program (e.g. an expression given to -eval).
     @param iargs Compiler arguments
     @param env The type environment from typechecking
     @param module_stmts List of (module_name, statements) pairs from typechecking
     @return The elaborated top-level statements *)
-let elaborate (iargs : Args.args) (env : env) (module_stmts : (string * Typed.top_stmt list) list) : Typed.top_stmt list
-    =
-  let instantiation_state = create_instantiation_state () in
+let elaborate ?(reuse_existing = false) (iargs : Args.args) (env : env)
+    (module_stmts : (string * Typed.top_stmt list) list) : Typed.top_stmt list =
+  let instantiation_state = create_instantiation_state reuse_existing in
   (* Pass 1: Transform all EGenCall to ECall across all modules *)
   let transformed_stmts =
     CCList.map
@@ -1088,4 +1124,11 @@ let elaborate (iargs : Args.args) (env : env) (module_stmts : (string * Typed.to
         stmts @ acc )
       [] transformed_stmts
   in
-  CCList.rev final_stmts
+  (* Specializations whose generic placeholder is not part of these statements (e.g. when
+     elaborating an expression against an existing program) are emitted before everything else *)
+  let leftover =
+    CCList.map
+      (fun (_, _, def, body) -> {top= TopFunction (def, body); loc= def.loc})
+      (CCList.rev instantiation_state.pending_functions)
+  in
+  leftover @ CCList.rev final_stmts

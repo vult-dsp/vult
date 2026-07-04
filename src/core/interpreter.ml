@@ -1617,7 +1617,14 @@ and compileCall (ctx : compile_ctx) (path : string) (args : exp list) : compiled
           (fun ctx stack fs ->
             let new_depth = ctx.depth + 1 in
             if new_depth > ctx.max_depth then error_with_context ctx "Maximum call depth exceeded" ;
-            let cfunc = Array.unsafe_get prog.compiled_functions func_idx in
+            let cfunc =
+              if func_idx < Array.length prog.compiled_functions then Array.unsafe_get prog.compiled_functions func_idx
+              else error_with_context ctx ("Internal error: the function '" ^ path ^ "' has not been compiled")
+            in
+            let () =
+              if String.length cfunc.cf_name = 0 then
+                error_with_context ctx ("Internal error: the function '" ^ path ^ "' has not been compiled")
+            in
             let new_ctx = {ctx with frames= cfunc.cf_name :: ctx.frames; depth= new_depth} in
             let arg_vals = List.init n_args (fun i -> (Array.unsafe_get fargs i) ctx stack fs) in
             callCompiledFunction new_ctx stack cfunc arg_vals )
@@ -1936,8 +1943,11 @@ and callCompiledFunction (ctx : call_context) (stack : runtime_stack) (cfunc : c
 (* Calls a compiled function by index *)
 let callCompiledFunctionByIdx (prog : iprog) (ctx : call_context) (stack : runtime_stack) (func_idx : int)
     (args : dvalue list) : dvalue =
-  let cfunc = Array.unsafe_get prog.compiled_functions func_idx in
-  callCompiledFunction ctx stack cfunc args
+  if func_idx < 0 || func_idx >= Array.length prog.compiled_functions then
+    error (Printf.sprintf "Internal error: function index %d has not been compiled" func_idx)
+  else
+    let cfunc = Array.get prog.compiled_functions func_idx in
+    callCompiledFunction ctx stack cfunc args
 
 (* ---- Program Processing ---- *)
 
@@ -2018,6 +2028,92 @@ let processStatement (prog : iprog) (stmt : top_stmt) : unit =
       | _ ->
           () )
 
+(* Collect the names of the functions called in an expression or statement *)
+let rec callsInExp (acc : string list) (e : exp) : string list =
+  match e.e with
+  | EUnit | EEmptyValue | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ ->
+      acc
+  | EUnOp (_, e1) ->
+      callsInExp acc e1
+  | EOp (_, e1, e2) ->
+      callsInExp (callsInExp acc e1) e2
+  | EIndex {e= e1; index} ->
+      callsInExp (callsInExp acc e1) index
+  | EArray elems | ETuple elems ->
+      CCList.fold_left callsInExp acc elems
+  | ECall {path; args} ->
+      CCList.fold_left callsInExp (path :: acc) args
+  | EIf {cond; then_; else_} ->
+      callsInExp (callsInExp (callsInExp acc cond) then_) else_
+  | EMember (e1, _) | ETMember (e1, _) ->
+      callsInExp acc e1
+  | ERecord {elems; _} ->
+      CCList.fold_left (fun acc (_, v) -> callsInExp acc v) acc elems
+
+let rec callsInLexp (acc : string list) (l : lexp) : string list =
+  match l.l with
+  | LWild | LId _ ->
+      acc
+  | LMember (le, _) ->
+      callsInLexp acc le
+  | LIndex {e= le; index} ->
+      callsInExp (callsInLexp acc le) index
+  | LTuple elems ->
+      CCList.fold_left callsInLexp acc elems
+
+let rec callsInStmt (acc : string list) (s : stmt) : string list =
+  match s.s with
+  | StmtDecl (_, None) ->
+      acc
+  | StmtDecl (_, Some e) ->
+      callsInExp acc e
+  | StmtBind (l, e) ->
+      callsInExp (callsInLexp acc l) e
+  | StmtReturn e ->
+      callsInExp acc e
+  | StmtBlock stmts ->
+      CCList.fold_left callsInStmt acc stmts
+  | StmtIf (cond, then_, else_opt) -> (
+      let acc = callsInStmt (callsInExp acc cond) then_ in
+      match else_opt with Some s -> callsInStmt acc s | None -> acc )
+  | StmtWhile (cond, body) ->
+      callsInStmt (callsInExp acc cond) body
+  | StmtSwitch (e, cases, default_opt) -> (
+      let acc = callsInExp acc e in
+      let acc = CCList.fold_left (fun acc (case_e, case_s) -> callsInStmt (callsInExp acc case_e) case_s) acc cases in
+      match default_opt with Some s -> callsInStmt acc s | None -> acc )
+
+(* Process a list of top-level statements. The passes sort constants before the functions,
+   but constant initializers may call functions, so the functions a constant needs are
+   compiled on demand (transitively) before the constant is evaluated. *)
+let processStatements (prog : iprog) (stmts : top_stmt list) : unit =
+  let pending : (string, function_def * stmt) Hashtbl.t = Hashtbl.create 16 in
+  CCList.iter
+    (fun (stmt : top_stmt) ->
+      match stmt.top with TopFunction (def, body) -> Hashtbl.replace pending def.name (def, body) | _ -> () )
+    stmts ;
+  let rec ensureCompiled (name : string) : unit =
+    match Hashtbl.find_opt pending name with
+    | None ->
+        ()
+    | Some (def, body) ->
+        (* Remove before recursing so recursive functions terminate *)
+        Hashtbl.remove pending name ;
+        CCList.iter ensureCompiled (callsInStmt [] body) ;
+        processStatement prog {top= TopFunction (def, body); loc= def.loc}
+  in
+  CCList.iter
+    (fun (stmt : top_stmt) ->
+      match stmt.top with
+      | TopConstant (_, _, _, exp, _) ->
+          CCList.iter ensureCompiled (callsInExp [] exp) ;
+          processStatement prog stmt
+      | TopFunction (def, _) ->
+          ensureCompiled def.name
+      | _ ->
+          processStatement prog stmt )
+    stmts
+
 (* Full pipeline from Prog AST to compiled iprog.
    Two-pass: first register all function names, then process everything. *)
 let transformProgram (prog : top_stmt list) : iprog =
@@ -2035,7 +2131,7 @@ let transformProgram (prog : top_stmt list) : iprog =
           () )
     prog ;
   (* Second pass: process all statements *)
-  CCList.iter (processStatement iprog) prog ;
+  processStatements iprog prog ;
   iprog
 
 (* ---- Public Entry Points ---- *)
@@ -2058,7 +2154,7 @@ let evaluateMainExpression args env iprog exp : dvalue =
       | _ ->
           () )
     main ;
-  CCList.iter (processStatement iprog) main ;
+  processStatements iprog main ;
   (* Look for the new function Main___main_ *)
   let main_func_name = "Main___main_" in
   match Map.find_opt main_func_name iprog.ifunction_names with
@@ -2166,7 +2262,7 @@ let renderAudioExpression (args : Util.Args.args) (env : Env.in_top) (iprog : ip
       | _ ->
           () )
     main ;
-  CCList.iter (processStatement iprog) main ;
+  processStatements iprog main ;
   (* Execute wrapper function *)
   let main_func_name = "Render___main" in
   let initial_ctx = {frames= []; depth= 0; max_depth= 50; sample_rate= args.fs} in

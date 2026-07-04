@@ -94,23 +94,26 @@ let resolveTypeIntrinsic (intrinsic : string) (t : type_) : exp =
       {e= EString ""; t; loc}
   (* typemax - numeric types only *)
   | "typemax", TInt ->
-      {e= EInt Int.max_int; t; loc}
+      (* int is 32 bits in the generated code *)
+      {e= EInt 2147483647; t; loc}
   | "typemax", TInt16 ->
       {e= EInt 32767; t; loc}
   | "typemax", TReal ->
-      {e= EReal Float.max_float; t; loc}
+      (* real is a 32-bit float in the generated code *)
+      {e= EReal 3.40282346638528859812e+38; t; loc}
   | "typemax", TFix16 ->
       {e= EFixed 32767.99998; t; loc}
   | "typemax", TBool ->
       {e= EBool true; t; loc}
   (* typemin - numeric types only *)
   | "typemin", TInt ->
-      {e= EInt Int.min_int; t; loc}
+      (* int is 32 bits in the generated code *)
+      {e= EInt (-2147483648); t; loc}
   | "typemin", TInt16 ->
       {e= EInt (-32768); t; loc}
   | "typemin", TReal ->
-      (* Most negative finite value (Float.min_float is the smallest positive value) *)
-      {e= EReal (-.Float.max_float); t; loc}
+      (* Most negative finite 32-bit float (Float.min_float is the smallest positive value) *)
+      {e= EReal (-3.40282346638528859812e+38); t; loc}
   | "typemin", TFix16 ->
       {e= EFixed (-32768.0); t; loc}
   | "typemin", TBool ->

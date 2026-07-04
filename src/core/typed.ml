@@ -1063,22 +1063,25 @@ let resolveTypeIntrinsicInline (intrinsic : type_intrinsic) (concrete_type : typ
   | TypeDefault, TEId {id= "string"; _} ->
       {e= EString ""; t; loc}
   | TypeMax, TEId {id= "int"; _} ->
-      {e= EInt Int.max_int; t; loc}
+      (* int is 32 bits in the generated code *)
+      {e= EInt 2147483647; t; loc}
   | TypeMax, TEId {id= "int16"; _} ->
       {e= EInt 32767; t; loc}
   | TypeMax, TEId {id= "real"; _} ->
-      {e= EReal Float.max_float; t; loc}
+      (* real is a 32-bit float in the generated code *)
+      {e= EReal 3.40282346638528859812e+38; t; loc}
   | TypeMax, TEId {id= "fix16"; _} ->
       {e= EFixed 32767.99998; t; loc}
   | TypeMax, TEId {id= "bool"; _} ->
       {e= EBool true; t; loc}
   | TypeMin, TEId {id= "int"; _} ->
-      {e= EInt Int.min_int; t; loc}
+      (* int is 32 bits in the generated code *)
+      {e= EInt (-2147483648); t; loc}
   | TypeMin, TEId {id= "int16"; _} ->
       {e= EInt (-32768); t; loc}
   | TypeMin, TEId {id= "real"; _} ->
-      (* Most negative finite value (Float.min_float is the smallest positive value) *)
-      {e= EReal (-.Float.max_float); t; loc}
+      (* Most negative finite 32-bit float (Float.min_float is the smallest positive value) *)
+      {e= EReal (-3.40282346638528859812e+38); t; loc}
   | TypeMin, TEId {id= "fix16"; _} ->
       {e= EFixed (-32768.0); t; loc}
   | TypeMin, TEId {id= "bool"; _} ->
