@@ -1,0 +1,74 @@
+// Regression test: companion functions of a generic instantiated at several
+// types. Each specialization must get its own companion bound to its own
+// context type, and companion calls must resolve to the right one.
+
+fun track(x : 't) : 't {
+  mem last : 't;
+  last = x;
+  return x;
+}
+and get_last() {
+  return last;
+}
+
+fun test_companions_two_types() : int {
+  val a = i1:track(3);      // int specialization on instance i1
+  val b = i2:track(0.5);    // real specialization on instance i2
+
+  val gi = i1:get_last();   // companion of the int specialization
+  val gr = i2:get_last();   // companion of the real specialization
+
+  if (gi == 3 && gr == 0.5) {
+    return 100;
+  }
+  return -1;
+}
+
+fun test_companion_reads_updates() : int {
+  val a = j1:track(7);
+  val g1 = j1:get_last();   // 7
+  val b = j1:track(9);
+  val g2 = j1:get_last();   // 9
+
+  if (g1 == 7 && g2 == 9) {
+    return 200;
+  }
+  return -2;
+}
+
+// Anonymous companion call with a single specialization in scope
+fun counter('step : int) : int {
+  mem count : int;
+  count = count + step;
+  return count;
+}
+and reset_counter() {
+  count = 0;
+}
+and get_count() : int {
+  return count;
+}
+
+fun test_anonymous_companion() : int {
+  val c1 = counter(5);      // count = 5
+  val g1 = get_count();     // 5
+  _ = reset_counter();
+  val g2 = get_count();     // 0
+
+  if (c1 == 5 && g1 == 5 && g2 == 0) {
+    return 300;
+  }
+  return -3;
+}
+
+fun main() : int {
+  val t1 = test_companions_two_types();
+  val t2 = test_companion_reads_updates();
+  val t3 = test_anonymous_companion();
+
+  // All tests pass: 100 + 200 + 300 = 600
+  if (t1 == 100 && t2 == 200 && t3 == 300) {
+    return 600;
+  }
+  return t1 + t2 + t3;
+}

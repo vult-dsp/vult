@@ -1,0 +1,55 @@
+// Regression test: constant values in specialization signatures must be encoded
+// exactly. Constants that are close but different must produce different
+// specializations, never silently share one.
+
+fun scale('k : real, x : real) : real {
+  return k * x;
+}
+
+fun test_large_close_constants() : int {
+  // These two constants agree in the first 6 significant digits
+  val a = scale(1234567.0, 1.0);
+  val b = scale(1234568.0, 1.0);
+
+  if (b - a == 1.0) {
+    return 100;
+  }
+  return -1;
+}
+
+fun test_small_close_constants() : int {
+  val a = scale(0.30000001, 1.0);
+  val b = scale(0.30000004, 1.0);
+
+  if (b > a) {
+    return 200;
+  }
+  return -2;
+}
+
+fun offset('d : int, x : int) : int {
+  return x + d;
+}
+
+fun test_close_int_constants() : int {
+  val a = offset(1000000, 0);
+  val b = offset(1000001, 0);
+  val c = offset(-1000001, 0);
+
+  if (a == 1000000 && b == 1000001 && c == -1000001) {
+    return 300;
+  }
+  return -3;
+}
+
+fun main() : int {
+  val t1 = test_large_close_constants();
+  val t2 = test_small_close_constants();
+  val t3 = test_close_int_constants();
+
+  // All tests pass: 100 + 200 + 300 = 600
+  if (t1 == 100 && t2 == 200 && t3 == 300) {
+    return 600;
+  }
+  return t1 + t2 + t3;
+}

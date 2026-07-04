@@ -1,0 +1,16 @@
+// Calling a companion function anonymously when the parent generic was
+// instantiated with a named instance must produce a proper error (not a crash).
+fun counter('step : int) : int {
+  mem count : int;
+  count = count + step;
+  return count;
+}
+and get_count() : int {
+  return count;
+}
+
+fun main() : int {
+  val c = i1:counter(5);
+  val g = get_count();
+  return g;
+}

@@ -5,36 +5,36 @@
 #include "vultin.hpp"
 #include "ConstSpecialization.tables.h"
 
-typedef struct ConstSpecialization_accumulate_type {
+typedef struct ConstSpecialization_accumulate_real_real_2_type {
    float sum;
-} ConstSpecialization_accumulate_type;
+} ConstSpecialization_accumulate_real_real_2_type;
 
-typedef struct ConstSpecialization_accumulate_real_2_type {
+typedef struct ConstSpecialization_accumulate_real_dyn_real_type {
    float sum;
-} ConstSpecialization_accumulate_real_2_type;
+} ConstSpecialization_accumulate_real_dyn_real_type;
 
 typedef struct ConstSpecialization_test_accumulate_spec_type {
-   ConstSpecialization_accumulate_real_2_type inst_10ec4;
+   ConstSpecialization_accumulate_real_real_2_type inst_124c4;
 } ConstSpecialization_test_accumulate_spec_type;
 
 typedef struct ConstSpecialization_test_accumulate_nonspec_type {
-   ConstSpecialization_accumulate_type inst_17a3f;
+   ConstSpecialization_accumulate_real_dyn_real_type inst_1053f;
 } ConstSpecialization_test_accumulate_nonspec_type;
 
-typedef struct ConstSpecialization_scale_typed_real_2_type {
+typedef struct ConstSpecialization_scale_typed_real_int_2_type {
    float last;
-} ConstSpecialization_scale_typed_real_2_type;
+} ConstSpecialization_scale_typed_real_int_2_type;
 
-typedef struct ConstSpecialization_scale_typed_int_2_type {
+typedef struct ConstSpecialization_scale_typed_int_int_2_type {
    int32_t last;
-} ConstSpecialization_scale_typed_int_2_type;
+} ConstSpecialization_scale_typed_int_int_2_type;
 
 typedef struct ConstSpecialization_test_typed_int_type {
-   ConstSpecialization_scale_typed_int_2_type inst_1c235;
+   ConstSpecialization_scale_typed_int_int_2_type inst_1e935;
 } ConstSpecialization_test_typed_int_type;
 
 typedef struct ConstSpecialization_test_typed_real_type {
-   ConstSpecialization_scale_typed_real_2_type inst_15f7d;
+   ConstSpecialization_scale_typed_real_int_2_type inst_1537d;
 } ConstSpecialization_test_typed_real_type;
 
 typedef struct ConstSpecialization_main_type {
@@ -44,36 +44,36 @@ typedef struct ConstSpecialization_main_type {
    ConstSpecialization_test_typed_real_type inst_477fa;
 } ConstSpecialization_main_type;
 
-static_inline void ConstSpecialization_accumulate_type_init(ConstSpecialization_accumulate_type& _ctx) {
+static_inline void ConstSpecialization_accumulate_real_real_2_type_init(ConstSpecialization_accumulate_real_real_2_type& _ctx) {
    _ctx.sum = 0.0f;
 }
 
-static_inline void ConstSpecialization_accumulate_real_2_type_init(ConstSpecialization_accumulate_real_2_type& _ctx) {
+static_inline void ConstSpecialization_accumulate_real_dyn_real_type_init(ConstSpecialization_accumulate_real_dyn_real_type& _ctx) {
    _ctx.sum = 0.0f;
 }
 
 static_inline void ConstSpecialization_test_accumulate_spec_type_init(ConstSpecialization_test_accumulate_spec_type& _ctx) {
-   ConstSpecialization_accumulate_real_2_type_init(_ctx.inst_10ec4);
+   ConstSpecialization_accumulate_real_real_2_type_init(_ctx.inst_124c4);
 }
 
 static_inline void ConstSpecialization_test_accumulate_nonspec_type_init(ConstSpecialization_test_accumulate_nonspec_type& _ctx) {
-   ConstSpecialization_accumulate_type_init(_ctx.inst_17a3f);
+   ConstSpecialization_accumulate_real_dyn_real_type_init(_ctx.inst_1053f);
 }
 
-static_inline void ConstSpecialization_scale_typed_real_2_type_init(ConstSpecialization_scale_typed_real_2_type& _ctx) {
+static_inline void ConstSpecialization_scale_typed_real_int_2_type_init(ConstSpecialization_scale_typed_real_int_2_type& _ctx) {
    _ctx.last = 0.0f;
 }
 
-static_inline void ConstSpecialization_scale_typed_int_2_type_init(ConstSpecialization_scale_typed_int_2_type& _ctx) {
+static_inline void ConstSpecialization_scale_typed_int_int_2_type_init(ConstSpecialization_scale_typed_int_int_2_type& _ctx) {
    _ctx.last = 0;
 }
 
 static_inline void ConstSpecialization_test_typed_int_type_init(ConstSpecialization_test_typed_int_type& _ctx) {
-   ConstSpecialization_scale_typed_int_2_type_init(_ctx.inst_1c235);
+   ConstSpecialization_scale_typed_int_int_2_type_init(_ctx.inst_1e935);
 }
 
 static_inline void ConstSpecialization_test_typed_real_type_init(ConstSpecialization_test_typed_real_type& _ctx) {
-   ConstSpecialization_scale_typed_real_2_type_init(_ctx.inst_15f7d);
+   ConstSpecialization_scale_typed_real_int_2_type_init(_ctx.inst_1537d);
 }
 
 static_inline void ConstSpecialization_main_type_init(ConstSpecialization_main_type& _ctx) {
@@ -83,135 +83,135 @@ static_inline void ConstSpecialization_main_type_init(ConstSpecialization_main_t
    ConstSpecialization_test_typed_real_type_init(_ctx.inst_477fa);
 }
 
-static_inline int32_t ConstSpecialization_add_n_int_5(int32_t x) {
-   return 5 + x;
-}
-
-static_inline int32_t ConstSpecialization_add_n_int_100(int32_t x) {
-   return 100 + x;
-}
-
-static_inline int32_t ConstSpecialization_add_n(int32_t n, int32_t x) {
+static_inline int32_t ConstSpecialization_add_n_int_dyn_int(int32_t n, int32_t x) {
    return n + x;
 }
 
+static_inline int32_t ConstSpecialization_add_n_int_int_100(int32_t x) {
+   return 100 + x;
+}
+
+static_inline int32_t ConstSpecialization_add_n_int_int_5(int32_t x) {
+   return 5 + x;
+}
+
 static_inline int32_t ConstSpecialization_test_specialized_5() {
-   return ConstSpecialization_add_n_int_5(10);
+   return ConstSpecialization_add_n_int_int_5(10);
 }
 
 static_inline int32_t ConstSpecialization_test_specialized_100() {
-   return ConstSpecialization_add_n_int_100(10);
+   return ConstSpecialization_add_n_int_int_100(10);
 }
 
 static_inline int32_t ConstSpecialization_test_nonspec(int32_t n) {
-   return ConstSpecialization_add_n(n, 10);
+   return ConstSpecialization_add_n_int_dyn_int(n, 10);
 }
 
-static_inline float ConstSpecialization_weighted_real_real_0_3_0_7(float x, float y) {
-   return 0.3f * x + 0.7f * y;
-}
-
-static_inline float ConstSpecialization_weighted(float w1, float w2, float x, float y) {
+static_inline float ConstSpecialization_weighted_real_real_dyn_real_real(float w1, float w2, float x, float y) {
    return w1 * x + w2 * y;
 }
 
+static_inline float ConstSpecialization_weighted_real_real_real_0_3_real_0_7(float x, float y) {
+   return 0.3f * x + 0.7f * y;
+}
+
 static_inline float ConstSpecialization_test_weighted_spec() {
-   return ConstSpecialization_weighted_real_real_0_3_0_7(10.0f, 20.0f);
+   return ConstSpecialization_weighted_real_real_real_0_3_real_0_7(10.0f, 20.0f);
 }
 
 static_inline float ConstSpecialization_test_weighted_nonspec(float w) {
-   return ConstSpecialization_weighted(w, 0.7f, 10.0f, 20.0f);
+   return ConstSpecialization_weighted_real_real_dyn_real_real(w, 0.7f, 10.0f, 20.0f);
 }
 
-static_inline float ConstSpecialization_interleaved_real_real_2_3(float x, float y) {
-   return 2.0f * x + 3.0f * y;
-}
-
-static_inline float ConstSpecialization_interleaved(float x, float a, float y, float b) {
+static_inline float ConstSpecialization_interleaved_real_real_dyn_real_real(float x, float a, float y, float b) {
    return a * x + b * y;
 }
 
+static_inline float ConstSpecialization_interleaved_real_real_real_2_real_3(float x, float y) {
+   return 2.0f * x + 3.0f * y;
+}
+
 static_inline float ConstSpecialization_test_interleaved_spec() {
-   return ConstSpecialization_interleaved_real_real_2_3(5.0f, 4.0f);
+   return ConstSpecialization_interleaved_real_real_real_2_real_3(5.0f, 4.0f);
 }
 
 static_inline float ConstSpecialization_test_interleaved_nonspec(float a) {
-   return ConstSpecialization_interleaved(5.0f, a, 4.0f, 3.0f);
+   return ConstSpecialization_interleaved_real_real_dyn_real_real(5.0f, a, 4.0f, 3.0f);
 }
 
-static_inline float ConstSpecialization_accumulate_real_2(ConstSpecialization_accumulate_real_2_type& _ctx, float x) {
-   _ctx.sum = 2.0f * x + _ctx.sum;
-   return _ctx.sum;
-}
-
-static_inline float ConstSpecialization_accumulate(ConstSpecialization_accumulate_type& _ctx, float scale, float x) {
+static_inline float ConstSpecialization_accumulate_real_dyn_real(ConstSpecialization_accumulate_real_dyn_real_type& _ctx, float scale, float x) {
    _ctx.sum = scale * x + _ctx.sum;
    return _ctx.sum;
 }
 
+static_inline float ConstSpecialization_accumulate_real_real_2(ConstSpecialization_accumulate_real_real_2_type& _ctx, float x) {
+   _ctx.sum = 2.0f * x + _ctx.sum;
+   return _ctx.sum;
+}
+
 static_inline float ConstSpecialization_test_accumulate_spec(ConstSpecialization_test_accumulate_spec_type& _ctx) {
-   return ConstSpecialization_accumulate_real_2(_ctx.inst_10ec4, 5.0f);
+   return ConstSpecialization_accumulate_real_real_2(_ctx.inst_124c4, 5.0f);
 }
 
 static_inline float ConstSpecialization_test_accumulate_nonspec(ConstSpecialization_test_accumulate_nonspec_type& _ctx, float s, float x) {
-   return ConstSpecialization_accumulate(_ctx.inst_17a3f, s, x);
+   return ConstSpecialization_accumulate_real_dyn_real(_ctx.inst_1053f, s, x);
 }
 
-static_inline int32_t ConstSpecialization_scale_typed_int_2(ConstSpecialization_scale_typed_int_2_type& _ctx, int32_t x) {
+static_inline float ConstSpecialization_scale_typed_real_int_2(ConstSpecialization_scale_typed_real_int_2_type& _ctx, float x) {
    _ctx.last = x;
    return x;
 }
 
-static_inline float ConstSpecialization_scale_typed_real_2(ConstSpecialization_scale_typed_real_2_type& _ctx, float x) {
+static_inline int32_t ConstSpecialization_scale_typed_int_int_2(ConstSpecialization_scale_typed_int_int_2_type& _ctx, int32_t x) {
    _ctx.last = x;
    return x;
 }
 
 static_inline int32_t ConstSpecialization_test_typed_int(ConstSpecialization_test_typed_int_type& _ctx) {
-   return ConstSpecialization_scale_typed_int_2(_ctx.inst_1c235, 42);
+   return ConstSpecialization_scale_typed_int_int_2(_ctx.inst_1e935, 42);
 }
 
 static_inline float ConstSpecialization_test_typed_real(ConstSpecialization_test_typed_real_type& _ctx) {
-   return ConstSpecialization_scale_typed_real_2(_ctx.inst_15f7d, 3.14f);
+   return ConstSpecialization_scale_typed_real_int_2(_ctx.inst_1537d, 3.14f);
 }
 
-static_inline void ConstSpecialization_setArrayElement_array_of_real_size_4_real_1(std::array<float, 4>& m, float value) {
+static_inline void ConstSpecialization_setArrayElement_array_of_real_size_4_real_int_1(std::array<float, 4>& m, float value) {
    m[static_cast<uint32_t>(1)] = value;
 }
 
-static_inline void ConstSpecialization_setArrayElement_array_of_real_size_4_real_0(std::array<float, 4>& m, float value) {
+static_inline void ConstSpecialization_setArrayElement_array_of_real_size_4_real_int_0(std::array<float, 4>& m, float value) {
    m[static_cast<uint32_t>(0)] = value;
 }
 
 static_inline void ConstSpecialization_test_array_mutation(std::array<float, 4>& m, const std::array<float, 2>& x) {
-   ConstSpecialization_setArrayElement_array_of_real_size_4_real_0(m, x[static_cast<uint32_t>(0)]);
-   ConstSpecialization_setArrayElement_array_of_real_size_4_real_1(m, x[static_cast<uint32_t>(1)]);
+   ConstSpecialization_setArrayElement_array_of_real_size_4_real_int_0(m, x[static_cast<uint32_t>(0)]);
+   ConstSpecialization_setArrayElement_array_of_real_size_4_real_int_1(m, x[static_cast<uint32_t>(1)]);
 }
 
-static_inline void ConstSpecialization_setMatrix2_array_of_real_size_4_real_0_1(std::array<float, 4>& m, float value) {
-   m[static_cast<uint32_t>(2)] = value;
-}
-
-static_inline void ConstSpecialization_setMatrix2_array_of_real_size_4_real_0_0(std::array<float, 4>& m, float value) {
-   m[static_cast<uint32_t>(0)] = value;
-}
-
-static_inline void ConstSpecialization_setMatrix2(std::array<float, 4>& m, int32_t row, int32_t col, float value) {
+static_inline void ConstSpecialization_setMatrix2_array_of_real_size_4_real_dyn_int_int(std::array<float, 4>& m, int32_t row, int32_t col, float value) {
    m[static_cast<uint32_t>(row + (col << 1))] = value;
 }
 
-static_inline float ConstSpecialization_getMatrix2(const std::array<float, 4>& m, int32_t row, int32_t col) {
+static_inline void ConstSpecialization_setMatrix2_array_of_real_size_4_real_int_0_int_1(std::array<float, 4>& m, float value) {
+   m[static_cast<uint32_t>(2)] = value;
+}
+
+static_inline void ConstSpecialization_setMatrix2_array_of_real_size_4_real_int_0_int_0(std::array<float, 4>& m, float value) {
+   m[static_cast<uint32_t>(0)] = value;
+}
+
+static_inline float ConstSpecialization_getMatrix2_array_of_real_size_4_dyn_int_int(const std::array<float, 4>& m, int32_t row, int32_t col) {
    return m[static_cast<uint32_t>(row + (col << 1))];
 }
 
 static_inline void ConstSpecialization_test_matrix_mutation(std::array<float, 4>& m, const std::array<float, 2>& x) {
-   ConstSpecialization_setMatrix2_array_of_real_size_4_real_0_0(m, x[static_cast<uint32_t>(0)]);
-   ConstSpecialization_setMatrix2_array_of_real_size_4_real_0_1(m, x[static_cast<uint32_t>(1)]);
+   ConstSpecialization_setMatrix2_array_of_real_size_4_real_int_0_int_0(m, x[static_cast<uint32_t>(0)]);
+   ConstSpecialization_setMatrix2_array_of_real_size_4_real_int_0_int_1(m, x[static_cast<uint32_t>(1)]);
 }
 
 static_inline void ConstSpecialization_eliminate_row(std::array<float, 4>& m, int32_t row, int32_t col) {
-   float k = ConstSpecialization_getMatrix2(m, row, col);
-   ConstSpecialization_setMatrix2(m, row, col, 1.0f + k);
+   float k = ConstSpecialization_getMatrix2_array_of_real_size_4_dyn_int_int(m, row, col);
+   ConstSpecialization_setMatrix2_array_of_real_size_4_real_dyn_int_int(m, row, col, 1.0f + k);
 }
 
 static_inline void ConstSpecialization_process_matrix(std::array<float, 4>& m) {

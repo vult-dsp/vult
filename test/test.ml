@@ -146,7 +146,9 @@ let errors_files =
   ; "error46.vult"
   ; "error47.vult"
   ; "error48.vult"
-  ; "error49.vult" ]
+  ; "error49.vult"
+  ; "error50.vult"
+  ; "error51.vult" ]
 
 let template_files =
   ["sf_f.vult"; "sff_f.vult"; "sff_ff.vult"; "sfi_fi.vult"; "af_f.vult"; "aff_f.vult"; "aff_ff.vult"; "afi_fi.vult"]
@@ -185,14 +187,22 @@ let interpreter =
   ; "functions.vult"
   ; "generics.vult"
   ; "generics_comprehensive.vult"
+  ; "generics_context_chains.vult"
+  ; "generics_lhs_index_call.vult"
   ; "generics_multiple_types.vult"
   ; "generics_nested.vult"
+  ; "generics_nested_state.vult"
+  ; "generics_recursive.vult"
   ; "generics_shared_types.vult"
   ; "generics_stress.vult"
+  ; "generics_type_positions.vult"
   ; "specialization_const_params.vult"
+  ; "specialization_const_precision.vult"
   ; "specialization_interleaved.vult"
   ; "specialization_lhs_index.vult"
   ; "specialization_companions.vult"
+  ; "specialization_companions_typed.vult"
+  ; "specialization_nonspec_types.vult"
   ; "instance_state.vult"
   ; "int16_test.vult"
   ; "memory_state.vult"

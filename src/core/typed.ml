@@ -182,6 +182,7 @@ type generic_function =
   ; args: arg list
   ; param_order: param_kind list (* Original order of parameters - maps call position to param *)
   ; t: fun_type (* Keep as fun_type for function definitions *)
+  ; type_param_map: (string * type_) list (* Type parameter name -> shared unbound cell used in [t] *)
   ; body: Syntax.stmt (* Store the unprocessed body *)
   ; next: Syntax.function_def option (* Companion 'and' functions *)
   ; loc: Loc.t
@@ -1076,7 +1077,8 @@ let resolveTypeIntrinsicInline (intrinsic : type_intrinsic) (concrete_type : typ
   | TypeMin, TEId {id= "int16"; _} ->
       {e= EInt (-32768); t; loc}
   | TypeMin, TEId {id= "real"; _} ->
-      {e= EReal Float.min_float; t; loc}
+      (* Most negative finite value (Float.min_float is the smallest positive value) *)
+      {e= EReal (-.Float.max_float); t; loc}
   | TypeMin, TEId {id= "fix16"; _} ->
       {e= EFixed (-32768.0); t; loc}
   | TypeMin, TEId {id= "bool"; _} ->

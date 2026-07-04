@@ -1,0 +1,4 @@
+No instance of the generic function 'counter' was found in this function. Call 'counter' first or qualify the companion call with an instance name (e.g. myinst:get_count(...)).
+  val c = i1:counter(5);
+  val g = get_count();
+          ^^^^^^^^^

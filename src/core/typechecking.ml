@@ -1534,6 +1534,7 @@ let create_generic_function (env : env) (def : Syntax.function_def) : Typed.gene
   ; args
   ; param_order
   ; t= (arg_types, inferred_ret)
+  ; type_param_map= generic_type_map
   ; body= def.body
   ; next= def.next
   ; loc= def.loc

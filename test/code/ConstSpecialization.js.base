@@ -5,13 +5,13 @@ this.irandom = function()        { return Math.floor(Math.random() * 4294967296)
 this.int_to_float = function(i)  { return i; };
 this.float_to_int = function(i)  { return Math.floor(i); };
 this.initializeArray = function(v, size){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-this.ConstSpecialization_accumulate_type_alloc = function () {
+this.ConstSpecialization_accumulate_real_real_2_type_alloc = function () {
    var _ctx = {};
    _ctx.sum = 0.0;
    return _ctx;
 };
 
-this.ConstSpecialization_accumulate_real_2_type_alloc = function () {
+this.ConstSpecialization_accumulate_real_dyn_real_type_alloc = function () {
    var _ctx = {};
    _ctx.sum = 0.0;
    return _ctx;
@@ -19,23 +19,23 @@ this.ConstSpecialization_accumulate_real_2_type_alloc = function () {
 
 this.ConstSpecialization_test_accumulate_spec_type_alloc = function () {
    var _ctx = {};
-   _ctx.inst_10ec4 = this.ConstSpecialization_accumulate_real_2_type_alloc();
+   _ctx.inst_124c4 = this.ConstSpecialization_accumulate_real_real_2_type_alloc();
    return _ctx;
 };
 
 this.ConstSpecialization_test_accumulate_nonspec_type_alloc = function () {
    var _ctx = {};
-   _ctx.inst_17a3f = this.ConstSpecialization_accumulate_type_alloc();
+   _ctx.inst_1053f = this.ConstSpecialization_accumulate_real_dyn_real_type_alloc();
    return _ctx;
 };
 
-this.ConstSpecialization_scale_typed_real_2_type_alloc = function () {
+this.ConstSpecialization_scale_typed_real_int_2_type_alloc = function () {
    var _ctx = {};
    _ctx.last = 0.0;
    return _ctx;
 };
 
-this.ConstSpecialization_scale_typed_int_2_type_alloc = function () {
+this.ConstSpecialization_scale_typed_int_int_2_type_alloc = function () {
    var _ctx = {};
    _ctx.last = (0|0);
    return _ctx;
@@ -43,13 +43,13 @@ this.ConstSpecialization_scale_typed_int_2_type_alloc = function () {
 
 this.ConstSpecialization_test_typed_int_type_alloc = function () {
    var _ctx = {};
-   _ctx.inst_1c235 = this.ConstSpecialization_scale_typed_int_2_type_alloc();
+   _ctx.inst_1e935 = this.ConstSpecialization_scale_typed_int_int_2_type_alloc();
    return _ctx;
 };
 
 this.ConstSpecialization_test_typed_real_type_alloc = function () {
    var _ctx = {};
-   _ctx.inst_15f7d = this.ConstSpecialization_scale_typed_real_2_type_alloc();
+   _ctx.inst_1537d = this.ConstSpecialization_scale_typed_real_int_2_type_alloc();
    return _ctx;
 };
 
@@ -62,135 +62,135 @@ this.ConstSpecialization_main_type_alloc = function () {
    return _ctx;
 };
 
-this.ConstSpecialization_add_n_int_5 = function (x) {
-   return ((5|0) + x);
-};
-
-this.ConstSpecialization_add_n_int_100 = function (x) {
-   return ((100|0) + x);
-};
-
-this.ConstSpecialization_add_n = function (n, x) {
+this.ConstSpecialization_add_n_int_dyn_int = function (n, x) {
    return (n + x);
 };
 
+this.ConstSpecialization_add_n_int_int_100 = function (x) {
+   return ((100|0) + x);
+};
+
+this.ConstSpecialization_add_n_int_int_5 = function (x) {
+   return ((5|0) + x);
+};
+
 this.ConstSpecialization_test_specialized_5 = function () {
-   return this.ConstSpecialization_add_n_int_5((10|0));
+   return this.ConstSpecialization_add_n_int_int_5((10|0));
 };
 
 this.ConstSpecialization_test_specialized_100 = function () {
-   return this.ConstSpecialization_add_n_int_100((10|0));
+   return this.ConstSpecialization_add_n_int_int_100((10|0));
 };
 
 this.ConstSpecialization_test_nonspec = function (n) {
-   return this.ConstSpecialization_add_n(n, (10|0));
+   return this.ConstSpecialization_add_n_int_dyn_int(n, (10|0));
 };
 
-this.ConstSpecialization_weighted_real_real_0_3_0_7 = function (x, y) {
-   return ((0.3 * x) + (0.7 * y));
-};
-
-this.ConstSpecialization_weighted = function (w1, w2, x, y) {
+this.ConstSpecialization_weighted_real_real_dyn_real_real = function (w1, w2, x, y) {
    return ((w1 * x) + (w2 * y));
 };
 
+this.ConstSpecialization_weighted_real_real_real_0_3_real_0_7 = function (x, y) {
+   return ((0.3 * x) + (0.7 * y));
+};
+
 this.ConstSpecialization_test_weighted_spec = function () {
-   return this.ConstSpecialization_weighted_real_real_0_3_0_7(10.0, 20.0);
+   return this.ConstSpecialization_weighted_real_real_real_0_3_real_0_7(10.0, 20.0);
 };
 
 this.ConstSpecialization_test_weighted_nonspec = function (w) {
-   return this.ConstSpecialization_weighted(w, 0.7, 10.0, 20.0);
+   return this.ConstSpecialization_weighted_real_real_dyn_real_real(w, 0.7, 10.0, 20.0);
 };
 
-this.ConstSpecialization_interleaved_real_real_2_3 = function (x, y) {
-   return ((2.0 * x) + (3.0 * y));
-};
-
-this.ConstSpecialization_interleaved = function (x, a, y, b) {
+this.ConstSpecialization_interleaved_real_real_dyn_real_real = function (x, a, y, b) {
    return ((a * x) + (b * y));
 };
 
+this.ConstSpecialization_interleaved_real_real_real_2_real_3 = function (x, y) {
+   return ((2.0 * x) + (3.0 * y));
+};
+
 this.ConstSpecialization_test_interleaved_spec = function () {
-   return this.ConstSpecialization_interleaved_real_real_2_3(5.0, 4.0);
+   return this.ConstSpecialization_interleaved_real_real_real_2_real_3(5.0, 4.0);
 };
 
 this.ConstSpecialization_test_interleaved_nonspec = function (a) {
-   return this.ConstSpecialization_interleaved(5.0, a, 4.0, 3.0);
+   return this.ConstSpecialization_interleaved_real_real_dyn_real_real(5.0, a, 4.0, 3.0);
 };
 
-this.ConstSpecialization_accumulate_real_2 = function (_ctx, x) {
-   _ctx.sum = ((2.0 * x) + _ctx.sum);
-   return _ctx.sum;
-};
-
-this.ConstSpecialization_accumulate = function (_ctx, scale, x) {
+this.ConstSpecialization_accumulate_real_dyn_real = function (_ctx, scale, x) {
    _ctx.sum = ((scale * x) + _ctx.sum);
    return _ctx.sum;
 };
 
+this.ConstSpecialization_accumulate_real_real_2 = function (_ctx, x) {
+   _ctx.sum = ((2.0 * x) + _ctx.sum);
+   return _ctx.sum;
+};
+
 this.ConstSpecialization_test_accumulate_spec = function (_ctx) {
-   return this.ConstSpecialization_accumulate_real_2(_ctx.inst_10ec4, 5.0);
+   return this.ConstSpecialization_accumulate_real_real_2(_ctx.inst_124c4, 5.0);
 };
 
 this.ConstSpecialization_test_accumulate_nonspec = function (_ctx, s, x) {
-   return this.ConstSpecialization_accumulate(_ctx.inst_17a3f, s, x);
+   return this.ConstSpecialization_accumulate_real_dyn_real(_ctx.inst_1053f, s, x);
 };
 
-this.ConstSpecialization_scale_typed_int_2 = function (_ctx, x) {
+this.ConstSpecialization_scale_typed_real_int_2 = function (_ctx, x) {
    _ctx.last = x;
    return x;
 };
 
-this.ConstSpecialization_scale_typed_real_2 = function (_ctx, x) {
+this.ConstSpecialization_scale_typed_int_int_2 = function (_ctx, x) {
    _ctx.last = x;
    return x;
 };
 
 this.ConstSpecialization_test_typed_int = function (_ctx) {
-   return this.ConstSpecialization_scale_typed_int_2(_ctx.inst_1c235, (42|0));
+   return this.ConstSpecialization_scale_typed_int_int_2(_ctx.inst_1e935, (42|0));
 };
 
 this.ConstSpecialization_test_typed_real = function (_ctx) {
-   return this.ConstSpecialization_scale_typed_real_2(_ctx.inst_15f7d, 3.14);
+   return this.ConstSpecialization_scale_typed_real_int_2(_ctx.inst_1537d, 3.14);
 };
 
-this.ConstSpecialization_setArrayElement_array_of_real_size_4_real_1 = function (m, value) {
+this.ConstSpecialization_setArrayElement_array_of_real_size_4_real_int_1 = function (m, value) {
    m[1] = value;
 };
 
-this.ConstSpecialization_setArrayElement_array_of_real_size_4_real_0 = function (m, value) {
+this.ConstSpecialization_setArrayElement_array_of_real_size_4_real_int_0 = function (m, value) {
    m[0] = value;
 };
 
 this.ConstSpecialization_test_array_mutation = function (m, x) {
-   this.ConstSpecialization_setArrayElement_array_of_real_size_4_real_0(m, x[0]);
-   this.ConstSpecialization_setArrayElement_array_of_real_size_4_real_1(m, x[1]);
+   this.ConstSpecialization_setArrayElement_array_of_real_size_4_real_int_0(m, x[0]);
+   this.ConstSpecialization_setArrayElement_array_of_real_size_4_real_int_1(m, x[1]);
 };
 
-this.ConstSpecialization_setMatrix2_array_of_real_size_4_real_0_1 = function (m, value) {
-   m[2] = value;
-};
-
-this.ConstSpecialization_setMatrix2_array_of_real_size_4_real_0_0 = function (m, value) {
-   m[0] = value;
-};
-
-this.ConstSpecialization_setMatrix2 = function (m, row, col, value) {
+this.ConstSpecialization_setMatrix2_array_of_real_size_4_real_dyn_int_int = function (m, row, col, value) {
    m[(row + (col << (1|0)))] = value;
 };
 
-this.ConstSpecialization_getMatrix2 = function (m, row, col) {
+this.ConstSpecialization_setMatrix2_array_of_real_size_4_real_int_0_int_1 = function (m, value) {
+   m[2] = value;
+};
+
+this.ConstSpecialization_setMatrix2_array_of_real_size_4_real_int_0_int_0 = function (m, value) {
+   m[0] = value;
+};
+
+this.ConstSpecialization_getMatrix2_array_of_real_size_4_dyn_int_int = function (m, row, col) {
    return m[(row + (col << (1|0)))];
 };
 
 this.ConstSpecialization_test_matrix_mutation = function (m, x) {
-   this.ConstSpecialization_setMatrix2_array_of_real_size_4_real_0_0(m, x[0]);
-   this.ConstSpecialization_setMatrix2_array_of_real_size_4_real_0_1(m, x[1]);
+   this.ConstSpecialization_setMatrix2_array_of_real_size_4_real_int_0_int_0(m, x[0]);
+   this.ConstSpecialization_setMatrix2_array_of_real_size_4_real_int_0_int_1(m, x[1]);
 };
 
 this.ConstSpecialization_eliminate_row = function (m, row, col) {
-   var k = this.ConstSpecialization_getMatrix2(m, row, col);
-   this.ConstSpecialization_setMatrix2(m, row, col, (1.0 + k));
+   var k = this.ConstSpecialization_getMatrix2_array_of_real_size_4_dyn_int_int(m, row, col);
+   this.ConstSpecialization_setMatrix2_array_of_real_size_4_real_dyn_int_int(m, row, col, (1.0 + k));
 };
 
 this.ConstSpecialization_process_matrix = function (m) {

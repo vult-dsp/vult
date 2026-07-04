@@ -48,6 +48,47 @@ let checkMemExists (env : env) name =
   | _ ->
       false
 
+(* Get the type of a mem/inst variable in the current function's context *)
+let memVarType (env : env) name : Typed.type_ option =
+  let f = Env.getCurrentFunction env in
+  match f.context with
+  | Some (_, {descr= Record members; _}) -> (
+    match Env.Map.find name members with Some {kind= Mem _ | Inst; t; _} -> Some t | _ -> None )
+  | _ ->
+      None
+
+(* Get the name of the context type of a function (its first argument when it takes a context) *)
+let ctxTypeNameOf (def : Typed.function_def) : string option =
+  match def.args with
+  | {name; t; _} :: _ when String.equal name context_name -> (
+    match (unlink t).tx with TEId p -> Some (pathString p) | _ -> None )
+  | _ ->
+      None
+
+(* Search the current function for the most recent auto-generated instance of the given
+   specialized function. Returns the tick and the instance name. *)
+let findAnonymousInstance (env : env) (spec_def : Typed.function_def) : (int * string) option =
+  let number =
+    Printf.sprintf "%.2x%.2x"
+      (0xFF land Hashtbl.hash (pathString spec_def.name))
+      (0xFF land Hashtbl.hash (pathString (Env.getContext env)))
+  in
+  let f = Env.getCurrentFunction env in
+  let rec loop n =
+    if n < 0 then None
+    else
+      let name = "inst_" ^ string_of_int n ^ number in
+      if checkMemExists env name then Some (n, name) else loop (n - 1)
+  in
+  loop f.tick
+
+(* Key identifying a call site within a function: used to reuse the same generated instance
+   name when the same call expression is processed more than once *)
+let callSiteKey (env : env) (loc : Loc.t) : string =
+  let f = Env.getCurrentFunction env in
+  Printf.sprintf "%s|%s:%d-%d" (pathString f.path) (Loc.file loc) loc.Loc.start_pos.Lexing.pos_cnum
+    loc.Loc.end_pos.Lexing.pos_cnum
+
 let typeToMangledName = Typed.typeToMangledName
 
 (* ========== Constant Literal Handling ========== *)
@@ -56,25 +97,30 @@ let typeToMangledName = Typed.typeToMangledName
 let is_constant_literal (e : Typed.exp) : bool =
   match e.e with EInt _ | EReal _ | EBool _ | EString _ | EFixed _ -> true | _ -> false
 
-(* Convert a constant literal expression to a string for signature encoding *)
+(* Encode a float exactly as an identifier-safe string. Prefers the short representation
+   when it round-trips; falls back to the full precision one. *)
+let float_to_signature_string (f : float) : string =
+  let short = Printf.sprintf "%.6g" f in
+  let s = if float_of_string short = f then short else Printf.sprintf "%.17g" f in
+  let s = Str.global_replace (Str.regexp_string ".") "_" s in
+  let s = Str.global_replace (Str.regexp_string "-") "n" s in
+  let s = Str.global_replace (Str.regexp_string "+") "p" s in
+  s
+
+(* Convert a constant literal expression to a string for signature encoding.
+   The encoding must be exact: two different constants must never produce the same string. *)
 let constant_to_signature_string (e : Typed.exp) : string =
   match e.e with
   | EInt n ->
       if n < 0 then "n" ^ string_of_int (abs n) else string_of_int n
   | EReal f ->
-      let s = Printf.sprintf "%.6g" f in
-      let s = Str.global_replace (Str.regexp_string ".") "_" s in
-      let s = Str.global_replace (Str.regexp_string "-") "n" s in
-      s
+      float_to_signature_string f
   | EBool b ->
       if b then "true" else "false"
   | EString s ->
-      Printf.sprintf "s%x" (Hashtbl.hash s land 0xFFFF)
+      Printf.sprintf "s%s" (Digest.to_hex (Digest.string s))
   | EFixed f ->
-      let s = Printf.sprintf "%.6g" f in
-      let s = Str.global_replace (Str.regexp_string ".") "_" s in
-      let s = Str.global_replace (Str.regexp_string "-") "n" s in
-      "fx" ^ s
+      "fx" ^ float_to_signature_string f
   | _ ->
       "var"
 
@@ -82,34 +128,59 @@ let constant_to_signature_string (e : Typed.exp) : string =
 
 (* Build a signature string for deduplication based on resolved types *)
 let build_signature_string (generic_name : string) (arg_types : Typed.type_ list) : string =
-  let type_strings = CCList.map typeToMangledName arg_types in
-  generic_name ^ "_" ^ String.concat "_" type_strings
+  String.concat "_" (generic_name :: CCList.map typeToMangledName arg_types)
 
-(* Build a signature string that includes constant values for fully specialized functions *)
+(* Build a signature string that includes constant types and values for fully specialized functions *)
 let build_specialized_signature_string (generic_name : string) (arg_types : Typed.type_ list)
     (explicit_args : Typed.exp list) : string =
   let type_strings = CCList.map typeToMangledName arg_types in
-  let const_strings = CCList.map constant_to_signature_string explicit_args in
-  generic_name ^ "_" ^ String.concat "_" type_strings ^ "_" ^ String.concat "_" const_strings
+  let const_strings =
+    CCList.map (fun (e : Typed.exp) -> typeToMangledName e.t ^ "_" ^ constant_to_signature_string e) explicit_args
+  in
+  String.concat "_" ((generic_name :: type_strings) @ const_strings)
 
-(* Build a signature string for non-specialized version (when any constant param is a variable) *)
-let build_nonspec_signature_string (generic_name : string) (_arg_types : Typed.type_ list) : string = generic_name
+(* Build a signature string for the non-specialized version (when any constant param is a variable).
+   It includes the argument types and the types of the explicit arguments so that different type
+   instantiations do not collapse into a single function. *)
+let build_nonspec_signature_string (generic_name : string) (arg_types : Typed.type_ list)
+    (explicit_args : Typed.exp list) : string =
+  let type_strings = CCList.map typeToMangledName arg_types in
+  let const_strings = CCList.map (fun (e : Typed.exp) -> typeToMangledName e.t) explicit_args in
+  String.concat "_" ((generic_name :: type_strings) @ ("dyn" :: const_strings))
+
+(* ========== Companion Renaming ========== *)
+
+(* The part of the specialized name that was appended to the generic name *)
+let companion_suffix (generic_name : string) (specialized_name : string) : string =
+  let gl = String.length generic_name in
+  if String.length specialized_name > gl && String.equal (String.sub specialized_name 0 gl) generic_name then
+    String.sub specialized_name gl (String.length specialized_name - gl)
+  else "_" ^ specialized_name
+
+(* Rename a chain of companion functions so each specialization gets its own set *)
+let rec rename_companion_chain (suffix : string) (def : Syntax.function_def) : Syntax.function_def =
+  {def with name= def.name ^ suffix; next= Option.map (rename_companion_chain suffix) def.next}
 
 (* ========== Instantiation State ========== *)
 
 (* State for tracking instantiated generic functions during post-processing *)
 type instantiation_state =
-  { mutable instantiated: (string, Typed.function_def * Typed.stmt) Hashtbl.t
+  { instantiated: (string, Typed.function_def * Typed.stmt) Hashtbl.t
   ; mutable pending_functions: (string * string * Typed.function_def * Typed.stmt) list
-  ; mutable functions_needing_context: (string, Typed.type_) Hashtbl.t
-  ; mutable processed_companions: (string, (Typed.function_def * Typed.stmt) option) Hashtbl.t
+  ; functions_needing_context: (string, Typed.type_) Hashtbl.t
+  ; in_progress: (string, bool ref) Hashtbl.t
+        (* Signatures currently being instantiated (for recursive generics). The flag records
+           whether a recursive call was emitted before knowing the function needs a context. *)
+  ; call_instance_names: (string, string) Hashtbl.t
+        (* Instance names generated per call site, so re-processing a call reuses the same instance *)
   ; mutable pending_generic_calls: Typed.exp list }
 
 let create_instantiation_state () : instantiation_state =
   { instantiated= Hashtbl.create 16
   ; pending_functions= []
   ; functions_needing_context= Hashtbl.create 16
-  ; processed_companions= Hashtbl.create 16
+  ; in_progress= Hashtbl.create 4
+  ; call_instance_names= Hashtbl.create 16
   ; pending_generic_calls= [] }
 
 let resolveTypeIntrinsicsInStmt = Typed.resolveTypeIntrinsicsInStmt
@@ -155,29 +226,51 @@ let markExpMutable env exp loc = !markExpMutable_ref env exp loc
 
 let propagateVariability env loc args exp_args = !propagateVariability_ref env loc args exp_args
 
+(* ========== Generic Parameter Pairing ========== *)
+
+(* Pair each GParamConstant with its explicit argument. The explicit arguments come in the
+   order the explicit generic parameters (constants and functions) appear in param_order,
+   so the pairing must count all explicit parameters, not only the constants. *)
+let constant_param_pairs (generic_func : Typed.generic_function) (explicit_args : Typed.exp list) :
+    ((string * Typed.type_) * Typed.exp) list =
+  let params = Array.of_list generic_func.generic_params in
+  let explicit = Array.of_list explicit_args in
+  let _, rev_pairs =
+    CCList.fold_left
+      (fun (expl_idx, acc) pk ->
+        match pk with
+        | Typed.PKArg _ ->
+            (expl_idx, acc)
+        | Typed.PKGeneric i -> (
+            if i >= Array.length params then failwith "Invalid generic param index in param_order" ;
+            match params.(i) with
+            | Typed.GParamConstant (name, param_type) ->
+                if expl_idx < Array.length explicit then (expl_idx + 1, ((name, param_type), explicit.(expl_idx)) :: acc)
+                else failwith "Mismatch between constant params and explicit arguments"
+            | Typed.GParamType _ | Typed.GParamFunction _ ->
+                (expl_idx + 1, acc) ) )
+      (0, []) generic_func.param_order
+  in
+  CCList.rev rev_pairs
+
 (* ========== Generic Function Instantiation ========== *)
 
-(* Create a specialized function from a generic function with resolved types. *)
-let instantiate_generic_function (iargs : Args.args) (env : env) (state : instantiation_state)
-    (generic_func : Typed.generic_function) (call_arg_types : Typed.type_ list) (explicit_args : Typed.exp list)
-    (loc : Loc.t) : Typed.function_def * Typed.stmt =
-  let all_constants = CCList.for_all is_constant_literal explicit_args in
-  let specialized_name =
-    if all_constants && CCList.length explicit_args > 0 then
-      build_specialized_signature_string generic_func.name call_arg_types explicit_args
-    else if CCList.length explicit_args > 0 then build_nonspec_signature_string generic_func.name call_arg_types
-    else build_signature_string generic_func.name call_arg_types
-  in
-  let type_param_names =
-    CCList.filter_map (function Typed.GParamType name -> Some name | _ -> None) generic_func.generic_params
-  in
-  let constant_params =
-    CCList.filter_map
-      (function Typed.GParamConstant (name, param_type) -> Some (name, param_type) | _ -> None)
-      generic_func.generic_params
-  in
+(* Create a specialized function from a generic function with resolved types.
+   The body is fully processed (nested generic calls are instantiated) while the
+   environment is still inside the specialized function, so instances created by
+   nested calls are stored in this function's context. *)
+let rec instantiate_generic_function (iargs : Args.args) (env : env) (state : instantiation_state)
+    (generic_func : Typed.generic_function) (signature : string) (specialized_name : string)
+    (call_arg_types : Typed.type_ list) (explicit_args : Typed.exp list) (loc : Loc.t) : Typed.function_def * Typed.stmt
+    =
+  let all_constants = CCList.length explicit_args > 0 && CCList.for_all is_constant_literal explicit_args in
+  let constant_pairs = constant_param_pairs generic_func explicit_args in
+  (* Create fresh copies of the generic types, keeping the mapping from the original unbound
+     cells so the type parameters can be resolved after unification *)
   let generic_func_arg_types, generic_func_ret_type = generic_func.t in
-  let fresh_types = Typed.copy_types_preserving_sharing (generic_func_arg_types @ [generic_func_ret_type]) in
+  let fresh_types, unbound_mapping =
+    Typed.copy_types_with_unbound_mapping (generic_func_arg_types @ [generic_func_ret_type])
+  in
   let fresh_arg_types, fresh_ret_type =
     match CCList.rev fresh_types with last :: rest -> (CCList.rev rest, last) | [] -> failwith "Empty type list"
   in
@@ -186,73 +279,67 @@ let instantiate_generic_function (iargs : Args.args) (env : env) (state : instan
       let _ = unify fresh_t call_t in
       () )
     fresh_arg_types call_arg_types ;
+  (* Resolve each type parameter to its concrete type using the unified fresh types *)
   let type_substitution_map =
-    CCList.mapi
-      (fun i name ->
-        let concrete_type =
-          if i < CCList.length call_arg_types then CCList.nth call_arg_types i
-          else if CCList.length call_arg_types > 0 then CCList.hd call_arg_types
-          else {tx= TEId {id= "int"; n= None; loc}; loc; const= C.const ()}
+    CCList.map
+      (fun (name, orig_t) ->
+        let orig_t = unlink orig_t in
+        let resolved =
+          match orig_t.tx with
+          | TEUnbound _ -> (
+            match CCList.find_opt (fun (o, _) -> o == orig_t) unbound_mapping with
+            | Some (_, fresh_t) ->
+                unlink fresh_t
+            | None ->
+                orig_t )
+          | _ ->
+              orig_t
         in
-        (name, concrete_type) )
-      type_param_names
+        (name, resolved) )
+      generic_func.type_param_map
   in
   let constant_substitution_map =
-    if all_constants && CCList.length explicit_args > 0 then
-      CCList.mapi
-        (fun i (name, _param_type) ->
-          if i < CCList.length explicit_args then (name, CCList.nth explicit_args i)
-          else failwith "Mismatch between constant_params and explicit_args" )
-        constant_params
-    else []
-  in
-  let constant_args : Typed.arg list =
-    CCList.mapi
-      (fun i (name, param_type) ->
-        let actual_type = if i < CCList.length explicit_args then (CCList.nth explicit_args i).t else param_type in
-        {name; t= actual_type; loc} )
-      constant_params
+    if all_constants then CCList.map (fun ((name, _), value) -> (name, value)) constant_pairs else []
   in
   let regular_args_array = Array.of_list generic_func.args in
+  let fresh_args_array = Array.of_list fresh_arg_types in
   let generic_params_array = Array.of_list generic_func.generic_params in
-  let constant_args_array = Array.of_list constant_args in
+  let explicit_args_array = Array.of_list explicit_args in
+  (* All arguments in declaration order: regular arguments with their fresh types and
+     constant parameters turned into regular arguments *)
   let all_args_for_body =
-    CCList.filter_map
-      (fun pk ->
-        match pk with
-        | Typed.PKArg i ->
-            let arg = regular_args_array.(i) in
-            if i < CCList.length fresh_arg_types then Some {arg with t= CCList.nth fresh_arg_types i} else Some arg
-        | Typed.PKGeneric i ->
-            if i < Array.length generic_params_array then
+    let _, rev_args =
+      CCList.fold_left
+        (fun (expl_idx, acc) pk ->
+          match pk with
+          | Typed.PKArg i ->
+              let arg = regular_args_array.(i) in
+              let arg = if i < Array.length fresh_args_array then {arg with t= fresh_args_array.(i)} else arg in
+              (expl_idx, arg :: acc)
+          | Typed.PKGeneric i -> (
+              if i >= Array.length generic_params_array then failwith "Invalid generic param index in param_order" ;
               match generic_params_array.(i) with
-              | Typed.GParamConstant _ ->
-                  (* Count how many GParamConstant entries precede index i *)
-                  let constant_index =
-                    let count = ref 0 in
-                    for j = 0 to i - 1 do
-                      match generic_params_array.(j) with Typed.GParamConstant _ -> incr count | _ -> ()
-                    done ;
-                    !count
+              | Typed.GParamConstant (name, param_type) ->
+                  let t =
+                    if expl_idx < Array.length explicit_args_array then explicit_args_array.(expl_idx).t else param_type
                   in
-                  if constant_index < Array.length constant_args_array then Some constant_args_array.(constant_index)
-                  else failwith "Invalid constant param index in param_order"
+                  (expl_idx + 1, ({name; t; loc} : Typed.arg) :: acc)
               | Typed.GParamType _ | Typed.GParamFunction _ ->
-                  None
-            else failwith "Invalid generic param index in param_order" )
-      generic_func.param_order
+                  (expl_idx + 1, acc) ) )
+        (0, []) generic_func.param_order
+    in
+    CCList.rev rev_args
   in
+  (* When all constant parameters are literals they are inlined in the body and dropped
+     from the argument list *)
   let specialized_args =
-    if all_constants && CCList.length explicit_args > 0 then
+    if all_constants then
       CCList.filter_map
         (fun pk ->
           match pk with
           | Typed.PKArg i ->
               let arg = regular_args_array.(i) in
-              let arg_with_type =
-                if i < CCList.length fresh_arg_types then {arg with t= CCList.nth fresh_arg_types i} else arg
-              in
-              Some arg_with_type
+              Some (if i < Array.length fresh_args_array then {arg with t= fresh_args_array.(i)} else arg)
           | Typed.PKGeneric _ ->
               None )
         generic_func.param_order
@@ -261,29 +348,9 @@ let instantiate_generic_function (iargs : Args.args) (env : env) (state : instan
   let env = Env.createContextForFunctionWithIndex env specialized_name loc generic_func.type_index in
   let inferred_ret = C.noreturn loc in
   let env, path, _t = Env.enterFunction env specialized_name all_args_for_body inferred_ret loc in
-  let env, body = stmt_with_type_substitution env type_substitution_map fresh_ret_type generic_func.body in
-  let body = CCList.map (resolveTypeIntrinsicsInStmt type_substitution_map) body in
-  let body =
-    if CCList.length constant_substitution_map > 0 then
-      CCList.map (substituteConstantsInStmt constant_substitution_map) body
-    else body
-  in
-  let env = Env.exitFunction env in
-  let env, next =
-    match generic_func.next with
-    | None ->
-        (env, None)
-    | Some _ -> (
-        let generic_key = generic_func.name in
-        match Hashtbl.find_opt state.processed_companions generic_key with
-        | Some cached_next ->
-            (env, cached_next)
-        | None ->
-            let env, next = function_def_opt iargs env generic_func.next in
-            Hashtbl.add state.processed_companions generic_key next ;
-            (env, next) )
-  in
-  let specialized_def : Typed.function_def =
+  (* Pre-register a provisional definition so recursive calls resolve to this specialization
+     instead of instantiating it again *)
+  let make_def next : Typed.function_def =
     { name= path
     ; args= specialized_args
     ; t= (CCList.map (fun (a : Typed.arg) -> a.t) specialized_args, fresh_ret_type)
@@ -292,23 +359,79 @@ let instantiate_generic_function (iargs : Args.args) (env : env) (state : instan
     ; is_root= false
     ; next }
   in
+  Hashtbl.replace state.instantiated signature (make_def None, {s= StmtBlock []; loc}) ;
+  let recursed_without_context = ref false in
+  Hashtbl.replace state.in_progress signature recursed_without_context ;
+  let env, body = stmt_with_type_substitution env type_substitution_map fresh_ret_type generic_func.body in
+  let body = CCList.map (resolveTypeIntrinsicsInStmt type_substitution_map) body in
+  let body =
+    if CCList.length constant_substitution_map > 0 then
+      CCList.map (substituteConstantsInStmt constant_substitution_map) body
+    else body
+  in
+  let combined_body = match body with [single] -> single | stmts -> {s= StmtBlock stmts; loc= generic_func.loc} in
+  (* Process nested generic calls while still inside the specialized function so instances
+     created by them are stored in this function's context *)
+  let () = prescan_generic_calls_in_stmt iargs env state combined_body in
+  let processed_body = process_stmt_instantiation iargs env state combined_body in
+  Hashtbl.remove state.in_progress signature ;
+  let env = Env.exitFunction env in
+  (* Companion functions are instantiated once per specialization with unique names so each
+     one is bound to the context of its own specialization *)
+  let env, next =
+    match generic_func.next with
+    | None ->
+        (env, None)
+    | Some syntax_next ->
+        let suffix = companion_suffix generic_func.name specialized_name in
+        let renamed = rename_companion_chain suffix syntax_next in
+        function_def_opt iargs env (Some renamed)
+  in
+  let next = process_companion_bodies iargs env state next in
+  let specialized_def = make_def next in
   let specialized_def = insertContextArgument env specialized_def in
   let env = Env.exitContext env in
   let _ = env in
-  let _ = iargs in
-  let combined_body = match body with [single] -> single | stmts -> {s= StmtBlock stmts; loc= generic_func.loc} in
-  (specialized_def, combined_body)
+  let () =
+    if !recursed_without_context then
+      match specialized_def.args with
+      | {name; _} :: _ when String.equal name context_name ->
+          Error.raiseError
+            (Printf.sprintf
+               "The generic function '%s' is recursive and requires state (mem or instances). Recursive generic \
+                functions with state are not supported."
+               generic_func.name )
+            generic_func.loc
+      | _ ->
+          ()
+  in
+  (specialized_def, processed_body)
+
+(* Process the bodies of companion functions so generic calls inside them are instantiated.
+   Instances created by them are stored in the context shared with the parent specialization. *)
+and process_companion_bodies (iargs : Args.args) (env : env) (state : instantiation_state)
+    (next : (Typed.function_def * Typed.stmt) option) : (Typed.function_def * Typed.stmt) option =
+  match next with
+  | None ->
+      None
+  | Some (cdef, cbody) ->
+      let cenv = Env.reenterFunction env cdef.name in
+      let () = prescan_generic_calls_in_stmt iargs cenv state cbody in
+      let cbody = process_stmt_instantiation iargs cenv state cbody in
+      let cnext = process_companion_bodies iargs env state cdef.next in
+      Some ({cdef with next= cnext}, cbody)
 
 (* ========== Prescan for Generic Calls ========== *)
 
-let rec prescan_generic_calls_in_stmt (iargs : Args.args) (env : env) (state : instantiation_state) (stmt : Typed.stmt)
-    : unit =
+and prescan_generic_calls_in_stmt (iargs : Args.args) (env : env) (state : instantiation_state) (stmt : Typed.stmt) :
+    unit =
   match stmt.s with
   | StmtVal _ ->
       ()
   | StmtReturn e ->
       prescan_generic_calls_in_exp iargs env state e
-  | StmtBind (_, e) ->
+  | StmtBind (lhs, e) ->
+      prescan_generic_calls_in_lexp iargs env state lhs ;
       prescan_generic_calls_in_exp iargs env state e
   | StmtIf (cond, then_s, else_opt) ->
       prescan_generic_calls_in_exp iargs env state cond ;
@@ -322,10 +445,25 @@ let rec prescan_generic_calls_in_stmt (iargs : Args.args) (env : env) (state : i
   | StmtMem _ ->
       ()
 
+and prescan_generic_calls_in_lexp (iargs : Args.args) (env : env) (state : instantiation_state) (l : Typed.lexp) : unit
+    =
+  match l.l with
+  | LWild | LId _ ->
+      ()
+  | LMember (le, _) ->
+      prescan_generic_calls_in_lexp iargs env state le
+  | LIndex {e= le; index} ->
+      prescan_generic_calls_in_lexp iargs env state le ;
+      prescan_generic_calls_in_exp iargs env state index
+  | LTuple elems ->
+      CCList.iter (prescan_generic_calls_in_lexp iargs env state) elems
+
 and prescan_generic_calls_in_exp (iargs : Args.args) (env : env) (state : instantiation_state) (e : Typed.exp) : unit =
   match e.e with
-  | EGenCall _ ->
-      state.pending_generic_calls <- e :: state.pending_generic_calls
+  | EGenCall {args; explicit_args; _} ->
+      state.pending_generic_calls <- e :: state.pending_generic_calls ;
+      CCList.iter (prescan_generic_calls_in_exp iargs env state) args ;
+      CCList.iter (prescan_generic_calls_in_exp iargs env state) explicit_args
   | ECall {args; _} ->
       CCList.iter (prescan_generic_calls_in_exp iargs env state) args
   | EIf {cond; then_; else_} ->
@@ -353,8 +491,8 @@ and prescan_generic_calls_in_exp (iargs : Args.args) (env : env) (state : instan
 
 (* ========== Expression and Statement Processing ========== *)
 
-let rec process_exp_instantiation (iargs : Args.args) (env : env) (state : instantiation_state) (e : Typed.exp) :
-    Typed.exp =
+and process_exp_instantiation (iargs : Args.args) (env : env) (state : instantiation_state) (e : Typed.exp) : Typed.exp
+    =
   let loc = e.loc in
   match e.e with
   | EGenCall {instance; generic_path; args; explicit_args} -> (
@@ -364,34 +502,32 @@ let rec process_exp_instantiation (iargs : Args.args) (env : env) (state : insta
           Error.raiseError (Printf.sprintf "Generic function '%s' not found" generic_name) loc
       | Some generic_func ->
           let resolved_arg_types = CCList.map (fun (a : Typed.exp) -> unlink a.t) args in
-          let all_constants = CCList.for_all is_constant_literal explicit_args in
+          let has_explicit = CCList.length explicit_args > 0 in
+          let all_constants = has_explicit && CCList.for_all is_constant_literal explicit_args in
           let signature =
-            if all_constants && CCList.length explicit_args > 0 then
-              build_specialized_signature_string generic_name resolved_arg_types explicit_args
-            else if CCList.length explicit_args > 0 then build_nonspec_signature_string generic_name resolved_arg_types
+            if all_constants then build_specialized_signature_string generic_name resolved_arg_types explicit_args
+            else if has_explicit then build_nonspec_signature_string generic_name resolved_arg_types explicit_args
             else build_signature_string generic_name resolved_arg_types
           in
-          let specialized_def =
+          let specialized_def, in_progress =
             match Hashtbl.find_opt state.instantiated signature with
             | Some (def, _) ->
-                def
+                (def, Hashtbl.find_opt state.in_progress signature)
             | None ->
+                let specialized_name =
+                  if all_constants then
+                    build_specialized_signature_string generic_func.name resolved_arg_types explicit_args
+                  else if has_explicit then
+                    build_nonspec_signature_string generic_func.name resolved_arg_types explicit_args
+                  else build_signature_string generic_func.name resolved_arg_types
+                in
                 let generic_module = generic_path.n in
                 let env_for_instantiation =
                   match generic_module with Some module_name -> Env.enterModule env module_name | None -> env
                 in
-                let def, body =
-                  instantiate_generic_function iargs env_for_instantiation state generic_func resolved_arg_types
-                    explicit_args loc
-                in
-                let () = prescan_generic_calls_in_stmt iargs env_for_instantiation state body in
-                let processed_body = process_stmt_instantiation iargs env_for_instantiation state body in
-                let _ =
-                  match generic_module with
-                  | Some _ ->
-                      Env.exitModule env_for_instantiation
-                  | None ->
-                      env_for_instantiation
+                let def, processed_body =
+                  instantiate_generic_function iargs env_for_instantiation state generic_func signature specialized_name
+                    resolved_arg_types explicit_args loc
                 in
                 let target_module =
                   match def.name.n with
@@ -405,15 +541,16 @@ let rec process_exp_instantiation (iargs : Args.args) (env : env) (state : insta
                         let m = Env.getCurrentModule env in
                         m.name )
                 in
-                Hashtbl.add state.instantiated signature (def, processed_body) ;
+                Hashtbl.replace state.instantiated signature (def, processed_body) ;
                 state.pending_functions <-
                   (target_module, generic_func.name, def, processed_body) :: state.pending_functions ;
-                def
+                (def, None)
           in
           let processed_regular_args = CCList.map (process_exp_instantiation iargs env state) args in
           let processed_explicit_args = CCList.map (process_exp_instantiation iargs env state) explicit_args in
           let processed_args =
-            if all_constants && CCList.length explicit_args > 0 then
+            if all_constants then
+              (* Constants are inlined in the specialized body: pass only the regular arguments *)
               let regular_args_array = Array.of_list processed_regular_args in
               CCList.filter_map
                 (fun pk ->
@@ -425,34 +562,30 @@ let rec process_exp_instantiation (iargs : Args.args) (env : env) (state : insta
                       None )
                 generic_func.param_order
             else
+              (* Interleave regular arguments and explicit generic arguments in declaration order *)
               let regular_args_array = Array.of_list processed_regular_args in
               let generic_params_array = Array.of_list generic_func.generic_params in
               let explicit_args_array = Array.of_list processed_explicit_args in
-              CCList.filter_map
-                (fun pk ->
-                  match pk with
-                  | Typed.PKArg i ->
-                      if i < Array.length regular_args_array then Some regular_args_array.(i)
-                      else failwith "Invalid arg index in param_order"
-                  | Typed.PKGeneric i ->
-                      if i < Array.length generic_params_array then
+              let _, rev_args =
+                CCList.fold_left
+                  (fun (expl_idx, acc) pk ->
+                    match pk with
+                    | Typed.PKArg i ->
+                        if i < Array.length regular_args_array then (expl_idx, regular_args_array.(i) :: acc)
+                        else failwith "Invalid arg index in param_order"
+                    | Typed.PKGeneric i -> (
+                        if i >= Array.length generic_params_array then
+                          failwith "Invalid generic param index in param_order" ;
                         match generic_params_array.(i) with
                         | Typed.GParamConstant _ ->
-                            (* Count how many GParamConstant entries precede index i *)
-                            let constant_index =
-                              let count = ref 0 in
-                              for j = 0 to i - 1 do
-                                match generic_params_array.(j) with Typed.GParamConstant _ -> incr count | _ -> ()
-                              done ;
-                              !count
-                            in
-                            if constant_index < Array.length explicit_args_array then
-                              Some explicit_args_array.(constant_index)
+                            if expl_idx < Array.length explicit_args_array then
+                              (expl_idx + 1, explicit_args_array.(expl_idx) :: acc)
                             else failwith "Invalid constant param index in param_order"
                         | Typed.GParamType _ | Typed.GParamFunction _ ->
-                            None
-                      else failwith "Invalid generic param index in param_order" )
-                generic_func.param_order
+                            (expl_idx + 1, acc) ) )
+                  (0, []) generic_func.param_order
+              in
+              CCList.rev rev_args
           in
           let specialized_non_ctx_args =
             match specialized_def.args with
@@ -463,45 +596,75 @@ let rec process_exp_instantiation (iargs : Args.args) (env : env) (state : insta
           in
           let () = propagateVariability env loc (Some specialized_non_ctx_args) processed_args in
           let final_args =
-            match specialized_def.args with
-            | {name; t= ctx_t; _} :: _ when String.equal name context_name ->
+            match in_progress with
+            | Some flag ->
+                (* Recursive call to a specialization that is being instantiated right now.
+                   When it is a direct self-call and the function has state, the context is
+                   passed through unchanged (same instance). *)
                 let current_f = Env.getCurrentFunction env in
-                let current_ctx_t =
+                if Syntax.compare_path current_f.path specialized_def.name = 0 && Env.isFunctionActive current_f then
                   match Env.lookVarInScopes current_f.locals context_name with
                   | Some var ->
-                      var.t
+                      {e= EId context_name; t= var.t; loc} :: processed_args
                   | None ->
-                      failwith "context var not declared in caller"
-                in
-                let inst_name =
-                  match instance with
-                  | Some user_inst_name ->
-                      let () =
-                        if not (checkMemExists env user_inst_name || Env.checkConstantExists env user_inst_name) then
-                          let _ = Env.addVar env unify user_inst_name ctx_t Inst loc in
-                          ()
-                      in
-                      user_inst_name
-                  | None ->
-                      let number =
-                        Printf.sprintf "%.2x%.2x"
-                          (0xFF land Hashtbl.hash (pathString specialized_def.name))
-                          (0xFF land Hashtbl.hash (pathString (Env.getContext env)))
-                      in
-                      let rec generateName () =
-                        let n = Env.getFunctionTick env in
-                        let name = "inst_" ^ string_of_int n ^ number in
-                        if checkMemExists env name || Env.checkConstantExists env name then generateName () else name
-                      in
-                      let name = generateName () in
-                      let _ = Env.addVar env unify name ctx_t Inst loc in
-                      name
-                in
-                let ctx_e = {e= EId context_name; t= current_ctx_t; loc} in
-                let inst_e = {e= EMember (ctx_e, inst_name); t= ctx_t; loc} in
-                inst_e :: processed_args
-            | _ ->
-                processed_args
+                      failwith "context var not declared in recursive generic function"
+                else (
+                  flag := true ;
+                  processed_args )
+            | None -> (
+              match specialized_def.args with
+              | {name; t= ctx_t; _} :: _ when String.equal name context_name ->
+                  let current_f = Env.getCurrentFunction env in
+                  let current_ctx_t =
+                    match Env.lookVarInScopes current_f.locals context_name with
+                    | Some var ->
+                        var.t
+                    | None ->
+                        failwith "context var not declared in caller"
+                  in
+                  let inst_name =
+                    match instance with
+                    | Some user_inst_name ->
+                        let () =
+                          if Env.checkConstantExists env user_inst_name then
+                            Error.raiseError
+                              (Printf.sprintf "Cannot use '%s' as an instance name: a constant with this name exists"
+                                 user_inst_name )
+                              loc
+                        in
+                        (* addVar unifies the context types when the instance already exists,
+                           reporting an error if the same instance is used with an incompatible
+                           specialization *)
+                        let _ = Env.addVar env unify user_inst_name ctx_t Inst loc in
+                        user_inst_name
+                    | None -> (
+                        let site = callSiteKey env loc in
+                        match Hashtbl.find_opt state.call_instance_names site with
+                        | Some name ->
+                            let _ = Env.addVar env unify name ctx_t Inst loc in
+                            name
+                        | None ->
+                            let number =
+                              Printf.sprintf "%.2x%.2x"
+                                (0xFF land Hashtbl.hash (pathString specialized_def.name))
+                                (0xFF land Hashtbl.hash (pathString (Env.getContext env)))
+                            in
+                            let rec generateName () =
+                              let n = Env.getFunctionTick env in
+                              let name = "inst_" ^ string_of_int n ^ number in
+                              if checkMemExists env name || Env.checkConstantExists env name then generateName ()
+                              else name
+                            in
+                            let name = generateName () in
+                            let _ = Env.addVar env unify name ctx_t Inst loc in
+                            Hashtbl.add state.call_instance_names site name ;
+                            name )
+                  in
+                  let ctx_e = {e= EId context_name; t= current_ctx_t; loc} in
+                  let inst_e = {e= EMember (ctx_e, inst_name); t= ctx_t; loc} in
+                  inst_e :: processed_args
+              | _ ->
+                  processed_args )
           in
           {e= ECall {instance= None; path= specialized_def.name; args= final_args}; t= e.t; loc} )
   | ECall {instance; path; args} ->
@@ -534,19 +697,28 @@ let rec process_exp_instantiation (iargs : Args.args) (env : env) (state : insta
                     (Printf.sprintf "Function '%s' calls '%s' which needs context, but caller has no context"
                        (pathString current_f.path) func_path_str )
             in
-            let number =
-              Printf.sprintf "%.2x%.2x"
-                (0xFF land Hashtbl.hash func_path_str)
-                (0xFF land Hashtbl.hash (pathString (Env.getContext env)))
+            let inst_name =
+              let site = callSiteKey env loc in
+              match Hashtbl.find_opt state.call_instance_names site with
+              | Some name ->
+                  let _ = Env.addVar env unify name ctx_t Inst loc in
+                  name
+              | None ->
+                  let number =
+                    Printf.sprintf "%.2x%.2x"
+                      (0xFF land Hashtbl.hash func_path_str)
+                      (0xFF land Hashtbl.hash (pathString (Env.getContext env)))
+                  in
+                  let rec generateName () =
+                    let n = Env.getFunctionTick env in
+                    let name = "inst_" ^ string_of_int n ^ number in
+                    if checkMemExists env name || Env.checkConstantExists env name then generateName () else name
+                  in
+                  let name = generateName () in
+                  let _ = Env.addVar env unify name ctx_t Inst loc in
+                  Hashtbl.add state.call_instance_names site name ;
+                  name
             in
-            let rec generateName () =
-              let n = Env.getFunctionTick env in
-              let inst_name = "inst_" ^ string_of_int n ^ number in
-              if checkMemExists env inst_name || Env.checkConstantExists env inst_name then generateName ()
-              else inst_name
-            in
-            let inst_name = generateName () in
-            let _ = Env.addVar env unify inst_name ctx_t Inst loc in
             let ctx_e = {e= EId context_name; t= current_ctx_t; loc} in
             let inst_e = {e= EMember (ctx_e, inst_name); t= ctx_t; loc} in
             inst_e :: processed_args
@@ -591,137 +763,174 @@ let rec process_exp_instantiation (iargs : Args.args) (env : env) (state : insta
           loc
     | Some _parent_generic -> (
         let parent_name = parent_generic_path.id in
-        let matching_instantiation =
-          CCList.find_opt
+        (* A specialization holds this companion under the name companion_name ^ suffix *)
+        let find_companion_in (def : Typed.function_def) : (Typed.function_def * Typed.stmt) option =
+          let suffix = companion_suffix parent_name def.name.id in
+          let target = companion_name ^ suffix in
+          let rec loop (next : (Typed.function_def * Typed.stmt) option) =
+            match next with
+            | None ->
+                None
+            | Some ((cdef, _) as companion) ->
+                if String.equal cdef.name.id target then Some companion else loop cdef.next
+          in
+          loop def.next
+        in
+        let collect_candidates () =
+          CCList.filter_map
             (fun (_module, gen_name, (def : Typed.function_def), _body) ->
-              String.equal gen_name parent_name
-              &&
-              let rec has_companion (next : (Typed.function_def * Typed.stmt) option) =
-                match next with
-                | None ->
-                    false
-                | Some (companion_def, _) ->
-                    if String.equal companion_def.name.id companion_name then true else has_companion companion_def.next
-              in
-              has_companion def.next )
+              if String.equal gen_name parent_name then
+                match find_companion_in def with Some companion -> Some (def, companion) | None -> None
+              else None )
             state.pending_functions
         in
-        let matching_instantiation =
-          match matching_instantiation with
-          | Some _ ->
-              matching_instantiation
-          | None -> (
-              let matching_pending =
-                CCList.find_opt
-                  (fun (pending_e : Typed.exp) ->
-                    match pending_e.e with
-                    | EGenCall {generic_path; _} ->
-                        String.equal generic_path.id parent_name
-                    | _ ->
-                        false )
-                  state.pending_generic_calls
-              in
-              match matching_pending with
-              | Some parent_call ->
-                  let _ = process_exp_instantiation iargs env state parent_call in
-                  CCList.find_opt
-                    (fun (_module, gen_name, (def : Typed.function_def), _body) ->
-                      String.equal gen_name parent_name
-                      &&
-                      let rec has_companion (next : (Typed.function_def * Typed.stmt) option) =
-                        match next with
-                        | None ->
-                            false
-                        | Some (companion_def, _) ->
-                            if String.equal companion_def.name.id companion_name then true
-                            else has_companion companion_def.next
-                      in
-                      has_companion def.next )
-                    state.pending_functions
-              | None ->
-                  None )
+        let candidates = collect_candidates () in
+        let candidates =
+          if CCList.is_empty candidates then
+            (* The companion may be called before the parent: instantiate the parent call
+               found during the prescan of this function *)
+            match
+              CCList.find_opt
+                (fun (pending_e : Typed.exp) ->
+                  match pending_e.e with
+                  | EGenCall {generic_path; _} ->
+                      String.equal generic_path.id parent_name
+                  | _ ->
+                      false )
+                state.pending_generic_calls
+            with
+            | Some parent_call ->
+                let _ = process_exp_instantiation iargs env state parent_call in
+                collect_candidates ()
+            | None ->
+                []
+          else candidates
         in
-        match matching_instantiation with
-        | None ->
+        match candidates with
+        | [] ->
             Error.raiseError
               (Printf.sprintf
                  "Companion function '%s' called before parent generic '%s' was instantiated. Make sure to call the \
                   parent function first."
                  companion_name parent_name )
               loc
-        | Some (_, _, specialized_def, _) -> (
-            let rec find_companion (next : (function_def * stmt) option) : (function_def * stmt) option =
-              match next with
-              | None ->
-                  None
-              | Some ((companion_def, _companion_body) as companion) ->
-                  if String.equal companion_def.name.id companion_name then Some companion
-                  else find_companion companion_def.next
+        | ((_, (first_companion_def, _)) as first_candidate) :: _ ->
+            let processed_args = CCList.map (process_exp_instantiation iargs env state) args in
+            let companion_has_ctx =
+              match first_companion_def.args with
+              | {name; _} :: _ when String.equal name context_name ->
+                  true
+              | _ ->
+                  false
             in
-            match find_companion specialized_def.next with
-            | None ->
+            let (companion_def : Typed.function_def), inst_name_opt =
+              if not companion_has_ctx then
+                let _, (cdef, _) = first_candidate in
+                (cdef, None)
+              else
+                match instance with
+                | Some user_inst_name ->
+                    let () =
+                      if Env.checkConstantExists env user_inst_name then
+                        Error.raiseError
+                          (Printf.sprintf "Cannot use '%s' as an instance name: a constant with this name exists"
+                             user_inst_name )
+                          loc
+                    in
+                    let _, (cdef, _) =
+                      match memVarType env user_inst_name with
+                      | Some t -> (
+                          let inst_ctx = match (unlink t).tx with TEId p -> Some (pathString p) | _ -> None in
+                          match
+                            CCList.find_opt
+                              (fun ((spec : Typed.function_def), _) ->
+                                match (ctxTypeNameOf spec, inst_ctx) with
+                                | Some a, Some b ->
+                                    String.equal a b
+                                | _ ->
+                                    false )
+                              candidates
+                          with
+                          | Some candidate ->
+                              candidate
+                          | None ->
+                              Error.raiseError
+                                (Printf.sprintf "'%s' is not an instance of the generic function '%s'" user_inst_name
+                                   parent_name )
+                                loc )
+                      | None -> (
+                        match candidates with
+                        | [candidate] ->
+                            candidate
+                        | _ ->
+                            Error.raiseError
+                              (Printf.sprintf
+                                 "Cannot determine which version of the generic function '%s' the instance '%s' \
+                                  belongs to. Call '%s' on this instance first."
+                                 parent_name user_inst_name parent_name )
+                              loc )
+                    in
+                    (cdef, Some user_inst_name)
+                | None -> (
+                    (* Anonymous companion call: use the most recent auto-generated instance
+                       of any specialization of the parent *)
+                    let hits =
+                      CCList.filter_map
+                        (fun ((spec, _) as candidate) ->
+                          match findAnonymousInstance env spec with
+                          | Some (n, name) ->
+                              Some (n, name, candidate)
+                          | None ->
+                              None )
+                        candidates
+                    in
+                    match CCList.sort (fun (n1, _, _) (n2, _, _) -> compare n2 n1) hits with
+                    | (_, name, (_, (cdef, _))) :: _ ->
+                        (cdef, Some name)
+                    | [] ->
+                        Error.raiseError
+                          (Printf.sprintf
+                             "No instance of the generic function '%s' was found in this function. Call '%s' first or \
+                              qualify the companion call with an instance name (e.g. myinst:%s(...))."
+                             parent_name parent_name companion_name )
+                          loc )
+            in
+            let companion_non_ctx_args =
+              match companion_def.args with
+              | {name; _} :: rest when String.equal name context_name ->
+                  rest
+              | args ->
+                  args
+            in
+            let () =
+              if CCList.length companion_non_ctx_args <> CCList.length processed_args then
                 Error.raiseError
-                  (Printf.sprintf "Companion function '%s' not found in instantiated generic" companion_name)
-                  loc
-            | Some (companion_def, _) ->
-                let processed_args = CCList.map (process_exp_instantiation iargs env state) args in
-                let companion_non_ctx_args =
-                  match companion_def.args with
-                  | {name; _} :: rest when String.equal name context_name ->
-                      rest
-                  | args ->
-                      args
-                in
-                let () =
-                  if CCList.length companion_non_ctx_args = CCList.length processed_args then
-                    CCList.iter2
-                      (fun (def_arg : Typed.arg) (call_arg : Typed.exp) ->
-                        let _ = unify def_arg.t call_arg.t in
-                        () )
-                      companion_non_ctx_args processed_args
-                in
-                let final_args =
-                  match companion_def.args with
-                  | {name; t= ctx_t; _} :: _ when String.equal name context_name ->
-                      let current_f = Env.getCurrentFunction env in
-                      let current_ctx_t =
-                        match Env.lookVarInScopes current_f.locals context_name with
-                        | Some var ->
-                            var.t
-                        | None ->
-                            failwith "context var not declared in caller for companion call"
-                      in
-                      let inst_name =
-                        match instance with
-                        | Some user_inst_name ->
-                            let () =
-                              if not (checkMemExists env user_inst_name || Env.checkConstantExists env user_inst_name)
-                              then
-                                let _ = Env.addVar env unify user_inst_name ctx_t Inst loc in
-                                ()
-                            in
-                            user_inst_name
-                        | None ->
-                            let number =
-                              Printf.sprintf "%.2x%.2x"
-                                (0xFF land Hashtbl.hash (pathString specialized_def.name))
-                                (0xFF land Hashtbl.hash (pathString (Env.getContext env)))
-                            in
-                            let rec findInstance n =
-                              if n < 0 then failwith "Could not find instance for companion call"
-                              else
-                                let name = "inst_" ^ string_of_int n ^ number in
-                                if checkMemExists env name then name else findInstance (n - 1)
-                            in
-                            findInstance (Env.getFunctionTick env)
-                      in
-                      let ctx_e = {e= EId context_name; t= current_ctx_t; loc} in
-                      let inst_e = {e= EMember (ctx_e, inst_name); t= ctx_t; loc} in
-                      inst_e :: processed_args
-                  | _ ->
-                      processed_args
-                in
-                {e= ECall {instance= None; path= companion_def.name; args= final_args}; t= e.t; loc} ) ) )
+                  (Printf.sprintf "Companion function '%s' expects %d arguments but got %d" companion_name
+                     (CCList.length companion_non_ctx_args) (CCList.length processed_args) )
+                  loc ;
+              CCList.iter2
+                (fun (def_arg : Typed.arg) (call_arg : Typed.exp) -> unifyRaise call_arg.loc def_arg.t call_arg.t)
+                companion_non_ctx_args processed_args
+            in
+            let final_args =
+              match (companion_def.args, inst_name_opt) with
+              | {name; t= ctx_t; _} :: _, Some inst_name when String.equal name context_name ->
+                  let current_f = Env.getCurrentFunction env in
+                  let current_ctx_t =
+                    match Env.lookVarInScopes current_f.locals context_name with
+                    | Some var ->
+                        var.t
+                    | None ->
+                        failwith "context var not declared in caller for companion call"
+                  in
+                  let _ = Env.addVar env unify inst_name ctx_t Inst loc in
+                  let ctx_e = {e= EId context_name; t= current_ctx_t; loc} in
+                  let inst_e = {e= EMember (ctx_e, inst_name); t= ctx_t; loc} in
+                  inst_e :: processed_args
+              | _ ->
+                  processed_args
+            in
+            {e= ECall {instance= None; path= companion_def.name; args= final_args}; t= e.t; loc} ) )
   | ETypeIntrinsic {intrinsic; type_param} ->
       let intrinsic_name =
         match intrinsic with TypeDefault -> "typedefault" | TypeMax -> "typemax" | TypeMin -> "typemin"
@@ -733,6 +942,22 @@ let rec process_exp_instantiation (iargs : Args.args) (env : env) (state : insta
   | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ | EConst _ ->
       e
 
+and process_lexp_instantiation (iargs : Args.args) (env : env) (state : instantiation_state) (l : Typed.lexp) :
+    Typed.lexp =
+  match l.l with
+  | LWild | LId _ ->
+      l
+  | LMember (le, m) ->
+      let le = process_lexp_instantiation iargs env state le in
+      {l with l= LMember (le, m)}
+  | LIndex {e= le; index} ->
+      let le = process_lexp_instantiation iargs env state le in
+      let index = process_exp_instantiation iargs env state index in
+      {l with l= LIndex {e= le; index}}
+  | LTuple elems ->
+      let elems = CCList.map (process_lexp_instantiation iargs env state) elems in
+      {l with l= LTuple elems}
+
 and process_stmt_instantiation (iargs : Args.args) (env : env) (state : instantiation_state) (s : Typed.stmt) :
     Typed.stmt =
   match s.s with
@@ -741,6 +966,7 @@ and process_stmt_instantiation (iargs : Args.args) (env : env) (state : instanti
   | StmtMem (d, tags) ->
       {s with s= StmtMem (d, tags)}
   | StmtBind (lhs, rhs) ->
+      let lhs = process_lexp_instantiation iargs env state lhs in
       let rhs = process_exp_instantiation iargs env state rhs in
       {s with s= StmtBind (lhs, rhs)}
   | StmtReturn e ->
@@ -764,6 +990,9 @@ and process_stmt_instantiation (iargs : Args.args) (env : env) (state : instanti
 let rec process_function_def (iargs : Args.args) (env : env) (state : instantiation_state) (def : Typed.function_def)
     (body : Typed.stmt) : Typed.function_def * Typed.stmt =
   let env = Env.reenterFunction env def.name in
+  (* Pending generic calls are per-function: they are only used to resolve companion calls
+     that happen before the parent call within the same function *)
+  let () = state.pending_generic_calls <- [] in
   let () = prescan_generic_calls_in_stmt iargs env state body in
   let body = process_stmt_instantiation iargs env state body in
   let had_ctx_before = match def.args with {name; _} :: _ when String.equal name context_name -> true | _ -> false in
@@ -802,8 +1031,12 @@ let process_top_stmt_instantiation (iargs : Args.args) (env : env) (state : inst
 
 let transform_module_generics (iargs : Args.args) (env : env) (state : instantiation_state) (stmts : Typed.top_stmt list)
     : Typed.top_stmt list =
-  let stmts = CCList.map (process_top_stmt_instantiation iargs env state) stmts in
-  CCList.map (process_top_stmt_instantiation iargs env state) stmts
+  (* The statements arrive in reverse source order. Process them in source order so callees
+     are processed before their callers: functions that gain a context argument during
+     elaboration are registered before any call to them is processed, allowing the context
+     requirement to propagate through call chains of any depth in a single pass. *)
+  let processed = CCList.map (process_top_stmt_instantiation iargs env state) (CCList.rev stmts) in
+  CCList.rev processed
 
 let replace_placeholders_in_module (state : instantiation_state) (module_name : string) (stmts : Typed.top_stmt list) :
     Typed.top_stmt list =

@@ -1,0 +1,69 @@
+// Regression test: when a constant parameter receives a variable, the
+// non-specialized version must still be specialized by type. Different type
+// instantiations must not collapse into a single function.
+
+fun pick('c : int, x : 't) : 't {
+  if (c > 0) {
+    return x + x;
+  }
+  return x;
+}
+
+fun test_two_types_same_variable() : int {
+  val c = 1;
+  val a = pick(c, 3);     // int version: 3 + 3 = 6
+  val b = pick(c, 0.5);   // real version: 0.5 + 0.5 = 1.0
+
+  if (a == 6 && b == 1.0) {
+    return 100;
+  }
+  return -1;
+}
+
+fun test_zero_variable() : int {
+  val z = 0;
+  val a = pick(z, 4);     // int version: 4
+  val b = pick(z, 0.25);  // real version: 0.25
+
+  if (a == 4 && b == 0.25) {
+    return 200;
+  }
+  return -2;
+}
+
+// Mixing specialized (constant) and non-specialized (variable) calls of the
+// same generic at several types
+fun scale('k : real, x : 't) : 't {
+  mem last : 't;
+  last = x;
+  if (k > 1.0) {
+    return x + x;
+  }
+  return x;
+}
+
+fun test_mixed_spec_nonspec() : int {
+  val k = 2.0;
+  val a = scale(2.0, 5);    // specialized with k=2.0, int
+  val b = scale(k, 5);      // non-specialized, int
+  val c = scale(2.0, 0.5);  // specialized with k=2.0, real
+  val d = scale(k, 0.5);    // non-specialized, real
+  val e = scale(0.5, 7);    // specialized with k=0.5, int
+
+  if (a == 10 && b == 10 && c == 1.0 && d == 1.0 && e == 7) {
+    return 300;
+  }
+  return -3;
+}
+
+fun main() : int {
+  val t1 = test_two_types_same_variable();
+  val t2 = test_zero_variable();
+  val t3 = test_mixed_spec_nonspec();
+
+  // All tests pass: 100 + 200 + 300 = 600
+  if (t1 == 100 && t2 == 200 && t3 == 300) {
+    return 600;
+  }
+  return t1 + t2 + t3;
+}

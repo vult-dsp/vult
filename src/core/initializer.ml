@@ -109,7 +109,8 @@ let resolveTypeIntrinsic (intrinsic : string) (t : type_) : exp =
   | "typemin", TInt16 ->
       {e= EInt (-32768); t; loc}
   | "typemin", TReal ->
-      {e= EReal Float.min_float; t; loc}
+      (* Most negative finite value (Float.min_float is the smallest positive value) *)
+      {e= EReal (-.Float.max_float); t; loc}
   | "typemin", TFix16 ->
       {e= EFixed (-32768.0); t; loc}
   | "typemin", TBool ->

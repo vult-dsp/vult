@@ -1,0 +1,105 @@
+// Regression test: context arguments must propagate through call chains of any depth.
+// A function that calls a stateful generic gains a context; its callers (and their
+// callers, at any depth) must receive that context too.
+
+fun change(x : 't) : bool {
+  mem pre : 't;
+  val result = pre <> x;
+  pre = x;
+  return result;
+}
+
+// Chain of depth 3: test -> level2 -> level1 -> change
+fun level1() : int {
+  val a = change(10);
+  if (a) { return 1; }
+  return 0;
+}
+
+fun level2() : int {
+  return level1();
+}
+
+fun test_chain3() : int {
+  // Call through the same call site twice: the state must persist through
+  // the chain, so the first call reports a change and the second does not
+  val i = 0;
+  val first = -1;
+  val second = -1;
+  while (i < 2) {
+    val r = level2();
+    if (i == 0) { first = r; }
+    if (i == 1) { second = r; }
+    i = i + 1;
+  }
+  if (first == 1 && second == 0) {
+    return 100;
+  }
+  return -1;
+}
+
+// Chain of depth 5: test -> deep4 -> deep3 -> deep2 -> deep1 -> change
+fun deep1() : int {
+  val a = change(2.5);
+  if (a) { return 1; }
+  return 0;
+}
+
+fun deep2() : int {
+  return deep1();
+}
+
+fun deep3() : int {
+  return deep2();
+}
+
+fun deep4() : int {
+  return deep3();
+}
+
+fun test_chain5() : int {
+  val i = 0;
+  val first = -1;
+  val second = -1;
+  while (i < 2) {
+    val r = deep4();
+    if (i == 0) { first = r; }
+    if (i == 1) { second = r; }
+    i = i + 1;
+  }
+  if (first == 1 && second == 0) {
+    return 200;
+  }
+  return -2;
+}
+
+// Two branches that converge on the same stateful helper: each call site
+// gets its own independent instance
+fun branch_a() : int {
+  return level1();
+}
+
+fun branch_b() : int {
+  return level1();
+}
+
+fun test_branches() : int {
+  val a1 = branch_a();
+  val b1 = branch_b();
+  if (a1 == 1 && b1 == 1) {
+    return 300;
+  }
+  return -3;
+}
+
+fun main() : int {
+  val t1 = test_chain3();
+  val t2 = test_chain5();
+  val t3 = test_branches();
+
+  // All tests pass: 100 + 200 + 300 = 600
+  if (t1 == 100 && t2 == 200 && t3 == 300) {
+    return 600;
+  }
+  return t1 + t2 + t3;
+}

@@ -1,76 +1,76 @@
 
 # High-performance Vult Runtime for Julia with typed arrays
 
-mutable struct ConstSpecialization_accumulate_type
+mutable struct ConstSpecialization_accumulate_real_real_2_type
        sum::Float32
 end
 
-# Default constructor for ConstSpecialization_accumulate_type
-function ConstSpecialization_accumulate_type()
-    return ConstSpecialization_accumulate_type(Float32(0.0))
+# Default constructor for ConstSpecialization_accumulate_real_real_2_type
+function ConstSpecialization_accumulate_real_real_2_type()
+    return ConstSpecialization_accumulate_real_real_2_type(Float32(0.0))
 end
 
-mutable struct ConstSpecialization_accumulate_real_2_type
+mutable struct ConstSpecialization_accumulate_real_dyn_real_type
        sum::Float32
 end
 
-# Default constructor for ConstSpecialization_accumulate_real_2_type
-function ConstSpecialization_accumulate_real_2_type()
-    return ConstSpecialization_accumulate_real_2_type(Float32(0.0))
+# Default constructor for ConstSpecialization_accumulate_real_dyn_real_type
+function ConstSpecialization_accumulate_real_dyn_real_type()
+    return ConstSpecialization_accumulate_real_dyn_real_type(Float32(0.0))
 end
 
 mutable struct ConstSpecialization_test_accumulate_spec_type
-       inst_10ec4::ConstSpecialization_accumulate_real_2_type
+       inst_124c4::ConstSpecialization_accumulate_real_real_2_type
 end
 
 # Default constructor for ConstSpecialization_test_accumulate_spec_type
 function ConstSpecialization_test_accumulate_spec_type()
-    return ConstSpecialization_test_accumulate_spec_type(ConstSpecialization_accumulate_real_2_type())
+    return ConstSpecialization_test_accumulate_spec_type(ConstSpecialization_accumulate_real_real_2_type())
 end
 
 mutable struct ConstSpecialization_test_accumulate_nonspec_type
-       inst_17a3f::ConstSpecialization_accumulate_type
+       inst_1053f::ConstSpecialization_accumulate_real_dyn_real_type
 end
 
 # Default constructor for ConstSpecialization_test_accumulate_nonspec_type
 function ConstSpecialization_test_accumulate_nonspec_type()
-    return ConstSpecialization_test_accumulate_nonspec_type(ConstSpecialization_accumulate_type())
+    return ConstSpecialization_test_accumulate_nonspec_type(ConstSpecialization_accumulate_real_dyn_real_type())
 end
 
-mutable struct ConstSpecialization_scale_typed_real_2_type
+mutable struct ConstSpecialization_scale_typed_real_int_2_type
        last::Float32
 end
 
-# Default constructor for ConstSpecialization_scale_typed_real_2_type
-function ConstSpecialization_scale_typed_real_2_type()
-    return ConstSpecialization_scale_typed_real_2_type(Float32(0.0))
+# Default constructor for ConstSpecialization_scale_typed_real_int_2_type
+function ConstSpecialization_scale_typed_real_int_2_type()
+    return ConstSpecialization_scale_typed_real_int_2_type(Float32(0.0))
 end
 
-mutable struct ConstSpecialization_scale_typed_int_2_type
+mutable struct ConstSpecialization_scale_typed_int_int_2_type
        last::Int32
 end
 
-# Default constructor for ConstSpecialization_scale_typed_int_2_type
-function ConstSpecialization_scale_typed_int_2_type()
-    return ConstSpecialization_scale_typed_int_2_type(Int32(0))
+# Default constructor for ConstSpecialization_scale_typed_int_int_2_type
+function ConstSpecialization_scale_typed_int_int_2_type()
+    return ConstSpecialization_scale_typed_int_int_2_type(Int32(0))
 end
 
 mutable struct ConstSpecialization_test_typed_int_type
-       inst_1c235::ConstSpecialization_scale_typed_int_2_type
+       inst_1e935::ConstSpecialization_scale_typed_int_int_2_type
 end
 
 # Default constructor for ConstSpecialization_test_typed_int_type
 function ConstSpecialization_test_typed_int_type()
-    return ConstSpecialization_test_typed_int_type(ConstSpecialization_scale_typed_int_2_type())
+    return ConstSpecialization_test_typed_int_type(ConstSpecialization_scale_typed_int_int_2_type())
 end
 
 mutable struct ConstSpecialization_test_typed_real_type
-       inst_15f7d::ConstSpecialization_scale_typed_real_2_type
+       inst_1537d::ConstSpecialization_scale_typed_real_int_2_type
 end
 
 # Default constructor for ConstSpecialization_test_typed_real_type
 function ConstSpecialization_test_typed_real_type()
-    return ConstSpecialization_test_typed_real_type(ConstSpecialization_scale_typed_real_2_type())
+    return ConstSpecialization_test_typed_real_type(ConstSpecialization_scale_typed_real_int_2_type())
 end
 
 mutable struct ConstSpecialization_main_type
@@ -85,51 +85,51 @@ function ConstSpecialization_main_type()
     return ConstSpecialization_main_type(ConstSpecialization_test_accumulate_spec_type(), ConstSpecialization_test_accumulate_nonspec_type(), ConstSpecialization_test_typed_int_type(), ConstSpecialization_test_typed_real_type())
 end
 
-function ConstSpecialization_accumulate_type_alloc()
-   _ctx = ConstSpecialization_accumulate_type()
+function ConstSpecialization_accumulate_real_real_2_type_alloc()
+   _ctx = ConstSpecialization_accumulate_real_real_2_type()
    _ctx.sum = Float32(0.0)
    return _ctx
 end
 
-function ConstSpecialization_accumulate_real_2_type_alloc()
-   _ctx = ConstSpecialization_accumulate_real_2_type()
+function ConstSpecialization_accumulate_real_dyn_real_type_alloc()
+   _ctx = ConstSpecialization_accumulate_real_dyn_real_type()
    _ctx.sum = Float32(0.0)
    return _ctx
 end
 
 function ConstSpecialization_test_accumulate_spec_type_alloc()
    _ctx = ConstSpecialization_test_accumulate_spec_type()
-   _ctx.inst_10ec4 = ConstSpecialization_accumulate_real_2_type_alloc()
+   _ctx.inst_124c4 = ConstSpecialization_accumulate_real_real_2_type_alloc()
    return _ctx
 end
 
 function ConstSpecialization_test_accumulate_nonspec_type_alloc()
    _ctx = ConstSpecialization_test_accumulate_nonspec_type()
-   _ctx.inst_17a3f = ConstSpecialization_accumulate_type_alloc()
+   _ctx.inst_1053f = ConstSpecialization_accumulate_real_dyn_real_type_alloc()
    return _ctx
 end
 
-function ConstSpecialization_scale_typed_real_2_type_alloc()
-   _ctx = ConstSpecialization_scale_typed_real_2_type()
+function ConstSpecialization_scale_typed_real_int_2_type_alloc()
+   _ctx = ConstSpecialization_scale_typed_real_int_2_type()
    _ctx.last = Float32(0.0)
    return _ctx
 end
 
-function ConstSpecialization_scale_typed_int_2_type_alloc()
-   _ctx = ConstSpecialization_scale_typed_int_2_type()
+function ConstSpecialization_scale_typed_int_int_2_type_alloc()
+   _ctx = ConstSpecialization_scale_typed_int_int_2_type()
    _ctx.last = Int32(0)
    return _ctx
 end
 
 function ConstSpecialization_test_typed_int_type_alloc()
    _ctx = ConstSpecialization_test_typed_int_type()
-   _ctx.inst_1c235 = ConstSpecialization_scale_typed_int_2_type_alloc()
+   _ctx.inst_1e935 = ConstSpecialization_scale_typed_int_int_2_type_alloc()
    return _ctx
 end
 
 function ConstSpecialization_test_typed_real_type_alloc()
    _ctx = ConstSpecialization_test_typed_real_type()
-   _ctx.inst_15f7d = ConstSpecialization_scale_typed_real_2_type_alloc()
+   _ctx.inst_1537d = ConstSpecialization_scale_typed_real_int_2_type_alloc()
    return _ctx
 end
 
@@ -142,135 +142,135 @@ function ConstSpecialization_main_type_alloc()
    return _ctx
 end
 
-function ConstSpecialization_add_n_int_5(x)
-   return (Int32(5) + x)
-end
-
-function ConstSpecialization_add_n_int_100(x)
-   return (Int32(100) + x)
-end
-
-function ConstSpecialization_add_n(n, x)
+function ConstSpecialization_add_n_int_dyn_int(n, x)
    return (n + x)
 end
 
+function ConstSpecialization_add_n_int_int_100(x)
+   return (Int32(100) + x)
+end
+
+function ConstSpecialization_add_n_int_int_5(x)
+   return (Int32(5) + x)
+end
+
 function ConstSpecialization_test_specialized_5()
-   return ConstSpecialization_add_n_int_5(Int32(10))
+   return ConstSpecialization_add_n_int_int_5(Int32(10))
 end
 
 function ConstSpecialization_test_specialized_100()
-   return ConstSpecialization_add_n_int_100(Int32(10))
+   return ConstSpecialization_add_n_int_int_100(Int32(10))
 end
 
 function ConstSpecialization_test_nonspec(n)
-   return ConstSpecialization_add_n(n, Int32(10))
+   return ConstSpecialization_add_n_int_dyn_int(n, Int32(10))
 end
 
-function ConstSpecialization_weighted_real_real_0_3_0_7(x, y)
-   return ((Float32(0.3) * x) + (Float32(0.7) * y))
-end
-
-function ConstSpecialization_weighted(w1, w2, x, y)
+function ConstSpecialization_weighted_real_real_dyn_real_real(w1, w2, x, y)
    return ((w1 * x) + (w2 * y))
 end
 
+function ConstSpecialization_weighted_real_real_real_0_3_real_0_7(x, y)
+   return ((Float32(0.3) * x) + (Float32(0.7) * y))
+end
+
 function ConstSpecialization_test_weighted_spec()
-   return ConstSpecialization_weighted_real_real_0_3_0_7(Float32(10.0), Float32(20.0))
+   return ConstSpecialization_weighted_real_real_real_0_3_real_0_7(Float32(10.0), Float32(20.0))
 end
 
 function ConstSpecialization_test_weighted_nonspec(w)
-   return ConstSpecialization_weighted(w, Float32(0.7), Float32(10.0), Float32(20.0))
+   return ConstSpecialization_weighted_real_real_dyn_real_real(w, Float32(0.7), Float32(10.0), Float32(20.0))
 end
 
-function ConstSpecialization_interleaved_real_real_2_3(x, y)
-   return ((Float32(2.0) * x) + (Float32(3.0) * y))
-end
-
-function ConstSpecialization_interleaved(x, a, y, b)
+function ConstSpecialization_interleaved_real_real_dyn_real_real(x, a, y, b)
    return ((a * x) + (b * y))
 end
 
+function ConstSpecialization_interleaved_real_real_real_2_real_3(x, y)
+   return ((Float32(2.0) * x) + (Float32(3.0) * y))
+end
+
 function ConstSpecialization_test_interleaved_spec()
-   return ConstSpecialization_interleaved_real_real_2_3(Float32(5.0), Float32(4.0))
+   return ConstSpecialization_interleaved_real_real_real_2_real_3(Float32(5.0), Float32(4.0))
 end
 
 function ConstSpecialization_test_interleaved_nonspec(a)
-   return ConstSpecialization_interleaved(Float32(5.0), a, Float32(4.0), Float32(3.0))
+   return ConstSpecialization_interleaved_real_real_dyn_real_real(Float32(5.0), a, Float32(4.0), Float32(3.0))
 end
 
-function ConstSpecialization_accumulate_real_2(_ctx, x)
-   _ctx.sum = ((Float32(2.0) * x) + _ctx.sum)
-   return _ctx.sum
-end
-
-function ConstSpecialization_accumulate(_ctx, scale, x)
+function ConstSpecialization_accumulate_real_dyn_real(_ctx, scale, x)
    _ctx.sum = ((scale * x) + _ctx.sum)
    return _ctx.sum
 end
 
+function ConstSpecialization_accumulate_real_real_2(_ctx, x)
+   _ctx.sum = ((Float32(2.0) * x) + _ctx.sum)
+   return _ctx.sum
+end
+
 function ConstSpecialization_test_accumulate_spec(_ctx)
-   return ConstSpecialization_accumulate_real_2(_ctx.inst_10ec4, Float32(5.0))
+   return ConstSpecialization_accumulate_real_real_2(_ctx.inst_124c4, Float32(5.0))
 end
 
 function ConstSpecialization_test_accumulate_nonspec(_ctx, s, x)
-   return ConstSpecialization_accumulate(_ctx.inst_17a3f, s, x)
+   return ConstSpecialization_accumulate_real_dyn_real(_ctx.inst_1053f, s, x)
 end
 
-function ConstSpecialization_scale_typed_int_2(_ctx, x)
+function ConstSpecialization_scale_typed_real_int_2(_ctx, x)
    _ctx.last = x
    return x
 end
 
-function ConstSpecialization_scale_typed_real_2(_ctx, x)
+function ConstSpecialization_scale_typed_int_int_2(_ctx, x)
    _ctx.last = x
    return x
 end
 
 function ConstSpecialization_test_typed_int(_ctx)
-   return ConstSpecialization_scale_typed_int_2(_ctx.inst_1c235, Int32(42))
+   return ConstSpecialization_scale_typed_int_int_2(_ctx.inst_1e935, Int32(42))
 end
 
 function ConstSpecialization_test_typed_real(_ctx)
-   return ConstSpecialization_scale_typed_real_2(_ctx.inst_15f7d, Float32(3.14))
+   return ConstSpecialization_scale_typed_real_int_2(_ctx.inst_1537d, Float32(3.14))
 end
 
-function ConstSpecialization_setArrayElement_array_of_real_size_4_real_1(m, value)
+function ConstSpecialization_setArrayElement_array_of_real_size_4_real_int_1(m, value)
    @inbounds m[2] = value
 end
 
-function ConstSpecialization_setArrayElement_array_of_real_size_4_real_0(m, value)
+function ConstSpecialization_setArrayElement_array_of_real_size_4_real_int_0(m, value)
    @inbounds m[1] = value
 end
 
 function ConstSpecialization_test_array_mutation(m, x)
-   ConstSpecialization_setArrayElement_array_of_real_size_4_real_0(m, @inbounds x[1])
-   ConstSpecialization_setArrayElement_array_of_real_size_4_real_1(m, @inbounds x[2])
+   ConstSpecialization_setArrayElement_array_of_real_size_4_real_int_0(m, @inbounds x[1])
+   ConstSpecialization_setArrayElement_array_of_real_size_4_real_int_1(m, @inbounds x[2])
 end
 
-function ConstSpecialization_setMatrix2_array_of_real_size_4_real_0_1(m, value)
-   @inbounds m[3] = value
-end
-
-function ConstSpecialization_setMatrix2_array_of_real_size_4_real_0_0(m, value)
-   @inbounds m[1] = value
-end
-
-function ConstSpecialization_setMatrix2(m, row, col, value)
+function ConstSpecialization_setMatrix2_array_of_real_size_4_real_dyn_int_int(m, row, col, value)
    @inbounds m[(row + (col * 2)) + 1] = value
 end
 
-function ConstSpecialization_getMatrix2(m, row, col)
+function ConstSpecialization_setMatrix2_array_of_real_size_4_real_int_0_int_1(m, value)
+   @inbounds m[3] = value
+end
+
+function ConstSpecialization_setMatrix2_array_of_real_size_4_real_int_0_int_0(m, value)
+   @inbounds m[1] = value
+end
+
+function ConstSpecialization_getMatrix2_array_of_real_size_4_dyn_int_int(m, row, col)
    return @inbounds m[(row + (col * 2)) + 1]
 end
 
 function ConstSpecialization_test_matrix_mutation(m, x)
-   ConstSpecialization_setMatrix2_array_of_real_size_4_real_0_0(m, @inbounds x[1])
-   ConstSpecialization_setMatrix2_array_of_real_size_4_real_0_1(m, @inbounds x[2])
+   ConstSpecialization_setMatrix2_array_of_real_size_4_real_int_0_int_0(m, @inbounds x[1])
+   ConstSpecialization_setMatrix2_array_of_real_size_4_real_int_0_int_1(m, @inbounds x[2])
 end
 
 function ConstSpecialization_eliminate_row(m, row, col)
-   k = ConstSpecialization_getMatrix2(m, row, col)
-   ConstSpecialization_setMatrix2(m, row, col, (Float32(1.0) + k))
+   k = ConstSpecialization_getMatrix2_array_of_real_size_4_dyn_int_int(m, row, col)
+   ConstSpecialization_setMatrix2_array_of_real_size_4_real_dyn_int_int(m, row, col, (Float32(1.0) + k))
 end
 
 function ConstSpecialization_process_matrix(m)

@@ -1,0 +1,13 @@
+// Using the same instance name with two incompatible specializations of a
+// generic function must be reported as an error.
+fun track(x : 't) : 't {
+  mem last : 't;
+  last = x;
+  return last;
+}
+
+fun main() : int {
+  val a = i1:track(3);
+  val b = i1:track(0.5);
+  return 0;
+}
