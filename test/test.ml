@@ -176,40 +176,41 @@ let perf_files =
   ; "clipper_perf.vult"
   ; "short_delay_perf.vult" ]
 
+(* Each file is evaluated and main() must return exactly the expected value *)
 let interpreter =
-  [ "arithmetic.vult"
-  ; "arrays_structs.vult"
-  ; "builtins.vult"
-  ; "constant.vult"
-  ; "control_flow.vult"
-  ; "edge_cases.vult"
-  ; "function_calls_in_constants.vult"
-  ; "functions.vult"
-  ; "generics.vult"
-  ; "generics_comprehensive.vult"
-  ; "generics_context_chains.vult"
-  ; "generics_cross_module.vult"
-  ; "generics_lhs_index_call.vult"
-  ; "generics_multiple_types.vult"
-  ; "generics_nested.vult"
-  ; "generics_nested_state.vult"
-  ; "generics_recursive.vult"
-  ; "generics_shared_types.vult"
-  ; "generics_stress.vult"
-  ; "generics_type_positions.vult"
-  ; "specialization_const_params.vult"
-  ; "specialization_const_precision.vult"
-  ; "specialization_interleaved.vult"
-  ; "specialization_lhs_index.vult"
-  ; "specialization_companions.vult"
-  ; "specialization_companions_typed.vult"
-  ; "specialization_nonspec_types.vult"
-  ; "instance_state.vult"
-  ; "int16_test.vult"
-  ; "memory_state.vult"
-  ; "qualified_enum_patterns.vult"
-  ; "strength_reduction.vult"
-  ; "type_intrinsics.vult" ]
+  [ ("arithmetic.vult", 1000)
+  ; ("arrays_structs.vult", 5000)
+  ; ("builtins.vult", 3000)
+  ; ("constant.vult", 8000)
+  ; ("control_flow.vult", 2000)
+  ; ("edge_cases.vult", 7000)
+  ; ("function_calls_in_constants.vult", 1)
+  ; ("functions.vult", 4000)
+  ; ("generics.vult", 1)
+  ; ("generics_comprehensive.vult", 800)
+  ; ("generics_context_chains.vult", 600)
+  ; ("generics_cross_module.vult", 600)
+  ; ("generics_lhs_index_call.vult", 600)
+  ; ("generics_multiple_types.vult", 600)
+  ; ("generics_nested.vult", 600)
+  ; ("generics_nested_state.vult", 1000)
+  ; ("generics_recursive.vult", 600)
+  ; ("generics_shared_types.vult", 3600)
+  ; ("generics_stress.vult", 2100)
+  ; ("generics_type_positions.vult", 1000)
+  ; ("specialization_const_params.vult", 21000)
+  ; ("specialization_const_precision.vult", 600)
+  ; ("specialization_interleaved.vult", 12000)
+  ; ("specialization_lhs_index.vult", 2100)
+  ; ("specialization_companions.vult", 2100)
+  ; ("specialization_companions_typed.vult", 600)
+  ; ("specialization_nonspec_types.vult", 600)
+  ; ("instance_state.vult", 7000)
+  ; ("int16_test.vult", 1000)
+  ; ("memory_state.vult", 6000)
+  ; ("qualified_enum_patterns.vult", 100)
+  ; ("strength_reduction.vult", 523)
+  ; ("type_intrinsics.vult", 1000) ]
 
 let passes_files =
   [ "split_mem.vult"
@@ -736,7 +737,7 @@ module InterpretPerf = struct
 end
 
 module Interpret = struct
-  let run file backend _context =
+  let run file expected backend _context =
     let fullfile = checkFile (in_test_directory ("interpreter/" ^ file)) in
     let moduleName file = Filename.basename file |> Filename.chop_extension |> String.capitalize_ascii in
     let args =
@@ -754,9 +755,11 @@ module Interpret = struct
         match result with
         | Args.Errors errors ->
             assert_failure (Error.reportErrors errors)
-        | Args.EvalResult int ->
+        | Args.EvalResult value ->
             got_result := true ;
-            if int_of_string int > 0 then () else assert_failure ("Evaluation returned: " ^ int)
+            let expected_str = string_of_int expected in
+            if String.equal value expected_str then ()
+            else assert_failure (Printf.sprintf "Evaluation returned %s but %s was expected" value expected_str)
         | _ ->
             () )
       results ;
@@ -765,8 +768,10 @@ module Interpret = struct
   (* Every file is evaluated with both backends so their semantics cannot diverge *)
   let get files =
     "run"
-    >::: CCList.map (fun file -> Filename.basename file ^ ".cvm" >:: run file Args.CVM) files
-         @ CCList.map (fun file -> Filename.basename file ^ ".interp" >:: run file Args.Interpreter) files
+    >::: CCList.map (fun (file, expected) -> Filename.basename file ^ ".cvm" >:: run file expected Args.CVM) files
+         @ CCList.map
+             (fun (file, expected) -> Filename.basename file ^ ".interp" >:: run file expected Args.Interpreter)
+             files
 end
 
 module EvalGenericTest = struct

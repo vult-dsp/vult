@@ -37,6 +37,12 @@ jobs:
 
       - run: opam exec -- make compiler jscompiler lsp vultweb vultlib
 
+      # The test runner shells out to gcc and node, which are not reliably
+      # available in the Windows environment
+      - name: Run tests
+        if: runner.os != 'Windows'
+        run: opam exec -- make test
+
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
