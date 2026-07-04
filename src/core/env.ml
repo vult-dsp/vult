@@ -679,7 +679,11 @@ let exitContext (env : env) : env =
   let m = getCurrentModule env in
   {env with location= InModule m.name}
 
-let getFunctionTick (env : env) : int =
+(* Returns the current tick of the function without advancing it *)
+let currentFunctionTick (env : env) : int = (getCurrentFunction env).tick
+
+(* Advances the tick of the current function and returns the new value *)
+let nextFunctionTick (env : env) : int =
   let f = getCurrentFunction env in
   let n = f.tick + 1 in
   f.tick <- n ;

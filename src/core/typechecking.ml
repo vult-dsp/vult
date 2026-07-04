@@ -345,7 +345,7 @@ let rec addContextArg (env : env) instance (f : Env.f) args loc =
             (0xFF land Hashtbl.hash (pathString cpath))
         in
         let rec generateName () =
-          let n = Env.getFunctionTick env in
+          let n = Env.nextFunctionTick env in
           let name = "inst_" ^ string_of_int n ^ number in
           if checkMemExists env name || Env.checkConstantExists env name then generateName () else name
         in
@@ -907,7 +907,7 @@ let rec dexp_to_lexp (d : Syntax.dexp) : Syntax.lexp =
 let stmt_block (stmts : stmt list) = match stmts with [s] -> s | _ -> {s= StmtBlock stmts; loc= Loc.default}
 
 let makeIterWhile (env : env) name id_loc value body loc =
-  let tick = Env.getFunctionTick env in
+  let tick = Env.nextFunctionTick env in
   let itname = name ^ "__" ^ string_of_int tick in
   let open Syntax in
   let int_type = {t= STId {id= "int"; n= None; loc= id_loc}; loc} in
@@ -1588,14 +1588,15 @@ let rec top_stmt (iargs : Args.args) (env : env) (s : Syntax.top_stmt) : env * t
       failwith ""
 
 and top_stmt_list (iargs : Args.args) (env : env) (s : Syntax.top_stmt list) : env * top_stmt list =
-  let env, rev_s =
+  let env, rev_groups =
     CCList.fold_left
       (fun (env, acc) s ->
         let env, stmt_list = top_stmt iargs env s in
-        (env, stmt_list @ acc) )
+        (env, stmt_list :: acc) )
       (env, []) s
   in
-  (env, rev_s)
+  (* Return the statements in source order *)
+  (env, CCList.concat (CCList.rev rev_groups))
 
 let getTypesFromModule m =
   Map.fold
@@ -1657,6 +1658,21 @@ let removeExistingTypes set types =
   let f s = match s with {top= TopType {path; _}; _} when Set.mem path set -> false | _ -> true in
   CCList.filter f types
 
+(* Instantiate the elaborator with the pieces of the typechecker it needs *)
+module Elab = Elaboration.Make (struct
+  let unify t1 t2 = unify t1 t2
+
+  let unifyRaise = unifyRaise
+
+  let function_def_opt = function_def_opt
+
+  let stmt_with_type_substitution = stmt_with_type_substitution
+
+  let insertContextArgument = insertContextArgument
+
+  let propagateVariability = propagateVariability
+end)
+
 (* Typechecks and elaborates a single file against an already-elaborated environment.
    Used to evaluate expressions (e.g. -eval) in the context of an existing program:
    generic calls reuse the specializations the program already created. *)
@@ -1665,7 +1681,7 @@ let typecheck_single (iargs : Args.args) (env : env) (h : Parse.parsed_file) : e
   let env = Env.enterModule env h.name in
   let env, stmt = top_stmt_list iargs env h.stmts in
   let env = Env.exitModule env in
-  let stmt = Elaboration.elaborate ~reuse_existing:true iargs env [(h.name, stmt)] in
+  let stmt = Elab.elaborate ~reuse_existing:true iargs env [(h.name, stmt)] in
   let types = removeExistingTypes set (createTypes env) in
   (env, stmt @ types)
 
@@ -1700,20 +1716,9 @@ let typecheck (iargs : Args.args) (parsed : Parse.parsed_file list) : env * (str
   (env, CCList.rev module_stmts)
 
 (* Type checking with elaboration - for backwards compatibility.
-   This is equivalent to calling typecheck followed by Elaboration.elaborate. *)
+   This is equivalent to calling typecheck followed by Elab.elaborate. *)
 let typecheck_and_elaborate (iargs : Args.args) (parsed : Parse.parsed_file list) : env * top_stmt list =
   let env, module_stmts = typecheck iargs parsed in
-  let elaborated = Elaboration.elaborate iargs env module_stmts in
+  let elaborated = Elab.elaborate iargs env module_stmts in
   let types = createTypes env in
   (env, types @ elaborated)
-
-(* Initialize the Elaboration module's refs to use our functions.
-   This is done at module load time. *)
-let () =
-  Elaboration.unify_ref := unify ;
-  Elaboration.unifyRaise_ref := unifyRaise ;
-  Elaboration.function_def_opt_ref := function_def_opt ;
-  Elaboration.stmt_with_type_substitution_ref := stmt_with_type_substitution ;
-  Elaboration.insertContextArgument_ref := insertContextArgument ;
-  Elaboration.markExpMutable_ref := markExpMutable ;
-  Elaboration.propagateVariability_ref := propagateVariability

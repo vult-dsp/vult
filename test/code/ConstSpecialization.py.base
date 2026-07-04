@@ -123,14 +123,14 @@ def ConstSpecialization_main_type_alloc():
    return _ctx
 
 
-def ConstSpecialization_add_n_int_dyn_int(n, x):
-   return (n + x)
+def ConstSpecialization_add_n_int_int_5(x):
+   return (5 + x)
 
 def ConstSpecialization_add_n_int_int_100(x):
    return (100 + x)
 
-def ConstSpecialization_add_n_int_int_5(x):
-   return (5 + x)
+def ConstSpecialization_add_n_int_dyn_int(n, x):
+   return (n + x)
 
 def ConstSpecialization_test_specialized_5():
    return ConstSpecialization_add_n_int_int_5(10)
@@ -141,11 +141,11 @@ def ConstSpecialization_test_specialized_100():
 def ConstSpecialization_test_nonspec(n):
    return ConstSpecialization_add_n_int_dyn_int(n, 10)
 
-def ConstSpecialization_weighted_real_real_dyn_real_real(w1, w2, x, y):
-   return ((w1 * x) + (w2 * y))
-
 def ConstSpecialization_weighted_real_real_real_0_3_real_0_7(x, y):
    return ((0.3 * x) + (0.7 * y))
+
+def ConstSpecialization_weighted_real_real_dyn_real_real(w1, w2, x, y):
+   return ((w1 * x) + (w2 * y))
 
 def ConstSpecialization_test_weighted_spec():
    return ConstSpecialization_weighted_real_real_real_0_3_real_0_7(10.0, 20.0)
@@ -153,11 +153,11 @@ def ConstSpecialization_test_weighted_spec():
 def ConstSpecialization_test_weighted_nonspec(w):
    return ConstSpecialization_weighted_real_real_dyn_real_real(w, 0.7, 10.0, 20.0)
 
-def ConstSpecialization_interleaved_real_real_dyn_real_real(x, a, y, b):
-   return ((a * x) + (b * y))
-
 def ConstSpecialization_interleaved_real_real_real_2_real_3(x, y):
    return ((2.0 * x) + (3.0 * y))
+
+def ConstSpecialization_interleaved_real_real_dyn_real_real(x, a, y, b):
+   return ((a * x) + (b * y))
 
 def ConstSpecialization_test_interleaved_spec():
    return ConstSpecialization_interleaved_real_real_real_2_real_3(5.0, 4.0)
@@ -165,13 +165,13 @@ def ConstSpecialization_test_interleaved_spec():
 def ConstSpecialization_test_interleaved_nonspec(a):
    return ConstSpecialization_interleaved_real_real_dyn_real_real(5.0, a, 4.0, 3.0)
 
-def ConstSpecialization_accumulate_real_dyn_real(_ctx, scale, x):
-   _ctx.sum = ((scale * x) + _ctx.sum)
+def ConstSpecialization_accumulate_real_real_2(_ctx, x):
+   _ctx.sum = ((2.0 * x) + _ctx.sum)
    return _ctx.sum
 
 
-def ConstSpecialization_accumulate_real_real_2(_ctx, x):
-   _ctx.sum = ((2.0 * x) + _ctx.sum)
+def ConstSpecialization_accumulate_real_dyn_real(_ctx, scale, x):
+   _ctx.sum = ((scale * x) + _ctx.sum)
    return _ctx.sum
 
 
@@ -181,12 +181,12 @@ def ConstSpecialization_test_accumulate_spec(_ctx):
 def ConstSpecialization_test_accumulate_nonspec(_ctx, s, x):
    return ConstSpecialization_accumulate_real_dyn_real(_ctx.inst_1053f, s, x)
 
-def ConstSpecialization_scale_typed_real_int_2(_ctx, x):
+def ConstSpecialization_scale_typed_int_int_2(_ctx, x):
    _ctx.last = x
    return x
 
 
-def ConstSpecialization_scale_typed_int_int_2(_ctx, x):
+def ConstSpecialization_scale_typed_real_int_2(_ctx, x):
    _ctx.last = x
    return x
 
@@ -197,25 +197,25 @@ def ConstSpecialization_test_typed_int(_ctx):
 def ConstSpecialization_test_typed_real(_ctx):
    return ConstSpecialization_scale_typed_real_int_2(_ctx.inst_1537d, 3.14)
 
-def ConstSpecialization_setArrayElement_array_of_real_size_4_real_int_1(m, value):
-   m[1] = value
-
 def ConstSpecialization_setArrayElement_array_of_real_size_4_real_int_0(m, value):
    m[0] = value
+
+def ConstSpecialization_setArrayElement_array_of_real_size_4_real_int_1(m, value):
+   m[1] = value
 
 def ConstSpecialization_test_array_mutation(m, x):
    _ = ConstSpecialization_setArrayElement_array_of_real_size_4_real_int_0(m, x[0])
    _ = ConstSpecialization_setArrayElement_array_of_real_size_4_real_int_1(m, x[1])
 
 
-def ConstSpecialization_setMatrix2_array_of_real_size_4_real_dyn_int_int(m, row, col, value):
-   m[(row + (col << 1))] = value
+def ConstSpecialization_setMatrix2_array_of_real_size_4_real_int_0_int_0(m, value):
+   m[0] = value
 
 def ConstSpecialization_setMatrix2_array_of_real_size_4_real_int_0_int_1(m, value):
    m[2] = value
 
-def ConstSpecialization_setMatrix2_array_of_real_size_4_real_int_0_int_0(m, value):
-   m[0] = value
+def ConstSpecialization_setMatrix2_array_of_real_size_4_real_dyn_int_int(m, row, col, value):
+   m[(row + (col << 1))] = value
 
 def ConstSpecialization_getMatrix2_array_of_real_size_4_dyn_int_int(m, row, col):
    return m[(row + (col << 1))]
