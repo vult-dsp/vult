@@ -613,10 +613,152 @@ module Python = struct
         None
 end
 
+module Zig = struct
+  let keywords =
+    [ "addrspace"
+    ; "align"
+    ; "allowzero"
+    ; "and"
+    ; "anyframe"
+    ; "anytype"
+    ; "asm"
+    ; "async"
+    ; "await"
+    ; "break"
+    ; "callconv"
+    ; "catch"
+    ; "comptime"
+    ; "const"
+    ; "continue"
+    ; "defer"
+    ; "else"
+    ; "enum"
+    ; "errdefer"
+    ; "error"
+    ; "export"
+    ; "extern"
+    ; "fn"
+    ; "for"
+    ; "if"
+    ; "inline"
+    ; "linksection"
+    ; "noalias"
+    ; "noinline"
+    ; "nosuspend"
+    ; "opaque"
+    ; "or"
+    ; "orelse"
+    ; "packed"
+    ; "pub"
+    ; "resume"
+    ; "return"
+    ; "struct"
+    ; "suspend"
+    ; "switch"
+    ; "test"
+    ; "threadlocal"
+    ; "try"
+    ; "union"
+    ; "unreachable"
+    ; "usingnamespace"
+    ; "var"
+    ; "volatile"
+    ; "while" ]
+    |> Util.Maps.Set.of_list
+
+  let op_to_fun (op : Core.Prog.operator) (e1 : type_) (e2 : type_) (ret : type_) =
+    match (op, e1.t, e2.t, ret.t) with
+    | OpMod, TReal, TReal, TReal ->
+        Some "fmodf"
+    | OpDiv, TInt, TInt, TInt ->
+        Some "intDiv"
+    | OpMod, TInt, TInt, TInt ->
+        Some "intMod"
+    | _ ->
+        None
+
+  (* Zig maps the runtime builtins to the small prelude emitted at the top of the generated file (see
+     [Zig.runtime]). The names below must match the helpers defined there. *)
+  let fun_to_fun (path : string) (args : type_ list) (ret : type_) =
+    let args = CCList.map (fun (t : type_) -> t.t) args in
+    match (path, args, (getReturnType ret).t) with
+    (* builtins *)
+    | "samplerate", [], TReal ->
+        Some "float_samplerate"
+    | "random", [], TReal ->
+        Some "float_random"
+    | "irandom", [], _ ->
+        Some "int_random"
+    | "clip", [TReal; _; _], TReal ->
+        Some "float_clip"
+    | "clip", [TInt; _; _], TInt ->
+        Some "int_clip"
+    | "pi", [], TReal ->
+        Some "float_pi"
+    | "eps", [], TReal ->
+        Some "float_eps"
+    (* math *)
+    | "sin", [TReal], TReal ->
+        Some "sinf"
+    | "cos", [TReal], TReal ->
+        Some "cosf"
+    | "tan", [TReal], TReal ->
+        Some "tanf"
+    | "sinh", [TReal], TReal ->
+        Some "sinhf"
+    | "cosh", [TReal], TReal ->
+        Some "coshf"
+    | "tanh", [TReal], TReal ->
+        Some "tanhf"
+    | "exp", [TReal], TReal ->
+        Some "expf"
+    | "log", [TReal], TReal ->
+        Some "logf"
+    | "log10", [TReal], TReal ->
+        Some "log10f"
+    | "floor", [TReal], TReal ->
+        Some "floorf"
+    | "abs", [TReal], TReal ->
+        Some "fabsf"
+    | "abs", [TInt], TInt ->
+        Some "int_abs"
+    | "sqrt", [TReal], TReal ->
+        Some "sqrtf"
+    (* cast *)
+    | "int", [TReal], _ ->
+        Some "float_to_int"
+    | "int", [TInt16], _ ->
+        Some "int16_to_int"
+    | "int16", [TInt], _ ->
+        Some "int_to_int16"
+    | "int16", [TReal], _ ->
+        Some "float_to_int16"
+    | "int16", [TBool], _ ->
+        Some "bool_to_int16"
+    | "int16", [TInt16], _ ->
+        Some "int16_to_int16"
+    | "real", [TInt], TReal ->
+        Some "int_to_float"
+    | "real", [TInt16], TReal ->
+        Some "int16_to_float"
+    | "real", [TBool], TReal ->
+        Some "bool_to_float"
+    | "bool", [TInt], _ ->
+        Some "int_to_bool"
+    | "bool", [TInt16], _ ->
+        Some "int16_to_bool"
+    | "bool", [TReal], _ ->
+        Some "float_to_bool"
+    | _ ->
+        None
+end
+
 let fun_to_fun (lang : Util.Args.code) (path : string) (args : type_ list) (ret : type_) =
   match lang with
   | CppCode ->
       Cpp.fun_to_fun path args ret
+  | ZigCode ->
+      Zig.fun_to_fun path args ret
   | JavaCode ->
       Java.fun_to_fun path args ret
   | LuaCode ->
@@ -634,6 +776,8 @@ let op_to_fun (lang : Util.Args.code) (op : Core.Prog.operator) (e1 : type_) (e2
   match lang with
   | CppCode ->
       Cpp.op_to_fun op e1 e2 ret
+  | ZigCode ->
+      Zig.op_to_fun op e1 e2 ret
   | JavaCode ->
       Java.op_to_fun op e1 e2 ret
   | LuaCode ->
@@ -651,6 +795,8 @@ let keyword (lang : Util.Args.code) id =
   match lang with
   | CppCode ->
       if Util.Maps.Set.mem id Cpp.keywords then id ^ "_" else id
+  | ZigCode ->
+      if Util.Maps.Set.mem id Zig.keywords then id ^ "_" else id
   | JavaCode ->
       if Util.Maps.Set.mem id Java.keywords then id ^ "_" else id
   | LuaCode ->

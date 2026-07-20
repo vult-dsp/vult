@@ -38,7 +38,7 @@ type output =
   | AudioRendered of string
   | Errors of Error.t list
 
-type code = NoCode | CppCode | JSCode | LuaCode | JavaCode | JuliaCode | PythonCode
+type code = NoCode | CppCode | JSCode | LuaCode | JavaCode | JuliaCode | PythonCode | ZigCode
 
 type eval_backend = Interpreter | OcamlVM | CVM
 
@@ -144,11 +144,13 @@ let flags result =
                   JuliaCode
               | "python" ->
                   PythonCode
+              | "zig" ->
+                  ZigCode
               | _ ->
                   print_endline
-                    ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js, julia, python") ;
+                    ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js, julia, python, zig") ;
                   exit (-1) ) )
-    ; comment= "language Generate code for the specified language (cpp, lua, java, js, julia, python)" }
+    ; comment= "language Generate code for the specified language (cpp, lua, java, js, julia, python, zig)" }
   ; { flag= "-prefix"
     ; action= Arg.String (fun prefix -> result.prefix <- Some prefix)
     ; comment= "name Used to pass additional information to the code generator." }

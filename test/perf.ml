@@ -183,6 +183,19 @@ let generatePython (filename : string) (output : string) : unit =
   let output = Driver.Cli.driver args in
   CCList.iter (Driver.Cli.showResult args) output
 
+let generateZig (filename : string) (output : string) : unit =
+  let args =
+    { default_arguments with
+      files= [File filename]
+    ; code= ZigCode
+    ; output= Some output
+    ; real= Float
+    ; template= Some "performance"
+    ; includes }
+  in
+  let output = Driver.Cli.driver args in
+  CCList.iter (Driver.Cli.showResult args) output
+
 let realString f = match f with Fixed -> "fixed" | Float -> "float"
 
 [@@@warning "-32"]
@@ -207,6 +220,20 @@ let runJs vultfile =
     Sys.chdir tmp_dir ;
     generateJs vultfile output ;
     ignore (Sys.command ("node " ^ output ^ ".js")) ;
+    Sys.chdir init_dir
+  with e -> showError e
+
+let runZig vultfile =
+  try
+    let output = Filename.chop_extension (Filename.basename vultfile) in
+    Sys.chdir tmp_dir ;
+    generateZig vultfile output ;
+    (* The Zig backend is intentionally minimal: modules that require memory allocation (delay lines,
+       dynamic lists, etc.) are not supported yet, so compilation failures are reported as a warning
+       and skipped instead of aborting the whole benchmark run. *)
+    let compile = Printf.sprintf "zig build-exe -O ReleaseFast %s.zig 2> /dev/null" output in
+    if Sys.command compile <> 0 then Printf.eprintf "Warning: Zig compilation failed for %s\n%!" output
+    else ignore (Sys.command ("./" ^ output)) ;
     Sys.chdir init_dir
   with e -> showError e
 
@@ -393,7 +420,8 @@ let main () =
     ; (["bun"], runBun)
     ; (["julia"], runJulia)
     ; (["python3"], runPython)
-    ; (["javac"; "java"], runJava) ]
+    ; (["javac"; "java"], runJava)
+    ; (["zig"], runZig) ]
   in
   let available =
     CCList.filter

@@ -277,6 +277,8 @@ let initializerType (iargs : Args.args) =
       NewObject
   | PythonCode ->
       NewObject
+  | ZigCode ->
+      RefObject
 
 let createInitFunction custom_initializers (iargs : Args.args) stmt =
   let () = resetTick () in

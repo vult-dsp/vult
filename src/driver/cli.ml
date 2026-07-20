@@ -84,6 +84,8 @@ let generateCode args file_deps (stmts, vm, acc) =
           Julia.generate args stmts
       | PythonCode ->
           Python.generate args stmts
+      | ZigCode ->
+          Zig.generate args stmts
     in
     (GeneratedCode code :: prog_out) @ acc
   else acc

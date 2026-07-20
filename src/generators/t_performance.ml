@@ -267,3 +267,41 @@ measure_performance()
 |}
 
 let generatePython (args : Util.Args.args) = (Pla.unit, pythonPost args)
+
+let zigPost (args : Util.Args.args) =
+  let module_name = match args.files with Util.Args.File s :: _ -> Pparser.Parse.moduleName s | _ -> "Top" in
+  {%pla|
+pub fn main() void {
+    var data: <#module_name#s>_process_type = undefined;
+    <#module_name#s>_process_type_init(&data);
+    <#module_name#s>_default(&data);
+
+    const total_time: f64 = <#time#f>;
+    var samples: i32 = @intFromFloat(44100.0 * total_time);
+
+    // Warm up
+    var warm: i32 = 0;
+    while (warm < 1000) : (warm += 1) {
+        _ = <#module_name#s>_process(&data, 0.0);
+    }
+
+    const start = now_ns();
+    var ramp: f32 = 0.0;
+    var acc: f32 = 0.0;
+    while (samples > 0) : (samples -= 1) {
+        ramp += 0.001;
+        if (ramp > 1.0) {
+            ramp = ramp - 1.0;
+        }
+        acc += <#module_name#s>_process(&data, ramp);
+    }
+    const elapsed_ns = now_ns() - start;
+    const elapsed_s = @as(f64, @floatFromInt(elapsed_ns)) / 1_000_000_000.0;
+    const ms_per_s = (elapsed_s / total_time) * 1000.0;
+
+    std.mem.doNotOptimizeAway(acc);
+    printResult("<#module_name#s>", ms_per_s);
+}
+|}
+
+let generateZig (args : Util.Args.args) = (Pla.unit, zigPost args)
