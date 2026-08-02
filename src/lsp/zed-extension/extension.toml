@@ -1,0 +1,22 @@
+id = "vult"
+name = "Vult"
+version = "0.0.1"
+schema_version = 1
+authors = ["Leonardo Laguna Ruiz <leonardo@wolfram.com>"]
+description = "Vult DSP language support: file recognition plus the Vult language server (vult -lsp)."
+repository = "https://github.com/vult-dsp/vult"
+languages = ["languages/vult"]
+
+[lib]
+kind = "Rust"
+version = "0.7.0"
+
+[language_servers.vult-lsp]
+name = "Vult Language Server"
+languages = ["Vult"]
+
+# Allow the extension to locate/launch the `vult` binary.
+[[capabilities]]
+kind = "process:exec"
+command = "**"
+args = ["**"]

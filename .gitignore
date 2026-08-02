@@ -46,6 +46,10 @@ src/lsp/vscode-extension/out/
 src/lsp/vscode-extension/node_modules/
 *.vsix
 
+# Zed extension build artifacts
+src/lsp/zed-extension/target/
+src/lsp/zed-extension/extension.wasm
+
 # TextMate grammars (not needed with LSP semantic highlighting)
 *.tmLanguage
 *.tmLanguage.json
