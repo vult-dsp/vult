@@ -67,10 +67,12 @@ coverage:
 	open _coverage/index.html
 #	bisect-ppx-report send-to Coveralls --source-path _build
 
-VERSION:=$(shell git describe --tags --abbrev=0)
+# Shallow CI checkouts have no tags, so `git describe` fails there. Fall back to
+# a placeholder instead of writing an empty version string.
+VERSION:=$(shell git describe --tags --abbrev=0 2>/dev/null || echo v1-dev)
 
 version :
-	@echo "let version = String.trim \"" $(VERSION) "\"" > src/core/version.ml
+	@echo "let version = \"$(VERSION)\"" > src/core/version.ml
 
 all: version compiler jscompiler test perf
 

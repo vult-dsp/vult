@@ -159,7 +159,7 @@ let compileCode (args : args) env stmts : Prog.top_stmt list * Interpreter.iprog
   in
   (prog, iprog, eval_out @ render_out @ prog_out @ bytecode_dump)
 
-let version = String.sub Version.version 1 (String.length Version.version - 2)
+let version = Version.version
 
 let driver (args : args) : output list =
   try

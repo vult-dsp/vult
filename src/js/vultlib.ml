@@ -297,7 +297,7 @@ let applyOptions (args : Args.args) (opts : options Js.t) : unit =
 (** {2 API Functions} *)
 
 (** Compiler version string. *)
-let version : Js.js_string Js.t = Js.string (String.sub Core.Version.version 1 (String.length Core.Version.version - 2))
+let version : Js.js_string Js.t = Js.string Core.Version.version
 
 (** Full compiler invocation. Takes a JS array of [{file?, code?}] input objects and runs
     the compiler with default arguments. Returns an array of result objects.
