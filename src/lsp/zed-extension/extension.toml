@@ -11,7 +11,7 @@ languages = ["languages/vult"]
 kind = "Rust"
 version = "0.7.0"
 
-[language_servers.vult-lsp]
+[language_servers.vult]
 name = "Vult Language Server"
 languages = ["Vult"]
 

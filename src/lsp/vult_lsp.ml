@@ -1015,134 +1015,72 @@ module SemanticTokens = struct
         VPunctuation
 
   (** Check if an identifier is followed by '(' indicating a function call *)
-  let is_function_call (content : string) (line : int) (start_char : int) (length : int) : bool =
-    try
-      let lines = String.split_on_char '\n' content in
-      if line >= 0 && line < CCList.length lines then
-        let line_text = CCList.nth lines line in
-        let end_pos = start_char + length in
-        let rec skip_whitespace pos =
-          if pos < String.length line_text && (line_text.[pos] = ' ' || line_text.[pos] = '\t') then
-            skip_whitespace (pos + 1)
-          else pos
-        in
-        let pos_after_whitespace = skip_whitespace end_pos in
-        pos_after_whitespace < String.length line_text && line_text.[pos_after_whitespace] = '('
-      else false
-    with _ -> false
+  let is_function_call (lines : string array) (line : int) (end_char : int) : bool =
+    if line >= 0 && line < Array.length lines then
+      let line_text = lines.(line) in
+      let rec skip_whitespace pos =
+        if pos < String.length line_text && (line_text.[pos] = ' ' || line_text.[pos] = '\t') then
+          skip_whitespace (pos + 1)
+        else pos
+      in
+      let pos_after_whitespace = skip_whitespace end_char in
+      pos_after_whitespace < String.length line_text && line_text.[pos_after_whitespace] = '('
+    else false
 
-  (** Split a multi-line token into per-line tokens *)
-  let split_multiline_token (content : string) (token_type : vult_token_type) (start_line : int) (start_char : int)
-      (length : int) : (vult_token_type * int * int * int) list =
-    let lines = String.split_on_char '\n' content in
-    try
-      (* Calculate which lines this token spans *)
-      let start_line_text = CCList.nth lines start_line in
-      let chars_on_first_line = String.length start_line_text - start_char in
-      if length <= chars_on_first_line then
-        (* Single line token *)
-        [(token_type, start_line, start_char, length)]
+  (** Split a token that spans several lines into one token per line. Tokens covering no characters (for example the
+      empty remainder of a line comment that ends with a newline) are dropped. *)
+  let split_by_lines (lines : string array) (token_type : vult_token_type) (start_line : int) (start_char : int)
+      (end_line : int) (end_char : int) : (vult_token_type * int * int * int) list =
+    let line_length line = if line >= 0 && line < Array.length lines then String.length lines.(line) else 0 in
+    let rec collect line acc =
+      if line > end_line then CCList.rev acc
       else
-        (* Multi-line token - need to split *)
-        let result = ref [] in
-        let current_line = ref start_line in
-        let remaining_chars = ref length in
-        (* Use iterative loop instead of recursive to avoid stack overflow *)
-        while !remaining_chars > 0 && !current_line < CCList.length lines do
-          let line_text = CCList.nth lines !current_line in
-          let line_start = if !current_line = start_line then start_char else 0 in
-          let available_chars = String.length line_text - line_start in
-          let chars_to_take = min !remaining_chars available_chars in
-          if chars_to_take > 0 then (
-            let new_token = (token_type, !current_line, line_start, chars_to_take) in
-            result := new_token :: !result ;
-            (* Account for the newline character when moving to next line *)
-            let chars_consumed = chars_to_take + if !current_line < CCList.length lines - 1 then 1 else 0 in
-            current_line := !current_line + 1 ;
-            remaining_chars := !remaining_chars - chars_consumed )
-          else
-            (* Skip empty lines *)
-            current_line := !current_line + 1 ;
-          remaining_chars := !remaining_chars - 1
-        done ;
-        CCList.rev !result
-    with _ -> [(token_type, start_line, start_char, length)]
+        let first = if line = start_line then start_char else 0 in
+        let last = if line = end_line then end_char else line_length line in
+        let acc = if last > first then (token_type, line, first, last - first) :: acc else acc in
+        collect (line + 1) acc
+    in
+    collect start_line []
 
-  (* Fallback to single token *)
-
-  (** Tokenize Vult code for syntax highlighting *)
+  (** Tokenize Vult code for syntax highlighting. The positions are taken from the token location and not from the
+      lexbuf, since tokens built by a sub-lexer (comments and strings) leave the lexbuf pointing at their last matched
+      fragment. *)
   let tokenize_vult_code (content : string) : (vult_token_type * int * int * int) list =
-    try
-      let lexbuf = Lexing.from_string content in
-      let lsp_source = Loc.File "" in
-      let tokens = ref [] in
-      (* Use iterative loop instead of recursive to avoid stack overflow in JavaScript *)
-      let continue = ref true in
-      while !continue do
-        let token = Pparser.Lexer.next_token_config lsp_source Pparser.Tokens.comment_config lexbuf in
-        match token.kind with
-        | Pparser.Tokens.EOF ->
-            continue := false
-        | _ ->
-            let start_pos = lexbuf.lex_start_p in
-            let end_pos = lexbuf.lex_curr_p in
-            let line = start_pos.Lexing.pos_lnum - 1 in
-            (* LSP uses 0-based line numbers *)
-            let start_char = start_pos.Lexing.pos_cnum - start_pos.Lexing.pos_bol in
-            let length = end_pos.Lexing.pos_cnum - start_pos.Lexing.pos_cnum in
-            let token_text = Lexing.lexeme lexbuf in
-            let token_type = classify_token token_text token.kind in
-            (* Enhance classification for function calls *)
-            let final_token_type =
-              match token_type with
-              | VIdentifier when is_function_call content line start_char length ->
-                  VFunction
-              | _ ->
-                  token_type
-            in
-            (* Handle multi-line tokens (block comments) *)
-            let line_tokens =
-              match token.kind with
-              | Pparser.Tokens.BLOCK_COMMENT ->
-                  (* Extract the actual comment content from the source file *)
-                  let actual_token_content =
-                    try
-                      let lines = String.split_on_char '\n' content in
-                      let start_line_text = CCList.nth lines line in
-                      let remaining_on_first_line = String.length start_line_text - start_char in
-                      if length <= remaining_on_first_line then
-                        (* Single line - extract from current line *)
-                        String.sub start_line_text start_char length
-                      else
-                        (* Multi-line - need to extract across lines *)
-                        let buffer = Buffer.create length in
-                        let current_line = ref line in
-                        let remaining_chars = ref length in
-                        (* Use iterative loop instead of recursive to avoid stack overflow *)
-                        while !remaining_chars > 0 && !current_line < CCList.length lines do
-                          let line_text = CCList.nth lines !current_line in
-                          let line_start = if !current_line = line then start_char else 0 in
-                          let available_chars = String.length line_text - line_start in
-                          let chars_to_take = min !remaining_chars available_chars in
-                          if chars_to_take > 0 then Buffer.add_substring buffer line_text line_start chars_to_take ;
-                          if !current_line < CCList.length lines - 1 && !remaining_chars > chars_to_take then
-                            Buffer.add_char buffer '\n' ;
-                          current_line := !current_line + 1 ;
-                          remaining_chars := !remaining_chars - chars_to_take - 1
-                        done ;
-                        Buffer.contents buffer
-                    with _ -> token_text
-                  in
-                  if String.contains actual_token_content '\n' then
-                    split_multiline_token content final_token_type line start_char length
-                  else [(final_token_type, line, start_char, length)]
-              | _ ->
-                  [(final_token_type, line, start_char, length)]
-            in
-            tokens := CCList.append (CCList.rev line_tokens) !tokens
-      done ;
-      CCList.rev !tokens
-    with _ -> [] (* Return empty list on lexer errors *)
+    let lines = Array.of_list (String.split_on_char '\n' content) in
+    let lexbuf = Lexing.from_string content in
+    let lsp_source = Loc.File "" in
+    let tokens = ref [] in
+    (* Use iterative loop instead of recursive to avoid stack overflow in JavaScript *)
+    let continue = ref true in
+    (* On a lexer error keep the tokens collected so far so the file is still partially highlighted *)
+    ( try
+        while !continue do
+          let token = Pparser.Lexer.next_token_config lsp_source Pparser.Tokens.comment_config lexbuf in
+          match token.kind with
+          | Pparser.Tokens.EOF ->
+              continue := false
+          | _ ->
+              let start_pos = token.loc.Loc.start_pos in
+              let end_pos = token.loc.Loc.end_pos in
+              (* LSP uses 0-based line numbers *)
+              let start_line = start_pos.Lexing.pos_lnum - 1 in
+              let end_line = end_pos.Lexing.pos_lnum - 1 in
+              let start_char = start_pos.Lexing.pos_cnum - start_pos.Lexing.pos_bol in
+              let end_char = end_pos.Lexing.pos_cnum - end_pos.Lexing.pos_bol in
+              let token_type = classify_token token.value token.kind in
+              (* Enhance classification for function calls *)
+              let token_type =
+                match token_type with
+                | VIdentifier when start_line = end_line && is_function_call lines start_line end_char ->
+                    VFunction
+                | _ ->
+                    token_type
+              in
+              let line_tokens = split_by_lines lines token_type start_line start_char end_line end_char in
+              tokens := CCList.rev_append line_tokens !tokens
+        done
+      with _ -> () ) ;
+    CCList.rev !tokens
 
   (** Generate LSP semantic tokens from Vult code *)
   let get_semantic_tokens (content : string) : int list =

@@ -63,8 +63,27 @@ The `vultconfig.json` would contain:
 
 This allows `examples/filters/ladder.vult` to find the `Util` module from `examples/util/util.vult`.
 
-## Install
+## Running the server
+
+The language server is part of the compiler; there is no separate server binary:
 
 ```
-ln -s /Users/leonardo/Development/vult/src/lsp/vscode-extension ~/.vscode/extensions/vult-language-server
+vult -lsp
 ```
+
+Both the VS Code and the Zed extensions locate `vult` in `PATH` and launch it with `-lsp`. In VS Code the path can be
+overridden with the `vult.languageServer.path` setting.
+
+## Install
+
+Build and install the compiler, then link the VS Code extension:
+
+```
+make compiler
+sudo make install
+make vscode-extension
+ln -s "$PWD/src/lsp/vscode-extension" ~/.vscode/extensions/vult-language-server
+```
+
+`make vscode-extension` compiles `src/extension.ts` into `out/extension.js`, which is what VS Code actually loads. Run
+it after changing the extension sources, otherwise VS Code keeps using the previously compiled client.

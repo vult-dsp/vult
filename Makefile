@@ -33,11 +33,10 @@ vultlib:
 	dune build src/js/vultlib_js.bc $(FORMAT)
 	js_of_ocaml --target-env=browser --disable use-js-string _build/default/src/js/vultlib_js.bc -o vultlib.js
 
-lsp:
-	dune build src/lsp/vult_lsp_js.bc $(FORMAT)
-	js_of_ocaml --custom-header="#!/usr/bin/env node" --disable use-js-string _build/default/src/lsp/vult_lsp_js.bc -o vult-lsp.js
-	chmod +x vult-lsp.js
-	cp vult-lsp.js src/lsp/vscode-extension/
+# The language server is part of the compiler: `vult -lsp`. This only builds the
+# VS Code client that launches it.
+vscode-extension:
+	cd src/lsp/vscode-extension && npm install && npm run compile
 
 #web:
 #	$(OCB) src/js/vultweb.byte
@@ -73,19 +72,26 @@ VERSION:=$(shell git describe --tags --abbrev=0)
 version :
 	@echo "let version = String.trim \"" $(VERSION) "\"" > src/core/version.ml
 
-all: version compiler lsp jscompiler test perf
+all: version compiler jscompiler test perf
 
 clean:
 	dune clean
-	rm -f vult.js vultweb.js vultlib.js vult-lsp.js
+	rm -f vult.js vultweb.js vultlib.js
 	rm -f bisect*.out
 	rm -rf bisect_coverage
 	rm -rf _build
 
 install:
+	# Remove the old binary first. Overwriting a code-signed executable in place
+	# invalidates its signature, and macOS then kills every exec of it with
+	# SIGKILL (Code Signature Invalid) before main runs. On macOS re-sign the
+	# installed copy ad-hoc so it is valid regardless of how it got there.
+	rm -f $(PREFIX)/vult
 	cp _build/default/src/vult.exe $(PREFIX)/vult
+	if [ "$$(uname -s)" = "Darwin" ]; then codesign -f -s - $(PREFIX)/vult; fi
+	$(PREFIX)/vult -version
 
 install-lib:
 	dune build -p vult @install
 
-.PHONY: 	all clean compiler js test
+.PHONY: 	all clean compiler js test vscode-extension

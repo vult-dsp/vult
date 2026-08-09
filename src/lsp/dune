@@ -7,12 +7,3 @@
  (name vult_lsp_server)
  (modules vult_lsp_server)
  (libraries vult_lsp yojson unix containers))
-
-(executable
- (name vult_lsp_js)
- (modules vult_lsp_js)
- (modes byte)
- (libraries vult_lsp vult_lsp_server yojson node)
- (flags -w -32)
- (preprocess
-  (pps js_of_ocaml-ppx)))

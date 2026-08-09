@@ -35,7 +35,7 @@ jobs:
 
       - run: opam install . --deps-only
 
-      - run: opam exec -- make compiler jscompiler lsp vultweb vultlib
+      - run: opam exec -- make compiler jscompiler vultweb vultlib
 
       # The test runner shells out to gcc and node, which are not reliably
       # available in the Windows environment
@@ -70,13 +70,6 @@ jobs:
           name: vultlib.js
           path: vultlib.js
 
-      - name: Save vult-lsp.js artifact
-        uses: actions/upload-artifact@v4
-        if: runner.os == 'Linux'
-        with:
-          name: vult-lsp.js
-          path: vult-lsp.js
-
       - name: Upload the build artifact
         uses: actions/upload-artifact@v4
         with:
@@ -106,7 +99,6 @@ jobs:
           cp artifacts/vult.js/vult.js release/
           cp artifacts/vultweb.js/vultweb.js release/
           cp artifacts/vultlib.js/vultlib.js release/
-          cp artifacts/vult-lsp.js/vult-lsp.js release/
 
           cp artifacts/ubuntu-latest-5-vult.exe/vult.exe vult
           zip release/vult-linux.zip vult
