@@ -225,37 +225,43 @@ static_inline float Util_cvToPitch(float cv) {
 }
 
 static_inline float Util_pitchToRate_1024_raw_c0(int32_t index) {
-   return Util_pitchToRate_1024_c0[static_cast<uint32_t>(index)];
+   return Util_pitchToRate_1024_c[static_cast<uint32_t>(index * 3)];
 }
 
 static_inline float Util_pitchToRate_1024_raw_c1(int32_t index) {
-   return Util_pitchToRate_1024_c1[static_cast<uint32_t>(index)];
+   return Util_pitchToRate_1024_c[static_cast<uint32_t>(index * 3 + 1)];
 }
 
 static_inline float Util_pitchToRate_1024_raw_c2(int32_t index) {
-   return Util_pitchToRate_1024_c2[static_cast<uint32_t>(index)];
+   return Util_pitchToRate_1024_c[static_cast<uint32_t>(index * 3 + 2)];
 }
 
 static_inline float Util_pitchToRate_1024(float pitch) {
-   int32_t index = int_clip(float_to_int(pitch * 0.251968f), 0, 31);
-   return Util_pitchToRate_1024_c0[static_cast<uint32_t>(index)] + pitch * (Util_pitchToRate_1024_c1[static_cast<uint32_t>(index)] + Util_pitchToRate_1024_c2[static_cast<uint32_t>(index)] * pitch);
+   float value = float_clip(pitch * 0.251968f, 0.0f, 32.0f);
+   int32_t cell = int_clip(float_to_int(value), 0, 31);
+   float u = value - int_to_float(cell);
+   int32_t index = cell * 3;
+   return Util_pitchToRate_1024_c[static_cast<uint32_t>(index)] + u * (Util_pitchToRate_1024_c[static_cast<uint32_t>(index + 1)] + Util_pitchToRate_1024_c[static_cast<uint32_t>((index + 2))] * u);
 }
 
 static_inline float Util_cvToRate_1024_raw_c0(int32_t index) {
-   return Util_cvToRate_1024_c0[static_cast<uint32_t>(index)];
+   return Util_cvToRate_1024_c[static_cast<uint32_t>(index * 3)];
 }
 
 static_inline float Util_cvToRate_1024_raw_c1(int32_t index) {
-   return Util_cvToRate_1024_c1[static_cast<uint32_t>(index)];
+   return Util_cvToRate_1024_c[static_cast<uint32_t>(index * 3 + 1)];
 }
 
 static_inline float Util_cvToRate_1024_raw_c2(int32_t index) {
-   return Util_cvToRate_1024_c2[static_cast<uint32_t>(index)];
+   return Util_cvToRate_1024_c[static_cast<uint32_t>(index * 3 + 2)];
 }
 
 static_inline float Util_cvToRate_1024(float cv) {
-   int32_t index = int_clip(float_to_int(cv * 35.555555f), 0, 31);
-   return Util_cvToRate_1024_c0[static_cast<uint32_t>(index)] + cv * (Util_cvToRate_1024_c1[static_cast<uint32_t>(index)] + Util_cvToRate_1024_c2[static_cast<uint32_t>(index)] * cv);
+   float value = float_clip(cv * 35.555555f, 0.0f, 32.0f);
+   int32_t cell = int_clip(float_to_int(value), 0, 31);
+   float u = value - int_to_float(cell);
+   int32_t index = cell * 3;
+   return Util_cvToRate_1024_c[static_cast<uint32_t>(index)] + u * (Util_cvToRate_1024_c[static_cast<uint32_t>(index + 1)] + Util_cvToRate_1024_c[static_cast<uint32_t>((index + 2))] * u);
 }
 
 static_inline void Tricore_default(Tricore_process_type& _ctx) {
@@ -281,20 +287,23 @@ static_inline void Tricore_default_type_init(Tricore_default_type& _ctx) {
 }
 
 static_inline float Svf_calc_g_raw_c0(int32_t index) {
-   return Svf_calc_g_c0[static_cast<uint32_t>(index)];
+   return Svf_calc_g_c[static_cast<uint32_t>(index * 3)];
 }
 
 static_inline float Svf_calc_g_raw_c1(int32_t index) {
-   return Svf_calc_g_c1[static_cast<uint32_t>(index)];
+   return Svf_calc_g_c[static_cast<uint32_t>(index * 3 + 1)];
 }
 
 static_inline float Svf_calc_g_raw_c2(int32_t index) {
-   return Svf_calc_g_c2[static_cast<uint32_t>(index)];
+   return Svf_calc_g_c[static_cast<uint32_t>(index * 3 + 2)];
 }
 
 static_inline float Svf_calc_g(float cv) {
-   int32_t index = int_clip(float_to_int(cv * 142.222222f), 0, 127);
-   return Svf_calc_g_c0[static_cast<uint32_t>(index)] + cv * (Svf_calc_g_c1[static_cast<uint32_t>(index)] + Svf_calc_g_c2[static_cast<uint32_t>(index)] * cv);
+   float value = float_clip(cv * 142.222222f, 0.0f, 128.0f);
+   int32_t cell = int_clip(float_to_int(value), 0, 127);
+   float u = value - int_to_float(cell);
+   int32_t index = cell * 3;
+   return Svf_calc_g_c[static_cast<uint32_t>(index)] + u * (Svf_calc_g_c[static_cast<uint32_t>(index + 1)] + Svf_calc_g_c[static_cast<uint32_t>((index + 2))] * u);
 }
 
 static_inline void Svf_default(Svf_process_type& _ctx) {
@@ -368,20 +377,23 @@ static_inline void Phase_default_type_init(Phase_default_type& _ctx) {
 }
 
 static_inline float Util_cvToperiod_raw_c0(int32_t index) {
-   return Util_cvToperiod_c0[static_cast<uint32_t>(index)];
+   return Util_cvToperiod_c[static_cast<uint32_t>(index * 3)];
 }
 
 static_inline float Util_cvToperiod_raw_c1(int32_t index) {
-   return Util_cvToperiod_c1[static_cast<uint32_t>(index)];
+   return Util_cvToperiod_c[static_cast<uint32_t>(index * 3 + 1)];
 }
 
 static_inline float Util_cvToperiod_raw_c2(int32_t index) {
-   return Util_cvToperiod_c2[static_cast<uint32_t>(index)];
+   return Util_cvToperiod_c[static_cast<uint32_t>(index * 3 + 2)];
 }
 
 static_inline float Util_cvToperiod(float cv) {
-   int32_t index = int_clip(float_to_int(cv * 32.0f), 0, 31);
-   return Util_cvToperiod_c0[static_cast<uint32_t>(index)] + cv * (Util_cvToperiod_c1[static_cast<uint32_t>(index)] + Util_cvToperiod_c2[static_cast<uint32_t>(index)] * cv);
+   float value = float_clip(cv * 32.0f, 0.0f, 32.0f);
+   int32_t cell = int_clip(float_to_int(value), 0, 31);
+   float u = value - int_to_float(cell);
+   int32_t index = cell * 3;
+   return Util_cvToperiod_c[static_cast<uint32_t>(index)] + u * (Util_cvToperiod_c[static_cast<uint32_t>(index + 1)] + Util_cvToperiod_c[static_cast<uint32_t>((index + 2))] * u);
 }
 
 static_inline void Blit_pulse_start(Blit_pulse_train_type& _ctx) {
@@ -401,37 +413,43 @@ static_inline void Blit_pulse_start_type_init(Blit_pulse_start_type& _ctx) {
 }
 
 static_inline float Util_pitchToRate_raw_c0(int32_t index) {
-   return Util_pitchToRate_c0[static_cast<uint32_t>(index)];
+   return Util_pitchToRate_c[static_cast<uint32_t>(index * 3)];
 }
 
 static_inline float Util_pitchToRate_raw_c1(int32_t index) {
-   return Util_pitchToRate_c1[static_cast<uint32_t>(index)];
+   return Util_pitchToRate_c[static_cast<uint32_t>(index * 3 + 1)];
 }
 
 static_inline float Util_pitchToRate_raw_c2(int32_t index) {
-   return Util_pitchToRate_c2[static_cast<uint32_t>(index)];
+   return Util_pitchToRate_c[static_cast<uint32_t>(index * 3 + 2)];
 }
 
 static_inline float Util_pitchToRate(float pitch) {
-   int32_t index = int_clip(float_to_int(pitch * 0.251968f), 0, 31);
-   return Util_pitchToRate_c0[static_cast<uint32_t>(index)] + pitch * (Util_pitchToRate_c1[static_cast<uint32_t>(index)] + Util_pitchToRate_c2[static_cast<uint32_t>(index)] * pitch);
+   float value = float_clip(pitch * 0.251968f, 0.0f, 32.0f);
+   int32_t cell = int_clip(float_to_int(value), 0, 31);
+   float u = value - int_to_float(cell);
+   int32_t index = cell * 3;
+   return Util_pitchToRate_c[static_cast<uint32_t>(index)] + u * (Util_pitchToRate_c[static_cast<uint32_t>(index + 1)] + Util_pitchToRate_c[static_cast<uint32_t>((index + 2))] * u);
 }
 
 static_inline float Util_cvToRate_raw_c0(int32_t index) {
-   return Util_cvToRate_c0[static_cast<uint32_t>(index)];
+   return Util_cvToRate_c[static_cast<uint32_t>(index * 3)];
 }
 
 static_inline float Util_cvToRate_raw_c1(int32_t index) {
-   return Util_cvToRate_c1[static_cast<uint32_t>(index)];
+   return Util_cvToRate_c[static_cast<uint32_t>(index * 3 + 1)];
 }
 
 static_inline float Util_cvToRate_raw_c2(int32_t index) {
-   return Util_cvToRate_c2[static_cast<uint32_t>(index)];
+   return Util_cvToRate_c[static_cast<uint32_t>(index * 3 + 2)];
 }
 
 static_inline float Util_cvToRate(float cv) {
-   int32_t index = int_clip(float_to_int(cv * 142.222222f), 0, 127);
-   return Util_cvToRate_c0[static_cast<uint32_t>(index)] + cv * (Util_cvToRate_c1[static_cast<uint32_t>(index)] + Util_cvToRate_c2[static_cast<uint32_t>(index)] * cv);
+   float value = float_clip(cv * 142.222222f, 0.0f, 128.0f);
+   int32_t cell = int_clip(float_to_int(value), 0, 127);
+   float u = value - int_to_float(cell);
+   int32_t index = cell * 3;
+   return Util_cvToRate_c[static_cast<uint32_t>(index)] + u * (Util_cvToRate_c[static_cast<uint32_t>(index + 1)] + Util_cvToRate_c[static_cast<uint32_t>((index + 2))] * u);
 }
 
 static_inline void Blit_init(Blit_osc_blit_type& _ctx) {
@@ -555,20 +573,23 @@ static_inline float Util_pitchToCv(float pitch) {
 }
 
 static_inline float Util_cvTokHz_raw_c0(int32_t index) {
-   return Util_cvTokHz_c0[static_cast<uint32_t>(index)];
+   return Util_cvTokHz_c[static_cast<uint32_t>(index * 3)];
 }
 
 static_inline float Util_cvTokHz_raw_c1(int32_t index) {
-   return Util_cvTokHz_c1[static_cast<uint32_t>(index)];
+   return Util_cvTokHz_c[static_cast<uint32_t>(index * 3 + 1)];
 }
 
 static_inline float Util_cvTokHz_raw_c2(int32_t index) {
-   return Util_cvTokHz_c2[static_cast<uint32_t>(index)];
+   return Util_cvTokHz_c[static_cast<uint32_t>(index * 3 + 2)];
 }
 
 static_inline float Util_cvTokHz(float cv) {
-   int32_t index = int_clip(float_to_int(cv * 32.0f), 0, 31);
-   return Util_cvTokHz_c0[static_cast<uint32_t>(index)] + cv * (Util_cvTokHz_c1[static_cast<uint32_t>(index)] + Util_cvTokHz_c2[static_cast<uint32_t>(index)] * cv);
+   float value = float_clip(cv * 32.0f, 0.0f, 32.0f);
+   int32_t cell = int_clip(float_to_int(value), 0, 31);
+   float u = value - int_to_float(cell);
+   int32_t index = cell * 3;
+   return Util_cvTokHz_c[static_cast<uint32_t>(index)] + u * (Util_cvTokHz_c[static_cast<uint32_t>(index + 1)] + Util_cvTokHz_c[static_cast<uint32_t>((index + 2))] * u);
 }
 
 float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float disable);
@@ -583,20 +604,23 @@ static_inline void Tricore_controlChange(Tricore_process_type& _ctx, int32_t con
 }
 
 static_inline float Saturate_soft_tanh_table_raw_c0(int32_t index) {
-   return Saturate_soft_tanh_table_c0[static_cast<uint32_t>(index)];
+   return Saturate_soft_tanh_table_c[static_cast<uint32_t>(index * 3)];
 }
 
 static_inline float Saturate_soft_tanh_table_raw_c1(int32_t index) {
-   return Saturate_soft_tanh_table_c1[static_cast<uint32_t>(index)];
+   return Saturate_soft_tanh_table_c[static_cast<uint32_t>(index * 3 + 1)];
 }
 
 static_inline float Saturate_soft_tanh_table_raw_c2(int32_t index) {
-   return Saturate_soft_tanh_table_c2[static_cast<uint32_t>(index)];
+   return Saturate_soft_tanh_table_c[static_cast<uint32_t>(index * 3 + 2)];
 }
 
 static_inline float Saturate_soft_tanh_table(float x) {
-   int32_t index = int_clip(float_to_int((x + 24.0f) * 5.020833f), 0, 240);
-   return Saturate_soft_tanh_table_c0[static_cast<uint32_t>(index)] + x * (Saturate_soft_tanh_table_c1[static_cast<uint32_t>(index)] + Saturate_soft_tanh_table_c2[static_cast<uint32_t>(index)] * x);
+   float value = float_clip((x + 24.0f) * 5.020833f, 0.0f, 241.0f);
+   int32_t cell = int_clip(float_to_int(value), 0, 240);
+   float u = value - int_to_float(cell);
+   int32_t index = cell * 3;
+   return Saturate_soft_tanh_table_c[static_cast<uint32_t>(index)] + u * (Saturate_soft_tanh_table_c[static_cast<uint32_t>(index + 1)] + Saturate_soft_tanh_table_c[static_cast<uint32_t>((index + 2))] * u);
 }
 
 static_inline float Saturate_soft_process(float x) {
@@ -627,20 +651,23 @@ static_inline void Svf_controlChange(Svf_process_type& _ctx, int32_t control, in
 }
 
 static_inline float Saturate_tanh_table_raw_c0(int32_t index) {
-   return Saturate_tanh_table_c0[static_cast<uint32_t>(index)];
+   return Saturate_tanh_table_c[static_cast<uint32_t>(index * 3)];
 }
 
 static_inline float Saturate_tanh_table_raw_c1(int32_t index) {
-   return Saturate_tanh_table_c1[static_cast<uint32_t>(index)];
+   return Saturate_tanh_table_c[static_cast<uint32_t>(index * 3 + 1)];
 }
 
 static_inline float Saturate_tanh_table_raw_c2(int32_t index) {
-   return Saturate_tanh_table_c2[static_cast<uint32_t>(index)];
+   return Saturate_tanh_table_c[static_cast<uint32_t>(index * 3 + 2)];
 }
 
 static_inline float Saturate_tanh_table(float x) {
-   int32_t index = int_clip(float_to_int((x + 24.0f) * 5.020833f), 0, 240);
-   return Saturate_tanh_table_c0[static_cast<uint32_t>(index)] + x * (Saturate_tanh_table_c1[static_cast<uint32_t>(index)] + Saturate_tanh_table_c2[static_cast<uint32_t>(index)] * x);
+   float value = float_clip((x + 24.0f) * 5.020833f, 0.0f, 241.0f);
+   int32_t cell = int_clip(float_to_int(value), 0, 240);
+   float u = value - int_to_float(cell);
+   int32_t index = cell * 3;
+   return Saturate_tanh_table_c[static_cast<uint32_t>(index)] + u * (Saturate_tanh_table_c[static_cast<uint32_t>(index + 1)] + Saturate_tanh_table_c[static_cast<uint32_t>((index + 2))] * u);
 }
 
 static_inline float Saturate_process(float x) {
@@ -676,20 +703,23 @@ static_inline void Lfo_default(Lfo_process_type& _ctx) {
 }
 
 static_inline float Tables_nsine_raw_c0(int32_t index) {
-   return Tables_nsine_c0[static_cast<uint32_t>(index)];
+   return Tables_nsine_c[static_cast<uint32_t>(index * 3)];
 }
 
 static_inline float Tables_nsine_raw_c1(int32_t index) {
-   return Tables_nsine_c1[static_cast<uint32_t>(index)];
+   return Tables_nsine_c[static_cast<uint32_t>(index * 3 + 1)];
 }
 
 static_inline float Tables_nsine_raw_c2(int32_t index) {
-   return Tables_nsine_c2[static_cast<uint32_t>(index)];
+   return Tables_nsine_c[static_cast<uint32_t>(index * 3 + 2)];
 }
 
 static_inline float Tables_nsine(float x) {
-   int32_t index = int_clip(float_to_int(x * 128.0f), 0, 127);
-   return Tables_nsine_c0[static_cast<uint32_t>(index)] + x * (Tables_nsine_c1[static_cast<uint32_t>(index)] + Tables_nsine_c2[static_cast<uint32_t>(index)] * x);
+   float value = float_clip(x * 128.0f, 0.0f, 128.0f);
+   int32_t cell = int_clip(float_to_int(value), 0, 127);
+   float u = value - int_to_float(cell);
+   int32_t index = cell * 3;
+   return Tables_nsine_c[static_cast<uint32_t>(index)] + u * (Tables_nsine_c[static_cast<uint32_t>(index + 1)] + Tables_nsine_c[static_cast<uint32_t>((index + 2))] * u);
 }
 
 float Phase_process(Phase_process_type& _ctx, float cv, float reset);

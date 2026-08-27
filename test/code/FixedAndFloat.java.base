@@ -215,61 +215,62 @@ private void FixedAndFloat_test1() {
    to_bool = false;
 }
 
-public static final int[] FixedAndFloat_take_fix_return_fixed_c0 = new float[]{0x0 /* 0.000000 */, 0x3072 /* 0.189246 */, 0x5f24 /* 0.371652 */, 0x8a66 /* 0.540627 */, 0xb0a7 /* 0.690063 */, 0xd086 /* 0.814560 */, 0xe8dc /* 0.909618 */, 0xf8c8 /* 0.971802 */, 0xffb5 /* 0.998865 */, 0xfd65 /* 0.989829 */, 0xf1ec /* 0.945019 */, 0xddb5 /* 0.866056 */, 0xc17b /* 0.755794 */, 0x9e43 /* 0.618216 */, 0x7552 /* 0.458296 */, 0x4824 /* 0.281813 */, 0x185b /* 0.095145 */, -0x184f /* -0.094961 */, -0x4819 /* -0.281636 */, -0x7548 /* -0.458132 */, -0x9e39 /* -0.618071 */, -0xc173 /* -0.755672 */, -0xddaf /* -0.865964 */, -0xf1e8 /* -0.944959 */, -0xfd63 /* -0.989802 */, -0xffb6 /* -0.998874 */, -0xf8ca /* -0.971846 */, -0xe8e1 /* -0.909695 */, -0xd08e /* -0.814667 */, -0xb0b0 /* -0.690197 */, -0x8a70 /* -0.540783 */, -0x5f2f /* -0.371824 */, -0x307e /* -0.189428 */, -0xc /* -0.000185 */};
-public static final int[] FixedAndFloat_take_fix_return_fixed_c1 = new float[]{0x3072 /* 0.189246 */, 0x2eb2 /* 0.182406 */, 0x2b41 /* 0.168975 */, 0x2641 /* 0.149436 */, 0x1fdf /* 0.124497 */, 0x1855 /* 0.095058 */, 0xfeb /* 0.062184 */, 0x6ed /* 0.027063 */, -0x250 /* -0.009037 */, -0xb78 /* -0.044809 */, -0x1436 /* -0.078963 */, -0x1c3a /* -0.110263 */, -0x2338 /* -0.137577 */, -0x28f0 /* -0.159920 */, -0x2d2d /* -0.176483 */, -0x2fc9 /* -0.186668 */, -0x30aa /* -0.190106 */, -0x2fc9 /* -0.186675 */, -0x2d2e /* -0.176496 */, -0x28f1 /* -0.159939 */, -0x2339 /* -0.137602 */, -0x1c3c /* -0.110291 */, -0x1439 /* -0.078995 */, -0xb7a /* -0.044844 */, -0x252 /* -0.009072 */, 0x6eb /* 0.027028 */, 0xfe9 /* 0.062151 */, 0x1853 /* 0.095028 */, 0x1fdd /* 0.124470 */, 0x2640 /* 0.149414 */, 0x2b40 /* 0.168958 */, 0x2eb1 /* 0.182396 */, 0x3072 /* 0.189242 */, 0x0 /* 0.000000 */};
+public static final int[] FixedAndFloat_take_fix_return_fixed_c = new float[]{0x0 /* 0.000000 */, 0x3072 /* 0.189246 */, 0x3072 /* 0.189246 */, 0x2eb2 /* 0.182406 */, 0x5f24 /* 0.371652 */, 0x2b41 /* 0.168975 */, 0x8a66 /* 0.540627 */, 0x2641 /* 0.149436 */, 0xb0a7 /* 0.690063 */, 0x1fdf /* 0.124497 */, 0xd086 /* 0.814560 */, 0x1855 /* 0.095058 */, 0xe8dc /* 0.909618 */, 0xfeb /* 0.062184 */, 0xf8c8 /* 0.971802 */, 0x6ed /* 0.027063 */, 0xffb5 /* 0.998865 */, -0x250 /* -0.009037 */, 0xfd65 /* 0.989829 */, -0xb78 /* -0.044809 */, 0xf1ec /* 0.945019 */, -0x1436 /* -0.078963 */, 0xddb5 /* 0.866056 */, -0x1c3a /* -0.110263 */, 0xc17b /* 0.755794 */, -0x2338 /* -0.137577 */, 0x9e43 /* 0.618216 */, -0x28f0 /* -0.159920 */, 0x7552 /* 0.458296 */, -0x2d2d /* -0.176483 */, 0x4824 /* 0.281813 */, -0x2fc9 /* -0.186668 */, 0x185b /* 0.095145 */, -0x30aa /* -0.190106 */, -0x184f /* -0.094961 */, -0x2fc9 /* -0.186675 */, -0x4819 /* -0.281636 */, -0x2d2e /* -0.176496 */, -0x7548 /* -0.458132 */, -0x28f1 /* -0.159939 */, -0x9e39 /* -0.618071 */, -0x2339 /* -0.137602 */, -0xc173 /* -0.755672 */, -0x1c3c /* -0.110291 */, -0xddaf /* -0.865964 */, -0x1439 /* -0.078995 */, -0xf1e8 /* -0.944959 */, -0xb7a /* -0.044844 */, -0xfd63 /* -0.989802 */, -0x252 /* -0.009072 */, -0xffb6 /* -0.998874 */, 0x6eb /* 0.027028 */, -0xf8ca /* -0.971846 */, 0xfe9 /* 0.062151 */, -0xe8e1 /* -0.909695 */, 0x1853 /* 0.095028 */, -0xd08e /* -0.814667 */, 0x1fdd /* 0.124470 */, -0xb0b0 /* -0.690197 */, 0x2640 /* 0.149414 */, -0x8a70 /* -0.540783 */, 0x2b40 /* 0.168958 */, -0x5f2f /* -0.371824 */, 0x2eb1 /* 0.182396 */, -0x307e /* -0.189428 */, 0x3072 /* 0.189242 */, -0xc /* -0.000185 */, 0x0 /* 0.000000 */};
 private int FixedAndFloat_take_fix_return_fixed_raw_c0(int index) {
-   return FixedAndFloat_take_fix_return_fixed_c0[index];
+   return FixedAndFloat_take_fix_return_fixed_c[(index * 2)];
 }
 
 private int FixedAndFloat_take_fix_return_fixed_raw_c1(int index) {
-   return FixedAndFloat_take_fix_return_fixed_c1[index];
+   return FixedAndFloat_take_fix_return_fixed_c[((index * 2) + 1)];
 }
 
 private int FixedAndFloat_take_fix_return_fixed(int x) {
    int value = (clip(x, 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */) * 0x210000 /* 33.000000 */);
-   int index = (int)(value);
+   int index = ((int)(value) * 2);
    int decimal = (value - floor(value));
-   return (FixedAndFloat_take_fix_return_fixed_c0[index] + (FixedAndFloat_take_fix_return_fixed_c1[index] * decimal));
+   return (FixedAndFloat_take_fix_return_fixed_c[index] + (FixedAndFloat_take_fix_return_fixed_c[(index + 1)] * decimal));
 }
 
-public static final float[] FixedAndFloat_take_fix_return_real_c0 = new float[]{0.0f, -0.003685f, -0.017567f, -0.045666f, -0.088119f, -0.140175f, -0.191679f, -0.227141f, -0.22641f, -0.165946f, -0.020627f, 0.234001f, 0.619196f, 1.150366f, 1.834509f, 2.667932f, 3.63446f, 4.704328f, 5.833885f, 6.966246f, 8.032931f, 8.956503f, 9.654127f, 10.041938f, 10.040014f, 9.577723f, 8.599151f, 7.068308f, 4.97378f, 2.332503f, -0.807634f, -4.366608f};
-public static final float[] FixedAndFloat_take_fix_return_real_c1 = new float[]{6.303116f, 6.539527f, 6.984871f, 7.585958f, 8.267315f, 8.936094f, 9.488211f, 9.815348f, 9.81247f, 9.38541f, 8.458111f, 6.979105f, 4.926833f, 2.313489f, -0.812886f, -4.368242f, -8.234355f, -12.262671f, -16.28001f, -20.095927f, -23.511418f, -26.328579f, -28.360772f, -29.442809f, -29.440648f, -28.260093f, -25.854042f, -22.227846f, -17.442452f, -11.615075f, -4.917253f, 2.429729f};
-public static final float[] FixedAndFloat_take_fix_return_real_c2 = new float[]{-1.933057f, -5.724888f, -9.296728f, -12.511321f, -15.245139f, -17.393129f, -18.872751f, -19.627146f, -19.627325f, -18.873281f, -17.393991f, -15.246298f, -12.512733f, -9.29834f, -5.726637f, -1.934876f, 1.931237f, 5.723139f, 9.295115f, 12.509907f, 15.243979f, 17.392267f, 18.872219f, 19.626966f, 19.627503f, 18.873811f, 17.394851f, 15.247456f, 12.514145f, 9.29995f, 5.728384f, 1.936693f};
+public static final float[] FixedAndFloat_take_fix_return_real_c = new float[]{0.0f, 0.196972f, -0.001888f, 0.195084f, 0.193178f, -0.005591f, 0.382672f, 0.181961f, -0.009079f, 0.555555f, 0.163752f, -0.012219f, 0.70709f, 0.13925f, -0.014888f, 0.831453f, 0.109398f, -0.016986f, 0.923866f, 0.075341f, -0.018431f, 0.980777f, 0.038389f, -0.019168f, 0.999999f, -3.8e-05f, -0.019168f, 0.980795f, -0.038463f, -0.018431f, 0.923901f, -0.075411f, -0.016987f, 0.831505f, -0.109461f, -0.014889f, 0.707155f, -0.139304f, -0.01222f, 0.555632f, -0.163795f, -0.009081f, 0.382758f, -0.181991f, -0.005593f, 0.195175f, -0.193194f, -0.00189f, 9.2e-05f, -0.196973f, 0.001885f, -0.194994f, -0.193183f, 0.005589f, -0.382588f, -0.181969f, 0.009077f, -0.555479f, -0.163763f, 0.012216f, -0.707025f, -0.139264f, 0.014886f, -0.831403f, -0.109414f, 0.016984f, -0.923831f, -0.075359f, 0.018429f, -0.98076f, -0.038408f, 0.019166f, -1.0f, 1.8e-05f, 0.019167f, -0.980814f, 0.038444f, 0.018431f, -0.923938f, 0.075393f, 0.016987f, -0.831557f, 0.109444f, 0.01489f, -0.707222f, 0.13929f, 0.01222f, -0.55571f, 0.163783f, 0.009081f, -0.382844f, 0.181983f, 0.005594f, -0.195267f, 0.193189f, 0.001891f};
 private float FixedAndFloat_take_fix_return_real_raw_c0(int index) {
-   return FixedAndFloat_take_fix_return_real_c0[index];
+   return FixedAndFloat_take_fix_return_real_c[(index * 3)];
 }
 
 private float FixedAndFloat_take_fix_return_real_raw_c1(int index) {
-   return FixedAndFloat_take_fix_return_real_c1[index];
+   return FixedAndFloat_take_fix_return_real_c[((index * 3) + 1)];
 }
 
 private float FixedAndFloat_take_fix_return_real_raw_c2(int index) {
-   return FixedAndFloat_take_fix_return_real_c2[index];
+   return FixedAndFloat_take_fix_return_real_c[((index * 3) + 2)];
 }
 
 private float FixedAndFloat_take_fix_return_real(int x) {
-   int index = clip(fix_to_int((x * 0x200000 /* 32.000000 */)), 0, 31);
-   return (FixedAndFloat_take_fix_return_real_c0[index] + (fix_to_float(x) * (FixedAndFloat_take_fix_return_real_c1[index] + (FixedAndFloat_take_fix_return_real_c2[index] * fix_to_float(x)))));
+   int value = clip((x * 0x200000 /* 32.000000 */), 0x0 /* 0.000000 */, 0x200000 /* 32.000000 */);
+   int cell = clip(fix_to_int(value), 0, 31);
+   int u = (value - (float)(cell));
+   int index = (cell * 3);
+   return (FixedAndFloat_take_fix_return_real_c[index] + (fix_to_float(u) * (FixedAndFloat_take_fix_return_real_c[(index + 1)] + (FixedAndFloat_take_fix_return_real_c[(index + 2)] * fix_to_float(u)))));
 }
 
-public static final int[] FixedAndFloat_take_real_return_fixed_c0 = new float[]{0x0 /* -0.000000 */, -0xf1 /* -0.003685 */, -0x47f /* -0.017566 */, -0xbb0 /* -0.045665 */, -0x168e /* -0.088119 */, -0x23e2 /* -0.140174 */, -0x3111 /* -0.191678 */, -0x3a25 /* -0.227141 */, -0x39f5 /* -0.226410 */, -0x2a7b /* -0.165945 */, -0x547 /* -0.020626 */, 0x3be7 /* 0.234002 */, 0x9e83 /* 0.619196 */, 0x1267e /* 1.150367 */, 0x1d5a2 /* 1.834510 */, 0x2aafd /* 2.667932 */, 0x3a26c /* 3.634460 */, 0x4b44e /* 4.704328 */, 0x5d579 /* 5.833885 */, 0x6f75b /* 6.966246 */, 0x8086e /* 8.032932 */, 0x8f4dd /* 8.956503 */, 0x9a774 /* 9.654127 */, 0xa0abc /* 10.041938 */, 0xa0a3e /* 10.040015 */, 0x993e5 /* 9.577724 */, 0x89961 /* 8.599151 */, 0x7117c /* 7.068309 */, 0x4f949 /* 4.973781 */, 0x2551e /* 2.332503 */, -0xcec1 /* -0.807633 */, -0x45dda /* -4.366608 */};
-public static final int[] FixedAndFloat_take_real_return_fixed_c1 = new float[]{0x64d99 /* 6.303117 */, 0x68a1e /* 6.539527 */, 0x6fc20 /* 6.984871 */, 0x79601 /* 7.585959 */, 0x8446e /* 8.267315 */, 0x8efa3 /* 8.936095 */, 0x97cfb /* 9.488211 */, 0x9d0ba /* 9.815348 */, 0x9cffe /* 9.812470 */, 0x962aa /* 9.385410 */, 0x87546 /* 8.458112 */, 0x6faa6 /* 6.979106 */, 0x4ed44 /* 4.926834 */, 0x25040 /* 2.313490 */, -0xd019 /* -0.812886 */, -0x45e45 /* -4.368241 */, -0x83bfe /* -8.234355 */, -0xc433e /* -12.262671 */, -0x1047ae /* -16.280010 */, -0x14188e /* -20.095926 */, -0x1782ec /* -23.511417 */, -0x1a541d /* -26.328579 */, -0x1c5c5b /* -28.360772 */, -0x1d715b /* -29.442809 */, -0x1d70ce /* -29.440647 */, -0x1c4295 /* -28.260093 */, -0x19daa2 /* -25.854041 */, -0x163a54 /* -22.227845 */, -0x117144 /* -17.442451 */, -0xb9d75 /* -11.615074 */, -0x4ead1 /* -4.917252 */, 0x26e02 /* 2.429729 */};
-public static final int[] FixedAndFloat_take_real_return_fixed_c2 = new float[]{-0x1eedc /* -1.933057 */, -0x5b992 /* -5.724888 */, -0x94bf6 /* -9.296728 */, -0xc82e5 /* -12.511320 */, -0xf3ec1 /* -15.245138 */, -0x1164a4 /* -17.393129 */, -0x12df6c /* -18.872750 */, -0x13a08c /* -19.627145 */, -0x13a098 /* -19.627324 */, -0x12df8f /* -18.873281 */, -0x1164dc /* -17.393990 */, -0xf3f0d /* -15.246298 */, -0xc8342 /* -12.512733 */, -0x94c5f /* -9.298339 */, -0x5ba04 /* -5.726636 */, -0x1ef53 /* -1.934875 */, 0x1ee65 /* 1.931238 */, 0x5b91f /* 5.723139 */, 0x94b8c /* 9.295116 */, 0xc8289 /* 12.509908 */, 0xf3e75 /* 15.243979 */, 0x11646b /* 17.392267 */, 0x12df49 /* 18.872220 */, 0x13a080 /* 19.626966 */, 0x13a0a4 /* 19.627503 */, 0x12dfb2 /* 18.873811 */, 0x116514 /* 17.394852 */, 0xf3f59 /* 15.247457 */, 0xc839f /* 12.514145 */, 0x94cc9 /* 9.299951 */, 0x5ba77 /* 5.728385 */, 0x1efcb /* 1.936694 */};
+public static final int[] FixedAndFloat_take_real_return_fixed_c = new float[]{0x0 /* -0.000000 */, 0x326c /* 0.196972 */, -0x7b /* -0.001888 */, 0x31f1 /* 0.195085 */, 0x3174 /* 0.193179 */, -0x16e /* -0.005591 */, 0x61f6 /* 0.382673 */, 0x2e95 /* 0.181962 */, -0x252 /* -0.009079 */, 0x8e38 /* 0.555556 */, 0x29eb /* 0.163753 */, -0x320 /* -0.012218 */, 0xb503 /* 0.707090 */, 0x23a5 /* 0.139251 */, -0x3cf /* -0.014888 */, 0xd4da /* 0.831454 */, 0x1c01 /* 0.109398 */, -0x459 /* -0.016985 */, 0xec82 /* 0.923866 */, 0x1349 /* 0.075342 */, -0x4b7 /* -0.018430 */, 0xfb14 /* 0.980777 */, 0x9d3 /* 0.038390 */, -0x4e8 /* -0.019167 */, 0xffff /* 1.000000 */, -0x2 /* -0.000037 */, -0x4e8 /* -0.019167 */, 0xfb15 /* 0.980795 */, -0x9d8 /* -0.038463 */, -0x4b7 /* -0.018431 */, 0xec84 /* 0.923902 */, -0x134e /* -0.075410 */, -0x459 /* -0.016986 */, 0xd4dd /* 0.831505 */, -0x1c05 /* -0.109460 */, -0x3cf /* -0.014889 */, 0xb508 /* 0.707156 */, -0x23a9 /* -0.139304 */, -0x320 /* -0.012219 */, 0x8e3d /* 0.555633 */, -0x29ee /* -0.163794 */, -0x253 /* -0.009080 */, 0x61fc /* 0.382758 */, -0x2e96 /* -0.181990 */, -0x16e /* -0.005592 */, 0x31f7 /* 0.195176 */, -0x3175 /* -0.193193 */, -0x7b /* -0.001890 */, 0x6 /* 0.000093 */, -0x326c /* -0.196972 */, 0x7b /* 0.001886 */, -0x31eb /* -0.194994 */, -0x3174 /* -0.193182 */, 0x16e /* 0.005589 */, -0x61f1 /* -0.382587 */, -0x2e95 /* -0.181969 */, 0x252 /* 0.009077 */, -0x8e33 /* -0.555479 */, -0x29ec /* -0.163763 */, 0x320 /* 0.012217 */, -0xb4ff /* -0.707025 */, -0x23a6 /* -0.139264 */, 0x3cf /* 0.014887 */, -0xd4d6 /* -0.831402 */, -0x1c02 /* -0.109413 */, 0x459 /* 0.016985 */, -0xec80 /* -0.923831 */, -0x134a /* -0.075358 */, 0x4b7 /* 0.018430 */, -0xfb13 /* -0.980759 */, -0x9d5 /* -0.038408 */, 0x4e8 /* 0.019167 */, -0xffff /* -1.000000 */, 0x1 /* 0.000019 */, 0x4e8 /* 0.019167 */, -0xfb16 /* -0.980814 */, 0x9d7 /* 0.038445 */, 0x4b7 /* 0.018431 */, -0xec87 /* -0.923937 */, 0x134c /* 0.075394 */, 0x459 /* 0.016987 */, -0xd4e0 /* -0.831556 */, 0x1c04 /* 0.109445 */, 0x3cf /* 0.014890 */, -0xb50c /* -0.707221 */, 0x23a8 /* 0.139291 */, 0x320 /* 0.012221 */, -0x8e43 /* -0.555710 */, 0x29ed /* 0.163784 */, 0x253 /* 0.009082 */, -0x6202 /* -0.382844 */, 0x2e96 /* 0.181983 */, 0x16e /* 0.005594 */, -0x31fc /* -0.195266 */, 0x3174 /* 0.193190 */, 0x7b /* 0.001891 */};
 private int FixedAndFloat_take_real_return_fixed_raw_c0(int index) {
-   return FixedAndFloat_take_real_return_fixed_c0[index];
+   return FixedAndFloat_take_real_return_fixed_c[(index * 3)];
 }
 
 private int FixedAndFloat_take_real_return_fixed_raw_c1(int index) {
-   return FixedAndFloat_take_real_return_fixed_c1[index];
+   return FixedAndFloat_take_real_return_fixed_c[((index * 3) + 1)];
 }
 
 private int FixedAndFloat_take_real_return_fixed_raw_c2(int index) {
-   return FixedAndFloat_take_real_return_fixed_c2[index];
+   return FixedAndFloat_take_real_return_fixed_c[((index * 3) + 2)];
 }
 
 private int FixedAndFloat_take_real_return_fixed(float x) {
-   int index = clip(float_to_int((x * 32.0f)), 0, 31);
-   return (FixedAndFloat_take_real_return_fixed_c0[index] + (float_to_fix(x) * (FixedAndFloat_take_real_return_fixed_c1[index] + (FixedAndFloat_take_real_return_fixed_c2[index] * float_to_fix(x)))));
+   float value = clip((x * 32.0f), 0.0f, 32.0f);
+   int cell = clip(float_to_int(value), 0, 31);
+   float u = (value - (float)(cell));
+   int index = (cell * 3);
+   return (FixedAndFloat_take_real_return_fixed_c[index] + (float_to_fix(u) * (FixedAndFloat_take_real_return_fixed_c[(index + 1)] + (FixedAndFloat_take_real_return_fixed_c[(index + 2)] * float_to_fix(u)))));
 }
 
 

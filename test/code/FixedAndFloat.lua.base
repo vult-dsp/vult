@@ -101,60 +101,61 @@ function FixedAndFloat_test1()
    to_bool = false
 end
 
-FixedAndFloat_take_fix_return_fixed_c0 = {};
-FixedAndFloat_take_fix_return_fixed_c1 = {};
+FixedAndFloat_take_fix_return_fixed_c = {};
 function FixedAndFloat_take_fix_return_fixed_raw_c0(index)
-   return FixedAndFloat_take_fix_return_fixed_c0[(index) + 1]
+   return FixedAndFloat_take_fix_return_fixed_c[((index * 2)) + 1]
 end
 
 function FixedAndFloat_take_fix_return_fixed_raw_c1(index)
-   return FixedAndFloat_take_fix_return_fixed_c1[(index) + 1]
+   return FixedAndFloat_take_fix_return_fixed_c[(((index * 2) + 1)) + 1]
 end
 
 function FixedAndFloat_take_fix_return_fixed(x)
    local value = (((x) > (1.0) and (1.0) or ((x) < (0.0) and (0.0) or (x))) * 33.0)
-   local index = (math.modf(value))
+   local index = ((math.modf(value)) * 2)
    local decimal = (value - floor(value))
-   return (FixedAndFloat_take_fix_return_fixed_c0[(index) + 1] + (FixedAndFloat_take_fix_return_fixed_c1[(index) + 1] * decimal))
+   return (FixedAndFloat_take_fix_return_fixed_c[(index) + 1] + (FixedAndFloat_take_fix_return_fixed_c[((index + 1)) + 1] * decimal))
 end
 
-FixedAndFloat_take_fix_return_real_c0 = {};
-FixedAndFloat_take_fix_return_real_c1 = {};
-FixedAndFloat_take_fix_return_real_c2 = {};
+FixedAndFloat_take_fix_return_real_c = {};
 function FixedAndFloat_take_fix_return_real_raw_c0(index)
-   return FixedAndFloat_take_fix_return_real_c0[(index) + 1]
+   return FixedAndFloat_take_fix_return_real_c[((index * 3)) + 1]
 end
 
 function FixedAndFloat_take_fix_return_real_raw_c1(index)
-   return FixedAndFloat_take_fix_return_real_c1[(index) + 1]
+   return FixedAndFloat_take_fix_return_real_c[(((index * 3) + 1)) + 1]
 end
 
 function FixedAndFloat_take_fix_return_real_raw_c2(index)
-   return FixedAndFloat_take_fix_return_real_c2[(index) + 1]
+   return FixedAndFloat_take_fix_return_real_c[(((index * 3) + 2)) + 1]
 end
 
 function FixedAndFloat_take_fix_return_real(x)
-   local index = ((fix_to_int((x * 32.0))) > (31) and (31) or ((fix_to_int((x * 32.0))) < (0) and (0) or (fix_to_int((x * 32.0)))))
-   return (FixedAndFloat_take_fix_return_real_c0[(index) + 1] + (fix_to_float(x) * (FixedAndFloat_take_fix_return_real_c1[(index) + 1] + (FixedAndFloat_take_fix_return_real_c2[(index) + 1] * fix_to_float(x)))))
+   local value = (((x * 32.0)) > (32.0) and (32.0) or (((x * 32.0)) < (0.0) and (0.0) or ((x * 32.0))))
+   local cell = ((fix_to_int(value)) > (31) and (31) or ((fix_to_int(value)) < (0) and (0) or (fix_to_int(value))))
+   local u = (value - (cell))
+   local index = (cell * 3)
+   return (FixedAndFloat_take_fix_return_real_c[(index) + 1] + (fix_to_float(u) * (FixedAndFloat_take_fix_return_real_c[((index + 1)) + 1] + (FixedAndFloat_take_fix_return_real_c[((index + 2)) + 1] * fix_to_float(u)))))
 end
 
-FixedAndFloat_take_real_return_fixed_c0 = {};
-FixedAndFloat_take_real_return_fixed_c1 = {};
-FixedAndFloat_take_real_return_fixed_c2 = {};
+FixedAndFloat_take_real_return_fixed_c = {};
 function FixedAndFloat_take_real_return_fixed_raw_c0(index)
-   return FixedAndFloat_take_real_return_fixed_c0[(index) + 1]
+   return FixedAndFloat_take_real_return_fixed_c[((index * 3)) + 1]
 end
 
 function FixedAndFloat_take_real_return_fixed_raw_c1(index)
-   return FixedAndFloat_take_real_return_fixed_c1[(index) + 1]
+   return FixedAndFloat_take_real_return_fixed_c[(((index * 3) + 1)) + 1]
 end
 
 function FixedAndFloat_take_real_return_fixed_raw_c2(index)
-   return FixedAndFloat_take_real_return_fixed_c2[(index) + 1]
+   return FixedAndFloat_take_real_return_fixed_c[(((index * 3) + 2)) + 1]
 end
 
 function FixedAndFloat_take_real_return_fixed(x)
-   local index = ((math.floor((x * 32.0))) > (31) and (31) or ((math.floor((x * 32.0))) < (0) and (0) or (math.floor((x * 32.0)))))
-   return (FixedAndFloat_take_real_return_fixed_c0[(index) + 1] + (float_to_fix(x) * (FixedAndFloat_take_real_return_fixed_c1[(index) + 1] + (FixedAndFloat_take_real_return_fixed_c2[(index) + 1] * float_to_fix(x)))))
+   local value = (((x * 32.0)) > (32.0) and (32.0) or (((x * 32.0)) < (0.0) and (0.0) or ((x * 32.0))))
+   local cell = ((math.floor(value)) > (31) and (31) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local u = (value - (cell))
+   local index = (cell * 3)
+   return (FixedAndFloat_take_real_return_fixed_c[(index) + 1] + (float_to_fix(u) * (FixedAndFloat_take_real_return_fixed_c[((index + 1)) + 1] + (FixedAndFloat_take_real_return_fixed_c[((index + 2)) + 1] * float_to_fix(u)))))
 end
 

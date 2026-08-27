@@ -6,18 +6,18 @@
 #include "saturate_soft.tables.h"
 
 static_inline fix16_t Saturate_soft_tanh_table_raw_c0(int32_t index) {
-   return Saturate_soft_tanh_table_c0[static_cast<uint32_t>(index)];
+   return Saturate_soft_tanh_table_c[static_cast<uint32_t>(index * 2)];
 }
 
 static_inline fix16_t Saturate_soft_tanh_table_raw_c1(int32_t index) {
-   return Saturate_soft_tanh_table_c1[static_cast<uint32_t>(index)];
+   return Saturate_soft_tanh_table_c[static_cast<uint32_t>(index * 2 + 1)];
 }
 
 static_inline fix16_t Saturate_soft_tanh_table(fix16_t x) {
    fix16_t value = fix_mul(fix_clip(x, -0x180000 /* -24.000000 */, 0x180000 /* 24.000000 */) + 0x180000 /* 24.000000 */, 0x50555 /* 5.020833 */);
-   int32_t index = fix_to_int(value);
+   int32_t index = fix_to_int(value) * 2;
    fix16_t decimal = value - fix_floor(value);
-   return Saturate_soft_tanh_table_c0[static_cast<uint32_t>(index)] + fix_mul(Saturate_soft_tanh_table_c1[static_cast<uint32_t>(index)], decimal);
+   return Saturate_soft_tanh_table_c[static_cast<uint32_t>(index)] + fix_mul(Saturate_soft_tanh_table_c[static_cast<uint32_t>(index + 1)], decimal);
 }
 
 static_inline fix16_t Saturate_soft_process(fix16_t x) {

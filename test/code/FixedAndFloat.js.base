@@ -25,60 +25,61 @@ this.FixedAndFloat_test1 = function () {
    to_bool = false;
 };
 
-var FixedAndFloat_take_fix_return_fixed_c0 = {};
-var FixedAndFloat_take_fix_return_fixed_c1 = {};
+var FixedAndFloat_take_fix_return_fixed_c = {};
 this.FixedAndFloat_take_fix_return_fixed_raw_c0 = function (index) {
-   return FixedAndFloat_take_fix_return_fixed_c0[index];
+   return FixedAndFloat_take_fix_return_fixed_c[(index * (2|0))];
 };
 
 this.FixedAndFloat_take_fix_return_fixed_raw_c1 = function (index) {
-   return FixedAndFloat_take_fix_return_fixed_c1[index];
+   return FixedAndFloat_take_fix_return_fixed_c[((index * (2|0)) + (1|0))];
 };
 
 this.FixedAndFloat_take_fix_return_fixed = function (x) {
    var value = (((x) < (0.0) ? (0.0) : ((x) > (1.0) ? (1.0) : (x))) * 33.0);
-   var index = ((value)|0);
+   var index = (((value)|0) * (2|0));
    var decimal = (value - Math.floor(value));
-   return (FixedAndFloat_take_fix_return_fixed_c0[index] + (FixedAndFloat_take_fix_return_fixed_c1[index] * decimal));
+   return (FixedAndFloat_take_fix_return_fixed_c[index] + (FixedAndFloat_take_fix_return_fixed_c[(index + (1|0))] * decimal));
 };
 
-var FixedAndFloat_take_fix_return_real_c0 = {};
-var FixedAndFloat_take_fix_return_real_c1 = {};
-var FixedAndFloat_take_fix_return_real_c2 = {};
+var FixedAndFloat_take_fix_return_real_c = {};
 this.FixedAndFloat_take_fix_return_real_raw_c0 = function (index) {
-   return FixedAndFloat_take_fix_return_real_c0[index];
+   return FixedAndFloat_take_fix_return_real_c[(index * (3|0))];
 };
 
 this.FixedAndFloat_take_fix_return_real_raw_c1 = function (index) {
-   return FixedAndFloat_take_fix_return_real_c1[index];
+   return FixedAndFloat_take_fix_return_real_c[((index * (3|0)) + (1|0))];
 };
 
 this.FixedAndFloat_take_fix_return_real_raw_c2 = function (index) {
-   return FixedAndFloat_take_fix_return_real_c2[index];
+   return FixedAndFloat_take_fix_return_real_c[((index * (3|0)) + (2|0))];
 };
 
 this.FixedAndFloat_take_fix_return_real = function (x) {
-   var index = ((this.fix_to_int((x * 32.0))) < ((0|0)) ? ((0|0)) : ((this.fix_to_int((x * 32.0))) > ((31|0)) ? ((31|0)) : (this.fix_to_int((x * 32.0)))));
-   return (FixedAndFloat_take_fix_return_real_c0[index] + (this.fix_to_float(x) * (FixedAndFloat_take_fix_return_real_c1[index] + (FixedAndFloat_take_fix_return_real_c2[index] * this.fix_to_float(x)))));
+   var value = (((x * 32.0)) < (0.0) ? (0.0) : (((x * 32.0)) > (32.0) ? (32.0) : ((x * 32.0))));
+   var cell = ((this.fix_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.fix_to_int(value)) > ((31|0)) ? ((31|0)) : (this.fix_to_int(value))));
+   var u = (value - (cell));
+   var index = (cell * (3|0));
+   return (FixedAndFloat_take_fix_return_real_c[index] + (this.fix_to_float(u) * (FixedAndFloat_take_fix_return_real_c[(index + (1|0))] + (FixedAndFloat_take_fix_return_real_c[(index + (2|0))] * this.fix_to_float(u)))));
 };
 
-var FixedAndFloat_take_real_return_fixed_c0 = {};
-var FixedAndFloat_take_real_return_fixed_c1 = {};
-var FixedAndFloat_take_real_return_fixed_c2 = {};
+var FixedAndFloat_take_real_return_fixed_c = {};
 this.FixedAndFloat_take_real_return_fixed_raw_c0 = function (index) {
-   return FixedAndFloat_take_real_return_fixed_c0[index];
+   return FixedAndFloat_take_real_return_fixed_c[(index * (3|0))];
 };
 
 this.FixedAndFloat_take_real_return_fixed_raw_c1 = function (index) {
-   return FixedAndFloat_take_real_return_fixed_c1[index];
+   return FixedAndFloat_take_real_return_fixed_c[((index * (3|0)) + (1|0))];
 };
 
 this.FixedAndFloat_take_real_return_fixed_raw_c2 = function (index) {
-   return FixedAndFloat_take_real_return_fixed_c2[index];
+   return FixedAndFloat_take_real_return_fixed_c[((index * (3|0)) + (2|0))];
 };
 
 this.FixedAndFloat_take_real_return_fixed = function (x) {
-   var index = ((this.float_to_int((x * 32.0))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((x * 32.0))) > ((31|0)) ? ((31|0)) : (this.float_to_int((x * 32.0)))));
-   return (FixedAndFloat_take_real_return_fixed_c0[index] + (this.float_to_fix(x) * (FixedAndFloat_take_real_return_fixed_c1[index] + (FixedAndFloat_take_real_return_fixed_c2[index] * this.float_to_fix(x)))));
+   var value = (((x * 32.0)) < (0.0) ? (0.0) : (((x * 32.0)) > (32.0) ? (32.0) : ((x * 32.0))));
+   var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((31|0)) ? ((31|0)) : (this.float_to_int(value))));
+   var u = (value - (cell));
+   var index = (cell * (3|0));
+   return (FixedAndFloat_take_real_return_fixed_c[index] + (this.float_to_fix(u) * (FixedAndFloat_take_real_return_fixed_c[(index + (1|0))] + (FixedAndFloat_take_real_return_fixed_c[(index + (2|0))] * this.float_to_fix(u)))));
 };
 

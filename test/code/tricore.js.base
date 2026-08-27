@@ -40,44 +40,46 @@ this.Util_cvToPitch = function (cv) {
    return (24.0 + (120.0 * cv));
 };
 
-var Util_pitchToRate_1024_c0 = {};
-var Util_pitchToRate_1024_c1 = {};
-var Util_pitchToRate_1024_c2 = {};
+var Util_pitchToRate_1024_c = {};
 this.Util_pitchToRate_1024_raw_c0 = function (index) {
-   return Util_pitchToRate_1024_c0[index];
+   return Util_pitchToRate_1024_c[(index * (3|0))];
 };
 
 this.Util_pitchToRate_1024_raw_c1 = function (index) {
-   return Util_pitchToRate_1024_c1[index];
+   return Util_pitchToRate_1024_c[((index * (3|0)) + (1|0))];
 };
 
 this.Util_pitchToRate_1024_raw_c2 = function (index) {
-   return Util_pitchToRate_1024_c2[index];
+   return Util_pitchToRate_1024_c[((index * (3|0)) + (2|0))];
 };
 
 this.Util_pitchToRate_1024 = function (pitch) {
-   var index = ((this.float_to_int((pitch * 0.251968))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((pitch * 0.251968))) > ((31|0)) ? ((31|0)) : (this.float_to_int((pitch * 0.251968)))));
-   return (Util_pitchToRate_1024_c0[index] + (pitch * (Util_pitchToRate_1024_c1[index] + (Util_pitchToRate_1024_c2[index] * pitch))));
+   var value = (((pitch * 0.251968)) < (0.0) ? (0.0) : (((pitch * 0.251968)) > (32.0) ? (32.0) : ((pitch * 0.251968))));
+   var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((31|0)) ? ((31|0)) : (this.float_to_int(value))));
+   var u = (value - (cell));
+   var index = (cell * (3|0));
+   return (Util_pitchToRate_1024_c[index] + (u * (Util_pitchToRate_1024_c[(index + (1|0))] + (Util_pitchToRate_1024_c[(index + (2|0))] * u))));
 };
 
-var Util_cvToRate_1024_c0 = {};
-var Util_cvToRate_1024_c1 = {};
-var Util_cvToRate_1024_c2 = {};
+var Util_cvToRate_1024_c = {};
 this.Util_cvToRate_1024_raw_c0 = function (index) {
-   return Util_cvToRate_1024_c0[index];
+   return Util_cvToRate_1024_c[(index * (3|0))];
 };
 
 this.Util_cvToRate_1024_raw_c1 = function (index) {
-   return Util_cvToRate_1024_c1[index];
+   return Util_cvToRate_1024_c[((index * (3|0)) + (1|0))];
 };
 
 this.Util_cvToRate_1024_raw_c2 = function (index) {
-   return Util_cvToRate_1024_c2[index];
+   return Util_cvToRate_1024_c[((index * (3|0)) + (2|0))];
 };
 
 this.Util_cvToRate_1024 = function (cv) {
-   var index = ((this.float_to_int((cv * 35.555555))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((cv * 35.555555))) > ((31|0)) ? ((31|0)) : (this.float_to_int((cv * 35.555555)))));
-   return (Util_cvToRate_1024_c0[index] + (cv * (Util_cvToRate_1024_c1[index] + (Util_cvToRate_1024_c2[index] * cv))));
+   var value = (((cv * 35.555555)) < (0.0) ? (0.0) : (((cv * 35.555555)) > (32.0) ? (32.0) : ((cv * 35.555555))));
+   var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((31|0)) ? ((31|0)) : (this.float_to_int(value))));
+   var u = (value - (cell));
+   var index = (cell * (3|0));
+   return (Util_cvToRate_1024_c[index] + (u * (Util_cvToRate_1024_c[(index + (1|0))] + (Util_cvToRate_1024_c[(index + (2|0))] * u))));
 };
 
 this.Tricore_default = function (_ctx) {
@@ -160,88 +162,92 @@ this.Util_cubic_clipper = function (x) {
    }
 };
 
-var Util_pitchToRate_c0 = {};
-var Util_pitchToRate_c1 = {};
-var Util_pitchToRate_c2 = {};
+var Util_pitchToRate_c = {};
 this.Util_pitchToRate_raw_c0 = function (index) {
-   return Util_pitchToRate_c0[index];
+   return Util_pitchToRate_c[(index * (3|0))];
 };
 
 this.Util_pitchToRate_raw_c1 = function (index) {
-   return Util_pitchToRate_c1[index];
+   return Util_pitchToRate_c[((index * (3|0)) + (1|0))];
 };
 
 this.Util_pitchToRate_raw_c2 = function (index) {
-   return Util_pitchToRate_c2[index];
+   return Util_pitchToRate_c[((index * (3|0)) + (2|0))];
 };
 
 this.Util_pitchToRate = function (pitch) {
-   var index = ((this.float_to_int((pitch * 0.251968))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((pitch * 0.251968))) > ((31|0)) ? ((31|0)) : (this.float_to_int((pitch * 0.251968)))));
-   return (Util_pitchToRate_c0[index] + (pitch * (Util_pitchToRate_c1[index] + (Util_pitchToRate_c2[index] * pitch))));
+   var value = (((pitch * 0.251968)) < (0.0) ? (0.0) : (((pitch * 0.251968)) > (32.0) ? (32.0) : ((pitch * 0.251968))));
+   var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((31|0)) ? ((31|0)) : (this.float_to_int(value))));
+   var u = (value - (cell));
+   var index = (cell * (3|0));
+   return (Util_pitchToRate_c[index] + (u * (Util_pitchToRate_c[(index + (1|0))] + (Util_pitchToRate_c[(index + (2|0))] * u))));
 };
 
-var Util_cvToRate_c0 = {};
-var Util_cvToRate_c1 = {};
-var Util_cvToRate_c2 = {};
+var Util_cvToRate_c = {};
 this.Util_cvToRate_raw_c0 = function (index) {
-   return Util_cvToRate_c0[index];
+   return Util_cvToRate_c[(index * (3|0))];
 };
 
 this.Util_cvToRate_raw_c1 = function (index) {
-   return Util_cvToRate_c1[index];
+   return Util_cvToRate_c[((index * (3|0)) + (1|0))];
 };
 
 this.Util_cvToRate_raw_c2 = function (index) {
-   return Util_cvToRate_c2[index];
+   return Util_cvToRate_c[((index * (3|0)) + (2|0))];
 };
 
 this.Util_cvToRate = function (cv) {
-   var index = ((this.float_to_int((cv * 142.222222))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((cv * 142.222222))) > ((127|0)) ? ((127|0)) : (this.float_to_int((cv * 142.222222)))));
-   return (Util_cvToRate_c0[index] + (cv * (Util_cvToRate_c1[index] + (Util_cvToRate_c2[index] * cv))));
+   var value = (((cv * 142.222222)) < (0.0) ? (0.0) : (((cv * 142.222222)) > (128.0) ? (128.0) : ((cv * 142.222222))));
+   var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((127|0)) ? ((127|0)) : (this.float_to_int(value))));
+   var u = (value - (cell));
+   var index = (cell * (3|0));
+   return (Util_cvToRate_c[index] + (u * (Util_cvToRate_c[(index + (1|0))] + (Util_cvToRate_c[(index + (2|0))] * u))));
 };
 
 this.Util_pitchToCv = function (pitch) {
    return (-0.2 + (0.008333 * pitch));
 };
 
-var Util_cvToperiod_c0 = {};
-var Util_cvToperiod_c1 = {};
-var Util_cvToperiod_c2 = {};
+var Util_cvToperiod_c = {};
 this.Util_cvToperiod_raw_c0 = function (index) {
-   return Util_cvToperiod_c0[index];
+   return Util_cvToperiod_c[(index * (3|0))];
 };
 
 this.Util_cvToperiod_raw_c1 = function (index) {
-   return Util_cvToperiod_c1[index];
+   return Util_cvToperiod_c[((index * (3|0)) + (1|0))];
 };
 
 this.Util_cvToperiod_raw_c2 = function (index) {
-   return Util_cvToperiod_c2[index];
+   return Util_cvToperiod_c[((index * (3|0)) + (2|0))];
 };
 
 this.Util_cvToperiod = function (cv) {
-   var index = ((this.float_to_int((cv * 32.0))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((cv * 32.0))) > ((31|0)) ? ((31|0)) : (this.float_to_int((cv * 32.0)))));
-   return (Util_cvToperiod_c0[index] + (cv * (Util_cvToperiod_c1[index] + (Util_cvToperiod_c2[index] * cv))));
+   var value = (((cv * 32.0)) < (0.0) ? (0.0) : (((cv * 32.0)) > (32.0) ? (32.0) : ((cv * 32.0))));
+   var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((31|0)) ? ((31|0)) : (this.float_to_int(value))));
+   var u = (value - (cell));
+   var index = (cell * (3|0));
+   return (Util_cvToperiod_c[index] + (u * (Util_cvToperiod_c[(index + (1|0))] + (Util_cvToperiod_c[(index + (2|0))] * u))));
 };
 
-var Util_cvTokHz_c0 = {};
-var Util_cvTokHz_c1 = {};
-var Util_cvTokHz_c2 = {};
+var Util_cvTokHz_c = {};
 this.Util_cvTokHz_raw_c0 = function (index) {
-   return Util_cvTokHz_c0[index];
+   return Util_cvTokHz_c[(index * (3|0))];
 };
 
 this.Util_cvTokHz_raw_c1 = function (index) {
-   return Util_cvTokHz_c1[index];
+   return Util_cvTokHz_c[((index * (3|0)) + (1|0))];
 };
 
 this.Util_cvTokHz_raw_c2 = function (index) {
-   return Util_cvTokHz_c2[index];
+   return Util_cvTokHz_c[((index * (3|0)) + (2|0))];
 };
 
 this.Util_cvTokHz = function (cv) {
-   var index = ((this.float_to_int((cv * 32.0))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((cv * 32.0))) > ((31|0)) ? ((31|0)) : (this.float_to_int((cv * 32.0)))));
-   return (Util_cvTokHz_c0[index] + (cv * (Util_cvTokHz_c1[index] + (Util_cvTokHz_c2[index] * cv))));
+   var value = (((cv * 32.0)) < (0.0) ? (0.0) : (((cv * 32.0)) > (32.0) ? (32.0) : ((cv * 32.0))));
+   var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((31|0)) ? ((31|0)) : (this.float_to_int(value))));
+   var u = (value - (cell));
+   var index = (cell * (3|0));
+   return (Util_cvTokHz_c[index] + (u * (Util_cvTokHz_c[(index + (1|0))] + (Util_cvTokHz_c[(index + (2|0))] * u))));
 };
 
 this.Tricore_process = function (_ctx, cv, reset, disable) {

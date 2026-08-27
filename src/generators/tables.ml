@@ -102,12 +102,17 @@ let getCoefficients1 l =
 let getCoefficients2 l =
   match l with [x1; x2; x3] -> (x1, x2, x3) | _ -> failwith "the curve fitting returned more than three points"
 
+(* The polynomials are fitted on the position within the cell, u in [0, 1], not on the absolute
+   input. The polynomial is the same one either way, but expressed in u its coefficients stay on
+   the scale of the output instead of growing with (max - min) raised to the order, which costs
+   float32 precision, and clamping u is what lets `bound_check` hold the result at the edge of
+   the table rather than extrapolating away from it. *)
 let rec fitDataOrder1 data index acc0 acc1 =
   if index < 0 then (acc0, acc1)
   else
     let p1 = data.(index) in
     let p2 = data.(index + 1) in
-    let x = [fst p1; fst p2] in
+    let x = [0.0; 1.0] in
     let y = [snd p1; snd p2] in
     let c0, c1 = Fitting.lagrange x y |> getCoefficients1 in
     fitDataOrder1 data (index - 1) (c0 :: acc0) (c1 :: acc1)
@@ -118,7 +123,7 @@ let rec fitDataOrder2 data index acc0 acc1 acc2 =
     let p1 = data.(index * 2) in
     let p2 = data.((index * 2) + 1) in
     let p3 = data.((index * 2) + 2) in
-    let x = [fst p1; fst p2; fst p3] in
+    let x = [0.0; 0.5; 1.0] in
     let y = [snd p1; snd p2; snd p3] in
     let c0, c1, c2 = Fitting.lagrange x y |> getCoefficients2 in
     fitDataOrder2 data (index - 1) (c0 :: acc0) (c1 :: acc1) (c2 :: acc2)
@@ -226,11 +231,26 @@ let getCastIndexFunction (in_precision : type_) =
   | _ ->
       failwith "invalid input precision"
 
-let getIndex in_precision bound_check ~stride size value =
-  let clip_call i = if bound_check then C.ecall "clip" [i; C.eint 0; C.eint (size - 1)] C.int_t else i in
-  let int_call i = C.ecall (getCastIndexFunction in_precision) [i] C.int_t in
+(* Declares "value", "u" and "index": the scaled input, the position within the cell that the
+   polynomial is evaluated on, and the offset of the cell's coefficients in the table. When
+   bound_check is set, "value" is clamped to the table, which bounds both of the others. *)
+let getIndex in_precision bound_check ~stride ~cells scaled =
+  let clamp e =
+    if bound_check then
+      C.ecall "clip" [e; makeFloat in_precision 0.0; makeFloat in_precision (float_of_int cells)] in_precision
+    else e
+  in
+  let value = C.eid "value" in_precision in
+  let cell = C.eid "cell" C.int_t in
+  let cell_expr = C.ecall (getCastIndexFunction in_precision) [value] C.int_t in
+  let cell_expr =
+    if bound_check then C.ecall "clip" [cell_expr; C.eint 0; C.eint (cells - 1)] C.int_t else cell_expr
+  in
   let scale i = if stride = 1 then i else C.emul i (C.eint stride) in
-  [C.sdecl ~init:(scale (clip_call (int_call value))) "index" C.int_t]
+  C.sdecl_bind "value" (clamp scaled) in_precision
+  @ C.sdecl_bind "cell" cell_expr C.int_t
+  @ C.sdecl_bind "u" (C.esub value (C.ecall "real" [cell] in_precision)) in_precision
+  @ C.sdecl_bind "index" (scale cell) C.int_t
 
 (* Reads coefficient [c] of the point selected by "index", which already includes the stride. *)
 let makeGetCoeff fname ~stride ~size t =
@@ -269,14 +289,14 @@ let makeSub t e1 e2 =
 
 let makeMul t e1 e2 = if e2 = 1.0 then e1 else C.emul e1 (makeNuber t e2)
 
-let makeNewBody1 bound_check fname size in_precision t min max input =
+let makeNewBody1 bound_check fname ~cells size in_precision t min max input =
   let stride = 2 in
   let getCoeff = makeGetCoeff fname ~stride ~size t in
-  let initial_index = float_of_int size /. (max -. min) in
-  let value = makeMul in_precision (makeSub in_precision input min) initial_index in
-  let index_stmts = getIndex in_precision bound_check ~stride size value in
-  let input = castInputVarPrecision in_precision t input in
-  let return = C.sreturn (C.eadd (getCoeff 0) (C.emul input (getCoeff 1))) in
+  let initial_index = float_of_int cells /. (max -. min) in
+  let scaled = makeMul in_precision (makeSub in_precision input min) initial_index in
+  let index_stmts = getIndex in_precision bound_check ~stride ~cells scaled in
+  let u = castInputVarPrecision in_precision t (C.eid "u" in_precision) in
+  let return = C.sreturn (C.eadd (getCoeff 0) (C.emul u (getCoeff 1))) in
   C.sblock (index_stmts @ [return])
 
 let makeNewBody1Fixed _bound_check fname size in_precision t min max input =
@@ -299,15 +319,15 @@ let makeNewBody1Fixed _bound_check fname size in_precision t min max input =
   let return = C.sreturn (C.eadd (getCoeff 0) (C.emul (getCoeff 1) (C.eid "decimal" in_precision))) in
   C.sblock (value_decl @ index @ decimal @ [return])
 
-let makeNewBody2 bound_check fname size in_precision t min max input =
+let makeNewBody2 bound_check fname ~cells size in_precision t min max input =
   let stride = 3 in
   let getCoeff = makeGetCoeff fname ~stride ~size t in
-  let initial_index = float_of_int size /. (max -. min) in
-  let value = makeMul in_precision (makeSub in_precision input min) initial_index in
-  let index_stmts = getIndex in_precision bound_check ~stride size value in
-  let input = castInputVarPrecision in_precision t input in
-  let k2 = C.emul (getCoeff 2) input in
-  let k1 = C.emul input (C.eadd (getCoeff 1) k2) in
+  let initial_index = float_of_int cells /. (max -. min) in
+  let scaled = makeMul in_precision (makeSub in_precision input min) initial_index in
+  let index_stmts = getIndex in_precision bound_check ~stride ~cells scaled in
+  let u = castInputVarPrecision in_precision t (C.eid "u" in_precision) in
+  let k2 = C.emul (getCoeff 2) u in
+  let k1 = C.emul u (C.eadd (getCoeff 1) k2) in
   let return = C.sreturn (C.eadd (getCoeff 0) k1) in
   C.sblock (index_stmts @ [return])
 
@@ -357,12 +377,12 @@ let makeTable vm (def : function_def) =
           result @ raw @ [{top= TopFunction (def, new_body); loc}]
       | Some (Int 1), _, _ ->
           let result = calculateTablesOrder1 loc vm def.name size min max out_precision in
-          let new_body = makeNewBody1 bound_check def.name size in_precision out_precision min max var in
+          let new_body = makeNewBody1 bound_check def.name ~cells:size size in_precision out_precision min max var in
           let raw = generateRawAccessFunctions loc def.name ~stride:2 ~size out_precision in
           result @ raw @ [{top= TopFunction (def, new_body); loc}]
       | _ ->
           let result = calculateTablesOrder2 loc vm def.name size min max out_precision in
-          let new_body = makeNewBody2 bound_check def.name size in_precision out_precision min max var in
+          let new_body = makeNewBody2 bound_check def.name ~cells:size size in_precision out_precision min max var in
           let raw = generateRawAccessFunctions loc def.name ~stride:3 ~size out_precision in
           result @ raw @ [{top= TopFunction (def, new_body); loc}] )
   | _ ->
@@ -486,7 +506,8 @@ let rec fitWavetableData data index acc0 acc1 acc2 =
     let p1 = wrapGet data index in
     let p2 = wrapGet data (index + 1) in
     let p3 = wrapGet data (index + 2) in
-    let x = [fst p1; fst p2; fst p3] in
+    (* Three consecutive samples, so the cell spans u in [0, 1] and the third node sits at u = 2. *)
+    let x = [0.0; 1.0; 2.0] in
     let y = [snd p1; snd p2; snd p3] in
     let c0, c1, c2 = Fitting.lagrange x y |> getCoefficients2 in
     fitWavetableData data (index - 1) (c0 :: acc0) (c1 :: acc1) (c2 :: acc2)
@@ -510,7 +531,8 @@ let makeWavetable (args : Args.args) _vm (def : function_def) =
       let size = float_of_int size_n in
       let data = Array.mapi (fun x y -> (float_of_int x /. (size -. 1.0), y)) data in
       let result = makeWavetableOrder2 def.loc def.name size_n out_precision data in
-      let new_body = makeNewBody2 bound_check def.name size_n in_precision out_precision 0.0 1.0 var in
+      (* The samples are placed at i / (size_n - 1), so [0, 1] spans size_n - 1 cells. *)
+      let new_body = makeNewBody2 bound_check def.name ~cells:(size_n - 1) size_n in_precision out_precision 0.0 1.0 var in
       let raw = generateRawAccessFunctions def.loc def.name ~stride:3 ~size:size_n out_precision in
       let size_fun = makeSizeFunction def wave.WaveFile.samples in
       result @ (size_fun :: raw) @ [{top= TopFunction (def, new_body); loc= def.loc}]

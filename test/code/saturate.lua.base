@@ -81,24 +81,25 @@ function int16(x)           local int_part,_ = math.modf(x) return math.max(-327
 function intDiv(a, b)       return math.floor(a / b) end
 function list_clear(t)      for k in pairs(t) do t[k] = nil end end
 
-Saturate_tanh_table_c0 = {};
-Saturate_tanh_table_c1 = {};
-Saturate_tanh_table_c2 = {};
+Saturate_tanh_table_c = {};
 function Saturate_tanh_table_raw_c0(index)
-   return Saturate_tanh_table_c0[(index) + 1]
+   return Saturate_tanh_table_c[((index * 3)) + 1]
 end
 
 function Saturate_tanh_table_raw_c1(index)
-   return Saturate_tanh_table_c1[(index) + 1]
+   return Saturate_tanh_table_c[(((index * 3) + 1)) + 1]
 end
 
 function Saturate_tanh_table_raw_c2(index)
-   return Saturate_tanh_table_c2[(index) + 1]
+   return Saturate_tanh_table_c[(((index * 3) + 2)) + 1]
 end
 
 function Saturate_tanh_table(x)
-   local index = ((math.floor(((x + 24.0) * 5.020833))) > (240) and (240) or ((math.floor(((x + 24.0) * 5.020833))) < (0) and (0) or (math.floor(((x + 24.0) * 5.020833)))))
-   return (Saturate_tanh_table_c0[(index) + 1] + (x * (Saturate_tanh_table_c1[(index) + 1] + (Saturate_tanh_table_c2[(index) + 1] * x))))
+   local value = ((((x + 24.0) * 5.020833)) > (241.0) and (241.0) or ((((x + 24.0) * 5.020833)) < (0.0) and (0.0) or (((x + 24.0) * 5.020833))))
+   local cell = ((math.floor(value)) > (240) and (240) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local u = (value - (cell))
+   local index = (cell * 3)
+   return (Saturate_tanh_table_c[(index) + 1] + (u * (Saturate_tanh_table_c[((index + 1)) + 1] + (Saturate_tanh_table_c[((index + 2)) + 1] * u))))
 end
 
 function Saturate_process(x)

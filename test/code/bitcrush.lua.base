@@ -81,24 +81,25 @@ function int16(x)           local int_part,_ = math.modf(x) return math.max(-327
 function intDiv(a, b)       return math.floor(a / b) end
 function list_clear(t)      for k in pairs(t) do t[k] = nil end end
 
-Bitcrush_factor_c0 = {};
-Bitcrush_factor_c1 = {};
-Bitcrush_factor_c2 = {};
+Bitcrush_factor_c = {};
 function Bitcrush_factor_raw_c0(index)
-   return Bitcrush_factor_c0[(index) + 1]
+   return Bitcrush_factor_c[((index * 3)) + 1]
 end
 
 function Bitcrush_factor_raw_c1(index)
-   return Bitcrush_factor_c1[(index) + 1]
+   return Bitcrush_factor_c[(((index * 3) + 1)) + 1]
 end
 
 function Bitcrush_factor_raw_c2(index)
-   return Bitcrush_factor_c2[(index) + 1]
+   return Bitcrush_factor_c[(((index * 3) + 2)) + 1]
 end
 
 function Bitcrush_factor(cv)
-   local index = ((math.floor((cv * 128.0))) > (127) and (127) or ((math.floor((cv * 128.0))) < (0) and (0) or (math.floor((cv * 128.0)))))
-   return (Bitcrush_factor_c0[(index) + 1] + (cv * (Bitcrush_factor_c1[(index) + 1] + (Bitcrush_factor_c2[(index) + 1] * cv))))
+   local value = (((cv * 128.0)) > (128.0) and (128.0) or (((cv * 128.0)) < (0.0) and (0.0) or ((cv * 128.0))))
+   local cell = ((math.floor(value)) > (127) and (127) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local u = (value - (cell))
+   local index = (cell * 3)
+   return (Bitcrush_factor_c[(index) + 1] + (u * (Bitcrush_factor_c[((index + 1)) + 1] + (Bitcrush_factor_c[((index + 2)) + 1] * u))))
 end
 
 function Bitcrush_process(i, cv)

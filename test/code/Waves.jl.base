@@ -13,28 +13,29 @@ function Waves_sineTable1(channel, index)
    return Float32(0.0)
 end
 
-Waves_sineTable2_c0 = nothing
-Waves_sineTable2_c1 = nothing
-Waves_sineTable2_c2 = nothing
+Waves_sineTable2_c = nothing
 function Waves_sineTable2_samples()
    return Int32(256)
 end
 
 function Waves_sineTable2_raw_c0(index)
-   return @inbounds Waves_sineTable2_c0[index + 1]
+   return @inbounds Waves_sineTable2_c[(index * Int32(3)) + 1]
 end
 
 function Waves_sineTable2_raw_c1(index)
-   return @inbounds Waves_sineTable2_c1[index + 1]
+   return @inbounds Waves_sineTable2_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Waves_sineTable2_raw_c2(index)
-   return @inbounds Waves_sineTable2_c2[index + 1]
+   return @inbounds Waves_sineTable2_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Waves_sineTable2(position)
-   index = clamp(trunc(Int32, (position * Float32(256.0))), Int32(0), Int32(255))
-   return (@inbounds Waves_sineTable2_c0[index + 1] + (position * (@inbounds Waves_sineTable2_c1[index + 1] + (@inbounds Waves_sineTable2_c2[index + 1] * position))))
+   value = clamp((position * Float32(256.0)), Float32(0.0), Float32(256.0))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(255))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Waves_sineTable2_c[index + 1] + (u * (@inbounds Waves_sineTable2_c[(index + Int32(1)) + 1] + (@inbounds Waves_sineTable2_c[(index + Int32(2)) + 1] * u))))
 end
 
 function Waves_test1()

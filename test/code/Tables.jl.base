@@ -1,56 +1,58 @@
 
 # High-performance Vult Runtime for Julia with typed arrays
 
-Tables_sineTable1_c0 = nothing
-Tables_sineTable1_c1 = nothing
-Tables_sineTable1_c2 = nothing
+Tables_sineTable1_c = nothing
 function Tables_sineTable1_raw_c0(index)
-   return @inbounds Tables_sineTable1_c0[index + 1]
+   return @inbounds Tables_sineTable1_c[(index * Int32(3)) + 1]
 end
 
 function Tables_sineTable1_raw_c1(index)
-   return @inbounds Tables_sineTable1_c1[index + 1]
+   return @inbounds Tables_sineTable1_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Tables_sineTable1_raw_c2(index)
-   return @inbounds Tables_sineTable1_c2[index + 1]
+   return @inbounds Tables_sineTable1_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Tables_sineTable1(x)
-   index = clamp(trunc(Int32, (x * Float32(32.0))), Int32(0), Int32(31))
-   return (@inbounds Tables_sineTable1_c0[index + 1] + (x * (@inbounds Tables_sineTable1_c1[index + 1] + (@inbounds Tables_sineTable1_c2[index + 1] * x))))
+   value = clamp((x * Float32(32.0)), Float32(0.0), Float32(32.0))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(31))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Tables_sineTable1_c[index + 1] + (u * (@inbounds Tables_sineTable1_c[(index + Int32(1)) + 1] + (@inbounds Tables_sineTable1_c[(index + Int32(2)) + 1] * u))))
 end
 
-Tables_sineTable2_c0 = nothing
-Tables_sineTable2_c1 = nothing
+Tables_sineTable2_c = nothing
 function Tables_sineTable2_raw_c0(index)
-   return @inbounds Tables_sineTable2_c0[index + 1]
+   return @inbounds Tables_sineTable2_c[(index * Int32(2)) + 1]
 end
 
 function Tables_sineTable2_raw_c1(index)
-   return @inbounds Tables_sineTable2_c1[index + 1]
+   return @inbounds Tables_sineTable2_c[((index * Int32(2)) + Int32(1)) + 1]
 end
 
 function Tables_sineTable2(x)
-   index = clamp(trunc(Int32, (x * Float32(32.0))), Int32(0), Int32(31))
-   return (@inbounds Tables_sineTable2_c0[index + 1] + (x * @inbounds Tables_sineTable2_c1[index + 1]))
+   value = clamp((x * Float32(32.0)), Float32(0.0), Float32(32.0))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(31))
+   u = (value - Float32(cell))
+   index = (cell * Int32(2))
+   return (@inbounds Tables_sineTable2_c[index + 1] + (u * @inbounds Tables_sineTable2_c[(index + Int32(1)) + 1]))
 end
 
-Tables_sineTable3_c0 = nothing
-Tables_sineTable3_c1 = nothing
+Tables_sineTable3_c = nothing
 function Tables_sineTable3_raw_c0(index)
-   return @inbounds Tables_sineTable3_c0[index + 1]
+   return @inbounds Tables_sineTable3_c[(index * Int32(2)) + 1]
 end
 
 function Tables_sineTable3_raw_c1(index)
-   return @inbounds Tables_sineTable3_c1[index + 1]
+   return @inbounds Tables_sineTable3_c[((index * Int32(2)) + Int32(1)) + 1]
 end
 
 function Tables_sineTable3(x)
    value = (clip(x, Float32(0.0), Float32(1.0)) * Float32(33.0))
-   index = trunc(Int32, value)
+   index = (trunc(Int32, value) * Int32(2))
    decimal = (value - floor(value))
-   return (@inbounds Tables_sineTable3_c0[index + 1] + (@inbounds Tables_sineTable3_c1[index + 1] * decimal))
+   return (@inbounds Tables_sineTable3_c[index + 1] + (@inbounds Tables_sineTable3_c[(index + Int32(1)) + 1] * decimal))
 end
 
 Tables_power2_table = nothing

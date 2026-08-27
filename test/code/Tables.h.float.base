@@ -6,48 +6,54 @@
 #include "Tables.tables.h"
 
 static_inline float Tables_sineTable1_raw_c0(int32_t index) {
-   return Tables_sineTable1_c0[static_cast<uint32_t>(index)];
+   return Tables_sineTable1_c[static_cast<uint32_t>(index * 3)];
 }
 
 static_inline float Tables_sineTable1_raw_c1(int32_t index) {
-   return Tables_sineTable1_c1[static_cast<uint32_t>(index)];
+   return Tables_sineTable1_c[static_cast<uint32_t>(index * 3 + 1)];
 }
 
 static_inline float Tables_sineTable1_raw_c2(int32_t index) {
-   return Tables_sineTable1_c2[static_cast<uint32_t>(index)];
+   return Tables_sineTable1_c[static_cast<uint32_t>(index * 3 + 2)];
 }
 
 static_inline float Tables_sineTable1(float x) {
-   int32_t index = int_clip(float_to_int(x * 32.0f), 0, 31);
-   return Tables_sineTable1_c0[static_cast<uint32_t>(index)] + x * (Tables_sineTable1_c1[static_cast<uint32_t>(index)] + Tables_sineTable1_c2[static_cast<uint32_t>(index)] * x);
+   float value = float_clip(x * 32.0f, 0.0f, 32.0f);
+   int32_t cell = int_clip(float_to_int(value), 0, 31);
+   float u = value - int_to_float(cell);
+   int32_t index = cell * 3;
+   return Tables_sineTable1_c[static_cast<uint32_t>(index)] + u * (Tables_sineTable1_c[static_cast<uint32_t>(index + 1)] + Tables_sineTable1_c[static_cast<uint32_t>((index + 2))] * u);
 }
 
 static_inline float Tables_sineTable2_raw_c0(int32_t index) {
-   return Tables_sineTable2_c0[static_cast<uint32_t>(index)];
+   return Tables_sineTable2_c[static_cast<uint32_t>(index * 2)];
 }
 
 static_inline float Tables_sineTable2_raw_c1(int32_t index) {
-   return Tables_sineTable2_c1[static_cast<uint32_t>(index)];
+   return Tables_sineTable2_c[static_cast<uint32_t>(index * 2 + 1)];
 }
 
 static_inline float Tables_sineTable2(float x) {
-   int32_t index = int_clip(float_to_int(x * 32.0f), 0, 31);
-   return Tables_sineTable2_c0[static_cast<uint32_t>(index)] + x * Tables_sineTable2_c1[static_cast<uint32_t>(index)];
+   float value = float_clip(x * 32.0f, 0.0f, 32.0f);
+   int32_t cell = int_clip(float_to_int(value), 0, 31);
+   float u = value - int_to_float(cell);
+   int32_t index = cell * 2;
+   return Tables_sineTable2_c[static_cast<uint32_t>(index)] + u * Tables_sineTable2_c[static_cast<uint32_t>((index + 1))];
 }
 
 static_inline fix16_t Tables_sineTable3_raw_c0(int32_t index) {
-   return Tables_sineTable3_c0[static_cast<uint32_t>(index)];
+   return Tables_sineTable3_c[static_cast<uint32_t>(index * 2)];
 }
 
 static_inline fix16_t Tables_sineTable3_raw_c1(int32_t index) {
-   return Tables_sineTable3_c1[static_cast<uint32_t>(index)];
+   return Tables_sineTable3_c[static_cast<uint32_t>(index * 2 + 1)];
 }
 
 static_inline fix16_t Tables_sineTable3(fix16_t x) {
    fix16_t value = fix_mul(fix_clip(x, 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */), 0x210000 /* 33.000000 */);
-   int32_t index = fix_to_int(value);
+   int32_t index = fix_to_int(value) * 2;
    fix16_t decimal = value - fix_floor(value);
-   return Tables_sineTable3_c0[static_cast<uint32_t>(index)] + fix_mul(Tables_sineTable3_c1[static_cast<uint32_t>(index)], decimal);
+   return Tables_sineTable3_c[static_cast<uint32_t>(index)] + fix_mul(Tables_sineTable3_c[static_cast<uint32_t>(index + 1)], decimal);
 }
 
 static_inline fix16_t Tables_power2(int32_t x) {

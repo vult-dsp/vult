@@ -5,24 +5,25 @@ this.irandom = function()        { return Math.floor(Math.random() * 4294967296)
 this.int_to_float = function(i)  { return i; };
 this.float_to_int = function(i)  { return Math.floor(i); };
 this.initializeArray = function(v, size){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-var Saturate_soft_tanh_table_c0 = {};
-var Saturate_soft_tanh_table_c1 = {};
-var Saturate_soft_tanh_table_c2 = {};
+var Saturate_soft_tanh_table_c = {};
 this.Saturate_soft_tanh_table_raw_c0 = function (index) {
-   return Saturate_soft_tanh_table_c0[index];
+   return Saturate_soft_tanh_table_c[(index * (3|0))];
 };
 
 this.Saturate_soft_tanh_table_raw_c1 = function (index) {
-   return Saturate_soft_tanh_table_c1[index];
+   return Saturate_soft_tanh_table_c[((index * (3|0)) + (1|0))];
 };
 
 this.Saturate_soft_tanh_table_raw_c2 = function (index) {
-   return Saturate_soft_tanh_table_c2[index];
+   return Saturate_soft_tanh_table_c[((index * (3|0)) + (2|0))];
 };
 
 this.Saturate_soft_tanh_table = function (x) {
-   var index = ((this.float_to_int(((x + 24.0) * 5.020833))) < ((0|0)) ? ((0|0)) : ((this.float_to_int(((x + 24.0) * 5.020833))) > ((240|0)) ? ((240|0)) : (this.float_to_int(((x + 24.0) * 5.020833)))));
-   return (Saturate_soft_tanh_table_c0[index] + (x * (Saturate_soft_tanh_table_c1[index] + (Saturate_soft_tanh_table_c2[index] * x))));
+   var value = ((((x + 24.0) * 5.020833)) < (0.0) ? (0.0) : ((((x + 24.0) * 5.020833)) > (241.0) ? (241.0) : (((x + 24.0) * 5.020833))));
+   var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((240|0)) ? ((240|0)) : (this.float_to_int(value))));
+   var u = (value - (cell));
+   var index = (cell * (3|0));
+   return (Saturate_soft_tanh_table_c[index] + (u * (Saturate_soft_tanh_table_c[(index + (1|0))] + (Saturate_soft_tanh_table_c[(index + (2|0))] * u))));
 };
 
 this.Saturate_soft_process = function (x) {

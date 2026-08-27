@@ -102,38 +102,40 @@ def Sawcore_ptr_w2_type_alloc():
 def Util_cvToPitch(cv):
    return (24.0 + (120.0 * cv))
 
-Util_pitchToRate_1024_c0 = {}
-Util_pitchToRate_1024_c1 = {}
-Util_pitchToRate_1024_c2 = {}
+Util_pitchToRate_1024_c = {}
 def Util_pitchToRate_1024_raw_c0(index):
-   return Util_pitchToRate_1024_c0[index]
+   return Util_pitchToRate_1024_c[(index * 3)]
 
 def Util_pitchToRate_1024_raw_c1(index):
-   return Util_pitchToRate_1024_c1[index]
+   return Util_pitchToRate_1024_c[((index * 3) + 1)]
 
 def Util_pitchToRate_1024_raw_c2(index):
-   return Util_pitchToRate_1024_c2[index]
+   return Util_pitchToRate_1024_c[((index * 3) + 2)]
 
 def Util_pitchToRate_1024(pitch):
-   index = ((0) if (float_to_int((pitch * 0.251968))) < (0) else ((31) if (float_to_int((pitch * 0.251968))) > (31) else (float_to_int((pitch * 0.251968)))))
-   return (Util_pitchToRate_1024_c0[index] + (pitch * (Util_pitchToRate_1024_c1[index] + (Util_pitchToRate_1024_c2[index] * pitch))))
+   value = ((0.0) if ((pitch * 0.251968)) < (0.0) else ((32.0) if ((pitch * 0.251968)) > (32.0) else ((pitch * 0.251968))))
+   cell = ((0) if (float_to_int(value)) < (0) else ((31) if (float_to_int(value)) > (31) else (float_to_int(value))))
+   u = (value - float(cell))
+   index = (cell * 3)
+   return (Util_pitchToRate_1024_c[index] + (u * (Util_pitchToRate_1024_c[(index + 1)] + (Util_pitchToRate_1024_c[(index + 2)] * u))))
 
 
-Util_cvToRate_1024_c0 = {}
-Util_cvToRate_1024_c1 = {}
-Util_cvToRate_1024_c2 = {}
+Util_cvToRate_1024_c = {}
 def Util_cvToRate_1024_raw_c0(index):
-   return Util_cvToRate_1024_c0[index]
+   return Util_cvToRate_1024_c[(index * 3)]
 
 def Util_cvToRate_1024_raw_c1(index):
-   return Util_cvToRate_1024_c1[index]
+   return Util_cvToRate_1024_c[((index * 3) + 1)]
 
 def Util_cvToRate_1024_raw_c2(index):
-   return Util_cvToRate_1024_c2[index]
+   return Util_cvToRate_1024_c[((index * 3) + 2)]
 
 def Util_cvToRate_1024(cv):
-   index = ((0) if (float_to_int((cv * 35.555555))) < (0) else ((31) if (float_to_int((cv * 35.555555))) > (31) else (float_to_int((cv * 35.555555)))))
-   return (Util_cvToRate_1024_c0[index] + (cv * (Util_cvToRate_1024_c1[index] + (Util_cvToRate_1024_c2[index] * cv))))
+   value = ((0.0) if ((cv * 35.555555)) < (0.0) else ((32.0) if ((cv * 35.555555)) > (32.0) else ((cv * 35.555555))))
+   cell = ((0) if (float_to_int(value)) < (0) else ((31) if (float_to_int(value)) > (31) else (float_to_int(value))))
+   u = (value - float(cell))
+   index = (cell * 3)
+   return (Util_cvToRate_1024_c[index] + (u * (Util_cvToRate_1024_c[(index + 1)] + (Util_cvToRate_1024_c[(index + 2)] * u))))
 
 
 def Sawcore_default(_ctx):
@@ -206,75 +208,79 @@ def Util_cubic_clipper(x):
       else:
          return (x + (-0.333334 * (x * (x * x))))
 
-Util_pitchToRate_c0 = {}
-Util_pitchToRate_c1 = {}
-Util_pitchToRate_c2 = {}
+Util_pitchToRate_c = {}
 def Util_pitchToRate_raw_c0(index):
-   return Util_pitchToRate_c0[index]
+   return Util_pitchToRate_c[(index * 3)]
 
 def Util_pitchToRate_raw_c1(index):
-   return Util_pitchToRate_c1[index]
+   return Util_pitchToRate_c[((index * 3) + 1)]
 
 def Util_pitchToRate_raw_c2(index):
-   return Util_pitchToRate_c2[index]
+   return Util_pitchToRate_c[((index * 3) + 2)]
 
 def Util_pitchToRate(pitch):
-   index = ((0) if (float_to_int((pitch * 0.251968))) < (0) else ((31) if (float_to_int((pitch * 0.251968))) > (31) else (float_to_int((pitch * 0.251968)))))
-   return (Util_pitchToRate_c0[index] + (pitch * (Util_pitchToRate_c1[index] + (Util_pitchToRate_c2[index] * pitch))))
+   value = ((0.0) if ((pitch * 0.251968)) < (0.0) else ((32.0) if ((pitch * 0.251968)) > (32.0) else ((pitch * 0.251968))))
+   cell = ((0) if (float_to_int(value)) < (0) else ((31) if (float_to_int(value)) > (31) else (float_to_int(value))))
+   u = (value - float(cell))
+   index = (cell * 3)
+   return (Util_pitchToRate_c[index] + (u * (Util_pitchToRate_c[(index + 1)] + (Util_pitchToRate_c[(index + 2)] * u))))
 
 
-Util_cvToRate_c0 = {}
-Util_cvToRate_c1 = {}
-Util_cvToRate_c2 = {}
+Util_cvToRate_c = {}
 def Util_cvToRate_raw_c0(index):
-   return Util_cvToRate_c0[index]
+   return Util_cvToRate_c[(index * 3)]
 
 def Util_cvToRate_raw_c1(index):
-   return Util_cvToRate_c1[index]
+   return Util_cvToRate_c[((index * 3) + 1)]
 
 def Util_cvToRate_raw_c2(index):
-   return Util_cvToRate_c2[index]
+   return Util_cvToRate_c[((index * 3) + 2)]
 
 def Util_cvToRate(cv):
-   index = ((0) if (float_to_int((cv * 142.222222))) < (0) else ((127) if (float_to_int((cv * 142.222222))) > (127) else (float_to_int((cv * 142.222222)))))
-   return (Util_cvToRate_c0[index] + (cv * (Util_cvToRate_c1[index] + (Util_cvToRate_c2[index] * cv))))
+   value = ((0.0) if ((cv * 142.222222)) < (0.0) else ((128.0) if ((cv * 142.222222)) > (128.0) else ((cv * 142.222222))))
+   cell = ((0) if (float_to_int(value)) < (0) else ((127) if (float_to_int(value)) > (127) else (float_to_int(value))))
+   u = (value - float(cell))
+   index = (cell * 3)
+   return (Util_cvToRate_c[index] + (u * (Util_cvToRate_c[(index + 1)] + (Util_cvToRate_c[(index + 2)] * u))))
 
 
 def Util_pitchToCv(pitch):
    return (-0.2 + (0.008333 * pitch))
 
-Util_cvToperiod_c0 = {}
-Util_cvToperiod_c1 = {}
-Util_cvToperiod_c2 = {}
+Util_cvToperiod_c = {}
 def Util_cvToperiod_raw_c0(index):
-   return Util_cvToperiod_c0[index]
+   return Util_cvToperiod_c[(index * 3)]
 
 def Util_cvToperiod_raw_c1(index):
-   return Util_cvToperiod_c1[index]
+   return Util_cvToperiod_c[((index * 3) + 1)]
 
 def Util_cvToperiod_raw_c2(index):
-   return Util_cvToperiod_c2[index]
+   return Util_cvToperiod_c[((index * 3) + 2)]
 
 def Util_cvToperiod(cv):
-   index = ((0) if (float_to_int((cv * 32.0))) < (0) else ((31) if (float_to_int((cv * 32.0))) > (31) else (float_to_int((cv * 32.0)))))
-   return (Util_cvToperiod_c0[index] + (cv * (Util_cvToperiod_c1[index] + (Util_cvToperiod_c2[index] * cv))))
+   value = ((0.0) if ((cv * 32.0)) < (0.0) else ((32.0) if ((cv * 32.0)) > (32.0) else ((cv * 32.0))))
+   cell = ((0) if (float_to_int(value)) < (0) else ((31) if (float_to_int(value)) > (31) else (float_to_int(value))))
+   u = (value - float(cell))
+   index = (cell * 3)
+   return (Util_cvToperiod_c[index] + (u * (Util_cvToperiod_c[(index + 1)] + (Util_cvToperiod_c[(index + 2)] * u))))
 
 
-Util_cvTokHz_c0 = {}
-Util_cvTokHz_c1 = {}
-Util_cvTokHz_c2 = {}
+Util_cvTokHz_c = {}
 def Util_cvTokHz_raw_c0(index):
-   return Util_cvTokHz_c0[index]
+   return Util_cvTokHz_c[(index * 3)]
 
 def Util_cvTokHz_raw_c1(index):
-   return Util_cvTokHz_c1[index]
+   return Util_cvTokHz_c[((index * 3) + 1)]
 
 def Util_cvTokHz_raw_c2(index):
-   return Util_cvTokHz_c2[index]
+   return Util_cvTokHz_c[((index * 3) + 2)]
 
 def Util_cvTokHz(cv):
-   index = ((0) if (float_to_int((cv * 32.0))) < (0) else ((31) if (float_to_int((cv * 32.0))) > (31) else (float_to_int((cv * 32.0)))))
-   return (Util_cvTokHz_c0[index] + (cv * (Util_cvTokHz_c1[index] + (Util_cvTokHz_c2[index] * cv))))
+   value = ((0.0) if ((cv * 32.0)) < (0.0) else ((32.0) if ((cv * 32.0)) > (32.0) else ((cv * 32.0))))
+   cell = ((0) if (float_to_int(value)) < (0) else ((31) if (float_to_int(value)) > (31) else (float_to_int(value))))
+   u = (value - float(cell))
+   index = (cell * 3)
+   return (Util_cvTokHz_c[index] + (u * (Util_cvTokHz_c[(index + 1)] + (Util_cvTokHz_c[(index + 2)] * u))))
 
 
 def Sawcore_ptr_w2(_ctx, phase, rate):

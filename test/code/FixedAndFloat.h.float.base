@@ -8,52 +8,58 @@
 void FixedAndFloat_test1();
 
 static_inline fix16_t FixedAndFloat_take_fix_return_fixed_raw_c0(int32_t index) {
-   return FixedAndFloat_take_fix_return_fixed_c0[static_cast<uint32_t>(index)];
+   return FixedAndFloat_take_fix_return_fixed_c[static_cast<uint32_t>(index * 2)];
 }
 
 static_inline fix16_t FixedAndFloat_take_fix_return_fixed_raw_c1(int32_t index) {
-   return FixedAndFloat_take_fix_return_fixed_c1[static_cast<uint32_t>(index)];
+   return FixedAndFloat_take_fix_return_fixed_c[static_cast<uint32_t>(index * 2 + 1)];
 }
 
 static_inline fix16_t FixedAndFloat_take_fix_return_fixed(fix16_t x) {
    fix16_t value = fix_mul(fix_clip(x, 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */), 0x210000 /* 33.000000 */);
-   int32_t index = fix_to_int(value);
+   int32_t index = fix_to_int(value) * 2;
    fix16_t decimal = value - fix_floor(value);
-   return FixedAndFloat_take_fix_return_fixed_c0[static_cast<uint32_t>(index)] + fix_mul(FixedAndFloat_take_fix_return_fixed_c1[static_cast<uint32_t>(index)], decimal);
+   return FixedAndFloat_take_fix_return_fixed_c[static_cast<uint32_t>(index)] + fix_mul(FixedAndFloat_take_fix_return_fixed_c[static_cast<uint32_t>(index + 1)], decimal);
 }
 
 static_inline float FixedAndFloat_take_fix_return_real_raw_c0(int32_t index) {
-   return FixedAndFloat_take_fix_return_real_c0[static_cast<uint32_t>(index)];
+   return FixedAndFloat_take_fix_return_real_c[static_cast<uint32_t>(index * 3)];
 }
 
 static_inline float FixedAndFloat_take_fix_return_real_raw_c1(int32_t index) {
-   return FixedAndFloat_take_fix_return_real_c1[static_cast<uint32_t>(index)];
+   return FixedAndFloat_take_fix_return_real_c[static_cast<uint32_t>(index * 3 + 1)];
 }
 
 static_inline float FixedAndFloat_take_fix_return_real_raw_c2(int32_t index) {
-   return FixedAndFloat_take_fix_return_real_c2[static_cast<uint32_t>(index)];
+   return FixedAndFloat_take_fix_return_real_c[static_cast<uint32_t>(index * 3 + 2)];
 }
 
 static_inline float FixedAndFloat_take_fix_return_real(fix16_t x) {
-   int32_t index = int_clip(fix_to_int((x << 5)), 0, 31);
-   return FixedAndFloat_take_fix_return_real_c0[static_cast<uint32_t>(index)] + fix_to_float(x) * (FixedAndFloat_take_fix_return_real_c1[static_cast<uint32_t>(index)] + FixedAndFloat_take_fix_return_real_c2[static_cast<uint32_t>(index)] * fix_to_float(x));
+   fix16_t value = fix_clip((x << 5), 0x0 /* 0.000000 */, 0x200000 /* 32.000000 */);
+   int32_t cell = int_clip(fix_to_int(value), 0, 31);
+   fix16_t u = value - int_to_fix(cell);
+   int32_t index = cell * 3;
+   return FixedAndFloat_take_fix_return_real_c[static_cast<uint32_t>(index)] + fix_to_float(u) * (FixedAndFloat_take_fix_return_real_c[static_cast<uint32_t>(index + 1)] + FixedAndFloat_take_fix_return_real_c[static_cast<uint32_t>((index + 2))] * fix_to_float(u));
 }
 
 static_inline fix16_t FixedAndFloat_take_real_return_fixed_raw_c0(int32_t index) {
-   return FixedAndFloat_take_real_return_fixed_c0[static_cast<uint32_t>(index)];
+   return FixedAndFloat_take_real_return_fixed_c[static_cast<uint32_t>(index * 3)];
 }
 
 static_inline fix16_t FixedAndFloat_take_real_return_fixed_raw_c1(int32_t index) {
-   return FixedAndFloat_take_real_return_fixed_c1[static_cast<uint32_t>(index)];
+   return FixedAndFloat_take_real_return_fixed_c[static_cast<uint32_t>(index * 3 + 1)];
 }
 
 static_inline fix16_t FixedAndFloat_take_real_return_fixed_raw_c2(int32_t index) {
-   return FixedAndFloat_take_real_return_fixed_c2[static_cast<uint32_t>(index)];
+   return FixedAndFloat_take_real_return_fixed_c[static_cast<uint32_t>(index * 3 + 2)];
 }
 
 static_inline fix16_t FixedAndFloat_take_real_return_fixed(float x) {
-   int32_t index = int_clip(float_to_int(x * 32.0f), 0, 31);
-   return FixedAndFloat_take_real_return_fixed_c0[static_cast<uint32_t>(index)] + fix_mul(float_to_fix(x), FixedAndFloat_take_real_return_fixed_c1[static_cast<uint32_t>(index)] + fix_mul(FixedAndFloat_take_real_return_fixed_c2[static_cast<uint32_t>(index)], float_to_fix(x)));
+   float value = float_clip(x * 32.0f, 0.0f, 32.0f);
+   int32_t cell = int_clip(float_to_int(value), 0, 31);
+   float u = value - int_to_float(cell);
+   int32_t index = cell * 3;
+   return FixedAndFloat_take_real_return_fixed_c[static_cast<uint32_t>(index)] + fix_mul(float_to_fix(u), FixedAndFloat_take_real_return_fixed_c[static_cast<uint32_t>(index + 1)] + fix_mul(FixedAndFloat_take_real_return_fixed_c[static_cast<uint32_t>(index + 2)], float_to_fix(u)));
 }
 
 

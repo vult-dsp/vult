@@ -6,20 +6,23 @@
 #include "bitcrush.tables.h"
 
 static_inline float Bitcrush_factor_raw_c0(int32_t index) {
-   return Bitcrush_factor_c0[static_cast<uint32_t>(index)];
+   return Bitcrush_factor_c[static_cast<uint32_t>(index * 3)];
 }
 
 static_inline float Bitcrush_factor_raw_c1(int32_t index) {
-   return Bitcrush_factor_c1[static_cast<uint32_t>(index)];
+   return Bitcrush_factor_c[static_cast<uint32_t>(index * 3 + 1)];
 }
 
 static_inline float Bitcrush_factor_raw_c2(int32_t index) {
-   return Bitcrush_factor_c2[static_cast<uint32_t>(index)];
+   return Bitcrush_factor_c[static_cast<uint32_t>(index * 3 + 2)];
 }
 
 static_inline float Bitcrush_factor(float cv) {
-   int32_t index = int_clip(float_to_int(cv * 128.0f), 0, 127);
-   return Bitcrush_factor_c0[static_cast<uint32_t>(index)] + cv * (Bitcrush_factor_c1[static_cast<uint32_t>(index)] + Bitcrush_factor_c2[static_cast<uint32_t>(index)] * cv);
+   float value = float_clip(cv * 128.0f, 0.0f, 128.0f);
+   int32_t cell = int_clip(float_to_int(value), 0, 127);
+   float u = value - int_to_float(cell);
+   int32_t index = cell * 3;
+   return Bitcrush_factor_c[static_cast<uint32_t>(index)] + u * (Bitcrush_factor_c[static_cast<uint32_t>(index + 1)] + Bitcrush_factor_c[static_cast<uint32_t>((index + 2))] * u);
 }
 
 float Bitcrush_process(float i, float cv);

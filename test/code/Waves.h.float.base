@@ -21,20 +21,23 @@ static_inline int32_t Waves_sineTable2_samples() {
 }
 
 static_inline float Waves_sineTable2_raw_c0(int32_t index) {
-   return Waves_sineTable2_c0[static_cast<uint32_t>(index)];
+   return Waves_sineTable2_c[static_cast<uint32_t>(index * 3)];
 }
 
 static_inline float Waves_sineTable2_raw_c1(int32_t index) {
-   return Waves_sineTable2_c1[static_cast<uint32_t>(index)];
+   return Waves_sineTable2_c[static_cast<uint32_t>(index * 3 + 1)];
 }
 
 static_inline float Waves_sineTable2_raw_c2(int32_t index) {
-   return Waves_sineTable2_c2[static_cast<uint32_t>(index)];
+   return Waves_sineTable2_c[static_cast<uint32_t>(index * 3 + 2)];
 }
 
 static_inline float Waves_sineTable2(float position) {
-   int32_t index = int_clip(float_to_int(position * 256.0f), 0, 255);
-   return Waves_sineTable2_c0[static_cast<uint32_t>(index)] + position * (Waves_sineTable2_c1[static_cast<uint32_t>(index)] + Waves_sineTable2_c2[static_cast<uint32_t>(index)] * position);
+   float value = float_clip(position * 256.0f, 0.0f, 256.0f);
+   int32_t cell = int_clip(float_to_int(value), 0, 255);
+   float u = value - int_to_float(cell);
+   int32_t index = cell * 3;
+   return Waves_sineTable2_c[static_cast<uint32_t>(index)] + u * (Waves_sineTable2_c[static_cast<uint32_t>(index + 1)] + Waves_sineTable2_c[static_cast<uint32_t>((index + 2))] * u);
 }
 
 void Waves_test1();

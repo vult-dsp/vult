@@ -250,44 +250,46 @@ function Util_cvToPitch(cv)
    return (Float32(24.0) + (Float32(120.0) * cv))
 end
 
-Util_pitchToRate_1024_c0 = nothing
-Util_pitchToRate_1024_c1 = nothing
-Util_pitchToRate_1024_c2 = nothing
+Util_pitchToRate_1024_c = nothing
 function Util_pitchToRate_1024_raw_c0(index)
-   return @inbounds Util_pitchToRate_1024_c0[index + 1]
+   return @inbounds Util_pitchToRate_1024_c[(index * Int32(3)) + 1]
 end
 
 function Util_pitchToRate_1024_raw_c1(index)
-   return @inbounds Util_pitchToRate_1024_c1[index + 1]
+   return @inbounds Util_pitchToRate_1024_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Util_pitchToRate_1024_raw_c2(index)
-   return @inbounds Util_pitchToRate_1024_c2[index + 1]
+   return @inbounds Util_pitchToRate_1024_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Util_pitchToRate_1024(pitch)
-   index = clamp(trunc(Int32, (pitch * Float32(0.251968))), Int32(0), Int32(31))
-   return (@inbounds Util_pitchToRate_1024_c0[index + 1] + (pitch * (@inbounds Util_pitchToRate_1024_c1[index + 1] + (@inbounds Util_pitchToRate_1024_c2[index + 1] * pitch))))
+   value = clamp((pitch * Float32(0.251968)), Float32(0.0), Float32(32.0))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(31))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Util_pitchToRate_1024_c[index + 1] + (u * (@inbounds Util_pitchToRate_1024_c[(index + Int32(1)) + 1] + (@inbounds Util_pitchToRate_1024_c[(index + Int32(2)) + 1] * u))))
 end
 
-Util_cvToRate_1024_c0 = nothing
-Util_cvToRate_1024_c1 = nothing
-Util_cvToRate_1024_c2 = nothing
+Util_cvToRate_1024_c = nothing
 function Util_cvToRate_1024_raw_c0(index)
-   return @inbounds Util_cvToRate_1024_c0[index + 1]
+   return @inbounds Util_cvToRate_1024_c[(index * Int32(3)) + 1]
 end
 
 function Util_cvToRate_1024_raw_c1(index)
-   return @inbounds Util_cvToRate_1024_c1[index + 1]
+   return @inbounds Util_cvToRate_1024_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Util_cvToRate_1024_raw_c2(index)
-   return @inbounds Util_cvToRate_1024_c2[index + 1]
+   return @inbounds Util_cvToRate_1024_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Util_cvToRate_1024(cv)
-   index = clamp(trunc(Int32, (cv * Float32(35.555555))), Int32(0), Int32(31))
-   return (@inbounds Util_cvToRate_1024_c0[index + 1] + (cv * (@inbounds Util_cvToRate_1024_c1[index + 1] + (@inbounds Util_cvToRate_1024_c2[index + 1] * cv))))
+   value = clamp((cv * Float32(35.555555)), Float32(0.0), Float32(32.0))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(31))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Util_cvToRate_1024_c[index + 1] + (u * (@inbounds Util_cvToRate_1024_c[(index + Int32(1)) + 1] + (@inbounds Util_cvToRate_1024_c[(index + Int32(2)) + 1] * u))))
 end
 
 function Tricore_default(_ctx)
@@ -324,24 +326,25 @@ function Tricore_default_type_alloc(_ctx)
    return Tricore_process_type_alloc()
 end
 
-Svf_calc_g_c0 = nothing
-Svf_calc_g_c1 = nothing
-Svf_calc_g_c2 = nothing
+Svf_calc_g_c = nothing
 function Svf_calc_g_raw_c0(index)
-   return @inbounds Svf_calc_g_c0[index + 1]
+   return @inbounds Svf_calc_g_c[(index * Int32(3)) + 1]
 end
 
 function Svf_calc_g_raw_c1(index)
-   return @inbounds Svf_calc_g_c1[index + 1]
+   return @inbounds Svf_calc_g_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Svf_calc_g_raw_c2(index)
-   return @inbounds Svf_calc_g_c2[index + 1]
+   return @inbounds Svf_calc_g_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Svf_calc_g(cv)
-   index = clamp(trunc(Int32, (cv * Float32(142.222222))), Int32(0), Int32(127))
-   return (@inbounds Svf_calc_g_c0[index + 1] + (cv * (@inbounds Svf_calc_g_c1[index + 1] + (@inbounds Svf_calc_g_c2[index + 1] * cv))))
+   value = clamp((cv * Float32(142.222222)), Float32(0.0), Float32(128.0))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(127))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Svf_calc_g_c[index + 1] + (u * (@inbounds Svf_calc_g_c[(index + Int32(1)) + 1] + (@inbounds Svf_calc_g_c[(index + Int32(2)) + 1] * u))))
 end
 
 function Svf_default(_ctx)
@@ -443,24 +446,25 @@ function Phase_default_type_alloc(_ctx)
    return Phase_process_type_alloc()
 end
 
-Util_cvToperiod_c0 = nothing
-Util_cvToperiod_c1 = nothing
-Util_cvToperiod_c2 = nothing
+Util_cvToperiod_c = nothing
 function Util_cvToperiod_raw_c0(index)
-   return @inbounds Util_cvToperiod_c0[index + 1]
+   return @inbounds Util_cvToperiod_c[(index * Int32(3)) + 1]
 end
 
 function Util_cvToperiod_raw_c1(index)
-   return @inbounds Util_cvToperiod_c1[index + 1]
+   return @inbounds Util_cvToperiod_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Util_cvToperiod_raw_c2(index)
-   return @inbounds Util_cvToperiod_c2[index + 1]
+   return @inbounds Util_cvToperiod_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Util_cvToperiod(cv)
-   index = clamp(trunc(Int32, (cv * Float32(32.0))), Int32(0), Int32(31))
-   return (@inbounds Util_cvToperiod_c0[index + 1] + (cv * (@inbounds Util_cvToperiod_c1[index + 1] + (@inbounds Util_cvToperiod_c2[index + 1] * cv))))
+   value = clamp((cv * Float32(32.0)), Float32(0.0), Float32(32.0))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(31))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Util_cvToperiod_c[index + 1] + (u * (@inbounds Util_cvToperiod_c[(index + Int32(1)) + 1] + (@inbounds Util_cvToperiod_c[(index + Int32(2)) + 1] * u))))
 end
 
 function Blit_pulse_start(_ctx)
@@ -481,44 +485,46 @@ function Blit_pulse_start_type_alloc(_ctx)
    return Blit_pulse_train_type_alloc()
 end
 
-Util_pitchToRate_c0 = nothing
-Util_pitchToRate_c1 = nothing
-Util_pitchToRate_c2 = nothing
+Util_pitchToRate_c = nothing
 function Util_pitchToRate_raw_c0(index)
-   return @inbounds Util_pitchToRate_c0[index + 1]
+   return @inbounds Util_pitchToRate_c[(index * Int32(3)) + 1]
 end
 
 function Util_pitchToRate_raw_c1(index)
-   return @inbounds Util_pitchToRate_c1[index + 1]
+   return @inbounds Util_pitchToRate_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Util_pitchToRate_raw_c2(index)
-   return @inbounds Util_pitchToRate_c2[index + 1]
+   return @inbounds Util_pitchToRate_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Util_pitchToRate(pitch)
-   index = clamp(trunc(Int32, (pitch * Float32(0.251968))), Int32(0), Int32(31))
-   return (@inbounds Util_pitchToRate_c0[index + 1] + (pitch * (@inbounds Util_pitchToRate_c1[index + 1] + (@inbounds Util_pitchToRate_c2[index + 1] * pitch))))
+   value = clamp((pitch * Float32(0.251968)), Float32(0.0), Float32(32.0))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(31))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Util_pitchToRate_c[index + 1] + (u * (@inbounds Util_pitchToRate_c[(index + Int32(1)) + 1] + (@inbounds Util_pitchToRate_c[(index + Int32(2)) + 1] * u))))
 end
 
-Util_cvToRate_c0 = nothing
-Util_cvToRate_c1 = nothing
-Util_cvToRate_c2 = nothing
+Util_cvToRate_c = nothing
 function Util_cvToRate_raw_c0(index)
-   return @inbounds Util_cvToRate_c0[index + 1]
+   return @inbounds Util_cvToRate_c[(index * Int32(3)) + 1]
 end
 
 function Util_cvToRate_raw_c1(index)
-   return @inbounds Util_cvToRate_c1[index + 1]
+   return @inbounds Util_cvToRate_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Util_cvToRate_raw_c2(index)
-   return @inbounds Util_cvToRate_c2[index + 1]
+   return @inbounds Util_cvToRate_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Util_cvToRate(cv)
-   index = clamp(trunc(Int32, (cv * Float32(142.222222))), Int32(0), Int32(127))
-   return (@inbounds Util_cvToRate_c0[index + 1] + (cv * (@inbounds Util_cvToRate_c1[index + 1] + (@inbounds Util_cvToRate_c2[index + 1] * cv))))
+   value = clamp((cv * Float32(142.222222)), Float32(0.0), Float32(128.0))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(127))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Util_cvToRate_c[index + 1] + (u * (@inbounds Util_cvToRate_c[(index + Int32(1)) + 1] + (@inbounds Util_cvToRate_c[(index + Int32(2)) + 1] * u))))
 end
 
 function Blit_init(_ctx)
@@ -703,24 +709,25 @@ function Util_pitchToCv(pitch)
    return (Float32(-0.2) + (Float32(0.008333) * pitch))
 end
 
-Util_cvTokHz_c0 = nothing
-Util_cvTokHz_c1 = nothing
-Util_cvTokHz_c2 = nothing
+Util_cvTokHz_c = nothing
 function Util_cvTokHz_raw_c0(index)
-   return @inbounds Util_cvTokHz_c0[index + 1]
+   return @inbounds Util_cvTokHz_c[(index * Int32(3)) + 1]
 end
 
 function Util_cvTokHz_raw_c1(index)
-   return @inbounds Util_cvTokHz_c1[index + 1]
+   return @inbounds Util_cvTokHz_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Util_cvTokHz_raw_c2(index)
-   return @inbounds Util_cvTokHz_c2[index + 1]
+   return @inbounds Util_cvTokHz_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Util_cvTokHz(cv)
-   index = clamp(trunc(Int32, (cv * Float32(32.0))), Int32(0), Int32(31))
-   return (@inbounds Util_cvTokHz_c0[index + 1] + (cv * (@inbounds Util_cvTokHz_c1[index + 1] + (@inbounds Util_cvTokHz_c2[index + 1] * cv))))
+   value = clamp((cv * Float32(32.0)), Float32(0.0), Float32(32.0))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(31))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Util_cvTokHz_c[index + 1] + (u * (@inbounds Util_cvTokHz_c[(index + Int32(1)) + 1] + (@inbounds Util_cvTokHz_c[(index + Int32(2)) + 1] * u))))
 end
 
 function Tricore_process(_ctx, cv, reset, disable)
@@ -791,24 +798,25 @@ end
 function Tricore_controlChange(_ctx, control, value, channel)
 end
 
-Saturate_soft_tanh_table_c0 = nothing
-Saturate_soft_tanh_table_c1 = nothing
-Saturate_soft_tanh_table_c2 = nothing
+Saturate_soft_tanh_table_c = nothing
 function Saturate_soft_tanh_table_raw_c0(index)
-   return @inbounds Saturate_soft_tanh_table_c0[index + 1]
+   return @inbounds Saturate_soft_tanh_table_c[(index * Int32(3)) + 1]
 end
 
 function Saturate_soft_tanh_table_raw_c1(index)
-   return @inbounds Saturate_soft_tanh_table_c1[index + 1]
+   return @inbounds Saturate_soft_tanh_table_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Saturate_soft_tanh_table_raw_c2(index)
-   return @inbounds Saturate_soft_tanh_table_c2[index + 1]
+   return @inbounds Saturate_soft_tanh_table_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Saturate_soft_tanh_table(x)
-   index = clamp(trunc(Int32, ((x + Float32(24.0)) * Float32(5.020833))), Int32(0), Int32(240))
-   return (@inbounds Saturate_soft_tanh_table_c0[index + 1] + (x * (@inbounds Saturate_soft_tanh_table_c1[index + 1] + (@inbounds Saturate_soft_tanh_table_c2[index + 1] * x))))
+   value = clamp(((x + Float32(24.0)) * Float32(5.020833)), Float32(0.0), Float32(241.0))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(240))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Saturate_soft_tanh_table_c[index + 1] + (u * (@inbounds Saturate_soft_tanh_table_c[(index + Int32(1)) + 1] + (@inbounds Saturate_soft_tanh_table_c[(index + Int32(2)) + 1] * u))))
 end
 
 function Saturate_soft_process(x)
@@ -868,24 +876,25 @@ end
 function Svf_controlChange(_ctx, control, value, channel)
 end
 
-Saturate_tanh_table_c0 = nothing
-Saturate_tanh_table_c1 = nothing
-Saturate_tanh_table_c2 = nothing
+Saturate_tanh_table_c = nothing
 function Saturate_tanh_table_raw_c0(index)
-   return @inbounds Saturate_tanh_table_c0[index + 1]
+   return @inbounds Saturate_tanh_table_c[(index * Int32(3)) + 1]
 end
 
 function Saturate_tanh_table_raw_c1(index)
-   return @inbounds Saturate_tanh_table_c1[index + 1]
+   return @inbounds Saturate_tanh_table_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Saturate_tanh_table_raw_c2(index)
-   return @inbounds Saturate_tanh_table_c2[index + 1]
+   return @inbounds Saturate_tanh_table_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Saturate_tanh_table(x)
-   index = clamp(trunc(Int32, ((x + Float32(24.0)) * Float32(5.020833))), Int32(0), Int32(240))
-   return (@inbounds Saturate_tanh_table_c0[index + 1] + (x * (@inbounds Saturate_tanh_table_c1[index + 1] + (@inbounds Saturate_tanh_table_c2[index + 1] * x))))
+   value = clamp(((x + Float32(24.0)) * Float32(5.020833)), Float32(0.0), Float32(241.0))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(240))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Saturate_tanh_table_c[index + 1] + (u * (@inbounds Saturate_tanh_table_c[(index + Int32(1)) + 1] + (@inbounds Saturate_tanh_table_c[(index + Int32(2)) + 1] * u))))
 end
 
 function Saturate_process(x)
@@ -959,24 +968,25 @@ end
 function Lfo_default(_ctx)
 end
 
-Tables_nsine_c0 = nothing
-Tables_nsine_c1 = nothing
-Tables_nsine_c2 = nothing
+Tables_nsine_c = nothing
 function Tables_nsine_raw_c0(index)
-   return @inbounds Tables_nsine_c0[index + 1]
+   return @inbounds Tables_nsine_c[(index * Int32(3)) + 1]
 end
 
 function Tables_nsine_raw_c1(index)
-   return @inbounds Tables_nsine_c1[index + 1]
+   return @inbounds Tables_nsine_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Tables_nsine_raw_c2(index)
-   return @inbounds Tables_nsine_c2[index + 1]
+   return @inbounds Tables_nsine_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Tables_nsine(x)
-   index = clamp(trunc(Int32, (x * Float32(128.0))), Int32(0), Int32(127))
-   return (@inbounds Tables_nsine_c0[index + 1] + (x * (@inbounds Tables_nsine_c1[index + 1] + (@inbounds Tables_nsine_c2[index + 1] * x))))
+   value = clamp((x * Float32(128.0)), Float32(0.0), Float32(128.0))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(127))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Tables_nsine_c[index + 1] + (u * (@inbounds Tables_nsine_c[(index + Int32(1)) + 1] + (@inbounds Tables_nsine_c[(index + Int32(2)) + 1] * u))))
 end
 
 function Phase_process(_ctx, cv, reset)

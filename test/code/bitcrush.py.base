@@ -18,21 +18,22 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
-Bitcrush_factor_c0 = {}
-Bitcrush_factor_c1 = {}
-Bitcrush_factor_c2 = {}
+Bitcrush_factor_c = {}
 def Bitcrush_factor_raw_c0(index):
-   return Bitcrush_factor_c0[index]
+   return Bitcrush_factor_c[(index * 3)]
 
 def Bitcrush_factor_raw_c1(index):
-   return Bitcrush_factor_c1[index]
+   return Bitcrush_factor_c[((index * 3) + 1)]
 
 def Bitcrush_factor_raw_c2(index):
-   return Bitcrush_factor_c2[index]
+   return Bitcrush_factor_c[((index * 3) + 2)]
 
 def Bitcrush_factor(cv):
-   index = ((0) if (float_to_int((cv * 128.0))) < (0) else ((127) if (float_to_int((cv * 128.0))) > (127) else (float_to_int((cv * 128.0)))))
-   return (Bitcrush_factor_c0[index] + (cv * (Bitcrush_factor_c1[index] + (Bitcrush_factor_c2[index] * cv))))
+   value = ((0.0) if ((cv * 128.0)) < (0.0) else ((128.0) if ((cv * 128.0)) > (128.0) else ((cv * 128.0))))
+   cell = ((0) if (float_to_int(value)) < (0) else ((127) if (float_to_int(value)) > (127) else (float_to_int(value))))
+   u = (value - float(cell))
+   index = (cell * 3)
+   return (Bitcrush_factor_c[index] + (u * (Bitcrush_factor_c[(index + 1)] + (Bitcrush_factor_c[(index + 2)] * u))))
 
 
 def Bitcrush_process(i, cv):

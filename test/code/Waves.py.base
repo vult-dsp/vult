@@ -28,24 +28,25 @@ def Waves_sineTable1(channel, index):
    return 0.0
 
 
-Waves_sineTable2_c0 = {}
-Waves_sineTable2_c1 = {}
-Waves_sineTable2_c2 = {}
+Waves_sineTable2_c = {}
 def Waves_sineTable2_samples():
    return 256
 
 def Waves_sineTable2_raw_c0(index):
-   return Waves_sineTable2_c0[index]
+   return Waves_sineTable2_c[(index * 3)]
 
 def Waves_sineTable2_raw_c1(index):
-   return Waves_sineTable2_c1[index]
+   return Waves_sineTable2_c[((index * 3) + 1)]
 
 def Waves_sineTable2_raw_c2(index):
-   return Waves_sineTable2_c2[index]
+   return Waves_sineTable2_c[((index * 3) + 2)]
 
 def Waves_sineTable2(position):
-   index = ((0) if (float_to_int((position * 256.0))) < (0) else ((255) if (float_to_int((position * 256.0))) > (255) else (float_to_int((position * 256.0)))))
-   return (Waves_sineTable2_c0[index] + (position * (Waves_sineTable2_c1[index] + (Waves_sineTable2_c2[index] * position))))
+   value = ((0.0) if ((position * 256.0)) < (0.0) else ((256.0) if ((position * 256.0)) > (256.0) else ((position * 256.0))))
+   cell = ((0) if (float_to_int(value)) < (0) else ((255) if (float_to_int(value)) > (255) else (float_to_int(value))))
+   u = (value - float(cell))
+   index = (cell * 3)
+   return (Waves_sineTable2_c[index] + (u * (Waves_sineTable2_c[(index + 1)] + (Waves_sineTable2_c[(index + 2)] * u))))
 
 
 def Waves_test1():

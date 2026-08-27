@@ -18,21 +18,22 @@ def float_to_int(i):
 def initializeArray(v, size):
     return [v for _ in range(size)]
 
-Saturate_soft_tanh_table_c0 = {}
-Saturate_soft_tanh_table_c1 = {}
-Saturate_soft_tanh_table_c2 = {}
+Saturate_soft_tanh_table_c = {}
 def Saturate_soft_tanh_table_raw_c0(index):
-   return Saturate_soft_tanh_table_c0[index]
+   return Saturate_soft_tanh_table_c[(index * 3)]
 
 def Saturate_soft_tanh_table_raw_c1(index):
-   return Saturate_soft_tanh_table_c1[index]
+   return Saturate_soft_tanh_table_c[((index * 3) + 1)]
 
 def Saturate_soft_tanh_table_raw_c2(index):
-   return Saturate_soft_tanh_table_c2[index]
+   return Saturate_soft_tanh_table_c[((index * 3) + 2)]
 
 def Saturate_soft_tanh_table(x):
-   index = ((0) if (float_to_int(((x + 24.0) * 5.020833))) < (0) else ((240) if (float_to_int(((x + 24.0) * 5.020833))) > (240) else (float_to_int(((x + 24.0) * 5.020833)))))
-   return (Saturate_soft_tanh_table_c0[index] + (x * (Saturate_soft_tanh_table_c1[index] + (Saturate_soft_tanh_table_c2[index] * x))))
+   value = ((0.0) if (((x + 24.0) * 5.020833)) < (0.0) else ((241.0) if (((x + 24.0) * 5.020833)) > (241.0) else (((x + 24.0) * 5.020833))))
+   cell = ((0) if (float_to_int(value)) < (0) else ((240) if (float_to_int(value)) > (240) else (float_to_int(value))))
+   u = (value - float(cell))
+   index = (cell * 3)
+   return (Saturate_soft_tanh_table_c[index] + (u * (Saturate_soft_tanh_table_c[(index + 1)] + (Saturate_soft_tanh_table_c[(index + 2)] * u))))
 
 
 def Saturate_soft_process(x):

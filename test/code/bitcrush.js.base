@@ -5,24 +5,25 @@ this.irandom = function()        { return Math.floor(Math.random() * 4294967296)
 this.int_to_float = function(i)  { return i; };
 this.float_to_int = function(i)  { return Math.floor(i); };
 this.initializeArray = function(v, size){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-var Bitcrush_factor_c0 = {};
-var Bitcrush_factor_c1 = {};
-var Bitcrush_factor_c2 = {};
+var Bitcrush_factor_c = {};
 this.Bitcrush_factor_raw_c0 = function (index) {
-   return Bitcrush_factor_c0[index];
+   return Bitcrush_factor_c[(index * (3|0))];
 };
 
 this.Bitcrush_factor_raw_c1 = function (index) {
-   return Bitcrush_factor_c1[index];
+   return Bitcrush_factor_c[((index * (3|0)) + (1|0))];
 };
 
 this.Bitcrush_factor_raw_c2 = function (index) {
-   return Bitcrush_factor_c2[index];
+   return Bitcrush_factor_c[((index * (3|0)) + (2|0))];
 };
 
 this.Bitcrush_factor = function (cv) {
-   var index = ((this.float_to_int((cv * 128.0))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((cv * 128.0))) > ((127|0)) ? ((127|0)) : (this.float_to_int((cv * 128.0)))));
-   return (Bitcrush_factor_c0[index] + (cv * (Bitcrush_factor_c1[index] + (Bitcrush_factor_c2[index] * cv))));
+   var value = (((cv * 128.0)) < (0.0) ? (0.0) : (((cv * 128.0)) > (128.0) ? (128.0) : ((cv * 128.0))));
+   var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((127|0)) ? ((127|0)) : (this.float_to_int(value))));
+   var u = (value - (cell));
+   var index = (cell * (3|0));
+   return (Bitcrush_factor_c[index] + (u * (Bitcrush_factor_c[(index + (1|0))] + (Bitcrush_factor_c[(index + (2|0))] * u))));
 };
 
 this.Bitcrush_process = function (i, cv) {

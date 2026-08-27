@@ -1,24 +1,25 @@
 
 # High-performance Vult Runtime for Julia with typed arrays
 
-Bitcrush_factor_c0 = nothing
-Bitcrush_factor_c1 = nothing
-Bitcrush_factor_c2 = nothing
+Bitcrush_factor_c = nothing
 function Bitcrush_factor_raw_c0(index)
-   return @inbounds Bitcrush_factor_c0[index + 1]
+   return @inbounds Bitcrush_factor_c[(index * Int32(3)) + 1]
 end
 
 function Bitcrush_factor_raw_c1(index)
-   return @inbounds Bitcrush_factor_c1[index + 1]
+   return @inbounds Bitcrush_factor_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Bitcrush_factor_raw_c2(index)
-   return @inbounds Bitcrush_factor_c2[index + 1]
+   return @inbounds Bitcrush_factor_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Bitcrush_factor(cv)
-   index = clamp(trunc(Int32, (cv * Float32(128.0))), Int32(0), Int32(127))
-   return (@inbounds Bitcrush_factor_c0[index + 1] + (cv * (@inbounds Bitcrush_factor_c1[index + 1] + (@inbounds Bitcrush_factor_c2[index + 1] * cv))))
+   value = clamp((cv * Float32(128.0)), Float32(0.0), Float32(128.0))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(127))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Bitcrush_factor_c[index + 1] + (u * (@inbounds Bitcrush_factor_c[(index + Int32(1)) + 1] + (@inbounds Bitcrush_factor_c[(index + Int32(2)) + 1] * u))))
 end
 
 function Bitcrush_process(i, cv)

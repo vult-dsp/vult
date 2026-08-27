@@ -93,28 +93,29 @@ function Waves_sineTable1(channel, index)
    return 0.0
 end
 
-Waves_sineTable2_c0 = {};
-Waves_sineTable2_c1 = {};
-Waves_sineTable2_c2 = {};
+Waves_sineTable2_c = {};
 function Waves_sineTable2_samples()
    return 256
 end
 
 function Waves_sineTable2_raw_c0(index)
-   return Waves_sineTable2_c0[(index) + 1]
+   return Waves_sineTable2_c[((index * 3)) + 1]
 end
 
 function Waves_sineTable2_raw_c1(index)
-   return Waves_sineTable2_c1[(index) + 1]
+   return Waves_sineTable2_c[(((index * 3) + 1)) + 1]
 end
 
 function Waves_sineTable2_raw_c2(index)
-   return Waves_sineTable2_c2[(index) + 1]
+   return Waves_sineTable2_c[(((index * 3) + 2)) + 1]
 end
 
 function Waves_sineTable2(position)
-   local index = ((math.floor((position * 256.0))) > (255) and (255) or ((math.floor((position * 256.0))) < (0) and (0) or (math.floor((position * 256.0)))))
-   return (Waves_sineTable2_c0[(index) + 1] + (position * (Waves_sineTable2_c1[(index) + 1] + (Waves_sineTable2_c2[(index) + 1] * position))))
+   local value = (((position * 256.0)) > (256.0) and (256.0) or (((position * 256.0)) < (0.0) and (0.0) or ((position * 256.0))))
+   local cell = ((math.floor(value)) > (255) and (255) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local u = (value - (cell))
+   local index = (cell * 3)
+   return (Waves_sineTable2_c[(index) + 1] + (u * (Waves_sineTable2_c[((index + 1)) + 1] + (Waves_sineTable2_c[((index + 2)) + 1] * u))))
 end
 
 function Waves_test1()

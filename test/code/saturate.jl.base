@@ -1,24 +1,25 @@
 
 # High-performance Vult Runtime for Julia with typed arrays
 
-Saturate_tanh_table_c0 = nothing
-Saturate_tanh_table_c1 = nothing
-Saturate_tanh_table_c2 = nothing
+Saturate_tanh_table_c = nothing
 function Saturate_tanh_table_raw_c0(index)
-   return @inbounds Saturate_tanh_table_c0[index + 1]
+   return @inbounds Saturate_tanh_table_c[(index * Int32(3)) + 1]
 end
 
 function Saturate_tanh_table_raw_c1(index)
-   return @inbounds Saturate_tanh_table_c1[index + 1]
+   return @inbounds Saturate_tanh_table_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Saturate_tanh_table_raw_c2(index)
-   return @inbounds Saturate_tanh_table_c2[index + 1]
+   return @inbounds Saturate_tanh_table_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Saturate_tanh_table(x)
-   index = clamp(trunc(Int32, ((x + Float32(24.0)) * Float32(5.020833))), Int32(0), Int32(240))
-   return (@inbounds Saturate_tanh_table_c0[index + 1] + (x * (@inbounds Saturate_tanh_table_c1[index + 1] + (@inbounds Saturate_tanh_table_c2[index + 1] * x))))
+   value = clamp(((x + Float32(24.0)) * Float32(5.020833)), Float32(0.0), Float32(241.0))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(240))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Saturate_tanh_table_c[index + 1] + (u * (@inbounds Saturate_tanh_table_c[(index + Int32(1)) + 1] + (@inbounds Saturate_tanh_table_c[(index + Int32(2)) + 1] * u))))
 end
 
 function Saturate_process(x)

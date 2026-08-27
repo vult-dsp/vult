@@ -17,28 +17,29 @@ this.Waves_sineTable1 = function (channel, index) {
    return 0.0;
 };
 
-var Waves_sineTable2_c0 = {};
-var Waves_sineTable2_c1 = {};
-var Waves_sineTable2_c2 = {};
+var Waves_sineTable2_c = {};
 this.Waves_sineTable2_samples = function () {
    return (256|0);
 };
 
 this.Waves_sineTable2_raw_c0 = function (index) {
-   return Waves_sineTable2_c0[index];
+   return Waves_sineTable2_c[(index * (3|0))];
 };
 
 this.Waves_sineTable2_raw_c1 = function (index) {
-   return Waves_sineTable2_c1[index];
+   return Waves_sineTable2_c[((index * (3|0)) + (1|0))];
 };
 
 this.Waves_sineTable2_raw_c2 = function (index) {
-   return Waves_sineTable2_c2[index];
+   return Waves_sineTable2_c[((index * (3|0)) + (2|0))];
 };
 
 this.Waves_sineTable2 = function (position) {
-   var index = ((this.float_to_int((position * 256.0))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((position * 256.0))) > ((255|0)) ? ((255|0)) : (this.float_to_int((position * 256.0)))));
-   return (Waves_sineTable2_c0[index] + (position * (Waves_sineTable2_c1[index] + (Waves_sineTable2_c2[index] * position))));
+   var value = (((position * 256.0)) < (0.0) ? (0.0) : (((position * 256.0)) > (256.0) ? (256.0) : ((position * 256.0))));
+   var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((255|0)) ? ((255|0)) : (this.float_to_int(value))));
+   var u = (value - (cell));
+   var index = (cell * (3|0));
+   return (Waves_sineTable2_c[index] + (u * (Waves_sineTable2_c[(index + (1|0))] + (Waves_sineTable2_c[(index + (2|0))] * u))));
 };
 
 this.Waves_test1 = function () {
