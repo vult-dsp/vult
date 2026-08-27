@@ -1,0 +1,119 @@
+import math
+import random as random_module
+
+# Runtime functions (simple builtins like eps, pi, clip, sin, cos, etc. are inlined)
+
+def random():
+    return random_module.random()
+
+def irandom():
+    return int(random_module.random() * 4294967296)
+
+def int_to_float(i):
+    return float(i)
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+class Companion_return_infer_accum_int_type:
+    __slots__ = ['total']
+    def __init__(self, total=0):
+        self.total = total
+
+class Companion_return_infer_wrapper_stateful_type:
+    __slots__ = ['inst_1c525']
+    def __init__(self, inst_1c525=Companion_return_infer_accum_int_type()):
+        self.inst_1c525 = inst_1c525
+
+class Companion_return_infer_wrapper_instance_type:
+    __slots__ = ['i1']
+    def __init__(self, i1=Companion_return_infer_accum_int_type()):
+        self.i1 = i1
+
+class Companion_return_infer_main_type:
+    __slots__ = ['inst_19106', 'inst_2af06']
+    def __init__(self, inst_19106=Companion_return_infer_wrapper_stateful_type(), inst_2af06=Companion_return_infer_wrapper_instance_type()):
+        self.inst_19106 = inst_19106
+        self.inst_2af06 = inst_2af06
+
+def Companion_return_infer_accum_int_type_alloc():
+   _ctx = Companion_return_infer_accum_int_type()
+   _ctx.total = 0
+   return _ctx
+
+
+def Companion_return_infer_wrapper_stateful_type_alloc():
+   _ctx = Companion_return_infer_wrapper_stateful_type()
+   _ctx.inst_1c525 = Companion_return_infer_accum_int_type_alloc()
+   return _ctx
+
+
+def Companion_return_infer_wrapper_instance_type_alloc():
+   _ctx = Companion_return_infer_wrapper_instance_type()
+   _ctx.i1 = Companion_return_infer_accum_int_type_alloc()
+   return _ctx
+
+
+def Companion_return_infer_main_type_alloc():
+   _ctx = Companion_return_infer_main_type()
+   _ctx.inst_19106 = Companion_return_infer_wrapper_stateful_type_alloc()
+   _ctx.inst_2af06 = Companion_return_infer_wrapper_instance_type_alloc()
+   return _ctx
+
+
+def Companion_return_infer_current_int_type_alloc(_ctx):
+   return Companion_return_infer_accum_int_type_alloc()
+
+def Cret_lib_pick_int(x):
+   return x
+
+def Cret_lib_tag_int():
+   return 7
+
+def Companion_return_infer_choose_int(x):
+   return x
+
+def Companion_return_infer_marker_int():
+   return 42
+
+def Companion_return_infer_accum_int(_ctx, x):
+   _ctx.total = (x + _ctx.total)
+   return _ctx.total
+
+
+def Companion_return_infer_current_int(_ctx):
+   return _ctx.total
+
+def Companion_return_infer_wrapper_stateless():
+   unused = Companion_return_infer_choose_int(1)
+   return Companion_return_infer_marker_int()
+
+
+def Companion_return_infer_wrapper_stateful(_ctx):
+   unused = Companion_return_infer_accum_int(_ctx.inst_1c525, 3)
+   return Companion_return_infer_current_int(_ctx.inst_1c525)
+
+
+def Companion_return_infer_wrapper_instance(_ctx):
+   unused = Companion_return_infer_accum_int(_ctx.i1, 20)
+   return Companion_return_infer_current_int(_ctx.i1)
+
+
+def Companion_return_infer_wrapper_qualified():
+   unused = Cret_lib_pick_int(1)
+   return Cret_lib_tag_int()
+
+
+def Companion_return_infer_main(_ctx):
+   w1 = Companion_return_infer_wrapper_stateless()
+   w2 = Companion_return_infer_wrapper_stateful(_ctx.inst_19106)
+   w3 = Companion_return_infer_wrapper_instance(_ctx.inst_2af06)
+   w4 = Companion_return_infer_wrapper_qualified()
+   if ((((w1 == 42) and (w2 == 3)) and (w3 == 20)) and (w4 == 7)):
+      return 700
+   return -1
+
+

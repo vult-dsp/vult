@@ -1,0 +1,57 @@
+// Regression test: the return type of a companion call must be resolved during
+// elaboration. Each wrapper below has no return type annotation, so its type is
+// inferred solely from the companion call; before the fix these programs failed
+// code generation with "The type could not be inferred".
+
+fun choose(x : 't) : 't {
+  return x;
+}
+and marker() : int {
+  return 42;
+}
+
+// Stateful generic with a companion that reads the shared context
+fun accum(x : 't) : 't {
+  mem total : 't;
+  total = total + x;
+  return total;
+}
+and current() {
+  // The companion's own return type is inferred per specialization
+  return total;
+}
+
+// Stateless companion, anonymous call
+fun wrapper_stateless() {
+  val unused = choose(1);
+  return marker();
+}
+
+// Stateful companion, anonymous instance
+fun wrapper_stateful() {
+  val unused = accum(3);
+  return current();
+}
+
+// Stateful companion, explicit instance
+fun wrapper_instance() {
+  val unused = i1:accum(20);
+  return i1:current();
+}
+
+// Qualified companion call into another module
+fun wrapper_qualified() {
+  val unused = Cret_lib.pick(1);
+  return Cret_lib.tag();
+}
+
+fun main() : int {
+  val w1 = wrapper_stateless(); // 42
+  val w2 = wrapper_stateful();  // 3
+  val w3 = wrapper_instance();  // 20
+  val w4 = wrapper_qualified(); // 7
+  if (w1 == 42 && w2 == 3 && w3 == 20 && w4 == 7) {
+    return 700;
+  }
+  return -1;
+}

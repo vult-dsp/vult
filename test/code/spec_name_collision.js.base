@@ -1,0 +1,58 @@
+
+// Runtime functions (simple builtins like eps, pi, clip, real, int_, sin, cos, etc. are inlined)
+this.random = function()         { return Math.random(); };
+this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };
+this.int_to_float = function(i)  { return i; };
+this.float_to_int = function(i)  { return Math.floor(i); };
+this.initializeArray = function(v, size){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
+this.Review_sig_a_b_c_alloc = function () {
+   var _ctx = {};
+   _ctx.first = (0|0);
+   return _ctx;
+};
+
+this.Review_sig_a_b_c_318de1b9_alloc = function () {
+   var _ctx = {};
+   _ctx.second = (0|0);
+   return _ctx;
+};
+
+this.Spec_name_collision_keep_Review_sig_a_b_c = function (v) {
+   return v;
+};
+
+this.Spec_name_collision_keep_Review_sig_a_b_c_b37a7a88 = function (v) {
+   return v;
+};
+
+this.Spec_name_collision_test_distinct_specializations = function () {
+   var _record_0 = { first: (11|0) };
+   var ra = this.Spec_name_collision_keep_Review_sig_a_b_c(_record_0);
+   var _record_1 = { second: (22|0) };
+   var rb = this.Spec_name_collision_keep_Review_sig_a_b_c_b37a7a88(_record_1);
+   if (((ra.first == (11|0)) && (rb.second == (22|0)))) {
+      return (100|0);
+   }
+   return (-1|0);
+};
+
+this.Spec_name_collision_test_reversed_order = function () {
+   var _record_0 = { second: (44|0) };
+   var rb = this.Spec_name_collision_keep_Review_sig_a_b_c_b37a7a88(_record_0);
+   var _record_1 = { first: (33|0) };
+   var ra = this.Spec_name_collision_keep_Review_sig_a_b_c(_record_1);
+   if (((ra.first == (33|0)) && (rb.second == (44|0)))) {
+      return (200|0);
+   }
+   return (-2|0);
+};
+
+this.Spec_name_collision_main = function () {
+   var t1 = this.Spec_name_collision_test_distinct_specializations();
+   var t2 = this.Spec_name_collision_test_reversed_order();
+   if (((t1 == (100|0)) && (t2 == (200|0)))) {
+      return (1100|0);
+   }
+   return (t1 + t2);
+};
+

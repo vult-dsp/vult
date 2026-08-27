@@ -1,0 +1,9 @@
+// A wrongly typed literal specialization: a bool constant cannot specialize an
+// int constant generic parameter.
+fun scale('factor : int, x : int) : int {
+  return x * factor;
+}
+
+fun main() : int {
+  return scale(true, 3);
+}

@@ -1,0 +1,302 @@
+
+package vult.com.spec_name_collision;
+
+import java.util.Arrays;
+import java.util.Random;
+import vult.com.external.*;
+
+public class Spec_name_collision {
+
+
+static int clip(int x, int minv, int maxv) {
+    if(x > maxv)
+        return maxv;
+    else if(x < minv)
+        return minv;
+    else return x;
+}
+
+static float clip(float x, float minv, float maxv) {
+    if(x > maxv)
+        return maxv;
+    else if(x < minv)
+        return minv;
+    else return x;
+}
+
+static int[] makeArray(int size, int init) {
+    int a[] = new int[size];
+    Arrays.fill(a, init);
+    return a;
+}
+
+static float[] makeArray(int size, float init) {
+    float a[] = new float[size];
+    Arrays.fill(a, init);
+    return a;
+}
+
+static boolean[] makeArray(int size, boolean init) {
+    boolean a[] = new boolean[size];
+    Arrays.fill(a, init);
+    return a;
+}
+
+static boolean not(boolean x) {
+    return !x;
+}
+
+static float int_to_float(int x) {
+    return (float)x;
+}
+
+static float bool_to_float(boolean x) {
+    return x ? 1.0f : 0.0f;
+}
+
+static int float_to_int(float x) {
+    return (int)x;
+}
+
+static short int16(int x) {
+    return (short)Math.max(-32768, Math.min(32767, x));
+}
+
+static short int16(float x) {
+    return (short)Math.max(-32768, Math.min(32767, (int)x));
+}
+
+static float floor(float x) {
+    return (float)Math.floor(x);
+}
+
+static float ceil(float x) {
+    return (float)Math.ceil(x);
+}
+
+static float asin(float x) {
+    return (float)Math.asin(x);
+}
+
+static float acos(float x) {
+    return (float)Math.acos(x);
+}
+
+static float atan(float x) {
+    return (float)Math.atan(x);
+}
+
+static float atan2(float y, float x) {
+    return (float)Math.atan2(y, x);
+}
+
+static float min(float a, float b) {
+    return Math.min(a, b);
+}
+
+static float max(float a, float b) {
+    return Math.max(a, b);
+}
+
+static int min(int a, int b) {
+    return Math.min(a, b);
+}
+
+static int max(int a, int b) {
+    return Math.max(a, b);
+}
+
+Random rand = new Random();
+
+float random() {
+    return rand.nextFloat();
+}
+
+int irandom() {
+    return rand.nextInt();
+}
+
+static float get(float[] a, int i) {
+    return a[i];
+}
+
+static void set(float[] a, int i, float val) {
+    a[i] = val;
+}
+
+static int get(int[] a, int i) {
+    return a[i];
+}
+
+static void set(int[] a, int i, int val) {
+    a[i] = val;
+}
+
+static float[] wrap_array(float x[]) {
+    return x;
+}
+
+static int[] wrap_array(int x[]) {
+    return x;
+}
+
+static float cosh(float x) {
+    return (float)Math.cosh(x);
+}
+
+static float cos(float x) {
+    return (float)Math.cos(x);
+}
+
+static float sin(float x) {
+    return (float)Math.sin(x);
+}
+
+static float sinh(float x) {
+    return (float)Math.sinh(x);
+}
+
+static float tan(float x) {
+    return (float)Math.tan(x);
+}
+
+static float tanh(float x) {
+    return (float)Math.tanh(x);
+}
+
+static float sqrt(float x) {
+    return (float)Math.sqrt(x);
+}
+
+static float pow(float x, float y) {
+    return (float)Math.pow(x, y);
+}
+
+static float exp(float x) {
+    return (float)Math.exp(x);
+}
+
+static float log(float x) {
+    return (float)Math.log(x);
+}
+
+static float log10(float x) {
+    return (float)Math.log10(x);
+}
+
+static float abs(float x) {
+    return Math.abs(x);
+}
+
+static int abs(int x) {
+    return Math.abs(x);
+}
+
+static float[] initializeArray(float v, int size) {
+    float[] a = new float[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static int[] initializeArray(int v, int size) {
+    int[] a = new int[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static boolean[] initializeArray(boolean v, int size) {
+    boolean[] a = new boolean[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static float eps() {
+    return 1e-18f;
+}
+
+static float pi() {
+    return 3.1415926535897932384f;
+}
+
+static int float_to_fix(float x) {
+    return (int)(x * 65536.0f);
+}
+
+static int fix_to_int(int x) {
+    return x >> 16;
+}
+
+static float fix_to_float(int x) {
+    return ((float)x) / 65536.0f;
+}
+
+
+public static class Review_sig_a_b_c {
+   public int first;
+
+   public Review_sig_a_b_c() {
+      this.first = 0;
+   }
+   public Review_sig_a_b_c(int first) {
+      this.first = first;
+   }}public static class Review_sig_a_b_c_318de1b9 {
+   public int second;
+
+   public Review_sig_a_b_c_318de1b9() {
+      this.second = 0;
+   }
+   public Review_sig_a_b_c_318de1b9(int second) {
+      this.second = second;
+   }}private Review_sig_a_b_c Review_sig_a_b_c_alloc() {
+   Review_sig_a_b_c _ctx = new Review_sig_a_b_c();
+   _ctx.first = 0;
+   return _ctx;
+}
+
+private Review_sig_a_b_c_318de1b9 Review_sig_a_b_c_318de1b9_alloc() {
+   Review_sig_a_b_c_318de1b9 _ctx = new Review_sig_a_b_c_318de1b9();
+   _ctx.second = 0;
+   return _ctx;
+}
+
+private Review_sig_a_b_c Spec_name_collision_keep_Review_sig_a_b_c(Review_sig_a_b_c v) {
+   return v;
+}
+
+private Review_sig_a_b_c_318de1b9 Spec_name_collision_keep_Review_sig_a_b_c_b37a7a88(Review_sig_a_b_c_318de1b9 v) {
+   return v;
+}
+
+private int Spec_name_collision_test_distinct_specializations() {
+   Review_sig_a_b_c _record_0 = new Review_sig_a_b_c(11);
+   Review_sig_a_b_c ra = Spec_name_collision_keep_Review_sig_a_b_c(_record_0);
+   Review_sig_a_b_c_318de1b9 _record_1 = new Review_sig_a_b_c_318de1b9(22);
+   Review_sig_a_b_c_318de1b9 rb = Spec_name_collision_keep_Review_sig_a_b_c_b37a7a88(_record_1);
+   if (((ra.first == 11) && (rb.second == 22))) {
+      return 100;
+   }
+   return -1;
+}
+
+private int Spec_name_collision_test_reversed_order() {
+   Review_sig_a_b_c_318de1b9 _record_0 = new Review_sig_a_b_c_318de1b9(44);
+   Review_sig_a_b_c_318de1b9 rb = Spec_name_collision_keep_Review_sig_a_b_c_b37a7a88(_record_0);
+   Review_sig_a_b_c _record_1 = new Review_sig_a_b_c(33);
+   Review_sig_a_b_c ra = Spec_name_collision_keep_Review_sig_a_b_c(_record_1);
+   if (((ra.first == 33) && (rb.second == 44))) {
+      return 200;
+   }
+   return -2;
+}
+
+private int Spec_name_collision_main() {
+   int t1 = Spec_name_collision_test_distinct_specializations();
+   int t2 = Spec_name_collision_test_reversed_order();
+   if (((t1 == 100) && (t2 == 200))) {
+      return 1100;
+   }
+   return (t1 + t2);
+}
+
+
+}

@@ -1,0 +1,7 @@
+// Support module for companion_return_infer.vult
+fun pick(x : 't) : 't {
+  return x;
+}
+and tag() : int {
+  return 7;
+}

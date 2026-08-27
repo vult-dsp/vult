@@ -1,0 +1,125 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct Companion_return_infer_accum_int_type
+       total::Int32
+end
+
+# Default constructor for Companion_return_infer_accum_int_type
+function Companion_return_infer_accum_int_type()
+    return Companion_return_infer_accum_int_type(Int32(0))
+end
+
+mutable struct Companion_return_infer_wrapper_stateful_type
+       inst_1c525::Companion_return_infer_accum_int_type
+end
+
+# Default constructor for Companion_return_infer_wrapper_stateful_type
+function Companion_return_infer_wrapper_stateful_type()
+    return Companion_return_infer_wrapper_stateful_type(Companion_return_infer_accum_int_type())
+end
+
+mutable struct Companion_return_infer_wrapper_instance_type
+       i1::Companion_return_infer_accum_int_type
+end
+
+# Default constructor for Companion_return_infer_wrapper_instance_type
+function Companion_return_infer_wrapper_instance_type()
+    return Companion_return_infer_wrapper_instance_type(Companion_return_infer_accum_int_type())
+end
+
+mutable struct Companion_return_infer_main_type
+       inst_19106::Companion_return_infer_wrapper_stateful_type
+       inst_2af06::Companion_return_infer_wrapper_instance_type
+end
+
+# Default constructor for Companion_return_infer_main_type
+function Companion_return_infer_main_type()
+    return Companion_return_infer_main_type(Companion_return_infer_wrapper_stateful_type(), Companion_return_infer_wrapper_instance_type())
+end
+
+function Companion_return_infer_accum_int_type_alloc()
+   _ctx = Companion_return_infer_accum_int_type()
+   _ctx.total = Int32(0)
+   return _ctx
+end
+
+function Companion_return_infer_wrapper_stateful_type_alloc()
+   _ctx = Companion_return_infer_wrapper_stateful_type()
+   _ctx.inst_1c525 = Companion_return_infer_accum_int_type_alloc()
+   return _ctx
+end
+
+function Companion_return_infer_wrapper_instance_type_alloc()
+   _ctx = Companion_return_infer_wrapper_instance_type()
+   _ctx.i1 = Companion_return_infer_accum_int_type_alloc()
+   return _ctx
+end
+
+function Companion_return_infer_main_type_alloc()
+   _ctx = Companion_return_infer_main_type()
+   _ctx.inst_19106 = Companion_return_infer_wrapper_stateful_type_alloc()
+   _ctx.inst_2af06 = Companion_return_infer_wrapper_instance_type_alloc()
+   return _ctx
+end
+
+function Companion_return_infer_current_int_type_alloc(_ctx)
+   return Companion_return_infer_accum_int_type_alloc()
+end
+
+function Cret_lib_pick_int(x)
+   return x
+end
+
+function Cret_lib_tag_int()
+   return Int32(7)
+end
+
+function Companion_return_infer_choose_int(x)
+   return x
+end
+
+function Companion_return_infer_marker_int()
+   return Int32(42)
+end
+
+function Companion_return_infer_accum_int(_ctx, x)
+   _ctx.total = (x + _ctx.total)
+   return _ctx.total
+end
+
+function Companion_return_infer_current_int(_ctx)
+   return _ctx.total
+end
+
+function Companion_return_infer_wrapper_stateless()
+   unused = Companion_return_infer_choose_int(Int32(1))
+   return Companion_return_infer_marker_int()
+end
+
+function Companion_return_infer_wrapper_stateful(_ctx)
+   unused = Companion_return_infer_accum_int(_ctx.inst_1c525, Int32(3))
+   return Companion_return_infer_current_int(_ctx.inst_1c525)
+end
+
+function Companion_return_infer_wrapper_instance(_ctx)
+   unused = Companion_return_infer_accum_int(_ctx.i1, Int32(20))
+   return Companion_return_infer_current_int(_ctx.i1)
+end
+
+function Companion_return_infer_wrapper_qualified()
+   unused = Cret_lib_pick_int(Int32(1))
+   return Cret_lib_tag_int()
+end
+
+function Companion_return_infer_main(_ctx)
+   w1 = Companion_return_infer_wrapper_stateless()
+   w2 = Companion_return_infer_wrapper_stateful(_ctx.inst_19106)
+   w3 = Companion_return_infer_wrapper_instance(_ctx.inst_2af06)
+   w4 = Companion_return_infer_wrapper_qualified()
+   if ((((w1 == Int32(42)) && (w2 == Int32(3))) && (w3 == Int32(20))) && (w4 == Int32(7)))
+      return Int32(700)
+   end
+   return Int32(-1)
+end
+

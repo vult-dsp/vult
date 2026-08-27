@@ -1,0 +1,76 @@
+import math
+import random as random_module
+
+# Runtime functions (simple builtins like eps, pi, clip, sin, cos, etc. are inlined)
+
+def random():
+    return random_module.random()
+
+def irandom():
+    return int(random_module.random() * 4294967296)
+
+def int_to_float(i):
+    return float(i)
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+class Review_sig_a_b_c:
+    __slots__ = ['first']
+    def __init__(self, first=0):
+        self.first = first
+
+class Review_sig_a_b_c_318de1b9:
+    __slots__ = ['second']
+    def __init__(self, second=0):
+        self.second = second
+
+def Review_sig_a_b_c_alloc():
+   _ctx = Review_sig_a_b_c()
+   _ctx.first = 0
+   return _ctx
+
+
+def Review_sig_a_b_c_318de1b9_alloc():
+   _ctx = Review_sig_a_b_c_318de1b9()
+   _ctx.second = 0
+   return _ctx
+
+
+def Spec_name_collision_keep_Review_sig_a_b_c(v):
+   return v
+
+def Spec_name_collision_keep_Review_sig_a_b_c_b37a7a88(v):
+   return v
+
+def Spec_name_collision_test_distinct_specializations():
+   _record_0 = Review_sig_a_b_c(first=11)
+   ra = Spec_name_collision_keep_Review_sig_a_b_c(_record_0)
+   _record_1 = Review_sig_a_b_c_318de1b9(second=22)
+   rb = Spec_name_collision_keep_Review_sig_a_b_c_b37a7a88(_record_1)
+   if ((ra.first == 11) and (rb.second == 22)):
+      return 100
+   return -1
+
+
+def Spec_name_collision_test_reversed_order():
+   _record_0 = Review_sig_a_b_c_318de1b9(second=44)
+   rb = Spec_name_collision_keep_Review_sig_a_b_c_b37a7a88(_record_0)
+   _record_1 = Review_sig_a_b_c(first=33)
+   ra = Spec_name_collision_keep_Review_sig_a_b_c(_record_1)
+   if ((ra.first == 33) and (rb.second == 44)):
+      return 200
+   return -2
+
+
+def Spec_name_collision_main():
+   t1 = Spec_name_collision_test_distinct_specializations()
+   t2 = Spec_name_collision_test_reversed_order()
+   if ((t1 == 100) and (t2 == 200)):
+      return 1100
+   return (t1 + t2)
+
+

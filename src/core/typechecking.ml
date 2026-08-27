@@ -460,6 +460,34 @@ and generic_call (env : env) (instance : (string * Syntax.exp option) option) (g
   let explicit_generic_args, function_args = split_args 0 [] [] generic_func.param_order in
   (* Process explicit template arguments with template argument context (allows function references) *)
   let env, processed_explicit_generic_args = exp_list ~context:generic_arg_context env explicit_generic_args in
+  (* Check each constant generic argument against its declared parameter type. This applies to
+     literal (specialized) and variable (non-specialized) arguments alike. A fresh copy of the
+     declared type is unified so the generic definition itself is never mutated. *)
+  let () =
+    let params = Array.of_list generic_func.generic_params in
+    let explicit = Array.of_list processed_explicit_generic_args in
+    ignore
+      ( CCList.fold_left
+          (fun expl_idx pk ->
+            match pk with
+            | Typed.PKArg _ ->
+                expl_idx
+            | Typed.PKGeneric i ->
+                let () =
+                  if i < Array.length params && expl_idx < Array.length explicit then
+                    match params.(i) with
+                    | Typed.GParamConstant (_, param_type) ->
+                        let fresh_param_type =
+                          match Typed.copy_types_preserving_sharing [param_type] with [t] -> t | _ -> param_type
+                        in
+                        unifyRaise explicit.(expl_idx).loc fresh_param_type explicit.(expl_idx).t
+                    | Typed.GParamType _ | Typed.GParamFunction _ ->
+                        ()
+                in
+                expl_idx + 1 )
+          0 generic_func.param_order
+        : int )
+  in
   (* Process regular function arguments with normal context *)
   let env, processed_function_args = exp_list ~context:normal_context env function_args in
   (* Create fresh copies of the generic function's argument types for unification *)

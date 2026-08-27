@@ -1,0 +1,4 @@
+This expression has type 'bool' but 'int' was expected
+fun main() : int {
+  return scale(true, 3);
+               ^^^^

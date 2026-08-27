@@ -28,9 +28,28 @@ module T = Typed
 module Maps = Util.Maps
 open Env
 
-type state = {types: type_ Maps.Map.t; dummy: int}
+type state =
+  { types: type_ Maps.Map.t (* Converted struct types, keyed by the full path of the type *)
+  ; type_names: string Maps.Map.t
+        (* Emitted type name -> full path that owns it. The flattened names are not injective
+           (the paths A.b_c and A_b.c both flatten to A_b_c), so a type whose flattened name is
+           already taken by a different type gets a digest-suffixed name. *)
+  ; dummy: int }
 
 let path (p : Syntax.path) : string = match p with {id; n= None; _} -> id | {id; n= Some n; _} -> n ^ "_" ^ id
+
+(* Full path key of a type: injective, unlike the flattened emitted name, because module
+   names cannot contain '.' *)
+let full_path_key (p : Syntax.path) : string =
+  match p with {id; n= None; _} -> id | {id; n= Some n; _} -> n ^ "." ^ id
+
+(* Reserve the emitted name for the type with the given full path. When distinct type paths
+   flatten to the same name, the later one gets the name extended with a digest of its full
+   path (see [Util.Names.disambiguate]). *)
+let claim_type_name (state : state) (full : string) (base : string) : state * string =
+  let taken candidate = Maps.Map.find_opt candidate state.type_names in
+  let name = Util.Names.disambiguate ~taken full base in
+  ({state with type_names= Maps.Map.add name full state.type_names}, name)
 
 let list mapper (env : env) (state : state) (l : 'a list) =
   let state, rev =
@@ -76,8 +95,8 @@ let rec type_ ?(const = false) (env : env) (state : state) (t : Typed.type_) =
   | T.TEId {id= "bool"; n= None; _} ->
       (state, {t= TBool; const; loc})
   | T.TEId p -> (
-      let ps = path p in
-      match Maps.Map.find_opt ps state.types with
+      let full = full_path_key p in
+      match Maps.Map.find_opt full state.types with
       | Some t ->
           (state, {t with const})
       | None -> (
@@ -89,13 +108,14 @@ let rec type_ ?(const = false) (env : env) (state : state) (t : Typed.type_) =
         | Some {descr= Record members; _} when Maps.Map.is_empty !members ->
             (state, {t= TEmptyType; const; loc})
         | Some {descr= Record members; _} ->
+            let state, ps = claim_type_name state full (path p) in
             let members =
               CCList.map (fun (name, (var : Env.var)) -> (name, var.t, var.tags, var.loc)) (Env.Map.to_list members)
               |> CCList.sort (fun (n1, _, _, _) (n2, _, _, _) -> String.compare n1 n2)
             in
             let state, members = type_list env state members in
             let t = {t= TStruct {path= ps; members}; loc; const= true} in
-            let types = Maps.Map.add ps t state.types in
+            let types = Maps.Map.add full t state.types in
             ({state with types}, t)
         | Some {descr= Simple; _} ->
             failwith "Type does not have members"
@@ -225,8 +245,7 @@ let rec exp (env : env) (state : state) (e : Typed.exp) : state * Prog.exp =
   | EMember (e, m) ->
       let state, e = exp env state e in
       (state, {e= EMember (e, m); t; loc})
-  | ERecord {path= p; elems} ->
-      let p = path p in
+  | ERecord {path= _; elems} ->
       let state, elems_rev =
         CCList.fold_left
           (fun (state, acc) (n, v) ->
@@ -234,10 +253,12 @@ let rec exp (env : env) (state : state) (e : Typed.exp) : state * Prog.exp =
             (state, (n, v) :: acc) )
           (state, []) elems
       in
-      let sorting =
+      (* The emitted record name comes from the converted struct type: flattening the record's
+         own path here could disagree with the (collision-disambiguated) name of the type *)
+      let sorting, p =
         match t with
-        | {t= TStruct {members; _}; _} ->
-            CCList.mapi (fun i (name, _, _, _) -> (name, i)) members
+        | {t= TStruct {members; path= struct_path; _}; _} ->
+            (CCList.mapi (fun i (name, _, _, _) -> (name, i)) members, struct_path)
         | _ ->
             failwith "This should be a record"
       in
@@ -416,11 +437,12 @@ let top_stmt (env : env) (state : state) (t : Typed.top_stmt) =
   | TopType {members= []; _} ->
       (state, [])
   | TopType {path= p; members} ->
-      let p = path p in
+      let full = full_path_key p in
+      let state, ps = claim_type_name state full (path p) in
       let state, members = type_list env state members in
-      let struct_descr = {path= p; members} in
+      let struct_descr = {path= ps; members} in
       let t = {t= TStruct struct_descr; loc= t.loc; const= false} in
-      let types = Maps.Map.add p t state.types in
+      let types = Maps.Map.add full t state.types in
       ({state with types}, [{top= TopType struct_descr; loc= t.loc}])
   | TopEnum _ ->
       (state, [])
@@ -437,7 +459,7 @@ let top_stmt (env : env) (state : state) (t : Typed.top_stmt) =
 let top_stmt_list (env : env) (state : state) (t : Typed.top_stmt list) = list top_stmt env state t
 
 let main env stmts =
-  let state = {types= Maps.Map.empty; dummy= 0} in
+  let state = {types= Maps.Map.empty; type_names= Maps.Map.empty; dummy= 0} in
   let _, t = top_stmt_list env state stmts in
   CCList.flatten t
 

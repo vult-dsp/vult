@@ -12,6 +12,7 @@
   Loc
   Args
   Maps
+  Names
   Fitting
   WaveFile
   Profile

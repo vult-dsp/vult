@@ -1,0 +1,150 @@
+
+-- LuaJIT detection and optimization
+local isLuaJIT = type(jit) == "table" and jit.version
+
+-- Optimized array creation for LuaJIT using FFI
+local initializeArray
+if isLuaJIT then
+    local ffi = require("ffi")
+    ffi.cdef[[
+        typedef struct { double data[1]; } vult_array_t;
+    ]]
+    
+    function initializeArray(v, n) 
+        if type(v) == "number" then
+            -- Use FFI for numeric arrays in LuaJIT
+            local arr = ffi.new("double[?]", n)
+            for i = 0, n-1 do arr[i] = v end
+            return setmetatable({}, {
+                __index = function(t, k) return arr[k-1] end,
+                __newindex = function(t, k, v) arr[k-1] = v end,
+                __len = function() return n end
+            })
+        else
+            -- Fallback for non-numeric values
+            local a = {} 
+            for i=1, n do a[i] = v end 
+            return a 
+        end
+    end
+else
+    -- Standard Lua implementation
+    function initializeArray(v, n) 
+        local a = {} 
+        for i=1, n do a[i] = v end 
+        return a 
+    end
+end
+
+-- Math functions with LuaJIT optimizations
+local sin, cos, abs, exp, floor, ceil, tan, tanh, sqrt
+local asin, acos, atan, atan2, min, max
+if isLuaJIT then
+    -- LuaJIT has faster math operations
+    sin = math.sin
+    cos = math.cos
+    abs = math.abs
+    exp = math.exp
+    floor = math.floor
+    ceil = math.ceil
+    tan = math.tan
+    tanh = math.tanh
+    sqrt = math.sqrt
+    asin = math.asin
+    acos = math.acos
+    atan = math.atan
+    atan2 = math.atan2
+    min = math.min
+    max = math.max
+else
+    -- Standard Lua (same functions but explicit for potential future optimizations)
+    sin = math.sin
+    cos = math.cos
+    abs = math.abs
+    exp = math.exp
+    floor = math.floor
+    ceil = math.ceil
+    tan = math.tan
+    tanh = math.tanh
+    sqrt = math.sqrt
+    asin = math.asin
+    acos = math.acos
+    atan = math.atan
+    -- math.atan2 was removed in Lua 5.4; the two-argument math.atan replaces it
+    atan2 = math.atan2 or function(y, x) return math.atan(y, x) end
+    min = math.min
+    max = math.max
+end
+
+-- Bit operations optimized for LuaJIT
+local lshift, rshift
+if isLuaJIT then
+    local bit = require("bit")
+    lshift = bit.lshift
+    rshift = bit.rshift
+else
+    -- Fallback to arithmetic operations for standard Lua
+    function lshift(a, b) return a * (2 ^ b) end
+    function rshift(a, b) return math.floor(a / (2 ^ b)) end
+end
+
+-- Core runtime functions (simple builtins like eps, pi, clip, real, int, bool are inlined)
+function ifExpressionValue(cond,then_,else_) if cond then return then_ else return else_ end end
+function ifExpression(cond,then_,else_) if cond then return then_() else return else_() end end
+function random()           return math.random() end
+function irandom()          return math.floor(math.random() * 4294967296) end
+function int16(x)           local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end
+function intDiv(a, b)       return math.floor(a / b) end
+function list_clear(t)      for k in pairs(t) do t[k] = nil end end
+
+function Review_sig_a_b_c_alloc()
+   local _ctx = {};
+   _ctx.first = 0
+   return _ctx
+end
+
+function Review_sig_a_b_c_318de1b9_alloc()
+   local _ctx = {};
+   _ctx.second = 0
+   return _ctx
+end
+
+function Spec_name_collision_keep_Review_sig_a_b_c(v)
+   return v
+end
+
+function Spec_name_collision_keep_Review_sig_a_b_c_b37a7a88(v)
+   return v
+end
+
+function Spec_name_collision_test_distinct_specializations()
+   local _record_0 = { first = 11 }
+   local ra = Spec_name_collision_keep_Review_sig_a_b_c(_record_0)
+   local _record_1 = { second = 22 }
+   local rb = Spec_name_collision_keep_Review_sig_a_b_c_b37a7a88(_record_1)
+   if ((ra.first == 11) and (rb.second == 22)) then
+      return 100
+   end
+   return -1
+end
+
+function Spec_name_collision_test_reversed_order()
+   local _record_0 = { second = 44 }
+   local rb = Spec_name_collision_keep_Review_sig_a_b_c_b37a7a88(_record_0)
+   local _record_1 = { first = 33 }
+   local ra = Spec_name_collision_keep_Review_sig_a_b_c(_record_1)
+   if ((ra.first == 33) and (rb.second == 44)) then
+      return 200
+   end
+   return -2
+end
+
+function Spec_name_collision_main()
+   local t1 = Spec_name_collision_test_distinct_specializations()
+   local t2 = Spec_name_collision_test_reversed_order()
+   if ((t1 == 100) and (t2 == 200)) then
+      return 1100
+   end
+   return (t1 + t2)
+end
+

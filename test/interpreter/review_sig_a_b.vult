@@ -1,0 +1,5 @@
+// Support module for spec_name_collision.vult: the type path Review_sig_a_b.c
+// flattens to the same mangled name as Review_sig_a.b_c
+type c {
+  val second : int;
+}

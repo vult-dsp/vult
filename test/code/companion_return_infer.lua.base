@@ -1,0 +1,184 @@
+
+-- LuaJIT detection and optimization
+local isLuaJIT = type(jit) == "table" and jit.version
+
+-- Optimized array creation for LuaJIT using FFI
+local initializeArray
+if isLuaJIT then
+    local ffi = require("ffi")
+    ffi.cdef[[
+        typedef struct { double data[1]; } vult_array_t;
+    ]]
+    
+    function initializeArray(v, n) 
+        if type(v) == "number" then
+            -- Use FFI for numeric arrays in LuaJIT
+            local arr = ffi.new("double[?]", n)
+            for i = 0, n-1 do arr[i] = v end
+            return setmetatable({}, {
+                __index = function(t, k) return arr[k-1] end,
+                __newindex = function(t, k, v) arr[k-1] = v end,
+                __len = function() return n end
+            })
+        else
+            -- Fallback for non-numeric values
+            local a = {} 
+            for i=1, n do a[i] = v end 
+            return a 
+        end
+    end
+else
+    -- Standard Lua implementation
+    function initializeArray(v, n) 
+        local a = {} 
+        for i=1, n do a[i] = v end 
+        return a 
+    end
+end
+
+-- Math functions with LuaJIT optimizations
+local sin, cos, abs, exp, floor, ceil, tan, tanh, sqrt
+local asin, acos, atan, atan2, min, max
+if isLuaJIT then
+    -- LuaJIT has faster math operations
+    sin = math.sin
+    cos = math.cos
+    abs = math.abs
+    exp = math.exp
+    floor = math.floor
+    ceil = math.ceil
+    tan = math.tan
+    tanh = math.tanh
+    sqrt = math.sqrt
+    asin = math.asin
+    acos = math.acos
+    atan = math.atan
+    atan2 = math.atan2
+    min = math.min
+    max = math.max
+else
+    -- Standard Lua (same functions but explicit for potential future optimizations)
+    sin = math.sin
+    cos = math.cos
+    abs = math.abs
+    exp = math.exp
+    floor = math.floor
+    ceil = math.ceil
+    tan = math.tan
+    tanh = math.tanh
+    sqrt = math.sqrt
+    asin = math.asin
+    acos = math.acos
+    atan = math.atan
+    -- math.atan2 was removed in Lua 5.4; the two-argument math.atan replaces it
+    atan2 = math.atan2 or function(y, x) return math.atan(y, x) end
+    min = math.min
+    max = math.max
+end
+
+-- Bit operations optimized for LuaJIT
+local lshift, rshift
+if isLuaJIT then
+    local bit = require("bit")
+    lshift = bit.lshift
+    rshift = bit.rshift
+else
+    -- Fallback to arithmetic operations for standard Lua
+    function lshift(a, b) return a * (2 ^ b) end
+    function rshift(a, b) return math.floor(a / (2 ^ b)) end
+end
+
+-- Core runtime functions (simple builtins like eps, pi, clip, real, int, bool are inlined)
+function ifExpressionValue(cond,then_,else_) if cond then return then_ else return else_ end end
+function ifExpression(cond,then_,else_) if cond then return then_() else return else_() end end
+function random()           return math.random() end
+function irandom()          return math.floor(math.random() * 4294967296) end
+function int16(x)           local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end
+function intDiv(a, b)       return math.floor(a / b) end
+function list_clear(t)      for k in pairs(t) do t[k] = nil end end
+
+function Companion_return_infer_accum_int_type_alloc()
+   local _ctx = {};
+   _ctx.total = 0
+   return _ctx
+end
+
+function Companion_return_infer_wrapper_stateful_type_alloc()
+   local _ctx = {};
+   _ctx.inst_1c525 = Companion_return_infer_accum_int_type_alloc()
+   return _ctx
+end
+
+function Companion_return_infer_wrapper_instance_type_alloc()
+   local _ctx = {};
+   _ctx.i1 = Companion_return_infer_accum_int_type_alloc()
+   return _ctx
+end
+
+function Companion_return_infer_main_type_alloc()
+   local _ctx = {};
+   _ctx.inst_19106 = Companion_return_infer_wrapper_stateful_type_alloc()
+   _ctx.inst_2af06 = Companion_return_infer_wrapper_instance_type_alloc()
+   return _ctx
+end
+
+function Companion_return_infer_current_int_type_alloc(_ctx)
+   return Companion_return_infer_accum_int_type_alloc()
+end
+
+function Cret_lib_pick_int(x)
+   return x
+end
+
+function Cret_lib_tag_int()
+   return 7
+end
+
+function Companion_return_infer_choose_int(x)
+   return x
+end
+
+function Companion_return_infer_marker_int()
+   return 42
+end
+
+function Companion_return_infer_accum_int(_ctx, x)
+   _ctx.total = (x + _ctx.total)
+   return _ctx.total
+end
+
+function Companion_return_infer_current_int(_ctx)
+   return _ctx.total
+end
+
+function Companion_return_infer_wrapper_stateless()
+   local unused = Companion_return_infer_choose_int(1)
+   return Companion_return_infer_marker_int()
+end
+
+function Companion_return_infer_wrapper_stateful(_ctx)
+   local unused = Companion_return_infer_accum_int(_ctx.inst_1c525, 3)
+   return Companion_return_infer_current_int(_ctx.inst_1c525)
+end
+
+function Companion_return_infer_wrapper_instance(_ctx)
+   local unused = Companion_return_infer_accum_int(_ctx.i1, 20)
+   return Companion_return_infer_current_int(_ctx.i1)
+end
+
+function Companion_return_infer_wrapper_qualified()
+   local unused = Cret_lib_pick_int(1)
+   return Cret_lib_tag_int()
+end
+
+function Companion_return_infer_main(_ctx)
+   local w1 = Companion_return_infer_wrapper_stateless()
+   local w2 = Companion_return_infer_wrapper_stateful(_ctx.inst_19106)
+   local w3 = Companion_return_infer_wrapper_instance(_ctx.inst_2af06)
+   local w4 = Companion_return_infer_wrapper_qualified()
+   if ((((w1 == 42) and (w2 == 3)) and (w3 == 20)) and (w4 == 7)) then
+      return 700
+   end
+   return -1
+end
+

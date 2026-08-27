@@ -1,0 +1,76 @@
+// Regression test: companion lookup must respect the module that owns the
+// parent generic. Cmod_a and Cmod_b define the same generic 'choose' with a
+// companion 'marker' returning different values; a qualified companion call
+// must never resolve to the other module's companion.
+
+fun test_qualified() : int {
+  val a = Cmod_a.choose(1);
+  val b = Cmod_b.choose(2);
+  val ma = Cmod_a.marker();
+  val mb = Cmod_b.marker();
+  if (ma == 11 && mb == 22) {
+    return 100;
+  }
+  return -1;
+}
+
+fun test_qualified_reversed() : int {
+  // Same test with the instantiation order reversed
+  val b = Cmod_b.choose(2);
+  val a = Cmod_a.choose(1);
+  val mb = Cmod_b.marker();
+  val ma = Cmod_a.marker();
+  if (ma == 11 && mb == 22) {
+    return 200;
+  }
+  return -2;
+}
+
+fun test_companion_before_parent() : int {
+  // The companion is processed before the parent call in this function: the
+  // pending-call fallback must also select the parent from the right module
+  val mb = Cmod_b.marker();
+  val ma = Cmod_a.marker();
+  val a = Cmod_a.choose(1);
+  val b = Cmod_b.choose(2);
+  if (ma == 11 && mb == 22) {
+    return 300;
+  }
+  return -3;
+}
+
+fun test_unqualified_in_module() : int {
+  // Unqualified companion calls inside each defining module
+  val la = Cmod_a.local_marker();
+  val lb = Cmod_b.local_marker();
+  if (la == 11 && lb == 22) {
+    return 400;
+  }
+  return -4;
+}
+
+fun test_fallback_module() : int {
+  // 'probe' has no specialization yet when this companion call is processed:
+  // the pending-call fallback must instantiate the parent from the right
+  // module, even though a same-named pending call of the other module exists
+  val vb = Cmod_b.pval();
+  val a = Cmod_a.probe(1);
+  val b = Cmod_b.probe(2);
+  val va = Cmod_a.pval();
+  if (va == 1100 && vb == 2200) {
+    return 500;
+  }
+  return -5;
+}
+
+fun main() : int {
+  val t1 = test_qualified();
+  val t2 = test_qualified_reversed();
+  val t3 = test_companion_before_parent();
+  val t4 = test_unqualified_in_module();
+  val t5 = test_fallback_module();
+  if (t1 == 100 && t2 == 200 && t3 == 300 && t4 == 400 && t5 == 500) {
+    return 1000;
+  }
+  return t1 + t2 + t3 + t4 + t5;
+}

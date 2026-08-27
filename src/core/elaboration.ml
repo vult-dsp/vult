@@ -123,9 +123,77 @@ let constant_to_signature_string (e : Typed.exp) : string =
   | _ ->
       "var"
 
+(* ========== Structural Specialization Keys ========== *)
+
+(* Length-prefixed atom used by the structural keys: makes the concatenations injective *)
+let signature_atom (s : string) : string = Printf.sprintf "%d:%s" (String.length s) s
+
+(* A canonical, injective encoding of a type used in the specialization deduplication keys.
+   Unlike [typeToMangledName], which flattens the type into an identifier where distinct
+   types can collide (e.g. the paths A.b_c and A_b.c both mangle to "A_b_c"), every
+   component here is length-prefixed and the type-tree boundaries are preserved, so two
+   structurally different types never produce the same key. The equivalences of
+   [typeToMangledName] (following links, collapsing single options) are mirrored so types
+   that are semantically the same still share one specialization. *)
+let rec type_to_structural_key (t : Typed.type_) : string =
+  match (unlink t).tx with
+  | TEId {id; n= None; _} ->
+      "i(" ^ signature_atom id ^ ")"
+  | TEId {id; n= Some module_name; _} ->
+      "i(" ^ signature_atom module_name ^ signature_atom id ^ ")"
+  | TEFunction (arg_types, ret_type) ->
+      let args_str = CCList.map type_to_structural_key arg_types |> String.concat "" in
+      "f(" ^ args_str ^ ">" ^ type_to_structural_key ret_type ^ ")"
+  | TEComposed (name, type_args) ->
+      let args_str = CCList.map type_to_structural_key type_args |> String.concat "" in
+      "c(" ^ signature_atom name ^ args_str ^ ")"
+  | TEUnbound (Some id) ->
+      "u(" ^ string_of_int id ^ ")"
+  | TEUnbound None ->
+      "u()"
+  | TEOption type_list -> (
+    match type_list with
+    | [single_type] ->
+        type_to_structural_key single_type
+    | multiple_types -> (
+        let non_option_types =
+          CCList.filter (fun t -> match (unlink t).tx with TEOption _ -> false | _ -> true) multiple_types
+        in
+        match non_option_types with
+        | concrete_type :: _ ->
+            type_to_structural_key concrete_type
+        | [] ->
+            "o(" ^ (CCList.map type_to_structural_key type_list |> String.concat "") ^ ")" ) )
+  | TENoReturn ->
+      "n"
+  | TESize i ->
+      "s(" ^ string_of_int i ^ ")"
+  | TELink _ ->
+      "l"
+
+(* Structural deduplication key of a specialization: the module that owns the generic, the
+   generic's name, a specialized/non-specialized discriminator, the structural argument
+   types, and the explicit argument types (with their constant values when the call is
+   fully specialized). This key decides whether two calls share a specialization; the
+   mangled names below are used only for the emitted identifier and may collide. *)
+let build_structural_signature (owner_module : string) (generic_name : string) (arg_types : Typed.type_ list)
+    (explicit_args : Typed.exp list) (specialized : bool) : string =
+  let kind = if specialized then "spec" else "dyn" in
+  let type_keys = CCList.map type_to_structural_key arg_types in
+  let explicit_keys =
+    CCList.map
+      (fun (e : Typed.exp) ->
+        let value = if specialized then "=" ^ signature_atom (constant_to_signature_string e) else "" in
+        type_to_structural_key e.t ^ value )
+      explicit_args
+  in
+  String.concat "|" ((signature_atom owner_module :: signature_atom generic_name :: kind :: type_keys) @ explicit_keys)
+
 (* ========== Signature Building ========== *)
 
-(* Build a signature string for deduplication based on resolved types *)
+(* Build a readable name for a specialization based on the resolved types. These names are
+   used only as emitted identifiers: they are not injective, so they must not be used to
+   decide whether two specializations are the same (see [build_structural_signature]). *)
 let build_signature_string (generic_name : string) (arg_types : Typed.type_ list) : string =
   String.concat "_" (generic_name :: CCList.map typeToMangledName arg_types)
 
@@ -175,6 +243,10 @@ type instantiation_state =
   ; reuse_env_specializations: bool
         (* When elaborating code against an already-elaborated program (e.g. an expression given
            to -eval), specializations that already exist in the environment are reused *)
+  ; name_signatures: (string, string) Hashtbl.t
+        (* Emitted specialization name -> structural signature that owns it. The mangled names
+           are not injective, so when a structurally different specialization wants a name that
+           is already taken, its name is extended with a digest of its structural signature. *)
   ; mutable pending_generic_calls: Typed.exp list }
 
 let create_instantiation_state (reuse_env_specializations : bool) : instantiation_state =
@@ -184,7 +256,23 @@ let create_instantiation_state (reuse_env_specializations : bool) : instantiatio
   ; in_progress= Hashtbl.create 4
   ; call_instance_names= Hashtbl.create 16
   ; reuse_env_specializations
+  ; name_signatures= Hashtbl.create 16
   ; pending_generic_calls= [] }
+
+(* Sentinel stored in [name_signatures] for names that are taken but do not correspond to a
+   specialization created by this elaboration (e.g. a structurally different function that
+   already exists in the environment). It can never equal a structural signature because
+   those always start with a length-prefixed atom. *)
+let foreign_name_sentinel = "!foreign"
+
+(* Reserve an emitted name for the given structural signature. Two different signatures can
+   mangle to the same readable name; the later one gets the name extended with a digest of
+   its signature (see [Util.Names.disambiguate]). *)
+let claim_specialization_name (state : instantiation_state) (signature : string) (base_name : string) : string =
+  let taken candidate = Hashtbl.find_opt state.name_signatures candidate in
+  let name = Names.disambiguate ~taken signature base_name in
+  Hashtbl.replace state.name_signatures name signature ;
+  name
 
 let resolveTypeIntrinsicsInStmt = Typed.resolveTypeIntrinsicsInStmt
 
@@ -216,6 +304,38 @@ let constant_param_pairs (generic_func : Typed.generic_function) (explicit_args 
       (0, []) generic_func.param_order
   in
   CCList.rev rev_pairs
+
+(* The argument types (excluding any context argument) that the specialization created for a
+   call will have: the regular argument types, interleaved with the explicit constant
+   parameters when the call is not fully specialized. Used to verify that a function found in
+   the environment really is the wanted specialization and not a mangled-name collision.
+   Out-of-range indices are skipped: a malformed param_order degrades to a length mismatch at
+   the comparison site (forcing a fresh instantiation), never to a false match. *)
+let expected_specialization_arg_types (generic_func : Typed.generic_function) (arg_types : Typed.type_ list)
+    (explicit_args : Typed.exp list) (all_constants : bool) : Typed.type_ list =
+  let regular = Array.of_list arg_types in
+  let params = Array.of_list generic_func.generic_params in
+  let explicit = Array.of_list explicit_args in
+  let _, rev_types =
+    CCList.fold_left
+      (fun (expl_idx, acc) pk ->
+        match pk with
+        | Typed.PKArg i ->
+            let acc = if i < Array.length regular then regular.(i) :: acc else acc in
+            (expl_idx, acc)
+        | Typed.PKGeneric i -> (
+            if i >= Array.length params then (expl_idx + 1, acc)
+            else
+              match params.(i) with
+              | Typed.GParamConstant (_, param_type) ->
+                  let t = if expl_idx < Array.length explicit then explicit.(expl_idx).t else param_type in
+                  let acc = if all_constants then acc else t :: acc in
+                  (expl_idx + 1, acc)
+              | Typed.GParamType _ | Typed.GParamFunction _ ->
+                  (expl_idx + 1, acc) ) )
+      (0, []) generic_func.param_order
+  in
+  CCList.rev rev_types
 
 (* ========== Typechecker Dependencies ========== *)
 
@@ -308,7 +428,16 @@ module Make (T : TYPECHECKER) = struct
                 match generic_params_array.(i) with
                 | Typed.GParamConstant (name, param_type) ->
                     let t =
-                      if expl_idx < Array.length explicit_args_array then explicit_args_array.(expl_idx).t
+                      if expl_idx < Array.length explicit_args_array then
+                        let arg_e = explicit_args_array.(expl_idx) in
+                        (* Defensive check: the typechecker already validated the argument
+                           against the declared type. A fresh copy is unified so the generic
+                           definition itself is never mutated. *)
+                        let fresh_param_type =
+                          match Typed.copy_types_preserving_sharing [param_type] with [t] -> t | _ -> param_type
+                        in
+                        let () = unifyRaise arg_e.loc fresh_param_type arg_e.t in
+                        arg_e.t
                       else param_type
                     in
                     (expl_idx + 1, ({name; t; loc} : Typed.arg) :: acc)
@@ -493,7 +622,7 @@ module Make (T : TYPECHECKER) = struct
             let resolved_arg_types = CCList.map (fun (a : Typed.exp) -> unlink a.t) args in
             let has_explicit = CCList.length explicit_args > 0 in
             let all_constants = has_explicit && CCList.for_all is_constant_literal explicit_args in
-            let specialized_name =
+            let base_name =
               if all_constants then
                 build_specialized_signature_string generic_func.name resolved_arg_types explicit_args
               else if has_explicit then
@@ -505,7 +634,9 @@ module Make (T : TYPECHECKER) = struct
                an unqualified call to the same generic map to the same specialization, and
                same-named generics in different modules do not collide *)
             let owner_module = match generic_module with Some m -> m | None -> (Env.getCurrentModule env).name in
-            let signature = owner_module ^ "." ^ specialized_name in
+            let signature =
+              build_structural_signature owner_module generic_func.name resolved_arg_types explicit_args all_constants
+            in
             let specialized_def, in_progress =
               match Hashtbl.find_opt state.instantiated signature with
               | Some (def, _) ->
@@ -516,8 +647,31 @@ module Make (T : TYPECHECKER) = struct
                   in
                   let existing =
                     if state.reuse_env_specializations then
-                      Env.tryLookFunctionCall env_for_instantiation {id= specialized_name; n= None; loc}
+                      Env.tryLookFunctionCall env_for_instantiation {id= base_name; n= None; loc}
                     else None
+                  in
+                  (* A function found in the environment must be verified structurally: mangled
+                     names are not injective, so it could be a different specialization that
+                     happens to share the name. In that case the name is marked as taken and a
+                     fresh specialization (with a disambiguated name) is created instead. *)
+                  let existing =
+                    match existing with
+                    | Some f ->
+                        let expected =
+                          expected_specialization_arg_types generic_func resolved_arg_types explicit_args all_constants
+                        in
+                        let found =
+                          match f.args with Some a -> CCList.map (fun (a : Typed.arg) -> a.t) a | None -> []
+                        in
+                        let same_key a b = String.equal (type_to_structural_key a) (type_to_structural_key b) in
+                        if CCList.length expected = CCList.length found && CCList.for_all2 same_key expected found then
+                          Some f
+                        else (
+                          if not (Hashtbl.mem state.name_signatures base_name) then
+                            Hashtbl.add state.name_signatures base_name foreign_name_sentinel ;
+                          None )
+                    | None ->
+                        None
                   in
                   match existing with
                   | Some f ->
@@ -545,6 +699,7 @@ module Make (T : TYPECHECKER) = struct
                       Hashtbl.replace state.instantiated signature (def, {s= StmtBlock []; loc}) ;
                       (def, None)
                   | None ->
+                      let specialized_name = claim_specialization_name state signature base_name in
                       let def, processed_body =
                         instantiate_generic_function iargs env_for_instantiation state generic_func signature
                           specialized_name resolved_arg_types explicit_args loc
@@ -783,6 +938,12 @@ module Make (T : TYPECHECKER) = struct
             loc
       | Some _parent_generic -> (
           let parent_name = parent_generic_path.id in
+          (* The module that owns the parent generic. An unqualified companion call can only
+             refer to a generic of the current module (the lookup rules only search there), so
+             candidates from same-named generics in other modules must not be considered. *)
+          let parent_module =
+            match parent_generic_path.n with Some m -> m | None -> (Env.getCurrentModule env).name
+          in
           (* A specialization holds this companion under the name companion_name ^ suffix *)
           let find_companion_in (def : Typed.function_def) : (Typed.function_def * Typed.stmt) option =
             let suffix = companion_suffix parent_name def.name.id in
@@ -798,8 +959,8 @@ module Make (T : TYPECHECKER) = struct
           in
           let collect_candidates () =
             CCList.filter_map
-              (fun (_module, gen_name, (def : Typed.function_def), _body) ->
-                if String.equal gen_name parent_name then
+              (fun (candidate_module, gen_name, (def : Typed.function_def), _body) ->
+                if String.equal candidate_module parent_module && String.equal gen_name parent_name then
                   match find_companion_in def with Some companion -> Some (def, companion) | None -> None
                 else None )
               state.pending_functions
@@ -808,13 +969,17 @@ module Make (T : TYPECHECKER) = struct
           let candidates =
             if CCList.is_empty candidates then
               (* The companion may be called before the parent: instantiate the parent call
-                 found during the prescan of this function *)
+                 found during the prescan of this function. The pending call must refer to the
+                 same generic: both paths are resolved to their owning module before comparing. *)
               match
                 CCList.find_opt
                   (fun (pending_e : Typed.exp) ->
                     match pending_e.e with
                     | EGenCall {generic_path; _} ->
-                        String.equal generic_path.id parent_name
+                        let call_module =
+                          match generic_path.n with Some m -> m | None -> (Env.getCurrentModule env).name
+                        in
+                        String.equal generic_path.id parent_name && String.equal call_module parent_module
                     | _ ->
                         false )
                   state.pending_generic_calls
@@ -932,6 +1097,10 @@ module Make (T : TYPECHECKER) = struct
                   (fun (def_arg : Typed.arg) (call_arg : Typed.exp) -> unifyRaise call_arg.loc def_arg.t call_arg.t)
                   companion_non_ctx_args processed_args
               in
+              (* The typechecker gives companion calls a provisional return type: resolve it
+                 against the selected companion's actual return type so callers whose types
+                 depend on this call (e.g. unannotated wrappers) are fully inferred *)
+              let () = unifyRaise loc (snd companion_def.t) e.t in
               let final_args =
                 match (companion_def.args, inst_name_opt) with
                 | {name; t= ctx_t; _} :: _, Some inst_name when String.equal name context_name ->

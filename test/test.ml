@@ -157,7 +157,10 @@ let errors_files =
   ; "error48.vult"
   ; "error49.vult"
   ; "error50.vult"
-  ; "error51.vult" ]
+  ; "error51.vult"
+  ; "error52.vult"
+  ; "error53.vult"
+  ; "error54.vult" ]
 
 let template_files =
   ["sf_f.vult"; "sff_f.vult"; "sff_ff.vult"; "sfi_fi.vult"; "af_f.vult"; "aff_f.vult"; "aff_ff.vult"; "afi_fi.vult"]
@@ -200,6 +203,9 @@ let interpreter =
   ; ("generics_comprehensive.vult", 800)
   ; ("generics_context_chains.vult", 600)
   ; ("generics_cross_module.vult", 600)
+  ; ("companion_cross_module.vult", 1000)
+  ; ("companion_return_infer.vult", 700)
+  ; ("spec_name_collision.vult", 1100)
   ; ("generics_lhs_index_call.vult", 600)
   ; ("generics_multiple_types.vult", 600)
   ; ("generics_nested.vult", 600)
@@ -295,7 +301,9 @@ let all_files =
   ; "../test/compile/multi_return.vult"
   ; "../test/compile/multi_iter.vult"
   ; "../test/compile/array_no_const.vult"
-  ; "../test/compile/record_init.vult" ]
+  ; "../test/compile/record_init.vult"
+  ; "../test/interpreter/companion_return_infer.vult"
+  ; "../test/interpreter/spec_name_collision.vult" ]
 
 let includes =
   ["effects"; "env"; "filters"; "midi"; "osc"; "unit"; "util"]

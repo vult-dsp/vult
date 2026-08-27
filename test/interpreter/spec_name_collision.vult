@@ -1,0 +1,36 @@
+// Regression test: specialization deduplication must compare types structurally.
+// The types Review_sig_a.b_c and Review_sig_a_b.c produce the same mangled name
+// (Review_sig_a_b_c), but they are different types: each call below must get its
+// own specialization (and its own emitted struct), keeping its correct type.
+
+fun keep(v : 't) : 't {
+  return v;
+}
+
+fun test_distinct_specializations() : int {
+  val ra = keep(Review_sig_a.b_c { first = 11 });
+  val rb = keep(Review_sig_a_b.c { second = 22 });
+  if (ra.first == 11 && rb.second == 22) {
+    return 100;
+  }
+  return -1;
+}
+
+fun test_reversed_order() : int {
+  // Same calls with the modules in the opposite order
+  val rb = keep(Review_sig_a_b.c { second = 44 });
+  val ra = keep(Review_sig_a.b_c { first = 33 });
+  if (ra.first == 33 && rb.second == 44) {
+    return 200;
+  }
+  return -2;
+}
+
+fun main() : int {
+  val t1 = test_distinct_specializations();
+  val t2 = test_reversed_order();
+  if (t1 == 100 && t2 == 200) {
+    return 1100;
+  }
+  return t1 + t2;
+}
