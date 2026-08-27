@@ -32,7 +32,7 @@ function FixedAndFloat_take_fix_return_fixed_raw_c1(index)
 end
 
 function FixedAndFloat_take_fix_return_fixed(x)
-   value = (clip(x, Float32(0.0), Float32(1.0)) * Float32(32.0))
+   value = (clip(x, Float32(0.0), Float32(1.0)) * Float32(33.0))
    index = trunc(Int32, value)
    decimal = (value - floor(value))
    return (@inbounds FixedAndFloat_take_fix_return_fixed_c0[index + 1] + (@inbounds FixedAndFloat_take_fix_return_fixed_c1[index + 1] * decimal))
@@ -54,7 +54,7 @@ function FixedAndFloat_take_fix_return_real_raw_c2(index)
 end
 
 function FixedAndFloat_take_fix_return_real(x)
-   index = clamp(fix_to_int((x * Float32(31.0))), Int32(0), Int32(31))
+   index = clamp(fix_to_int((x * Float32(32.0))), Int32(0), Int32(31))
    return (@inbounds FixedAndFloat_take_fix_return_real_c0[index + 1] + (fix_to_float(x) * (@inbounds FixedAndFloat_take_fix_return_real_c1[index + 1] + (@inbounds FixedAndFloat_take_fix_return_real_c2[index + 1] * fix_to_float(x)))))
 end
 
@@ -74,7 +74,7 @@ function FixedAndFloat_take_real_return_fixed_raw_c2(index)
 end
 
 function FixedAndFloat_take_real_return_fixed(x)
-   index = clamp(trunc(Int32, (x * Float32(31.0))), Int32(0), Int32(31))
+   index = clamp(trunc(Int32, (x * Float32(32.0))), Int32(0), Int32(31))
    return (@inbounds FixedAndFloat_take_real_return_fixed_c0[index + 1] + (float_to_fix(x) * (@inbounds FixedAndFloat_take_real_return_fixed_c1[index + 1] + (@inbounds FixedAndFloat_take_real_return_fixed_c2[index + 1] * float_to_fix(x)))))
 end
 

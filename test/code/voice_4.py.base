@@ -215,7 +215,7 @@ def Util_pitchToRate_1024_raw_c2(index):
    return Util_pitchToRate_1024_c2[index]
 
 def Util_pitchToRate_1024(pitch):
-   index = ((0) if (float_to_int((pitch * 0.244094))) < (0) else ((31) if (float_to_int((pitch * 0.244094))) > (31) else (float_to_int((pitch * 0.244094)))))
+   index = ((0) if (float_to_int((pitch * 0.251968))) < (0) else ((31) if (float_to_int((pitch * 0.251968))) > (31) else (float_to_int((pitch * 0.251968)))))
    return (Util_pitchToRate_1024_c0[index] + (pitch * (Util_pitchToRate_1024_c1[index] + (Util_pitchToRate_1024_c2[index] * pitch))))
 
 
@@ -232,7 +232,7 @@ def Util_cvToRate_1024_raw_c2(index):
    return Util_cvToRate_1024_c2[index]
 
 def Util_cvToRate_1024(cv):
-   index = ((0) if (float_to_int((cv * 34.444444))) < (0) else ((31) if (float_to_int((cv * 34.444444))) > (31) else (float_to_int((cv * 34.444444)))))
+   index = ((0) if (float_to_int((cv * 35.555555))) < (0) else ((31) if (float_to_int((cv * 35.555555))) > (31) else (float_to_int((cv * 35.555555)))))
    return (Util_cvToRate_1024_c0[index] + (cv * (Util_cvToRate_1024_c1[index] + (Util_cvToRate_1024_c2[index] * cv))))
 
 
@@ -278,7 +278,7 @@ def Svf_calc_g_raw_c2(index):
    return Svf_calc_g_c2[index]
 
 def Svf_calc_g(cv):
-   index = ((0) if (float_to_int((cv * 141.111111))) < (0) else ((127) if (float_to_int((cv * 141.111111))) > (127) else (float_to_int((cv * 141.111111)))))
+   index = ((0) if (float_to_int((cv * 142.222222))) < (0) else ((127) if (float_to_int((cv * 142.222222))) > (127) else (float_to_int((cv * 142.222222)))))
    return (Svf_calc_g_c0[index] + (cv * (Svf_calc_g_c1[index] + (Svf_calc_g_c2[index] * cv))))
 
 
@@ -381,7 +381,7 @@ def Util_cvToperiod_raw_c2(index):
    return Util_cvToperiod_c2[index]
 
 def Util_cvToperiod(cv):
-   index = ((0) if (float_to_int((cv * 31.0))) < (0) else ((31) if (float_to_int((cv * 31.0))) > (31) else (float_to_int((cv * 31.0)))))
+   index = ((0) if (float_to_int((cv * 32.0))) < (0) else ((31) if (float_to_int((cv * 32.0))) > (31) else (float_to_int((cv * 32.0)))))
    return (Util_cvToperiod_c0[index] + (cv * (Util_cvToperiod_c1[index] + (Util_cvToperiod_c2[index] * cv))))
 
 
@@ -415,7 +415,7 @@ def Util_pitchToRate_raw_c2(index):
    return Util_pitchToRate_c2[index]
 
 def Util_pitchToRate(pitch):
-   index = ((0) if (float_to_int((pitch * 0.244094))) < (0) else ((31) if (float_to_int((pitch * 0.244094))) > (31) else (float_to_int((pitch * 0.244094)))))
+   index = ((0) if (float_to_int((pitch * 0.251968))) < (0) else ((31) if (float_to_int((pitch * 0.251968))) > (31) else (float_to_int((pitch * 0.251968)))))
    return (Util_pitchToRate_c0[index] + (pitch * (Util_pitchToRate_c1[index] + (Util_pitchToRate_c2[index] * pitch))))
 
 
@@ -432,7 +432,7 @@ def Util_cvToRate_raw_c2(index):
    return Util_cvToRate_c2[index]
 
 def Util_cvToRate(cv):
-   index = ((0) if (float_to_int((cv * 141.111111))) < (0) else ((127) if (float_to_int((cv * 141.111111))) > (127) else (float_to_int((cv * 141.111111)))))
+   index = ((0) if (float_to_int((cv * 142.222222))) < (0) else ((127) if (float_to_int((cv * 142.222222))) > (127) else (float_to_int((cv * 142.222222)))))
    return (Util_cvToRate_c0[index] + (cv * (Util_cvToRate_c1[index] + (Util_cvToRate_c2[index] * cv))))
 
 
@@ -612,7 +612,7 @@ def Util_cvTokHz_raw_c2(index):
    return Util_cvTokHz_c2[index]
 
 def Util_cvTokHz(cv):
-   index = ((0) if (float_to_int((cv * 31.0))) < (0) else ((31) if (float_to_int((cv * 31.0))) > (31) else (float_to_int((cv * 31.0)))))
+   index = ((0) if (float_to_int((cv * 32.0))) < (0) else ((31) if (float_to_int((cv * 32.0))) > (31) else (float_to_int((cv * 32.0)))))
    return (Util_cvTokHz_c0[index] + (cv * (Util_cvTokHz_c1[index] + (Util_cvTokHz_c2[index] * cv))))
 
 
@@ -683,7 +683,7 @@ def Saturate_soft_tanh_table_raw_c2(index):
    return Saturate_soft_tanh_table_c2[index]
 
 def Saturate_soft_tanh_table(x):
-   index = ((0) if (float_to_int(((x + 24.0) * 5.0))) < (0) else ((240) if (float_to_int(((x + 24.0) * 5.0))) > (240) else (float_to_int(((x + 24.0) * 5.0)))))
+   index = ((0) if (float_to_int(((x + 24.0) * 5.020833))) < (0) else ((240) if (float_to_int(((x + 24.0) * 5.020833))) > (240) else (float_to_int(((x + 24.0) * 5.020833)))))
    return (Saturate_soft_tanh_table_c0[index] + (x * (Saturate_soft_tanh_table_c1[index] + (Saturate_soft_tanh_table_c2[index] * x))))
 
 
@@ -751,7 +751,7 @@ def Saturate_tanh_table_raw_c2(index):
    return Saturate_tanh_table_c2[index]
 
 def Saturate_tanh_table(x):
-   index = ((0) if (float_to_int(((x + 24.0) * 5.0))) < (0) else ((240) if (float_to_int(((x + 24.0) * 5.0))) > (240) else (float_to_int(((x + 24.0) * 5.0)))))
+   index = ((0) if (float_to_int(((x + 24.0) * 5.020833))) < (0) else ((240) if (float_to_int(((x + 24.0) * 5.020833))) > (240) else (float_to_int(((x + 24.0) * 5.020833)))))
    return (Saturate_tanh_table_c0[index] + (x * (Saturate_tanh_table_c1[index] + (Saturate_tanh_table_c2[index] * x))))
 
 
@@ -832,7 +832,7 @@ def Tables_nsine_raw_c2(index):
    return Tables_nsine_c2[index]
 
 def Tables_nsine(x):
-   index = ((0) if (float_to_int((x * 127.0))) < (0) else ((127) if (float_to_int((x * 127.0))) > (127) else (float_to_int((x * 127.0)))))
+   index = ((0) if (float_to_int((x * 128.0))) < (0) else ((127) if (float_to_int((x * 128.0))) > (127) else (float_to_int((x * 128.0)))))
    return (Tables_nsine_c0[index] + (x * (Tables_nsine_c1[index] + (Tables_nsine_c2[index] * x))))
 
 

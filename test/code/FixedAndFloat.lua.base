@@ -112,7 +112,7 @@ function FixedAndFloat_take_fix_return_fixed_raw_c1(index)
 end
 
 function FixedAndFloat_take_fix_return_fixed(x)
-   local value = (((x) > (1.0) and (1.0) or ((x) < (0.0) and (0.0) or (x))) * 32.0)
+   local value = (((x) > (1.0) and (1.0) or ((x) < (0.0) and (0.0) or (x))) * 33.0)
    local index = (math.modf(value))
    local decimal = (value - floor(value))
    return (FixedAndFloat_take_fix_return_fixed_c0[(index) + 1] + (FixedAndFloat_take_fix_return_fixed_c1[(index) + 1] * decimal))
@@ -134,7 +134,7 @@ function FixedAndFloat_take_fix_return_real_raw_c2(index)
 end
 
 function FixedAndFloat_take_fix_return_real(x)
-   local index = ((fix_to_int((x * 31.0))) > (31) and (31) or ((fix_to_int((x * 31.0))) < (0) and (0) or (fix_to_int((x * 31.0)))))
+   local index = ((fix_to_int((x * 32.0))) > (31) and (31) or ((fix_to_int((x * 32.0))) < (0) and (0) or (fix_to_int((x * 32.0)))))
    return (FixedAndFloat_take_fix_return_real_c0[(index) + 1] + (fix_to_float(x) * (FixedAndFloat_take_fix_return_real_c1[(index) + 1] + (FixedAndFloat_take_fix_return_real_c2[(index) + 1] * fix_to_float(x)))))
 end
 
@@ -154,7 +154,7 @@ function FixedAndFloat_take_real_return_fixed_raw_c2(index)
 end
 
 function FixedAndFloat_take_real_return_fixed(x)
-   local index = ((math.floor((x * 31.0))) > (31) and (31) or ((math.floor((x * 31.0))) < (0) and (0) or (math.floor((x * 31.0)))))
+   local index = ((math.floor((x * 32.0))) > (31) and (31) or ((math.floor((x * 32.0))) < (0) and (0) or (math.floor((x * 32.0)))))
    return (FixedAndFloat_take_real_return_fixed_c0[(index) + 1] + (float_to_fix(x) * (FixedAndFloat_take_real_return_fixed_c1[(index) + 1] + (FixedAndFloat_take_real_return_fixed_c2[(index) + 1] * float_to_fix(x)))))
 end
 

@@ -184,7 +184,7 @@ def Util_pitchToRate_1024_raw_c2(index):
    return Util_pitchToRate_1024_c2[index]
 
 def Util_pitchToRate_1024(pitch):
-   index = ((0) if (float_to_int((pitch * 0.244094))) < (0) else ((31) if (float_to_int((pitch * 0.244094))) > (31) else (float_to_int((pitch * 0.244094)))))
+   index = ((0) if (float_to_int((pitch * 0.251968))) < (0) else ((31) if (float_to_int((pitch * 0.251968))) > (31) else (float_to_int((pitch * 0.251968)))))
    return (Util_pitchToRate_1024_c0[index] + (pitch * (Util_pitchToRate_1024_c1[index] + (Util_pitchToRate_1024_c2[index] * pitch))))
 
 
@@ -201,7 +201,7 @@ def Util_pitchToRate_raw_c2(index):
    return Util_pitchToRate_c2[index]
 
 def Util_pitchToRate(pitch):
-   index = ((0) if (float_to_int((pitch * 0.244094))) < (0) else ((31) if (float_to_int((pitch * 0.244094))) > (31) else (float_to_int((pitch * 0.244094)))))
+   index = ((0) if (float_to_int((pitch * 0.251968))) < (0) else ((31) if (float_to_int((pitch * 0.251968))) > (31) else (float_to_int((pitch * 0.251968)))))
    return (Util_pitchToRate_c0[index] + (pitch * (Util_pitchToRate_c1[index] + (Util_pitchToRate_c2[index] * pitch))))
 
 
@@ -221,7 +221,7 @@ def Util_cvToRate_1024_raw_c2(index):
    return Util_cvToRate_1024_c2[index]
 
 def Util_cvToRate_1024(cv):
-   index = ((0) if (float_to_int((cv * 34.444444))) < (0) else ((31) if (float_to_int((cv * 34.444444))) > (31) else (float_to_int((cv * 34.444444)))))
+   index = ((0) if (float_to_int((cv * 35.555555))) < (0) else ((31) if (float_to_int((cv * 35.555555))) > (31) else (float_to_int((cv * 35.555555)))))
    return (Util_cvToRate_1024_c0[index] + (cv * (Util_cvToRate_1024_c1[index] + (Util_cvToRate_1024_c2[index] * cv))))
 
 
@@ -238,7 +238,7 @@ def Util_cvToRate_raw_c2(index):
    return Util_cvToRate_c2[index]
 
 def Util_cvToRate(cv):
-   index = ((0) if (float_to_int((cv * 141.111111))) < (0) else ((127) if (float_to_int((cv * 141.111111))) > (127) else (float_to_int((cv * 141.111111)))))
+   index = ((0) if (float_to_int((cv * 142.222222))) < (0) else ((127) if (float_to_int((cv * 142.222222))) > (127) else (float_to_int((cv * 142.222222)))))
    return (Util_cvToRate_c0[index] + (cv * (Util_cvToRate_c1[index] + (Util_cvToRate_c2[index] * cv))))
 
 
@@ -258,7 +258,7 @@ def Util_cvToperiod_raw_c2(index):
    return Util_cvToperiod_c2[index]
 
 def Util_cvToperiod(cv):
-   index = ((0) if (float_to_int((cv * 31.0))) < (0) else ((31) if (float_to_int((cv * 31.0))) > (31) else (float_to_int((cv * 31.0)))))
+   index = ((0) if (float_to_int((cv * 32.0))) < (0) else ((31) if (float_to_int((cv * 32.0))) > (31) else (float_to_int((cv * 32.0)))))
    return (Util_cvToperiod_c0[index] + (cv * (Util_cvToperiod_c1[index] + (Util_cvToperiod_c2[index] * cv))))
 
 
@@ -275,7 +275,7 @@ def Util_cvTokHz_raw_c2(index):
    return Util_cvTokHz_c2[index]
 
 def Util_cvTokHz(cv):
-   index = ((0) if (float_to_int((cv * 31.0))) < (0) else ((31) if (float_to_int((cv * 31.0))) > (31) else (float_to_int((cv * 31.0)))))
+   index = ((0) if (float_to_int((cv * 32.0))) < (0) else ((31) if (float_to_int((cv * 32.0))) > (31) else (float_to_int((cv * 32.0)))))
    return (Util_cvTokHz_c0[index] + (cv * (Util_cvTokHz_c1[index] + (Util_cvTokHz_c2[index] * cv))))
 
 

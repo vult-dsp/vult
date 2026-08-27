@@ -241,7 +241,7 @@ let makeNewBody1 bound_check fname size in_precision t min max input =
     let arr = C.eid (fname ^ "_" ^ a) atype in
     C.eindex arr rindex t
   in
-  let initial_index = (float_of_int size -. 1.0) /. (max -. min) in
+  let initial_index = float_of_int size /. (max -. min) in
   let value = makeMul in_precision (makeSub in_precision input min) initial_index in
   let index_stmts = getIndex in_precision bound_check size value in
   let input = castInputVarPrecision in_precision t input in
@@ -255,7 +255,7 @@ let makeNewBody1Fixed _bound_check fname size in_precision t min max input =
     let arr = C.eid (fname ^ "_" ^ a) atype in
     C.eindex arr rindex t
   in
-  let initial_index = (float_of_int size -. 1.0) /. (max -. min) in
+  let initial_index = float_of_int size /. (max -. min) in
   (* Clamp the input, not the scaled value: scaling first overflows the fixed-point range for
      inputs well outside [min, max], and the clamp would then be applied to a wrapped value. *)
   let clamped = C.ecall "clip" [input; makeFloat in_precision min; makeFloat in_precision max] in_precision in
@@ -277,7 +277,7 @@ let makeNewBody2 bound_check fname size in_precision t min max input =
     let arr = C.eid (fname ^ "_" ^ a) atype in
     C.eindex arr rindex t
   in
-  let initial_index = (float_of_int size -. 1.0) /. (max -. min) in
+  let initial_index = float_of_int size /. (max -. min) in
   let value = makeMul in_precision (makeSub in_precision input min) initial_index in
   let index_stmts = getIndex in_precision bound_check size value in
   let input = castInputVarPrecision in_precision t input in

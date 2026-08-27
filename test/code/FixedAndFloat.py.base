@@ -47,7 +47,7 @@ def FixedAndFloat_take_fix_return_fixed_raw_c1(index):
    return FixedAndFloat_take_fix_return_fixed_c1[index]
 
 def FixedAndFloat_take_fix_return_fixed(x):
-   value = (((0.0) if (x) < (0.0) else ((1.0) if (x) > (1.0) else (x))) * 32.0)
+   value = (((0.0) if (x) < (0.0) else ((1.0) if (x) > (1.0) else (x))) * 33.0)
    index = int(value)
    decimal = (value - math.floor(value))
    return (FixedAndFloat_take_fix_return_fixed_c0[index] + (FixedAndFloat_take_fix_return_fixed_c1[index] * decimal))
@@ -66,7 +66,7 @@ def FixedAndFloat_take_fix_return_real_raw_c2(index):
    return FixedAndFloat_take_fix_return_real_c2[index]
 
 def FixedAndFloat_take_fix_return_real(x):
-   index = ((0) if (fix_to_int((x * 31.0))) < (0) else ((31) if (fix_to_int((x * 31.0))) > (31) else (fix_to_int((x * 31.0)))))
+   index = ((0) if (fix_to_int((x * 32.0))) < (0) else ((31) if (fix_to_int((x * 32.0))) > (31) else (fix_to_int((x * 32.0)))))
    return (FixedAndFloat_take_fix_return_real_c0[index] + (fix_to_float(x) * (FixedAndFloat_take_fix_return_real_c1[index] + (FixedAndFloat_take_fix_return_real_c2[index] * fix_to_float(x)))))
 
 
@@ -83,7 +83,7 @@ def FixedAndFloat_take_real_return_fixed_raw_c2(index):
    return FixedAndFloat_take_real_return_fixed_c2[index]
 
 def FixedAndFloat_take_real_return_fixed(x):
-   index = ((0) if (float_to_int((x * 31.0))) < (0) else ((31) if (float_to_int((x * 31.0))) > (31) else (float_to_int((x * 31.0)))))
+   index = ((0) if (float_to_int((x * 32.0))) < (0) else ((31) if (float_to_int((x * 32.0))) > (31) else (float_to_int((x * 32.0)))))
    return (FixedAndFloat_take_real_return_fixed_c0[index] + (float_to_fix(x) * (FixedAndFloat_take_real_return_fixed_c1[index] + (FixedAndFloat_take_real_return_fixed_c2[index] * float_to_fix(x)))))
 
 

@@ -67,7 +67,7 @@ this.Saturate_tanh_table_raw_c2 = function (index) {
 };
 
 this.Saturate_tanh_table = function (x) {
-   var index = ((this.float_to_int(((x + 24.0) * 5.0))) < ((0|0)) ? ((0|0)) : ((this.float_to_int(((x + 24.0) * 5.0))) > ((240|0)) ? ((240|0)) : (this.float_to_int(((x + 24.0) * 5.0)))));
+   var index = ((this.float_to_int(((x + 24.0) * 5.020833))) < ((0|0)) ? ((0|0)) : ((this.float_to_int(((x + 24.0) * 5.020833))) > ((240|0)) ? ((240|0)) : (this.float_to_int(((x + 24.0) * 5.020833)))));
    return (Saturate_tanh_table_c0[index] + (x * (Saturate_tanh_table_c1[index] + (Saturate_tanh_table_c2[index] * x))));
 };
 

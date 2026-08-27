@@ -21,7 +21,7 @@ this.Bitcrush_factor_raw_c2 = function (index) {
 };
 
 this.Bitcrush_factor = function (cv) {
-   var index = ((this.float_to_int((cv * 127.0))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((cv * 127.0))) > ((127|0)) ? ((127|0)) : (this.float_to_int((cv * 127.0)))));
+   var index = ((this.float_to_int((cv * 128.0))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((cv * 128.0))) > ((127|0)) ? ((127|0)) : (this.float_to_int((cv * 128.0)))));
    return (Bitcrush_factor_c0[index] + (cv * (Bitcrush_factor_c1[index] + (Bitcrush_factor_c2[index] * cv))));
 };
 

@@ -31,7 +31,7 @@ def Bitcrush_factor_raw_c2(index):
    return Bitcrush_factor_c2[index]
 
 def Bitcrush_factor(cv):
-   index = ((0) if (float_to_int((cv * 127.0))) < (0) else ((127) if (float_to_int((cv * 127.0))) > (127) else (float_to_int((cv * 127.0)))))
+   index = ((0) if (float_to_int((cv * 128.0))) < (0) else ((127) if (float_to_int((cv * 128.0))) > (127) else (float_to_int((cv * 128.0)))))
    return (Bitcrush_factor_c0[index] + (cv * (Bitcrush_factor_c1[index] + (Bitcrush_factor_c2[index] * cv))))
 
 

@@ -231,7 +231,7 @@ function Util_pitchToRate_1024_raw_c2(index)
 end
 
 function Util_pitchToRate_1024(pitch)
-   index = clamp(trunc(Int32, (pitch * Float32(0.244094))), Int32(0), Int32(31))
+   index = clamp(trunc(Int32, (pitch * Float32(0.251968))), Int32(0), Int32(31))
    return (@inbounds Util_pitchToRate_1024_c0[index + 1] + (pitch * (@inbounds Util_pitchToRate_1024_c1[index + 1] + (@inbounds Util_pitchToRate_1024_c2[index + 1] * pitch))))
 end
 
@@ -251,7 +251,7 @@ function Util_cvToRate_1024_raw_c2(index)
 end
 
 function Util_cvToRate_1024(cv)
-   index = clamp(trunc(Int32, (cv * Float32(34.444444))), Int32(0), Int32(31))
+   index = clamp(trunc(Int32, (cv * Float32(35.555555))), Int32(0), Int32(31))
    return (@inbounds Util_cvToRate_1024_c0[index + 1] + (cv * (@inbounds Util_cvToRate_1024_c1[index + 1] + (@inbounds Util_cvToRate_1024_c2[index + 1] * cv))))
 end
 
@@ -487,7 +487,7 @@ function Util_pitchToRate_raw_c2(index)
 end
 
 function Util_pitchToRate(pitch)
-   index = clamp(trunc(Int32, (pitch * Float32(0.244094))), Int32(0), Int32(31))
+   index = clamp(trunc(Int32, (pitch * Float32(0.251968))), Int32(0), Int32(31))
    return (@inbounds Util_pitchToRate_c0[index + 1] + (pitch * (@inbounds Util_pitchToRate_c1[index + 1] + (@inbounds Util_pitchToRate_c2[index + 1] * pitch))))
 end
 
@@ -507,7 +507,7 @@ function Util_cvToRate_raw_c2(index)
 end
 
 function Util_cvToRate(cv)
-   index = clamp(trunc(Int32, (cv * Float32(141.111111))), Int32(0), Int32(127))
+   index = clamp(trunc(Int32, (cv * Float32(142.222222))), Int32(0), Int32(127))
    return (@inbounds Util_cvToRate_c0[index + 1] + (cv * (@inbounds Util_cvToRate_c1[index + 1] + (@inbounds Util_cvToRate_c2[index + 1] * cv))))
 end
 
@@ -531,7 +531,7 @@ function Util_cvToperiod_raw_c2(index)
 end
 
 function Util_cvToperiod(cv)
-   index = clamp(trunc(Int32, (cv * Float32(31.0))), Int32(0), Int32(31))
+   index = clamp(trunc(Int32, (cv * Float32(32.0))), Int32(0), Int32(31))
    return (@inbounds Util_cvToperiod_c0[index + 1] + (cv * (@inbounds Util_cvToperiod_c1[index + 1] + (@inbounds Util_cvToperiod_c2[index + 1] * cv))))
 end
 
@@ -551,7 +551,7 @@ function Util_cvTokHz_raw_c2(index)
 end
 
 function Util_cvTokHz(cv)
-   index = clamp(trunc(Int32, (cv * Float32(31.0))), Int32(0), Int32(31))
+   index = clamp(trunc(Int32, (cv * Float32(32.0))), Int32(0), Int32(31))
    return (@inbounds Util_cvTokHz_c0[index + 1] + (cv * (@inbounds Util_cvTokHz_c1[index + 1] + (@inbounds Util_cvTokHz_c2[index + 1] * cv))))
 end
 
@@ -661,7 +661,7 @@ function Saturate_tanh_table_raw_c2(index)
 end
 
 function Saturate_tanh_table(x)
-   index = clamp(trunc(Int32, ((x + Float32(24.0)) * Float32(5.0))), Int32(0), Int32(240))
+   index = clamp(trunc(Int32, ((x + Float32(24.0)) * Float32(5.020833))), Int32(0), Int32(240))
    return (@inbounds Saturate_tanh_table_c0[index + 1] + (x * (@inbounds Saturate_tanh_table_c1[index + 1] + (@inbounds Saturate_tanh_table_c2[index + 1] * x))))
 end
 

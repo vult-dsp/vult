@@ -86,7 +86,7 @@ this.Util_pitchToRate_1024_raw_c2 = function (index) {
 };
 
 this.Util_pitchToRate_1024 = function (pitch) {
-   var index = ((this.float_to_int((pitch * 0.244094))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((pitch * 0.244094))) > ((31|0)) ? ((31|0)) : (this.float_to_int((pitch * 0.244094)))));
+   var index = ((this.float_to_int((pitch * 0.251968))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((pitch * 0.251968))) > ((31|0)) ? ((31|0)) : (this.float_to_int((pitch * 0.251968)))));
    return (Util_pitchToRate_1024_c0[index] + (pitch * (Util_pitchToRate_1024_c1[index] + (Util_pitchToRate_1024_c2[index] * pitch))));
 };
 
@@ -106,7 +106,7 @@ this.Util_cvToRate_1024_raw_c2 = function (index) {
 };
 
 this.Util_cvToRate_1024 = function (cv) {
-   var index = ((this.float_to_int((cv * 34.444444))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((cv * 34.444444))) > ((31|0)) ? ((31|0)) : (this.float_to_int((cv * 34.444444)))));
+   var index = ((this.float_to_int((cv * 35.555555))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((cv * 35.555555))) > ((31|0)) ? ((31|0)) : (this.float_to_int((cv * 35.555555)))));
    return (Util_cvToRate_1024_c0[index] + (cv * (Util_cvToRate_1024_c1[index] + (Util_cvToRate_1024_c2[index] * cv))));
 };
 
@@ -342,7 +342,7 @@ this.Util_pitchToRate_raw_c2 = function (index) {
 };
 
 this.Util_pitchToRate = function (pitch) {
-   var index = ((this.float_to_int((pitch * 0.244094))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((pitch * 0.244094))) > ((31|0)) ? ((31|0)) : (this.float_to_int((pitch * 0.244094)))));
+   var index = ((this.float_to_int((pitch * 0.251968))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((pitch * 0.251968))) > ((31|0)) ? ((31|0)) : (this.float_to_int((pitch * 0.251968)))));
    return (Util_pitchToRate_c0[index] + (pitch * (Util_pitchToRate_c1[index] + (Util_pitchToRate_c2[index] * pitch))));
 };
 
@@ -362,7 +362,7 @@ this.Util_cvToRate_raw_c2 = function (index) {
 };
 
 this.Util_cvToRate = function (cv) {
-   var index = ((this.float_to_int((cv * 141.111111))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((cv * 141.111111))) > ((127|0)) ? ((127|0)) : (this.float_to_int((cv * 141.111111)))));
+   var index = ((this.float_to_int((cv * 142.222222))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((cv * 142.222222))) > ((127|0)) ? ((127|0)) : (this.float_to_int((cv * 142.222222)))));
    return (Util_cvToRate_c0[index] + (cv * (Util_cvToRate_c1[index] + (Util_cvToRate_c2[index] * cv))));
 };
 
@@ -386,7 +386,7 @@ this.Util_cvToperiod_raw_c2 = function (index) {
 };
 
 this.Util_cvToperiod = function (cv) {
-   var index = ((this.float_to_int((cv * 31.0))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((cv * 31.0))) > ((31|0)) ? ((31|0)) : (this.float_to_int((cv * 31.0)))));
+   var index = ((this.float_to_int((cv * 32.0))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((cv * 32.0))) > ((31|0)) ? ((31|0)) : (this.float_to_int((cv * 32.0)))));
    return (Util_cvToperiod_c0[index] + (cv * (Util_cvToperiod_c1[index] + (Util_cvToperiod_c2[index] * cv))));
 };
 
@@ -406,7 +406,7 @@ this.Util_cvTokHz_raw_c2 = function (index) {
 };
 
 this.Util_cvTokHz = function (cv) {
-   var index = ((this.float_to_int((cv * 31.0))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((cv * 31.0))) > ((31|0)) ? ((31|0)) : (this.float_to_int((cv * 31.0)))));
+   var index = ((this.float_to_int((cv * 32.0))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((cv * 32.0))) > ((31|0)) ? ((31|0)) : (this.float_to_int((cv * 32.0)))));
    return (Util_cvTokHz_c0[index] + (cv * (Util_cvTokHz_c1[index] + (Util_cvTokHz_c2[index] * cv))));
 };
 
@@ -516,7 +516,7 @@ this.Saturate_tanh_table_raw_c2 = function (index) {
 };
 
 this.Saturate_tanh_table = function (x) {
-   var index = ((this.float_to_int(((x + 24.0) * 5.0))) < ((0|0)) ? ((0|0)) : ((this.float_to_int(((x + 24.0) * 5.0))) > ((240|0)) ? ((240|0)) : (this.float_to_int(((x + 24.0) * 5.0)))));
+   var index = ((this.float_to_int(((x + 24.0) * 5.020833))) < ((0|0)) ? ((0|0)) : ((this.float_to_int(((x + 24.0) * 5.020833))) > ((240|0)) ? ((240|0)) : (this.float_to_int(((x + 24.0) * 5.020833)))));
    return (Saturate_tanh_table_c0[index] + (x * (Saturate_tanh_table_c1[index] + (Saturate_tanh_table_c2[index] * x))));
 };
 

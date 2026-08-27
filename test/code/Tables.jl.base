@@ -17,7 +17,7 @@ function Tables_sineTable1_raw_c2(index)
 end
 
 function Tables_sineTable1(x)
-   index = clamp(trunc(Int32, (x * Float32(31.0))), Int32(0), Int32(31))
+   index = clamp(trunc(Int32, (x * Float32(32.0))), Int32(0), Int32(31))
    return (@inbounds Tables_sineTable1_c0[index + 1] + (x * (@inbounds Tables_sineTable1_c1[index + 1] + (@inbounds Tables_sineTable1_c2[index + 1] * x))))
 end
 
@@ -32,7 +32,7 @@ function Tables_sineTable2_raw_c1(index)
 end
 
 function Tables_sineTable2(x)
-   index = clamp(trunc(Int32, (x * Float32(31.0))), Int32(0), Int32(31))
+   index = clamp(trunc(Int32, (x * Float32(32.0))), Int32(0), Int32(31))
    return (@inbounds Tables_sineTable2_c0[index + 1] + (x * @inbounds Tables_sineTable2_c1[index + 1]))
 end
 
@@ -47,7 +47,7 @@ function Tables_sineTable3_raw_c1(index)
 end
 
 function Tables_sineTable3(x)
-   value = (clip(x, Float32(0.0), Float32(1.0)) * Float32(32.0))
+   value = (clip(x, Float32(0.0), Float32(1.0)) * Float32(33.0))
    index = trunc(Int32, value)
    decimal = (value - floor(value))
    return (@inbounds Tables_sineTable3_c0[index + 1] + (@inbounds Tables_sineTable3_c1[index + 1] * decimal))

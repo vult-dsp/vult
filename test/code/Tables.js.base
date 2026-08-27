@@ -21,7 +21,7 @@ this.Tables_sineTable1_raw_c2 = function (index) {
 };
 
 this.Tables_sineTable1 = function (x) {
-   var index = ((this.float_to_int((x * 31.0))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((x * 31.0))) > ((31|0)) ? ((31|0)) : (this.float_to_int((x * 31.0)))));
+   var index = ((this.float_to_int((x * 32.0))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((x * 32.0))) > ((31|0)) ? ((31|0)) : (this.float_to_int((x * 32.0)))));
    return (Tables_sineTable1_c0[index] + (x * (Tables_sineTable1_c1[index] + (Tables_sineTable1_c2[index] * x))));
 };
 
@@ -36,7 +36,7 @@ this.Tables_sineTable2_raw_c1 = function (index) {
 };
 
 this.Tables_sineTable2 = function (x) {
-   var index = ((this.float_to_int((x * 31.0))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((x * 31.0))) > ((31|0)) ? ((31|0)) : (this.float_to_int((x * 31.0)))));
+   var index = ((this.float_to_int((x * 32.0))) < ((0|0)) ? ((0|0)) : ((this.float_to_int((x * 32.0))) > ((31|0)) ? ((31|0)) : (this.float_to_int((x * 32.0)))));
    return (Tables_sineTable2_c0[index] + (x * Tables_sineTable2_c1[index]));
 };
 
@@ -51,7 +51,7 @@ this.Tables_sineTable3_raw_c1 = function (index) {
 };
 
 this.Tables_sineTable3 = function (x) {
-   var value = (((x) < (0.0) ? (0.0) : ((x) > (1.0) ? (1.0) : (x))) * 32.0);
+   var value = (((x) < (0.0) ? (0.0) : ((x) > (1.0) ? (1.0) : (x))) * 33.0);
    var index = ((value)|0);
    var decimal = (value - Math.floor(value));
    return (Tables_sineTable3_c0[index] + (Tables_sineTable3_c1[index] * decimal));

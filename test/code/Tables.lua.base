@@ -97,7 +97,7 @@ function Tables_sineTable1_raw_c2(index)
 end
 
 function Tables_sineTable1(x)
-   local index = ((math.floor((x * 31.0))) > (31) and (31) or ((math.floor((x * 31.0))) < (0) and (0) or (math.floor((x * 31.0)))))
+   local index = ((math.floor((x * 32.0))) > (31) and (31) or ((math.floor((x * 32.0))) < (0) and (0) or (math.floor((x * 32.0)))))
    return (Tables_sineTable1_c0[(index) + 1] + (x * (Tables_sineTable1_c1[(index) + 1] + (Tables_sineTable1_c2[(index) + 1] * x))))
 end
 
@@ -112,7 +112,7 @@ function Tables_sineTable2_raw_c1(index)
 end
 
 function Tables_sineTable2(x)
-   local index = ((math.floor((x * 31.0))) > (31) and (31) or ((math.floor((x * 31.0))) < (0) and (0) or (math.floor((x * 31.0)))))
+   local index = ((math.floor((x * 32.0))) > (31) and (31) or ((math.floor((x * 32.0))) < (0) and (0) or (math.floor((x * 32.0)))))
    return (Tables_sineTable2_c0[(index) + 1] + (x * Tables_sineTable2_c1[(index) + 1]))
 end
 
@@ -127,7 +127,7 @@ function Tables_sineTable3_raw_c1(index)
 end
 
 function Tables_sineTable3(x)
-   local value = (((x) > (1.0) and (1.0) or ((x) < (0.0) and (0.0) or (x))) * 32.0)
+   local value = (((x) > (1.0) and (1.0) or ((x) < (0.0) and (0.0) or (x))) * 33.0)
    local index = (math.modf(value))
    local decimal = (value - floor(value))
    return (Tables_sineTable3_c0[(index) + 1] + (Tables_sineTable3_c1[(index) + 1] * decimal))

@@ -17,7 +17,7 @@ function Bitcrush_factor_raw_c2(index)
 end
 
 function Bitcrush_factor(cv)
-   index = clamp(trunc(Int32, (cv * Float32(127.0))), Int32(0), Int32(127))
+   index = clamp(trunc(Int32, (cv * Float32(128.0))), Int32(0), Int32(127))
    return (@inbounds Bitcrush_factor_c0[index + 1] + (cv * (@inbounds Bitcrush_factor_c1[index + 1] + (@inbounds Bitcrush_factor_c2[index + 1] * cv))))
 end
 

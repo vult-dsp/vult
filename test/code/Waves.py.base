@@ -44,7 +44,7 @@ def Waves_sineTable2_raw_c2(index):
    return Waves_sineTable2_c2[index]
 
 def Waves_sineTable2(position):
-   index = ((0) if (float_to_int((position * 255.0))) < (0) else ((255) if (float_to_int((position * 255.0))) > (255) else (float_to_int((position * 255.0)))))
+   index = ((0) if (float_to_int((position * 256.0))) < (0) else ((255) if (float_to_int((position * 256.0))) > (255) else (float_to_int((position * 256.0)))))
    return (Waves_sineTable2_c0[index] + (position * (Waves_sineTable2_c1[index] + (Waves_sineTable2_c2[index] * position))))
 
 

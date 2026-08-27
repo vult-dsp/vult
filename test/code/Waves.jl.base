@@ -33,7 +33,7 @@ function Waves_sineTable2_raw_c2(index)
 end
 
 function Waves_sineTable2(position)
-   index = clamp(trunc(Int32, (position * Float32(255.0))), Int32(0), Int32(255))
+   index = clamp(trunc(Int32, (position * Float32(256.0))), Int32(0), Int32(255))
    return (@inbounds Waves_sineTable2_c0[index + 1] + (position * (@inbounds Waves_sineTable2_c1[index + 1] + (@inbounds Waves_sineTable2_c2[index + 1] * position))))
 end
 

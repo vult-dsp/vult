@@ -31,7 +31,7 @@ def Tables_sineTable1_raw_c2(index):
    return Tables_sineTable1_c2[index]
 
 def Tables_sineTable1(x):
-   index = ((0) if (float_to_int((x * 31.0))) < (0) else ((31) if (float_to_int((x * 31.0))) > (31) else (float_to_int((x * 31.0)))))
+   index = ((0) if (float_to_int((x * 32.0))) < (0) else ((31) if (float_to_int((x * 32.0))) > (31) else (float_to_int((x * 32.0)))))
    return (Tables_sineTable1_c0[index] + (x * (Tables_sineTable1_c1[index] + (Tables_sineTable1_c2[index] * x))))
 
 
@@ -44,7 +44,7 @@ def Tables_sineTable2_raw_c1(index):
    return Tables_sineTable2_c1[index]
 
 def Tables_sineTable2(x):
-   index = ((0) if (float_to_int((x * 31.0))) < (0) else ((31) if (float_to_int((x * 31.0))) > (31) else (float_to_int((x * 31.0)))))
+   index = ((0) if (float_to_int((x * 32.0))) < (0) else ((31) if (float_to_int((x * 32.0))) > (31) else (float_to_int((x * 32.0)))))
    return (Tables_sineTable2_c0[index] + (x * Tables_sineTable2_c1[index]))
 
 
@@ -57,7 +57,7 @@ def Tables_sineTable3_raw_c1(index):
    return Tables_sineTable3_c1[index]
 
 def Tables_sineTable3(x):
-   value = (((0.0) if (x) < (0.0) else ((1.0) if (x) > (1.0) else (x))) * 32.0)
+   value = (((0.0) if (x) < (0.0) else ((1.0) if (x) > (1.0) else (x))) * 33.0)
    index = int(value)
    decimal = (value - math.floor(value))
    return (Tables_sineTable3_c0[index] + (Tables_sineTable3_c1[index] * decimal))

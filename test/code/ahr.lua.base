@@ -215,7 +215,7 @@ function Util_pitchToRate_1024_raw_c2(index)
 end
 
 function Util_pitchToRate_1024(pitch)
-   local index = ((math.floor((pitch * 0.244094))) > (31) and (31) or ((math.floor((pitch * 0.244094))) < (0) and (0) or (math.floor((pitch * 0.244094)))))
+   local index = ((math.floor((pitch * 0.251968))) > (31) and (31) or ((math.floor((pitch * 0.251968))) < (0) and (0) or (math.floor((pitch * 0.251968)))))
    return (Util_pitchToRate_1024_c0[(index) + 1] + (pitch * (Util_pitchToRate_1024_c1[(index) + 1] + (Util_pitchToRate_1024_c2[(index) + 1] * pitch))))
 end
 
@@ -235,7 +235,7 @@ function Util_pitchToRate_raw_c2(index)
 end
 
 function Util_pitchToRate(pitch)
-   local index = ((math.floor((pitch * 0.244094))) > (31) and (31) or ((math.floor((pitch * 0.244094))) < (0) and (0) or (math.floor((pitch * 0.244094)))))
+   local index = ((math.floor((pitch * 0.251968))) > (31) and (31) or ((math.floor((pitch * 0.251968))) < (0) and (0) or (math.floor((pitch * 0.251968)))))
    return (Util_pitchToRate_c0[(index) + 1] + (pitch * (Util_pitchToRate_c1[(index) + 1] + (Util_pitchToRate_c2[(index) + 1] * pitch))))
 end
 
@@ -259,7 +259,7 @@ function Util_cvToRate_1024_raw_c2(index)
 end
 
 function Util_cvToRate_1024(cv)
-   local index = ((math.floor((cv * 34.444444))) > (31) and (31) or ((math.floor((cv * 34.444444))) < (0) and (0) or (math.floor((cv * 34.444444)))))
+   local index = ((math.floor((cv * 35.555555))) > (31) and (31) or ((math.floor((cv * 35.555555))) < (0) and (0) or (math.floor((cv * 35.555555)))))
    return (Util_cvToRate_1024_c0[(index) + 1] + (cv * (Util_cvToRate_1024_c1[(index) + 1] + (Util_cvToRate_1024_c2[(index) + 1] * cv))))
 end
 
@@ -279,7 +279,7 @@ function Util_cvToRate_raw_c2(index)
 end
 
 function Util_cvToRate(cv)
-   local index = ((math.floor((cv * 141.111111))) > (127) and (127) or ((math.floor((cv * 141.111111))) < (0) and (0) or (math.floor((cv * 141.111111)))))
+   local index = ((math.floor((cv * 142.222222))) > (127) and (127) or ((math.floor((cv * 142.222222))) < (0) and (0) or (math.floor((cv * 142.222222)))))
    return (Util_cvToRate_c0[(index) + 1] + (cv * (Util_cvToRate_c1[(index) + 1] + (Util_cvToRate_c2[(index) + 1] * cv))))
 end
 
@@ -303,7 +303,7 @@ function Util_cvToperiod_raw_c2(index)
 end
 
 function Util_cvToperiod(cv)
-   local index = ((math.floor((cv * 31.0))) > (31) and (31) or ((math.floor((cv * 31.0))) < (0) and (0) or (math.floor((cv * 31.0)))))
+   local index = ((math.floor((cv * 32.0))) > (31) and (31) or ((math.floor((cv * 32.0))) < (0) and (0) or (math.floor((cv * 32.0)))))
    return (Util_cvToperiod_c0[(index) + 1] + (cv * (Util_cvToperiod_c1[(index) + 1] + (Util_cvToperiod_c2[(index) + 1] * cv))))
 end
 
@@ -323,7 +323,7 @@ function Util_cvTokHz_raw_c2(index)
 end
 
 function Util_cvTokHz(cv)
-   local index = ((math.floor((cv * 31.0))) > (31) and (31) or ((math.floor((cv * 31.0))) < (0) and (0) or (math.floor((cv * 31.0)))))
+   local index = ((math.floor((cv * 32.0))) > (31) and (31) or ((math.floor((cv * 32.0))) < (0) and (0) or (math.floor((cv * 32.0)))))
    return (Util_cvTokHz_c0[(index) + 1] + (cv * (Util_cvTokHz_c1[(index) + 1] + (Util_cvTokHz_c2[(index) + 1] * cv))))
 end
 

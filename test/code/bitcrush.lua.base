@@ -97,7 +97,7 @@ function Bitcrush_factor_raw_c2(index)
 end
 
 function Bitcrush_factor(cv)
-   local index = ((math.floor((cv * 127.0))) > (127) and (127) or ((math.floor((cv * 127.0))) < (0) and (0) or (math.floor((cv * 127.0)))))
+   local index = ((math.floor((cv * 128.0))) > (127) and (127) or ((math.floor((cv * 128.0))) < (0) and (0) or (math.floor((cv * 128.0)))))
    return (Bitcrush_factor_c0[(index) + 1] + (cv * (Bitcrush_factor_c1[(index) + 1] + (Bitcrush_factor_c2[(index) + 1] * cv))))
 end
 
