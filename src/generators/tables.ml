@@ -256,13 +256,10 @@ let makeNewBody1Fixed _bound_check fname size in_precision t min max input =
     C.eindex arr rindex t
   in
   let initial_index = (float_of_int size -. 1.0) /. (max -. min) in
-  let value =
-    C.ecall "clip"
-      [ makeMul in_precision (makeSub in_precision input min) initial_index
-      ; makeFloat in_precision 0.0
-      ; makeFloat in_precision (float_of_int (size - 1)) ]
-      in_precision
-  in
+  (* Clamp the input, not the scaled value: scaling first overflows the fixed-point range for
+     inputs well outside [min, max], and the clamp would then be applied to a wrapped value. *)
+  let clamped = C.ecall "clip" [input; makeFloat in_precision min; makeFloat in_precision max] in_precision in
+  let value = makeMul in_precision (makeSub in_precision clamped min) initial_index in
   let value_decl = C.sdecl_bind "value" value in_precision in
   let decimal =
     C.sdecl_bind "decimal"
@@ -457,10 +454,10 @@ let makeWave (args : Args.args) _vm (def : function_def) =
       let msg = "The attribute 'wave' requires specific parameters. e.g. 'wave(channels=1, file=\"file.wav\")'" in
       Util.Error.raiseError msg def.loc
 
+(* Wavetables are cyclic, so points past either end wrap around. *)
 let wrapGet data index =
-  if index >= Array.length data then data.(index - Array.length data)
-  else if index < 0 then data.(Array.length data - index)
-  else data.(index)
+  let n = Array.length data in
+  data.(((index mod n) + n) mod n)
 
 let rec fitWavetableData data index acc0 acc1 acc2 =
   if index < 0 then (acc0, acc1, acc2)

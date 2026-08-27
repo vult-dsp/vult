@@ -57,7 +57,7 @@ def Tables_sineTable3_raw_c1(index):
    return Tables_sineTable3_c1[index]
 
 def Tables_sineTable3(x):
-   value = ((0.0) if ((x * 32.0)) < (0.0) else ((32.0) if ((x * 32.0)) > (32.0) else ((x * 32.0))))
+   value = (((0.0) if (x) < (0.0) else ((1.0) if (x) > (1.0) else (x))) * 32.0)
    index = int(value)
    decimal = (value - math.floor(value))
    return (Tables_sineTable3_c0[index] + (Tables_sineTable3_c1[index] * decimal))

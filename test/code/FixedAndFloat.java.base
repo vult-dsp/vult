@@ -226,7 +226,7 @@ private int FixedAndFloat_take_fix_return_fixed_raw_c1(int index) {
 }
 
 private int FixedAndFloat_take_fix_return_fixed(int x) {
-   int value = clip((x * 0x200000 /* 32.000000 */), 0x0 /* 0.000000 */, 0x200000 /* 32.000000 */);
+   int value = (clip(x, 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */) * 0x200000 /* 32.000000 */);
    int index = (int)(value);
    int decimal = (value - floor(value));
    return (FixedAndFloat_take_fix_return_fixed_c0[index] + (FixedAndFloat_take_fix_return_fixed_c1[index] * decimal));

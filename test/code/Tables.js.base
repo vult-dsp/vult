@@ -51,7 +51,7 @@ this.Tables_sineTable3_raw_c1 = function (index) {
 };
 
 this.Tables_sineTable3 = function (x) {
-   var value = (((x * 32.0)) < (0.0) ? (0.0) : (((x * 32.0)) > (32.0) ? (32.0) : ((x * 32.0))));
+   var value = (((x) < (0.0) ? (0.0) : ((x) > (1.0) ? (1.0) : (x))) * 32.0);
    var index = ((value)|0);
    var decimal = (value - Math.floor(value));
    return (Tables_sineTable3_c0[index] + (Tables_sineTable3_c1[index] * decimal));

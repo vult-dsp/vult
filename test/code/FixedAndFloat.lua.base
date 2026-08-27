@@ -112,7 +112,7 @@ function FixedAndFloat_take_fix_return_fixed_raw_c1(index)
 end
 
 function FixedAndFloat_take_fix_return_fixed(x)
-   local value = (((x * 32.0)) > (32.0) and (32.0) or (((x * 32.0)) < (0.0) and (0.0) or ((x * 32.0))))
+   local value = (((x) > (1.0) and (1.0) or ((x) < (0.0) and (0.0) or (x))) * 32.0)
    local index = (math.modf(value))
    local decimal = (value - floor(value))
    return (FixedAndFloat_take_fix_return_fixed_c0[(index) + 1] + (FixedAndFloat_take_fix_return_fixed_c1[(index) + 1] * decimal))
