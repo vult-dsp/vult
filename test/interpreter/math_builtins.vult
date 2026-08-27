@@ -1,0 +1,36 @@
+// Tests the extended math builtins (ceil, asin, acos, atan, atan2, min, max) with runtime
+// arguments, so both evaluation backends execute the builtin instead of the compiler folding it.
+fun main() : int {
+  val x = 0.5;
+  val y = 2.3;
+  val one = 1.0;
+  val a = 3;
+  val b = 7;
+
+  val ceil_val = ceil(y); // 3.0
+  val floor_val = floor(y); // 2.0
+  val asin_val = asin(x); // 0.5235987755982988
+  val acos_val = acos(x); // 1.0471975511965976
+  val atan_val = atan(one); // 0.7853981633974483
+  val atan2_val = atan2(one, one); // 0.7853981633974483
+  val min_real = min(x, y); // 0.5
+  val max_real = max(x, y); // 2.3
+  val min_int = min(a, b); // 3
+  val max_int = max(a, b); // 7
+
+  val tol = 0.000000001;
+  if (ceil_val == 3.0 && floor_val == 2.0) {
+    if (abs(asin_val - 0.5235987755982988) < tol && abs(acos_val - 1.0471975511965976) < tol) {
+      if (abs(atan_val - 0.7853981633974483) < tol && abs(atan2_val - 0.7853981633974483) < tol) {
+        if (min_real == 0.5 && max_real == 2.3 && min_int == 3 && max_int == 7) {
+          // asin and acos of the same value must add up to pi / 2
+          if (abs(asin_val + acos_val - (pi() / 2.0)) < tol) {
+            return 900; // All math builtin tests passed
+          }
+        }
+      }
+    }
+  }
+
+  return -1; // Some test failed
+}

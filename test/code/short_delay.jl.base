@@ -92,7 +92,7 @@ function Saturate_tanh_table_raw_c2(index)
 end
 
 function Saturate_tanh_table(x)
-   value = clamp(((x + Float32(24.0)) * Float32(5.020833)), Float32(0.0), Float32(241.0))
+   value = ((clamp(x, Float32(-24.0), Float32(24.0)) + Float32(24.0)) * Float32(5.020833))
    cell = clamp(trunc(Int32, value), Int32(0), Int32(240))
    u = (value - Float32(cell))
    index = (cell * Int32(3))

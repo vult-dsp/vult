@@ -35,8 +35,8 @@ this.Waves_sineTable2_raw_c2 = function (index) {
 };
 
 this.Waves_sineTable2 = function (position) {
-   var value = (((position * 256.0)) < (0.0) ? (0.0) : (((position * 256.0)) > (256.0) ? (256.0) : ((position * 256.0))));
-   var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((255|0)) ? ((255|0)) : (this.float_to_int(value))));
+   var value = (((position) < (0.0) ? (0.0) : ((position) > (1.0) ? (1.0) : (position))) * 255.0);
+   var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((254|0)) ? ((254|0)) : (this.float_to_int(value))));
    var u = (value - (cell));
    var index = (cell * (3|0));
    return (Waves_sineTable2_c[index] + (u * (Waves_sineTable2_c[(index + (1|0))] + (Waves_sineTable2_c[(index + (2|0))] * u))));

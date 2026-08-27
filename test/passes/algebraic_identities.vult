@@ -1,0 +1,85 @@
+// Algebraic simplifications on non-literal expressions.
+
+// x - x cancels for each numeric type
+fun sub_self_int(x:int) : int {
+   return x - x;
+}
+
+fun sub_self_real(x:real) : real {
+   return x - x;
+}
+
+fun sub_self_fix(x:fix16) : fix16 {
+   return x - x;
+}
+
+// the cancellation also works through reassociation
+fun cancel_reassoc(x:real) : real {
+   return (x + 1.0) - x;
+}
+
+// additive and multiplicative identities
+fun add_zero_int(x:int) : int {
+   return x + 0;
+}
+
+fun add_zero_real(x:real) : real {
+   return x + 0.0;
+}
+
+fun mul_one(x:real) : real {
+   return x * 1.0;
+}
+
+fun mul_zero(x:real) : real {
+   return x * 0.0;
+}
+
+fun mul_neg_one(x:real) : real {
+   return x * (-1.0);
+}
+
+fun div_one(x:real) : real {
+   return x / 1.0;
+}
+
+fun sub_from_zero(x:real) : real {
+   return 0.0 - x;
+}
+
+fun double_neg(x:real) : real {
+   return -(-x);
+}
+
+// division by a constant becomes a multiplication by the reciprocal
+fun div_const(x:real) : real {
+   return x / 4.0;
+}
+
+// comparisons of a simple value with itself
+fun self_cmp(x:int) : bool {
+   return (x == x) && (x <= x) && not(x < x);
+}
+
+// bitwise identities on simple values
+fun self_bitwise(x:int) : int {
+   return (x & x) + (x | 0) + (x ^ x) + (x << 0);
+}
+
+fun self_minmax(x:real) : real {
+   return min(x, x) + max(x, x);
+}
+
+// constant conditions are eliminated
+fun if_stmt_const(x:real) : real {
+   if (true) {
+      return x;
+   }
+   else {
+      return 0.0;
+   }
+}
+
+fun if_exp_const() : real {
+   return if false then 1.0 else 2.0;
+}

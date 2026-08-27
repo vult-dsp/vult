@@ -250,6 +250,20 @@ let resolveBuiltin (path : string) (nargs : int) (result_type : type_) : (builti
       Some (BI_abs, 1)
   | "floor", 1 ->
       Some (BI_floor, 1)
+  | "ceil", 1 ->
+      Some (BI_ceil, 1)
+  | "asin", 1 ->
+      Some (BI_asin, 1)
+  | "acos", 1 ->
+      Some (BI_acos, 1)
+  | "atan", 1 ->
+      Some (BI_atan, 1)
+  | "atan2", 2 ->
+      Some (BI_atan2, 2)
+  | "min", 2 ->
+      Some (BI_min, 2)
+  | "max", 2 ->
+      Some (BI_max, 2)
   | "pow", 2 ->
       Some (BI_pow, 2)
   | "clip", 3 when isRealType result_type ->

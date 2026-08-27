@@ -171,7 +171,7 @@ function Util_pitchToRate_1024_raw_c2(index)
 end
 
 function Util_pitchToRate_1024(pitch)
-   value = clamp((pitch * Float32(0.251968)), Float32(0.0), Float32(32.0))
+   value = (clamp(pitch, Float32(0.0), Float32(127.0)) * Float32(0.251968))
    cell = clamp(trunc(Int32, value), Int32(0), Int32(31))
    u = (value - Float32(cell))
    index = (cell * Int32(3))
@@ -192,7 +192,7 @@ function Util_pitchToRate_raw_c2(index)
 end
 
 function Util_pitchToRate(pitch)
-   value = clamp((pitch * Float32(0.251968)), Float32(0.0), Float32(32.0))
+   value = (clamp(pitch, Float32(0.0), Float32(127.0)) * Float32(0.251968))
    cell = clamp(trunc(Int32, value), Int32(0), Int32(31))
    u = (value - Float32(cell))
    index = (cell * Int32(3))
@@ -217,7 +217,7 @@ function Util_cvToRate_1024_raw_c2(index)
 end
 
 function Util_cvToRate_1024(cv)
-   value = clamp((cv * Float32(35.555555)), Float32(0.0), Float32(32.0))
+   value = (clamp(cv, Float32(0.0), Float32(0.9)) * Float32(35.555555))
    cell = clamp(trunc(Int32, value), Int32(0), Int32(31))
    u = (value - Float32(cell))
    index = (cell * Int32(3))
@@ -238,7 +238,7 @@ function Util_cvToRate_raw_c2(index)
 end
 
 function Util_cvToRate(cv)
-   value = clamp((cv * Float32(142.222222)), Float32(0.0), Float32(128.0))
+   value = (clamp(cv, Float32(0.0), Float32(0.9)) * Float32(142.222222))
    cell = clamp(trunc(Int32, value), Int32(0), Int32(127))
    u = (value - Float32(cell))
    index = (cell * Int32(3))
@@ -263,7 +263,7 @@ function Util_cvToperiod_raw_c2(index)
 end
 
 function Util_cvToperiod(cv)
-   value = clamp((cv * Float32(32.0)), Float32(0.0), Float32(32.0))
+   value = (clamp(cv, Float32(0.0), Float32(1.0)) * Float32(32.0))
    cell = clamp(trunc(Int32, value), Int32(0), Int32(31))
    u = (value - Float32(cell))
    index = (cell * Int32(3))
@@ -284,7 +284,7 @@ function Util_cvTokHz_raw_c2(index)
 end
 
 function Util_cvTokHz(cv)
-   value = clamp((cv * Float32(32.0)), Float32(0.0), Float32(32.0))
+   value = (clamp(cv, Float32(0.0), Float32(1.0)) * Float32(32.0))
    cell = clamp(trunc(Int32, value), Int32(0), Int32(31))
    u = (value - Float32(cell))
    index = (cell * Int32(3))

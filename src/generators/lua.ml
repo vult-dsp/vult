@@ -69,7 +69,8 @@ else
 end
 
 -- Math functions with LuaJIT optimizations
-local sin, cos, abs, exp, floor, tan, tanh, sqrt
+local sin, cos, abs, exp, floor, ceil, tan, tanh, sqrt
+local asin, acos, atan, atan2, min, max
 if isLuaJIT then
     -- LuaJIT has faster math operations
     sin = math.sin
@@ -77,9 +78,16 @@ if isLuaJIT then
     abs = math.abs
     exp = math.exp
     floor = math.floor
+    ceil = math.ceil
     tan = math.tan
     tanh = math.tanh
     sqrt = math.sqrt
+    asin = math.asin
+    acos = math.acos
+    atan = math.atan
+    atan2 = math.atan2
+    min = math.min
+    max = math.max
 else
     -- Standard Lua (same functions but explicit for potential future optimizations)
     sin = math.sin
@@ -87,9 +95,17 @@ else
     abs = math.abs
     exp = math.exp
     floor = math.floor
+    ceil = math.ceil
     tan = math.tan
     tanh = math.tanh
     sqrt = math.sqrt
+    asin = math.asin
+    acos = math.acos
+    atan = math.atan
+    -- math.atan2 was removed in Lua 5.4; the two-argument math.atan replaces it
+    atan2 = math.atan2 or function(y, x) return math.atan(y, x) end
+    min = math.min
+    max = math.max
 end
 
 -- Bit operations optimized for LuaJIT
@@ -211,7 +227,8 @@ let rec print_exp e =
         let a = print_exp a in
         let b = print_exp b in
         {%pla|rshift(<#a#>, <#b#>)|}
-    | ("sin" | "cos" | "abs" | "exp" | "floor" | "tan" | "tanh" | "sqrt"), _ ->
+    | ("sin" | "cos" | "abs" | "exp" | "floor" | "ceil" | "tan" | "tanh" | "sqrt"), _
+    | ("asin" | "acos" | "atan" | "atan2" | "min" | "max"), _ ->
         let args = Pla.map_sep Pla.commaspace print_exp args in
         {%pla|<#path#s>(<#args#>)|}
     (* List operations *)

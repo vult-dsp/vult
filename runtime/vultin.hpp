@@ -149,6 +149,16 @@ static_inline fix16_t fix_clip(fix16_t v, fix16_t minv, fix16_t maxv) {
 
 static_inline fix16_t fix_floor(fix16_t x) { return (x & (fix16_t)0xFFFF0000); }
 
+static_inline fix16_t fix_ceil(fix16_t x) { return (x & (fix16_t)0xFFFF) ? ((x & (fix16_t)0xFFFF0000) + 0x10000) : x; }
+
+static_inline fix16_t fix_min(fix16_t a, fix16_t b) { return a < b ? a : b; }
+
+static_inline fix16_t fix_max(fix16_t a, fix16_t b) { return a > b ? a : b; }
+
+static_inline int int_min(int a, int b) { return a < b ? a : b; }
+
+static_inline int int_max(int a, int b) { return a > b ? a : b; }
+
 static_inline float float_eps() { return 1e-18f; }
 
 static_inline fix16_t fix_eps() { return 1; }
@@ -178,6 +188,10 @@ fix16_t fix_sqrt(fix16_t inValue);
 static_inline float float_clip(float value, float low, float high) {
   return value < low ? low : (value > high ? high : value);
 }
+
+static_inline float float_min(float a, float b) { return a < b ? a : b; }
+
+static_inline float float_max(float a, float b) { return a > b ? a : b; }
 
 /* Random numbers */
 float float_random();

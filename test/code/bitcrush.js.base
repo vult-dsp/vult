@@ -19,7 +19,7 @@ this.Bitcrush_factor_raw_c2 = function (index) {
 };
 
 this.Bitcrush_factor = function (cv) {
-   var value = (((cv * 128.0)) < (0.0) ? (0.0) : (((cv * 128.0)) > (128.0) ? (128.0) : ((cv * 128.0))));
+   var value = (((cv) < (0.0) ? (0.0) : ((cv) > (1.0) ? (1.0) : (cv))) * 128.0);
    var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((127|0)) ? ((127|0)) : (this.float_to_int(value))));
    var u = (value - (cell));
    var index = (cell * (3|0));

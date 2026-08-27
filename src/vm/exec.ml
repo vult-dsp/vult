@@ -340,6 +340,53 @@ let execBuiltin (vm : vm_state) (id : int) (nargs : int) : unit =
           push vm Void
       | _ ->
           error "list_set: expected list, int, and value" )
+  | 37 -> (
+      (* ceil *)
+      let v = pop vm in
+      match v with Real f -> push vm (Real (ceil f)) | _ -> error "ceil: expected real" )
+  | 38 -> (
+      (* atan2 *)
+      let x = pop vm in
+      let y = pop vm in
+      match (y, x) with Real a, Real b -> push vm (Real (atan2 a b)) | _ -> error "atan2: expected reals" )
+  | 39 -> (
+      (* asin *)
+      let v = pop vm in
+      match v with Real f -> push vm (Real (asin f)) | _ -> error "asin: expected real" )
+  | 40 -> (
+      (* acos *)
+      let v = pop vm in
+      match v with Real f -> push vm (Real (acos f)) | _ -> error "acos: expected real" )
+  | 41 -> (
+      (* atan *)
+      let v = pop vm in
+      match v with Real f -> push vm (Real (atan f)) | _ -> error "atan: expected real" )
+  | 42 -> (
+      (* min *)
+      let b = pop vm in
+      let a = pop vm in
+      match (a, b) with
+      | Real x, Real y ->
+          push vm (Real (Float.min x y))
+      | Int x, Int y ->
+          push vm (Int (Int.min x y))
+      | Int16 x, Int16 y ->
+          push vm (Int16 (Int.min x y))
+      | _ ->
+          error "min: expected numeric values of the same type" )
+  | 43 -> (
+      (* max *)
+      let b = pop vm in
+      let a = pop vm in
+      match (a, b) with
+      | Real x, Real y ->
+          push vm (Real (Float.max x y))
+      | Int x, Int y ->
+          push vm (Int (Int.max x y))
+      | Int16 x, Int16 y ->
+          push vm (Int16 (Int.max x y))
+      | _ ->
+          error "max: expected numeric values of the same type" )
   | _ ->
       ignore nargs ;
       error (Printf.sprintf "Unknown builtin id: %d" id)

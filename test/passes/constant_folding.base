@@ -1,0 +1,90 @@
+fun Constant_folding_int_arith() : int {
+   return 20;
+}
+
+fun Constant_folding_int_shift() : int {
+   return 80;
+}
+
+fun Constant_folding_int_bitwise() : int {
+   return 29;
+}
+
+fun Constant_folding_int_mod() : int {
+   return 1;
+}
+
+fun Constant_folding_int_not_folded() : int {
+   return ((1 / 0) + ((7 % 0) + (-8 >> 1)));
+}
+
+fun Constant_folding_bool_eq() : bool {
+   return false;
+}
+
+fun Constant_folding_bool_ne() : bool {
+   return true;
+}
+
+fun Constant_folding_bool_and() : bool {
+   return false;
+}
+
+fun Constant_folding_bool_or() : bool {
+   return true;
+}
+
+fun Constant_folding_bool_not() : bool {
+   return false;
+}
+
+fun Constant_folding_cmp_fold() : bool {
+   return true;
+}
+
+fun Constant_folding_tanh_exact() : real {
+   return 0.0499583749579;
+}
+
+fun Constant_folding_math_fold() : real {
+   return 11.7684371095;
+}
+
+fun Constant_folding_trig_fold() : real {
+   return 2.32590073027;
+}
+
+fun Constant_folding_minmax_fold() : real {
+   return 7.0;
+}
+
+fun Constant_folding_minmax_fold_int() : int {
+   return 4;
+}
+
+fun Constant_folding_pow_fold() : real {
+   return 1024.0;
+}
+
+fun Constant_folding_pi_fold() : real {
+   return 3.14159265359;
+}
+
+fun Constant_folding_cast_real() : real {
+   return 2.25;
+}
+
+fun Constant_folding_cast_int() : int {
+   return 3;
+}
+
+fun Constant_folding_str_length() : int {
+   return 5;
+}
+
+fun Constant_folding_array_size() : int {
+   val a : real[3];
+   (a : real[3]) = {1.0, 2.0, 3.0};
+   return 3;
+}
+

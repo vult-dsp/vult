@@ -151,7 +151,7 @@ this.Util_pitchToRate_1024_raw_c2 = function (index) {
 };
 
 this.Util_pitchToRate_1024 = function (pitch) {
-   var value = (((pitch * 0.251968)) < (0.0) ? (0.0) : (((pitch * 0.251968)) > (32.0) ? (32.0) : ((pitch * 0.251968))));
+   var value = (((pitch) < (0.0) ? (0.0) : ((pitch) > (127.0) ? (127.0) : (pitch))) * 0.251968);
    var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((31|0)) ? ((31|0)) : (this.float_to_int(value))));
    var u = (value - (cell));
    var index = (cell * (3|0));
@@ -172,7 +172,7 @@ this.Util_pitchToRate_raw_c2 = function (index) {
 };
 
 this.Util_pitchToRate = function (pitch) {
-   var value = (((pitch * 0.251968)) < (0.0) ? (0.0) : (((pitch * 0.251968)) > (32.0) ? (32.0) : ((pitch * 0.251968))));
+   var value = (((pitch) < (0.0) ? (0.0) : ((pitch) > (127.0) ? (127.0) : (pitch))) * 0.251968);
    var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((31|0)) ? ((31|0)) : (this.float_to_int(value))));
    var u = (value - (cell));
    var index = (cell * (3|0));
@@ -197,7 +197,7 @@ this.Util_cvToRate_1024_raw_c2 = function (index) {
 };
 
 this.Util_cvToRate_1024 = function (cv) {
-   var value = (((cv * 35.555555)) < (0.0) ? (0.0) : (((cv * 35.555555)) > (32.0) ? (32.0) : ((cv * 35.555555))));
+   var value = (((cv) < (0.0) ? (0.0) : ((cv) > (0.9) ? (0.9) : (cv))) * 35.555555);
    var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((31|0)) ? ((31|0)) : (this.float_to_int(value))));
    var u = (value - (cell));
    var index = (cell * (3|0));
@@ -218,7 +218,7 @@ this.Util_cvToRate_raw_c2 = function (index) {
 };
 
 this.Util_cvToRate = function (cv) {
-   var value = (((cv * 142.222222)) < (0.0) ? (0.0) : (((cv * 142.222222)) > (128.0) ? (128.0) : ((cv * 142.222222))));
+   var value = (((cv) < (0.0) ? (0.0) : ((cv) > (0.9) ? (0.9) : (cv))) * 142.222222);
    var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((127|0)) ? ((127|0)) : (this.float_to_int(value))));
    var u = (value - (cell));
    var index = (cell * (3|0));
@@ -243,7 +243,7 @@ this.Util_cvToperiod_raw_c2 = function (index) {
 };
 
 this.Util_cvToperiod = function (cv) {
-   var value = (((cv * 32.0)) < (0.0) ? (0.0) : (((cv * 32.0)) > (32.0) ? (32.0) : ((cv * 32.0))));
+   var value = (((cv) < (0.0) ? (0.0) : ((cv) > (1.0) ? (1.0) : (cv))) * 32.0);
    var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((31|0)) ? ((31|0)) : (this.float_to_int(value))));
    var u = (value - (cell));
    var index = (cell * (3|0));
@@ -264,7 +264,7 @@ this.Util_cvTokHz_raw_c2 = function (index) {
 };
 
 this.Util_cvTokHz = function (cv) {
-   var value = (((cv * 32.0)) < (0.0) ? (0.0) : (((cv * 32.0)) > (32.0) ? (32.0) : ((cv * 32.0))));
+   var value = (((cv) < (0.0) ? (0.0) : ((cv) > (1.0) ? (1.0) : (cv))) * 32.0);
    var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((31|0)) ? ((31|0)) : (this.float_to_int(value))));
    var u = (value - (cell));
    var index = (cell * (3|0));

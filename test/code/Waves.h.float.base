@@ -33,8 +33,8 @@ static_inline float Waves_sineTable2_raw_c2(int32_t index) {
 }
 
 static_inline float Waves_sineTable2(float position) {
-   float value = float_clip(position * 256.0f, 0.0f, 256.0f);
-   int32_t cell = int_clip(float_to_int(value), 0, 255);
+   float value = float_clip(position, 0.0f, 1.0f) * 255.0f;
+   int32_t cell = int_clip(float_to_int(value), 0, 254);
    float u = value - int_to_float(cell);
    int32_t index = cell * 3;
    return Waves_sineTable2_c[static_cast<uint32_t>(index)] + u * (Waves_sineTable2_c[static_cast<uint32_t>(index + 1)] + Waves_sineTable2_c[static_cast<uint32_t>((index + 2))] * u);

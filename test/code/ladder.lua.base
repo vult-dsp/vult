@@ -37,7 +37,8 @@ else
 end
 
 -- Math functions with LuaJIT optimizations
-local sin, cos, abs, exp, floor, tan, tanh, sqrt
+local sin, cos, abs, exp, floor, ceil, tan, tanh, sqrt
+local asin, acos, atan, atan2, min, max
 if isLuaJIT then
     -- LuaJIT has faster math operations
     sin = math.sin
@@ -45,9 +46,16 @@ if isLuaJIT then
     abs = math.abs
     exp = math.exp
     floor = math.floor
+    ceil = math.ceil
     tan = math.tan
     tanh = math.tanh
     sqrt = math.sqrt
+    asin = math.asin
+    acos = math.acos
+    atan = math.atan
+    atan2 = math.atan2
+    min = math.min
+    max = math.max
 else
     -- Standard Lua (same functions but explicit for potential future optimizations)
     sin = math.sin
@@ -55,9 +63,17 @@ else
     abs = math.abs
     exp = math.exp
     floor = math.floor
+    ceil = math.ceil
     tan = math.tan
     tanh = math.tanh
     sqrt = math.sqrt
+    asin = math.asin
+    acos = math.acos
+    atan = math.atan
+    -- math.atan2 was removed in Lua 5.4; the two-argument math.atan replaces it
+    atan2 = math.atan2 or function(y, x) return math.atan(y, x) end
+    min = math.min
+    max = math.max
 end
 
 -- Bit operations optimized for LuaJIT
@@ -228,7 +244,7 @@ function Util_pitchToRate_1024_raw_c2(index)
 end
 
 function Util_pitchToRate_1024(pitch)
-   local value = (((pitch * 0.251968)) > (32.0) and (32.0) or (((pitch * 0.251968)) < (0.0) and (0.0) or ((pitch * 0.251968))))
+   local value = (((pitch) > (127.0) and (127.0) or ((pitch) < (0.0) and (0.0) or (pitch))) * 0.251968)
    local cell = ((math.floor(value)) > (31) and (31) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
    local u = (value - (cell))
    local index = (cell * 3)
@@ -249,7 +265,7 @@ function Util_pitchToRate_raw_c2(index)
 end
 
 function Util_pitchToRate(pitch)
-   local value = (((pitch * 0.251968)) > (32.0) and (32.0) or (((pitch * 0.251968)) < (0.0) and (0.0) or ((pitch * 0.251968))))
+   local value = (((pitch) > (127.0) and (127.0) or ((pitch) < (0.0) and (0.0) or (pitch))) * 0.251968)
    local cell = ((math.floor(value)) > (31) and (31) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
    local u = (value - (cell))
    local index = (cell * 3)
@@ -274,7 +290,7 @@ function Util_cvToRate_1024_raw_c2(index)
 end
 
 function Util_cvToRate_1024(cv)
-   local value = (((cv * 35.555555)) > (32.0) and (32.0) or (((cv * 35.555555)) < (0.0) and (0.0) or ((cv * 35.555555))))
+   local value = (((cv) > (0.9) and (0.9) or ((cv) < (0.0) and (0.0) or (cv))) * 35.555555)
    local cell = ((math.floor(value)) > (31) and (31) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
    local u = (value - (cell))
    local index = (cell * 3)
@@ -295,7 +311,7 @@ function Util_cvToRate_raw_c2(index)
 end
 
 function Util_cvToRate(cv)
-   local value = (((cv * 142.222222)) > (128.0) and (128.0) or (((cv * 142.222222)) < (0.0) and (0.0) or ((cv * 142.222222))))
+   local value = (((cv) > (0.9) and (0.9) or ((cv) < (0.0) and (0.0) or (cv))) * 142.222222)
    local cell = ((math.floor(value)) > (127) and (127) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
    local u = (value - (cell))
    local index = (cell * 3)
@@ -320,7 +336,7 @@ function Util_cvToperiod_raw_c2(index)
 end
 
 function Util_cvToperiod(cv)
-   local value = (((cv * 32.0)) > (32.0) and (32.0) or (((cv * 32.0)) < (0.0) and (0.0) or ((cv * 32.0))))
+   local value = (((cv) > (1.0) and (1.0) or ((cv) < (0.0) and (0.0) or (cv))) * 32.0)
    local cell = ((math.floor(value)) > (31) and (31) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
    local u = (value - (cell))
    local index = (cell * 3)
@@ -341,7 +357,7 @@ function Util_cvTokHz_raw_c2(index)
 end
 
 function Util_cvTokHz(cv)
-   local value = (((cv * 32.0)) > (32.0) and (32.0) or (((cv * 32.0)) < (0.0) and (0.0) or ((cv * 32.0))))
+   local value = (((cv) > (1.0) and (1.0) or ((cv) < (0.0) and (0.0) or (cv))) * 32.0)
    local cell = ((math.floor(value)) > (31) and (31) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
    local u = (value - (cell))
    local index = (cell * 3)
@@ -362,7 +378,7 @@ function Ladder_tune_raw_c2(index)
 end
 
 function Ladder_tune(cut)
-   local value = (((cut * 128.0)) > (128.0) and (128.0) or (((cut * 128.0)) < (0.0) and (0.0) or ((cut * 128.0))))
+   local value = (((cut) > (1.0) and (1.0) or ((cut) < (0.0) and (0.0) or (cut))) * 128.0)
    local cell = ((math.floor(value)) > (127) and (127) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
    local u = (value - (cell))
    local index = (cell * 3)

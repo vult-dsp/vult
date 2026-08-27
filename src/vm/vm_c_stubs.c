@@ -662,6 +662,56 @@ static void exec_builtin(vm_val *stack, int *sp_ptr, arena *a, int id, double sa
         stack[sp++] = VM_VOID;
         break;
     }
+    case 37: { /* ceil */
+        double x = as_real(stack[--sp]);
+        stack[sp++] = from_real(ceil(x));
+        break;
+    }
+    case 38: { /* atan2 */
+        double x = as_real(stack[--sp]);
+        double y = as_real(stack[--sp]);
+        stack[sp++] = from_real(atan2(y, x));
+        break;
+    }
+    case 39: { /* asin */
+        double x = as_real(stack[--sp]);
+        stack[sp++] = from_real(asin(x));
+        break;
+    }
+    case 40: { /* acos */
+        double x = as_real(stack[--sp]);
+        stack[sp++] = from_real(acos(x));
+        break;
+    }
+    case 41: { /* atan */
+        double x = as_real(stack[--sp]);
+        stack[sp++] = from_real(atan(x));
+        break;
+    }
+    case 42: { /* min */
+        vm_val b = stack[--sp];
+        vm_val a = stack[--sp];
+        if (is_real(a) || is_real(b)) {
+            double x = as_real(a), y = as_real(b);
+            stack[sp++] = from_real(x < y ? x : y);
+        } else {
+            int32_t x = as_int(a), y = as_int(b);
+            stack[sp++] = from_int(x < y ? x : y);
+        }
+        break;
+    }
+    case 43: { /* max */
+        vm_val b = stack[--sp];
+        vm_val a = stack[--sp];
+        if (is_real(a) || is_real(b)) {
+            double x = as_real(a), y = as_real(b);
+            stack[sp++] = from_real(x > y ? x : y);
+        } else {
+            int32_t x = as_int(a), y = as_int(b);
+            stack[sp++] = from_int(x > y ? x : y);
+        }
+        break;
+    }
     default:
         fprintf(stderr, "C VM: unsupported builtin id %d\n", id);
         stack[sp++] = VM_VOID;

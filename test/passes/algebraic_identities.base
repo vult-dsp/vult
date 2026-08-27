@@ -1,0 +1,72 @@
+fun Algebraic_identities_sub_self_int(const x : int) : int {
+   return 0;
+}
+
+fun Algebraic_identities_sub_self_real(const x : real) : real {
+   return 0.0;
+}
+
+fun Algebraic_identities_sub_self_fix(const x : fixed) : fixed {
+   return 0.0x;
+}
+
+fun Algebraic_identities_cancel_reassoc(const x : real) : real {
+   return 1.0;
+}
+
+fun Algebraic_identities_add_zero_int(const x : int) : int {
+   return (x : int);
+}
+
+fun Algebraic_identities_add_zero_real(const x : real) : real {
+   return (x : real);
+}
+
+fun Algebraic_identities_mul_one(const x : real) : real {
+   return (x : real);
+}
+
+fun Algebraic_identities_mul_zero(const x : real) : real {
+   return 0.0;
+}
+
+fun Algebraic_identities_mul_neg_one(const x : real) : real {
+   return (-(x : real));
+}
+
+fun Algebraic_identities_div_one(const x : real) : real {
+   return (x : real);
+}
+
+fun Algebraic_identities_sub_from_zero(const x : real) : real {
+   return (-(x : real));
+}
+
+fun Algebraic_identities_double_neg(const x : real) : real {
+   return (x : real);
+}
+
+fun Algebraic_identities_div_const(const x : real) : real {
+   return (0.25 * (x : real));
+}
+
+fun Algebraic_identities_self_cmp(const x : int) : bool {
+   return true;
+}
+
+fun Algebraic_identities_self_bitwise(const x : int) : int {
+   return ((x : int) + ((x : int) + (x : int)));
+}
+
+fun Algebraic_identities_self_minmax(const x : real) : real {
+   return ((x : real) + (x : real));
+}
+
+fun Algebraic_identities_if_stmt_const(const x : real) : real {
+   return (x : real);
+}
+
+fun Algebraic_identities_if_exp_const() : real {
+   return 2.0;
+}
+

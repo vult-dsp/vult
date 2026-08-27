@@ -55,7 +55,7 @@ this.FixedAndFloat_take_fix_return_real_raw_c2 = function (index) {
 };
 
 this.FixedAndFloat_take_fix_return_real = function (x) {
-   var value = (((x * 32.0)) < (0.0) ? (0.0) : (((x * 32.0)) > (32.0) ? (32.0) : ((x * 32.0))));
+   var value = (((x) < (0.0) ? (0.0) : ((x) > (1.0) ? (1.0) : (x))) * 32.0);
    var cell = ((this.fix_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.fix_to_int(value)) > ((31|0)) ? ((31|0)) : (this.fix_to_int(value))));
    var u = (value - (cell));
    var index = (cell * (3|0));
@@ -76,7 +76,7 @@ this.FixedAndFloat_take_real_return_fixed_raw_c2 = function (index) {
 };
 
 this.FixedAndFloat_take_real_return_fixed = function (x) {
-   var value = (((x * 32.0)) < (0.0) ? (0.0) : (((x * 32.0)) > (32.0) ? (32.0) : ((x * 32.0))));
+   var value = (((x) < (0.0) ? (0.0) : ((x) > (1.0) ? (1.0) : (x))) * 32.0);
    var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((31|0)) ? ((31|0)) : (this.float_to_int(value))));
    var u = (value - (cell));
    var index = (cell * (3|0));

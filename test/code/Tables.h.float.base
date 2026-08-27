@@ -18,7 +18,7 @@ static_inline float Tables_sineTable1_raw_c2(int32_t index) {
 }
 
 static_inline float Tables_sineTable1(float x) {
-   float value = float_clip(x * 32.0f, 0.0f, 32.0f);
+   float value = float_clip(x, 0.0f, 1.0f) * 32.0f;
    int32_t cell = int_clip(float_to_int(value), 0, 31);
    float u = value - int_to_float(cell);
    int32_t index = cell * 3;
@@ -34,7 +34,7 @@ static_inline float Tables_sineTable2_raw_c1(int32_t index) {
 }
 
 static_inline float Tables_sineTable2(float x) {
-   float value = float_clip(x * 32.0f, 0.0f, 32.0f);
+   float value = float_clip(x, 0.0f, 1.0f) * 32.0f;
    int32_t cell = int_clip(float_to_int(value), 0, 31);
    float u = value - int_to_float(cell);
    int32_t index = cell * 2;

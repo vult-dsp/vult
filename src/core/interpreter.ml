@@ -550,8 +550,10 @@ let compile_unary_r (f1 : compiled_exp) (op : float -> float) (err : string) : c
 let compile_binop_ii_cp (r1 : compiled_result) (r2 : compiled_result) (op : int -> int -> dvalue) (err : string) :
     compiled_result =
   match (r1, r2) with
-  | CConstant (DInt a), CConstant (DInt b) ->
-      CConstant (op a b)
+  | CConstant (DInt a), CConstant (DInt b) -> (
+    (* A failing operation (e.g. division by zero) is not folded: it must only raise if the
+       code path actually runs *)
+    try CConstant (op a b) with Division_by_zero -> CDynamic (fun _ctx _stack _fs -> op a b) )
   | CVar idx1, CVar idx2 ->
       CDynamic
         (fun ctx stack fs ->
@@ -574,9 +576,11 @@ let compile_binop_ii_cp (r1 : compiled_result) (r2 : compiled_result) (op : int 
 let compile_binop_i16_cp (r1 : compiled_result) (r2 : compiled_result) (op : int -> int -> int) (err : string) :
     compiled_result =
   match (r1, r2) with
-  | CConstant (DInt16 a), CConstant (DInt16 b) ->
+  | CConstant (DInt16 a), CConstant (DInt16 b) -> (
+    try
       let result = op a b in
       CConstant (DInt16 (max (-32768) (min 32767 result)))
+    with Division_by_zero -> CDynamic (fun _ctx _stack _fs -> DInt16 (max (-32768) (min 32767 (op a b)))) )
   | _ ->
       CDynamic (compile_binop_i16 (to_closure r1) (to_closure r2) op err)
 
@@ -894,9 +898,12 @@ let rec compileExp (ctx : compile_ctx) (exp : exp) : compiled_result =
       let r1 = compileExp ctx e1 in
       let r2 = compileExp ctx e2 in
       match (r1, r2) with
-      | CConstant v1, CConstant v2 ->
+      | CConstant v1, CConstant v2 -> (
           let dummy_ctx = {frames= []; depth= 0; max_depth= 0; sample_rate= None} in
-          CConstant (evalBinop dummy_ctx op v1 v2)
+          (* An operation that fails on constants (e.g. division by zero) is not folded: it must
+             only raise if the code path actually runs *)
+          try CConstant (evalBinop dummy_ctx op v1 v2)
+          with Runtime_error _ -> CDynamic (fun ctx _stack _fs -> evalBinop ctx op v1 v2) )
       | _ ->
           let f1 = to_closure r1 in
           let f2 = to_closure r2 in
@@ -933,10 +940,32 @@ let rec compileExp (ctx : compile_ctx) (exp : exp) : compiled_result =
       compile_unary_r_cp (compileExp ctx a) sqrt "Type mismatch in sqrt"
   | ECall {path= "floor"; args= [a]} ->
       compile_unary_r_cp (compileExp ctx a) floor "Type mismatch in floor"
+  | ECall {path= "ceil"; args= [a]} ->
+      compile_unary_r_cp (compileExp ctx a) ceil "Type mismatch in ceil"
+  | ECall {path= "asin"; args= [a]} ->
+      compile_unary_r_cp (compileExp ctx a) asin "Type mismatch in asin"
+  | ECall {path= "acos"; args= [a]} ->
+      compile_unary_r_cp (compileExp ctx a) acos "Type mismatch in acos"
+  | ECall {path= "atan"; args= [a]} ->
+      compile_unary_r_cp (compileExp ctx a) atan "Type mismatch in atan"
+  | ECall {path= "atan2"; args= [a; b]} ->
+      compile_binop_rr_cp (compileExp ctx a) (compileExp ctx b) (fun a b -> DReal (atan2 a b)) "Type mismatch in atan2"
   | ECall {path= "abs"; args= [a]} ->
       compileAbs ctx a
   | ECall {path= "pow"; args= [a; b]} ->
       compile_binop_rr_cp (compileExp ctx a) (compileExp ctx b) (fun a b -> DReal (a ** b)) "Type mismatch in pow"
+  | ECall {path= "min"; args= [a; b]} when isRealType exp.t ->
+      compile_binop_rr_cp (compileExp ctx a) (compileExp ctx b)
+        (fun a b -> DReal (Float.min a b))
+        "Type mismatch in min"
+  | ECall {path= "min"; args= [a; b]} when isIntType exp.t ->
+      compile_binop_ii_cp (compileExp ctx a) (compileExp ctx b) (fun a b -> DInt (Int.min a b)) "Type mismatch in min"
+  | ECall {path= "max"; args= [a; b]} when isRealType exp.t ->
+      compile_binop_rr_cp (compileExp ctx a) (compileExp ctx b)
+        (fun a b -> DReal (Float.max a b))
+        "Type mismatch in max"
+  | ECall {path= "max"; args= [a; b]} when isIntType exp.t ->
+      compile_binop_ii_cp (compileExp ctx a) (compileExp ctx b) (fun a b -> DInt (Int.max a b)) "Type mismatch in max"
   | ECall {path= "clip"; args= [x; mn; mx]} when isRealType exp.t ->
       compileClipReal ctx x mn mx
   | ECall {path= "clip"; args= [x; mn; mx]} when isIntType exp.t ->

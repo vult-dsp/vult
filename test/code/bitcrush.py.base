@@ -29,7 +29,7 @@ def Bitcrush_factor_raw_c2(index):
    return Bitcrush_factor_c[((index * 3) + 2)]
 
 def Bitcrush_factor(cv):
-   value = ((0.0) if ((cv * 128.0)) < (0.0) else ((128.0) if ((cv * 128.0)) > (128.0) else ((cv * 128.0))))
+   value = (((0.0) if (cv) < (0.0) else ((1.0) if (cv) > (1.0) else (cv))) * 128.0)
    cell = ((0) if (float_to_int(value)) < (0) else ((127) if (float_to_int(value)) > (127) else (float_to_int(value))))
    u = (value - float(cell))
    index = (cell * 3)

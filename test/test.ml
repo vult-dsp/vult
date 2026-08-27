@@ -73,6 +73,15 @@ let has_python =
     let () = print_endline "Python syntax will not be checked" in
     false
 
+(** checks if a C++ compiler is available to build and run the table regression checks *)
+let has_cpp =
+  if tryToRun "c++ --version > out 2>&1" then
+    let () = print_endline "Generated tables will be checked" in
+    true
+  else
+    let () = print_endline "Generated tables will not be checked" in
+    false
+
 let has_wl = false
 (*
    if tryToRun "wolframscript --version > out" then (
@@ -186,6 +195,7 @@ let interpreter =
   ; ("edge_cases.vult", 7000)
   ; ("function_calls_in_constants.vult", 1)
   ; ("functions.vult", 4000)
+  ; ("math_builtins.vult", 900)
   ; ("generics.vult", 1)
   ; ("generics_comprehensive.vult", 800)
   ; ("generics_context_chains.vult", 600)
@@ -220,6 +230,9 @@ let passes_files =
   ; "context_nested.vult"
   ; "tuple_to_types.vult"
   ; "simplify.vult"
+  ; "constant_folding.vult"
+  ; "algebraic_identities.vult"
+  ; "strength_reduction.vult"
   ; "external_calls.vult"
   ; "output_references.vult"
   ; "nested_if.vult"
@@ -450,6 +463,48 @@ module RandomCompileTest = struct
     Sys.chdir initial_dir
 
   let get files = "compile" >::: CCList.map (fun file -> Filename.basename file ^ ".float" >:: run file) files
+end
+
+(** Functional checks of the generated lookup tables: the fixture is compiled with the C++
+    backend and the resulting tables are evaluated at their edges by tables_regression_main.cpp,
+    which compares them against the functions they were fitted on. This exercises behavior the
+    code snapshots cannot: the upper endpoint of tables with bound_check = false, the clamping
+    of fixed-point inputs far outside the table, and the wavetable grid alignment. *)
+module TableRegressionTest = struct
+  let run _context =
+    skip_if (not has_cpp) "no C++ compiler available" ;
+    let fullfile = checkFile (in_test_directory "tables/tables_regression.vult") in
+    let output = in_tmp_dir "tables_regression" in
+    let args =
+      Args.
+        { default_arguments with
+          files= [File fullfile]
+        ; code= CppCode
+        ; output= Some output
+        ; force_write= true
+        ; includes= in_test_directory "tables" :: in_test_directory "passes" :: includes }
+    in
+    let results = Driver.Cli.driver args in
+    let () =
+      CCList.iter
+        (fun result ->
+          match result with
+          | Args.Errors errors ->
+              assert_failure (Error.reportErrors errors)
+          | result ->
+              Driver.Cli.showResult args result )
+        results
+    in
+    let main_file = in_test_directory "tables/tables_regression_main.cpp" in
+    let runtime = in_test_directory "../runtime" in
+    let exe = in_tmp_dir "tables_regression_check" in
+    let cmd =
+      Printf.sprintf "c++ -std=c++11 -O0 -I%s -I%s %s %s/vultin.cpp -o %s" runtime tmp_dir main_file runtime exe
+    in
+    if Sys.command cmd <> 0 then assert_failure "Failed to build the table regression checks" ;
+    if Sys.command exe <> 0 then assert_failure "The table regression checks failed"
+
+  let get () = "tables" >::: ["regression" >:: run]
 end
 
 type compiler = Node | Native
@@ -931,6 +986,7 @@ let suite =
        ; CliTest.get all_files Node "julia"
        ; CliTest.get all_files Node "python"
        ; RandomCompileTest.get test_random_code
+       ; TableRegressionTest.get ()
        ; InterpretPerf.get perf_files
        ; Interpret.get interpreter
        ; EvalGenericTest.get ()

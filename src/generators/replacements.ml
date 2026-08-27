@@ -136,6 +136,20 @@ module Cpp = struct
         Some "fix_exp"
     | "floor", [TFix16], TFix16 ->
         Some "fix_floor"
+    | "ceil", [TFix16], TFix16 ->
+        Some "fix_ceil"
+    | "min", [TFix16; _], TFix16 ->
+        Some "fix_min"
+    | "max", [TFix16; _], TFix16 ->
+        Some "fix_max"
+    | "min", [TInt; _], TInt ->
+        Some "int_min"
+    | "max", [TInt; _], TInt ->
+        Some "int_max"
+    | "min", [TReal; _], TReal ->
+        Some "float_min"
+    | "max", [TReal; _], TReal ->
+        Some "float_max"
     | "abs", [TFix16], TFix16 ->
         Some "fix_abs"
     | "sqrt", [TFix16], TFix16 ->
@@ -156,6 +170,16 @@ module Cpp = struct
         Some "expf"
     | "floor", [TReal], TReal ->
         Some "floorf"
+    | "ceil", [TReal], TReal ->
+        Some "ceilf"
+    | "asin", [TReal], TReal ->
+        Some "asinf"
+    | "acos", [TReal], TReal ->
+        Some "acosf"
+    | "atan", [TReal], TReal ->
+        Some "atanf"
+    | "atan2", [TReal; TReal], TReal ->
+        Some "atan2f"
     | "abs", [TReal], TReal ->
         Some "fabsf"
     | "sqrt", [TReal], TReal ->
@@ -493,6 +517,25 @@ module Julia = struct
         Some "exp"
     | "floor", [TReal], TReal ->
         Some "floor"
+    | "ceil", [TReal], TReal ->
+        Some "ceil"
+    | "asin", [TReal], TReal ->
+        Some "asin"
+    | "acos", [TReal], TReal ->
+        Some "acos"
+    | "atan", [TReal], TReal ->
+        Some "atan"
+    (* Julia's two-argument atan is atan2 *)
+    | "atan2", [TReal; TReal], TReal ->
+        Some "atan"
+    | "min", [TReal; _], TReal ->
+        Some "min"
+    | "max", [TReal; _], TReal ->
+        Some "max"
+    | "min", [TInt; _], TInt ->
+        Some "min"
+    | "max", [TInt; _], TInt ->
+        Some "max"
     | "abs", [TReal], TReal ->
         Some "abs"
     | "sqrt", [TReal], TReal ->
@@ -588,6 +631,24 @@ module Python = struct
         Some "math.exp"
     | "floor", [TReal], TReal ->
         Some "math.floor"
+    | "ceil", [TReal], TReal ->
+        Some "math.ceil"
+    | "asin", [TReal], TReal ->
+        Some "math.asin"
+    | "acos", [TReal], TReal ->
+        Some "math.acos"
+    | "atan", [TReal], TReal ->
+        Some "math.atan"
+    | "atan2", [TReal; TReal], TReal ->
+        Some "math.atan2"
+    | "min", [TReal; _], TReal ->
+        Some "min"
+    | "max", [TReal; _], TReal ->
+        Some "max"
+    | "min", [TInt; _], TInt ->
+        Some "min"
+    | "max", [TInt; _], TInt ->
+        Some "max"
     | "abs", [TReal], TReal ->
         Some "abs"
     | "abs", [TInt], TInt ->
@@ -724,6 +785,24 @@ module Zig = struct
         Some "log10f"
     | "floor", [TReal], TReal ->
         Some "floorf"
+    | "ceil", [TReal], TReal ->
+        Some "ceilf"
+    | "asin", [TReal], TReal ->
+        Some "asinf"
+    | "acos", [TReal], TReal ->
+        Some "acosf"
+    | "atan", [TReal], TReal ->
+        Some "atanf"
+    | "atan2", [TReal; TReal], TReal ->
+        Some "atan2f"
+    | "min", [TReal; _], TReal ->
+        Some "float_min"
+    | "max", [TReal; _], TReal ->
+        Some "float_max"
+    | "min", [TInt; _], TInt ->
+        Some "int_min"
+    | "max", [TInt; _], TInt ->
+        Some "int_max"
     | "abs", [TReal], TReal ->
         Some "fabsf"
     | "abs", [TInt], TInt ->

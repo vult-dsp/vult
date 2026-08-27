@@ -88,6 +88,33 @@ inline fn log10f(a: f32) f32 {
 inline fn floorf(a: f32) f32 {
     return @floor(a);
 }
+inline fn ceilf(a: f32) f32 {
+    return @ceil(a);
+}
+inline fn asinf(a: f32) f32 {
+    return std.math.asin(a);
+}
+inline fn acosf(a: f32) f32 {
+    return std.math.acos(a);
+}
+inline fn atanf(a: f32) f32 {
+    return std.math.atan(a);
+}
+inline fn atan2f(a: f32, b: f32) f32 {
+    return std.math.atan2(a, b);
+}
+inline fn float_min(a: f32, b: f32) f32 {
+    return @min(a, b);
+}
+inline fn float_max(a: f32, b: f32) f32 {
+    return @max(a, b);
+}
+inline fn int_min(a: i32, b: i32) i32 {
+    return @min(a, b);
+}
+inline fn int_max(a: i32, b: i32) i32 {
+    return @max(a, b);
+}
 inline fn fabsf(a: f32) f32 {
     return @abs(a);
 }

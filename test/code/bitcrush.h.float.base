@@ -18,7 +18,7 @@ static_inline float Bitcrush_factor_raw_c2(int32_t index) {
 }
 
 static_inline float Bitcrush_factor(float cv) {
-   float value = float_clip(cv * 128.0f, 0.0f, 128.0f);
+   float value = float_clip(cv, 0.0f, 1.0f) * 128.0f;
    int32_t cell = int_clip(float_to_int(value), 0, 127);
    float u = value - int_to_float(cell);
    int32_t index = cell * 3;

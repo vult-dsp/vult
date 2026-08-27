@@ -29,7 +29,7 @@ def Tables_sineTable1_raw_c2(index):
    return Tables_sineTable1_c[((index * 3) + 2)]
 
 def Tables_sineTable1(x):
-   value = ((0.0) if ((x * 32.0)) < (0.0) else ((32.0) if ((x * 32.0)) > (32.0) else ((x * 32.0))))
+   value = (((0.0) if (x) < (0.0) else ((1.0) if (x) > (1.0) else (x))) * 32.0)
    cell = ((0) if (float_to_int(value)) < (0) else ((31) if (float_to_int(value)) > (31) else (float_to_int(value))))
    u = (value - float(cell))
    index = (cell * 3)
@@ -44,7 +44,7 @@ def Tables_sineTable2_raw_c1(index):
    return Tables_sineTable2_c[((index * 2) + 1)]
 
 def Tables_sineTable2(x):
-   value = ((0.0) if ((x * 32.0)) < (0.0) else ((32.0) if ((x * 32.0)) > (32.0) else ((x * 32.0))))
+   value = (((0.0) if (x) < (0.0) else ((1.0) if (x) > (1.0) else (x))) * 32.0)
    cell = ((0) if (float_to_int(value)) < (0) else ((31) if (float_to_int(value)) > (31) else (float_to_int(value))))
    u = (value - float(cell))
    index = (cell * 2)

@@ -88,7 +88,7 @@ def Saturate_tanh_table_raw_c2(index):
    return Saturate_tanh_table_c[((index * 3) + 2)]
 
 def Saturate_tanh_table(x):
-   value = ((0.0) if (((x + 24.0) * 5.020833)) < (0.0) else ((241.0) if (((x + 24.0) * 5.020833)) > (241.0) else (((x + 24.0) * 5.020833))))
+   value = ((((-24.0) if (x) < (-24.0) else ((24.0) if (x) > (24.0) else (x))) + 24.0) * 5.020833)
    cell = ((0) if (float_to_int(value)) < (0) else ((240) if (float_to_int(value)) > (240) else (float_to_int(value))))
    u = (value - float(cell))
    index = (cell * 3)

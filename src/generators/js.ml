@@ -184,6 +184,30 @@ let rec print_exp e =
   | ECall {path= "floor"; args= [x]} ->
       let x = print_exp x in
       {%pla|Math.floor(<#x#>)|}
+  | ECall {path= "ceil"; args= [x]} ->
+      let x = print_exp x in
+      {%pla|Math.ceil(<#x#>)|}
+  | ECall {path= "asin"; args= [x]} ->
+      let x = print_exp x in
+      {%pla|Math.asin(<#x#>)|}
+  | ECall {path= "acos"; args= [x]} ->
+      let x = print_exp x in
+      {%pla|Math.acos(<#x#>)|}
+  | ECall {path= "atan"; args= [x]} ->
+      let x = print_exp x in
+      {%pla|Math.atan(<#x#>)|}
+  | ECall {path= "atan2"; args= [a; b]} ->
+      let a = print_exp a in
+      let b = print_exp b in
+      {%pla|Math.atan2(<#a#>, <#b#>)|}
+  | ECall {path= "min"; args= [a; b]} ->
+      let a = print_exp a in
+      let b = print_exp b in
+      {%pla|Math.min(<#a#>, <#b#>)|}
+  | ECall {path= "max"; args= [a; b]} ->
+      let a = print_exp a in
+      let b = print_exp b in
+      {%pla|Math.max(<#a#>, <#b#>)|}
   | ECall {path= "tan"; args= [x]} ->
       let x = print_exp x in
       {%pla|Math.tan(<#x#>)|}

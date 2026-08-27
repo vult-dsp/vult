@@ -192,7 +192,7 @@ static_inline float Util_pitchToRate_1024_raw_c2(int32_t index) {
 }
 
 static_inline float Util_pitchToRate_1024(float pitch) {
-   float value = float_clip(pitch * 0.251968f, 0.0f, 32.0f);
+   float value = float_clip(pitch, 0.0f, 127.0f) * 0.251968f;
    int32_t cell = int_clip(float_to_int(value), 0, 31);
    float u = value - int_to_float(cell);
    int32_t index = cell * 3;
@@ -212,7 +212,7 @@ static_inline float Util_pitchToRate_raw_c2(int32_t index) {
 }
 
 static_inline float Util_pitchToRate(float pitch) {
-   float value = float_clip(pitch * 0.251968f, 0.0f, 32.0f);
+   float value = float_clip(pitch, 0.0f, 127.0f) * 0.251968f;
    int32_t cell = int_clip(float_to_int(value), 0, 31);
    float u = value - int_to_float(cell);
    int32_t index = cell * 3;
@@ -236,7 +236,7 @@ static_inline float Util_cvToRate_1024_raw_c2(int32_t index) {
 }
 
 static_inline float Util_cvToRate_1024(float cv) {
-   float value = float_clip(cv * 35.555555f, 0.0f, 32.0f);
+   float value = float_clip(cv, 0.0f, 0.9f) * 35.555555f;
    int32_t cell = int_clip(float_to_int(value), 0, 31);
    float u = value - int_to_float(cell);
    int32_t index = cell * 3;
@@ -256,7 +256,7 @@ static_inline float Util_cvToRate_raw_c2(int32_t index) {
 }
 
 static_inline float Util_cvToRate(float cv) {
-   float value = float_clip(cv * 142.222222f, 0.0f, 128.0f);
+   float value = float_clip(cv, 0.0f, 0.9f) * 142.222222f;
    int32_t cell = int_clip(float_to_int(value), 0, 127);
    float u = value - int_to_float(cell);
    int32_t index = cell * 3;
@@ -280,7 +280,7 @@ static_inline float Util_cvToperiod_raw_c2(int32_t index) {
 }
 
 static_inline float Util_cvToperiod(float cv) {
-   float value = float_clip(cv * 32.0f, 0.0f, 32.0f);
+   float value = float_clip(cv, 0.0f, 1.0f) * 32.0f;
    int32_t cell = int_clip(float_to_int(value), 0, 31);
    float u = value - int_to_float(cell);
    int32_t index = cell * 3;
@@ -300,7 +300,7 @@ static_inline float Util_cvTokHz_raw_c2(int32_t index) {
 }
 
 static_inline float Util_cvTokHz(float cv) {
-   float value = float_clip(cv * 32.0f, 0.0f, 32.0f);
+   float value = float_clip(cv, 0.0f, 1.0f) * 32.0f;
    int32_t cell = int_clip(float_to_int(value), 0, 31);
    float u = value - int_to_float(cell);
    int32_t index = cell * 3;
@@ -320,7 +320,7 @@ static_inline float Ladder_tune_raw_c2(int32_t index) {
 }
 
 static_inline float Ladder_tune(float cut) {
-   float value = float_clip(cut * 128.0f, 0.0f, 128.0f);
+   float value = float_clip(cut, 0.0f, 1.0f) * 128.0f;
    int32_t cell = int_clip(float_to_int(value), 0, 127);
    float u = value - int_to_float(cell);
    int32_t index = cell * 3;

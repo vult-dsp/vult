@@ -63,7 +63,7 @@ def FixedAndFloat_take_fix_return_real_raw_c2(index):
    return FixedAndFloat_take_fix_return_real_c[((index * 3) + 2)]
 
 def FixedAndFloat_take_fix_return_real(x):
-   value = ((0.0) if ((x * 32.0)) < (0.0) else ((32.0) if ((x * 32.0)) > (32.0) else ((x * 32.0))))
+   value = (((0.0) if (x) < (0.0) else ((1.0) if (x) > (1.0) else (x))) * 32.0)
    cell = ((0) if (fix_to_int(value)) < (0) else ((31) if (fix_to_int(value)) > (31) else (fix_to_int(value))))
    u = (value - float(cell))
    index = (cell * 3)
@@ -81,7 +81,7 @@ def FixedAndFloat_take_real_return_fixed_raw_c2(index):
    return FixedAndFloat_take_real_return_fixed_c[((index * 3) + 2)]
 
 def FixedAndFloat_take_real_return_fixed(x):
-   value = ((0.0) if ((x * 32.0)) < (0.0) else ((32.0) if ((x * 32.0)) > (32.0) else ((x * 32.0))))
+   value = (((0.0) if (x) < (0.0) else ((1.0) if (x) > (1.0) else (x))) * 32.0)
    cell = ((0) if (float_to_int(value)) < (0) else ((31) if (float_to_int(value)) > (31) else (float_to_int(value))))
    u = (value - float(cell))
    index = (cell * 3)

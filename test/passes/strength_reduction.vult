@@ -1,0 +1,63 @@
+// Strength reduction: operations replaced by cheaper equivalents.
+
+// integer multiplication and division by powers of two become shifts
+fun mul_pow2(x:int) : int {
+   return x * 8;
+}
+
+fun div_pow2(x:int) : int {
+   return x / 4;
+}
+
+// pow with a small constant exponent expands when the base is a simple value
+fun pow_two(x:real) : real {
+   return pow(x, 2.0);
+}
+
+fun pow_three(x:real) : real {
+   return pow(x, 3.0);
+}
+
+fun pow_four(x:real) : real {
+   return pow(x, 4.0);
+}
+
+fun pow_half(x:real) : real {
+   return pow(x, 0.5);
+}
+
+fun pow_neg_one(x:real) : real {
+   return pow(x, -1.0);
+}
+
+fun pow_zero(x:real) : real {
+   return pow(x, 0.0);
+}
+
+// sqrt of a squared simple value becomes abs
+fun sqrt_square(x:real) : real {
+   return sqrt(x * x);
+}
+
+// a stateful call must not be duplicated or dropped: these remain calls to pow, min and sqrt
+fun counter() : real {
+   mem count;
+   count = count + 1.0;
+   return count;
+}
+
+fun pow_stateful() : real {
+   return pow(counter(), 2.0);
+}
+
+fun pow_zero_stateful() : real {
+   return pow(counter(), 0.0);
+}
+
+fun min_stateful() : real {
+   return min(counter(), counter());
+}
+
+fun sqrt_square_stateful() : real {
+   return sqrt(counter() * counter());
+}

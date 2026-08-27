@@ -1,0 +1,25 @@
+// Regression fixture for the generated lookup tables. The functions are compiled with the C++
+// backend and evaluated by tables_regression_main.cpp, which asserts their values at the edges
+// of the tables instead of only snapshotting the generated code.
+
+// Tables without bound checks must still return the value at the exact upper endpoint: an
+// input of exactly max selects the cell after the fitted ones, which holds the endpoint.
+fun order1_nocheck(x) @[table(min = 0.0, max = 1.0, size = 8, order = 1, bound_check = false)] {
+  return tanh(2.0 * x);
+}
+
+fun order2_nocheck(x) @[table(min = 0.0, max = 1.0, size = 8, order = 2, bound_check = false)] {
+  return tanh(2.0 * x);
+}
+
+// Mixed precision: a fix16 input with a real output. With bound checks enabled the raw input
+// must be clamped before it is scaled, otherwise the scaling wraps for large inputs and the
+// wrong edge of the table is returned.
+fun mixed_checked(x:fix16) : real @[table(min = 0.0, max = 1.0, size = 4, order = 1)] {
+  return real(x);
+}
+
+// The raw samples and the interpolated wavetable of the same file: the n samples span n - 1
+// cells, so reading the wavetable at i / (n - 1) must land on sample i.
+external wave_raw(channel:int, index:int) : real @[wave(channels = 1, file = "wave.wav")];
+external wavetable(position:real) : real @[wavetable(file = "wave.wav")];

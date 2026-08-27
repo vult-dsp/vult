@@ -37,7 +37,8 @@ else
 end
 
 -- Math functions with LuaJIT optimizations
-local sin, cos, abs, exp, floor, tan, tanh, sqrt
+local sin, cos, abs, exp, floor, ceil, tan, tanh, sqrt
+local asin, acos, atan, atan2, min, max
 if isLuaJIT then
     -- LuaJIT has faster math operations
     sin = math.sin
@@ -45,9 +46,16 @@ if isLuaJIT then
     abs = math.abs
     exp = math.exp
     floor = math.floor
+    ceil = math.ceil
     tan = math.tan
     tanh = math.tanh
     sqrt = math.sqrt
+    asin = math.asin
+    acos = math.acos
+    atan = math.atan
+    atan2 = math.atan2
+    min = math.min
+    max = math.max
 else
     -- Standard Lua (same functions but explicit for potential future optimizations)
     sin = math.sin
@@ -55,9 +63,17 @@ else
     abs = math.abs
     exp = math.exp
     floor = math.floor
+    ceil = math.ceil
     tan = math.tan
     tanh = math.tanh
     sqrt = math.sqrt
+    asin = math.asin
+    acos = math.acos
+    atan = math.atan
+    -- math.atan2 was removed in Lua 5.4; the two-argument math.atan replaces it
+    atan2 = math.atan2 or function(y, x) return math.atan(y, x) end
+    min = math.min
+    max = math.max
 end
 
 -- Bit operations optimized for LuaJIT
@@ -141,7 +157,7 @@ function Saturate_tanh_table_raw_c2(index)
 end
 
 function Saturate_tanh_table(x)
-   local value = ((((x + 24.0) * 5.020833)) > (241.0) and (241.0) or ((((x + 24.0) * 5.020833)) < (0.0) and (0.0) or (((x + 24.0) * 5.020833))))
+   local value = ((((x) > (24.0) and (24.0) or ((x) < (-24.0) and (-24.0) or (x))) + 24.0) * 5.020833)
    local cell = ((math.floor(value)) > (240) and (240) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
    local u = (value - (cell))
    local index = (cell * 3)

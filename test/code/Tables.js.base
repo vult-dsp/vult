@@ -19,7 +19,7 @@ this.Tables_sineTable1_raw_c2 = function (index) {
 };
 
 this.Tables_sineTable1 = function (x) {
-   var value = (((x * 32.0)) < (0.0) ? (0.0) : (((x * 32.0)) > (32.0) ? (32.0) : ((x * 32.0))));
+   var value = (((x) < (0.0) ? (0.0) : ((x) > (1.0) ? (1.0) : (x))) * 32.0);
    var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((31|0)) ? ((31|0)) : (this.float_to_int(value))));
    var u = (value - (cell));
    var index = (cell * (3|0));
@@ -36,7 +36,7 @@ this.Tables_sineTable2_raw_c1 = function (index) {
 };
 
 this.Tables_sineTable2 = function (x) {
-   var value = (((x * 32.0)) < (0.0) ? (0.0) : (((x * 32.0)) > (32.0) ? (32.0) : ((x * 32.0))));
+   var value = (((x) < (0.0) ? (0.0) : ((x) > (1.0) ? (1.0) : (x))) * 32.0);
    var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((31|0)) ? ((31|0)) : (this.float_to_int(value))));
    var u = (value - (cell));
    var index = (cell * (2|0));

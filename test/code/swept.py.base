@@ -153,7 +153,7 @@ def Util_pitchToRate_1024_raw_c2(index):
    return Util_pitchToRate_1024_c[((index * 3) + 2)]
 
 def Util_pitchToRate_1024(pitch):
-   value = ((0.0) if ((pitch * 0.251968)) < (0.0) else ((32.0) if ((pitch * 0.251968)) > (32.0) else ((pitch * 0.251968))))
+   value = (((0.0) if (pitch) < (0.0) else ((127.0) if (pitch) > (127.0) else (pitch))) * 0.251968)
    cell = ((0) if (float_to_int(value)) < (0) else ((31) if (float_to_int(value)) > (31) else (float_to_int(value))))
    u = (value - float(cell))
    index = (cell * 3)
@@ -171,7 +171,7 @@ def Util_pitchToRate_raw_c2(index):
    return Util_pitchToRate_c[((index * 3) + 2)]
 
 def Util_pitchToRate(pitch):
-   value = ((0.0) if ((pitch * 0.251968)) < (0.0) else ((32.0) if ((pitch * 0.251968)) > (32.0) else ((pitch * 0.251968))))
+   value = (((0.0) if (pitch) < (0.0) else ((127.0) if (pitch) > (127.0) else (pitch))) * 0.251968)
    cell = ((0) if (float_to_int(value)) < (0) else ((31) if (float_to_int(value)) > (31) else (float_to_int(value))))
    u = (value - float(cell))
    index = (cell * 3)
@@ -192,7 +192,7 @@ def Util_cvToRate_1024_raw_c2(index):
    return Util_cvToRate_1024_c[((index * 3) + 2)]
 
 def Util_cvToRate_1024(cv):
-   value = ((0.0) if ((cv * 35.555555)) < (0.0) else ((32.0) if ((cv * 35.555555)) > (32.0) else ((cv * 35.555555))))
+   value = (((0.0) if (cv) < (0.0) else ((0.9) if (cv) > (0.9) else (cv))) * 35.555555)
    cell = ((0) if (float_to_int(value)) < (0) else ((31) if (float_to_int(value)) > (31) else (float_to_int(value))))
    u = (value - float(cell))
    index = (cell * 3)
@@ -210,7 +210,7 @@ def Util_cvToRate_raw_c2(index):
    return Util_cvToRate_c[((index * 3) + 2)]
 
 def Util_cvToRate(cv):
-   value = ((0.0) if ((cv * 142.222222)) < (0.0) else ((128.0) if ((cv * 142.222222)) > (128.0) else ((cv * 142.222222))))
+   value = (((0.0) if (cv) < (0.0) else ((0.9) if (cv) > (0.9) else (cv))) * 142.222222)
    cell = ((0) if (float_to_int(value)) < (0) else ((127) if (float_to_int(value)) > (127) else (float_to_int(value))))
    u = (value - float(cell))
    index = (cell * 3)
@@ -231,7 +231,7 @@ def Util_cvToperiod_raw_c2(index):
    return Util_cvToperiod_c[((index * 3) + 2)]
 
 def Util_cvToperiod(cv):
-   value = ((0.0) if ((cv * 32.0)) < (0.0) else ((32.0) if ((cv * 32.0)) > (32.0) else ((cv * 32.0))))
+   value = (((0.0) if (cv) < (0.0) else ((1.0) if (cv) > (1.0) else (cv))) * 32.0)
    cell = ((0) if (float_to_int(value)) < (0) else ((31) if (float_to_int(value)) > (31) else (float_to_int(value))))
    u = (value - float(cell))
    index = (cell * 3)
@@ -249,7 +249,7 @@ def Util_cvTokHz_raw_c2(index):
    return Util_cvTokHz_c[((index * 3) + 2)]
 
 def Util_cvTokHz(cv):
-   value = ((0.0) if ((cv * 32.0)) < (0.0) else ((32.0) if ((cv * 32.0)) > (32.0) else ((cv * 32.0))))
+   value = (((0.0) if (cv) < (0.0) else ((1.0) if (cv) > (1.0) else (cv))) * 32.0)
    cell = ((0) if (float_to_int(value)) < (0) else ((31) if (float_to_int(value)) > (31) else (float_to_int(value))))
    u = (value - float(cell))
    index = (cell * 3)

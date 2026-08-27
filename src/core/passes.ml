@@ -782,6 +782,18 @@ module Simplify = struct
   let evaluate t op e1 e2 =
     match (e1, e2) with
     (* boolean *)
+    | {e= EBool n1; _}, {e= EBool n2; _} -> (
+      match op with
+      | OpEq ->
+          Some {e= EBool (n1 = n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpNe ->
+          Some {e= EBool (n1 <> n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpLand ->
+          Some {e= EBool (n1 && n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpLor ->
+          Some {e= EBool (n1 || n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | _ ->
+          None )
     | e, {e= EBool true; loc; _} | {e= EBool true; loc; _}, e -> (
       match op with OpLand -> Some e | OpLor -> Some (C.ebool ~loc true) | _ -> None )
     | e, {e= EBool false; loc; _} | {e= EBool false; loc; _}, e -> (
@@ -843,8 +855,21 @@ module Simplify = struct
           Some {e= EInt (n1 * n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
       | OpSub ->
           Some {e= EInt (n1 - n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
-      | OpDiv ->
+      | OpDiv when n2 <> 0 ->
           Some {e= EInt (n1 / n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpMod when n1 >= 0 && n2 > 0 ->
+          Some {e= EInt (n1 mod n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpLsh when n1 >= 0 && n2 >= 0 && n2 < 32 ->
+          Some
+            {e= EInt (Int32.to_int (Int32.shift_left (Int32.of_int n1) n2)); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpRsh when n1 >= 0 && n2 >= 0 && n2 < 32 ->
+          Some {e= EInt (n1 asr n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpBand ->
+          Some {e= EInt (n1 land n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpBor ->
+          Some {e= EInt (n1 lor n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpBxor ->
+          Some {e= EInt (n1 lxor n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
       | OpEq ->
           Some {e= EBool (n1 = n2); t; loc= Util.Loc.merge e1.loc e2.loc}
       | OpNe ->
@@ -859,7 +884,7 @@ module Simplify = struct
           Some {e= EBool (n1 > n2); t; loc= Util.Loc.merge e1.loc e2.loc}
       | _ ->
           None )
-    | ({e= EReal 0.0 | EFixed 0.0; _} as zero), e | e, ({e= EReal 0.0 | EFixed 0.0; _} as zero) -> (
+    | ({e= EReal 0.0 | EFixed 0.0 | EInt 0; _} as zero), e | e, ({e= EReal 0.0 | EFixed 0.0 | EInt 0; _} as zero) -> (
       match op with OpAdd -> Some e | OpMul -> Some zero | _ -> None )
     | _ ->
         None
@@ -875,13 +900,9 @@ module Simplify = struct
         (reapply state, {e1 with e= EFixed (-.n)})
     | {e= EUnOp (UOpNeg, ({e= EInt n; _} as e1)); _} ->
         (reapply state, {e1 with e= EInt (-n)})
-    (* x - (-n) -> x + n *)
-    | {e= EOp (OpSub, e1, ({e= EReal n; _} as e2)); _} ->
-        (reapply state, {e with e= EOp (OpAdd, e1, {e2 with e= EReal (-.n)})})
-    | {e= EOp (OpSub, e1, ({e= EFixed n; _} as e2)); _} ->
-        (reapply state, {e with e= EOp (OpAdd, e1, {e2 with e= EFixed (-.n)})})
-    | {e= EOp (OpSub, e1, ({e= EInt n; _} as e2)); _} ->
-        (reapply state, {e with e= EOp (OpAdd, e1, {e2 with e= EInt (-n)})})
+    (* not (b) -> b' *)
+    | {e= EUnOp (UOpNot, ({e= EBool b; _} as e1)); _} ->
+        (reapply state, {e1 with e= EBool (not b)})
     (* e1 / e2 -> e1 * (1.0 / e2) *)
     | {e= EOp (OpDiv, e1, ({e= EReal n; _} as e2)); _} ->
         (reapply state, {e with e= EOp (OpMul, e1, {e2 with e= EReal (1.0 /. n)})})
@@ -932,21 +953,9 @@ module StrengthReduction = struct
     let rec loop acc x = if x = 1 then acc else loop (acc + 1) (x lsr 1) in
     loop 0 n
 
-  (* Check if a floating point number is close to an integer *)
-  let is_close_to_int f =
-    let rounded = Float.round f in
-    Float.abs (f -. rounded) < 1e-10
-
-  (* Check if a floating point number is a power of 2 *)
-  let is_float_power_of_two f =
-    is_close_to_int f
-    &&
-    let i = int_of_float (Float.round f) in
-    i > 0 && is_power_of_two i
-
-  let float_log2 f =
-    let i = int_of_float (Float.round f) in
-    log2 i
+  (* Rules that drop or duplicate a matched subexpression require it to be a simple value:
+     removing or repeating a function call would change how many times its side effects run. *)
+  let isSimpleValue = IfExpressions.isSimpleValue
 
   (* Main strength reduction for expressions *)
   let exp =
@@ -974,8 +983,18 @@ module StrengthReduction = struct
         let shift_amount = log2 n in
         (reapply state, {e= EOp (OpRsh, e1, C.eint ~loc shift_amount); t= e.t; loc})
     (* Removed x + x -> x * 2 transformation as it causes issues with constant propagation *)
-    (* x - x -> 0 (preserve type) *)
-    | {e= EOp (OpSub, e1, e2); _} when Compare.exp e1 e2 = 0 -> (
+    (* x + (-x) -> 0 (the canonical form of x - x, preserve type) *)
+    | {e= EOp (OpAdd, e1, {e= EUnOp (UOpNeg, e2); _}); _} when Compare.exp e1 e2 = 0 && isSimpleValue e1 -> (
+      match e1.t.t with
+      | TInt ->
+          (reapply state, C.eint ~loc:e.loc 0)
+      | TReal ->
+          (reapply state, C.ereal ~loc:e.loc 0.0)
+      | TFix16 ->
+          (reapply state, C.efix16 ~loc:e.loc 0.0)
+      | _ ->
+          (state, e) )
+    | {e= EOp (OpAdd, {e= EUnOp (UOpNeg, e1); _}, e2); _} when Compare.exp e1 e2 = 0 && isSimpleValue e1 -> (
       match e1.t.t with
       | TInt ->
           (reapply state, C.eint ~loc:e.loc 0)
@@ -998,9 +1017,6 @@ module StrengthReduction = struct
     (* 0 / x -> 0 *)
     | {e= EOp (OpDiv, {e= EInt 0; _}, _); loc; _} ->
         (reapply state, C.eint ~loc 0)
-    (* 0 - x -> -x *)
-    | {e= EOp (OpSub, {e= EInt 0; _}, e2); _} ->
-        (reapply state, {e with e= EUnOp (UOpNeg, e2)})
     (* ========== FLOATING POINT ARITHMETIC OPTIMIZATIONS ========== *)
     (* x * 0.0 -> 0.0, x * 1.0 -> x *)
     | {e= EOp (OpMul, _, {e= EReal 0.0; _}); _} | {e= EOp (OpMul, {e= EReal 0.0; _}, _); _} ->
@@ -1017,9 +1033,6 @@ module StrengthReduction = struct
     (* 0.0 / x -> 0.0 *)
     | {e= EOp (OpDiv, {e= EReal 0.0; _}, _); loc; _} ->
         (reapply state, C.ereal ~loc 0.0)
-    (* 0.0 - x -> -x *)
-    | {e= EOp (OpSub, {e= EReal 0.0; _}, e2); _} ->
-        (reapply state, {e with e= EUnOp (UOpNeg, e2)})
     (* Removed x * 2.0 -> x + x transformation as it interferes with constant folding *)
     (* Removed x * 0.5 <-> x / 2.0 transformations as they create cycles with other passes *)
     (* Removed problematic power-of-2 real multiplication transformation *)
@@ -1039,9 +1052,6 @@ module StrengthReduction = struct
     (* 0.0 / x -> 0.0 (fixed) *)
     | {e= EOp (OpDiv, {e= EFixed 0.0; _}, _); loc; _} ->
         (reapply state, C.efix16 ~loc 0.0)
-    (* 0.0 - x -> -x (fixed) *)
-    | {e= EOp (OpSub, {e= EFixed 0.0; _}, e2); _} ->
-        (reapply state, {e with e= EUnOp (UOpNeg, e2)})
     (* ========== DIVISION BY 1 OPTIMIZATIONS ========== *)
     (* x / 1 -> x (for all numeric types) *)
     | {e= EOp (OpDiv, e1, {e= EInt 1; _}); _} ->
@@ -1052,24 +1062,24 @@ module StrengthReduction = struct
         (reapply state, e1)
     (* ========== FUNCTION CALL OPTIMIZATIONS ========== *)
     (* pow(x, 2) -> x * x *)
-    | {e= ECall {path= "pow"; args= [x; {e= EReal 2.0; _}]}; _} ->
+    | {e= ECall {path= "pow"; args= [x; {e= EReal 2.0; _}]}; _} when isSimpleValue x ->
         (reapply state, {e with e= EOp (OpMul, x, x)})
-    | {e= ECall {path= "pow"; args= [x; {e= EInt 2; _}]}; _} ->
+    | {e= ECall {path= "pow"; args= [x; {e= EInt 2; _}]}; _} when isSimpleValue x ->
         (reapply state, {e with e= EOp (OpMul, x, x)})
-    | {e= ECall {path= "pow"; args= [x; {e= EFixed 2.0; _}]}; _} ->
+    | {e= ECall {path= "pow"; args= [x; {e= EFixed 2.0; _}]}; _} when isSimpleValue x ->
         (reapply state, {e with e= EOp (OpMul, x, x)})
     (* pow(x, 3) -> x * x * x *)
-    | {e= ECall {path= "pow"; args= [x; {e= EReal 3.0; _}]}; _} ->
+    | {e= ECall {path= "pow"; args= [x; {e= EReal 3.0; _}]}; _} when isSimpleValue x ->
         let x_squared = {e with e= EOp (OpMul, x, x)} in
         (reapply state, {e with e= EOp (OpMul, x, x_squared)})
-    | {e= ECall {path= "pow"; args= [x; {e= EInt 3; _}]}; _} ->
+    | {e= ECall {path= "pow"; args= [x; {e= EInt 3; _}]}; _} when isSimpleValue x ->
         let x_squared = {e with e= EOp (OpMul, x, x)} in
         (reapply state, {e with e= EOp (OpMul, x, x_squared)})
     (* pow(x, 4) -> (x * x) * (x * x) *)
-    | {e= ECall {path= "pow"; args= [x; {e= EReal 4.0; _}]}; _} ->
+    | {e= ECall {path= "pow"; args= [x; {e= EReal 4.0; _}]}; _} when isSimpleValue x ->
         let x_squared = {e with e= EOp (OpMul, x, x)} in
         (reapply state, {e with e= EOp (OpMul, x_squared, x_squared)})
-    | {e= ECall {path= "pow"; args= [x; {e= EInt 4; _}]}; _} ->
+    | {e= ECall {path= "pow"; args= [x; {e= EInt 4; _}]}; _} when isSimpleValue x ->
         let x_squared = {e with e= EOp (OpMul, x, x)} in
         (reapply state, {e with e= EOp (OpMul, x_squared, x_squared)})
     (* pow(x, 0.5) -> sqrt(x) *)
@@ -1081,10 +1091,10 @@ module StrengthReduction = struct
     | {e= ECall {path= "pow"; args= [x; {e= EInt -1; _}]}; loc; _} ->
         (reapply state, {e with e= EOp (OpDiv, C.ereal ~loc 1.0, x)})
     (* pow(x, -2) -> 1.0 / (x * x) *)
-    | {e= ECall {path= "pow"; args= [x; {e= EReal -2.0; _}]}; loc; _} ->
+    | {e= ECall {path= "pow"; args= [x; {e= EReal -2.0; _}]}; loc; _} when isSimpleValue x ->
         let x_squared = {e with e= EOp (OpMul, x, x)} in
         (reapply state, {e with e= EOp (OpDiv, C.ereal ~loc 1.0, x_squared)})
-    | {e= ECall {path= "pow"; args= [x; {e= EInt -2; _}]}; loc; _} ->
+    | {e= ECall {path= "pow"; args= [x; {e= EInt -2; _}]}; loc; _} when isSimpleValue x ->
         let x_squared = {e with e= EOp (OpMul, x, x)} in
         (reapply state, {e with e= EOp (OpDiv, C.ereal ~loc 1.0, x_squared)})
     (* pow(x, 1) -> x *)
@@ -1095,27 +1105,23 @@ module StrengthReduction = struct
     | {e= ECall {path= "pow"; args= [x; {e= EFixed 1.0; _}]}; _} ->
         (reapply state, x)
     (* pow(x, 0) -> 1 *)
-    | {e= ECall {path= "pow"; args= [_; {e= EReal 0.0; _}]}; loc; _} ->
+    | {e= ECall {path= "pow"; args= [x; {e= EReal 0.0; _}]}; loc; _} when isSimpleValue x ->
         (reapply state, C.ereal ~loc 1.0)
-    | {e= ECall {path= "pow"; args= [_; {e= EInt 0; _}]}; loc; _} ->
+    | {e= ECall {path= "pow"; args= [x; {e= EInt 0; _}]}; loc; _} when isSimpleValue x ->
         (reapply state, C.eint ~loc 1)
-    | {e= ECall {path= "pow"; args= [_; {e= EFixed 0.0; _}]}; loc; _} ->
+    | {e= ECall {path= "pow"; args= [x; {e= EFixed 0.0; _}]}; loc; _} when isSimpleValue x ->
         (reapply state, C.efix16 ~loc 1.0 (* ========== MATHEMATICAL IDENTITIES ========== *))
     (* abs(abs(x)) -> abs(x) *)
     | {e= ECall {path= "abs"; args= [{e= ECall {path= "abs"; args= [x]}; _}]}; _} ->
         (reapply state, {e with e= ECall {path= "abs"; args= [x]}})
     (* sqrt(x * x) -> abs(x) (mathematically correct) *)
-    | {e= ECall {path= "sqrt"; args= [{e= EOp (OpMul, x1, x2); _}]}; _} when Compare.exp x1 x2 = 0 ->
+    | {e= ECall {path= "sqrt"; args= [{e= EOp (OpMul, x1, x2); _}]}; _} when Compare.exp x1 x2 = 0 && isSimpleValue x1
+      ->
         (reapply state, {e with e= ECall {path= "abs"; args= [x1]}})
     (* Removed log(exp(x)) <-> exp(log(x)) transformations as they may create cycles *)
     (* Removed sin/cos constant optimizations as they conflict with existing Builtin pass *)
 
-    (* ========== AUDIO-SPECIFIC OPTIMIZATIONS ========== *)
-    (* tanh(x) where x is very small -> x (linear approximation) *)
-    | {e= ECall {path= "tanh"; args= [{e= EReal x; _}]}; _} when Float.abs x < 0.1 ->
-        (reapply state, {e with e= EReal x})
-    | {e= ECall {path= "tanh"; args= [{e= EFixed x; _}]}; _} when Float.abs x < 0.1 ->
-        (reapply state, {e with e= EFixed x}) (* ========== BITWISE OPERATIONS OPTIMIZATIONS ========== *)
+    (* ========== BITWISE OPERATIONS OPTIMIZATIONS ========== *)
     (* x & 0 -> 0 *)
     | {e= EOp (OpBand, _, {e= EInt 0; _}); _} | {e= EOp (OpBand, {e= EInt 0; _}, _); _} ->
         (reapply state, {e with e= EInt 0})
@@ -1130,7 +1136,7 @@ module StrengthReduction = struct
     | {e= EOp (OpBxor, {e= EInt 0; _}, e2); _} ->
         (reapply state, e2)
     (* x ^ x -> 0 *)
-    | {e= EOp (OpBxor, e1, e2); _} when Compare.exp e1 e2 = 0 ->
+    | {e= EOp (OpBxor, e1, e2); _} when Compare.exp e1 e2 = 0 && isSimpleValue e1 ->
         (reapply state, C.eint ~loc:e.loc 0)
     (* x << 0 -> x, x >> 0 -> x *)
     | {e= EOp (OpLsh, e1, {e= EInt 0; _}); _} ->
@@ -1138,9 +1144,9 @@ module StrengthReduction = struct
     | {e= EOp (OpRsh, e1, {e= EInt 0; _}); _} ->
         (reapply state, e1)
     (* x & x -> x, x | x -> x *)
-    | {e= EOp (OpBand, e1, e2); _} when Compare.exp e1 e2 = 0 ->
+    | {e= EOp (OpBand, e1, e2); _} when Compare.exp e1 e2 = 0 && isSimpleValue e1 ->
         (reapply state, e1)
-    | {e= EOp (OpBor, e1, e2); _} when Compare.exp e1 e2 = 0 ->
+    | {e= EOp (OpBor, e1, e2); _} when Compare.exp e1 e2 = 0 && isSimpleValue e1 ->
         (reapply state, e1)
     (* x & -1 -> x (all bits set) *)
     | {e= EOp (OpBand, e1, {e= EInt -1; _}); _} ->
@@ -1177,26 +1183,26 @@ module StrengthReduction = struct
         (reapply state, C.ebool ~loc true)
     (* ========== COMPARISON SELF-IDENTITIES ========== *)
     (* x == x -> true (int only, floats have NaN) *)
-    | {e= EOp (OpEq, e1, e2); loc; _} when Compare.exp e1 e2 = 0 && e1.t.t = TInt ->
+    | {e= EOp (OpEq, e1, e2); loc; _} when Compare.exp e1 e2 = 0 && e1.t.t = TInt && isSimpleValue e1 ->
         (reapply state, C.ebool ~loc true)
     (* x != x -> false (int only) *)
-    | {e= EOp (OpNe, e1, e2); loc; _} when Compare.exp e1 e2 = 0 && e1.t.t = TInt ->
+    | {e= EOp (OpNe, e1, e2); loc; _} when Compare.exp e1 e2 = 0 && e1.t.t = TInt && isSimpleValue e1 ->
         (reapply state, C.ebool ~loc false)
     (* x < x -> false, x > x -> false *)
-    | {e= EOp (OpLt, e1, e2); loc; _} when Compare.exp e1 e2 = 0 ->
+    | {e= EOp (OpLt, e1, e2); loc; _} when Compare.exp e1 e2 = 0 && isSimpleValue e1 ->
         (reapply state, C.ebool ~loc false)
-    | {e= EOp (OpGt, e1, e2); loc; _} when Compare.exp e1 e2 = 0 ->
+    | {e= EOp (OpGt, e1, e2); loc; _} when Compare.exp e1 e2 = 0 && isSimpleValue e1 ->
         (reapply state, C.ebool ~loc false)
     (* x <= x -> true, x >= x -> true (int only) *)
-    | {e= EOp (OpLe, e1, e2); loc; _} when Compare.exp e1 e2 = 0 && e1.t.t = TInt ->
+    | {e= EOp (OpLe, e1, e2); loc; _} when Compare.exp e1 e2 = 0 && e1.t.t = TInt && isSimpleValue e1 ->
         (reapply state, C.ebool ~loc true)
-    | {e= EOp (OpGe, e1, e2); loc; _} when Compare.exp e1 e2 = 0 && e1.t.t = TInt ->
+    | {e= EOp (OpGe, e1, e2); loc; _} when Compare.exp e1 e2 = 0 && e1.t.t = TInt && isSimpleValue e1 ->
         (reapply state, C.ebool ~loc true)
     (* ========== MIN/MAX OPTIMIZATIONS ========== *)
     (* min(x, x) -> x, max(x, x) -> x *)
-    | {e= ECall {path= "min"; args= [x1; x2]}; _} when Compare.exp x1 x2 = 0 ->
+    | {e= ECall {path= "min"; args= [x1; x2]}; _} when Compare.exp x1 x2 = 0 && isSimpleValue x1 ->
         (reapply state, x1)
-    | {e= ECall {path= "max"; args= [x1; x2]}; _} when Compare.exp x1 x2 = 0 ->
+    | {e= ECall {path= "max"; args= [x1; x2]}; _} when Compare.exp x1 x2 = 0 && isSimpleValue x1 ->
         (reapply state, x1)
     (* No optimization found *)
     | _ ->

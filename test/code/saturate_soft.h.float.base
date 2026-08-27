@@ -18,7 +18,7 @@ static_inline float Saturate_soft_tanh_table_raw_c2(int32_t index) {
 }
 
 static_inline float Saturate_soft_tanh_table(float x) {
-   float value = float_clip((x + 24.0f) * 5.020833f, 0.0f, 241.0f);
+   float value = (float_clip(x, -24.0f, 24.0f) + 24.0f) * 5.020833f;
    int32_t cell = int_clip(float_to_int(value), 0, 240);
    float u = value - int_to_float(cell);
    int32_t index = cell * 3;

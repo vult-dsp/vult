@@ -65,7 +65,7 @@ this.Saturate_tanh_table_raw_c2 = function (index) {
 };
 
 this.Saturate_tanh_table = function (x) {
-   var value = ((((x + 24.0) * 5.020833)) < (0.0) ? (0.0) : ((((x + 24.0) * 5.020833)) > (241.0) ? (241.0) : (((x + 24.0) * 5.020833))));
+   var value = ((((x) < (-24.0) ? (-24.0) : ((x) > (24.0) ? (24.0) : (x))) + 24.0) * 5.020833);
    var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((240|0)) ? ((240|0)) : (this.float_to_int(value))));
    var u = (value - (cell));
    var index = (cell * (3|0));

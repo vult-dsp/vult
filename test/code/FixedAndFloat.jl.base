@@ -51,7 +51,7 @@ function FixedAndFloat_take_fix_return_real_raw_c2(index)
 end
 
 function FixedAndFloat_take_fix_return_real(x)
-   value = clip((x * Float32(32.0)), Float32(0.0), Float32(32.0))
+   value = (clip(x, Float32(0.0), Float32(1.0)) * Float32(32.0))
    cell = clamp(fix_to_int(value), Int32(0), Int32(31))
    u = (value - Float32(cell))
    index = (cell * Int32(3))
@@ -72,7 +72,7 @@ function FixedAndFloat_take_real_return_fixed_raw_c2(index)
 end
 
 function FixedAndFloat_take_real_return_fixed(x)
-   value = clamp((x * Float32(32.0)), Float32(0.0), Float32(32.0))
+   value = (clamp(x, Float32(0.0), Float32(1.0)) * Float32(32.0))
    cell = clamp(trunc(Int32, value), Int32(0), Int32(31))
    u = (value - Float32(cell))
    index = (cell * Int32(3))
