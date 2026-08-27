@@ -160,6 +160,12 @@ module Cpp = struct
         Some "fabsf"
     | "sqrt", [TReal], TReal ->
         Some "sqrtf"
+    | "log", [TReal], TReal ->
+        Some "logf"
+    | "log10", [TReal], TReal ->
+        Some "log10f"
+    | "pow", [TReal; TReal], TReal ->
+        Some "powf"
     (* cast *)
     | "int", [TReal], _ ->
         Some "float_to_int"
