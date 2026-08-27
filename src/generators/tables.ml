@@ -55,16 +55,46 @@ let makeIntTableDecl loc fname name int_type data =
   let elems = CCList.map (makeInt int_type) data in
   {top= TopConstant (varname, Some size, t, C.earray elems t, None); loc}
 
-let generateRawAccessFunction loc full_name c t =
+let coefficientTableName fname = fname ^ "_c"
+
+(* The coefficients of one table point are stored contiguously
+   ([c0.(0); c1.(0); c2.(0); c0.(1); ...]) rather than in one array per coefficient, so that a
+   lookup reads a single region of the table instead of one region per coefficient. On a part
+   with a small flash data cache, such as the 8 x 16 byte cache of the STM32F4 ART accelerator,
+   a scattered lookup then costs one line fill instead of one per coefficient. The stored values
+   are unchanged. *)
+let interleave (coefficients : float list list) : float list =
+  let columns = CCList.map Array.of_list coefficients in
+  match columns with
+  | [] ->
+      []
+  | first :: _ ->
+      let points = Array.length first in
+      CCList.init points (fun i -> CCList.map (fun column -> column.(i)) columns) |> CCList.flatten
+
+let makeCoefficientTableDecl loc fname precision coefficients =
+  makeRealTableDecl loc fname "c" precision (interleave coefficients)
+
+(* Offset of coefficient [c] within the point selected by [index]. The generated bodies keep
+   "index" already multiplied by the stride, so each coefficient is one constant offset away. *)
+let coefficientOffset index c = if c = 0 then index else C.eadd index (C.eint c)
+
+let generateRawAccessFunction loc full_name ~stride ~size c t =
   let n = string_of_int c in
-  let table_name = full_name ^ "_c" ^ n in
+  let table_name = coefficientTableName full_name in
   let function_name = full_name ^ "_raw_c" ^ n in
-  let r = C.eindex (C.eid table_name t) (C.eid "index" C.int_t) t in
+  let atype = makeArrayType t (size * stride) in
+  let offset = coefficientOffset (C.emul (C.eid "index" C.int_t) (C.eint stride)) c in
+  let r = C.eindex (C.eid table_name atype) offset t in
   let body = {s= StmtReturn r; loc} in
   let args = [C.param ~const:true "index" C.int_t] in
   let t = ([C.int_t], t) in
   let info = {original_name= None; is_root= false} in
   {top= TopFunction ({name= function_name; args; t; tags= []; loc; info}, body); loc}
+
+(* One raw accessor per coefficient, all reading the shared interleaved table. *)
+let generateRawAccessFunctions loc full_name ~stride ~size t =
+  CCList.init stride (fun c -> generateRawAccessFunction loc full_name ~stride ~size c t)
 
 let getCoefficients1 l =
   match l with [x1; x2] -> (x1, x2) | _ -> failwith "the curve fitting returned more than three points"
@@ -151,7 +181,7 @@ let calculateTablesOrder1 loc iprog name size min max precision =
         (x, getRealResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [DReal x])) )
   in
   let acc0, acc1 = fitDataOrder1 data (size - 1) [] [] in
-  [makeRealTableDecl loc name "c0" precision acc0; makeRealTableDecl loc name "c1" precision acc1]
+  [makeCoefficientTableDecl loc name precision [acc0; acc1]]
 
 let calculateTablesOrder1Fixed loc iprog name size min max precision =
   let map x x0 x1 y0 y1 = ((x -. x0) *. (y1 -. y0) /. (x1 -. x0)) +. y0 in
@@ -168,7 +198,7 @@ let calculateTablesOrder1Fixed loc iprog name size min max precision =
   in
   let acc0 = CCList.map snd data in
   let acc1 = increments data in
-  [makeRealTableDecl loc name "c0" precision acc0; makeRealTableDecl loc name "c1" precision acc1]
+  [makeCoefficientTableDecl loc name precision [acc0; acc1]]
 
 let calculateTablesOrder2 loc iprog name size min max precision =
   let map x x0 x1 y0 y1 = ((x -. x0) *. (y1 -. y0) /. (x1 -. x0)) +. y0 in
@@ -183,9 +213,7 @@ let calculateTablesOrder2 loc iprog name size min max precision =
         (x, getRealResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [DReal x])) )
   in
   let acc0, acc1, acc2 = fitDataOrder2 data (size - 1) [] [] [] in
-  [ makeRealTableDecl loc name "c0" precision acc0
-  ; makeRealTableDecl loc name "c1" precision acc1
-  ; makeRealTableDecl loc name "c2" precision acc2 ]
+  [makeCoefficientTableDecl loc name precision [acc0; acc1; acc2]]
 
 let getCastIndexFunction (in_precision : type_) =
   match in_precision.t with
@@ -198,10 +226,17 @@ let getCastIndexFunction (in_precision : type_) =
   | _ ->
       failwith "invalid input precision"
 
-let getIndex in_precision bound_check size value =
+let getIndex in_precision bound_check ~stride size value =
   let clip_call i = if bound_check then C.ecall "clip" [i; C.eint 0; C.eint (size - 1)] C.int_t else i in
   let int_call i = C.ecall (getCastIndexFunction in_precision) [i] C.int_t in
-  [C.sdecl ~init:(clip_call (int_call value)) "index" C.int_t]
+  let scale i = if stride = 1 then i else C.emul i (C.eint stride) in
+  [C.sdecl ~init:(scale (clip_call (int_call value))) "index" C.int_t]
+
+(* Reads coefficient [c] of the point selected by "index", which already includes the stride. *)
+let makeGetCoeff fname ~stride ~size t =
+  let atype = makeArrayType t (size * stride) in
+  let arr = C.eid (coefficientTableName fname) atype in
+  fun c -> C.eindex arr (coefficientOffset (C.eid "index" C.int_t) c) t
 
 let castInputVarPrecision (in_precision : type_) (out_precision : type_) (input : exp) : exp =
   match (in_precision.t, out_precision.t) with
@@ -235,26 +270,18 @@ let makeSub t e1 e2 =
 let makeMul t e1 e2 = if e2 = 1.0 then e1 else C.emul e1 (makeNuber t e2)
 
 let makeNewBody1 bound_check fname size in_precision t min max input =
-  let atype = makeArrayType t size in
-  let rindex = C.eid "index" C.int_t in
-  let getCoeff a =
-    let arr = C.eid (fname ^ "_" ^ a) atype in
-    C.eindex arr rindex t
-  in
+  let stride = 2 in
+  let getCoeff = makeGetCoeff fname ~stride ~size t in
   let initial_index = float_of_int size /. (max -. min) in
   let value = makeMul in_precision (makeSub in_precision input min) initial_index in
-  let index_stmts = getIndex in_precision bound_check size value in
+  let index_stmts = getIndex in_precision bound_check ~stride size value in
   let input = castInputVarPrecision in_precision t input in
-  let return = C.sreturn (C.eadd (getCoeff "c0") (C.emul input (getCoeff "c1"))) in
+  let return = C.sreturn (C.eadd (getCoeff 0) (C.emul input (getCoeff 1))) in
   C.sblock (index_stmts @ [return])
 
 let makeNewBody1Fixed _bound_check fname size in_precision t min max input =
-  let atype = makeArrayType t size in
-  let rindex = C.eid "index" C.int_t in
-  let getCoeff a =
-    let arr = C.eid (fname ^ "_" ^ a) atype in
-    C.eindex arr rindex t
-  in
+  let stride = 2 in
+  let getCoeff = makeGetCoeff fname ~stride ~size t in
   let initial_index = float_of_int size /. (max -. min) in
   (* Clamp the input, not the scaled value: scaling first overflows the fixed-point range for
      inputs well outside [min, max], and the clamp would then be applied to a wrapped value. *)
@@ -266,24 +293,22 @@ let makeNewBody1Fixed _bound_check fname size in_precision t min max input =
       (C.esub (C.eid "value" in_precision) (C.ecall "floor" [C.eid "value" in_precision] in_precision))
       in_precision
   in
-  let index = C.sdecl_bind "index" (C.ecall "int" [C.eid "value" in_precision] C.int_t) C.int_t in
-  let return = C.sreturn (C.eadd (getCoeff "c0") (C.emul (getCoeff "c1") (C.eid "decimal" in_precision))) in
+  let index =
+    C.sdecl_bind "index" (C.emul (C.ecall "int" [C.eid "value" in_precision] C.int_t) (C.eint stride)) C.int_t
+  in
+  let return = C.sreturn (C.eadd (getCoeff 0) (C.emul (getCoeff 1) (C.eid "decimal" in_precision))) in
   C.sblock (value_decl @ index @ decimal @ [return])
 
 let makeNewBody2 bound_check fname size in_precision t min max input =
-  let atype = makeArrayType t size in
-  let rindex = C.eid "index" C.int_t in
-  let getCoeff a =
-    let arr = C.eid (fname ^ "_" ^ a) atype in
-    C.eindex arr rindex t
-  in
+  let stride = 3 in
+  let getCoeff = makeGetCoeff fname ~stride ~size t in
   let initial_index = float_of_int size /. (max -. min) in
   let value = makeMul in_precision (makeSub in_precision input min) initial_index in
-  let index_stmts = getIndex in_precision bound_check size value in
+  let index_stmts = getIndex in_precision bound_check ~stride size value in
   let input = castInputVarPrecision in_precision t input in
-  let k2 = C.emul (getCoeff "c2") input in
-  let k1 = C.emul input (C.eadd (getCoeff "c1") k2) in
-  let return = C.sreturn (C.eadd (getCoeff "c0") k1) in
+  let k2 = C.emul (getCoeff 2) input in
+  let k1 = C.emul input (C.eadd (getCoeff 1) k2) in
+  let return = C.sreturn (C.eadd (getCoeff 0) k1) in
   C.sblock (index_stmts @ [return])
 
 let makeIntAccessBody fname out_type min max input =
@@ -328,22 +353,18 @@ let makeTable vm (def : function_def) =
           let size = optimizeSize size in
           let result = calculateTablesOrder1Fixed loc vm def.name size min max out_precision in
           let new_body = makeNewBody1Fixed bound_check def.name size in_precision out_precision min max var in
-          let c0 = generateRawAccessFunction loc def.name 0 out_precision in
-          let c1 = generateRawAccessFunction loc def.name 1 out_precision in
-          result @ [c0; c1] @ [{top= TopFunction (def, new_body); loc}]
+          let raw = generateRawAccessFunctions loc def.name ~stride:2 ~size out_precision in
+          result @ raw @ [{top= TopFunction (def, new_body); loc}]
       | Some (Int 1), _, _ ->
           let result = calculateTablesOrder1 loc vm def.name size min max out_precision in
           let new_body = makeNewBody1 bound_check def.name size in_precision out_precision min max var in
-          let c0 = generateRawAccessFunction loc def.name 0 out_precision in
-          let c1 = generateRawAccessFunction loc def.name 1 out_precision in
-          result @ [c0; c1] @ [{top= TopFunction (def, new_body); loc}]
+          let raw = generateRawAccessFunctions loc def.name ~stride:2 ~size out_precision in
+          result @ raw @ [{top= TopFunction (def, new_body); loc}]
       | _ ->
           let result = calculateTablesOrder2 loc vm def.name size min max out_precision in
           let new_body = makeNewBody2 bound_check def.name size in_precision out_precision min max var in
-          let c0 = generateRawAccessFunction loc def.name 0 out_precision in
-          let c1 = generateRawAccessFunction loc def.name 1 out_precision in
-          let c2 = generateRawAccessFunction loc def.name 2 out_precision in
-          result @ [c0; c1; c2] @ [{top= TopFunction (def, new_body); loc}] )
+          let raw = generateRawAccessFunctions loc def.name ~stride:3 ~size out_precision in
+          result @ raw @ [{top= TopFunction (def, new_body); loc}] )
   | _ ->
       let msg =
         "The attribute 'table' requires specific parameters. e.g. 'table(size = 128, min = 0.0, max = 1.0, [order = \
@@ -472,9 +493,7 @@ let rec fitWavetableData data index acc0 acc1 acc2 =
 
 let makeWavetableOrder2 loc name size precision data =
   let acc0, acc1, acc2 = fitWavetableData data size [] [] [] in
-  [ makeRealTableDecl loc name "c0" precision acc0
-  ; makeRealTableDecl loc name "c1" precision acc1
-  ; makeRealTableDecl loc name "c2" precision acc2 ]
+  [makeCoefficientTableDecl loc name precision [acc0; acc1; acc2]]
 
 let makeWavetable (args : Args.args) _vm (def : function_def) =
   let params = Tags.[("file", TypeString); ("bound_check", TypeBool)] in
@@ -492,11 +511,9 @@ let makeWavetable (args : Args.args) _vm (def : function_def) =
       let data = Array.mapi (fun x y -> (float_of_int x /. (size -. 1.0), y)) data in
       let result = makeWavetableOrder2 def.loc def.name size_n out_precision data in
       let new_body = makeNewBody2 bound_check def.name size_n in_precision out_precision 0.0 1.0 var in
-      let c0 = generateRawAccessFunction def.loc def.name 0 out_precision in
-      let c1 = generateRawAccessFunction def.loc def.name 1 out_precision in
-      let c2 = generateRawAccessFunction def.loc def.name 2 out_precision in
+      let raw = generateRawAccessFunctions def.loc def.name ~stride:3 ~size:size_n out_precision in
       let size_fun = makeSizeFunction def wave.WaveFile.samples in
-      result @ [size_fun; c0; c1; c2] @ [{top= TopFunction (def, new_body); loc= def.loc}]
+      result @ (size_fun :: raw) @ [{top= TopFunction (def, new_body); loc= def.loc}]
   | _ ->
       let msg = "This attribute can only be applied to functions returning 'real'" in
       Util.Error.raiseError msg def.loc
