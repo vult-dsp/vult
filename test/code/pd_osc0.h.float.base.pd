@@ -8,6 +8,7 @@
 
  #include <stdint.h>
  #include <math.h>
+ #include <new>
  #include <m_pd.h>
 
  #if defined(_MSC_VER)

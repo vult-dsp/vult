@@ -284,13 +284,16 @@ let collectObjects (lib_name : string) (stmts : top_stmt list) : obj list =
 
 (* ==== Shared pieces of the generated code ==== *)
 
-(* The struct type used by the object: the context of the function when it has one. *)
+(* The struct type used by the object: the context of the function when it has one.
+   Pure Data hands the object memory as raw bytes, so the context is constructed in
+   place (its members can be C++ types like std::string) and destroyed on delete. *)
 let dataType (o : obj) =
   match o.ctx with
   | Some ctx ->
-      (Pla.string ctx, {%pla|<#ctx#s>_init(x->data);|})
+      (Pla.string ctx, {%pla|new (&x->data) <#ctx#s>();
+   <#ctx#s>_init(x->data);|}, {%pla|x->data.~<#ctx#s>();|})
   | None ->
-      (Pla.string "float", Pla.unit)
+      (Pla.string "float", Pla.unit, Pla.unit)
 
 let structName (o : obj) =
   match o.kind with Tilde -> "t_" ^ o.fname ^ "_tilde" | Control -> "t_" ^ o.fname ^ "_normal"
@@ -427,7 +430,7 @@ let tildeObject (o : obj) : Pla.t =
   let dsp_nargs, vec_decl = tildeNewFunction o in
   let last_w, io_decl = tildePerformFunctionVector o in
   let process_call = tildePerformFunctionCall o in
-  let main_type, init_call = dataType o in
+  let main_type, init_call, destroy_call = dataType o in
   let handlers = messageHandlers o in
   let registrations = messageRegistrations o (fname ^ "_tilde_class") in
   (* The main signal inlet only exists when the object has signal inputs: a pure generator
@@ -477,6 +480,7 @@ void *<#fname#s>_tilde_new()
 
 void <#fname#s>_tilde_delete(<#struct_name#s> *x){
    (void)x;
+   <#destroy_call#>
 }
 
 EXPORT void <#setup_name#s>(void) {
@@ -678,7 +682,7 @@ let controlObject (o : obj) : Pla.t =
   let outlet_vars = controlOutletVars o in
   let inlets = controlInlets o.inputs in
   let outlets = controlOutlets o in
-  let main_type, init_call = dataType o in
+  let main_type, init_call, destroy_call = dataType o in
   let call = controlCall o in
   let triggers = controlTriggers o in
   let handlers = messageHandlers o in
@@ -709,6 +713,7 @@ void *<#fname#s>_normal_new()
 
 void <#fname#s>_normal_delete(<#struct_name#s> *x){
    (void)x;
+   <#destroy_call#>
 }
 
 EXPORT void <#setup_name#s>(void) {
@@ -788,6 +793,7 @@ let libHeader lib_name (objects : obj list) : Pla.t =
   {%pla|
  #include <stdint.h>
  #include <math.h>
+ #include <new>
  #include <m_pd.h>
 
  #if defined(_MSC_VER)

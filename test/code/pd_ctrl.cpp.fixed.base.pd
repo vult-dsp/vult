@@ -84,6 +84,7 @@ void Pd_ctrl_scale_list(t_Pd_ctrl_scale_normal *x, t_symbol *s, int argc, t_atom
 void *Pd_ctrl_scale_normal_new()
 {
    t_Pd_ctrl_scale_normal *x = (t_Pd_ctrl_scale_normal *)pd_new(Pd_ctrl_scale_normal_class);
+   new (&x->data) Pd_ctrl_scale_type();
    Pd_ctrl_scale_type_init(x->data);
 
    x->arg_x = 0;
@@ -101,6 +102,7 @@ void *Pd_ctrl_scale_normal_new()
 
 void Pd_ctrl_scale_normal_delete(t_Pd_ctrl_scale_normal *x){
    (void)x;
+   x->data.~Pd_ctrl_scale_type();
 }
 
 EXPORT void scale_setup(void) {
@@ -171,6 +173,7 @@ void Pd_ctrl_tagger_list(t_Pd_ctrl_tagger_normal *x, t_symbol *s, int argc, t_at
 void *Pd_ctrl_tagger_normal_new()
 {
    t_Pd_ctrl_tagger_normal *x = (t_Pd_ctrl_tagger_normal *)pd_new(Pd_ctrl_tagger_normal_class);
+   new (&x->data) Pd_ctrl_tagger_type();
    Pd_ctrl_tagger_type_init(x->data);
 
    x->arg_value = 0;
@@ -186,6 +189,7 @@ void *Pd_ctrl_tagger_normal_new()
 
 void Pd_ctrl_tagger_normal_delete(t_Pd_ctrl_tagger_normal *x){
    (void)x;
+   x->data.~Pd_ctrl_tagger_type();
 }
 
 EXPORT void vtag_setup(void) {

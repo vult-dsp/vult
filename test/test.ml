@@ -45,6 +45,11 @@ let makeTestDir (name : string) : string =
   let () = if Sys.command ("mkdir -p " ^ dir) <> 0 then failwith ("failed to create " ^ dir) in
   dir
 
+(* Runs a command inside a directory without changing the working directory of the test
+   runner: the tests run several per process, and an assert_failure raised between a
+   Sys.chdir and its restore would leave every later test in the wrong directory. *)
+let runInDir (dir : string) (cmd : string) : int = Sys.command (Printf.sprintf "cd %s && %s" (Filename.quote dir) cmd)
+
 (** checks if node can be called with flag -c *)
 let has_node =
   if tryToRun ("node -c " ^ in_test_directory "other/test.js") then
@@ -456,7 +461,7 @@ end
 
 (** Tries to compile all the examples *)
 module RandomCompileTest = struct
-  let compileFile (file : string) =
+  let compileFile (dir : string) (file : string) =
     let basename = Filename.chop_extension (Filename.basename file) in
     let cmd =
       Printf.sprintf
@@ -464,7 +469,7 @@ module RandomCompileTest = struct
          -Wno-unused-value -Wno-tautological-compare -Wconversion -I%s -c %s -o %s"
         (in_test_directory "../runtime") file basename
     in
-    if Sys.command cmd <> 0 then assert_failure ("Failed to compile " ^ file)
+    if runInDir dir cmd <> 0 then assert_failure ("Failed to compile " ^ file)
 
   let generateCPP (filename : string) (output : string) : unit =
     let args = Args.{default_arguments with files= [File filename]; code= CppCode; output= Some output} in
@@ -480,15 +485,10 @@ module RandomCompileTest = struct
   let run (file : string) _ =
     let output = Filename.chop_extension (Filename.basename file) in
     let dir = makeTestDir ("random_" ^ output) in
-    Sys.chdir dir ;
-    generateCPP file output ;
-    assert_bool "No code generated" (Sys.file_exists (output ^ ".cpp")) ;
-    compileFile (output ^ ".cpp") ;
-    Sys.remove (output ^ ".cpp") ;
-    Sys.remove (output ^ ".h") ;
-    Sys.remove (output ^ ".vult") ;
-    Sys.remove output ;
-    Sys.chdir initial_dir
+    let in_dir name = Filename.concat dir name in
+    generateCPP (in_dir file) (in_dir output) ;
+    assert_bool "No code generated" (Sys.file_exists (in_dir (output ^ ".cpp"))) ;
+    compileFile dir (output ^ ".cpp")
 
   let get files = "compile" >::: CCList.map (fun file -> Filename.basename file ^ ".float" >:: run file) files
 end
@@ -536,7 +536,7 @@ end
 
 type compiler = Node | Native
 
-let callCompiler (file : string) : unit =
+let callCompilerIn (dir : string) (file : string) : unit =
   let basename = Filename.chop_extension (Filename.basename file) in
   let cmd =
     Printf.sprintf "gcc -std=c++11 -O0 -Werror -Wno-write-strings -Wconversion -I%s -I%s -c %s -o %s"
@@ -544,15 +544,13 @@ let callCompiler (file : string) : unit =
       (in_test_directory "../examples/cmake/pd-deps")
       file basename
   in
-  if Sys.command cmd <> 0 then assert_failure ("Failed to compile " ^ file)
+  if runInDir dir cmd <> 0 then assert_failure ("Failed to compile " ^ file)
 
 let compileCppFile ext (dir : string) (file : string) : unit =
   let output = Filename.chop_extension (Filename.basename file) in
-  Sys.chdir dir ;
-  assert_bool "No code generated" (Sys.file_exists (output ^ ext)) ;
-  callCompiler (output ^ ext) ;
-  callCompiler "vultin.cpp" ;
-  Sys.chdir initial_dir
+  assert_bool "No code generated" (Sys.file_exists (Filename.concat dir (output ^ ext))) ;
+  callCompilerIn dir (output ^ ext) ;
+  callCompilerIn dir "vultin.cpp"
 
 (* Links the generated Pure Data external against the API stubs and runs its setup,
    instantiating every registered class. This catches undefined symbols (the compile step
@@ -560,7 +558,6 @@ let compileCppFile ext (dir : string) (file : string) : unit =
 let linkAndRunPd (filename : string) : unit =
   let dir = Filename.dirname filename in
   let base = Filename.chop_extension (Filename.basename filename) in
-  Sys.chdir dir ;
   let cmd =
     Printf.sprintf "c++ -std=c++11 -O0 -DPD -DVULT_TEST_SETUP=%s_setup -I%s -I. %s.cpp vultin.cpp %s -o %s_smoke" base
       (in_test_directory "../examples/cmake/pd-deps")
@@ -568,10 +565,9 @@ let linkAndRunPd (filename : string) : unit =
       (in_test_directory "templates/pd_stubs.cpp")
       base
   in
-  if Sys.command cmd <> 0 then assert_failure ("Failed to link the pd external " ^ base) ;
-  if Sys.command ("./" ^ base ^ "_smoke > /dev/null") <> 0 then
-    assert_failure ("The pd external smoke test failed for " ^ base) ;
-  Sys.chdir initial_dir
+  if runInDir dir cmd <> 0 then assert_failure ("Failed to link the pd external " ^ base) ;
+  if runInDir dir ("./" ^ base ^ "_smoke > /dev/null") <> 0 then
+    assert_failure ("The pd external smoke test failed for " ^ base)
 
 (** Generates multi-module examples with -split-files and compiles every produced file. The
     per-module headers must include the headers of the modules they depend on (computed from the
@@ -608,8 +604,7 @@ module SplitCompileTest = struct
               Driver.Cli.showResult args result )
         results
     in
-    Sys.chdir outdir ;
-    let cpp_files = Sys.readdir "." |> Array.to_list |> CCList.filter (fun f -> Filename.check_suffix f ".cpp") in
+    let cpp_files = Sys.readdir outdir |> Array.to_list |> CCList.filter (fun f -> Filename.check_suffix f ".cpp") in
     (* in split mode: at least one module file, the aggregated file and the runtime *)
     let () = if split then assert_bool "the code was not split in multiple files" (CCList.length cpp_files > 3) in
     let () =
@@ -621,7 +616,7 @@ module SplitCompileTest = struct
       | _ ->
           ()
     in
-    CCList.iter callCompiler cpp_files ; Sys.chdir initial_dir
+    CCList.iter (callCompilerIn outdir) cpp_files
 
   let get files =
     "split"
@@ -637,45 +632,37 @@ end
 module CliTest = struct
   let checkJsFile (dir : string) (file : string) : unit =
     let output = Filename.chop_extension (Filename.basename file) in
-    Sys.chdir dir ;
-    assert_bool "No code generated" (Sys.file_exists (output ^ ".js")) ;
+    assert_bool "No code generated" (Sys.file_exists (Filename.concat dir (output ^ ".js"))) ;
     let cmd = "node -c " ^ output ^ ".js" in
-    if Sys.command cmd <> 0 then assert_failure ("Failed to check " ^ file) ;
-    Sys.chdir initial_dir
+    if runInDir dir cmd <> 0 then assert_failure ("Failed to check " ^ file)
 
   let checkLuaFile (dir : string) (file : string) : unit =
     let output = Filename.chop_extension (Filename.basename file) in
-    Sys.chdir dir ;
-    assert_bool "No code generated" (Sys.file_exists (output ^ ".lua")) ;
+    assert_bool "No code generated" (Sys.file_exists (Filename.concat dir (output ^ ".lua"))) ;
     let cmd = "luajit -bl " ^ output ^ ".lua > " ^ output ^ ".b" in
-    if Sys.command cmd <> 0 then assert_failure ("Failed to check " ^ file) ;
-    Sys.remove (output ^ ".b") ;
-    Sys.chdir initial_dir
+    if runInDir dir cmd <> 0 then assert_failure ("Failed to check " ^ file) ;
+    Sys.remove (Filename.concat dir (output ^ ".b"))
 
   let checkJuliaFile (dir : string) (file : string) : unit =
     let output = Filename.chop_extension (Filename.basename file) in
-    Sys.chdir dir ;
-    assert_bool "No code generated" (Sys.file_exists (output ^ ".jl")) ;
+    assert_bool "No code generated" (Sys.file_exists (Filename.concat dir (output ^ ".jl"))) ;
     let cmd = "julia --check-bounds=no --compile=min --optimize=0 " ^ output ^ ".jl > " ^ output ^ ".out 2>&1" in
-    if Sys.command cmd <> 0 then assert_failure ("Failed to check " ^ file) ;
-    Sys.remove (output ^ ".out") ;
-    Sys.chdir initial_dir
+    if runInDir dir cmd <> 0 then assert_failure ("Failed to check " ^ file) ;
+    Sys.remove (Filename.concat dir (output ^ ".out"))
 
   let checkPythonFile (dir : string) (file : string) : unit =
     let output = Filename.chop_extension (Filename.basename file) in
-    Sys.chdir dir ;
-    assert_bool "No code generated" (Sys.file_exists (output ^ ".py")) ;
+    assert_bool "No code generated" (Sys.file_exists (Filename.concat dir (output ^ ".py"))) ;
     let cmd = "python3 -m py_compile " ^ output ^ ".py" in
-    if Sys.command cmd <> 0 then assert_failure ("Failed to check " ^ file) ;
-    Sys.chdir initial_dir
+    if runInDir dir cmd <> 0 then assert_failure ("Failed to check " ^ file)
 
   let checkWLFile (dir : string) (file : string) : unit =
     let output = Filename.chop_extension (Filename.basename file) in
-    Sys.chdir dir ;
-    assert_bool ("No code generated for file " ^ output ^ ".wl") (Sys.file_exists (output ^ ".wl")) ;
+    assert_bool
+      ("No code generated for file " ^ output ^ ".wl")
+      (Sys.file_exists (Filename.concat dir (output ^ ".wl"))) ;
     let cmd = "wolframscript -f " ^ output ^ ".wl" in
-    if Sys.command cmd <> 0 then assert_failure ("Failed to check " ^ file) ;
-    Sys.chdir initial_dir
+    if runInDir dir cmd <> 0 then assert_failure ("Failed to check " ^ file)
 
   let getFlags code_type =
     match code_type with

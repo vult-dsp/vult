@@ -111,6 +111,7 @@ void *Pd_msg_process_tilde_new()
 {
    t_Pd_msg_process_tilde *x = (t_Pd_msg_process_tilde *)pd_new(Pd_msg_process_tilde_class);
 
+   new (&x->data) Pd_msg_process_type();
    Pd_msg_process_type_init(x->data);
 
 
@@ -121,6 +122,7 @@ void *Pd_msg_process_tilde_new()
 
 void Pd_msg_process_tilde_delete(t_Pd_msg_process_tilde *x){
    (void)x;
+   x->data.~Pd_msg_process_type();
 }
 
 EXPORT void msgsynth_tilde_setup(void) {

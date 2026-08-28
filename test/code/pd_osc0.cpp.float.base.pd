@@ -80,6 +80,7 @@ void *Pd_osc0_process_tilde_new()
 {
    t_Pd_osc0_process_tilde *x = (t_Pd_osc0_process_tilde *)pd_new(Pd_osc0_process_tilde_class);
 
+   new (&x->data) Pd_osc0_process_type();
    Pd_osc0_process_type_init(x->data);
 
 
@@ -90,6 +91,7 @@ void *Pd_osc0_process_tilde_new()
 
 void Pd_osc0_process_tilde_delete(t_Pd_osc0_process_tilde *x){
    (void)x;
+   x->data.~Pd_osc0_process_type();
 }
 
 EXPORT void osc0_tilde_setup(void) {

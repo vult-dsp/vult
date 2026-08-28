@@ -120,6 +120,7 @@ void *Afi_fi_process_tilde_new()
 {
    t_Afi_fi_process_tilde *x = (t_Afi_fi_process_tilde *)pd_new(Afi_fi_process_tilde_class);
 
+   new (&x->data) Afi_fi_process_type();
    Afi_fi_process_type_init(x->data);
 
    inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);
@@ -132,6 +133,7 @@ void *Afi_fi_process_tilde_new()
 
 void Afi_fi_process_tilde_delete(t_Afi_fi_process_tilde *x){
    (void)x;
+   x->data.~Afi_fi_process_type();
 }
 
 EXPORT void process_tilde_setup(void) {

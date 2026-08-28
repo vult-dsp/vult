@@ -34,16 +34,18 @@ t_symbol *gensym(const char *name) {
 struct _class {
    t_symbol *name;
    t_newmethod newmethod;
+   t_method freemethod;
    size_t size;
    struct _class *next;
 };
 
 static t_class *class_registry = nullptr;
 
-t_class *class_new(t_symbol *name, t_newmethod newmethod, t_method, size_t size, int, t_atomtype, ...) {
+t_class *class_new(t_symbol *name, t_newmethod newmethod, t_method freemethod, size_t size, int, t_atomtype, ...) {
    t_class *c = (t_class *)calloc(1, sizeof(t_class));
    c->name = name;
    c->newmethod = newmethod;
+   c->freemethod = freemethod;
    c->size = size;
    c->next = class_registry;
    class_registry = c;
@@ -104,6 +106,10 @@ int main() {
          fprintf(stderr, "failed to create an instance of '%s'\n", c->name->s_name);
          return 1;
       }
+      if (c->freemethod != nullptr) {
+         ((void (*)(void *))c->freemethod)(obj);
+      }
+      free(obj);
       classes++;
    }
    if (classes == 0) {

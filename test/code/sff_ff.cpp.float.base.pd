@@ -120,6 +120,7 @@ void *Sff_ff_process_tilde_new()
 {
    t_Sff_ff_process_tilde *x = (t_Sff_ff_process_tilde *)pd_new(Sff_ff_process_tilde_class);
 
+   new (&x->data) Sff_ff_process_type();
    Sff_ff_process_type_init(x->data);
 
    inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);
@@ -132,6 +133,7 @@ void *Sff_ff_process_tilde_new()
 
 void Sff_ff_process_tilde_delete(t_Sff_ff_process_tilde *x){
    (void)x;
+   x->data.~Sff_ff_process_type();
 }
 
 EXPORT void process_tilde_setup(void) {

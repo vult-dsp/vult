@@ -114,6 +114,7 @@ void *Af_f_process_tilde_new()
 {
    t_Af_f_process_tilde *x = (t_Af_f_process_tilde *)pd_new(Af_f_process_tilde_class);
 
+   new (&x->data) Af_f_process_type();
    Af_f_process_type_init(x->data);
 
 
@@ -124,6 +125,7 @@ void *Af_f_process_tilde_new()
 
 void Af_f_process_tilde_delete(t_Af_f_process_tilde *x){
    (void)x;
+   x->data.~Af_f_process_type();
 }
 
 EXPORT void process_tilde_setup(void) {
