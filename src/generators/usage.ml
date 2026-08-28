@@ -23,6 +23,7 @@
 *)
 open Core.Prog
 module Set = Util.Maps.Set
+module Map = Util.Maps.Map
 
 type features = {fix16_math: bool; random: bool; strings: bool; serialization: bool; tuples: bool; lists: bool}
 
@@ -30,34 +31,36 @@ type features = {fix16_math: bool; random: bool; strings: bool; serialization: b
    to the type of every expression, declaration, parameter, return value,
    struct member and constant of the program. [on_type] receives each type as
    found; it is responsible for recursing into sub-types if it needs to. *)
+let rec iterExp ~(on_exp : exp -> unit) ~(on_type : type_ -> unit) (e : exp) : unit =
+  let iterExp = iterExp ~on_exp ~on_type in
+  on_exp e ;
+  on_type e.t ;
+  match e.e with
+  | EUnit | EEmptyValue | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ ->
+      ()
+  | EUnOp (_, e1) ->
+      iterExp e1
+  | EOp (_, e1, e2) ->
+      iterExp e1 ; iterExp e2
+  | EIndex {e; index} ->
+      iterExp e ; iterExp index
+  | EArray elems ->
+      CCList.iter iterExp elems
+  | ECall {args; _} ->
+      CCList.iter iterExp args
+  | EIf {cond; then_; else_} ->
+      iterExp cond ; iterExp then_ ; iterExp else_
+  | ETuple elems ->
+      CCList.iter iterExp elems
+  | EMember (e1, _) ->
+      iterExp e1
+  | ETMember (e1, _) ->
+      iterExp e1
+  | ERecord {elems; _} ->
+      CCList.iter (fun (_, e1) -> iterExp e1) elems
+
 let iterProg ~(on_exp : exp -> unit) ~(on_type : type_ -> unit) (prog : prog) : unit =
-  let rec iterExp (e : exp) =
-    on_exp e ;
-    on_type e.t ;
-    match e.e with
-    | EUnit | EEmptyValue | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ ->
-        ()
-    | EUnOp (_, e1) ->
-        iterExp e1
-    | EOp (_, e1, e2) ->
-        iterExp e1 ; iterExp e2
-    | EIndex {e; index} ->
-        iterExp e ; iterExp index
-    | EArray elems ->
-        CCList.iter iterExp elems
-    | ECall {args; _} ->
-        CCList.iter iterExp args
-    | EIf {cond; then_; else_} ->
-        iterExp cond ; iterExp then_ ; iterExp else_
-    | ETuple elems ->
-        CCList.iter iterExp elems
-    | EMember (e1, _) ->
-        iterExp e1
-    | ETMember (e1, _) ->
-        iterExp e1
-    | ERecord {elems; _} ->
-        CCList.iter (fun (_, e1) -> iterExp e1) elems
-  in
+  let iterExp = iterExp ~on_exp ~on_type in
   let rec iterLExp (l : lexp) =
     on_type l.t ;
     match l.l with
@@ -137,6 +140,94 @@ let existsType (pred : type_ -> bool) (prog : prog) : bool =
   in
   iterProg ~on_exp:(fun _ -> ()) ~on_type:check prog ;
   !found
+
+(* Dependencies between the files of a program generated with -split-files.
+   They are computed from the final program because elaboration can move code
+   between modules (e.g. a generic function instantiated with a type of the
+   calling module), so the source-level imports are not a reliable source.
+
+   The interface of a file (type definitions, function signatures, constants)
+   and the function bodies are tracked separately: interface dependencies must
+   be included from the generated header while body-only dependencies can be
+   included from the implementation file, which keeps mutually-dependent
+   modules from producing header include cycles. *)
+
+type file_deps = {interface: string list; body: string list}
+
+let fileDependencies (files : (string * prog) list) : (string * file_deps) list =
+  (* map from every top-level name to the file that defines it *)
+  let definitions =
+    let add_top file map (top : top_stmt) =
+      match top.top with
+      | TopType {path; _} | TopAlias {path; _} ->
+          Map.add path file map
+      | TopFunction (def, _) ->
+          Map.add def.name file map
+      | TopExternal (def, link_name) ->
+          let map = Map.add def.name file map in
+          (* calls to externals with a link name use that name *)
+          CCOption.map_or ~default:map (fun name -> Map.add name file map) link_name
+      | TopConstant (name, _, _, _, _) ->
+          Map.add name file map
+    in
+    CCList.fold_left (fun map (file, prog) -> CCList.fold_left (add_top file) map prog) Map.empty files
+  in
+  (* collects the names a piece of code refers to: struct types, called
+     functions and top-level identifiers (constants) *)
+  let collect () =
+    let refs = ref Set.empty in
+    let rec on_type (t : type_) =
+      match t.t with
+      | TStruct {path; _} ->
+          refs := Set.add path !refs
+      | TArray (_, sub) | TList sub ->
+          on_type sub
+      | TTuple elems | TVoid (Some elems) ->
+          CCList.iter on_type elems
+      | TVoid None | TInt | TInt16 | TReal | TString | TBool | TFix16 | TEmptyType ->
+          ()
+    in
+    let on_exp (e : exp) =
+      match e.e with ECall {path; _} -> refs := Set.add path !refs | EId name -> refs := Set.add name !refs | _ -> ()
+    in
+    (refs, on_exp, on_type)
+  in
+  let interfaceRefs (prog : prog) : Set.t =
+    let refs, on_exp, on_type = collect () in
+    let function_def (def : function_def) =
+      CCList.iter (fun (p : param) -> on_type p.t) def.args ;
+      let args_t, ret = def.t in
+      CCList.iter on_type args_t ; on_type ret
+    in
+    let top (t : top_stmt) =
+      match t.top with
+      | TopFunction (def, _) | TopExternal (def, _) ->
+          function_def def
+      | TopType {members; _} ->
+          CCList.iter (fun (_, mt, _, _) -> on_type mt) members
+      | TopAlias {alias_of; _} ->
+          refs := Set.add alias_of !refs
+      | TopConstant (_, _, t, rhs, _) ->
+          on_type t ; iterExp ~on_exp ~on_type rhs
+    in
+    CCList.iter top prog ; !refs
+  in
+  let allRefs (prog : prog) : Set.t =
+    let refs, on_exp, on_type = collect () in
+    iterProg ~on_exp ~on_type prog ; !refs
+  in
+  let toFiles (self : string) (refs : Set.t) : Set.t =
+    Set.fold
+      (fun name acc ->
+        match Map.find_opt name definitions with Some file when file <> self -> Set.add file acc | _ -> acc )
+      refs Set.empty
+  in
+  CCList.map
+    (fun (file, prog) ->
+      let interface = toFiles file (interfaceRefs prog) in
+      let body = Set.diff (toFiles file (allRefs prog)) interface in
+      (file, {interface= Set.to_list interface; body= Set.to_list body}) )
+    files
 
 (* The names below are the ones found in the program after the replacements
    ([Replacements.Cpp]) and the serializer generation ([Core.Serializer]) have

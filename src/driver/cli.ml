@@ -63,7 +63,7 @@ let showResult (args : args) (output : output) =
       let error_strings = Error.reportErrors errors in
       prerr_endline error_strings ; exit 1
 
-let generateCode args file_deps (stmts, vm, acc) =
+let generateCode args (stmts, vm, acc) =
   let stmts = Util.Profile.time "Generate Tables" (fun () -> Tables.create args vm stmts) in
   if args.code <> NoCode || args.dcode then
     let stmts = Util.Profile.time "Convert" (fun () -> Tocode.prog args stmts) in
@@ -73,7 +73,7 @@ let generateCode args file_deps (stmts, vm, acc) =
       | NoCode ->
           []
       | CppCode ->
-          Util.Profile.time "Generate Code" (fun () -> Cpp.generate file_deps args.split args args.template stmts)
+          Util.Profile.time "Generate Code" (fun () -> Cpp.generate args.split args args.template stmts)
       | LuaCode ->
           Lua.generate args stmts
       | JSCode ->
@@ -170,7 +170,7 @@ let driver (args : args) : output list =
       | [] ->
           [Message ("vult " ^ version ^ " - https://github.com/vult-dsp/vult\nno input files")]
       | _ ->
-          let parsed, file_deps = Util.Profile.time "Load files" (fun () -> Loader.loadFiles args args.files) in
+          let parsed, _file_deps = Util.Profile.time "Load files" (fun () -> Loader.loadFiles args args.files) in
           if args.deps then CCList.map (fun r -> r.Parse.file) parsed |> fun s -> [Dependencies s]
           else if args.dparse then
             CCList.map (fun (r : Parse.parsed_file) -> ParsedCode (Syntax.Print.print r.stmts)) parsed
@@ -186,7 +186,7 @@ let driver (args : args) : output list =
             if args.dtyped then
               let () = Typed.print_exp_locs := args.dlocs in
               [Typed (Pla.print (Typed.print_prog stmts))]
-            else compileCode args env stmts |> generateCode args file_deps
+            else compileCode args env stmts |> generateCode args
   with Error.Errors errors when args.debug = false -> [Errors errors]
 
 let run (args : args) : unit =

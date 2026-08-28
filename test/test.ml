@@ -309,6 +309,9 @@ let includes =
   ["effects"; "env"; "filters"; "midi"; "osc"; "unit"; "util"]
   |> CCList.map (fun dir -> in_test_directory ("../examples/" ^ dir))
 
+(* multi-module examples used to check the -split-files mode *)
+let split_files = ["units/kick.vult"; "units/voice_4.vult"; "effects/rescomb.vult"]
+
 let test_random_code =
   let rec loop n = if n > 0 then Printf.sprintf "test%i.vult" n :: loop (n - 1) else [] in
   loop 1
@@ -451,11 +454,9 @@ module RandomCompileTest = struct
     let code = RandProg.run (seed + 1) in
     write filename code ;
     let parser_results = Pparser.Parse.parseString (Some filename) code in
-    let deps = Hashtbl.create 16 in
-    let () = Hashtbl.add deps (Filename.basename filename) [] in
     let env, stmts = Core.Typechecking.typecheck_and_elaborate args [parser_results] in
     let stmts, vm, _ = Driver.Cli.compileCode args env stmts in
-    let gen = Driver.Cli.generateCode args deps (stmts, vm, []) in
+    let gen = Driver.Cli.generateCode args (stmts, vm, []) in
     writeFiles args gen
 
   let run (file : string) _ =
@@ -534,6 +535,49 @@ let compileCppFile ext (file : string) : unit =
   callCompiler (output ^ ext) ;
   callCompiler "vultin.cpp" ;
   Sys.chdir initial_dir
+
+(** Generates multi-module examples with -split-files and compiles every produced file. The
+    per-module headers must include the headers of the modules they depend on (computed from the
+    final program, since elaboration can create dependencies that are not visible in the source
+    imports), otherwise the individual files do not compile. *)
+module SplitCompileTest = struct
+  let run (file : string) context =
+    skip_if (not has_cpp) "no C++ compiler available" ;
+    Sys.chdir initial_dir ;
+    let fullfile = checkFile (in_test_directory ("../examples/" ^ file)) in
+    let name = Filename.chop_extension (Filename.basename file) in
+    let outdir = in_tmp_dir ("split_" ^ name) in
+    let () = if Sys.command ("mkdir -p " ^ outdir) <> 0 then assert_failure ("failed to create " ^ outdir) in
+    let args =
+      Args.
+        { default_arguments with
+          files= [File fullfile]
+        ; code= CppCode
+        ; split= true
+        ; force_write= update_test context
+        ; includes
+        ; output= Some (Filename.concat outdir "engine") }
+    in
+    let results = Driver.Cli.driver args in
+    let () =
+      CCList.iter
+        (fun result ->
+          match result with
+          | Args.Errors errors ->
+              assert_failure (Error.reportErrors errors)
+          | result ->
+              Driver.Cli.showResult args result )
+        results
+    in
+    Sys.chdir outdir ;
+    let cpp_files = Sys.readdir "." |> Array.to_list |> CCList.filter (fun f -> Filename.check_suffix f ".cpp") in
+    (* at least one module file, the aggregated file and the runtime *)
+    assert_bool "the code was not split in multiple files" (CCList.length cpp_files > 3) ;
+    CCList.iter callCompiler cpp_files ;
+    Sys.chdir initial_dir
+
+  let get files = "split" >::: CCList.map (fun file -> Filename.basename file >:: run file) files
+end
 
 module CliTest = struct
   let checkJsFile (file : string) : unit =
@@ -994,6 +1038,7 @@ let suite =
        ; CliTest.get all_files Node "julia"
        ; CliTest.get all_files Node "python"
        ; RandomCompileTest.get test_random_code
+       ; SplitCompileTest.get split_files
        ; TableRegressionTest.get ()
        ; InterpretPerf.get perf_files
        ; Interpret.get interpreter

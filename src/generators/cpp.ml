@@ -631,13 +631,14 @@ let vultinFiles (args : Util.Args.args) (stmts : top_stmt list) =
       let cpp = {%pla|<#legend#><#><#cpp_body#>|} in
       [(hpp, Filename.concat dir "vultin.hpp"); (cpp, Filename.concat dir "vultin.cpp")]
 
-let generateSplit file_deps (args : Util.Args.args) template (stmts : top_stmt list) =
+let generateSplit (args : Util.Args.args) template (stmts : top_stmt list) =
   let legend = getLegend args in
   let state = {args; prefixed= Hashtbl.create 16} in
   let dir = CCOption.map_or ~default:"" (fun file -> Filename.dirname file) args.output in
   let main_header_file = Common.setExt ".h" args.output in
   let impl_file = Common.setExt ".cpp" args.output in
-  let generateClassic (mname, stmts) =
+  let makeIncludes files = Pla.map_sep_all Pla.newline (fun inc -> {%pla|#include "<#inc#s>.h"|}) files in
+  let generateClassic deps_table (mname, stmts) =
     let output = Some (Filename.concat dir mname) in
     let allow_inline = false in
     let header = print_prog state ~allow_inline Header stmts in
@@ -646,20 +647,38 @@ let generateSplit file_deps (args : Util.Args.args) template (stmts : top_stmt l
     let header_file = Common.setExt ".h" output in
     let header_file_base = Filename.basename header_file in
     let impl_file = Common.setExt ".cpp" output in
-    let dependencies =
-      Hashtbl.find file_deps mname |> Pla.map_sep_all Pla.newline (fun inc -> {%pla|#include "<#inc#s>.h"|})
+    let deps : Usage.file_deps =
+      match CCList.assoc_opt ~eq:String.equal mname deps_table with
+      | Some deps ->
+          deps
+      | None ->
+          {interface= []; body= []}
     in
+    let header_includes = makeIncludes deps.interface in
+    let impl_includes = makeIncludes deps.body in
     let header =
       let ifdef, endif = makeIfdef header_file in
-      {%pla|<#legend#><#ifdef#><#>#include "vultin.hpp"<#><#dependencies#><#><#><#header#><#endif#>|}
+      {%pla|<#legend#><#ifdef#><#>#include "vultin.hpp"<#><#header_includes#><#><#><#header#><#endif#>|}
     in
-    let impl = {%pla|<#legend#><#><#>#include "<#header_file_base#s>"<#><#><#tables#><#><#><#impl#>|} in
+    let impl =
+      {%pla|<#legend#><#><#>#include "<#header_file_base#s>"<#><#impl_includes#><#><#tables#><#><#><#impl#>|}
+    in
     [(header, header_file); (impl, impl_file)]
   in
   let (timpl_start, timpl_end), (theader_start, theader_end) = getTemplateCode template args stmts in
   let vultin = vultinFiles args stmts in
   let stmts = Common.splitByFile stmts in
-  let files = CCList.flat_map generateClassic stmts in
+  let () =
+    (* the aggregated header and implementation use the output name: a module
+       with the same name would silently overwrite them *)
+    let output_base = Filename.basename (CCOption.get_or ~default:"output" args.output) in
+    if CCList.exists (fun (mname, _) -> mname = output_base) stmts then
+      Util.Error.raiseErrorMsg
+        ( "The output name '" ^ output_base ^ "' conflicts with the file '" ^ output_base
+        ^ ".vult' when using -split-files. Use a different output name (-o)." )
+  in
+  let deps_table = Usage.fileDependencies stmts in
+  let files = CCList.flat_map (generateClassic deps_table) stmts in
   let include_list = generateIncludeList stmts in
   (Pla.join [timpl_start; timpl_end], impl_file)
   :: (Pla.join [theader_start; include_list; theader_end], main_header_file)
@@ -691,5 +710,5 @@ let generateSingle (args : Util.Args.args) template (stmts : top_stmt list) =
   in
   [(header, header_file); (impl, impl_file); (tables, tables_file)] @ vultinFiles args stmts
 
-let generate file_deps split output template (stmts : top_stmt list) =
-  if split then generateSplit file_deps output template stmts else generateSingle output template stmts
+let generate split output template (stmts : top_stmt list) =
+  if split then generateSplit output template stmts else generateSingle output template stmts

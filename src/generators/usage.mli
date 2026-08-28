@@ -37,6 +37,19 @@ val existsType : (Core.Prog.type_ -> bool) -> Core.Prog.prog -> bool
 (** [existsType pred prog] is true when any type used by the program
     (including sub-types like array elements) satisfies [pred]. *)
 
+(** Dependencies of one generated file on the other files of a program
+    generated with [-split-files]. [interface] lists the files whose header
+    must be included from this file's header (their types appear in type
+    definitions, function signatures or constants); [body] lists the files
+    only referenced from function bodies, which can be included from the
+    implementation file. *)
+type file_deps = {interface: string list; body: string list}
+
+val fileDependencies : (string * Core.Prog.prog) list -> (string * file_deps) list
+(** Computes the dependencies between the files of a split program from the
+    final program (source-level imports are not reliable: elaboration can
+    place code in a module that refers to types of its callers). *)
+
 (** Optional features of the C++ runtime (vultin). *)
 type features =
   { fix16_math: bool  (** Fixed-point transcendental functions: [fix_sin], [fix_exp], etc. *)
