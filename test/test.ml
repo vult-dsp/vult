@@ -37,6 +37,14 @@ let in_test_directory path = Filename.concat test_directory path
 
 let in_tmp_dir path = Filename.concat tmp_dir path
 
+(* The tests run in parallel runners that share tmp_dir, and generating C++ also emits the
+   runtime files (vultin.hpp / vultin.cpp) whose contents differ per program. Every test that
+   generates and compiles code works inside its own directory to avoid races between runners. *)
+let makeTestDir (name : string) : string =
+  let dir = in_tmp_dir name in
+  let () = if Sys.command ("mkdir -p " ^ dir) <> 0 then failwith ("failed to create " ^ dir) in
+  dir
+
 (** checks if node can be called with flag -c *)
 let has_node =
   if tryToRun ("node -c " ^ in_test_directory "other/test.js") then
@@ -461,7 +469,8 @@ module RandomCompileTest = struct
 
   let run (file : string) _ =
     let output = Filename.chop_extension (Filename.basename file) in
-    Sys.chdir tmp_dir ;
+    let dir = makeTestDir ("random_" ^ output) in
+    Sys.chdir dir ;
     generateCPP file output ;
     assert_bool "No code generated" (Sys.file_exists (output ^ ".cpp")) ;
     compileFile (output ^ ".cpp") ;
@@ -483,7 +492,8 @@ module TableRegressionTest = struct
   let run _context =
     skip_if (not has_cpp) "no C++ compiler available" ;
     let fullfile = checkFile (in_test_directory "tables/tables_regression.vult") in
-    let output = in_tmp_dir "tables_regression" in
+    let dir = makeTestDir "tables_regression" in
+    let output = Filename.concat dir "tables_regression" in
     let args =
       Args.
         { default_arguments with
@@ -506,10 +516,8 @@ module TableRegressionTest = struct
     in
     let main_file = in_test_directory "tables/tables_regression_main.cpp" in
     let runtime = in_test_directory "../runtime" in
-    let exe = in_tmp_dir "tables_regression_check" in
-    let cmd =
-      Printf.sprintf "c++ -std=c++11 -O0 -I%s -I%s %s %s/vultin.cpp -o %s" runtime tmp_dir main_file tmp_dir exe
-    in
+    let exe = Filename.concat dir "tables_regression_check" in
+    let cmd = Printf.sprintf "c++ -std=c++11 -O0 -I%s -I%s %s %s/vultin.cpp -o %s" runtime dir main_file dir exe in
     if Sys.command cmd <> 0 then assert_failure "Failed to build the table regression checks" ;
     if Sys.command exe <> 0 then assert_failure "The table regression checks failed"
 
@@ -528,9 +536,9 @@ let callCompiler (file : string) : unit =
   in
   if Sys.command cmd <> 0 then assert_failure ("Failed to compile " ^ file)
 
-let compileCppFile ext (file : string) : unit =
+let compileCppFile ext (dir : string) (file : string) : unit =
   let output = Filename.chop_extension (Filename.basename file) in
-  Sys.chdir tmp_dir ;
+  Sys.chdir dir ;
   assert_bool "No code generated" (Sys.file_exists (output ^ ext)) ;
   callCompiler (output ^ ext) ;
   callCompiler "vultin.cpp" ;
@@ -598,43 +606,43 @@ module SplitCompileTest = struct
 end
 
 module CliTest = struct
-  let checkJsFile (file : string) : unit =
+  let checkJsFile (dir : string) (file : string) : unit =
     let output = Filename.chop_extension (Filename.basename file) in
-    Sys.chdir tmp_dir ;
+    Sys.chdir dir ;
     assert_bool "No code generated" (Sys.file_exists (output ^ ".js")) ;
     let cmd = "node -c " ^ output ^ ".js" in
     if Sys.command cmd <> 0 then assert_failure ("Failed to check " ^ file) ;
     Sys.chdir initial_dir
 
-  let checkLuaFile (file : string) : unit =
+  let checkLuaFile (dir : string) (file : string) : unit =
     let output = Filename.chop_extension (Filename.basename file) in
-    Sys.chdir tmp_dir ;
+    Sys.chdir dir ;
     assert_bool "No code generated" (Sys.file_exists (output ^ ".lua")) ;
     let cmd = "luajit -bl " ^ output ^ ".lua > " ^ output ^ ".b" in
     if Sys.command cmd <> 0 then assert_failure ("Failed to check " ^ file) ;
     Sys.remove (output ^ ".b") ;
     Sys.chdir initial_dir
 
-  let checkJuliaFile (file : string) : unit =
+  let checkJuliaFile (dir : string) (file : string) : unit =
     let output = Filename.chop_extension (Filename.basename file) in
-    Sys.chdir tmp_dir ;
+    Sys.chdir dir ;
     assert_bool "No code generated" (Sys.file_exists (output ^ ".jl")) ;
     let cmd = "julia --check-bounds=no --compile=min --optimize=0 " ^ output ^ ".jl > " ^ output ^ ".out 2>&1" in
     if Sys.command cmd <> 0 then assert_failure ("Failed to check " ^ file) ;
     Sys.remove (output ^ ".out") ;
     Sys.chdir initial_dir
 
-  let checkPythonFile (file : string) : unit =
+  let checkPythonFile (dir : string) (file : string) : unit =
     let output = Filename.chop_extension (Filename.basename file) in
-    Sys.chdir tmp_dir ;
+    Sys.chdir dir ;
     assert_bool "No code generated" (Sys.file_exists (output ^ ".py")) ;
     let cmd = "python3 -m py_compile " ^ output ^ ".py" in
     if Sys.command cmd <> 0 then assert_failure ("Failed to check " ^ file) ;
     Sys.chdir initial_dir
 
-  let checkWLFile (file : string) : unit =
+  let checkWLFile (dir : string) (file : string) : unit =
     let output = Filename.chop_extension (Filename.basename file) in
-    Sys.chdir tmp_dir ;
+    Sys.chdir dir ;
     assert_bool ("No code generated for file " ^ output ^ ".wl") (Sys.file_exists (output ^ ".wl")) ;
     let cmd = "wolframscript -f " ^ output ^ ".wl" in
     if Sys.command cmd <> 0 then assert_failure ("Failed to check " ^ file) ;
@@ -663,8 +671,14 @@ module CliTest = struct
     | _ ->
         failwith "Unknown target to run test"
 
+  let testDirFor (compiler : compiler) (fullfile : string) code_type =
+    let base = Filename.chop_extension (Filename.basename fullfile) in
+    let suffix = match compiler with Node -> ".node" | Native -> "" in
+    (makeTestDir (base ^ "." ^ code_type ^ suffix), base)
+
   let callVultCli (compiler : compiler) (fullfile : string) code_type =
-    let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
+    let dir, base = testDirFor compiler fullfile code_type in
+    let basefile = Filename.concat dir base in
     let flags, ext = getFlags code_type in
     let includes_flags = CCList.map (fun a -> "-i " ^ a) includes |> String.concat " " in
     let flags = flags ^ " " ^ includes_flags in
@@ -682,26 +696,27 @@ module CliTest = struct
     let () =
       match code_type with
       | "fixed" | "float" ->
-          compileCppFile ".cpp" fullfile
+          compileCppFile ".cpp" dir fullfile
       | "c" ->
-          compileCppFile ".c" fullfile
+          compileCppFile ".c" dir fullfile
       | "js" ->
-          if has_node then checkJsFile fullfile
+          if has_node then checkJsFile dir fullfile
       | "lua" ->
-          if has_lua then checkLuaFile fullfile
+          if has_lua then checkLuaFile dir fullfile
       | "julia" ->
-          if has_julia then checkJuliaFile fullfile
+          if has_julia then checkJuliaFile dir fullfile
       | "python" ->
-          if has_python then checkPythonFile fullfile
+          if has_python then checkPythonFile dir fullfile
       | "wl" ->
-          if has_wl then checkWLFile fullfile
+          if has_wl then checkWLFile dir fullfile
       | _ ->
           ()
     in
     generated_files
 
-  let callVultInternal (_ : compiler) (fullfile : string) code_type =
-    let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
+  let callVultInternal (compiler : compiler) (fullfile : string) code_type =
+    let dir, base = testDirFor compiler fullfile code_type in
+    let basefile = Filename.concat dir base in
     let args = Args.{default_arguments with includes; test_mode= true} in
     let args, ext =
       match code_type with
@@ -761,14 +776,15 @@ module Templates = struct
   let tryCompile (args : Args.args) generated_files =
     match (args.template, args.code, generated_files) with
     | Some "pd", CppCode, (filename, _) :: _ ->
-        compileCppFile ".cpp" filename
+        compileCppFile ".cpp" (Filename.dirname filename) filename
     | _ ->
         ()
 
   let callVult template (fullfile : string) code_type =
     let basefile = Filename.chop_extension (Filename.basename fullfile) in
     let moduleName = String.capitalize_ascii basefile in
-    let output = in_tmp_dir basefile in
+    let dir = makeTestDir (basefile ^ "." ^ code_type ^ "." ^ template) in
+    let output = Filename.concat dir basefile in
     let roots =
       match (code_type, template) with "js", _ -> [] | _, "vcv-prototype" -> [] | _ -> [moduleName ^ ".process"]
     in
