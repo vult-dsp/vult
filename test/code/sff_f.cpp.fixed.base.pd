@@ -3,6 +3,35 @@
 #include "sff_f.h"
 
 
+float float_samplerate() { return sys_getsr(); }
+fix16_t fix_samplerate() { return float_to_fix(sys_getsr()); }
+
+static bool vult_check_argc(void *x, const char *msg, int expected, int argc) {
+   if (argc != expected) {
+      pd_error(x, "%s: wrong number of arguments (%d given, %d expected)", msg, argc, expected);
+      return false;
+   }
+   return true;
+}
+
+static bool vult_get_float(void *x, const char *msg, int i, t_atom *argv, t_float *value) {
+   if (argv[i].a_type != A_FLOAT) {
+      pd_error(x, "%s: argument %d must be a number", msg, i + 1);
+      return false;
+   }
+   *value = argv[i].a_w.w_float;
+   return true;
+}
+
+static bool vult_get_symbol(void *x, const char *msg, int i, t_atom *argv, t_symbol **value) {
+   if (argv[i].a_type != A_SYMBOL) {
+      pd_error(x, "%s: argument %d must be a symbol", msg, i + 1);
+      return false;
+   }
+   *value = argv[i].a_w.w_symbol;
+   return true;
+}
+
 extern "C" {
 
 static t_class *Sff_f_process_tilde_class;
@@ -56,11 +85,11 @@ void *Sff_f_process_tilde_new()
 }
 
 void Sff_f_process_tilde_delete(t_Sff_f_process_tilde *x){
-
+   (void)x;
 }
 
-void Sff_f_process_tilde_setup(void) {
-   Sff_f_process_tilde_class = class_new(gensym("Sff_f_process~"),
+EXPORT void process_tilde_setup(void) {
+   Sff_f_process_tilde_class = class_new(gensym("process~"),
       (t_newmethod)Sff_f_process_tilde_new, // constructor function
       (t_method)Sff_f_process_tilde_delete, // destructor function
       sizeof(t_Sff_f_process_tilde), // size of the object
@@ -69,11 +98,12 @@ void Sff_f_process_tilde_setup(void) {
 
    class_addmethod(Sff_f_process_tilde_class, (t_method)Sff_f_process_tilde_dsp, gensym("dsp"), A_NULL);
    CLASS_MAINSIGNALIN(Sff_f_process_tilde_class, t_Sff_f_process_tilde, dummy);
+
+
 }
 
 } // extern "C"
-
 void sff_f_setup() {
 
-   Sff_f_process_tilde_setup();
+   process_tilde_setup();
 }

@@ -1,0 +1,31 @@
+function vultProcess() {
+this.Pd_osc0_process_type_alloc = function () {
+   var _ctx = {};
+   _ctx.phase = 0.0;
+   return _ctx;
+};
+
+this.Pd_osc0_setFreq_type_alloc = function (_ctx) {
+   return this.Pd_osc0_process_type_alloc();
+};
+
+this.Pd_osc0_process = function (_ctx) {
+   _ctx.phase = ((440.0 / this.samplerate()) + _ctx.phase);
+   if ((_ctx.phase > 1.0)) {
+      _ctx.phase = (-1.0 + _ctx.phase);
+   }
+   return Math.sin((6.283185 * _ctx.phase));
+};
+
+this.Pd_osc0_setFreq = function (_ctx, freq) {
+   _ctx.phase = _ctx.phase;
+};
+
+
+   if(this.Pd_osc0_process_type_alloc)  this.context =  this.Pd_osc0_process_type_alloc(); else this.context = {};
+   this.liveNoteOn        = function(note,velocity,channel) { if(this.Pd_osc0_noteOn)        this.Pd_osc0_noteOn(this.context,note,velocity,channel); };
+   this.liveNoteOff       = function(note,velocity,channel) { if(this.Pd_osc0_noteOff)       this.Pd_osc0_noteOff(this.context,note,velocity,channel); };
+   this.liveControlChange = function(note,velocity,channel) { if(this.Pd_osc0_controlChange) this.Pd_osc0_controlChange(this.context,note,velocity,channel); };
+   this.liveProcess       = function(input)         { if(this.Pd_osc0_process)       return this.Pd_osc0_process(this.context,input); else return 0; };
+   this.liveDefault       = function() { if(this.Pd_osc0_default)      return this.Pd_osc0_default(this.context); };
+   }

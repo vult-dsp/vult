@@ -6,7 +6,7 @@ Copyright (c) 2014-2024 Leonardo Laguna Ruiz
 Sin oscillator reset control
 */
 
-fun process(cv, reset) {
+fun process(cv, reset) @[pdtilde(name = "sine")] {
    mem trig;
    if(Util.edge(reset > 0.5)) {
       trig = true;
@@ -20,7 +20,7 @@ fun process(cv, reset) {
    return Tables.nsine(phase);
 }
 
-and noteOn(note:int,velocity:int,channel:int){ }
-and noteOff(note:int,channel:int){ }
-and controlChange(control:int,value:int,channel:int){ }
+and noteOn(note:int,velocity:int,channel:int) @[pdmessage] { }
+and noteOff(note:int,channel:int) @[pdmessage] { }
+and controlChange(control:int,value:int,channel:int) @[pdmessage] { }
 and default(){ }

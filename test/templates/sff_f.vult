@@ -1,5 +1,5 @@
 
-fun process(a:real, b) { return a * b; }
+fun process(a:real, b) @[pdtilde] { return a * b; }
 and noteOn(note:int,velocity:int,channel:int){ }
 and noteOff(note:int,channel:int){ }
 and controlChange(control:int,value:int,channel:int){ }

@@ -1,0 +1,13 @@
+// A pure generator: a signal object with no signal inputs must wire its outlets
+// correctly (no main signal inlet).
+fun process() @[pdtilde(name = "osc0")] {
+  mem phase;
+  phase = phase + 440.0 / samplerate();
+  if (phase > 1.0)
+    phase = phase - 1.0;
+  return sin(2.0 * pi() * phase);
+}
+and setFreq(freq:real) @[pdmessage] {
+  mem phase;
+  phase = phase + freq * 0.0;
+}

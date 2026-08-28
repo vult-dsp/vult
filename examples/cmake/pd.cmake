@@ -33,7 +33,10 @@ find_program(VULT NAMES ./_build/default/src/vult.exe vult  HINTS ${CMAKE_CURREN
 message(STATUS "Vult compiler found in ${VULT}")
 
 function(vult_pd output source includes)
-   set(OUTPUT_FILES ${CMAKE_CURRENT_BINARY_DIR}/${output}.cpp ${CMAKE_CURRENT_BINARY_DIR}/${output}.h)
+   # every target generates into its own directory: the compiler emits the runtime files
+   # (vultin.hpp/vultin.cpp) next to the generated code
+   set(GEN_DIR ${CMAKE_CURRENT_BINARY_DIR}/${output})
+   set(OUTPUT_FILES ${GEN_DIR}/${output}.cpp ${GEN_DIR}/${output}.h ${GEN_DIR}/vultin.cpp ${GEN_DIR}/vultin.hpp)
 
    foreach(dir ${${includes}})
       set(includes_flag -i ${dir} ${includes_flag})
@@ -48,15 +51,27 @@ function(vult_pd output source includes)
    if(DEPENDENCIES_STRING STREQUAL "")
       set(DEPENDENCIES)
    else()
+      string(STRIP ${DEPENDENCIES_STRING} DEPENDENCIES_STRING)
       string(REPLACE " " ";" DEPENDENCIES ${DEPENDENCIES_STRING})
    endif()
 
+   set(DEPENDENCY_FILES)
+   foreach(dep ${DEPENDENCIES})
+      if(IS_ABSOLUTE ${dep})
+         list(APPEND DEPENDENCY_FILES ${dep})
+      else()
+         list(APPEND DEPENDENCY_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${dep})
+      endif()
+   endforeach(dep)
+
    add_custom_command(
       OUTPUT ${OUTPUT_FILES}
-      DEPENDS ${source} ${DEPENDENCIES}
+      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${source} ${DEPENDENCY_FILES}
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-      COMMAND ${VULT} ${includes_flag} ${source} -ccode -template pd -o ${CMAKE_CURRENT_BINARY_DIR}/${output})
-   add_custom_target(${output}_code ALL DEPENDS ${output}.cpp ${output}.h)
-   set(src ${OUTPUT_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/../runtime/vultin.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../runtime/vultin.h)
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${GEN_DIR}
+      COMMAND ${VULT} ${includes_flag} ${source} -code cpp -template pd -o ${GEN_DIR}/${output})
+   add_custom_target(${output}_code ALL DEPENDS ${OUTPUT_FILES})
+   set(src ${GEN_DIR}/${output}.cpp ${GEN_DIR}/vultin.cpp)
    add_pd_object(${output} src)
+   target_include_directories(${output} PRIVATE ${GEN_DIR})
 endfunction(vult_pd)

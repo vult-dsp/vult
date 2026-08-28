@@ -1,0 +1,41 @@
+class VultProcessor extends AudioWorkletProcessor {
+   constructor() {
+      super();
+      this.vult = new (function() {
+this.Pd_osc0_process_type_alloc = function () {
+   var _ctx = {};
+   _ctx.phase = 0.0;
+   return _ctx;
+};
+
+this.Pd_osc0_setFreq_type_alloc = function (_ctx) {
+   return this.Pd_osc0_process_type_alloc();
+};
+
+this.Pd_osc0_process = function (_ctx) {
+   _ctx.phase = ((440.0 / this.samplerate()) + _ctx.phase);
+   if ((_ctx.phase > 1.0)) {
+      _ctx.phase = (-1.0 + _ctx.phase);
+   }
+   return Math.sin((6.283185 * _ctx.phase));
+};
+
+this.Pd_osc0_setFreq = function (_ctx, freq) {
+   _ctx.phase = _ctx.phase;
+};
+
+
+      this.context = this.Pd_osc0_process_type_alloc();
+      })();
+      
+   }
+   process(inputs, outputs, parameters) {
+      const input = inputs[0];
+      const output = outputs[0];
+      for (var i = 0; i < 128; i++) {
+         output[0][i] = this.vult.Pd_osc0_process(this.vult.context, input[0] ? input[0][i] : 0);
+      }
+      return true;
+   }
+}
+registerProcessor('vult-processor', VultProcessor);

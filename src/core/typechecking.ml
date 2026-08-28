@@ -1344,6 +1344,15 @@ let isRoot (args : Args.args) path =
   let s_path = Pla.print (Syntax.print_path path) in
   CCList.mem s_path args.roots
 
+(* When generating Pure Data externals, the tagged functions are the objects of the
+   library: they are roots without needing the -root flag. *)
+let isPdRoot (args : Args.args) tags =
+  match args.template with
+  | Some "pd" ->
+      Ptags.has tags "pdtilde" || Ptags.has tags "pd" || Ptags.has tags "pdmessage"
+  | Some _ | None ->
+      false
+
 let customInitializer (env : env) tags name = if Ptags.has tags "init" then Env.addCustomInitFunction env name else env
 
 let reportReturnTypeMismatch is_placeholder loc (specified_ret : type_ option) (inferred_ret : type_) =
@@ -1373,7 +1382,7 @@ let rec function_def (iargs : Args.args) (env : env) (def : Syntax.function_def)
   let env, next = function_def_opt iargs env next in
   let env = registerMultiReturnMem env path t def.loc in
   let env = customInitializer env def.tags path in
-  let is_root = isRoot iargs path in
+  let is_root = isRoot iargs path || isPdRoot iargs def.tags in
   let is_placeholder = Ptags.has def.tags "placeholder" in
   let () = reportReturnTypeMismatch is_placeholder def.loc specified_ret inferred_ret in
   (env, ({name= path; args; t; loc= def.loc; tags= def.tags; next; is_root}, stmt_block body))

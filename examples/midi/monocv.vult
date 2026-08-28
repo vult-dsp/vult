@@ -60,7 +60,7 @@ and mono_isGateOn() {
    return count > 0;
 }
 
-fun process(c:int) {
+fun process(c:int) @[pdtilde(name = "monocv")] {
    mem cv, vel, gate;
    mem active_note;
    mem channel_in;

@@ -1,0 +1,62 @@
+function vultProcess() {
+this.Pd_msg_process_type_alloc = function () {
+   var _ctx = {};
+   _ctx.freq = 0.0;
+   _ctx.level = 0.0;
+   _ctx.phase = 0.0;
+   return _ctx;
+};
+
+this.Pd_msg_noteOn_type_alloc = function (_ctx) {
+   return this.Pd_msg_process_type_alloc();
+};
+
+this.Pd_msg_setLevel_type_alloc = function (_ctx) {
+   return this.Pd_msg_process_type_alloc();
+};
+
+this.Pd_msg_mute_type_alloc = function (_ctx) {
+   return this.Pd_msg_process_type_alloc();
+};
+
+this.Pd_msg_setLabel_type_alloc = function (_ctx) {
+   return this.Pd_msg_process_type_alloc();
+};
+
+this.Pd_msg_process = function (_ctx, gate) {
+   _ctx.phase = ((_ctx.freq / this.samplerate()) + _ctx.phase);
+   if ((_ctx.phase > 1.0)) {
+      _ctx.phase = (-1.0 + _ctx.phase);
+   }
+   return (gate * (_ctx.phase * _ctx.level));
+};
+
+this.Pd_msg_noteOn = function (_ctx, note, velocity, channel) {
+   _ctx.freq = (6.376811 * (note));
+   _ctx.level = (0.007874 * (velocity));
+};
+
+this.Pd_msg_setLevel = function (_ctx, l) {
+   _ctx.level = l;
+};
+
+this.Pd_msg_mute = function (_ctx, on) {
+   if (on) {
+      _ctx.level = 0.0;
+   } else {
+      _ctx.level = 1.0;
+   }
+};
+
+this.Pd_msg_setLabel = function (_ctx, name) {
+   _ctx.level = _ctx.level;
+};
+
+
+   if(this.Pd_msg_process_type_alloc)  this.context =  this.Pd_msg_process_type_alloc(); else this.context = {};
+   this.liveNoteOn        = function(note,velocity,channel) { if(this.Pd_msg_noteOn)        this.Pd_msg_noteOn(this.context,note,velocity,channel); };
+   this.liveNoteOff       = function(note,velocity,channel) { if(this.Pd_msg_noteOff)       this.Pd_msg_noteOff(this.context,note,velocity,channel); };
+   this.liveControlChange = function(note,velocity,channel) { if(this.Pd_msg_controlChange) this.Pd_msg_controlChange(this.context,note,velocity,channel); };
+   this.liveProcess       = function(input)         { if(this.Pd_msg_process)       return this.Pd_msg_process(this.context,input); else return 0; };
+   this.liveDefault       = function() { if(this.Pd_msg_default)      return this.Pd_msg_default(this.context); };
+   }

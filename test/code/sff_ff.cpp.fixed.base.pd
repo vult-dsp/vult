@@ -3,6 +3,35 @@
 #include "sff_ff.h"
 
 
+float float_samplerate() { return sys_getsr(); }
+fix16_t fix_samplerate() { return float_to_fix(sys_getsr()); }
+
+static bool vult_check_argc(void *x, const char *msg, int expected, int argc) {
+   if (argc != expected) {
+      pd_error(x, "%s: wrong number of arguments (%d given, %d expected)", msg, argc, expected);
+      return false;
+   }
+   return true;
+}
+
+static bool vult_get_float(void *x, const char *msg, int i, t_atom *argv, t_float *value) {
+   if (argv[i].a_type != A_FLOAT) {
+      pd_error(x, "%s: argument %d must be a number", msg, i + 1);
+      return false;
+   }
+   *value = argv[i].a_w.w_float;
+   return true;
+}
+
+static bool vult_get_symbol(void *x, const char *msg, int i, t_atom *argv, t_symbol **value) {
+   if (argv[i].a_type != A_SYMBOL) {
+      pd_error(x, "%s: argument %d must be a symbol", msg, i + 1);
+      return false;
+   }
+   *value = argv[i].a_w.w_symbol;
+   return true;
+}
+
 extern "C" {
 
 static t_class *Sff_ff_process_tilde_class;
@@ -12,6 +41,47 @@ typedef struct _Sff_ff_process_tilde {
    float dummy;
    Sff_ff_process_type data;
 } t_Sff_ff_process_tilde;
+
+void Sff_ff_noteOn_msg(t_Sff_ff_process_tilde *x, t_symbol *s, int argc, t_atom *argv)
+{
+   (void)s;
+   if (!vult_check_argc(x, "noteOn", 3, argc)) return;
+
+   t_float a0; if (!vult_get_float(x, "noteOn", 0, argv, &a0)) return;
+   t_float a1; if (!vult_get_float(x, "noteOn", 1, argv, &a1)) return;
+   t_float a2; if (!vult_get_float(x, "noteOn", 2, argv, &a2)) return;
+   Sff_ff_noteOn(x->data, (int)a0, (int)a1, (int)a2);
+}
+
+void Sff_ff_noteOff_msg(t_Sff_ff_process_tilde *x, t_symbol *s, int argc, t_atom *argv)
+{
+   (void)s;
+   if (!vult_check_argc(x, "noteOff", 2, argc)) return;
+
+   t_float a0; if (!vult_get_float(x, "noteOff", 0, argv, &a0)) return;
+   t_float a1; if (!vult_get_float(x, "noteOff", 1, argv, &a1)) return;
+   Sff_ff_noteOff(x->data, (int)a0, (int)a1);
+}
+
+void Sff_ff_controlChange_msg(t_Sff_ff_process_tilde *x, t_symbol *s, int argc, t_atom *argv)
+{
+   (void)s;
+   if (!vult_check_argc(x, "controlChange", 3, argc)) return;
+
+   t_float a0; if (!vult_get_float(x, "controlChange", 0, argv, &a0)) return;
+   t_float a1; if (!vult_get_float(x, "controlChange", 1, argv, &a1)) return;
+   t_float a2; if (!vult_get_float(x, "controlChange", 2, argv, &a2)) return;
+   Sff_ff_controlChange(x->data, (int)a0, (int)a1, (int)a2);
+}
+
+void Sff_ff_default_msg(t_Sff_ff_process_tilde *x, t_symbol *s, int argc, t_atom *argv)
+{
+   (void)s;
+   if (!vult_check_argc(x, "default", 0, argc)) return;
+
+
+   Sff_ff_default(x->data);
+}
 
 t_int *Sff_ff_process_tilde_perform(t_int *w)
 {
@@ -61,11 +131,11 @@ void *Sff_ff_process_tilde_new()
 }
 
 void Sff_ff_process_tilde_delete(t_Sff_ff_process_tilde *x){
-
+   (void)x;
 }
 
-void Sff_ff_process_tilde_setup(void) {
-   Sff_ff_process_tilde_class = class_new(gensym("Sff_ff_process~"),
+EXPORT void process_tilde_setup(void) {
+   Sff_ff_process_tilde_class = class_new(gensym("process~"),
       (t_newmethod)Sff_ff_process_tilde_new, // constructor function
       (t_method)Sff_ff_process_tilde_delete, // destructor function
       sizeof(t_Sff_ff_process_tilde), // size of the object
@@ -74,11 +144,15 @@ void Sff_ff_process_tilde_setup(void) {
 
    class_addmethod(Sff_ff_process_tilde_class, (t_method)Sff_ff_process_tilde_dsp, gensym("dsp"), A_NULL);
    CLASS_MAINSIGNALIN(Sff_ff_process_tilde_class, t_Sff_ff_process_tilde, dummy);
+
+   class_addmethod(Sff_ff_process_tilde_class, (t_method)Sff_ff_noteOn_msg, gensym("noteOn"), A_GIMME, A_NULL);
+   class_addmethod(Sff_ff_process_tilde_class, (t_method)Sff_ff_noteOff_msg, gensym("noteOff"), A_GIMME, A_NULL);
+   class_addmethod(Sff_ff_process_tilde_class, (t_method)Sff_ff_controlChange_msg, gensym("controlChange"), A_GIMME, A_NULL);
+   class_addmethod(Sff_ff_process_tilde_class, (t_method)Sff_ff_default_msg, gensym("default"), A_GIMME, A_NULL);
 }
 
 } // extern "C"
-
 void sff_ff_setup() {
 
-   Sff_ff_process_tilde_setup();
+   process_tilde_setup();
 }

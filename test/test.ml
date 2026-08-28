@@ -171,7 +171,17 @@ let errors_files =
   ; "error54.vult" ]
 
 let template_files =
-  ["sf_f.vult"; "sff_f.vult"; "sff_ff.vult"; "sfi_fi.vult"; "af_f.vult"; "aff_f.vult"; "aff_ff.vult"; "afi_fi.vult"]
+  [ "sf_f.vult"
+  ; "sff_f.vult"
+  ; "sff_ff.vult"
+  ; "sfi_fi.vult"
+  ; "af_f.vult"
+  ; "aff_f.vult"
+  ; "aff_ff.vult"
+  ; "afi_fi.vult"
+  ; "pd_osc0.vult"
+  ; "pd_ctrl.vult"
+  ; "pd_msg.vult" ]
 
 let vcv_template_files = ["vcv_template.vult"; "vcv_vco.vult"]
 
@@ -544,6 +554,25 @@ let compileCppFile ext (dir : string) (file : string) : unit =
   callCompiler "vultin.cpp" ;
   Sys.chdir initial_dir
 
+(* Links the generated Pure Data external against the API stubs and runs its setup,
+   instantiating every registered class. This catches undefined symbols (the compile step
+   alone cannot) and exercises the registration and constructor paths. *)
+let linkAndRunPd (filename : string) : unit =
+  let dir = Filename.dirname filename in
+  let base = Filename.chop_extension (Filename.basename filename) in
+  Sys.chdir dir ;
+  let cmd =
+    Printf.sprintf "c++ -std=c++11 -O0 -DPD -DVULT_TEST_SETUP=%s_setup -I%s -I. %s.cpp vultin.cpp %s -o %s_smoke" base
+      (in_test_directory "../examples/cmake/pd-deps")
+      base
+      (in_test_directory "templates/pd_stubs.cpp")
+      base
+  in
+  if Sys.command cmd <> 0 then assert_failure ("Failed to link the pd external " ^ base) ;
+  if Sys.command ("./" ^ base ^ "_smoke > /dev/null") <> 0 then
+    assert_failure ("The pd external smoke test failed for " ^ base) ;
+  Sys.chdir initial_dir
+
 (** Generates multi-module examples with -split-files and compiles every produced file. The
     per-module headers must include the headers of the modules they depend on (computed from the
     final program, since elaboration can create dependencies that are not visible in the source
@@ -776,7 +805,8 @@ module Templates = struct
   let tryCompile (args : Args.args) generated_files =
     match (args.template, args.code, generated_files) with
     | Some "pd", CppCode, (filename, _) :: _ ->
-        compileCppFile ".cpp" (Filename.dirname filename) filename
+        compileCppFile ".cpp" (Filename.dirname filename) filename ;
+        linkAndRunPd filename
     | _ ->
         ()
 
@@ -786,7 +816,16 @@ module Templates = struct
     let dir = makeTestDir (basefile ^ "." ^ code_type ^ "." ^ template) in
     let output = Filename.concat dir basefile in
     let roots =
-      match (code_type, template) with "js", _ -> [] | _, "vcv-prototype" -> [] | _ -> [moduleName ^ ".process"]
+      match (code_type, template) with
+      | "js", _ ->
+          []
+      | _, "vcv-prototype" ->
+          []
+      | _, "pd" ->
+          (* the pd objects are selected with the @[pdtilde]/@[pd] tags, which are roots *)
+          []
+      | _ ->
+          [moduleName ^ ".process"]
     in
     let args = Args.{default_arguments with includes; roots} in
     let args, ext =

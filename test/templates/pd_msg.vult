@@ -1,0 +1,23 @@
+// A signal object with messages of every supported argument type.
+fun process(gate:real) @[pdtilde(name = "msgsynth")] {
+  mem freq, level;
+  mem phase = phase + freq / samplerate();
+  if (phase > 1.0)
+    phase = phase - 1.0;
+  return phase * gate * level;
+}
+and noteOn(note:int, velocity:int, channel:int) @[pdmessage] {
+  mem freq = 440.0 * real(note) / 69.0;
+  mem level = real(velocity) / 127.0;
+}
+and setLevel(l:real) @[pdmessage] {
+  mem level = l;
+}
+and mute(on:bool) @[pdmessage] {
+  mem level = if on then 0.0 else 1.0;
+}
+and setLabel(name:string) @[pdmessage] {
+  mem level;
+  _ = name;
+  level = level + 0.0;
+}

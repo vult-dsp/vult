@@ -1,0 +1,76 @@
+class VultProcessor extends AudioWorkletProcessor {
+   constructor() {
+      super();
+      this.vult = new (function() {
+this.Pd_msg_process_type_alloc = function () {
+   var _ctx = {};
+   _ctx.freq = 0.0;
+   _ctx.level = 0.0;
+   _ctx.phase = 0.0;
+   return _ctx;
+};
+
+this.Pd_msg_noteOn_type_alloc = function (_ctx) {
+   return this.Pd_msg_process_type_alloc();
+};
+
+this.Pd_msg_setLevel_type_alloc = function (_ctx) {
+   return this.Pd_msg_process_type_alloc();
+};
+
+this.Pd_msg_mute_type_alloc = function (_ctx) {
+   return this.Pd_msg_process_type_alloc();
+};
+
+this.Pd_msg_setLabel_type_alloc = function (_ctx) {
+   return this.Pd_msg_process_type_alloc();
+};
+
+this.Pd_msg_process = function (_ctx, gate) {
+   _ctx.phase = ((_ctx.freq / this.samplerate()) + _ctx.phase);
+   if ((_ctx.phase > 1.0)) {
+      _ctx.phase = (-1.0 + _ctx.phase);
+   }
+   return (gate * (_ctx.phase * _ctx.level));
+};
+
+this.Pd_msg_noteOn = function (_ctx, note, velocity, channel) {
+   _ctx.freq = (6.376811 * (note));
+   _ctx.level = (0.007874 * (velocity));
+};
+
+this.Pd_msg_setLevel = function (_ctx, l) {
+   _ctx.level = l;
+};
+
+this.Pd_msg_mute = function (_ctx, on) {
+   if (on) {
+      _ctx.level = 0.0;
+   } else {
+      _ctx.level = 1.0;
+   }
+};
+
+this.Pd_msg_setLabel = function (_ctx, name) {
+   _ctx.level = _ctx.level;
+};
+
+
+      this.context = this.Pd_msg_process_type_alloc();
+      })();
+      this.port.onmessage = (e) => {
+         if (e.data.type === 'noteOn') this.vult.Pd_msg_noteOn(this.vult.context, e.data.note, e.data.velocity, e.data.channel);
+         
+         
+      };
+   }
+   process(inputs, outputs, parameters) {
+      const input = inputs[0];
+      const output = outputs[0];
+      for (var i = 0; i < 128; i++) {
+         output[0][i] = this.vult.Pd_msg_process(this.vult.context, input[0] ? input[0][i] : 0);
+      }
+      return true;
+   }
+}
+registerProcessor('vult-processor', VultProcessor);

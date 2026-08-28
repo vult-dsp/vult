@@ -1,0 +1,88 @@
+
+(function(audioContext) {
+   var code = function () {
+   this.Pd_msg_process_type_alloc = function () {
+   var _ctx = {};
+   _ctx.freq = 0.0;
+   _ctx.level = 0.0;
+   _ctx.phase = 0.0;
+   return _ctx;
+};
+
+this.Pd_msg_noteOn_type_alloc = function (_ctx) {
+   return this.Pd_msg_process_type_alloc();
+};
+
+this.Pd_msg_setLevel_type_alloc = function (_ctx) {
+   return this.Pd_msg_process_type_alloc();
+};
+
+this.Pd_msg_mute_type_alloc = function (_ctx) {
+   return this.Pd_msg_process_type_alloc();
+};
+
+this.Pd_msg_setLabel_type_alloc = function (_ctx) {
+   return this.Pd_msg_process_type_alloc();
+};
+
+this.Pd_msg_process = function (_ctx, gate) {
+   _ctx.phase = ((_ctx.freq / this.samplerate()) + _ctx.phase);
+   if ((_ctx.phase > 1.0)) {
+      _ctx.phase = (-1.0 + _ctx.phase);
+   }
+   return (gate * (_ctx.phase * _ctx.level));
+};
+
+this.Pd_msg_noteOn = function (_ctx, note, velocity, channel) {
+   _ctx.freq = (6.376811 * (note));
+   _ctx.level = (0.007874 * (velocity));
+};
+
+this.Pd_msg_setLevel = function (_ctx, l) {
+   _ctx.level = l;
+};
+
+this.Pd_msg_mute = function (_ctx, on) {
+   if (on) {
+      _ctx.level = 0.0;
+   } else {
+      _ctx.level = 1.0;
+   }
+};
+
+this.Pd_msg_setLabel = function (_ctx, name) {
+   _ctx.level = _ctx.level;
+};
+
+
+      this.context = this.Pd_msg_process_type_alloc();
+      };
+   var processor = new code ();
+   
+   var node = audioContext.createScriptProcessor(0, 1, 1);
+   node.inputs = 1;
+   node.outputs = 1;
+   node.onaudioprocess = function (e) {
+
+
+   var in_0 = e.inputBuffer.getChannelData(0); 
+
+
+   var out_0 = e.outputBuffer.getChannelData(0); 
+
+
+   for (var n = 0; n < e.inputBuffer.length; n++) {
+            var ret = processor.Pd_msg_process(processor.context, in_0[n]); 
+out_0[n] = ret;  
+   }
+   }
+
+
+   node.noteOn = function(note, velocity, channel){
+      if(velocity > 0) processor.Pd_msg_noteOn(processor.context,note,velocity,channel);
+      else processor.Pd_msg_noteOff(processor.context,note,channel);
+   }
+
+
+   return node;
+   })
