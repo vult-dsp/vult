@@ -92,6 +92,28 @@ let registerPrefix state name =
 
 let addPrefix state id = match Hashtbl.find_opt state.prefixed id with None -> id | Some prefix -> prefix
 
+(* References are printed by looking up the prefixed table, so every top-level
+   definition must be registered before anything is printed: with -split-files
+   a module can be printed before the module that defines the names it uses. *)
+let registerAllDefinitions state (stmts : top_stmt list) =
+  match state.args.output_prefix with
+  | None ->
+      ()
+  | Some _ ->
+      CCList.iter
+        (fun (t : top_stmt) ->
+          match t.top with
+          | TopType {path; _} | TopAlias {path; _} ->
+              ignore (registerPrefix state path)
+          | TopFunction (def, _) | TopExternal (def, None) ->
+              ignore (registerPrefix state def.name)
+          | TopExternal (_, Some _) ->
+              (* externals with a link name are called by that name, unprefixed *)
+              ()
+          | TopConstant (name, _, _, _, _) ->
+              ignore (registerPrefix state name) )
+        stmts
+
 let rec print_type_ state (t : type_) =
   match t.t with
   | TEmptyType ->
@@ -410,8 +432,9 @@ let rec print_stmt state s =
   (* declares and initializes a structure *)
   | StmtDecl (({t= {t= TStruct {path; _}; _}; _} as lhs), None) ->
       let t = print_type_ state lhs.t in
+      let init = addPrefix state (path ^ "_init") in
       let lhs = print_dexp lhs in
-      {%pla|<#t#> <#lhs#>;<#><#path#s>_init(<#lhs#>);|}
+      {%pla|<#t#> <#lhs#>;<#><#init#s>(<#lhs#>);|}
   | StmtDecl ({d= DId (n, _); t; _}, None) ->
       let t = print_decl_alloc state (n, t) in
       {%pla|<#t#>;|}
@@ -598,8 +621,6 @@ let getTemplateCode (name : string option) (args : Util.Args.args) (stmts : top_
   | Some name ->
       Util.Error.raiseErrorMsg ("Unknown template '" ^ name ^ "'")
 
-let generateIncludeList stmts = Pla.map_sep_all Pla.newline (fun (file, _) -> {%pla|#include "<#file#s>.h"|}) stmts
-
 let getLegend (args : Util.Args.args) =
   match (args.header, args.header_file) with
   | None, None ->
@@ -634,12 +655,22 @@ let vultinFiles (args : Util.Args.args) (stmts : top_stmt list) =
 let generateSplit (args : Util.Args.args) template (stmts : top_stmt list) =
   let legend = getLegend args in
   let state = {args; prefixed= Hashtbl.create 16} in
+  let () = registerAllDefinitions state stmts in
   let dir = CCOption.map_or ~default:"" (fun file -> Filename.dirname file) args.output in
   let main_header_file = Common.setExt ".h" args.output in
   let impl_file = Common.setExt ".cpp" args.output in
-  let makeIncludes files = Pla.map_sep_all Pla.newline (fun inc -> {%pla|#include "<#inc#s>.h"|}) files in
+  (* with an output prefix the module files are prefixed too, so programs
+     sharing modules can be generated into the same directory *)
+  let moduleFileName mname = CCOption.map_or ~default:mname (fun prefix -> prefix ^ mname) args.output_prefix in
+  let makeIncludes files =
+    Pla.map_sep_all Pla.newline
+      (fun inc ->
+        let inc = moduleFileName inc in
+        {%pla|#include "<#inc#s>.h"|} )
+      files
+  in
   let generateClassic deps_table (mname, stmts) =
-    let output = Some (Filename.concat dir mname) in
+    let output = Some (Filename.concat dir (moduleFileName mname)) in
     let allow_inline = false in
     let header = print_prog state ~allow_inline Header stmts in
     let impl = print_prog state ~allow_inline Implementation stmts in
@@ -672,14 +703,17 @@ let generateSplit (args : Util.Args.args) template (stmts : top_stmt list) =
     (* the aggregated header and implementation use the output name: a module
        with the same name would silently overwrite them *)
     let output_base = Filename.basename (CCOption.get_or ~default:"output" args.output) in
-    if CCList.exists (fun (mname, _) -> mname = output_base) stmts then
-      Util.Error.raiseErrorMsg
-        ( "The output name '" ^ output_base ^ "' conflicts with the file '" ^ output_base
-        ^ ".vult' when using -split-files. Use a different output name (-o)." )
+    match CCList.find_opt (fun (mname, _) -> moduleFileName mname = output_base) stmts with
+    | Some (mname, _) ->
+        Util.Error.raiseErrorMsg
+          ( "The output name '" ^ output_base ^ "' conflicts with the file '" ^ mname
+          ^ ".vult' when using -split-files. Use a different output name (-o)." )
+    | None ->
+        ()
   in
   let deps_table = Usage.fileDependencies stmts in
   let files = CCList.flat_map (generateClassic deps_table) stmts in
-  let include_list = generateIncludeList stmts in
+  let include_list = makeIncludes (CCList.map fst stmts) in
   (Pla.join [timpl_start; timpl_end], impl_file)
   :: (Pla.join [theader_start; include_list; theader_end], main_header_file)
   :: (vultin @ files)
@@ -687,6 +721,7 @@ let generateSplit (args : Util.Args.args) template (stmts : top_stmt list) =
 let generateSingle (args : Util.Args.args) template (stmts : top_stmt list) =
   let legend = getLegend args in
   let state = {args; prefixed= Hashtbl.create 16} in
+  let () = registerAllDefinitions state stmts in
   let allow_inline = true in
   let header = print_prog state ~allow_inline Header stmts in
   let impl = print_prog state ~allow_inline Implementation stmts in

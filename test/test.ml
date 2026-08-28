@@ -541,19 +541,21 @@ let compileCppFile ext (file : string) : unit =
     final program, since elaboration can create dependencies that are not visible in the source
     imports), otherwise the individual files do not compile. *)
 module SplitCompileTest = struct
-  let run (file : string) context =
+  let run ~(split : bool) ~(prefix : string option) (file : string) context =
     skip_if (not has_cpp) "no C++ compiler available" ;
     Sys.chdir initial_dir ;
     let fullfile = checkFile (in_test_directory ("../examples/" ^ file)) in
     let name = Filename.chop_extension (Filename.basename file) in
-    let outdir = in_tmp_dir ("split_" ^ name) in
+    let variant = (if split then "split_" else "single_") ^ CCOption.get_or ~default:"" prefix in
+    let outdir = in_tmp_dir (variant ^ name) in
     let () = if Sys.command ("mkdir -p " ^ outdir) <> 0 then assert_failure ("failed to create " ^ outdir) in
     let args =
       Args.
         { default_arguments with
           files= [File fullfile]
         ; code= CppCode
-        ; split= true
+        ; split
+        ; output_prefix= prefix
         ; force_write= update_test context
         ; includes
         ; output= Some (Filename.concat outdir "engine") }
@@ -571,12 +573,28 @@ module SplitCompileTest = struct
     in
     Sys.chdir outdir ;
     let cpp_files = Sys.readdir "." |> Array.to_list |> CCList.filter (fun f -> Filename.check_suffix f ".cpp") in
-    (* at least one module file, the aggregated file and the runtime *)
-    assert_bool "the code was not split in multiple files" (CCList.length cpp_files > 3) ;
-    CCList.iter callCompiler cpp_files ;
-    Sys.chdir initial_dir
+    (* in split mode: at least one module file, the aggregated file and the runtime *)
+    let () = if split then assert_bool "the code was not split in multiple files" (CCList.length cpp_files > 3) in
+    let () =
+      (* the module files must carry the prefix so two programs can share a directory *)
+      match (split, prefix) with
+      | true, Some prefix ->
+          let unprefixed f = f <> "vultin.cpp" && f <> "engine.cpp" && not (CCString.prefix ~pre:prefix f) in
+          assert_bool "the module files are not prefixed" (not (CCList.exists unprefixed cpp_files))
+      | _ ->
+          ()
+    in
+    CCList.iter callCompiler cpp_files ; Sys.chdir initial_dir
 
-  let get files = "split" >::: CCList.map (fun file -> Filename.basename file >:: run file) files
+  let get files =
+    "split"
+    >::: CCList.flat_map
+           (fun file ->
+             let name = Filename.basename file in
+             [ name >:: run ~split:true ~prefix:None file
+             ; name ^ ".prefix" >:: run ~split:true ~prefix:(Some "pfx_") file
+             ; name ^ ".single.prefix" >:: run ~split:false ~prefix:(Some "pfx_") file ] )
+           files
 end
 
 module CliTest = struct
