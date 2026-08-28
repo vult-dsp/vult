@@ -29,6 +29,8 @@ NOTE: The code for the fixed-point operations is based on the project:
 */
 #include "vultin.hpp"
 
+#ifndef VULT_NO_FIX16_MATH
+
 fix16_t fix_exp(fix16_t inValue) {
   if (inValue == 0)
     return FIX16_ONE;
@@ -146,6 +148,10 @@ fix16_t fix_sqrt(fix16_t inValue) {
   return (neg ? -(int32_t)result : (int32_t)result);
 }
 
+#endif // VULT_NO_FIX16_MATH
+
+#ifndef VULT_NO_RANDOM
+
 float float_random() { return (float)rand() / (float)RAND_MAX; }
 
 fix16_t fix_random() {
@@ -154,6 +160,10 @@ fix16_t fix_random() {
 }
 
 int int_random() { return (int)rand(); }
+
+#endif // VULT_NO_RANDOM
+
+#ifndef VULT_NO_SERIALIZATION
 
 void push_byte(CustomBuffer &buffer, uint8_t byte) {
   if (!buffer.calculate_size) {
@@ -448,3 +458,5 @@ std::string deserialize_string(CustomBuffer &buffer, int32_t index) {
     return "";
   }
 }
+
+#endif // VULT_NO_SERIALIZATION

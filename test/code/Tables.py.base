@@ -1,22 +1,9 @@
 import math
-import random as random_module
 
-# Runtime functions (simple builtins like eps, pi, clip, sin, cos, etc. are inlined)
-
-def random():
-    return random_module.random()
-
-def irandom():
-    return int(random_module.random() * 4294967296)
-
-def int_to_float(i):
-    return float(i)
+# Runtime functions
 
 def float_to_int(i):
     return int(math.floor(i))
-
-def initializeArray(v, size):
-    return [v for _ in range(size)]
 
 Tables_sineTable1_c = {}
 def Tables_sineTable1_raw_c0(index):

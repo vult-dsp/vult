@@ -31,13 +31,32 @@ NOTE: The code for the fixed-point operations is based on the project:
 #ifndef VULTIN_H
 #define VULTIN_H
 
+/* The VULT_NO_* macros disable the runtime features the generated code does
+   not use. The Vult compiler emits a copy of this file next to the generated
+   code with the macros for the unused features already defined. The macros
+   can also be set manually in the build flags, and defining VULT_FULL_RUNTIME
+   overrides the compiler-generated ones to compile the full runtime. */
+
+#if !defined(VULT_NO_SERIALIZATION) && defined(VULT_NO_STRING)
+#error "Vult serialization requires string support: remove VULT_NO_STRING or define VULT_NO_SERIALIZATION"
+#endif
+
 #include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <array>
+
+#ifndef VULT_NO_TUPLE
 #include <tuple>
+#endif
+
+#ifndef VULT_NO_STRING
 #include <string>
+#endif
+
+#if !defined(VULT_NO_SERIALIZATION) || !defined(VULT_NO_LIST)
 #include <vector>
+#endif
 
 #ifdef _MSC_VER
 #define static_inline static __inline
@@ -66,6 +85,7 @@ static_inline fix16_t float_to_fix(float a) {
 }
 static_inline bool float_to_bool(float a) { return a != 0.0f; }
 
+#ifndef VULT_NO_STRING
 static_inline std::string fix_to_string(fix16_t a) { return std::to_string(fix_to_float(a)); }
 
 static_inline std::string bool_to_string(bool a) {
@@ -74,6 +94,7 @@ static_inline std::string bool_to_string(bool a) {
   else
     return std::string("false");
 }
+#endif // VULT_NO_STRING
 
 static_inline float int_to_float(int a) { return (float)a; }
 
@@ -108,7 +129,9 @@ static_inline int int16_to_int(int16_t a) { return (int)a; }
 static_inline float int16_to_float(int16_t a) { return (float)a; }
 static_inline bool int16_to_bool(int16_t a) { return a != 0; }
 static_inline fix16_t int16_to_fix(int16_t a) { return int_to_fix((int)a); }
+#ifndef VULT_NO_STRING
 static_inline std::string int16_to_string(int16_t a) { return std::to_string(a); }
+#endif // VULT_NO_STRING
 
 // Int16 arithmetic operations with clamping
 static_inline int16_t int16_add(int16_t a, int16_t b) { return int_to_int16((int)a + (int)b); }
@@ -167,6 +190,7 @@ static_inline float float_pi() { return 3.1415926535897932384f; }
 
 static_inline fix16_t fix_pi() { return 205887; }
 
+#ifndef VULT_NO_FIX16_MATH
 fix16_t fix_exp(fix16_t inValue);
 
 fix16_t fix_sin(fix16_t inAngle);
@@ -182,6 +206,7 @@ fix16_t fix_cosh(fix16_t inAngle);
 fix16_t fix_tanh(fix16_t inAngle);
 
 fix16_t fix_sqrt(fix16_t inValue);
+#endif // VULT_NO_FIX16_MATH
 
 /* Floating point operations */
 
@@ -193,10 +218,14 @@ static_inline float float_min(float a, float b) { return a < b ? a : b; }
 
 static_inline float float_max(float a, float b) { return a > b ? a : b; }
 
+#ifndef VULT_NO_RANDOM
 /* Random numbers */
 float float_random();
 fix16_t fix_random();
 int int_random();
+#endif // VULT_NO_RANDOM
+
+#ifndef VULT_NO_SERIALIZATION
 
 /* Serialization */
 
@@ -336,5 +365,7 @@ void deserialize_data(CustomBuffer &buffer, void (*deserializer)(CustomBuffer &,
   // call the deserializer
   deserializer(buffer, descr, data_index, data);
 }
+
+#endif // VULT_NO_SERIALIZATION
 
 #endif // VULTIN_H

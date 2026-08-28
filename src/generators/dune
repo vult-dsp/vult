@@ -10,6 +10,8 @@
   Zig
   Common
   Tocode
+  Usage
+  Vultin_embedded
   Tables
   T_pd
   T_performance
@@ -27,3 +29,19 @@
  (ocamlopt_flags -O3 -unbox-closures)
  (instrumentation
   (backend bisect_ppx)))
+
+(rule
+ (targets vultin_embedded.ml)
+ (deps ../../runtime/vultin.hpp ../../runtime/vultin.cpp)
+ (action
+  (with-stdout-to
+   vultin_embedded.ml
+   (progn
+    (echo
+     "(* Generated from the files in the runtime directory. Do not edit. *)\n")
+    (echo "let hpp =\n  {vultin_embedded|")
+    (cat ../../runtime/vultin.hpp)
+    (echo "|vultin_embedded}\n\n")
+    (echo "let cpp =\n  {vultin_embedded|")
+    (cat ../../runtime/vultin.cpp)
+    (echo "|vultin_embedded}\n")))))

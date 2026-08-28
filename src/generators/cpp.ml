@@ -613,6 +613,24 @@ let getLegend (args : Util.Args.args) =
     | Some text ->
         Pla.wrap (Pla.string "/*") (Pla.string "*/") (Pla.string text) )
 
+(* The runtime is emitted along with the generated code so every project gets
+   the vultin files matching the compiler version. The emitted vultin.hpp
+   starts with the defines that disable the runtime features the program does
+   not use. Nothing is emitted when printing to stdout. *)
+let vultinFiles (args : Util.Args.args) (stmts : top_stmt list) =
+  match args.output with
+  | None ->
+      []
+  | Some file ->
+      let dir = Filename.dirname file in
+      let legend = Common.legend in
+      let defines = Usage.runtimeDefines (Usage.detect stmts) in
+      let hpp_body = Pla.string Vultin_embedded.hpp in
+      let cpp_body = Pla.string Vultin_embedded.cpp in
+      let hpp = {%pla|<#legend#><#><#defines#><#hpp_body#>|} in
+      let cpp = {%pla|<#legend#><#><#cpp_body#>|} in
+      [(hpp, Filename.concat dir "vultin.hpp"); (cpp, Filename.concat dir "vultin.cpp")]
+
 let generateSplit file_deps (args : Util.Args.args) template (stmts : top_stmt list) =
   let legend = getLegend args in
   let state = {args; prefixed= Hashtbl.create 16} in
@@ -639,12 +657,13 @@ let generateSplit file_deps (args : Util.Args.args) template (stmts : top_stmt l
     [(header, header_file); (impl, impl_file)]
   in
   let (timpl_start, timpl_end), (theader_start, theader_end) = getTemplateCode template args stmts in
+  let vultin = vultinFiles args stmts in
   let stmts = Common.splitByFile stmts in
   let files = CCList.flat_map generateClassic stmts in
   let include_list = generateIncludeList stmts in
   (Pla.join [timpl_start; timpl_end], impl_file)
   :: (Pla.join [theader_start; include_list; theader_end], main_header_file)
-  :: files
+  :: (vultin @ files)
 
 let generateSingle (args : Util.Args.args) template (stmts : top_stmt list) =
   let legend = getLegend args in
@@ -670,7 +689,7 @@ let generateSingle (args : Util.Args.args) template (stmts : top_stmt list) =
     let ifdef, endif = makeIfdef tables_file in
     {%pla|<#legend#><#ifdef#><#tables#><#endif#>|}
   in
-  [(header, header_file); (impl, impl_file); (tables, tables_file)]
+  [(header, header_file); (impl, impl_file); (tables, tables_file)] @ vultinFiles args stmts
 
 let generate file_deps split output template (stmts : top_stmt list) =
   if split then generateSplit file_deps output template stmts else generateSingle output template stmts

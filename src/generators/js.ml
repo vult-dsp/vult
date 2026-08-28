@@ -24,15 +24,22 @@
 
 open Core.Prog
 
-let runtime =
-  {%pla|
-// Runtime functions (simple builtins like eps, pi, clip, real, int_, sin, cos, etc. are inlined)
-this.random = function()         { return Math.random(); };
-this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };
-this.int_to_float = function(i)  { return i; };
-this.float_to_int = function(i)  { return Math.floor(i); };
-this.initializeArray = function(v, size){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-|}
+(* Only the runtime functions called by the generated code are emitted. Simple
+   builtins like eps, pi, clip, real, int_, sin, cos, etc. are inlined by the
+   printer and need no runtime support. *)
+let runtime (stmts : prog) =
+  let calls = Usage.calledFunctions stmts in
+  let fragments =
+    [ ("random", {%pla|this.random = function()         { return Math.random(); };<#>|})
+    ; ("irandom", {%pla|this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };<#>|})
+    ; ("int_to_float", {%pla|this.int_to_float = function(i)  { return i; };<#>|})
+    ; ("float_to_int", {%pla|this.float_to_int = function(i)  { return Math.floor(i); };<#>|})
+    ; ( "initializeArray"
+      , {%pla|this.initializeArray = function(v, size){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };<#>|}
+      ) ]
+    |> CCList.filter_map (fun (name, code) -> if Util.Maps.Set.mem name calls then Some code else None)
+  in
+  if CCList.is_empty fragments then Pla.unit else Pla.join ({%pla|<#>// Runtime functions<#>|} :: fragments)
 
 let rec isValueOrIf (e : exp) =
   match e.e with
@@ -391,4 +398,5 @@ let generate (args : Util.Args.args) (stmts : top_stmt list) =
   let file = Common.setExt ".js" args.output in
   let code = print_prog args stmts in
   let pre, post = getTemplateCode args stmts in
+  let runtime = runtime stmts in
   [({%pla|<#pre#><#runtime#><#code#><#post#>|}, file)]

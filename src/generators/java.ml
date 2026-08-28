@@ -24,9 +24,11 @@
 
 open Core.Prog
 
-let runtime =
-  {%pla|
-
+(* Only the runtime helpers used by the generated code are emitted. Each entry
+   lists the call names that require the helper. *)
+let runtime_helpers : (string list * Pla.t) list =
+  [ ( ["clip"]
+    , {%pla|
 static int clip(int x, int minv, int maxv) {
     if(x > maxv)
         return maxv;
@@ -42,7 +44,10 @@ static float clip(float x, float minv, float maxv) {
         return minv;
     else return x;
 }
-
+|}
+    )
+  ; ( ["makeArray"]
+    , {%pla|
 static int[] makeArray(int size, int init) {
     int a[] = new int[size];
     Arrays.fill(a, init);
@@ -60,23 +65,30 @@ static boolean[] makeArray(int size, boolean init) {
     Arrays.fill(a, init);
     return a;
 }
-
+|}
+    )
+  ; (["not"], {%pla|
 static boolean not(boolean x) {
     return !x;
 }
-
+|})
+  ; (["int_to_float"], {%pla|
 static float int_to_float(int x) {
     return (float)x;
 }
-
+|})
+  ; (["bool_to_float"], {%pla|
 static float bool_to_float(boolean x) {
     return x ? 1.0f : 0.0f;
 }
-
+|})
+  ; (["float_to_int"], {%pla|
 static int float_to_int(float x) {
     return (int)x;
 }
-
+|})
+  ; ( ["int16"]
+    , {%pla|
 static short int16(int x) {
     return (short)Math.max(-32768, Math.min(32767, x));
 }
@@ -84,73 +96,97 @@ static short int16(int x) {
 static short int16(float x) {
     return (short)Math.max(-32768, Math.min(32767, (int)x));
 }
-
+|}
+    )
+  ; (["floor"], {%pla|
 static float floor(float x) {
     return (float)Math.floor(x);
 }
-
+|})
+  ; (["ceil"], {%pla|
 static float ceil(float x) {
     return (float)Math.ceil(x);
 }
-
+|})
+  ; (["asin"], {%pla|
 static float asin(float x) {
     return (float)Math.asin(x);
 }
-
+|})
+  ; (["acos"], {%pla|
 static float acos(float x) {
     return (float)Math.acos(x);
 }
-
+|})
+  ; (["atan"], {%pla|
 static float atan(float x) {
     return (float)Math.atan(x);
 }
-
+|})
+  ; (["atan2"], {%pla|
 static float atan2(float y, float x) {
     return (float)Math.atan2(y, x);
 }
-
+|})
+  ; ( ["min"]
+    , {%pla|
 static float min(float a, float b) {
     return Math.min(a, b);
-}
-
-static float max(float a, float b) {
-    return Math.max(a, b);
 }
 
 static int min(int a, int b) {
     return Math.min(a, b);
 }
+|}
+    )
+  ; ( ["max"]
+    , {%pla|
+static float max(float a, float b) {
+    return Math.max(a, b);
+}
 
 static int max(int a, int b) {
     return Math.max(a, b);
 }
-
+|}
+    )
+  ; (["random"; "irandom"], {%pla|
 Random rand = new Random();
-
+|})
+  ; (["random"], {%pla|
 float random() {
     return rand.nextFloat();
 }
-
+|})
+  ; (["irandom"], {%pla|
 int irandom() {
     return rand.nextInt();
 }
-
+|})
+  ; ( ["get"]
+    , {%pla|
 static float get(float[] a, int i) {
     return a[i];
-}
-
-static void set(float[] a, int i, float val) {
-    a[i] = val;
 }
 
 static int get(int[] a, int i) {
     return a[i];
 }
+|}
+    )
+  ; ( ["set"]
+    , {%pla|
+static void set(float[] a, int i, float val) {
+    a[i] = val;
+}
 
 static void set(int[] a, int i, int val) {
     a[i] = val;
 }
-
+|}
+    )
+  ; ( ["wrap_array"]
+    , {%pla|
 static float[] wrap_array(float x[]) {
     return x;
 }
@@ -158,51 +194,65 @@ static float[] wrap_array(float x[]) {
 static int[] wrap_array(int x[]) {
     return x;
 }
-
+|}
+    )
+  ; (["cosh"], {%pla|
 static float cosh(float x) {
     return (float)Math.cosh(x);
 }
-
+|})
+  ; (["cos"], {%pla|
 static float cos(float x) {
     return (float)Math.cos(x);
 }
-
+|})
+  ; (["sin"], {%pla|
 static float sin(float x) {
     return (float)Math.sin(x);
 }
-
+|})
+  ; (["sinh"], {%pla|
 static float sinh(float x) {
     return (float)Math.sinh(x);
 }
-
+|})
+  ; (["tan"], {%pla|
 static float tan(float x) {
     return (float)Math.tan(x);
 }
-
+|})
+  ; (["tanh"], {%pla|
 static float tanh(float x) {
     return (float)Math.tanh(x);
 }
-
+|})
+  ; (["sqrt"], {%pla|
 static float sqrt(float x) {
     return (float)Math.sqrt(x);
 }
-
+|})
+  ; (["pow"], {%pla|
 static float pow(float x, float y) {
     return (float)Math.pow(x, y);
 }
-
+|})
+  ; (["exp"], {%pla|
 static float exp(float x) {
     return (float)Math.exp(x);
 }
-
+|})
+  ; (["log"], {%pla|
 static float log(float x) {
     return (float)Math.log(x);
 }
-
+|})
+  ; (["log10"], {%pla|
 static float log10(float x) {
     return (float)Math.log10(x);
 }
-
+|})
+  ; ( ["abs"]
+    , {%pla|
 static float abs(float x) {
     return Math.abs(x);
 }
@@ -210,7 +260,10 @@ static float abs(float x) {
 static int abs(int x) {
     return Math.abs(x);
 }
-
+|}
+    )
+  ; ( ["initializeArray"]
+    , {%pla|
 static float[] initializeArray(float v, int size) {
     float[] a = new float[size];
     Arrays.fill(a, v);
@@ -228,28 +281,46 @@ static boolean[] initializeArray(boolean v, int size) {
     Arrays.fill(a, v);
     return a;
 }
-
+|}
+    )
+  ; (["eps"], {%pla|
 static float eps() {
     return 1e-18f;
 }
-
+|})
+  ; (["pi"], {%pla|
 static float pi() {
     return 3.1415926535897932384f;
 }
-
+|})
+  ; (["float_to_fix"], {%pla|
 static int float_to_fix(float x) {
     return (int)(x * 65536.0f);
 }
-
+|})
+  ; (["fix_to_int"], {%pla|
 static int fix_to_int(int x) {
     return x >> 16;
 }
-
+|})
+  ; (["fix_to_float"], {%pla|
 static float fix_to_float(int x) {
     return ((float)x) / 65536.0f;
 }
+|}) ]
 
-|}
+let runtime (stmts : prog) =
+  let calls = Usage.calledFunctions stmts in
+  (* makeArray is not a call in the program: the printer emits it when it
+     initializes an array too large to write as a literal (see getInitValue). *)
+  let uses_large_array =
+    Usage.existsType (fun t -> match t.t with TArray (Some size, _) -> size >= 32 | _ -> false) stmts
+  in
+  let needed name = Util.Maps.Set.mem name calls || (name = "makeArray" && uses_large_array) in
+  let fragments =
+    CCList.filter_map (fun (names, code) -> if CCList.exists needed names then Some code else None) runtime_helpers
+  in
+  Pla.join fragments
 
 let rec typeName (t : type_) : string =
   match t.t with
@@ -969,6 +1040,7 @@ let generate (args : Util.Args.args) (stmts : top_stmt list) =
         (name, Pla.unit)
   in
   let code = print_prog args stmts in
+  let runtime = runtime stmts in
   let pre, post = getTemplateCode args in
   let table_data = generateTableData args stmts in
   match args.template with

@@ -507,7 +507,7 @@ module TableRegressionTest = struct
     let runtime = in_test_directory "../runtime" in
     let exe = in_tmp_dir "tables_regression_check" in
     let cmd =
-      Printf.sprintf "c++ -std=c++11 -O0 -I%s -I%s %s %s/vultin.cpp -o %s" runtime tmp_dir main_file runtime exe
+      Printf.sprintf "c++ -std=c++11 -O0 -I%s -I%s %s %s/vultin.cpp -o %s" runtime tmp_dir main_file tmp_dir exe
     in
     if Sys.command cmd <> 0 then assert_failure "Failed to build the table regression checks" ;
     if Sys.command exe <> 0 then assert_failure "The table regression checks failed"
@@ -532,7 +532,7 @@ let compileCppFile ext (file : string) : unit =
   Sys.chdir tmp_dir ;
   assert_bool "No code generated" (Sys.file_exists (output ^ ext)) ;
   callCompiler (output ^ ext) ;
-  callCompiler (in_test_directory "../runtime/vultin.cpp") ;
+  callCompiler "vultin.cpp" ;
   Sys.chdir initial_dir
 
 module CliTest = struct

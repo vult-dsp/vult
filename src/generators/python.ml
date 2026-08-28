@@ -24,28 +24,32 @@
 
 open Core.Prog
 
-let runtime =
-  {%pla|import math
-import random as random_module
-
-# Runtime functions (simple builtins like eps, pi, clip, sin, cos, etc. are inlined)
-
-def random():
-    return random_module.random()
-
-def irandom():
-    return int(random_module.random() * 4294967296)
-
-def int_to_float(i):
-    return float(i)
-
-def float_to_int(i):
-    return int(math.floor(i))
-
-def initializeArray(v, size):
-    return [v for _ in range(size)]
-
-|}
+(* Only the runtime functions called by the generated code are emitted. Most
+   builtins are inlined by the printer or replaced by math module calls
+   ([Replacements.Python]) and need no runtime support. *)
+let runtime (stmts : prog) =
+  let calls = Usage.calledFunctions stmts in
+  let uses name = Util.Maps.Set.mem name calls in
+  (* The replacements turn math builtins into math.* calls and random into random.random *)
+  let uses_math = uses "float_to_int" || Util.Maps.Set.exists (fun name -> CCString.prefix ~pre:"math." name) calls in
+  let uses_random = uses "random.random" || uses "irandom" in
+  let import_math = if uses_math then {%pla|import math<#>|} else Pla.unit in
+  let import_random = if uses_random then {%pla|import random<#>|} else Pla.unit in
+  let fragments =
+    [ ("irandom", {%pla|<#>def irandom():
+    return int(random.random() * 4294967296)<#>|})
+    ; ("int_to_float", {%pla|<#>def int_to_float(i):
+    return float(i)<#>|})
+    ; ("float_to_int", {%pla|<#>def float_to_int(i):
+    return int(math.floor(i))<#>|})
+    ; ("initializeArray", {%pla|<#>def initializeArray(v, size):
+    return [v for _ in range(size)]<#>|}) ]
+    |> CCList.filter_map (fun (name, code) -> if uses name then Some code else None)
+  in
+  let functions =
+    if CCList.is_empty fragments then Pla.unit else Pla.join ({%pla|<#># Runtime functions<#>|} :: fragments)
+  in
+  {%pla|<#import_math#><#import_random#><#functions#><#>|}
 
 let operator (op : operator) =
   match op with
@@ -445,4 +449,5 @@ let generate (args : Util.Args.args) (stmts : top_stmt list) =
   let file = Common.setExt ".py" args.output in
   let code = print_prog args stmts in
   let pre, post = getTemplateCode args in
+  let runtime = runtime stmts in
   [({%pla|<#runtime#><#pre#><#code#><#post#>|}, file)]

@@ -25,15 +25,34 @@
 open Core.Prog
 
 (* TODO:
-   - Runtime cleanup: generate only the required functions
    - String support: conversions and concatenation
 *)
 
-let runtime =
-  {%pla|
--- LuaJIT detection and optimization
-local isLuaJIT = type(jit) == "table" and jit.version
+let rec isValueOrIf (e : exp) =
+  match e.e with
+  | EUnit | EBool _ | EInt _ | EReal _ | EString _ | EId _ | EMember _ | EFixed _ ->
+      true
+  | EUnOp (_, e) ->
+      isValueOrIf e
+  | EOp (_, e1, e2) ->
+      isValueOrIf e1 && isValueOrIf e2
+  | EIndex {e; index} ->
+      isValueOrIf e && isValueOrIf index
+  | EIf {then_; else_; _} ->
+      isValueOrIf then_ && isValueOrIf else_
+  | _ ->
+      false
 
+(* Only the runtime pieces used by the generated code are emitted. Simple
+   builtins like eps, pi, clip, real, int, bool are inlined by the printer. *)
+
+let luajit_detection =
+  {%pla|-- LuaJIT detection and optimization
+local isLuaJIT = type(jit) == "table" and jit.version
+<#>|}
+
+let initialize_array_runtime =
+  {%pla|
 -- Optimized array creation for LuaJIT using FFI
 local initializeArray
 if isLuaJIT then
@@ -67,47 +86,14 @@ else
         return a 
     end
 end
+<#>|}
 
--- Math functions with LuaJIT optimizations
-local sin, cos, abs, exp, floor, ceil, tan, tanh, sqrt
-local asin, acos, atan, atan2, min, max
-if isLuaJIT then
-    -- LuaJIT has faster math operations
-    sin = math.sin
-    cos = math.cos
-    abs = math.abs
-    exp = math.exp
-    floor = math.floor
-    ceil = math.ceil
-    tan = math.tan
-    tanh = math.tanh
-    sqrt = math.sqrt
-    asin = math.asin
-    acos = math.acos
-    atan = math.atan
-    atan2 = math.atan2
-    min = math.min
-    max = math.max
-else
-    -- Standard Lua (same functions but explicit for potential future optimizations)
-    sin = math.sin
-    cos = math.cos
-    abs = math.abs
-    exp = math.exp
-    floor = math.floor
-    ceil = math.ceil
-    tan = math.tan
-    tanh = math.tanh
-    sqrt = math.sqrt
-    asin = math.asin
-    acos = math.acos
-    atan = math.atan
-    -- math.atan2 was removed in Lua 5.4; the two-argument math.atan replaces it
-    atan2 = math.atan2 or function(y, x) return math.atan(y, x) end
-    min = math.min
-    max = math.max
-end
+(* Math builtins resolved to local aliases of the math module. *)
+let math_local_functions =
+  ["sin"; "cos"; "abs"; "exp"; "floor"; "ceil"; "tan"; "tanh"; "sqrt"; "asin"; "acos"; "atan"; "min"; "max"]
 
+let bit_ops_runtime =
+  {%pla|
 -- Bit operations optimized for LuaJIT
 local lshift, rshift
 if isLuaJIT then
@@ -119,32 +105,65 @@ else
     function lshift(a, b) return a * (2 ^ b) end
     function rshift(a, b) return math.floor(a / (2 ^ b)) end
 end
+<#>|}
 
--- Core runtime functions (simple builtins like eps, pi, clip, real, int, bool are inlined)
-function ifExpressionValue(cond,then_,else_) if cond then return then_ else return else_ end end
-function ifExpression(cond,then_,else_) if cond then return then_() else return else_() end end
-function random()           return math.random() end
-function irandom()          return math.floor(math.random() * 4294967296) end
-function int16(x)           local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end
-function intDiv(a, b)       return math.floor(a / b) end
-function list_clear(t)      for k in pairs(t) do t[k] = nil end end
+let core_runtime_functions =
+  [ ( "ifExpressionValue"
+    , {%pla|function ifExpressionValue(cond,then_,else_) if cond then return then_ else return else_ end end<#>|} )
+  ; ( "ifExpression"
+    , {%pla|function ifExpression(cond,then_,else_) if cond then return then_() else return else_() end end<#>|} )
+  ; ("random", {%pla|function random()           return math.random() end<#>|})
+  ; ("irandom", {%pla|function irandom()          return math.floor(math.random() * 4294967296) end<#>|})
+  ; ( "int16"
+    , {%pla|function int16(x)           local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end<#>|}
+    )
+  ; ("intDiv", {%pla|function intDiv(a, b)       return math.floor(a / b) end<#>|})
+  ; ("list_clear", {%pla|function list_clear(t)      for k in pairs(t) do t[k] = nil end end<#>|}) ]
 
-|}
-
-let rec isValueOrIf (e : exp) =
-  match e.e with
-  | EUnit | EBool _ | EInt _ | EReal _ | EString _ | EId _ | EMember _ | EFixed _ ->
-      true
-  | EUnOp (_, e) ->
-      isValueOrIf e
-  | EOp (_, e1, e2) ->
-      isValueOrIf e1 && isValueOrIf e2
-  | EIndex {e; index} ->
-      isValueOrIf e && isValueOrIf index
-  | EIf {then_; else_; _} ->
-      isValueOrIf then_ && isValueOrIf else_
-  | _ ->
-      false
+let runtime (stmts : prog) =
+  let calls = Usage.calledFunctions stmts in
+  let uses name = Util.Maps.Set.mem name calls in
+  let uses_shifts =
+    uses "lshift" || uses "rshift"
+    || Usage.existsExp (fun e -> match e.e with EOp ((OpLsh | OpRsh), _, _) -> true | _ -> false) stmts
+  in
+  let uses_if_value =
+    Usage.existsExp
+      (fun e -> match e.e with EIf {then_; else_; _} -> isValueOrIf then_ && isValueOrIf else_ | _ -> false)
+      stmts
+  in
+  let uses_if_closure =
+    Usage.existsExp
+      (fun e -> match e.e with EIf {then_; else_; _} -> not (isValueOrIf then_ && isValueOrIf else_) | _ -> false)
+      stmts
+  in
+  let uses_core name =
+    match name with "ifExpressionValue" -> uses_if_value | "ifExpression" -> uses_if_closure | _ -> uses name
+  in
+  let initialize_array = if uses "initializeArray" then initialize_array_runtime else Pla.unit in
+  let math_locals =
+    let used = CCList.filter uses math_local_functions in
+    let atan2 =
+      if uses "atan2" then
+        (* math.atan2 was removed in Lua 5.4; the two-argument math.atan replaces it *)
+        {%pla|local atan2 = math.atan2 or function(y, x) return math.atan(y, x) end<#>|}
+      else Pla.unit
+    in
+    if CCList.is_empty used && not (uses "atan2") then Pla.unit
+    else
+      let aliases = Pla.map_join (fun name -> {%pla|local <#name#s> = math.<#name#s><#>|}) used in
+      {%pla|<#>-- Math functions<#><#aliases#><#atan2#>|}
+  in
+  let bit_ops = if uses_shifts then bit_ops_runtime else Pla.unit in
+  let core =
+    let fragments =
+      CCList.filter_map (fun (name, code) -> if uses_core name then Some code else None) core_runtime_functions
+    in
+    if CCList.is_empty fragments then Pla.unit else Pla.join ({%pla|<#>-- Core runtime functions<#>|} :: fragments)
+  in
+  let needs_luajit_detection = uses "initializeArray" || uses_shifts in
+  let detection = if needs_luajit_detection then luajit_detection else Pla.unit in
+  {%pla|<#><#detection#><#initialize_array#><#math_locals#><#bit_ops#><#core#><#>|}
 
 let operator (op : operator) =
   match op with
@@ -467,4 +486,5 @@ let generate (args : Util.Args.args) (stmts : top_stmt list) =
   let file = Common.setExt ".lua" args.output in
   let code = print_prog args stmts in
   let pre, post = getTemplateCode args stmts in
+  let runtime = runtime stmts in
   [({%pla|<#runtime#><#pre#><#code#><#post#>|}, file)]

@@ -1,19 +1,18 @@
 VULT = ../../../_build/default/src/vult.exe
-RUNTIME = ../../../runtime
 CXX = g++
-CXXFLAGS = -std=c++11 -O0 -Wall -I$(RUNTIME)
+CXXFLAGS = -std=c++11 -O0 -Wall
 
 .PHONY: all clean test
 
 all: test_serialization
 
-# Generate C++ from Vult
-test_serialization.cpp test_serialization.h: test_serialization.vult $(VULT)
+# Generate C++ from Vult; the compiler also emits the vultin runtime files
+test_serialization.cpp test_serialization.h vultin.cpp vultin.hpp: test_serialization.vult $(VULT)
 	$(VULT) test_serialization.vult -code cpp -o test_serialization
 
-# Compile runtime
-vultin.o: $(RUNTIME)/vultin.cpp $(RUNTIME)/vultin.hpp
-	$(CXX) $(CXXFLAGS) -c $(RUNTIME)/vultin.cpp -o vultin.o
+# Compile the emitted runtime
+vultin.o: vultin.cpp vultin.hpp
+	$(CXX) $(CXXFLAGS) -c vultin.cpp -o vultin.o
 
 # Compile generated code
 test_serialization.o: test_serialization.cpp test_serialization.h
@@ -32,4 +31,4 @@ test: test_serialization
 	./test_serialization
 
 clean:
-	rm -f *.o test_serialization test_serialization.cpp test_serialization.h test_serialization.tables.h
+	rm -f *.o test_serialization test_serialization.cpp test_serialization.h test_serialization.tables.h vultin.cpp vultin.hpp

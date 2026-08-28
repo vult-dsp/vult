@@ -7,7 +7,6 @@ import vult.com.external.*;
 
 public class Tables {
 
-
 static int clip(int x, int minv, int maxv) {
     if(x > maxv)
         return maxv;
@@ -42,194 +41,13 @@ static boolean[] makeArray(int size, boolean init) {
     return a;
 }
 
-static boolean not(boolean x) {
-    return !x;
-}
-
-static float int_to_float(int x) {
-    return (float)x;
-}
-
-static float bool_to_float(boolean x) {
-    return x ? 1.0f : 0.0f;
-}
-
 static int float_to_int(float x) {
     return (int)x;
-}
-
-static short int16(int x) {
-    return (short)Math.max(-32768, Math.min(32767, x));
-}
-
-static short int16(float x) {
-    return (short)Math.max(-32768, Math.min(32767, (int)x));
 }
 
 static float floor(float x) {
     return (float)Math.floor(x);
 }
-
-static float ceil(float x) {
-    return (float)Math.ceil(x);
-}
-
-static float asin(float x) {
-    return (float)Math.asin(x);
-}
-
-static float acos(float x) {
-    return (float)Math.acos(x);
-}
-
-static float atan(float x) {
-    return (float)Math.atan(x);
-}
-
-static float atan2(float y, float x) {
-    return (float)Math.atan2(y, x);
-}
-
-static float min(float a, float b) {
-    return Math.min(a, b);
-}
-
-static float max(float a, float b) {
-    return Math.max(a, b);
-}
-
-static int min(int a, int b) {
-    return Math.min(a, b);
-}
-
-static int max(int a, int b) {
-    return Math.max(a, b);
-}
-
-Random rand = new Random();
-
-float random() {
-    return rand.nextFloat();
-}
-
-int irandom() {
-    return rand.nextInt();
-}
-
-static float get(float[] a, int i) {
-    return a[i];
-}
-
-static void set(float[] a, int i, float val) {
-    a[i] = val;
-}
-
-static int get(int[] a, int i) {
-    return a[i];
-}
-
-static void set(int[] a, int i, int val) {
-    a[i] = val;
-}
-
-static float[] wrap_array(float x[]) {
-    return x;
-}
-
-static int[] wrap_array(int x[]) {
-    return x;
-}
-
-static float cosh(float x) {
-    return (float)Math.cosh(x);
-}
-
-static float cos(float x) {
-    return (float)Math.cos(x);
-}
-
-static float sin(float x) {
-    return (float)Math.sin(x);
-}
-
-static float sinh(float x) {
-    return (float)Math.sinh(x);
-}
-
-static float tan(float x) {
-    return (float)Math.tan(x);
-}
-
-static float tanh(float x) {
-    return (float)Math.tanh(x);
-}
-
-static float sqrt(float x) {
-    return (float)Math.sqrt(x);
-}
-
-static float pow(float x, float y) {
-    return (float)Math.pow(x, y);
-}
-
-static float exp(float x) {
-    return (float)Math.exp(x);
-}
-
-static float log(float x) {
-    return (float)Math.log(x);
-}
-
-static float log10(float x) {
-    return (float)Math.log10(x);
-}
-
-static float abs(float x) {
-    return Math.abs(x);
-}
-
-static int abs(int x) {
-    return Math.abs(x);
-}
-
-static float[] initializeArray(float v, int size) {
-    float[] a = new float[size];
-    Arrays.fill(a, v);
-    return a;
-}
-
-static int[] initializeArray(int v, int size) {
-    int[] a = new int[size];
-    Arrays.fill(a, v);
-    return a;
-}
-
-static boolean[] initializeArray(boolean v, int size) {
-    boolean[] a = new boolean[size];
-    Arrays.fill(a, v);
-    return a;
-}
-
-static float eps() {
-    return 1e-18f;
-}
-
-static float pi() {
-    return 3.1415926535897932384f;
-}
-
-static int float_to_fix(float x) {
-    return (int)(x * 65536.0f);
-}
-
-static int fix_to_int(int x) {
-    return x >> 16;
-}
-
-static float fix_to_float(int x) {
-    return ((float)x) / 65536.0f;
-}
-
 
 public static final float[] Tables_sineTable1_c = new float[]{0.0f, 0.196978f, -0.001888f, 0.19509f, 0.193184f, -0.005592f, 0.382683f, 0.181966f, -0.00908f, 0.55557f, 0.163755f, -0.01222f, 0.707106f, 0.139251f, -0.01489f, 0.831469f, 0.109396f, -0.016987f, 0.923879f, 0.075337f, -0.018432f, 0.980785f, 0.038383f, -0.019169f, 1.0f, -4.7e-05f, -0.019169f, 0.980785f, -0.038475f, -0.018432f, 0.923879f, -0.075424f, -0.016987f, 0.831469f, -0.109474f, -0.01489f, 0.707106f, -0.139318f, -0.01222f, 0.55557f, -0.163808f, -0.00908f, 0.382683f, -0.182002f, -0.005592f, 0.19509f, -0.193203f, -0.001888f, 0.0f, -0.196979f, 0.001887f, -0.195091f, -0.193185f, 0.005591f, -0.382684f, -0.181967f, 0.009079f, -0.555571f, -0.163756f, 0.012219f, -0.707107f, -0.139252f, 0.014889f, -0.83147f, -0.109397f, 0.016986f, -0.92388f, -0.075338f, 0.018431f, -0.980786f, -0.038384f, 0.019168f, -1.0f, 4.6e-05f, 0.019168f, -0.980786f, 0.038474f, 0.018431f, -0.92388f, 0.075423f, 0.016986f, -0.83147f, 0.109473f, 0.014889f, -0.707107f, 0.139317f, 0.012219f, -0.555571f, 0.163807f, 0.009079f, -0.382684f, 0.182001f, 0.005591f, -0.195091f, 0.193202f, 0.001887f, -1e-06f, 0.0f, 0.0f};
 private float Tables_sineTable1_raw_c0(int index) {
