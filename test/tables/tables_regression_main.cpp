@@ -32,6 +32,21 @@ int main() {
    check("mixed_checked(max)", Tables_regression_mixed_checked(float_to_fix(1.0f)), 1.0f, 1e-3f);
    check("mixed_checked(mid)", Tables_regression_mixed_checked(float_to_fix(0.5f)), 0.5f, 1e-3f);
 
+   /* Fixed-point tables honor an explicit order = 2: at 0.3125 (a cell midpoint in the high
+      curvature region) the linear table misses by ~6e-3, so the tighter tolerance passes only
+      when the quadratic path is actually used. Both must clamp inputs outside the range. */
+   check("fix_o2(mid-cell)", fix_to_float(Tables_regression_fix_o2(float_to_fix(0.3125f))), std::tanh(0.625f), 2e-3f);
+   check("fix_o1(mid-cell)", fix_to_float(Tables_regression_fix_o1(float_to_fix(0.3125f))), std::tanh(0.625f), 1e-2f);
+   check("fix_o2(max)", fix_to_float(Tables_regression_fix_o2(float_to_fix(1.0f))), std::tanh(2.0f), 1e-3f);
+   check("fix_o2(clamped)", fix_to_float(Tables_regression_fix_o2(float_to_fix(100.0f))), std::tanh(2.0f), 1e-3f);
+   check("fix_o1(clamped)", fix_to_float(Tables_regression_fix_o1(float_to_fix(100.0f))), std::tanh(2.0f), 1e-3f);
+
+   /* Fixed-point tables honor bound_check = false: the exact upper endpoint must read the
+      guard point instead of running past the fitted cells. */
+   check("fix_nocheck(max)", fix_to_float(Tables_regression_fix_nocheck(float_to_fix(1.0f))), std::tanh(2.0f), 1e-3f);
+   check("fix_nocheck(min)", fix_to_float(Tables_regression_fix_nocheck(float_to_fix(0.0f))), 0.0f, 1e-3f);
+   check("fix_nocheck(mid)", fix_to_float(Tables_regression_fix_nocheck(float_to_fix(0.5f))), std::tanh(1.0f), 1e-2f);
+
    /* The n samples of a wavetable span n - 1 cells: both endpoints and the interior grid
       points must land exactly on the samples. */
    int n = Tables_regression_wavetable_samples();

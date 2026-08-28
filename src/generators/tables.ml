@@ -305,13 +305,18 @@ let makeNewBody1 bound_check fname ~cells ~points in_precision t min max input =
   let return = C.sreturn (C.eadd (getCoeff 0) (C.emul u (getCoeff 1))) in
   C.sblock (index_stmts @ [return])
 
-let makeNewBody1Fixed _bound_check fname ~cells ~points in_precision t min max input =
+let makeNewBody1Fixed bound_check fname ~cells ~points in_precision t min max input =
   let stride = 2 in
   let getCoeff = makeGetCoeff fname ~stride ~size:points t in
   let initial_index = float_of_int cells /. (max -. min) in
   (* Clamp the input, not the scaled value: scaling first overflows the fixed-point range for
-     inputs well outside [min, max], and the clamp would then be applied to a wrapped value. *)
-  let clamped = C.ecall "clip" [input; makeFloat in_precision min; makeFloat in_precision max] in_precision in
+     inputs well outside [min, max], and the clamp would then be applied to a wrapped value.
+     Without bound checks nothing is clamped, and an input of exactly [max] reads the guard
+     point stored after the fitted cells. *)
+  let clamped =
+    if bound_check then C.ecall "clip" [input; makeFloat in_precision min; makeFloat in_precision max] in_precision
+    else input
+  in
   let value = makeMul in_precision (makeSub in_precision clamped min) initial_index in
   let value_decl = C.sdecl_bind "value" value in_precision in
   let decimal =
@@ -373,7 +378,9 @@ let makeTable vm (def : function_def) =
       let var = checkInputVariables def.loc def.args in
       let in_precision = var.t in
       match (order, in_precision, out_precision) with
-      | _, {t= TFix16; _}, {t= TFix16; _} ->
+      (* Fixed point defaults to the cheaper linear interpolation; an explicit order = 2
+         falls through to the generic quadratic path, which also handles fix16. *)
+      | (None | Some (Int 1)), {t= TFix16; _}, {t= TFix16; _} ->
           let size = optimizeSize size in
           let points = size + 1 in
           let result = calculateTablesOrder1Fixed loc vm def.name size min max out_precision in

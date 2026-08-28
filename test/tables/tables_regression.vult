@@ -23,3 +23,19 @@ fun mixed_checked(x:fix16) : real @[table(min = 0.0, max = 1.0, size = 4, order 
 // cells, so reading the wavetable at i / (n - 1) must land on sample i.
 external wave_raw(channel:int, index:int) : real @[wave(channels = 1, file = "wave.wav")];
 external wavetable(position:real) : real @[wavetable(file = "wave.wav")];
+
+// Fixed-point tables default to linear interpolation but honor an explicit order = 2. At the
+// same size the quadratic table must follow the curvature much closer than the linear one.
+fun fix_o1(x:fix16) : fix16 @[table(min = 0.0, max = 1.0, size = 8)] {
+  return tanh(2.0x * x);
+}
+
+fun fix_o2(x:fix16) : fix16 @[table(min = 0.0, max = 1.0, size = 8, order = 2)] {
+  return tanh(2.0x * x);
+}
+
+// Fixed-point tables honor bound_check = false: nothing is clamped, and an input of exactly
+// max must read the guard point holding the endpoint value.
+fun fix_nocheck(x:fix16) : fix16 @[table(min = 0.0, max = 1.0, size = 8, bound_check = false)] {
+  return tanh(2.0x * x);
+}
