@@ -1,0 +1,40 @@
+fun square(x:real) {
+   return x * x;
+}
+
+fun cse(x:real) {
+   val a = square(x) + 1.0;
+   val b = square(x) + 2.0;
+   val dead = a - b;
+   dead = 0.0;
+   return a + b;
+}
+
+fun effects(x:real) {
+   mem state;
+   state = state + x;
+   return state;
+}
+
+fun keep_effects(x:real) {
+   return effects(x) + effects(x);
+}
+
+fun range(x:real, position:int) {
+   val clipped = clip(x, 0.0, 1.0);
+   val scaled = 8.0 * clipped;
+   val index = int(floor(scaled));
+   position = (position + 1) % 8;
+   return index + position;
+}
+
+// Above the threshold the wrap becomes an increment plus a range check.
+fun wrap(position:int) {
+   position = (position + 1) % 64;
+   return position;
+}
+
+// The same rewrite applies to a wrap used only as an index.
+fun read_delayed(buffer:array(real,64), position:int) {
+   return buffer[(position + 1) % 64];
+}

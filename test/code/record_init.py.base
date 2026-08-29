@@ -13,7 +13,5 @@ def Record_init_point_alloc():
 
 
 def Record_init_foo():
-   _record_0 = Record_init_point(x=0.0, y=0.0)
-   p1 = _record_0.x
-
+   pass
 

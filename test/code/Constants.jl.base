@@ -5,8 +5,5 @@ Constants_str = nothing
 Constants_num = nothing
 Constants_some_array = nothing
 function Constants_foo()
-   i = Int32(1)
-   s = "hello"
-   x = @inbounds Constants_some_array[1]
 end
 

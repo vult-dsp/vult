@@ -14,11 +14,12 @@ private String StringType_test1() {
    return str3;
 }
 
-private void StringType_test2() {
+private String StringType_test2() {
    String str1 = string(1);
    String str2 = string(1.0f);
    String str3 = string(0x10000 /* 1.000000 */);
    String str4 = string(true);
+   return (((str1 + str2) + str3) + str4);
 }
 
 private String StringType_test3(String a, String b) {
@@ -26,9 +27,7 @@ private String StringType_test3(String a, String b) {
 }
 
 private void StringType_test4() {
-   String str = "text";
    StringType_test3("first", "second");
-   int i = (6 + str.length());
 }
 
 

@@ -478,80 +478,82 @@ module C = struct
 end
 
 module Compare = struct
+  (* Ignores locations: expressions from different places in the source must
+     compare equal so they can share a cache entry. *)
   let rec exp (e1 : exp) (e2 : exp) =
     match (e1, e2) with
     | {e= EEmptyValue; _}, {e= EEmptyValue; _} ->
         0
     | {e= EEmptyValue; _}, {e= _; _} ->
-        compare e1 e2
+        compare e1.e e2.e
     | {e= EUnit; _}, {e= EUnit; _} ->
         0
     | {e= EUnit; _}, _ ->
-        compare e1 e2
+        compare e1.e e2.e
     | {e= EBool b1; _}, {e= EBool b2; _} ->
         compare b1 b2
     | {e= EBool _; _}, _ ->
-        compare e1 e2
+        compare e1.e e2.e
     | {e= EInt b1; _}, {e= EInt b2; _} ->
         compare b1 b2
     | {e= EInt _; _}, _ ->
-        compare e1 e2
+        compare e1.e e2.e
     | {e= EReal b1; _}, {e= EReal b2; _} ->
         compare b1 b2
     | {e= EReal _; _}, _ ->
-        compare e1 e2
+        compare e1.e e2.e
     | {e= EFixed b1; _}, {e= EFixed b2; _} ->
         compare b1 b2
     | {e= EFixed _; _}, _ ->
-        compare e1 e2
+        compare e1.e e2.e
     | {e= EString b1; _}, {e= EString b2; _} ->
         String.compare b1 b2
     | {e= EString _; _}, _ ->
-        compare e1 e2
+        compare e1.e e2.e
     | {e= EId n1; _}, {e= EId n2; _} ->
         String.compare n1 n2
     | {e= EId _; _}, _ ->
-        compare e1 e2
+        compare e1.e e2.e
     | {e= EOp (op1, a1, b1); _}, {e= EOp (op2, a2, b2); _} when op1 = op2 -> (
       match exp a1 a2 with 0 -> exp b1 b2 | n -> n )
     | {e= EOp _; _}, _ ->
-        compare e1 e2
+        compare e1.e e2.e
     | {e= EUnOp (op1, a1); _}, {e= EUnOp (op2, a2); _} when op1 = op2 ->
         exp a1 a2
     | {e= EUnOp _; _}, _ ->
-        compare e1 e2
+        compare e1.e e2.e
     | {e= EIndex {e= e1; index= index1}; _}, {e= EIndex {e= e2; index= index2}; _} -> (
       match exp e1 e2 with 0 -> exp index1 index2 | n -> n )
     | {e= EIndex _; _}, _ ->
-        compare e1 e2
+        compare e1.e e2.e
     | {e= EArray elems1; _}, {e= EArray elems2; _} ->
         CCList.compare exp elems1 elems2
     | {e= EArray _; _}, _ ->
-        compare e1 e2
+        compare e1.e e2.e
     | {e= ECall {path= path1; args= args1}; _}, {e= ECall {path= path2; args= args2}; _} when path1 = path2 ->
         CCList.compare exp args1 args2
     | {e= ECall _; _}, _ ->
-        compare e1 e2
+        compare e1.e e2.e
     | {e= ETuple elems1; _}, {e= ETuple elems2; _} ->
         CCList.compare exp elems1 elems2
     | {e= ETuple _; _}, _ ->
-        compare e1 e2
+        compare e1.e e2.e
     | {e= EMember (e1, member1); _}, {e= EMember (e2, member2); _} -> (
       match exp e1 e2 with 0 -> String.compare member1 member2 | n -> n )
     | {e= EMember _; _}, _ ->
-        compare e1 e2
+        compare e1.e e2.e
     | {e= ETMember (e1, member1); _}, {e= ETMember (e2, member2); _} -> (
       match exp e1 e2 with 0 -> compare member1 member2 | n -> n )
     | {e= ETMember _; _}, _ ->
-        compare e1 e2
+        compare e1.e e2.e
     | {e= EIf {cond= cond1; then_= then1; else_= else1}; _}, {e= EIf {cond= cond2; then_= then2; else_= else2}; _} -> (
       match exp cond1 cond2 with 0 -> ( match exp then1 then2 with 0 -> exp else1 else2 | n -> n ) | n -> n )
     | {e= EIf _; _}, _ ->
-        compare e1 e2
+        compare e1.e e2.e
     | {e= ERecord {path= path1; elems= elems1}; _}, {e= ERecord {path= path2; elems= elems2}; _} when path1 = path2 ->
         CCList.compare
           (fun (id1, v1) (id2, v2) -> match String.compare id1 id2 with 0 -> exp v1 v2 | n -> n)
           elems1 elems2
     | {e= ERecord _; _}, _ ->
-        compare e1 e2
+        compare e1.e e2.e
 end

@@ -139,13 +139,10 @@ float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float d
          else {
             reset_speed = 0.5f;
          }
-         _ctx.reset_phase = (- reset_speed * _ctx.reset_phase) + _ctx.reset_phase;
+         _ctx.reset_phase = (- (reset_speed * _ctx.reset_phase)) + _ctx.reset_phase;
       }
       else {
-         if (_ctx.reset_phase > 10.0f) {
-            _ctx.reset_phase = _ctx.reset_phase;
-         }
-         else {
+         if ((not (_ctx.reset_phase > 10.0f))) {
             _ctx.reset_phase = 0.0f;
          }
          _ctx.reset_state = false;
@@ -164,7 +161,7 @@ float Svf_process(Svf_process_type& _ctx, float x, float cv, float q, int32_t se
       _ctx.r = 1.0f / (2.0f * (q + float_eps()));
       _ctx.inv_den = 1.0f / (1.0f + 2.0f * _ctx.r * _ctx.g + _ctx.g * _ctx.g);
    }
-   float high = (x + (- (2.0f * _ctx.r + _ctx.g) * _ctx.z1) + (- _ctx.z2)) * _ctx.inv_den;
+   float high = (x + (- ((2.0f * _ctx.r + _ctx.g) * _ctx.z1)) + (- _ctx.z2)) * _ctx.inv_den;
    float band = high * _ctx.g + _ctx.z1;
    float low = band * _ctx.g + _ctx.z2;
    float notch = high + low;
@@ -189,17 +186,6 @@ float Svf_process(Svf_process_type& _ctx, float x, float cv, float q, int32_t se
    return Saturate_soft_process(output);
 }
 
-float Lfo_soft(Lfo_soft_type& _ctx, float x1) {
-   float o = 0.25f * (x1 + _ctx.x2 + _ctx.x3 + _ctx.x4);
-   float _t_temp_0 = x1;
-   float _t_temp_1 = _ctx.x2;
-   float _t_temp_2 = _ctx.x3;
-   _ctx.x2 = _t_temp_0;
-   _ctx.x3 = _t_temp_1;
-   _ctx.x4 = _t_temp_2;
-   return o;
-}
-
 float Lfo_process(Lfo_process_type& _ctx, float cv, float shape, float reset) {
    if (Util_change(_ctx.inst_1b0d6, cv)) {
       _ctx.rate = Util_cvToRate(-0.3f + cv);
@@ -207,9 +193,6 @@ float Lfo_process(Lfo_process_type& _ctx, float cv, float shape, float reset) {
    _ctx.phase = _ctx.phase + _ctx.rate;
    if (_ctx.phase > 2.0f) {
       _ctx.phase = -2.0f + _ctx.phase;
-   }
-   else {
-      _ctx.phase = _ctx.phase;
    }
    bool breset = reset > 0.0f;
    if (Util_edge(_ctx.inst_204d6, breset)) {
@@ -249,16 +232,14 @@ float Phase_process(Phase_process_type& _ctx, float cv, float reset) {
    if (_ctx.phase > 1024.0f) {
       _ctx.phase = -1024.0f + _ctx.phase;
    }
-   else {
-      _ctx.phase = _ctx.phase;
-   }
    return 0.000976f * _ctx.phase;
 }
 
 float Blit_pulse_train(Blit_pulse_train_type& _ctx, float cv, float phase) {
    if (Util_change(_ctx.inst_1b05e, cv)) {
-      _ctx.m = 1 + (float_to_int(Util_cvToperiod(cv)) << 1);
-      _ctx.scale = 2.0f * Util_cvToperiod(cv);
+      float _cse_temp_0 = Util_cvToperiod(cv);
+      _ctx.m = 1 + (float_to_int(_cse_temp_0) << 1);
+      _ctx.scale = 2.0f * _cse_temp_0;
    }
    float pi_phase = 0.5f * phase;
    float denominator = Tables_nsine(pi_phase);

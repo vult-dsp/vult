@@ -6,24 +6,7 @@ def float_to_int(i):
     return int(math.floor(i))
 
 def FixedAndFloat_test1():
-   fixed_value = 0.0
    real_value = 0.0
-   int_value = 0
-   bool_value = False
-   result = (fixed_value + fix16(real_value))
-   from_int = fix16(int_value)
-   from_real = fix16(real_value)
-   from_bool = fix16(bool_value)
-   to_int = int(fixed_value)
-   to_real = float(fixed_value)
-   to_bool = bool(fixed_value)
-   from_int = 0.0
-   from_real = 0.0
-   from_bool = 0.0
-   to_int = 0
-   to_real = 0.0
-   to_bool = False
-
 
 FixedAndFloat_take_fix_return_fixed_c = {}
 def FixedAndFloat_take_fix_return_fixed_raw_c0(index):

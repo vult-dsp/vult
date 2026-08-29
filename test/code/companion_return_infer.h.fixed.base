@@ -71,22 +71,20 @@ static_inline int32_t Companion_return_infer_current_int(Companion_return_infer_
 }
 
 static_inline int32_t Companion_return_infer_wrapper_stateless() {
-   int32_t unused = Companion_return_infer_choose_int(1);
    return Companion_return_infer_marker_int();
 }
 
 static_inline int32_t Companion_return_infer_wrapper_stateful(Companion_return_infer_wrapper_stateful_type& _ctx) {
-   int32_t unused = Companion_return_infer_accum_int(_ctx.inst_1c525, 3);
+   Companion_return_infer_accum_int(_ctx.inst_1c525, 3);
    return Companion_return_infer_current_int(_ctx.inst_1c525);
 }
 
 static_inline int32_t Companion_return_infer_wrapper_instance(Companion_return_infer_wrapper_instance_type& _ctx) {
-   int32_t unused = Companion_return_infer_accum_int(_ctx.i1, 20);
+   Companion_return_infer_accum_int(_ctx.i1, 20);
    return Companion_return_infer_current_int(_ctx.i1);
 }
 
 static_inline int32_t Companion_return_infer_wrapper_qualified() {
-   int32_t unused = Cret_lib_pick_int(1);
    return Cret_lib_tag_int();
 }
 

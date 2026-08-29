@@ -251,8 +251,6 @@ this.Saw_ptr2_process = function (_ctx, cv) {
    var out = 0.0;
    if ((_ctx.phase > 1.0)) {
       _ctx.phase = (-1.0 + _ctx.phase);
-   } else {
-      _ctx.phase = _ctx.phase;
    }
    if ((_ctx.phase < s1)) {
       {

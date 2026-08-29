@@ -377,8 +377,9 @@ def Util_cvToperiod(cv):
 
 
 def Blit_pulse_start(_ctx):
-   _ctx.m = (1 + (int(Util_cvToperiod(0.0)) << 1))
-   _ctx.scale = (1.0 + (2.0 * Util_cvToperiod(0.0)))
+   _cse_temp_1 = Util_cvToperiod(0.0)
+   _ctx.m = (1 + (int(_cse_temp_1) << 1))
+   _ctx.scale = (1.0 + (2.0 * _cse_temp_1))
 
 
 def Blit_pulse_train_type_alloc():
@@ -642,9 +643,7 @@ def Tricore_process(_ctx, cv, reset, disable):
          _ctx.reset_phase = ((-(reset_speed * _ctx.reset_phase)) + _ctx.reset_phase)
 
       else:
-         if (_ctx.reset_phase > 10.0):
-            _ctx.reset_phase = _ctx.reset_phase
-         else:
+         if (not (_ctx.reset_phase > 10.0)):
             _ctx.reset_phase = 0.0
          _ctx.reset_state = False
          _ctx.direction = True
@@ -768,12 +767,9 @@ def Saturate_default():
 
 def Lfo_soft(_ctx, x1):
    o = (0.25 * (x1 + (_ctx.x2 + (_ctx.x3 + _ctx.x4))))
-   _t_temp_0 = x1
-   _t_temp_1 = _ctx.x2
-   _t_temp_2 = _ctx.x3
-   _ctx.x2 = _t_temp_0
-   _ctx.x3 = _t_temp_1
-   _ctx.x4 = _t_temp_2
+   _ctx.x4 = _ctx.x3
+   _ctx.x3 = _ctx.x2
+   _ctx.x2 = x1
    return o
 
 
@@ -783,8 +779,6 @@ def Lfo_process(_ctx, cv, shape, reset):
    _ctx.phase = (_ctx.phase + _ctx.rate)
    if (_ctx.phase > 2.0):
       _ctx.phase = (-2.0 + _ctx.phase)
-   else:
-      _ctx.phase = _ctx.phase
    breset = (reset > 0.0)
    if Util_edge(_ctx.inst_204d6, breset):
       _ctx.phase = 0.0
@@ -842,8 +836,6 @@ def Phase_process(_ctx, cv, reset):
       _ctx.phase = (_ctx.phase + _ctx.rate)
    if (_ctx.phase > 1024.0):
       _ctx.phase = (-1024.0 + _ctx.phase)
-   else:
-      _ctx.phase = _ctx.phase
    return (0.000976 * _ctx.phase)
 
 
@@ -858,8 +850,9 @@ def Phase_controlChange(_ctx, control, value, channel):
 
 def Blit_pulse_train(_ctx, cv, phase):
    if Util_change(_ctx.inst_1b05e, cv):
-      _ctx.m = (1 + (int(Util_cvToperiod(cv)) << 1))
-      _ctx.scale = (2.0 * Util_cvToperiod(cv))
+      _cse_temp_0 = Util_cvToperiod(cv)
+      _ctx.m = (1 + (int(_cse_temp_0) << 1))
+      _ctx.scale = (2.0 * _cse_temp_0)
 
    pi_phase = (0.5 * phase)
    denominator = Tables_nsine(pi_phase)

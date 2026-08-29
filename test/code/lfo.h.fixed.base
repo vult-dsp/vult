@@ -239,7 +239,13 @@ static_inline fix16_t Util_cvTokHz(fix16_t cv) {
    return Util_cvTokHz_c[static_cast<uint32_t>(index)] + fix_mul(Util_cvTokHz_c[static_cast<uint32_t>(index + 1)], decimal);
 }
 
-fix16_t Lfo_soft(Lfo_soft_type& _ctx, fix16_t x1);
+static_inline fix16_t Lfo_soft(Lfo_soft_type& _ctx, fix16_t x1) {
+   fix16_t o = ((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4) >> 2);
+   _ctx.x4 = _ctx.x3;
+   _ctx.x3 = _ctx.x2;
+   _ctx.x2 = x1;
+   return o;
+}
 
 fix16_t Lfo_process(Lfo_process_type& _ctx, fix16_t cv, fix16_t shape, fix16_t reset);
 

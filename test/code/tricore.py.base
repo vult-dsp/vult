@@ -291,9 +291,7 @@ def Tricore_process(_ctx, cv, reset, disable):
          _ctx.reset_phase = ((-(reset_speed * _ctx.reset_phase)) + _ctx.reset_phase)
 
       else:
-         if (_ctx.reset_phase > 10.0):
-            _ctx.reset_phase = _ctx.reset_phase
-         else:
+         if (not (_ctx.reset_phase > 10.0)):
             _ctx.reset_phase = 0.0
          _ctx.reset_state = False
          _ctx.direction = True

@@ -3,7 +3,7 @@
 #include "bitcrush.h"
 
 fix16_t Bitcrush_process(fix16_t i, fix16_t cv) {
-   fix16_t out = i;
+   fix16_t out = 0x0 /* 0.000000 */;
    if (cv == 0x0 /* 0.000000 */) {
       out = i;
    }

@@ -52,7 +52,6 @@ this.Pd_msg_mute = function (_ctx, on) {
 };
 
 this.Pd_msg_setLabel = function (_ctx, name) {
-   _ctx.level = _ctx.level;
 };
 
 

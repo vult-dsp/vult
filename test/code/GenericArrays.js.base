@@ -13,7 +13,7 @@ this.GenericArrays_sum = function (data) {
 this.GenericArrays_test1 = function () {
    var data1 = [1.0, 2.0, 3.0];
    var data2 = [1.0, 2.0, 3.0, 4.0];
-   var result1 = this.GenericArrays_sum(data1);
-   var result2 = this.GenericArrays_sum(data2);
+   this.GenericArrays_sum(data1);
+   this.GenericArrays_sum(data2);
 };
 

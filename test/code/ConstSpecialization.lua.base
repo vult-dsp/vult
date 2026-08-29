@@ -1,51 +1,42 @@
 
--- LuaJIT detection and optimization
+-- LuaJIT detection
 local isLuaJIT = type(jit) == "table" and jit.version
 
 
--- Optimized array creation for LuaJIT using FFI
+-- Numeric arrays use FFI storage under LuaJIT, tables everywhere else.
 local initializeArray
 if isLuaJIT then
     local ffi = require("ffi")
-    ffi.cdef[[
-        typedef struct { double data[1]; } vult_array_t;
-    ]]
-    
-    function initializeArray(v, n) 
+    function initializeArray(v, n)
         if type(v) == "number" then
-            -- Use FFI for numeric arrays in LuaJIT
-            local arr = ffi.new("double[?]", n)
-            for i = 0, n-1 do arr[i] = v end
-            return setmetatable({}, {
-                __index = function(t, k) return arr[k-1] end,
-                __newindex = function(t, k, v) arr[k-1] = v end,
-                __len = function() return n end
-            })
+            -- One-based, so element zero is unused. This is cdata, not a
+            -- table: indexing works, '#' and pairs() do not.
+            local a = ffi.new("double[?]", n + 1)
+            for i = 1, n do a[i] = v end
+            return a
         else
-            -- Fallback for non-numeric values
-            local a = {} 
-            for i=1, n do a[i] = v end 
-            return a 
+            local a = {}
+            for i = 1, n do a[i] = v end
+            return a
         end
     end
 else
-    -- Standard Lua implementation
-    function initializeArray(v, n) 
-        local a = {} 
-        for i=1, n do a[i] = v end 
-        return a 
+    function initializeArray(v, n)
+        local a = {}
+        for i = 1, n do a[i] = v end
+        return a
     end
 end
 
 
--- Bit operations optimized for LuaJIT
+-- Bit operations, using the LuaJIT bit library when available
 local lshift, rshift
 if isLuaJIT then
     local bit = require("bit")
     lshift = bit.lshift
     rshift = bit.rshift
 else
-    -- Fallback to arithmetic operations for standard Lua
+    -- Arithmetic fallback for standard Lua
     function lshift(a, b) return a * (2 ^ b) end
     function rshift(a, b) return math.floor(a / (2 ^ b)) end
 end
@@ -250,17 +241,10 @@ function ConstSpecialization_process_matrix(m)
 end
 
 function ConstSpecialization_main(_ctx)
-   local r1 = ConstSpecialization_test_specialized_5()
-   local r2 = ConstSpecialization_test_specialized_100()
-   local r3 = ConstSpecialization_test_nonspec(50)
-   local r4 = ConstSpecialization_test_weighted_spec()
-   local r5 = ConstSpecialization_test_weighted_nonspec(0.5)
-   local r6 = ConstSpecialization_test_interleaved_spec()
-   local r7 = ConstSpecialization_test_interleaved_nonspec(1.5)
-   local r8 = ConstSpecialization_test_accumulate_spec(_ctx.inst_13dfa)
-   local r9 = ConstSpecialization_test_accumulate_nonspec(_ctx.inst_201fa, 3.0, 4.0)
-   local r10 = ConstSpecialization_test_typed_int(_ctx.inst_3e2fa)
-   local r11 = ConstSpecialization_test_typed_real(_ctx.inst_477fa)
+   ConstSpecialization_test_accumulate_spec(_ctx.inst_13dfa)
+   ConstSpecialization_test_accumulate_nonspec(_ctx.inst_201fa, 3.0, 4.0)
+   ConstSpecialization_test_typed_int(_ctx.inst_3e2fa)
+   ConstSpecialization_test_typed_real(_ctx.inst_477fa)
    local inputs = initializeArray(0.0, 2)
    inputs[1] = 1.0
    inputs[2] = 2.0

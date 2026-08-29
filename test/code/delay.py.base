@@ -249,7 +249,7 @@ def Delay_delay(_ctx, x, time, feedback):
    time = ((0.0) if (time) < (0.0) else ((1.0) if (time) > (1.0) else (time)))
    feedback = ((0.0) if (feedback) < (0.0) else ((1.0) if (feedback) > (1.0) else (feedback)))
    index_r = (30000.0 * time)
-   index_i = int(math.floor(index_r))
+   index_i = int(index_r)
    delta = ((-index_i) + _ctx.write_pos)
    read_pos = 0
    if (delta < 0):
@@ -258,9 +258,27 @@ def Delay_delay(_ctx, x, time, feedback):
       read_pos = delta
    decimal = (index_r + (-float(index_i)))
    x1 = _ctx.buffer[read_pos]
-   x2 = _ctx.buffer[((1 + read_pos) % 30000)]
+   _wrap_temp_0 = (1 + read_pos)
+   x2 = 0.0
+   if (_wrap_temp_0 >= 30000):
+      if (_wrap_temp_0 == 30000):
+         _wrap_temp_0 = 0
+      else:
+         _wrap_temp_0 = (_wrap_temp_0 % 30000)
+   else:
+      if (_wrap_temp_0 <= -30000):
+         _wrap_temp_0 = (_wrap_temp_0 % 30000)
+   x2 = _ctx.buffer[_wrap_temp_0]
    ret = (x1 + (decimal * (x2 + (-x1))))
-   _ctx.write_pos = ((1 + _ctx.write_pos) % 30000)
+   _ctx.write_pos = (1 + _ctx.write_pos)
+   if (_ctx.write_pos >= 30000):
+      if (_ctx.write_pos == 30000):
+         _ctx.write_pos = 0
+      else:
+         _ctx.write_pos = (_ctx.write_pos % 30000)
+   else:
+      if (_ctx.write_pos <= -30000):
+         _ctx.write_pos = (_ctx.write_pos % 30000)
    _ctx.buffer[_ctx.write_pos] = ((-1.0) if ((x + (feedback * ret))) < (-1.0) else ((1.0) if ((x + (feedback * ret))) > (1.0) else ((x + (feedback * ret)))))
    return ret
 

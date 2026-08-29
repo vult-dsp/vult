@@ -5,7 +5,9 @@
 #include "vultin.hpp"
 #include "FixedAndFloat.tables.h"
 
-void FixedAndFloat_test1();
+static_inline void FixedAndFloat_test1() {
+   float real_value = 0.0f;
+}
 
 static_inline fix16_t FixedAndFloat_take_fix_return_fixed_raw_c0(int32_t index) {
    return FixedAndFloat_take_fix_return_fixed_c[static_cast<uint32_t>(index * 2)];

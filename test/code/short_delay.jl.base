@@ -117,12 +117,9 @@ end
 
 function Short_delay_soft(_ctx, x1)
    o = (Float32(0.25) * (x1 + (_ctx.x2 + (_ctx.x3 + _ctx.x4))))
-   _t_temp_0 = x1
-   _t_temp_1 = _ctx.x2
-   _t_temp_2 = _ctx.x3
-   _ctx.x2 = _t_temp_0
-   _ctx.x3 = _t_temp_1
-   _ctx.x4 = _t_temp_2
+   _ctx.x4 = _ctx.x3
+   _ctx.x3 = _ctx.x2
+   _ctx.x2 = x1
    return o
 end
 
@@ -130,7 +127,7 @@ function Short_delay_do(_ctx, x, time_in, feedback_in)
    time = clamp(time_in, Float32(0.0), Float32(1.0))
    feedback = clamp(feedback_in, Float32(0.0), Float32(1.0))
    index_r = (Float32(22050.0) * time)
-   index_i = trunc(Int32, floor(index_r))
+   index_i = trunc(Int32, index_r)
    delta = ((-index_i) + _ctx.write_pos)
    read_pos = Int32(0)
    if (delta < Int32(0))
@@ -140,9 +137,33 @@ function Short_delay_do(_ctx, x, time_in, feedback_in)
    end
    decimal = (index_r + (-Float32(index_i)))
    x1 = @inbounds _ctx.buffer[read_pos + 1]
-   x2 = @inbounds _ctx.buffer[((Int32(1) + read_pos) % Int32(22050)) + 1]
+   _wrap_temp_0 = (Int32(1) + read_pos)
+   x2 = Float32(0.0)
+   if (_wrap_temp_0 >= Int32(22050))
+      if (_wrap_temp_0 == Int32(22050))
+         _wrap_temp_0 = Int32(0)
+      else
+         _wrap_temp_0 = (_wrap_temp_0 % Int32(22050))
+      end
+   else
+      if (_wrap_temp_0 <= Int32(-22050))
+         _wrap_temp_0 = (_wrap_temp_0 % Int32(22050))
+      end
+   end
+   x2 = @inbounds _ctx.buffer[_wrap_temp_0 + 1]
    ret = (x1 + (decimal * (x2 + (-x1))))
-   _ctx.write_pos = ((Int32(1) + _ctx.write_pos) % Int32(22050))
+   _ctx.write_pos = (Int32(1) + _ctx.write_pos)
+   if (_ctx.write_pos >= Int32(22050))
+      if (_ctx.write_pos == Int32(22050))
+         _ctx.write_pos = Int32(0)
+      else
+         _ctx.write_pos = (_ctx.write_pos % Int32(22050))
+      end
+   else
+      if (_ctx.write_pos <= Int32(-22050))
+         _ctx.write_pos = (_ctx.write_pos % Int32(22050))
+      end
+   end
    @inbounds _ctx.buffer[_ctx.write_pos + 1] = Saturate_process((x + (feedback * ret)))
    return ret
 end

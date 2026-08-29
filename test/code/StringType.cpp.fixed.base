@@ -2,3 +2,12 @@
 
 #include "StringType.h"
 
+std::string StringType_test2() {
+   std::string str1 = std::to_string(1);
+   std::string _cse_temp_0 = fix_to_string(0x10000 /* 1.000000 */);
+   std::string str2 = _cse_temp_0;
+   std::string str3 = _cse_temp_0;
+   std::string str4 = bool_to_string(true);
+   return str1 + str2 + str3 + str4;
+}
+

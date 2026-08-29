@@ -1,39 +1,30 @@
 
--- LuaJIT detection and optimization
+-- LuaJIT detection
 local isLuaJIT = type(jit) == "table" and jit.version
 
 
--- Optimized array creation for LuaJIT using FFI
+-- Numeric arrays use FFI storage under LuaJIT, tables everywhere else.
 local initializeArray
 if isLuaJIT then
     local ffi = require("ffi")
-    ffi.cdef[[
-        typedef struct { double data[1]; } vult_array_t;
-    ]]
-    
-    function initializeArray(v, n) 
+    function initializeArray(v, n)
         if type(v) == "number" then
-            -- Use FFI for numeric arrays in LuaJIT
-            local arr = ffi.new("double[?]", n)
-            for i = 0, n-1 do arr[i] = v end
-            return setmetatable({}, {
-                __index = function(t, k) return arr[k-1] end,
-                __newindex = function(t, k, v) arr[k-1] = v end,
-                __len = function() return n end
-            })
+            -- One-based, so element zero is unused. This is cdata, not a
+            -- table: indexing works, '#' and pairs() do not.
+            local a = ffi.new("double[?]", n + 1)
+            for i = 1, n do a[i] = v end
+            return a
         else
-            -- Fallback for non-numeric values
-            local a = {} 
-            for i=1, n do a[i] = v end 
-            return a 
+            local a = {}
+            for i = 1, n do a[i] = v end
+            return a
         end
     end
 else
-    -- Standard Lua implementation
-    function initializeArray(v, n) 
-        local a = {} 
-        for i=1, n do a[i] = v end 
-        return a 
+    function initializeArray(v, n)
+        local a = {}
+        for i = 1, n do a[i] = v end
+        return a
     end
 end
 
@@ -346,7 +337,8 @@ function Synth2_svf(_ctx, input, fc, q, sel)
 end
 
 function Synth2_lfo(_ctx, f, gate)
-   local rate = ((100.0 * (f * Synth2_minFixed())) + Synth2_minFixed())
+   local _cse_temp_0 = Synth2_minFixed()
+   local rate = (_cse_temp_0 + (100.0 * (_cse_temp_0 * f)))
    if Synth2_edge(_ctx.inst_1445f, gate) then
       _ctx.phase = 0.0
    end

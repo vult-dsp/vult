@@ -254,8 +254,6 @@ this.Saw_r_process = function (_ctx, cv) {
    _ctx.phase = ((2.0 * _ctx.inc) + _ctx.phase);
    if ((_ctx.phase > 2.0)) {
       _ctx.phase = (-2.0 + _ctx.phase);
-   } else {
-      _ctx.phase = _ctx.phase;
    }
    var ph = (-1.0 + _ctx.phase);
    var o = 0.0;

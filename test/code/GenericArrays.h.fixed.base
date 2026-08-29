@@ -19,8 +19,8 @@ static_inline fix16_t GenericArrays_sum(const std::array<fix16_t, SIZE_0>& data)
 static_inline void GenericArrays_test1() {
    std::array<fix16_t, 3> data1 = { 0x10000 /* 1.000000 */, 0x20000 /* 2.000000 */, 0x30000 /* 3.000000 */ };
    std::array<fix16_t, 4> data2 = { 0x10000 /* 1.000000 */, 0x20000 /* 2.000000 */, 0x30000 /* 3.000000 */, 0x40000 /* 4.000000 */ };
-   fix16_t result1 = GenericArrays_sum(data1);
-   fix16_t result2 = GenericArrays_sum(data2);
+   GenericArrays_sum(data1);
+   GenericArrays_sum(data2);
 }
 
 

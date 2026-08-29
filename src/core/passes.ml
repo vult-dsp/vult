@@ -24,6 +24,7 @@
 
 open Prog
 open Util.Maps
+open Analysis
 
 type data =
   { repeat: bool
@@ -42,8 +43,6 @@ type env =
   ; current_function: function_def option
   ; current_type: struct_descr option
   ; args: Util.Args.args }
-
-type enabled_disabled = Enabled | Disabled
 
 let default_data () : data =
   {repeat= false; ticks= Hashtbl.create 16; function_deps= Map.empty; type_deps= Map.empty; constants= Map.empty}
@@ -104,8 +103,7 @@ module ConstantPropagation = struct
     | _ ->
         (state, e)
 
-  let mapper (enabled : enabled_disabled) =
-    if enabled = Enabled then {Mapper.identity with exp; top_stmt} else Mapper.identity
+  let mapper = {Mapper.identity with exp; top_stmt}
 end
 
 let getTick (env : env) (state : data Mapper.state) =
@@ -184,50 +182,6 @@ module CollectDependencies = struct
         (state, [top])
 
   let mapper = {Mapper.identity with exp; type_; top_stmt}
-end
-
-module GetVariables = struct
-  let exp =
-    Mapper.make
-    @@ fun _env (state : Set.t Mapper.state) (e : exp) ->
-    match e with
-    | {e= EId name; _} ->
-        let data = Mapper.getData state in
-        (Mapper.setData state (Set.add name data), e)
-    | _ ->
-        (state, e)
-
-  let lexp =
-    Mapper.make
-    @@ fun _env (state : Set.t Mapper.state) (e : lexp) ->
-    match e with
-    | {l= LId name; _} ->
-        let data = Mapper.getData state in
-        (Mapper.setData state (Set.add name data), e)
-    | _ ->
-        (state, e)
-
-  let dexp =
-    Mapper.make
-    @@ fun _env (state : Set.t Mapper.state) (e : dexp) ->
-    match e with
-    | {d= DId (name, _); _} ->
-        let data = Mapper.getData state in
-        (Mapper.setData state (Set.add name data), e)
-
-  let mapper = {Mapper.identity with exp; lexp; dexp}
-
-  let in_exp (e : exp) =
-    let state, _ = Mapper.exp mapper () (Mapper.defaultState Set.empty) e in
-    Mapper.getData state
-
-  let in_lexp (e : lexp) =
-    let state, _ = Mapper.lexp mapper () (Mapper.defaultState Set.empty) e in
-    Mapper.getData state
-
-  let in_stmts (s : stmt list) =
-    let state, _ = Mapper.mapper_list_expand Mapper.stmt mapper () (Mapper.defaultState Set.empty) s in
-    Mapper.getData state
 end
 
 module Location = struct
@@ -325,7 +279,7 @@ module IfExpressions = struct
     | _ ->
         (state, e)
 
-  let mapper enabled = if enabled = Enabled then {Mapper.identity with stmt; exp; stmt_env} else Mapper.identity
+  let mapper = {Mapper.identity with stmt; exp; stmt_env}
 end
 
 module LiteralRecords = struct
@@ -362,7 +316,7 @@ module LiteralRecords = struct
     | _ ->
         (state, e)
 
-  let mapper enabled = if enabled = Enabled then {Mapper.identity with exp; stmt_env; top_stmt_env} else Mapper.identity
+  let mapper = {Mapper.identity with exp; stmt_env; top_stmt_env}
 end
 
 module Markers = struct
@@ -370,7 +324,7 @@ module Markers = struct
     Mapper.makeEnv
     @@ fun env (s : top_stmt) -> match s with {top= TopFunction _; _} -> {env with in_function= true} | _ -> env
 
-  let mapper enabled = if enabled = Enabled then {Mapper.identity with top_stmt_env} else Mapper.identity
+  let mapper = {Mapper.identity with top_stmt_env}
 end
 
 module LiteralArrays = struct
@@ -400,10 +354,54 @@ module LiteralArrays = struct
     | _ ->
         (state, e)
 
-  let mapper enabled = if enabled = Enabled then {Mapper.identity with exp; stmt_env; top_stmt_env} else Mapper.identity
+  let mapper = {Mapper.identity with exp; stmt_env; top_stmt_env}
 end
 
 module Tuples = struct
+  let literal_source (e : exp) = match e.e with EBool _ | EInt _ | EReal _ | EFixed _ | EString _ -> true | _ -> false
+
+  let simple_parallel_source (e : exp) = literal_source e || Option.is_some (Path.of_exp e)
+
+  let make_parallel_temps env state loc copies =
+    let temp_list = CCList.map (fun ((l : lexp), _) -> ("_t_temp_" ^ string_of_int (getTick env state), l.t)) copies in
+    let decl = CCList.map (fun (n, t) -> {s= StmtDecl ({d= DId (n, None); loc; t}, None); loc}) temp_list in
+    let bindings1 =
+      CCList.map2 (fun (l, _) (_, (r : exp)) -> {s= StmtBind ({l= LId l; t= r.t; loc= r.loc}, r); loc}) temp_list copies
+    in
+    let bindings2 =
+      CCList.map2
+        (fun ((l : lexp), _) (r, _) -> {s= StmtBind (l, {e= EId r; t= l.t; loc= l.loc}); loc})
+        copies temp_list
+    in
+    decl @ bindings1 @ bindings2
+
+  (* Emits a copy once its destination cannot overlap any value still to be
+     read. Only a remaining cycle, such as [x,y = y,x], is spilled to temps. *)
+  let schedule_parallel_copies env state loc copies =
+    let source_paths pending = CCList.filter_map (fun (_, rhs) -> Path.of_exp rhs) pending in
+    let ready pending (lhs, _) =
+      match Path.of_lexp lhs with
+      | Some destination ->
+          not (CCList.exists (Path.may_alias destination) (source_paths pending))
+      | None ->
+          false
+    in
+    let rec loop emitted pending =
+      match CCList.find_opt (ready pending) pending with
+      | Some ((lhs, rhs) as scheduled) ->
+          let pending = CCList.filter (fun copy -> copy != scheduled) pending in
+          loop ({s= StmtBind (lhs, rhs); loc} :: emitted) pending
+      | None ->
+          (CCList.rev emitted, pending)
+    in
+    (* A copy of a location onto itself is already satisfied and must not keep
+       other copies waiting. *)
+    let is_self_copy (lhs, rhs) =
+      match (Path.of_lexp lhs, Path.of_exp rhs) with Some lhs, Some rhs -> Path.equal lhs rhs | _ -> false
+    in
+    let scheduled, cyclic = loop [] (CCList.filter (fun copy -> not (is_self_copy copy)) copies) in
+    scheduled @ if cyclic = [] then [] else make_parallel_temps env state loc cyclic
+
   let stmt_env =
     Mapper.makeEnv
     @@ fun env (s : stmt) ->
@@ -448,22 +446,13 @@ module Tuples = struct
         if Set.is_empty d then
           let bindings = CCList.map2 (fun l r -> {s= StmtBind (l, r); loc}) l_elems r_elems in
           (reapply state, bindings)
-        else
-          let temp_list =
-            CCList.map (fun (l : lexp) -> ("_t_temp_" ^ string_of_int (getTick env state), l.t)) l_elems
-          in
-          let decl = CCList.map (fun (n, t) -> {s= StmtDecl ({d= DId (n, None); loc; t}, None); loc}) temp_list in
-          let bindings1 =
-            CCList.map2
-              (fun (l, _) (r : exp) -> {s= StmtBind ({l= LId l; t= r.t; loc= r.loc}, r); loc})
-              temp_list r_elems
-          in
-          let bindings2 =
-            CCList.map2
-              (fun (l : lexp) (r, _) -> {s= StmtBind (l, {e= EId r; t= l.t; loc= l.loc}); loc})
-              l_elems temp_list
-          in
-          (reapply state, decl @ bindings1 @ bindings2)
+        else if
+          CCList.for_all (fun l -> Option.is_some (Path.of_lexp l)) l_elems
+          && CCList.for_all simple_parallel_source r_elems
+        then
+          let copies = CCList.combine l_elems r_elems in
+          (reapply state, schedule_parallel_copies env state loc copies)
+        else (reapply state, make_parallel_temps env state loc (CCList.combine l_elems r_elems))
     (* bind multi return calls to the context *)
     | {s= StmtBind (({l= LTuple elems; _} as lhs), ({e= ECall {path; args= ctx :: _}; loc= rloc; _} as rhs)); loc} ->
         let bindings =
@@ -533,11 +522,10 @@ module Tuples = struct
     | _ ->
         (state, [top])
 
-  let mapper enabled =
-    if enabled = Enabled then {Mapper.identity with stmt; stmt_env; exp; top_stmt} else Mapper.identity
+  let mapper = {Mapper.identity with stmt; stmt_env; exp; top_stmt}
 end
 
-module Builtin = struct
+module FoldBuiltins = struct
   let exp =
     Mapper.make
     @@ fun env state (e : exp) ->
@@ -662,7 +650,7 @@ module Builtin = struct
     | _ ->
         (state, e)
 
-  let mapper enabled = if enabled = Enabled then {Mapper.identity with exp} else Mapper.identity
+  let mapper = {Mapper.identity with exp}
 end
 
 module Cast = struct
@@ -718,7 +706,7 @@ module Cast = struct
     | _ ->
         (state, t)
 
-  let mapper enabled = if enabled = Enabled then {Mapper.identity with exp; type_} else Mapper.identity
+  let mapper = {Mapper.identity with exp; type_}
 end
 
 module Canonize = struct
@@ -775,10 +763,48 @@ module Canonize = struct
     | _ ->
         (state, e)
 
-  let mapper enabled = if enabled = Enabled then {Mapper.identity with exp} else Mapper.identity
+  let mapper = {Mapper.identity with exp}
 end
 
 module Simplify = struct
+  (* Flipping an ordering operator needs ordered operands: for a NaN both
+     [a < b] and [a >= b] are false. Equality is safe on any type. *)
+  let negate_condition (cond : exp) =
+    let ordered (lhs : exp) = match lhs.t.t with TReal -> false | _ -> true in
+    let negate_operator (lhs : exp) = function
+      | OpEq ->
+          Some OpNe
+      | OpNe ->
+          Some OpEq
+      | OpLt when ordered lhs ->
+          Some OpGe
+      | OpLe when ordered lhs ->
+          Some OpGt
+      | OpGt when ordered lhs ->
+          Some OpLe
+      | OpGe when ordered lhs ->
+          Some OpLt
+      | _ ->
+          None
+    in
+    let logical_not (cond : exp) = {cond with e= EUnOp (UOpNot, cond)} in
+    match cond.e with
+    | EOp (op, lhs, rhs) -> (
+      match negate_operator lhs op with Some op -> {cond with e= EOp (op, lhs, rhs)} | None -> logical_not cond )
+    | EUnOp (UOpNot, e) ->
+        e
+    | _ ->
+        logical_not cond
+
+  let rec discardable_value (e : exp) =
+    match e.e with
+    | EUnit | EEmptyValue | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ ->
+        true
+    | EMember (base, _) | ETMember (base, _) ->
+        discardable_value base
+    | _ ->
+        false
+
   let evaluate t op e1 e2 =
     match (e1, e2) with
     (* boolean *)
@@ -926,23 +952,245 @@ module Simplify = struct
     | _ ->
         (state, e)
 
+  (* A bind that stores a value where it already is, or discards one that costs
+     nothing. Indexed locations are excluded: an index can have effects. *)
+  let redundant_bind (lhs : lexp) rhs =
+    match (lhs.l, Path.exp_of_lexp lhs) with
+    | LWild, _ ->
+        discardable_value rhs
+    | _, Some location ->
+        Compare.exp location rhs = 0
+    | _, None ->
+        false
+
   let stmt =
     Mapper.makeExpander
     @@ fun _env state (s : stmt) ->
     match s with
-    (* removes a = a *)
-    | {s= StmtBind ({l= LId name1; _}, {e= EId name2; _}); _} when String.compare name1 name2 = 0 ->
+    | {s= StmtBind (lhs, rhs); _} when redundant_bind lhs rhs ->
         (state, [])
     (* removes else {} *)
     | {s= StmtIf (cond, then_, Some {s= StmtBlock []; _}); _} ->
         (state, [{s with s= StmtIf (cond, then_, None)}])
+    (* An empty then-branch is not valid in all target languages. Invert the
+       condition and keep the non-empty branch as the then-branch. *)
+    | {s= StmtIf (cond, {s= StmtBlock []; _}, Some else_); _} ->
+        let cond = negate_condition cond in
+        (reapply state, [{s with s= StmtIf (cond, else_, None)}])
     (* removes if (cond) {} *)
     | {s= StmtIf (_, {s= StmtBlock []; _}, None); _} ->
         (state, [])
     | _ ->
         (state, [s])
 
-  let mapper enabled = if enabled = Enabled then {Mapper.identity with exp; stmt} else Mapper.identity
+  let mapper = {Mapper.identity with exp; stmt}
+end
+
+(* Rewrites [int(floor(e))] into [int(e)] when [e] cannot be negative. A plain
+   traversal, because a Mapper's linear state cannot join branches or loops. *)
+module NonnegativeFloor = struct
+  let literal_nonnegative (e : exp) = match e.e with EInt n -> n >= 0 | EReal n | EFixed n -> n >= 0.0 | _ -> false
+
+  let rec is_nonnegative known (e : exp) =
+    match e.e with
+    | EInt n ->
+        n >= 0
+    | EReal n | EFixed n ->
+        n >= 0.0
+    | EId name ->
+        Set.mem name known
+    | EOp (OpAdd, lhs, rhs) | EOp (OpMul, lhs, rhs) ->
+        is_nonnegative known lhs && is_nonnegative known rhs
+    | ECall {path; args} -> (
+      match (Builtin.of_name path, args) with
+      | Some (Abs | Sqrt), [_] ->
+          true
+      | Some Clip, [_; lower; _] ->
+          literal_nonnegative lower
+      | Some (Real | Fix16 | Int | Floor), [arg] ->
+          is_nonnegative known arg
+      | _ ->
+          false )
+    | _ ->
+        false
+
+  let assigned_lexp assigned (l : lexp) =
+    let rec loop assigned (l : lexp) =
+      match l.l with
+      | LId name ->
+          Set.add name assigned
+      | LTuple elems ->
+          CCList.fold_left loop assigned elems
+      | LWild | LMember _ | LIndex _ ->
+          assigned
+    in
+    loop assigned l
+
+  (* Every name a statement or anything nested in it may write. *)
+  let assigned_stmt assigned s =
+    fold_stmt
+      (fun assigned (s : stmt) -> match s.s with StmtBind (lhs, _) -> assigned_lexp assigned lhs | _ -> assigned)
+      assigned s
+
+  let mapper =
+    let exp =
+      Mapper.make
+      @@ fun _env state (e : exp) ->
+      match e.e with
+      | ECall {path; args= [({e= ECall {path= inner; args= [arg]}; t= {t= TReal | TFix16; _}; _} : exp)]} -> (
+        match (Builtin.of_name path, Builtin.of_name inner) with
+        | Some Int, Some Floor when is_nonnegative (Mapper.getData state) arg ->
+            (state, {e with e= ECall {path; args= [arg]}})
+        | _ ->
+            (state, e) )
+      | _ ->
+          (state, e)
+    in
+    {Mapper.identity with exp}
+
+  let rewrite_exp known e = snd (Mapper.exp mapper () (Mapper.defaultState known) e)
+
+  (* Returns the rewritten statement and the facts holding after it. Branches
+     and loops drop every name they may write, so no fact outlives its scope. *)
+  let rec rewrite_stmt known (s : stmt) =
+    match s.s with
+    | StmtDecl (({d= DId (name, _); _} as decl), Some rhs) ->
+        let rhs = rewrite_exp known rhs in
+        let known = if is_nonnegative known rhs then Set.add name known else Set.remove name known in
+        (known, {s with s= StmtDecl (decl, Some rhs)})
+    | StmtDecl ({d= DId (name, _); _}, None) ->
+        (Set.remove name known, s)
+    | StmtBind (({l= LId name; _} as lhs), rhs) ->
+        let rhs = rewrite_exp known rhs in
+        let known = if is_nonnegative known rhs then Set.add name known else Set.remove name known in
+        (known, {s with s= StmtBind (lhs, rhs)})
+    | StmtBind (lhs, rhs) ->
+        (known, {s with s= StmtBind (lhs, rewrite_exp known rhs)})
+    | StmtReturn e ->
+        (known, {s with s= StmtReturn (rewrite_exp known e)})
+    | StmtBlock stmts ->
+        let known, stmts =
+          CCList.fold_left
+            (fun (known, result) stmt ->
+              let known, stmt = rewrite_stmt known stmt in
+              (known, stmt :: result) )
+            (known, []) stmts
+        in
+        (known, {s with s= StmtBlock (CCList.rev stmts)})
+    | StmtIf (cond, then_, else_) ->
+        let cond = rewrite_exp known cond in
+        let _, then_ = rewrite_stmt known then_ in
+        let else_ = Option.map (fun else_ -> snd (rewrite_stmt known else_)) else_ in
+        (Set.diff known (assigned_stmt Set.empty s), {s with s= StmtIf (cond, then_, else_)})
+    | StmtWhile (cond, body) ->
+        let known = Set.diff known (assigned_stmt Set.empty s) in
+        let cond = rewrite_exp known cond in
+        let _, body = rewrite_stmt known body in
+        (known, {s with s= StmtWhile (cond, body)})
+    | StmtSwitch (cond, cases, default) ->
+        let cond = rewrite_exp known cond in
+        let cases = CCList.map (fun (case, body) -> (case, snd (rewrite_stmt known body))) cases in
+        let default = Option.map (fun body -> snd (rewrite_stmt known body)) default in
+        (Set.diff known (assigned_stmt Set.empty s), {s with s= StmtSwitch (cond, cases, default)})
+
+  let run prog =
+    CCList.map
+      (fun (top : top_stmt) ->
+        match top.top with
+        | TopFunction (def, body) ->
+            {top with top= TopFunction (def, snd (rewrite_stmt Set.empty body))}
+        | _ ->
+            top )
+      prog
+end
+
+(* Replaces [i = (i + 1) % n] with an increment plus a range check, so the
+   common case costs a comparison instead of an integer division. *)
+module CircularBuffers = struct
+  (* Below this, the branchy form is not worth it: small wraps are usually
+     powers of two that StrengthReduction already turns into a mask. *)
+  let minimum_modulus = 16
+
+  let increment_modulo (e : exp) =
+    let increment_base (increment : exp) =
+      match increment.e with
+      | EOp (OpAdd, {e= EInt 1; _}, base) | EOp (OpAdd, base, {e= EInt 1; _}) ->
+          Some base
+      | _ ->
+          None
+    in
+    match e with
+    | {e= EOp (OpMod, increment, ({e= EInt modulus; _} as modulus_exp)); t= {t= TInt; _}; _}
+      when modulus > minimum_modulus ->
+        Option.map (fun base -> (increment, base, modulus, modulus_exp)) (increment_base increment)
+    | _ ->
+        None
+
+  let comparison loc op lhs rhs = {e= EOp (op, lhs, rhs); t= {C.bool_t with loc}; loc}
+
+  (* [value] is already incremented; (-modulus, modulus) needs no repair, which
+     matches truncated [%] and so aligns Lua and Python with the interpreter. *)
+  let range_guard loc lhs value modulus modulus_exp =
+    let zero = C.eint ~loc 0 in
+    let negative_modulus = {modulus_exp with e= EInt (-modulus)} in
+    let modulo = {value with e= EOp (OpMod, value, modulus_exp)} in
+    let bind rhs = {s= StmtBind (lhs, rhs); loc} in
+    let at_upper = comparison loc OpEq value modulus_exp in
+    let upper_repair = {s= StmtIf (at_upper, bind zero, Some (bind modulo)); loc} in
+    let below_lower = comparison loc OpLe value negative_modulus in
+    let lower_repair = {s= StmtIf (below_lower, bind modulo, None); loc} in
+    let above_upper = comparison loc OpGe value modulus_exp in
+    {s= StmtIf (above_upper, upper_repair, Some lower_repair); loc}
+
+  let lower_index env state loc index =
+    match increment_modulo index with
+    | None ->
+        None
+    | Some (increment, _, modulus, modulus_exp) ->
+        let name = "_wrap_temp_" ^ string_of_int (getTick env state) in
+        let temp_lhs = {l= LId name; t= index.t; loc} in
+        let temp_value = {e= EId name; t= index.t; loc} in
+        let decl = {s= StmtDecl ({d= DId (name, None); t= index.t; loc}, None); loc} in
+        let initialize = {s= StmtBind (temp_lhs, increment); loc} in
+        let guard = range_guard loc temp_lhs temp_value modulus modulus_exp in
+        Some ([decl; initialize; guard], temp_value)
+
+  let stmt =
+    Mapper.makeExpander
+    @@ fun env state (s : stmt) ->
+    match s.s with
+    | StmtBind (lhs, rhs) -> (
+      match (Path.exp_of_lexp lhs, increment_modulo rhs) with
+      | Some lhs_value, Some (increment, base, modulus, modulus_exp) when Compare.exp lhs_value base = 0 ->
+          let initialize = {s= StmtBind (lhs, increment); loc= s.loc} in
+          let guard = range_guard s.loc lhs lhs_value modulus modulus_exp in
+          (reapply state, [initialize; guard])
+      | _ -> (
+        match rhs.e with
+        | EIndex {e; index} -> (
+          match lower_index env state s.loc index with
+          | Some (prefix, index) ->
+              (reapply state, prefix @ [{s with s= StmtBind (lhs, {rhs with e= EIndex {e; index}})}])
+          | None ->
+              (state, [s]) )
+        | _ ->
+            (state, [s]) ) )
+    | StmtDecl (decl, Some ({e= EIndex {e; index}; _} as rhs)) -> (
+      match lower_index env state s.loc index with
+      | Some (prefix, index) ->
+          (reapply state, prefix @ [{s with s= StmtDecl (decl, Some {rhs with e= EIndex {e; index}})}])
+      | None ->
+          (state, [s]) )
+    | StmtReturn ({e= EIndex {e; index}; _} as rhs) -> (
+      match lower_index env state s.loc index with
+      | Some (prefix, index) ->
+          (reapply state, prefix @ [{s with s= StmtReturn {rhs with e= EIndex {e; index}}}])
+      | None ->
+          (state, [s]) )
+    | _ ->
+        (state, [s])
+
+  let mapper = {Mapper.identity with stmt}
 end
 
 module StrengthReduction = struct
@@ -1208,7 +1456,7 @@ module StrengthReduction = struct
     | _ ->
         (state, e)
 
-  let mapper enabled = if enabled = Enabled then {Mapper.identity with exp} else Mapper.identity
+  let mapper = {Mapper.identity with exp}
 end
 
 module Sort = struct
@@ -1423,9 +1671,8 @@ module DeadCodeElimination = struct
           match s.top with TopAlias {path; alias_of} -> addDep graph alias_of path | _ -> graph )
         graph prog
     in
-    (* Reverse context-type edges: when a context type is reachable, functions using it
-       as their first parameter become reachable. This preserves and-grouped functions
-       whose context types are aliases of a root function's context type. *)
+    (* Reverse context-type edges: a reachable context type makes the functions
+       taking it as their first parameter reachable too. *)
     let graph =
       List.fold_left
         (fun graph (s : top_stmt) ->
@@ -1511,18 +1758,10 @@ module DeadCodeElimination = struct
 end
 
 let passes =
-  Location.mapper
-  |> Mapper.seq (Markers.mapper Enabled)
-  |> Mapper.seq (Canonize.mapper Enabled)
-  |> Mapper.seq (ConstantPropagation.mapper Enabled)
-  |> Mapper.seq (StrengthReduction.mapper Enabled)
-  |> Mapper.seq (Simplify.mapper Enabled)
-  |> Mapper.seq (Builtin.mapper Enabled)
-  |> Mapper.seq (IfExpressions.mapper Enabled)
-  |> Mapper.seq (Tuples.mapper Enabled)
-  |> Mapper.seq (Cast.mapper Enabled)
-  |> Mapper.seq (LiteralArrays.mapper Enabled)
-  |> Mapper.seq (LiteralRecords.mapper Enabled)
+  Location.mapper |> Mapper.seq Markers.mapper |> Mapper.seq Canonize.mapper |> Mapper.seq ConstantPropagation.mapper
+  |> Mapper.seq StrengthReduction.mapper |> Mapper.seq Simplify.mapper |> Mapper.seq FoldBuiltins.mapper
+  |> Mapper.seq CircularBuffers.mapper |> Mapper.seq IfExpressions.mapper |> Mapper.seq Tuples.mapper
+  |> Mapper.seq Cast.mapper |> Mapper.seq LiteralArrays.mapper |> Mapper.seq LiteralRecords.mapper
 
 let rec apply env state prog n =
   if n > 20 then failwith "too many repeats"
@@ -1543,19 +1782,9 @@ let rec apply env state prog n =
 
 let run args (prog : prog) : prog =
   let _, prog = apply (default_env args) (Mapper.defaultState (default_data ())) prog 0 in
+  let prog = NonnegativeFloor.run prog in
+  let prog = Local_optimization.run prog in
+  let _, prog = apply (default_env args) (Mapper.defaultState (default_data ())) prog 0 in
   let prog = Sort.run args prog in
   let prog = DeadCodeElimination.run args prog in
   prog
-
-let simplifyExp (e : exp) : exp =
-  let rec loop n env state e =
-    if n > 20 then failwith "too many repeats"
-    else
-      let state, e = Mapper.exp passes env state e in
-      let data = Mapper.getData state in
-      if data.repeat then
-        let data = {data with repeat= false} in
-        loop (n + 1) env (Mapper.setData state data) e
-      else e
-  in
-  loop 0 (default_env Util.Args.default_arguments) (Mapper.defaultState (default_data ())) e

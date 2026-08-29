@@ -43,7 +43,7 @@ static_inline float Waves_sineTable2(float position) {
 void Waves_test1();
 
 static_inline void Waves_test2() {
-   float result = Waves_sineTable2(0.5f);
+   Waves_sineTable2(0.5f);
 }
 
 

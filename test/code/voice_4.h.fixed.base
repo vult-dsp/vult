@@ -377,8 +377,9 @@ static_inline fix16_t Util_cvToperiod(fix16_t cv) {
 }
 
 static_inline void Blit_pulse_start(Blit_pulse_train_type& _ctx) {
-   _ctx.m = 1 + (fix_to_int(Util_cvToperiod(0x0 /* 0.000000 */)) << 1);
-   _ctx.scale = 0x10000 /* 1.000000 */ + (Util_cvToperiod(0x0 /* 0.000000 */) << 1);
+   fix16_t _cse_temp_1 = Util_cvToperiod(0x0 /* 0.000000 */);
+   _ctx.m = 1 + (fix_to_int(_cse_temp_1) << 1);
+   _ctx.scale = 0x10000 /* 1.000000 */ + (_cse_temp_1 << 1);
 }
 
 static_inline void Blit_pulse_train_type_init(Blit_pulse_train_type& _ctx) {
@@ -641,7 +642,13 @@ static_inline void Saturate_controlChange(int32_t control, int32_t value, int32_
 static_inline void Saturate_default() {
 }
 
-fix16_t Lfo_soft(Lfo_soft_type& _ctx, fix16_t x1);
+static_inline fix16_t Lfo_soft(Lfo_soft_type& _ctx, fix16_t x1) {
+   fix16_t o = ((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4) >> 2);
+   _ctx.x4 = _ctx.x3;
+   _ctx.x3 = _ctx.x2;
+   _ctx.x2 = x1;
+   return o;
+}
 
 fix16_t Lfo_process(Lfo_process_type& _ctx, fix16_t cv, fix16_t shape, fix16_t reset);
 

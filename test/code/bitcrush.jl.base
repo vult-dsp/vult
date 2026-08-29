@@ -23,7 +23,7 @@ function Bitcrush_factor(cv)
 end
 
 function Bitcrush_process(i, cv)
-   out = i
+   out = Float32(0.0)
    if (cv == Float32(0.0))
       out = i
    else

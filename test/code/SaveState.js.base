@@ -203,8 +203,8 @@ this.SaveState_nosave = function (_ctx) {
 this.SaveState_main = function (_ctx) {
    _ctx.x = 0.0;
    _ctx.str = "";
-   var count1 = this.SaveState_counter(_ctx.c1);
-   var count2 = this.SaveState_counter(_ctx.inst_19fb0);
+   this.SaveState_counter(_ctx.c1);
+   this.SaveState_counter(_ctx.inst_19fb0);
    this.SaveState_nosave(_ctx.inst_21bb0);
 };
 

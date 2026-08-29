@@ -200,17 +200,10 @@ this.ConstSpecialization_process_matrix = function (m) {
 };
 
 this.ConstSpecialization_main = function (_ctx) {
-   var r1 = this.ConstSpecialization_test_specialized_5();
-   var r2 = this.ConstSpecialization_test_specialized_100();
-   var r3 = this.ConstSpecialization_test_nonspec((50|0));
-   var r4 = this.ConstSpecialization_test_weighted_spec();
-   var r5 = this.ConstSpecialization_test_weighted_nonspec(0.5);
-   var r6 = this.ConstSpecialization_test_interleaved_spec();
-   var r7 = this.ConstSpecialization_test_interleaved_nonspec(1.5);
-   var r8 = this.ConstSpecialization_test_accumulate_spec(_ctx.inst_13dfa);
-   var r9 = this.ConstSpecialization_test_accumulate_nonspec(_ctx.inst_201fa, 3.0, 4.0);
-   var r10 = this.ConstSpecialization_test_typed_int(_ctx.inst_3e2fa);
-   var r11 = this.ConstSpecialization_test_typed_real(_ctx.inst_477fa);
+   this.ConstSpecialization_test_accumulate_spec(_ctx.inst_13dfa);
+   this.ConstSpecialization_test_accumulate_nonspec(_ctx.inst_201fa, 3.0, 4.0);
+   this.ConstSpecialization_test_typed_int(_ctx.inst_3e2fa);
+   this.ConstSpecialization_test_typed_real(_ctx.inst_477fa);
    var inputs = this.initializeArray(0.0, (2|0));
    inputs[0] = 1.0;
    inputs[1] = 2.0;

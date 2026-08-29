@@ -318,12 +318,9 @@ end
 
 function Lfo_soft(_ctx, x1)
    o = (Float32(0.25) * (x1 + (_ctx.x2 + (_ctx.x3 + _ctx.x4))))
-   _t_temp_0 = x1
-   _t_temp_1 = _ctx.x2
-   _t_temp_2 = _ctx.x3
-   _ctx.x2 = _t_temp_0
-   _ctx.x3 = _t_temp_1
-   _ctx.x4 = _t_temp_2
+   _ctx.x4 = _ctx.x3
+   _ctx.x3 = _ctx.x2
+   _ctx.x2 = x1
    return o
 end
 
@@ -334,8 +331,6 @@ function Lfo_process(_ctx, cv, shape, reset)
    _ctx.phase = (_ctx.phase + _ctx.rate)
    if (_ctx.phase > Float32(2.0))
       _ctx.phase = (Float32(-2.0) + _ctx.phase)
-   else
-      _ctx.phase = _ctx.phase
    end
    breset = (reset > Float32(0.0))
    if Util_edge(_ctx.inst_204d6, breset)

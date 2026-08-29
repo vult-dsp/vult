@@ -204,8 +204,8 @@ def SaveState_nosave(_ctx):
 def SaveState_main(_ctx):
    _ctx.x = 0.0
    _ctx.str = ""
-   count1 = SaveState_counter(_ctx.c1)
-   count2 = SaveState_counter(_ctx.inst_19fb0)
+   _ = SaveState_counter(_ctx.c1)
+   _ = SaveState_counter(_ctx.inst_19fb0)
    _ = SaveState_nosave(_ctx.inst_21bb0)
 
 

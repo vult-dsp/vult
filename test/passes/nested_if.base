@@ -13,7 +13,6 @@ fun Nested_if_foo(const a : int, const b : int, const c : int) : int {
 
 fun Nested_if_bar() : void {
    val b : real;
-   if (((b : real) < 1.1)) (b : real) = 1.8;
 }
 
 fun Nested_if_yoo() : void {
@@ -22,16 +21,10 @@ fun Nested_if_yoo() : void {
    val c : real;
    (c : real) = 2.0;
    {
-      val _if_temp_0 : bool;
-      if (((b : real) >= (b : real))) (_if_temp_0 : bool) = true;
-      else (_if_temp_0 : bool) = ((b : real) < 1.11456084129);
-      val _if_temp_1 : bool;
       {
          val _if_temp_2 : bool;
          if (((c : real) > 2.0)) (_if_temp_2 : bool) = true;
          else (_if_temp_2 : bool) = false;
-         if ((_if_temp_2 : bool)) (_if_temp_1 : bool) = true;
-         else (_if_temp_1 : bool) = false;
       }
    }
 }

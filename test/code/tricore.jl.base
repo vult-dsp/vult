@@ -351,9 +351,7 @@ function Tricore_process(_ctx, cv, reset, disable)
             end
          else
             begin
-               if (_ctx.reset_phase > Float32(10.0))
-                  _ctx.reset_phase = _ctx.reset_phase
-               else
+               if (!(_ctx.reset_phase > Float32(10.0)))
                   _ctx.reset_phase = Float32(0.0)
                end
                _ctx.reset_state = false

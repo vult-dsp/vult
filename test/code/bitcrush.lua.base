@@ -1,5 +1,12 @@
 
 
+-- Math functions
+local floor = math.floor
+local modf = math.modf
+
+-- Core runtime functions
+local function clipValue(x, low, high) if x > high then return high elseif x < low then return low else return x end end
+
 Bitcrush_factor_c = {};
 function Bitcrush_factor_raw_c0(index)
    return Bitcrush_factor_c[((index * 3)) + 1]
@@ -15,20 +22,20 @@ end
 
 function Bitcrush_factor(cv)
    local value = (((cv) > (1.0) and (1.0) or ((cv) < (0.0) and (0.0) or (cv))) * 128.0)
-   local cell = ((math.floor(value)) > (127) and (127) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local cell = clipValue(floor(value), 0, 127)
    local u = (value - (cell))
    local index = (cell * 3)
    return (Bitcrush_factor_c[(index) + 1] + (u * (Bitcrush_factor_c[((index + 1)) + 1] + (Bitcrush_factor_c[((index + 2)) + 1] * u))))
 end
 
 function Bitcrush_process(i, cv)
-   local out = i
+   local out = 0.0
    if (cv == 0.0) then
       out = i
    else
       do
          local b = Bitcrush_factor(cv)
-         local x = (math.modf((b * i)))
+         local x = (modf((b * i)))
          out = ((x) / b)
       end
    end

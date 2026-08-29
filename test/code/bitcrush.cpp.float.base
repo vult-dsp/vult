@@ -3,7 +3,7 @@
 #include "bitcrush.h"
 
 float Bitcrush_process(float i, float cv) {
-   float out = i;
+   float out = 0.0f;
    if (cv == 0.0f) {
       out = i;
    }

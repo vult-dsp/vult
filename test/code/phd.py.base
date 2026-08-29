@@ -289,8 +289,6 @@ def Phase_process(_ctx, cv, reset):
       _ctx.phase = (_ctx.phase + _ctx.rate)
    if (_ctx.phase > 1024.0):
       _ctx.phase = (-1024.0 + _ctx.phase)
-   else:
-      _ctx.phase = _ctx.phase
    return (0.000976 * _ctx.phase)
 
 

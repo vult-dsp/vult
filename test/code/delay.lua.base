@@ -1,39 +1,30 @@
 
--- LuaJIT detection and optimization
+-- LuaJIT detection
 local isLuaJIT = type(jit) == "table" and jit.version
 
 
--- Optimized array creation for LuaJIT using FFI
+-- Numeric arrays use FFI storage under LuaJIT, tables everywhere else.
 local initializeArray
 if isLuaJIT then
     local ffi = require("ffi")
-    ffi.cdef[[
-        typedef struct { double data[1]; } vult_array_t;
-    ]]
-    
-    function initializeArray(v, n) 
+    function initializeArray(v, n)
         if type(v) == "number" then
-            -- Use FFI for numeric arrays in LuaJIT
-            local arr = ffi.new("double[?]", n)
-            for i = 0, n-1 do arr[i] = v end
-            return setmetatable({}, {
-                __index = function(t, k) return arr[k-1] end,
-                __newindex = function(t, k, v) arr[k-1] = v end,
-                __len = function() return n end
-            })
+            -- One-based, so element zero is unused. This is cdata, not a
+            -- table: indexing works, '#' and pairs() do not.
+            local a = ffi.new("double[?]", n + 1)
+            for i = 1, n do a[i] = v end
+            return a
         else
-            -- Fallback for non-numeric values
-            local a = {} 
-            for i=1, n do a[i] = v end 
-            return a 
+            local a = {}
+            for i = 1, n do a[i] = v end
+            return a
         end
     end
 else
-    -- Standard Lua implementation
-    function initializeArray(v, n) 
-        local a = {} 
-        for i=1, n do a[i] = v end 
-        return a 
+    function initializeArray(v, n)
+        local a = {}
+        for i = 1, n do a[i] = v end
+        return a
     end
 end
 
@@ -41,7 +32,7 @@ end
 -- Math functions
 local sin = math.sin
 local exp = math.exp
-local floor = math.floor
+local modf = math.modf
 
 -- Core runtime functions
 function ifExpressionValue(cond,then_,else_) if cond then return then_ else return else_ end end
@@ -233,7 +224,7 @@ function Delay_delay(_ctx, x, time, feedback)
    time = ((time) > (1.0) and (1.0) or ((time) < (0.0) and (0.0) or (time)))
    feedback = ((feedback) > (1.0) and (1.0) or ((feedback) < (0.0) and (0.0) or (feedback)))
    local index_r = (30000.0 * time)
-   local index_i = (math.modf(floor(index_r)))
+   local index_i = (modf(index_r))
    local delta = ((-index_i) + _ctx.write_pos)
    local read_pos = 0
    if (delta < 0) then
@@ -243,9 +234,33 @@ function Delay_delay(_ctx, x, time, feedback)
    end
    local decimal = (index_r + (-(index_i)))
    local x1 = _ctx.buffer[(read_pos) + 1]
-   local x2 = _ctx.buffer[(((1 + read_pos) % 30000)) + 1]
+   local _wrap_temp_0 = (1 + read_pos)
+   local x2 = 0.0
+   if (_wrap_temp_0 >= 30000) then
+      if (_wrap_temp_0 == 30000) then
+         _wrap_temp_0 = 0
+      else
+         _wrap_temp_0 = (_wrap_temp_0 % 30000)
+      end
+   else
+      if (_wrap_temp_0 <= -30000) then
+         _wrap_temp_0 = (_wrap_temp_0 % 30000)
+      end
+   end
+   x2 = _ctx.buffer[(_wrap_temp_0) + 1]
    local ret = (x1 + (decimal * (x2 + (-x1))))
-   _ctx.write_pos = ((1 + _ctx.write_pos) % 30000)
+   _ctx.write_pos = (1 + _ctx.write_pos)
+   if (_ctx.write_pos >= 30000) then
+      if (_ctx.write_pos == 30000) then
+         _ctx.write_pos = 0
+      else
+         _ctx.write_pos = (_ctx.write_pos % 30000)
+      end
+   else
+      if (_ctx.write_pos <= -30000) then
+         _ctx.write_pos = (_ctx.write_pos % 30000)
+      end
+   end
    _ctx.buffer[_ctx.write_pos + 1] = (((x + (feedback * ret))) > (1.0) and (1.0) or (((x + (feedback * ret))) < (-1.0) and (-1.0) or ((x + (feedback * ret)))))
    return ret
 end

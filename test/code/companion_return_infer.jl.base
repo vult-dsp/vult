@@ -93,22 +93,20 @@ function Companion_return_infer_current_int(_ctx)
 end
 
 function Companion_return_infer_wrapper_stateless()
-   unused = Companion_return_infer_choose_int(Int32(1))
    return Companion_return_infer_marker_int()
 end
 
 function Companion_return_infer_wrapper_stateful(_ctx)
-   unused = Companion_return_infer_accum_int(_ctx.inst_1c525, Int32(3))
+   Companion_return_infer_accum_int(_ctx.inst_1c525, Int32(3))
    return Companion_return_infer_current_int(_ctx.inst_1c525)
 end
 
 function Companion_return_infer_wrapper_instance(_ctx)
-   unused = Companion_return_infer_accum_int(_ctx.i1, Int32(20))
+   Companion_return_infer_accum_int(_ctx.i1, Int32(20))
    return Companion_return_infer_current_int(_ctx.i1)
 end
 
 function Companion_return_infer_wrapper_qualified()
-   unused = Cret_lib_pick_int(Int32(1))
    return Cret_lib_tag_int()
 end
 

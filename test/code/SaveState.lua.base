@@ -205,8 +205,8 @@ end
 function SaveState_main(_ctx)
    _ctx.x = 0.0
    _ctx.str = ""
-   local count1 = SaveState_counter(_ctx.c1)
-   local count2 = SaveState_counter(_ctx.inst_19fb0)
+   SaveState_counter(_ctx.c1)
+   SaveState_counter(_ctx.inst_19fb0)
    SaveState_nosave(_ctx.inst_21bb0)
 end
 

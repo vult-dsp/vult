@@ -316,7 +316,15 @@ def Util_cvTokHz(cv):
 
 
 def Rescomb_delay(_ctx, x, cv):
-   _ctx.write_pos = ((1 + _ctx.write_pos) % 675)
+   _ctx.write_pos = (1 + _ctx.write_pos)
+   if (_ctx.write_pos >= 675):
+      if (_ctx.write_pos == 675):
+         _ctx.write_pos = 0
+      else:
+         _ctx.write_pos = (_ctx.write_pos % 675)
+   else:
+      if (_ctx.write_pos <= -675):
+         _ctx.write_pos = (_ctx.write_pos % 675)
    _ctx.buffer[_ctx.write_pos] = x
    r_size = 675.0
    r_index = (((-Util_cvToperiod(cv)) + float(_ctx.write_pos)) % r_size)

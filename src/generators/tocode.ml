@@ -77,7 +77,7 @@ let generateInitializations env vars =
   (env, stmts)
 
 let getNecessaryDeclarations (env : env) (e : exp) =
-  let vars = Core.Passes.GetVariables.in_exp e in
+  let vars = Core.Analysis.GetVariables.in_exp e in
   generateInitializations env (Set.to_list vars)
 
 let getPendingDeclarations (env : env) =

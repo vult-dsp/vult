@@ -1,29 +1,15 @@
 fun If_to_stmt_foo(const e : int) : void {
-   val y : real;
    val cond1 : bool;
    (cond1 : bool) = ((e : int) > 0);
    val cond2 : bool;
    (cond2 : bool) = ((e : int) < 0);
-   val x : real;
-   if ((cond1 : bool)) (x : real) = 0.0;
-   else if ((cond2 : bool)) (x : real) = 1.0;
-   else (x : real) = 2.0;
-   if ((cond1 : bool)) (y : real) = 0.0;
-   else if ((cond2 : bool)) (y : real) = 1.0;
-   else (y : real) = 2.0;
-   val z : real;
-   val a : real;
-   {
-      val _if_temp_0 : real;
-      if ((cond1 : bool)) (_if_temp_0 : real) = 0.0;
-      else (_if_temp_0 : real) = (2.0 + (if (cond2 : bool) then 1.0 else 2.0));
-      (a : real) = (1.0 + (_if_temp_0 : real));
+   if ((cond1 : bool)) {
+   }
+   if ((cond1 : bool)) {
    }
    {
-      val _if_temp_1 : real;
-      if ((cond1 : bool)) (_if_temp_1 : real) = 0.0;
-      else (_if_temp_1 : real) = (2.0 + (if (cond2 : bool) then 1.0 else 2.0));
-      (z : real) = (1.0 + (_if_temp_1 : real));
+   }
+   {
    }
 }
 

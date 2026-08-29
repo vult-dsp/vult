@@ -73,8 +73,6 @@ this.Phasedist_phasor = function (_ctx, pitch, reset) {
    }
    if ((_ctx.phase > 1.0)) {
       _ctx.phase = (-1.0 + _ctx.phase);
-   } else {
-      _ctx.phase = _ctx.phase;
    }
    return _ctx.phase;
 };

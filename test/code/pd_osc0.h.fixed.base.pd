@@ -47,7 +47,6 @@ static_inline fix16_t Pd_osc0_process(Pd_osc0_process_type& _ctx) {
 }
 
 static_inline void Pd_osc0_setFreq(Pd_osc0_process_type& _ctx, fix16_t freq) {
-   _ctx.phase = _ctx.phase;
 }
 
 

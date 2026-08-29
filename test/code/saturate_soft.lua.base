@@ -1,5 +1,11 @@
 
 
+-- Math functions
+local floor = math.floor
+
+-- Core runtime functions
+local function clipValue(x, low, high) if x > high then return high elseif x < low then return low else return x end end
+
 Saturate_soft_tanh_table_c = {};
 function Saturate_soft_tanh_table_raw_c0(index)
    return Saturate_soft_tanh_table_c[((index * 3)) + 1]
@@ -15,7 +21,7 @@ end
 
 function Saturate_soft_tanh_table(x)
    local value = ((((x) > (24.0) and (24.0) or ((x) < (-24.0) and (-24.0) or (x))) + 24.0) * 5.020833)
-   local cell = ((math.floor(value)) > (240) and (240) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local cell = clipValue(floor(value), 0, 240)
    local u = (value - (cell))
    local index = (cell * 3)
    return (Saturate_soft_tanh_table_c[(index) + 1] + (u * (Saturate_soft_tanh_table_c[((index + 1)) + 1] + (Saturate_soft_tanh_table_c[((index + 2)) + 1] * u))))

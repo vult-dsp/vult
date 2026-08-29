@@ -34,8 +34,7 @@ private float Array_dimension_sum(float[] data1, float[] data2) {
 private void Array_dimension_main() {
    float[] x = new float[]{1.0f, 2.0f};
    float[] y = new float[]{1.0f, 2.0f, 3.0f};
-   float z = (Array_dimension_total(x) + Array_dimension_total(y));
-   float k = Array_dimension_sum(x, y);
+   Array_dimension_sum(x, y);
 }
 
 

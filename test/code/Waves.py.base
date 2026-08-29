@@ -46,5 +46,5 @@ def Waves_test1():
 
 
 def Waves_test2():
-   result = Waves_sineTable2(0.5)
+   _ = Waves_sineTable2(0.5)
 

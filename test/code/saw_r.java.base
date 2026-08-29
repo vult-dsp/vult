@@ -367,8 +367,6 @@ private float Saw_r_process(Saw_r_process_type _ctx, float cv) {
    _ctx.phase = ((2.0f * _ctx.inc) + _ctx.phase);
    if ((_ctx.phase > 2.0f)) {
       _ctx.phase = (-2.0f + _ctx.phase);
-   } else {
-      _ctx.phase = _ctx.phase;
    }
    float ph = (-1.0f + _ctx.phase);
    float o = 0.0f;

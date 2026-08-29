@@ -30,8 +30,7 @@ static_inline fix16_t Array_dimension_sum(const std::array<fix16_t, SIZE_0>& dat
 static_inline void Array_dimension_main() {
    std::array<fix16_t, 2> x = { 0x10000 /* 1.000000 */, 0x20000 /* 2.000000 */ };
    std::array<fix16_t, 3> y = { 0x10000 /* 1.000000 */, 0x20000 /* 2.000000 */, 0x30000 /* 3.000000 */ };
-   fix16_t z = Array_dimension_total(x) + Array_dimension_total(y);
-   fix16_t k = Array_dimension_sum(x, y);
+   Array_dimension_sum(x, y);
 }
 
 

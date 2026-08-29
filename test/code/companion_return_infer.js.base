@@ -53,22 +53,20 @@ this.Companion_return_infer_current_int = function (_ctx) {
 };
 
 this.Companion_return_infer_wrapper_stateless = function () {
-   var unused = this.Companion_return_infer_choose_int((1|0));
    return this.Companion_return_infer_marker_int();
 };
 
 this.Companion_return_infer_wrapper_stateful = function (_ctx) {
-   var unused = this.Companion_return_infer_accum_int(_ctx.inst_1c525, (3|0));
+   this.Companion_return_infer_accum_int(_ctx.inst_1c525, (3|0));
    return this.Companion_return_infer_current_int(_ctx.inst_1c525);
 };
 
 this.Companion_return_infer_wrapper_instance = function (_ctx) {
-   var unused = this.Companion_return_infer_accum_int(_ctx.i1, (20|0));
+   this.Companion_return_infer_accum_int(_ctx.i1, (20|0));
    return this.Companion_return_infer_current_int(_ctx.i1);
 };
 
 this.Companion_return_infer_wrapper_qualified = function () {
-   var unused = this.Cret_lib_pick_int((1|0));
    return this.Cret_lib_tag_int();
 };
 

@@ -188,7 +188,7 @@ this.Delay_delay = function (_ctx, x, time, feedback) {
    time = ((time) < (0.0) ? (0.0) : ((time) > (1.0) ? (1.0) : (time)));
    feedback = ((feedback) < (0.0) ? (0.0) : ((feedback) > (1.0) ? (1.0) : (feedback)));
    var index_r = (30000.0 * time);
-   var index_i = ((Math.floor(index_r))|0);
+   var index_i = ((index_r)|0);
    var delta = ((-index_i) + _ctx.write_pos);
    var read_pos = (0|0);
    if ((delta < (0|0))) {
@@ -198,9 +198,33 @@ this.Delay_delay = function (_ctx, x, time, feedback) {
    }
    var decimal = (index_r + (-(index_i)));
    var x1 = _ctx.buffer[read_pos];
-   var x2 = _ctx.buffer[(((1|0) + read_pos) % (30000|0))];
+   var _wrap_temp_0 = ((1|0) + read_pos);
+   var x2 = 0.0;
+   if ((_wrap_temp_0 >= (30000|0))) {
+      if ((_wrap_temp_0 == (30000|0))) {
+         _wrap_temp_0 = (0|0);
+      } else {
+         _wrap_temp_0 = (_wrap_temp_0 % (30000|0));
+      }
+   } else {
+      if ((_wrap_temp_0 <= (-30000|0))) {
+         _wrap_temp_0 = (_wrap_temp_0 % (30000|0));
+      }
+   }
+   x2 = _ctx.buffer[_wrap_temp_0];
    var ret = (x1 + (decimal * (x2 + (-x1))));
-   _ctx.write_pos = (((1|0) + _ctx.write_pos) % (30000|0));
+   _ctx.write_pos = ((1|0) + _ctx.write_pos);
+   if ((_ctx.write_pos >= (30000|0))) {
+      if ((_ctx.write_pos == (30000|0))) {
+         _ctx.write_pos = (0|0);
+      } else {
+         _ctx.write_pos = (_ctx.write_pos % (30000|0));
+      }
+   } else {
+      if ((_ctx.write_pos <= (-30000|0))) {
+         _ctx.write_pos = (_ctx.write_pos % (30000|0));
+      }
+   }
    _ctx.buffer[_ctx.write_pos] = (((x + (feedback * ret))) < (-1.0) ? (-1.0) : (((x + (feedback * ret))) > (1.0) ? (1.0) : ((x + (feedback * ret)))));
    return ret;
 };

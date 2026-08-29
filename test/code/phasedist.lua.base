@@ -79,8 +79,6 @@ function Phasedist_phasor(_ctx, pitch, reset)
    end
    if (_ctx.phase > 1.0) then
       _ctx.phase = (-1.0 + _ctx.phase)
-   else
-      _ctx.phase = _ctx.phase
    end
    return _ctx.phase
 end

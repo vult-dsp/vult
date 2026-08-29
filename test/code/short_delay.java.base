@@ -45,10 +45,6 @@ static int float_to_int(float x) {
     return (int)x;
 }
 
-static float floor(float x) {
-    return (float)Math.floor(x);
-}
-
 static float[] initializeArray(float v, int size) {
     float[] a = new float[size];
     Arrays.fill(a, v);
@@ -188,12 +184,9 @@ private void Saturate_default() {
 
 private float Short_delay_soft(Short_delay_soft_type _ctx, float x1) {
    float o = (0.25f * (x1 + (_ctx.x2 + (_ctx.x3 + _ctx.x4))));
-   float _t_temp_0 = x1;
-   float _t_temp_1 = _ctx.x2;
-   float _t_temp_2 = _ctx.x3;
-   _ctx.x2 = _t_temp_0;
-   _ctx.x3 = _t_temp_1;
-   _ctx.x4 = _t_temp_2;
+   _ctx.x4 = _ctx.x3;
+   _ctx.x3 = _ctx.x2;
+   _ctx.x2 = x1;
    return o;
 }
 
@@ -201,7 +194,7 @@ private float Short_delay_do(Short_delay_do_type _ctx, float x, float time_in, f
    float time = clip(time_in, 0.0f, 1.0f);
    float feedback = clip(feedback_in, 0.0f, 1.0f);
    float index_r = (22050.0f * time);
-   int index_i = (int)(floor(index_r));
+   int index_i = (int)(index_r);
    int delta = ((-index_i) + _ctx.write_pos);
    int read_pos = 0;
    if ((delta < 0)) {
@@ -211,9 +204,33 @@ private float Short_delay_do(Short_delay_do_type _ctx, float x, float time_in, f
    }
    float decimal = (index_r + (-(float)(index_i)));
    float x1 = _ctx.buffer[read_pos];
-   float x2 = _ctx.buffer[((1 + read_pos) % 22050)];
+   int _wrap_temp_0 = (1 + read_pos);
+   float x2 = 0.0f;
+   if ((_wrap_temp_0 >= 22050)) {
+      if ((_wrap_temp_0 == 22050)) {
+         _wrap_temp_0 = 0;
+      } else {
+         _wrap_temp_0 = (_wrap_temp_0 % 22050);
+      }
+   } else {
+      if ((_wrap_temp_0 <= -22050)) {
+         _wrap_temp_0 = (_wrap_temp_0 % 22050);
+      }
+   }
+   x2 = _ctx.buffer[_wrap_temp_0];
    float ret = (x1 + (decimal * (x2 + (-x1))));
-   _ctx.write_pos = ((1 + _ctx.write_pos) % 22050);
+   _ctx.write_pos = (1 + _ctx.write_pos);
+   if ((_ctx.write_pos >= 22050)) {
+      if ((_ctx.write_pos == 22050)) {
+         _ctx.write_pos = 0;
+      } else {
+         _ctx.write_pos = (_ctx.write_pos % 22050);
+      }
+   } else {
+      if ((_ctx.write_pos <= -22050)) {
+         _ctx.write_pos = (_ctx.write_pos % 22050);
+      }
+   }
    _ctx.buffer[_ctx.write_pos] = Saturate_process((x + (feedback * ret)));
    return ret;
 }

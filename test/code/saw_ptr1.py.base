@@ -258,8 +258,6 @@ def Saw_ptr1_process(_ctx, cv):
    out = 0.0
    if (_ctx.phase > 1.0):
       _ctx.phase = (-1.0 + _ctx.phase)
-   else:
-      _ctx.phase = _ctx.phase
    if (_ctx.phase < s1):
       d = (_ctx.phase / _ctx.rate)
       out = (2.0 + (dc + (-2.0 * d)))

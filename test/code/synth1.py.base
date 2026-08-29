@@ -222,20 +222,15 @@ def Synth1_noteOn(_ctx, note, velocity, channel):
 def Synth1_noteOff(_ctx, note, channel):
    found = False
    if (note == _ctx.n1):
-      _t_temp_0 = _ctx.n2
-      _t_temp_1 = _ctx.n3
-      _t_temp_2 = _ctx.n4
-      _ctx.n1 = _t_temp_0
-      _ctx.n2 = _t_temp_1
-      _ctx.n3 = _t_temp_2
+      _ctx.n1 = _ctx.n2
+      _ctx.n2 = _ctx.n3
+      _ctx.n3 = _ctx.n4
       found = True
 
    else:
       if (note == _ctx.n2):
-         _t_temp_3 = _ctx.n3
-         _t_temp_4 = _ctx.n4
-         _ctx.n2 = _t_temp_3
-         _ctx.n3 = _t_temp_4
+         _ctx.n2 = _ctx.n3
+         _ctx.n3 = _ctx.n4
          found = True
 
       else:

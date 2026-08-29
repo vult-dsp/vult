@@ -108,20 +108,15 @@ void Synth1_noteOn(Synth1_process_type& _ctx, int32_t note, int32_t velocity, in
 void Synth1_noteOff(Synth1_process_type& _ctx, int32_t note, int32_t channel) {
    bool found = false;
    if (note == _ctx.n1) {
-      int32_t _t_temp_0 = _ctx.n2;
-      int32_t _t_temp_1 = _ctx.n3;
-      int32_t _t_temp_2 = _ctx.n4;
-      _ctx.n1 = _t_temp_0;
-      _ctx.n2 = _t_temp_1;
-      _ctx.n3 = _t_temp_2;
+      _ctx.n1 = _ctx.n2;
+      _ctx.n2 = _ctx.n3;
+      _ctx.n3 = _ctx.n4;
       found = true;
    }
    else {
       if (note == _ctx.n2) {
-         int32_t _t_temp_3 = _ctx.n3;
-         int32_t _t_temp_4 = _ctx.n4;
-         _ctx.n2 = _t_temp_3;
-         _ctx.n3 = _t_temp_4;
+         _ctx.n2 = _ctx.n3;
+         _ctx.n3 = _ctx.n4;
          found = true;
       }
       else {

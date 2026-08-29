@@ -11,4 +11,8 @@ fun bar(){
 	r,t,_ = t,r,0;
 	val t1,t2;
 	t1,t2 = 3,6;
+
+	val q1,q2,q3,q4 = 1,2,3,4;
+	q2,q3,q4 = q1,q2,q3;
+	return x+y+z+w+a+b+c+d+r+t+t1+t2+q2+q3+q4;
 }

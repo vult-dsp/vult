@@ -352,8 +352,6 @@ private float Saw_ptr1_process(Saw_ptr1_process_type _ctx, float cv) {
    float out = 0.0f;
    if ((_ctx.phase > 1.0f)) {
       _ctx.phase = (-1.0f + _ctx.phase);
-   } else {
-      _ctx.phase = _ctx.phase;
    }
    if ((_ctx.phase < s1)) {
       {

@@ -4,8 +4,5 @@ Constants_str = {};
 Constants_num = {};
 Constants_some_array = {};
 function Constants_foo()
-   local i = 1
-   local s = "hello"
-   local x = Constants_some_array[1]
 end
 

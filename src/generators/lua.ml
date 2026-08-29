@@ -46,62 +46,77 @@ let rec isValueOrIf (e : exp) =
 (* Only the runtime pieces used by the generated code are emitted. Simple
    builtins like eps, pi, clip, real, int, bool are inlined by the printer. *)
 
-let luajit_detection =
-  {%pla|-- LuaJIT detection and optimization
+let luajit_detection = {%pla|-- LuaJIT detection
 local isLuaJIT = type(jit) == "table" and jit.version
 <#>|}
 
 let initialize_array_runtime =
   {%pla|
--- Optimized array creation for LuaJIT using FFI
+-- Numeric arrays use FFI storage under LuaJIT, tables everywhere else.
 local initializeArray
 if isLuaJIT then
     local ffi = require("ffi")
-    ffi.cdef[[
-        typedef struct { double data[1]; } vult_array_t;
-    ]]
-    
-    function initializeArray(v, n) 
+    function initializeArray(v, n)
         if type(v) == "number" then
-            -- Use FFI for numeric arrays in LuaJIT
-            local arr = ffi.new("double[?]", n)
-            for i = 0, n-1 do arr[i] = v end
-            return setmetatable({}, {
-                __index = function(t, k) return arr[k-1] end,
-                __newindex = function(t, k, v) arr[k-1] = v end,
-                __len = function() return n end
-            })
+            -- One-based, so element zero is unused. This is cdata, not a
+            -- table: indexing works, '#' and pairs() do not.
+            local a = ffi.new("double[?]", n + 1)
+            for i = 1, n do a[i] = v end
+            return a
         else
-            -- Fallback for non-numeric values
-            local a = {} 
-            for i=1, n do a[i] = v end 
-            return a 
+            local a = {}
+            for i = 1, n do a[i] = v end
+            return a
         end
     end
 else
-    -- Standard Lua implementation
-    function initializeArray(v, n) 
-        local a = {} 
-        for i=1, n do a[i] = v end 
-        return a 
+    function initializeArray(v, n)
+        local a = {}
+        for i = 1, n do a[i] = v end
+        return a
     end
 end
 <#>|}
 
-(* Math builtins resolved to local aliases of the math module. *)
-let math_local_functions =
-  ["sin"; "cos"; "abs"; "exp"; "floor"; "ceil"; "tan"; "tanh"; "sqrt"; "asin"; "acos"; "atan"; "min"; "max"]
+(* Builtins Lua exposes as 'math.<name>' under the same name. atan2 and log10
+   are absent: later Lua versions dropped them, so they need a fallback. *)
+let math_builtins : Core.Builtin.t list =
+  [Sin; Cos; Abs; Exp; Floor; Ceil; Tan; Tanh; Sinh; Cosh; Sqrt; Log; Asin; Acos; Atan; Min; Max]
+
+(* 'modf' is not a Vult builtin; it is how the 'int' conversion is emitted. *)
+let math_local_functions = CCList.map Core.Builtin.name math_builtins @ ["modf"]
+
+let local_math_name path =
+  let prefix = "math." in
+  let prefix_length = String.length prefix in
+  let name =
+    if String.length path > prefix_length && String.sub path 0 prefix_length = prefix then
+      String.sub path prefix_length (String.length path - prefix_length)
+    else path
+  in
+  if CCList.exists (String.equal name) math_local_functions then Some name else None
+
+let rec is_repeatable_exp (e : exp) =
+  match e.e with
+  | EUnit | EBool _ | EInt _ | EReal _ | EString _ | EId _ | EFixed _ ->
+      true
+  | EUnOp (_, e) | EMember (e, _) | ETMember (e, _) ->
+      is_repeatable_exp e
+  | EOp (_, lhs, rhs) | EIndex {e= lhs; index= rhs} ->
+      is_repeatable_exp lhs && is_repeatable_exp rhs
+  | EEmptyValue | EArray _ | ECall _ | EIf _ | ETuple _ | ERecord _ ->
+      false
 
 let bit_ops_runtime =
   {%pla|
--- Bit operations optimized for LuaJIT
+-- Bit operations, using the LuaJIT bit library when available
 local lshift, rshift
 if isLuaJIT then
     local bit = require("bit")
     lshift = bit.lshift
     rshift = bit.rshift
 else
-    -- Fallback to arithmetic operations for standard Lua
+    -- Arithmetic fallback for standard Lua
     function lshift(a, b) return a * (2 ^ b) end
     function rshift(a, b) return math.floor(a / (2 ^ b)) end
 end
@@ -118,9 +133,12 @@ let core_runtime_functions =
     , {%pla|function int16(x)           local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end<#>|}
     )
   ; ("intDiv", {%pla|function intDiv(a, b)       return math.floor(a / b) end<#>|})
+  ; ( "clipValue"
+    , {%pla|local function clipValue(x, low, high) if x > high then return high elseif x < low then return low else return x end end<#>|}
+    )
   ; ("list_clear", {%pla|function list_clear(t)      for k in pairs(t) do t[k] = nil end end<#>|}) ]
 
-let runtime (stmts : prog) =
+let runtime (args : Util.Args.args) (stmts : prog) =
   let calls = Usage.calledFunctions stmts in
   let uses name = Util.Maps.Set.mem name calls in
   let uses_shifts =
@@ -138,21 +156,46 @@ let runtime (stmts : prog) =
       stmts
   in
   let uses_core name =
-    match name with "ifExpressionValue" -> uses_if_value | "ifExpression" -> uses_if_closure | _ -> uses name
+    match name with
+    | "ifExpressionValue" ->
+        uses_if_value
+    | "ifExpression" ->
+        uses_if_closure
+    | "clipValue" ->
+        Usage.existsExp
+          (fun e ->
+            match e.e with
+            | ECall {path= "clip"; args= [x; low; high]} ->
+                not (is_repeatable_exp x && is_repeatable_exp low && is_repeatable_exp high)
+            | _ ->
+                false )
+          stmts
+    | _ ->
+        uses name
   in
   let initialize_array = if uses "initializeArray" then initialize_array_runtime else Pla.unit in
   let math_locals =
-    let used = CCList.filter uses math_local_functions in
+    let uses_math name = uses name || uses ("math." ^ name) || (String.equal name "modf" && uses "int") in
+    let used = CCList.filter uses_math math_local_functions in
+    (* Functions dropped by later Lua versions need a fallback, not an alias. *)
+    let uses_atan2 = uses_math "atan2" in
     let atan2 =
-      if uses "atan2" then
+      if uses_atan2 then
         (* math.atan2 was removed in Lua 5.4; the two-argument math.atan replaces it *)
         {%pla|local atan2 = math.atan2 or function(y, x) return math.atan(y, x) end<#>|}
       else Pla.unit
     in
-    if CCList.is_empty used && not (uses "atan2") then Pla.unit
+    let uses_log10 = uses_math "log10" in
+    let log10 =
+      if uses_log10 then
+        (* math.log10 was removed in Lua 5.3; the two-argument math.log replaces it *)
+        {%pla|local log10 = math.log10 or function(x) return math.log(x, 10) end<#>|}
+      else Pla.unit
+    in
+    if CCList.is_empty used && (not uses_atan2) && not uses_log10 then Pla.unit
     else
       let aliases = Pla.map_join (fun name -> {%pla|local <#name#s> = math.<#name#s><#>|}) used in
-      {%pla|<#>-- Math functions<#><#aliases#><#atan2#>|}
+      {%pla|<#>-- Math functions<#><#aliases#><#atan2#><#log10#>|}
   in
   let bit_ops = if uses_shifts then bit_ops_runtime else Pla.unit in
   let core =
@@ -161,7 +204,8 @@ let runtime (stmts : prog) =
     in
     if CCList.is_empty fragments then Pla.unit else Pla.join ({%pla|<#>-- Core runtime functions<#>|} :: fragments)
   in
-  let needs_luajit_detection = uses "initializeArray" || uses_shifts in
+  let performance_template = match args.template with Some "performance" -> true | _ -> false in
+  let needs_luajit_detection = uses "initializeArray" || uses_shifts || performance_template in
   let detection = if needs_luajit_detection then luajit_detection else Pla.unit in
   {%pla|<#><#detection#><#initialize_array#><#math_locals#><#bit_ops#><#core#><#>|}
 
@@ -237,82 +281,92 @@ let rec print_exp e =
       Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
   | ECall {path; args} -> (
     (* Use optimized functions when available *)
-    match (path, args) with
-    | "lshift", [a; b] ->
+    match (local_math_name path, path, args) with
+    | Some name, _, _ ->
+        let args = Pla.map_sep Pla.commaspace print_exp args in
+        {%pla|<#name#s>(<#args#>)|}
+    | None, ("atan2" | "math.atan2"), _ ->
+        let args = Pla.map_sep Pla.commaspace print_exp args in
+        {%pla|atan2(<#args#>)|}
+    | None, ("log10" | "math.log10"), _ ->
+        let args = Pla.map_sep Pla.commaspace print_exp args in
+        {%pla|log10(<#args#>)|}
+    | None, "lshift", [a; b] ->
         let a = print_exp a in
         let b = print_exp b in
         {%pla|lshift(<#a#>, <#b#>)|}
-    | "rshift", [a; b] ->
+    | None, "rshift", [a; b] ->
         let a = print_exp a in
         let b = print_exp b in
         {%pla|rshift(<#a#>, <#b#>)|}
-    | ("sin" | "cos" | "abs" | "exp" | "floor" | "ceil" | "tan" | "tanh" | "sqrt"), _
-    | ("asin" | "acos" | "atan" | "atan2" | "min" | "max"), _ ->
-        let args = Pla.map_sep Pla.commaspace print_exp args in
-        {%pla|<#path#s>(<#args#>)|}
     (* List operations *)
-    | "list_size", [e1] ->
+    | None, "list_size", [e1] ->
         let e1 = print_exp e1 in
         {%pla|#<#e1#>|}
-    | "list_capacity", [_] ->
+    | None, "list_capacity", [_] ->
         {%pla|2147483647|}
-    | "list_append", [l; v] ->
+    | None, "list_append", [l; v] ->
         let l = print_exp l in
         let v = print_exp v in
         {%pla|table.insert(<#l#>, <#v#>)|}
-    | "list_insert", [l; i; v] ->
+    | None, "list_insert", [l; i; v] ->
         let l = print_exp l in
         let i = print_exp i in
         let v = print_exp v in
         {%pla|table.insert(<#l#>, <#i#> + 1, <#v#>)|}
-    | "list_remove", [l; i] ->
+    | None, "list_remove", [l; i] ->
         let l = print_exp l in
         let i = print_exp i in
         {%pla|table.remove(<#l#>, <#i#> + 1)|}
-    | "list_clear", [e1] ->
+    | None, "list_clear", [e1] ->
         let e1 = print_exp e1 in
         {%pla|list_clear(<#e1#>)|}
-    | "list_reserve", [_; _] ->
+    | None, "list_reserve", [_; _] ->
         (* No-op for Lua *)
         {%pla|nil|}
-    | "list_get", [l; i] ->
+    | None, "list_get", [l; i] ->
         let l = print_exp l in
         let i = print_exp i in
         (* Inline index+1 to avoid function call overhead *)
         {%pla|<#l#>[(<#i#>) + 1]|}
-    | "list_set", [l; i; v] ->
+    | None, "list_set", [l; i; v] ->
         let l = print_exp l in
         let i = print_exp i in
         let v = print_exp v in
         (* Lua is 1-based *)
         {%pla|<#l#>[<#i#> + 1] = <#v#>|}
     (* Inline simple builtins to avoid function call overhead *)
-    | "eps", [] ->
+    | None, "eps", [] ->
         {%pla|1e-18|}
-    | "pi", [] ->
+    | None, "pi", [] ->
         {%pla|3.1415926535897932384|}
-    | "real", [x] ->
+    | None, "real", [x] ->
         let x = print_exp x in
         {%pla|(<#x#>)|}
-    | "int", [x] ->
+    | None, "int", [x] ->
         (* Inline int conversion using math.modf (truncates towards zero) *)
         let x = print_exp x in
-        {%pla|(math.modf(<#x#>))|}
-    | "bool", [x] ->
+        {%pla|(modf(<#x#>))|}
+    | None, "bool", [x] ->
         (* Inline bool conversion *)
         let x = print_exp x in
         {%pla|((<#x#>) ~= 0 and (<#x#>) ~= false)|}
-    | "not_", [x] ->
+    | None, "not_", [x] ->
         (* Inline logical not *)
         let x = print_exp x in
         {%pla|(not (<#x#>))|}
-    | "clip", [x; low; high] ->
+    | None, "clip", [x; low; high] when is_repeatable_exp x && is_repeatable_exp low && is_repeatable_exp high ->
         (* Inline clip as: (x > high) and high or ((x < low) and low or x) *)
         let x = print_exp x in
         let low = print_exp low in
         let high = print_exp high in
         {%pla|((<#x#>) > (<#high#>) and (<#high#>) or ((<#x#>) < (<#low#>) and (<#low#>) or (<#x#>)))|}
-    | _ ->
+    | None, "clip", [x; low; high] ->
+        let x = print_exp x in
+        let low = print_exp low in
+        let high = print_exp high in
+        {%pla|clipValue(<#x#>, <#low#>, <#high#>)|}
+    | None, _, _ ->
         let args = Pla.map_sep Pla.commaspace print_exp args in
         {%pla|<#path#s>(<#args#>)|} )
   | EUnOp (op, e) ->
@@ -486,5 +540,5 @@ let generate (args : Util.Args.args) (stmts : top_stmt list) =
   let file = Common.setExt ".lua" args.output in
   let code = print_prog args stmts in
   let pre, post = getTemplateCode args stmts in
-  let runtime = runtime stmts in
+  let runtime = runtime args stmts in
   [({%pla|<#runtime#><#pre#><#code#><#post#>|}, file)]

@@ -1,5 +1,11 @@
 
 
+-- Math functions
+local floor = math.floor
+
+-- Core runtime functions
+local function clipValue(x, low, high) if x > high then return high elseif x < low then return low else return x end end
+
 Waves_sineTable1_chan_0 = {};
 function Waves_sineTable1_samples()
    return 256
@@ -31,7 +37,7 @@ end
 
 function Waves_sineTable2(position)
    local value = (((position) > (1.0) and (1.0) or ((position) < (0.0) and (0.0) or (position))) * 255.0)
-   local cell = ((math.floor(value)) > (254) and (254) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local cell = clipValue(floor(value), 0, 254)
    local u = (value - (cell))
    local index = (cell * 3)
    return (Waves_sineTable2_c[(index) + 1] + (u * (Waves_sineTable2_c[((index + 1)) + 1] + (Waves_sineTable2_c[((index + 2)) + 1] * u))))
@@ -49,6 +55,6 @@ function Waves_test1()
 end
 
 function Waves_test2()
-   local result = Waves_sineTable2(0.5)
+   Waves_sineTable2(0.5)
 end
 

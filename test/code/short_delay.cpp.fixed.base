@@ -11,22 +11,11 @@ void Short_delay_do_type_init(Short_delay_do_type& _ctx) {
    _ctx.write_pos = 0;
 }
 
-fix16_t Short_delay_soft(Short_delay_soft_type& _ctx, fix16_t x1) {
-   fix16_t o = ((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4) >> 2);
-   fix16_t _t_temp_0 = x1;
-   fix16_t _t_temp_1 = _ctx.x2;
-   fix16_t _t_temp_2 = _ctx.x3;
-   _ctx.x2 = _t_temp_0;
-   _ctx.x3 = _t_temp_1;
-   _ctx.x4 = _t_temp_2;
-   return o;
-}
-
 fix16_t Short_delay_do(Short_delay_do_type& _ctx, fix16_t x, fix16_t time_in, fix16_t feedback_in) {
    fix16_t time = fix_clip(time_in, 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */);
    fix16_t feedback = fix_clip(feedback_in, 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */);
    fix16_t index_r = fix_mul(0x56220000 /* 22050.000000 */, time);
-   int32_t index_i = fix_to_int(fix_floor(index_r));
+   int32_t index_i = fix_to_int(index_r);
    int32_t delta = (- index_i) + _ctx.write_pos;
    int32_t read_pos = 0;
    if (delta < 0) {
@@ -37,9 +26,37 @@ fix16_t Short_delay_do(Short_delay_do_type& _ctx, fix16_t x, fix16_t time_in, fi
    }
    fix16_t decimal = index_r + (- int_to_fix(index_i));
    fix16_t x1 = _ctx.buffer[static_cast<uint32_t>(read_pos)];
-   fix16_t x2 = _ctx.buffer[static_cast<uint32_t>((1 + read_pos) % 22050)];
+   int32_t _wrap_temp_0 = 1 + read_pos;
+   fix16_t x2 = 0x0 /* 0.000000 */;
+   if (_wrap_temp_0 >= 22050) {
+      if (_wrap_temp_0 == 22050) {
+         _wrap_temp_0 = 0;
+      }
+      else {
+         _wrap_temp_0 = _wrap_temp_0 % 22050;
+      }
+   }
+   else {
+      if (_wrap_temp_0 <= -22050) {
+         _wrap_temp_0 = _wrap_temp_0 % 22050;
+      }
+   }
+   x2 = _ctx.buffer[static_cast<uint32_t>(_wrap_temp_0)];
    fix16_t ret = x1 + fix_mul(decimal, x2 + (- x1));
-   _ctx.write_pos = (1 + _ctx.write_pos) % 22050;
+   _ctx.write_pos = 1 + _ctx.write_pos;
+   if (_ctx.write_pos >= 22050) {
+      if (_ctx.write_pos == 22050) {
+         _ctx.write_pos = 0;
+      }
+      else {
+         _ctx.write_pos = _ctx.write_pos % 22050;
+      }
+   }
+   else {
+      if (_ctx.write_pos <= -22050) {
+         _ctx.write_pos = _ctx.write_pos % 22050;
+      }
+   }
    _ctx.buffer[static_cast<uint32_t>(_ctx.write_pos)] = Saturate_process(x + fix_mul(feedback, ret));
    return ret;
 }

@@ -311,8 +311,6 @@ function Saw_r_process(_ctx, cv)
    _ctx.phase = ((Float32(2.0) * _ctx.inc) + _ctx.phase)
    if (_ctx.phase > Float32(2.0))
       _ctx.phase = (Float32(-2.0) + _ctx.phase)
-   else
-      _ctx.phase = _ctx.phase
    end
    ph = (Float32(-1.0) + _ctx.phase)
    o = Float32(0.0)

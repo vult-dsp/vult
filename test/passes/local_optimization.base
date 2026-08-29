@@ -1,0 +1,72 @@
+struct Local_optimization_effects_type {
+   state : real;
+}
+
+struct Local_optimization_keep_effects_type {
+   inst_13b67 : struct Local_optimization_effects_type;
+   inst_23b67 : struct Local_optimization_effects_type;
+}
+
+fun Local_optimization_effects_type_alloc() : struct Local_optimization_effects_type {
+   val _ctx : struct Local_optimization_effects_type;
+   (_ctx : struct Local_optimization_effects_type).state = 0.0;
+   return (_ctx : struct Local_optimization_effects_type);
+}
+
+fun Local_optimization_keep_effects_type_alloc() : struct Local_optimization_keep_effects_type {
+   val _ctx : struct Local_optimization_keep_effects_type;
+   (_ctx : struct Local_optimization_keep_effects_type).inst_13b67 = (Local_optimization_effects_type_alloc() : struct Local_optimization_effects_type);
+   (_ctx : struct Local_optimization_keep_effects_type).inst_23b67 = (Local_optimization_effects_type_alloc() : struct Local_optimization_effects_type);
+   return (_ctx : struct Local_optimization_keep_effects_type);
+}
+
+fun Local_optimization_square(const x : real) : real {
+   return ((x : real) * (x : real));
+}
+
+fun Local_optimization_cse(const x : real) : real {
+   val a : real;
+   val _cse_temp_0 : real = (Local_optimization_square((x : real)) : real);
+   (a : real) = (1.0 + (_cse_temp_0 : real));
+   val b : real;
+   (b : real) = (2.0 + (_cse_temp_0 : real));
+   return ((a : real) + (b : real));
+}
+
+fun Local_optimization_effects(_ctx : struct Local_optimization_effects_type, x : real) : real {
+   (_ctx : struct Local_optimization_effects_type).state = ((x : real) + (_ctx : struct Local_optimization_effects_type).state);
+   return (_ctx : struct Local_optimization_effects_type).state;
+}
+
+fun Local_optimization_keep_effects(_ctx : struct Local_optimization_keep_effects_type, x : real) : real {
+   return ((Local_optimization_effects((_ctx : struct Local_optimization_keep_effects_type).inst_13b67, (x : real)) : real) + (Local_optimization_effects((_ctx : struct Local_optimization_keep_effects_type).inst_23b67, (x : real)) : real));
+}
+
+fun Local_optimization_range(const x : real, position : int) : int {
+   val clipped : real;
+   (clipped : real) = (clip((x : real), 0.0, 1.0) : real);
+   val scaled : real;
+   (scaled : real) = (8.0 * (clipped : real));
+   val index : int;
+   (index : int) = (int((scaled : real)) : int);
+   (position : int) = ((1 + (position : int)) % 8);
+   return ((index : int) + (position : int));
+}
+
+fun Local_optimization_wrap(position : int) : int {
+   (position : int) = (1 + (position : int));
+   if (((position : int) >= 64)) if (((position : int) == 64)) (position : int) = 0;
+   else (position : int) = ((position : int) % 64);
+   else if (((position : int) <= -64)) (position : int) = ((position : int) % 64);
+   return (position : int);
+}
+
+fun Local_optimization_read_delayed(const buffer : real[64], const position : int) : real {
+   val _wrap_temp_0 : int;
+   (_wrap_temp_0 : int) = (1 + (position : int));
+   if (((_wrap_temp_0 : int) >= 64)) if (((_wrap_temp_0 : int) == 64)) (_wrap_temp_0 : int) = 0;
+   else (_wrap_temp_0 : int) = ((_wrap_temp_0 : int) % 64);
+   else if (((_wrap_temp_0 : int) <= -64)) (_wrap_temp_0 : int) = ((_wrap_temp_0 : int) % 64);
+   return (buffer : real[64])[(_wrap_temp_0 : int)];
+}
+

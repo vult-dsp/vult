@@ -8,7 +8,5 @@ function Record_init_point_alloc()
 end
 
 function Record_init_foo()
-   local _record_0 = { x = 0.0, y = 0.0 }
-   local p1 = _record_0.x
 end
 

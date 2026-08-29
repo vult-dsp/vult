@@ -77,7 +77,7 @@ float Delay_delay(Delay_delay_type& _ctx, float x, float time, float feedback) {
    time = float_clip(time, 0.0f, 1.0f);
    feedback = float_clip(feedback, 0.0f, 1.0f);
    float index_r = 30000.0f * time;
-   int32_t index_i = float_to_int(floorf(index_r));
+   int32_t index_i = float_to_int(index_r);
    int32_t delta = (- index_i) + _ctx.write_pos;
    int32_t read_pos = 0;
    if (delta < 0) {
@@ -88,9 +88,37 @@ float Delay_delay(Delay_delay_type& _ctx, float x, float time, float feedback) {
    }
    float decimal = index_r + (- int_to_float(index_i));
    float x1 = _ctx.buffer[static_cast<uint32_t>(read_pos)];
-   float x2 = _ctx.buffer[static_cast<uint32_t>((1 + read_pos) % 30000)];
+   int32_t _wrap_temp_0 = 1 + read_pos;
+   float x2 = 0.0f;
+   if (_wrap_temp_0 >= 30000) {
+      if (_wrap_temp_0 == 30000) {
+         _wrap_temp_0 = 0;
+      }
+      else {
+         _wrap_temp_0 = _wrap_temp_0 % 30000;
+      }
+   }
+   else {
+      if (_wrap_temp_0 <= -30000) {
+         _wrap_temp_0 = _wrap_temp_0 % 30000;
+      }
+   }
+   x2 = _ctx.buffer[static_cast<uint32_t>(_wrap_temp_0)];
    float ret = x1 + decimal * (x2 + (- x1));
-   _ctx.write_pos = (1 + _ctx.write_pos) % 30000;
+   _ctx.write_pos = 1 + _ctx.write_pos;
+   if (_ctx.write_pos >= 30000) {
+      if (_ctx.write_pos == 30000) {
+         _ctx.write_pos = 0;
+      }
+      else {
+         _ctx.write_pos = _ctx.write_pos % 30000;
+      }
+   }
+   else {
+      if (_ctx.write_pos <= -30000) {
+         _ctx.write_pos = _ctx.write_pos % 30000;
+      }
+   }
    _ctx.buffer[static_cast<uint32_t>(_ctx.write_pos)] = float_clip(x + feedback * ret, -1.0f, 1.0f);
    return ret;
 }

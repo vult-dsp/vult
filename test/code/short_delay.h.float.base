@@ -94,7 +94,13 @@ static_inline void Saturate_controlChange(int32_t control, int32_t value, int32_
 static_inline void Saturate_default() {
 }
 
-float Short_delay_soft(Short_delay_soft_type& _ctx, float x1);
+static_inline float Short_delay_soft(Short_delay_soft_type& _ctx, float x1) {
+   float o = 0.25f * (x1 + _ctx.x2 + _ctx.x3 + _ctx.x4);
+   _ctx.x4 = _ctx.x3;
+   _ctx.x3 = _ctx.x2;
+   _ctx.x2 = x1;
+   return o;
+}
 
 float Short_delay_do(Short_delay_do_type& _ctx, float x, float time_in, float feedback_in);
 

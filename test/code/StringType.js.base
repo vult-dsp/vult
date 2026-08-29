@@ -10,6 +10,7 @@ this.StringType_test2 = function () {
    var str2 = this.string(1.0);
    var str3 = this.string(1.0);
    var str4 = this.string(true);
+   return (((str1 + str2) + str3) + str4);
 };
 
 this.StringType_test3 = function (a, b) {
@@ -17,8 +18,6 @@ this.StringType_test3 = function (a, b) {
 };
 
 this.StringType_test4 = function () {
-   var str = "text";
    this.StringType_test3("first", "second");
-   var i = ((6|0) + this.length(str));
 };
 

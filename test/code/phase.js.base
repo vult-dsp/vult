@@ -253,8 +253,6 @@ this.Phase_process = function (_ctx, cv, reset) {
    }
    if ((_ctx.phase > 1024.0)) {
       _ctx.phase = (-1024.0 + _ctx.phase);
-   } else {
-      _ctx.phase = _ctx.phase;
    }
    return (0.000976 * _ctx.phase);
 };

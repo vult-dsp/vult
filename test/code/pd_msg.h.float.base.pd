@@ -87,7 +87,6 @@ static_inline void Pd_msg_mute(Pd_msg_process_type& _ctx, bool on) {
 }
 
 static_inline void Pd_msg_setLabel(Pd_msg_process_type& _ctx, std::string name) {
-   _ctx.level = _ctx.level;
 }
 
 

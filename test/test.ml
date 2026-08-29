@@ -247,7 +247,10 @@ let interpreter =
   ; ("instance_state.vult", 7000)
   ; ("int16_test.vult", 1000)
   ; ("memory_state.vult", 6000)
+  ; ("nonnegative_floor.vult", 1)
+  ; ("parallel_assign.vult", 1267)
   ; ("qualified_enum_patterns.vult", 100)
+  ; ("range_optimization.vult", -1)
   ; ("strength_reduction.vult", 523)
   ; ("type_intrinsics.vult", 1000) ]
 
@@ -262,6 +265,7 @@ let passes_files =
   ; "constant_folding.vult"
   ; "algebraic_identities.vult"
   ; "strength_reduction.vult"
+  ; "local_optimization.vult"
   ; "external_calls.vult"
   ; "output_references.vult"
   ; "nested_if.vult"

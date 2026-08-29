@@ -87,12 +87,9 @@ this.Saturate_default = function () {
 
 this.Short_delay_soft = function (_ctx, x1) {
    var o = (0.25 * (x1 + (_ctx.x2 + (_ctx.x3 + _ctx.x4))));
-   var _t_temp_0 = x1;
-   var _t_temp_1 = _ctx.x2;
-   var _t_temp_2 = _ctx.x3;
-   _ctx.x2 = _t_temp_0;
-   _ctx.x3 = _t_temp_1;
-   _ctx.x4 = _t_temp_2;
+   _ctx.x4 = _ctx.x3;
+   _ctx.x3 = _ctx.x2;
+   _ctx.x2 = x1;
    return o;
 };
 
@@ -100,7 +97,7 @@ this.Short_delay_do = function (_ctx, x, time_in, feedback_in) {
    var time = ((time_in) < (0.0) ? (0.0) : ((time_in) > (1.0) ? (1.0) : (time_in)));
    var feedback = ((feedback_in) < (0.0) ? (0.0) : ((feedback_in) > (1.0) ? (1.0) : (feedback_in)));
    var index_r = (22050.0 * time);
-   var index_i = ((Math.floor(index_r))|0);
+   var index_i = ((index_r)|0);
    var delta = ((-index_i) + _ctx.write_pos);
    var read_pos = (0|0);
    if ((delta < (0|0))) {
@@ -110,9 +107,33 @@ this.Short_delay_do = function (_ctx, x, time_in, feedback_in) {
    }
    var decimal = (index_r + (-(index_i)));
    var x1 = _ctx.buffer[read_pos];
-   var x2 = _ctx.buffer[(((1|0) + read_pos) % (22050|0))];
+   var _wrap_temp_0 = ((1|0) + read_pos);
+   var x2 = 0.0;
+   if ((_wrap_temp_0 >= (22050|0))) {
+      if ((_wrap_temp_0 == (22050|0))) {
+         _wrap_temp_0 = (0|0);
+      } else {
+         _wrap_temp_0 = (_wrap_temp_0 % (22050|0));
+      }
+   } else {
+      if ((_wrap_temp_0 <= (-22050|0))) {
+         _wrap_temp_0 = (_wrap_temp_0 % (22050|0));
+      }
+   }
+   x2 = _ctx.buffer[_wrap_temp_0];
    var ret = (x1 + (decimal * (x2 + (-x1))));
-   _ctx.write_pos = (((1|0) + _ctx.write_pos) % (22050|0));
+   _ctx.write_pos = ((1|0) + _ctx.write_pos);
+   if ((_ctx.write_pos >= (22050|0))) {
+      if ((_ctx.write_pos == (22050|0))) {
+         _ctx.write_pos = (0|0);
+      } else {
+         _ctx.write_pos = (_ctx.write_pos % (22050|0));
+      }
+   } else {
+      if ((_ctx.write_pos <= (-22050|0))) {
+         _ctx.write_pos = (_ctx.write_pos % (22050|0));
+      }
+   }
    _ctx.buffer[_ctx.write_pos] = this.Saturate_process((x + (feedback * ret)));
    return ret;
 };

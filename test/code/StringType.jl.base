@@ -13,6 +13,7 @@ function StringType_test2()
    str2 = string(Float32(1.0))
    str3 = string(Float32(1.0))
    str4 = string(true)
+   return (((str1 + str2) + str3) + str4)
 end
 
 function StringType_test3(a, b)
@@ -20,8 +21,6 @@ function StringType_test3(a, b)
 end
 
 function StringType_test4()
-   str = "text"
    StringType_test3("first", "second")
-   i = (Int32(6) + length(str))
 end
 

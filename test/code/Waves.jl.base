@@ -50,6 +50,6 @@ function Waves_test1()
 end
 
 function Waves_test2()
-   result = Waves_sineTable2(Float32(0.5))
+   Waves_sineTable2(Float32(0.5))
 end
 

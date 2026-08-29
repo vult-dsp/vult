@@ -298,7 +298,18 @@ this.Util_cvTokHz = function (cv) {
 };
 
 this.Rescomb_delay = function (_ctx, x, cv) {
-   _ctx.write_pos = (((1|0) + _ctx.write_pos) % (675|0));
+   _ctx.write_pos = ((1|0) + _ctx.write_pos);
+   if ((_ctx.write_pos >= (675|0))) {
+      if ((_ctx.write_pos == (675|0))) {
+         _ctx.write_pos = (0|0);
+      } else {
+         _ctx.write_pos = (_ctx.write_pos % (675|0));
+      }
+   } else {
+      if ((_ctx.write_pos <= (-675|0))) {
+         _ctx.write_pos = (_ctx.write_pos % (675|0));
+      }
+   }
    _ctx.buffer[_ctx.write_pos] = x;
    var r_size = 675.0;
    var r_index = (((-this.Util_cvToperiod(cv)) + (_ctx.write_pos)) % r_size);

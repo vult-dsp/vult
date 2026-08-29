@@ -1,42 +1,39 @@
 
--- LuaJIT detection and optimization
+-- LuaJIT detection
 local isLuaJIT = type(jit) == "table" and jit.version
 
 
--- Optimized array creation for LuaJIT using FFI
+-- Numeric arrays use FFI storage under LuaJIT, tables everywhere else.
 local initializeArray
 if isLuaJIT then
     local ffi = require("ffi")
-    ffi.cdef[[
-        typedef struct { double data[1]; } vult_array_t;
-    ]]
-    
-    function initializeArray(v, n) 
+    function initializeArray(v, n)
         if type(v) == "number" then
-            -- Use FFI for numeric arrays in LuaJIT
-            local arr = ffi.new("double[?]", n)
-            for i = 0, n-1 do arr[i] = v end
-            return setmetatable({}, {
-                __index = function(t, k) return arr[k-1] end,
-                __newindex = function(t, k, v) arr[k-1] = v end,
-                __len = function() return n end
-            })
+            -- One-based, so element zero is unused. This is cdata, not a
+            -- table: indexing works, '#' and pairs() do not.
+            local a = ffi.new("double[?]", n + 1)
+            for i = 1, n do a[i] = v end
+            return a
         else
-            -- Fallback for non-numeric values
-            local a = {} 
-            for i=1, n do a[i] = v end 
-            return a 
+            local a = {}
+            for i = 1, n do a[i] = v end
+            return a
         end
     end
 else
-    -- Standard Lua implementation
-    function initializeArray(v, n) 
-        local a = {} 
-        for i=1, n do a[i] = v end 
-        return a 
+    function initializeArray(v, n)
+        local a = {}
+        for i = 1, n do a[i] = v end
+        return a
     end
 end
 
+
+-- Math functions
+local floor = math.floor
+
+-- Core runtime functions
+local function clipValue(x, low, high) if x > high then return high elseif x < low then return low else return x end end
 
 function Util_edge_type_alloc()
    local _ctx = {};
@@ -185,7 +182,7 @@ end
 
 function Util_pitchToRate_1024(pitch)
    local value = (((pitch) > (127.0) and (127.0) or ((pitch) < (0.0) and (0.0) or (pitch))) * 0.251968)
-   local cell = ((math.floor(value)) > (31) and (31) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local cell = clipValue(floor(value), 0, 31)
    local u = (value - (cell))
    local index = (cell * 3)
    return (Util_pitchToRate_1024_c[(index) + 1] + (u * (Util_pitchToRate_1024_c[((index + 1)) + 1] + (Util_pitchToRate_1024_c[((index + 2)) + 1] * u))))
@@ -206,7 +203,7 @@ end
 
 function Util_pitchToRate(pitch)
    local value = (((pitch) > (127.0) and (127.0) or ((pitch) < (0.0) and (0.0) or (pitch))) * 0.251968)
-   local cell = ((math.floor(value)) > (31) and (31) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local cell = clipValue(floor(value), 0, 31)
    local u = (value - (cell))
    local index = (cell * 3)
    return (Util_pitchToRate_c[(index) + 1] + (u * (Util_pitchToRate_c[((index + 1)) + 1] + (Util_pitchToRate_c[((index + 2)) + 1] * u))))
@@ -231,7 +228,7 @@ end
 
 function Util_cvToRate_1024(cv)
    local value = (((cv) > (0.9) and (0.9) or ((cv) < (0.0) and (0.0) or (cv))) * 35.555555)
-   local cell = ((math.floor(value)) > (31) and (31) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local cell = clipValue(floor(value), 0, 31)
    local u = (value - (cell))
    local index = (cell * 3)
    return (Util_cvToRate_1024_c[(index) + 1] + (u * (Util_cvToRate_1024_c[((index + 1)) + 1] + (Util_cvToRate_1024_c[((index + 2)) + 1] * u))))
@@ -252,7 +249,7 @@ end
 
 function Util_cvToRate(cv)
    local value = (((cv) > (0.9) and (0.9) or ((cv) < (0.0) and (0.0) or (cv))) * 142.222222)
-   local cell = ((math.floor(value)) > (127) and (127) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local cell = clipValue(floor(value), 0, 127)
    local u = (value - (cell))
    local index = (cell * 3)
    return (Util_cvToRate_c[(index) + 1] + (u * (Util_cvToRate_c[((index + 1)) + 1] + (Util_cvToRate_c[((index + 2)) + 1] * u))))
@@ -277,7 +274,7 @@ end
 
 function Util_cvToperiod(cv)
    local value = (((cv) > (1.0) and (1.0) or ((cv) < (0.0) and (0.0) or (cv))) * 32.0)
-   local cell = ((math.floor(value)) > (31) and (31) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local cell = clipValue(floor(value), 0, 31)
    local u = (value - (cell))
    local index = (cell * 3)
    return (Util_cvToperiod_c[(index) + 1] + (u * (Util_cvToperiod_c[((index + 1)) + 1] + (Util_cvToperiod_c[((index + 2)) + 1] * u))))
@@ -298,7 +295,7 @@ end
 
 function Util_cvTokHz(cv)
    local value = (((cv) > (1.0) and (1.0) or ((cv) < (0.0) and (0.0) or (cv))) * 32.0)
-   local cell = ((math.floor(value)) > (31) and (31) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local cell = clipValue(floor(value), 0, 31)
    local u = (value - (cell))
    local index = (cell * 3)
    return (Util_cvTokHz_c[(index) + 1] + (u * (Util_cvTokHz_c[((index + 1)) + 1] + (Util_cvTokHz_c[((index + 2)) + 1] * u))))

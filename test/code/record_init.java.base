@@ -26,8 +26,6 @@ public static class Record_init_point {
 }
 
 private void Record_init_foo() {
-   Record_init_point _record_0 = new Record_init_point(0.0f, 0.0f);
-   float p1 = _record_0.x;
 }
 
 

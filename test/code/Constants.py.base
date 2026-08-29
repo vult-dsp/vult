@@ -3,8 +3,5 @@ Constants_str = {}
 Constants_num = {}
 Constants_some_array = {}
 def Constants_foo():
-   i = 1
-   s = "hello"
-   x = Constants_some_array[0]
-
+   pass
 

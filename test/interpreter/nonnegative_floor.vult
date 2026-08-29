@@ -1,0 +1,46 @@
+// int(floor(e)) may only lose the floor when 'e' cannot be negative. Facts
+// learned before a branch or a loop do not survive an assignment made inside
+// one, and must not leak from one branch into the other.
+fun in_branch(c : bool, y : real) : int {
+   val x = 1.0;
+   val r = 0;
+   if (c) {
+      x = 0.0 - y;
+      r = int(floor(x));
+   }
+   return r;
+}
+
+fun in_loop(n : int) : int {
+   val x = 1.5;
+   val acc = 0;
+   val i = 0;
+   while (i < n) {
+      acc = acc + int(floor(x));
+      x = x - 2.0;
+      i = i + 1;
+   }
+   return acc;
+}
+
+fun between_branches(c : bool) : int {
+   val x = 4.5;
+   if (c) {
+      x = 0.0 - x;
+   }
+   else {
+      x = x + 1.0;
+   }
+   return int(floor(x));
+}
+
+// clip pins the value at or above zero, so the floor really is redundant here.
+fun still_folds(x : real) : int {
+   return int(floor(8.0 * clip(x, 0.0, 1.0)));
+}
+
+fun main() : int {
+   val branches = in_branch(true, 2.5) + between_branches(true);
+   val kept = branches + in_loop(3);
+   return (kept + still_folds(0.5)) + still_folds(2.0);
+}

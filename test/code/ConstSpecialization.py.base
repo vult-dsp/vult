@@ -225,17 +225,10 @@ def ConstSpecialization_process_matrix(m):
 
 
 def ConstSpecialization_main(_ctx):
-   r1 = ConstSpecialization_test_specialized_5()
-   r2 = ConstSpecialization_test_specialized_100()
-   r3 = ConstSpecialization_test_nonspec(50)
-   r4 = ConstSpecialization_test_weighted_spec()
-   r5 = ConstSpecialization_test_weighted_nonspec(0.5)
-   r6 = ConstSpecialization_test_interleaved_spec()
-   r7 = ConstSpecialization_test_interleaved_nonspec(1.5)
-   r8 = ConstSpecialization_test_accumulate_spec(_ctx.inst_13dfa)
-   r9 = ConstSpecialization_test_accumulate_nonspec(_ctx.inst_201fa, 3.0, 4.0)
-   r10 = ConstSpecialization_test_typed_int(_ctx.inst_3e2fa)
-   r11 = ConstSpecialization_test_typed_real(_ctx.inst_477fa)
+   _ = ConstSpecialization_test_accumulate_spec(_ctx.inst_13dfa)
+   _ = ConstSpecialization_test_accumulate_nonspec(_ctx.inst_201fa, 3.0, 4.0)
+   _ = ConstSpecialization_test_typed_int(_ctx.inst_3e2fa)
+   _ = ConstSpecialization_test_typed_real(_ctx.inst_477fa)
    inputs = initializeArray(0.0, 2)
    inputs[0] = 1.0
    inputs[1] = 2.0

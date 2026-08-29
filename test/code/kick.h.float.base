@@ -462,7 +462,14 @@ static_inline void Tricore_noteOff(Tricore_process_type& _ctx, int32_t note, int
 static_inline void Tricore_controlChange(Tricore_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
 }
 
-float Swept_process(Swept_process_type& _ctx, float gate, float start, float end, float rate);
+static_inline float Swept_process(Swept_process_type& _ctx, float gate, float start, float end, float rate) {
+   bool bgate = gate > 0.5f;
+   _ctx.out = 0.004f * rate * ((- _ctx.out) + 1024.0f * end) + _ctx.out;
+   if (Util_edge(_ctx.inst_10402, bgate)) {
+      _ctx.out = 1024.0f * start;
+   }
+   return 0.000976f * _ctx.out;
+}
 
 static_inline void Swept_noteOn(Swept_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
 }

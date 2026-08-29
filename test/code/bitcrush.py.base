@@ -24,7 +24,7 @@ def Bitcrush_factor(cv):
 
 
 def Bitcrush_process(i, cv):
-   out = i
+   out = 0.0
    if (cv == 0.0):
       out = i
    else:

@@ -1,0 +1,18 @@
+fun wrap(x:int) : int {
+   x = (x + 1) % 17;
+   return x;
+}
+
+fun increment_local(x:int) : int {
+   val y = x;
+   y = y + 1;
+   return y;
+}
+
+fun main() : int {
+   val a = wrap(16);
+   val b = wrap(-2);
+   val c = wrap(-18);
+   val d = wrap(33);
+   return a + b + c + d + increment_local(4) - 5;
+}

@@ -69,24 +69,20 @@ def Companion_return_infer_current_int(_ctx):
    return _ctx.total
 
 def Companion_return_infer_wrapper_stateless():
-   unused = Companion_return_infer_choose_int(1)
    return Companion_return_infer_marker_int()
 
-
 def Companion_return_infer_wrapper_stateful(_ctx):
-   unused = Companion_return_infer_accum_int(_ctx.inst_1c525, 3)
+   _ = Companion_return_infer_accum_int(_ctx.inst_1c525, 3)
    return Companion_return_infer_current_int(_ctx.inst_1c525)
 
 
 def Companion_return_infer_wrapper_instance(_ctx):
-   unused = Companion_return_infer_accum_int(_ctx.i1, 20)
+   _ = Companion_return_infer_accum_int(_ctx.i1, 20)
    return Companion_return_infer_current_int(_ctx.i1)
 
 
 def Companion_return_infer_wrapper_qualified():
-   unused = Cret_lib_pick_int(1)
    return Cret_lib_tag_int()
-
 
 def Companion_return_infer_main(_ctx):
    w1 = Companion_return_infer_wrapper_stateless()

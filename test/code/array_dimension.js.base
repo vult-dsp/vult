@@ -25,7 +25,6 @@ this.Array_dimension_sum = function (data1, data2) {
 this.Array_dimension_main = function () {
    var x = [1.0, 2.0];
    var y = [1.0, 2.0, 3.0];
-   var z = (this.Array_dimension_total(x) + this.Array_dimension_total(y));
-   var k = this.Array_dimension_sum(x, y);
+   this.Array_dimension_sum(x, y);
 };
 

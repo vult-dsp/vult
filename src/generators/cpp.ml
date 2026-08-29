@@ -92,9 +92,8 @@ let registerPrefix state name =
 
 let addPrefix state id = match Hashtbl.find_opt state.prefixed id with None -> id | Some prefix -> prefix
 
-(* References are printed by looking up the prefixed table, so every top-level
-   definition must be registered before anything is printed: with -split-files
-   a module can be printed before the module that defines the names it uses. *)
+(* Every definition must be registered before printing: with -split-files a
+   module can be printed before the one defining the names it uses. *)
 let registerAllDefinitions state (stmts : top_stmt list) =
   match state.args.output_prefix with
   | None ->
@@ -312,9 +311,11 @@ let rec print_exp state (prec : operator option) (e : exp) =
       let args = Pla.map_sep Pla.commaspace (print_exp state prec) fargs in
       {%pla|<#path#s>(<#args#>)|}
   | EUnOp (op, e) ->
-      let e = print_exp state None e in
+      (* A unary operator binds tighter than any binary one. *)
+      let operand = print_exp state None e in
+      let operand = match e.e with EOp _ -> {%pla|(<#operand#>)|} | _ -> operand in
       let op = uoperator op in
-      {%pla|(<#op#> <#e#>)|}
+      {%pla|(<#op#> <#operand#>)|}
   | EOp (op, e1, e2) ->
       let inner = Some op in
       let se1 = print_exp state inner e1 in
@@ -634,10 +635,8 @@ let getLegend (args : Util.Args.args) =
     | Some text ->
         Pla.wrap (Pla.string "/*") (Pla.string "*/") (Pla.string text) )
 
-(* The runtime is emitted along with the generated code so every project gets
-   the vultin files matching the compiler version. The emitted vultin.hpp
-   starts with the defines that disable the runtime features the program does
-   not use. Nothing is emitted when printing to stdout. *)
+(* Emits the vultin files matching the compiler version, headed by the defines
+   that disable unused runtime features. Skipped when printing to stdout. *)
 let vultinFiles (args : Util.Args.args) (stmts : top_stmt list) =
   match args.output with
   | None ->

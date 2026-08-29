@@ -348,8 +348,6 @@ function Phase_process(_ctx, cv, reset)
    end
    if (_ctx.phase > Float32(1024.0))
       _ctx.phase = (Float32(-1024.0) + _ctx.phase)
-   else
-      _ctx.phase = _ctx.phase
    end
    return (Float32(0.000976) * _ctx.phase)
 end

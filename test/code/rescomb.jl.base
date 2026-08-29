@@ -375,7 +375,18 @@ function Util_cvTokHz(cv)
 end
 
 function Rescomb_delay(_ctx, x, cv)
-   _ctx.write_pos = ((Int32(1) + _ctx.write_pos) % Int32(675))
+   _ctx.write_pos = (Int32(1) + _ctx.write_pos)
+   if (_ctx.write_pos >= Int32(675))
+      if (_ctx.write_pos == Int32(675))
+         _ctx.write_pos = Int32(0)
+      else
+         _ctx.write_pos = (_ctx.write_pos % Int32(675))
+      end
+   else
+      if (_ctx.write_pos <= Int32(-675))
+         _ctx.write_pos = (_ctx.write_pos % Int32(675))
+      end
+   end
    @inbounds _ctx.buffer[_ctx.write_pos + 1] = x
    r_size = Float32(675.0)
    r_index = mod(((-Util_cvToperiod(cv)) + Float32(_ctx.write_pos)), r_size)

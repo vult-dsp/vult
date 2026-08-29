@@ -43,7 +43,7 @@ static_inline fix16_t Waves_sineTable2(fix16_t position) {
 void Waves_test1();
 
 static_inline void Waves_test2() {
-   fix16_t result = Waves_sineTable2(0x8000 /* 0.500000 */);
+   Waves_sineTable2(0x8000 /* 0.500000 */);
 }
 
 

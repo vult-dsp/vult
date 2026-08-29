@@ -23,7 +23,7 @@ this.Bitcrush_factor = function (cv) {
 };
 
 this.Bitcrush_process = function (i, cv) {
-   var out = i;
+   var out = 0.0;
    if ((cv == 0.0)) {
       out = i;
    } else {

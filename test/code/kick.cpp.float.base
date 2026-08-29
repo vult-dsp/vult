@@ -55,7 +55,7 @@ float Noise_pinker(Noise_pinker_type& _ctx, float x) {
    float b0 = 0.027712f;
    float b1 = 0.027712f;
    float a1 = -0.944575f;
-   float w0 = x + (- a1 * _ctx.w1);
+   float w0 = x + (- (a1 * _ctx.w1));
    float y0 = b0 * w0 + b1 * _ctx.w1;
    _ctx.w1 = w0;
    return y0;
@@ -112,13 +112,10 @@ float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float d
          else {
             reset_speed = 0.5f;
          }
-         _ctx.reset_phase = (- reset_speed * _ctx.reset_phase) + _ctx.reset_phase;
+         _ctx.reset_phase = (- (reset_speed * _ctx.reset_phase)) + _ctx.reset_phase;
       }
       else {
-         if (_ctx.reset_phase > 10.0f) {
-            _ctx.reset_phase = _ctx.reset_phase;
-         }
-         else {
+         if ((not (_ctx.reset_phase > 10.0f))) {
             _ctx.reset_phase = 0.0f;
          }
          _ctx.reset_state = false;
@@ -128,16 +125,6 @@ float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float d
    }
    out = out + _ctx.phase;
    return 0.000976f * out;
-}
-
-float Swept_process(Swept_process_type& _ctx, float gate, float start, float end, float rate) {
-   float a_rate = 1.0f / (0.01f + 100.0f * rate);
-   bool bgate = gate > 0.5f;
-   _ctx.out = 0.004f * rate * ((- _ctx.out) + 1024.0f * end) + _ctx.out;
-   if (Util_edge(_ctx.inst_10402, bgate)) {
-      _ctx.out = 1024.0f * start;
-   }
-   return 0.000976f * _ctx.out;
 }
 
 void Ahr_do(Ahr_do_type& _ctx, float gate, float a, float h, float r) {

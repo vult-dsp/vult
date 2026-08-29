@@ -6,7 +6,5 @@ this.Record_init_point_alloc = function () {
 };
 
 this.Record_init_foo = function () {
-   var _record_0 = { x: 0.0, y: 0.0 };
-   var p1 = _record_0.x;
 };
 

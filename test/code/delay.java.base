@@ -41,10 +41,6 @@ static boolean[] makeArray(int size, boolean init) {
     return a;
 }
 
-static float floor(float x) {
-    return (float)Math.floor(x);
-}
-
 static float sin(float x) {
     return (float)Math.sin(x);
 }
@@ -404,7 +400,7 @@ private float Delay_delay(Delay_delay_type _ctx, float x, float time, float feed
    time = clip(time, 0.0f, 1.0f);
    feedback = clip(feedback, 0.0f, 1.0f);
    float index_r = (30000.0f * time);
-   int index_i = (int)(floor(index_r));
+   int index_i = (int)(index_r);
    int delta = ((-index_i) + _ctx.write_pos);
    int read_pos = 0;
    if ((delta < 0)) {
@@ -414,9 +410,33 @@ private float Delay_delay(Delay_delay_type _ctx, float x, float time, float feed
    }
    float decimal = (index_r + (-(float)(index_i)));
    float x1 = _ctx.buffer[read_pos];
-   float x2 = _ctx.buffer[((1 + read_pos) % 30000)];
+   int _wrap_temp_0 = (1 + read_pos);
+   float x2 = 0.0f;
+   if ((_wrap_temp_0 >= 30000)) {
+      if ((_wrap_temp_0 == 30000)) {
+         _wrap_temp_0 = 0;
+      } else {
+         _wrap_temp_0 = (_wrap_temp_0 % 30000);
+      }
+   } else {
+      if ((_wrap_temp_0 <= -30000)) {
+         _wrap_temp_0 = (_wrap_temp_0 % 30000);
+      }
+   }
+   x2 = _ctx.buffer[_wrap_temp_0];
    float ret = (x1 + (decimal * (x2 + (-x1))));
-   _ctx.write_pos = ((1 + _ctx.write_pos) % 30000);
+   _ctx.write_pos = (1 + _ctx.write_pos);
+   if ((_ctx.write_pos >= 30000)) {
+      if ((_ctx.write_pos == 30000)) {
+         _ctx.write_pos = 0;
+      } else {
+         _ctx.write_pos = (_ctx.write_pos % 30000);
+      }
+   } else {
+      if ((_ctx.write_pos <= -30000)) {
+         _ctx.write_pos = (_ctx.write_pos % 30000);
+      }
+   }
    _ctx.buffer[_ctx.write_pos] = clip((x + (feedback * ret)), -1.0f, 1.0f);
    return ret;
 }

@@ -2,7 +2,10 @@
  (name core)
  (public_name vult.core)
  (modules
+  Builtin
   Typed
+  Analysis
+  Local_optimization
   Prog
   Toprog
   Typechecking

@@ -3,17 +3,10 @@
 #include "ConstSpecialization.h"
 
 void ConstSpecialization_main(ConstSpecialization_main_type& _ctx) {
-   int32_t r1 = ConstSpecialization_test_specialized_5();
-   int32_t r2 = ConstSpecialization_test_specialized_100();
-   int32_t r3 = ConstSpecialization_test_nonspec(50);
-   fix16_t r4 = ConstSpecialization_test_weighted_spec();
-   fix16_t r5 = ConstSpecialization_test_weighted_nonspec(0x8000 /* 0.500000 */);
-   fix16_t r6 = ConstSpecialization_test_interleaved_spec();
-   fix16_t r7 = ConstSpecialization_test_interleaved_nonspec(0x18000 /* 1.500000 */);
-   fix16_t r8 = ConstSpecialization_test_accumulate_spec(_ctx.inst_13dfa);
-   fix16_t r9 = ConstSpecialization_test_accumulate_nonspec(_ctx.inst_201fa, 0x30000 /* 3.000000 */, 0x40000 /* 4.000000 */);
-   int32_t r10 = ConstSpecialization_test_typed_int(_ctx.inst_3e2fa);
-   fix16_t r11 = ConstSpecialization_test_typed_real(_ctx.inst_477fa);
+   ConstSpecialization_test_accumulate_spec(_ctx.inst_13dfa);
+   ConstSpecialization_test_accumulate_nonspec(_ctx.inst_201fa, 0x30000 /* 3.000000 */, 0x40000 /* 4.000000 */);
+   ConstSpecialization_test_typed_int(_ctx.inst_3e2fa);
+   ConstSpecialization_test_typed_real(_ctx.inst_477fa);
    std::array<fix16_t, 2> inputs; for (auto& elem : inputs) { elem = 0x0 /* 0.000000 */; }
    inputs[static_cast<uint32_t>(0)] = 0x10000 /* 1.000000 */;
    inputs[static_cast<uint32_t>(1)] = 0x20000 /* 2.000000 */;

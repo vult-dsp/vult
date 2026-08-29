@@ -176,37 +176,105 @@ let vcv_prototype_builtins : (string * (unit -> Typed.fun_type)) list =
 let builtins_for_extension (ext : extension) : (string * (unit -> Typed.fun_type)) list =
   match ext with VCVPrototype -> vcv_prototype_builtins
 
-let builtin_functions =
+(* The type of each builtin. Adding a constructor to [Builtin.t] fails here
+   until it is given a signature. *)
+let builtin_type (b : Builtin.t) =
+  Typed.(
+    match b with
+    | Size ->
+        C.array_size
+    | Abs ->
+        C.num_num
+    | Exp ->
+        C.freal_freal
+    | Log10 ->
+        C.freal_freal
+    | Log ->
+        C.freal_freal
+    | Sin ->
+        C.freal_freal
+    | Cos ->
+        C.freal_freal
+    | Floor ->
+        C.freal_freal
+    | Ceil ->
+        C.freal_freal
+    | Tanh ->
+        C.freal_freal
+    | Asin ->
+        C.freal_freal
+    | Acos ->
+        C.freal_freal
+    | Atan ->
+        C.freal_freal
+    | Atan2 ->
+        C.real_real_real
+    | Min ->
+        C.num_num_num
+    | Max ->
+        C.num_num_num
+    | Pow ->
+        C.real_real_real
+    | Cosh ->
+        C.freal_freal
+    | Sinh ->
+        C.freal_freal
+    | Tan ->
+        C.freal_freal
+    | Sqrt ->
+        C.freal_freal
+    | Clip ->
+        C.clip
+    | Int ->
+        C.valid_int
+    | Real ->
+        C.valid_real
+    | Fix16 ->
+        C.valid_fix16
+    | Int16 ->
+        C.valid_int16
+    | String ->
+        C.valid_string
+    | Bool ->
+        C.valid_bool
+    | Not ->
+        C.bool_bool
+    | Eps ->
+        C.unit_real
+    | Pi ->
+        C.unit_real
+    | Random ->
+        C.unit_real
+    | Irandom ->
+        C.unit_int
+    | Samplerate ->
+        C.unit_real
+    | WrapArray ->
+        C.wrap_array
+    | Length ->
+        C.str_length
+    | ListAppend ->
+        C.list_append
+    | ListInsert ->
+        C.list_insert
+    | ListRemove ->
+        C.list_remove
+    | ListClear ->
+        C.list_clear
+    | ListReserve ->
+        C.list_reserve
+    | ListCapacity ->
+        C.list_capacity
+    | ListGet ->
+        C.list_get
+    | ListSet ->
+        C.list_set )
+
+(* Operators are spelled by their symbol and never reach [Builtin.t]: the
+   parser turns them into EOp and EUnOp nodes. *)
+let operator_functions =
   Typed.
-    [ ("size", C.array_size)
-    ; ("abs", C.num_num)
-    ; ("exp", C.freal_freal)
-    ; ("log10", C.freal_freal)
-    ; ("log", C.freal_freal)
-    ; ("sin", C.freal_freal)
-    ; ("cos", C.freal_freal)
-    ; ("floor", C.freal_freal)
-    ; ("ceil", C.freal_freal)
-    ; ("tanh", C.freal_freal)
-    ; ("asin", C.freal_freal)
-    ; ("acos", C.freal_freal)
-    ; ("atan", C.freal_freal)
-    ; ("atan2", C.real_real_real)
-    ; ("min", C.num_num_num)
-    ; ("max", C.num_num_num)
-    ; ("pow", C.real_real_real)
-    ; ("cosh", C.freal_freal)
-    ; ("sinh", C.freal_freal)
-    ; ("tan", C.freal_freal)
-    ; ("sqrt", C.freal_freal)
-    ; ("clip", C.clip)
-    ; ("int", C.valid_int)
-    ; ("real", C.valid_real)
-    ; ("fix16", C.valid_fix16)
-    ; ("int16", C.valid_int16)
-    ; ("string", C.valid_string)
-    ; ("bool", C.valid_bool)
-    ; ("u-", C.num_num)
+    [ ("u-", C.num_num)
     ; ("+", C.numstr_numstr_numstr)
     ; ("-", C.num_num_num)
     ; ("*", C.num_num_num)
@@ -223,26 +291,11 @@ let builtin_functions =
     ; ("^", C.int_int_int)
     ; (">>", C.int_int_int)
     ; ("<<", C.int_int_int)
-    ; ("not", C.bool_bool)
     ; ("||", C.bool_bool_bool)
-    ; ("&&", C.bool_bool_bool)
-    ; ("eps", C.unit_real)
-    ; ("pi", C.unit_real)
-    ; ("random", C.unit_real)
-    ; ("irandom", C.unit_int)
-    ; ("samplerate", C.unit_real)
-    ; ("wrap_array", C.wrap_array)
-    ; ("length", C.str_length)
-    ; ("list_size", C.list_size)
-    ; ("list_append", C.list_append)
-    ; ("list_insert", C.list_insert)
-    ; ("list_remove", C.list_remove)
-    ; ("list_clear", C.list_clear)
-    ; ("list_reserve", C.list_reserve)
-    ; ("list_capacity", C.list_capacity)
-    ; ("list_get", C.list_get)
-    ; ("list_set", C.list_set) ]
-  |> Map.of_list
+    ; ("&&", C.bool_bool_bool) ]
+
+let builtin_functions =
+  Map.of_list (operator_functions @ CCList.map (fun b -> (Builtin.name b, builtin_type b)) Builtin.all)
 
 let builtin_types =
   ["int"; "int16"; "real"; "fix16"; "bool"; "string"; "unit"]

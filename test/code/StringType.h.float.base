@@ -12,11 +12,12 @@ static_inline std::string StringType_test1() {
    return str3;
 }
 
-static_inline void StringType_test2() {
+static_inline std::string StringType_test2() {
    std::string str1 = std::to_string(1);
    std::string str2 = std::to_string(1.0f);
    std::string str3 = fix_to_string(0x10000 /* 1.000000 */);
    std::string str4 = bool_to_string(true);
+   return str1 + str2 + str3 + str4;
 }
 
 static_inline std::string StringType_test3(std::string a, std::string b) {
@@ -24,9 +25,7 @@ static_inline std::string StringType_test3(std::string a, std::string b) {
 }
 
 static_inline void StringType_test4() {
-   std::string str = "text";
    StringType_test3("first", "second");
-   int32_t i = 6 + static_cast<int32_t>(str.size());
 }
 
 

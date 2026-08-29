@@ -289,9 +289,7 @@ this.Tricore_process = function (_ctx, cv, reset, disable) {
             }
          } else {
             {
-               if ((_ctx.reset_phase > 10.0)) {
-                  _ctx.reset_phase = _ctx.reset_phase;
-               } else {
+               if ((!(_ctx.reset_phase > 10.0))) {
                   _ctx.reset_phase = 0.0;
                }
                _ctx.reset_state = false;

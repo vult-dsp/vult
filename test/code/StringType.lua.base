@@ -12,6 +12,7 @@ function StringType_test2()
    local str2 = tostring(1.0)
    local str3 = tostring(1.0)
    local str4 = tostring(true)
+   return (((str1 + str2) + str3) + str4)
 end
 
 function StringType_test3(a, b)
@@ -19,8 +20,6 @@ function StringType_test3(a, b)
 end
 
 function StringType_test4()
-   local str = "text"
    StringType_test3("first", "second")
-   local i = (6 + length(str))
 end
 

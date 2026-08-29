@@ -227,7 +227,14 @@ static_inline fix16_t Util_cvTokHz(fix16_t cv) {
    return Util_cvTokHz_c[static_cast<uint32_t>(index)] + fix_mul(Util_cvTokHz_c[static_cast<uint32_t>(index + 1)], decimal);
 }
 
-fix16_t Swept_process(Swept_process_type& _ctx, fix16_t gate, fix16_t start, fix16_t end, fix16_t rate);
+static_inline fix16_t Swept_process(Swept_process_type& _ctx, fix16_t gate, fix16_t start, fix16_t end, fix16_t rate) {
+   bool bgate = gate > 0x8000 /* 0.500000 */;
+   _ctx.out = fix_mul(0x106 /* 0.004000 */, fix_mul(rate, (- _ctx.out) + (end << 10))) + _ctx.out;
+   if (Util_edge(_ctx.inst_10402, bgate)) {
+      _ctx.out = (start << 10);
+   }
+   return (_ctx.out >> 10);
+}
 
 static_inline void Swept_noteOn(Swept_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
 }

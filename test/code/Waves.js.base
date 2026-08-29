@@ -50,6 +50,6 @@ this.Waves_test1 = function () {
 };
 
 this.Waves_test2 = function () {
-   var result = this.Waves_sineTable2(0.5);
+   this.Waves_sineTable2(0.5);
 };
 

@@ -308,8 +308,6 @@ function Saw_ptr1_process(_ctx, cv)
    out = Float32(0.0)
    if (_ctx.phase > Float32(1.0))
       _ctx.phase = (Float32(-1.0) + _ctx.phase)
-   else
-      _ctx.phase = _ctx.phase
    end
    if (_ctx.phase < s1)
       begin

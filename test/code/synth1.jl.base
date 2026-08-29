@@ -272,21 +272,16 @@ function Synth1_noteOff(_ctx, note, channel)
    found = false
    if (note == _ctx.n1)
       begin
-         _t_temp_0 = _ctx.n2
-         _t_temp_1 = _ctx.n3
-         _t_temp_2 = _ctx.n4
-         _ctx.n1 = _t_temp_0
-         _ctx.n2 = _t_temp_1
-         _ctx.n3 = _t_temp_2
+         _ctx.n1 = _ctx.n2
+         _ctx.n2 = _ctx.n3
+         _ctx.n3 = _ctx.n4
          found = true
       end
    else
       if (note == _ctx.n2)
          begin
-            _t_temp_3 = _ctx.n3
-            _t_temp_4 = _ctx.n4
-            _ctx.n2 = _t_temp_3
-            _ctx.n3 = _t_temp_4
+            _ctx.n2 = _ctx.n3
+            _ctx.n3 = _ctx.n4
             found = true
          end
       else

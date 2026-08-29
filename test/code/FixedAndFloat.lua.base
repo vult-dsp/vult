@@ -2,25 +2,13 @@
 
 -- Math functions
 local floor = math.floor
+local modf = math.modf
+
+-- Core runtime functions
+local function clipValue(x, low, high) if x > high then return high elseif x < low then return low else return x end end
 
 function FixedAndFloat_test1()
-   local fixed_value = 0.0
    local real_value = 0.0
-   local int_value = 0
-   local bool_value = false
-   local result = (fixed_value + fix16(real_value))
-   local from_int = fix16(int_value)
-   local from_real = fix16(real_value)
-   local from_bool = fix16(bool_value)
-   local to_int = (math.modf(fixed_value))
-   local to_real = (fixed_value)
-   local to_bool = ((fixed_value) ~= 0 and (fixed_value) ~= false)
-   from_int = 0.0
-   from_real = 0.0
-   from_bool = 0.0
-   to_int = 0
-   to_real = 0.0
-   to_bool = false
 end
 
 FixedAndFloat_take_fix_return_fixed_c = {};
@@ -34,7 +22,7 @@ end
 
 function FixedAndFloat_take_fix_return_fixed(x)
    local value = (((x) > (1.0) and (1.0) or ((x) < (0.0) and (0.0) or (x))) * 33.0)
-   local index = ((math.modf(value)) * 2)
+   local index = ((modf(value)) * 2)
    local decimal = (value - floor(value))
    return (FixedAndFloat_take_fix_return_fixed_c[(index) + 1] + (FixedAndFloat_take_fix_return_fixed_c[((index + 1)) + 1] * decimal))
 end
@@ -54,7 +42,7 @@ end
 
 function FixedAndFloat_take_fix_return_real(x)
    local value = (((x) > (1.0) and (1.0) or ((x) < (0.0) and (0.0) or (x))) * 32.0)
-   local cell = ((fix_to_int(value)) > (31) and (31) or ((fix_to_int(value)) < (0) and (0) or (fix_to_int(value))))
+   local cell = clipValue(fix_to_int(value), 0, 31)
    local u = (value - (cell))
    local index = (cell * 3)
    return (FixedAndFloat_take_fix_return_real_c[(index) + 1] + (fix_to_float(u) * (FixedAndFloat_take_fix_return_real_c[((index + 1)) + 1] + (FixedAndFloat_take_fix_return_real_c[((index + 2)) + 1] * fix_to_float(u)))))
@@ -75,7 +63,7 @@ end
 
 function FixedAndFloat_take_real_return_fixed(x)
    local value = (((x) > (1.0) and (1.0) or ((x) < (0.0) and (0.0) or (x))) * 32.0)
-   local cell = ((math.floor(value)) > (31) and (31) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local cell = clipValue(floor(value), 0, 31)
    local u = (value - (cell))
    local index = (cell * 3)
    return (FixedAndFloat_take_real_return_fixed_c[(index) + 1] + (float_to_fix(u) * (FixedAndFloat_take_real_return_fixed_c[((index + 1)) + 1] + (FixedAndFloat_take_real_return_fixed_c[((index + 2)) + 1] * float_to_fix(u)))))

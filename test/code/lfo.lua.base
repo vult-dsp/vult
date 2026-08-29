@@ -2,6 +2,10 @@
 
 -- Math functions
 local abs = math.abs
+local floor = math.floor
+
+-- Core runtime functions
+local function clipValue(x, low, high) if x > high then return high elseif x < low then return low else return x end end
 
 function Util_edge_type_alloc()
    local _ctx = {};
@@ -129,7 +133,7 @@ end
 
 function Util_pitchToRate_1024(pitch)
    local value = (((pitch) > (127.0) and (127.0) or ((pitch) < (0.0) and (0.0) or (pitch))) * 0.251968)
-   local cell = ((math.floor(value)) > (31) and (31) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local cell = clipValue(floor(value), 0, 31)
    local u = (value - (cell))
    local index = (cell * 3)
    return (Util_pitchToRate_1024_c[(index) + 1] + (u * (Util_pitchToRate_1024_c[((index + 1)) + 1] + (Util_pitchToRate_1024_c[((index + 2)) + 1] * u))))
@@ -150,7 +154,7 @@ end
 
 function Util_pitchToRate(pitch)
    local value = (((pitch) > (127.0) and (127.0) or ((pitch) < (0.0) and (0.0) or (pitch))) * 0.251968)
-   local cell = ((math.floor(value)) > (31) and (31) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local cell = clipValue(floor(value), 0, 31)
    local u = (value - (cell))
    local index = (cell * 3)
    return (Util_pitchToRate_c[(index) + 1] + (u * (Util_pitchToRate_c[((index + 1)) + 1] + (Util_pitchToRate_c[((index + 2)) + 1] * u))))
@@ -175,7 +179,7 @@ end
 
 function Util_cvToRate_1024(cv)
    local value = (((cv) > (0.9) and (0.9) or ((cv) < (0.0) and (0.0) or (cv))) * 35.555555)
-   local cell = ((math.floor(value)) > (31) and (31) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local cell = clipValue(floor(value), 0, 31)
    local u = (value - (cell))
    local index = (cell * 3)
    return (Util_cvToRate_1024_c[(index) + 1] + (u * (Util_cvToRate_1024_c[((index + 1)) + 1] + (Util_cvToRate_1024_c[((index + 2)) + 1] * u))))
@@ -196,7 +200,7 @@ end
 
 function Util_cvToRate(cv)
    local value = (((cv) > (0.9) and (0.9) or ((cv) < (0.0) and (0.0) or (cv))) * 142.222222)
-   local cell = ((math.floor(value)) > (127) and (127) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local cell = clipValue(floor(value), 0, 127)
    local u = (value - (cell))
    local index = (cell * 3)
    return (Util_cvToRate_c[(index) + 1] + (u * (Util_cvToRate_c[((index + 1)) + 1] + (Util_cvToRate_c[((index + 2)) + 1] * u))))
@@ -221,7 +225,7 @@ end
 
 function Util_cvToperiod(cv)
    local value = (((cv) > (1.0) and (1.0) or ((cv) < (0.0) and (0.0) or (cv))) * 32.0)
-   local cell = ((math.floor(value)) > (31) and (31) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local cell = clipValue(floor(value), 0, 31)
    local u = (value - (cell))
    local index = (cell * 3)
    return (Util_cvToperiod_c[(index) + 1] + (u * (Util_cvToperiod_c[((index + 1)) + 1] + (Util_cvToperiod_c[((index + 2)) + 1] * u))))
@@ -242,7 +246,7 @@ end
 
 function Util_cvTokHz(cv)
    local value = (((cv) > (1.0) and (1.0) or ((cv) < (0.0) and (0.0) or (cv))) * 32.0)
-   local cell = ((math.floor(value)) > (31) and (31) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local cell = clipValue(floor(value), 0, 31)
    local u = (value - (cell))
    local index = (cell * 3)
    return (Util_cvTokHz_c[(index) + 1] + (u * (Util_cvTokHz_c[((index + 1)) + 1] + (Util_cvTokHz_c[((index + 2)) + 1] * u))))
@@ -250,12 +254,9 @@ end
 
 function Lfo_soft(_ctx, x1)
    local o = (0.25 * (x1 + (_ctx.x2 + (_ctx.x3 + _ctx.x4))))
-   local _t_temp_0 = x1
-   local _t_temp_1 = _ctx.x2
-   local _t_temp_2 = _ctx.x3
-   _ctx.x2 = _t_temp_0
-   _ctx.x3 = _t_temp_1
-   _ctx.x4 = _t_temp_2
+   _ctx.x4 = _ctx.x3
+   _ctx.x3 = _ctx.x2
+   _ctx.x2 = x1
    return o
 end
 
@@ -266,8 +267,6 @@ function Lfo_process(_ctx, cv, shape, reset)
    _ctx.phase = (_ctx.phase + _ctx.rate)
    if (_ctx.phase > 2.0) then
       _ctx.phase = (-2.0 + _ctx.phase)
-   else
-      _ctx.phase = _ctx.phase
    end
    local breset = (reset > 0.0)
    if Util_edge(_ctx.inst_204d6, breset) then

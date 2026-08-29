@@ -18,7 +18,6 @@ this.Pd_osc0_process = function (_ctx) {
 };
 
 this.Pd_osc0_setFreq = function (_ctx, freq) {
-   _ctx.phase = _ctx.phase;
 };
 
 

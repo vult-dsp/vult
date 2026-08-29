@@ -114,8 +114,8 @@ void SaveState_main_type_deserialize_data(CustomBuffer& buffer, CustomTypeDescr&
 void SaveState_main(SaveState_main_type& _ctx) {
    _ctx.x = 0.0f;
    _ctx.str = "";
-   int32_t count1 = SaveState_counter(_ctx.c1);
-   int32_t count2 = SaveState_counter(_ctx.inst_19fb0);
+   SaveState_counter(_ctx.c1);
+   SaveState_counter(_ctx.inst_19fb0);
    SaveState_nosave(_ctx.inst_21bb0);
 }
 

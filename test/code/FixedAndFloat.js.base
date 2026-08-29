@@ -2,23 +2,7 @@
 // Runtime functions
 this.float_to_int = function(i)  { return Math.floor(i); };
 this.FixedAndFloat_test1 = function () {
-   var fixed_value = 0.0;
    var real_value = 0.0;
-   var int_value = (0|0);
-   var bool_value = false;
-   var result = (fixed_value + this.fix16(real_value));
-   var from_int = this.fix16(int_value);
-   var from_real = this.fix16(real_value);
-   var from_bool = this.fix16(bool_value);
-   var to_int = ((fixed_value)|0);
-   var to_real = (fixed_value);
-   var to_bool = this.bool(fixed_value);
-   from_int = 0.0;
-   from_real = 0.0;
-   from_bool = 0.0;
-   to_int = (0|0);
-   to_real = 0.0;
-   to_bool = false;
 };
 
 var FixedAndFloat_take_fix_return_fixed_c = {};

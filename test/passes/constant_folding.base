@@ -83,8 +83,6 @@ fun Constant_folding_str_length() : int {
 }
 
 fun Constant_folding_array_size() : int {
-   val a : real[3];
-   (a : real[3]) = {1.0, 2.0, 3.0};
    return 3;
 }
 

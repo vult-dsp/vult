@@ -2,6 +2,10 @@
 
 -- Math functions
 local floor = math.floor
+local modf = math.modf
+
+-- Core runtime functions
+local function clipValue(x, low, high) if x > high then return high elseif x < low then return low else return x end end
 
 Tables_sineTable1_c = {};
 function Tables_sineTable1_raw_c0(index)
@@ -18,7 +22,7 @@ end
 
 function Tables_sineTable1(x)
    local value = (((x) > (1.0) and (1.0) or ((x) < (0.0) and (0.0) or (x))) * 32.0)
-   local cell = ((math.floor(value)) > (31) and (31) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local cell = clipValue(floor(value), 0, 31)
    local u = (value - (cell))
    local index = (cell * 3)
    return (Tables_sineTable1_c[(index) + 1] + (u * (Tables_sineTable1_c[((index + 1)) + 1] + (Tables_sineTable1_c[((index + 2)) + 1] * u))))
@@ -35,7 +39,7 @@ end
 
 function Tables_sineTable2(x)
    local value = (((x) > (1.0) and (1.0) or ((x) < (0.0) and (0.0) or (x))) * 32.0)
-   local cell = ((math.floor(value)) > (31) and (31) or ((math.floor(value)) < (0) and (0) or (math.floor(value))))
+   local cell = clipValue(floor(value), 0, 31)
    local u = (value - (cell))
    local index = (cell * 2)
    return (Tables_sineTable2_c[(index) + 1] + (u * Tables_sineTable2_c[((index + 1)) + 1]))
@@ -52,7 +56,7 @@ end
 
 function Tables_sineTable3(x)
    local value = (((x) > (1.0) and (1.0) or ((x) < (0.0) and (0.0) or (x))) * 33.0)
-   local index = ((math.modf(value)) * 2)
+   local index = ((modf(value)) * 2)
    local decimal = (value - floor(value))
    return (Tables_sineTable3_c[(index) + 1] + (Tables_sineTable3_c[((index + 1)) + 1] * decimal))
 end
