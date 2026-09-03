@@ -4,6 +4,10 @@
 
 #include "vultin.hpp"
 #include "pd_osc0.tables.h"
+/* Runtime features this file needs from vultin.hpp. */
+#ifdef VULT_NO_FIX16_MATH
+#error "pd_osc0.h uses fixed-point math functions: it cannot be compiled with VULT_NO_FIX16_MATH"
+#endif
 
 
  #include <stdint.h>

@@ -4,6 +4,10 @@
 
 #include "vultin.hpp"
 #include "Match.tables.h"
+/* Runtime features this file needs from vultin.hpp. */
+#ifdef VULT_NO_STRING
+#error "Match.h uses strings: it cannot be compiled with VULT_NO_STRING"
+#endif
 
 static_inline int32_t Match_foo1(int32_t x) {
     switch (x) {

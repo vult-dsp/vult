@@ -4,6 +4,13 @@
 
 #include "vultin.hpp"
 #include "SaveState.tables.h"
+/* Runtime features this file needs from vultin.hpp. */
+#ifdef VULT_NO_SERIALIZATION
+#error "SaveState.h uses serialization: it cannot be compiled with VULT_NO_SERIALIZATION"
+#endif
+#ifdef VULT_NO_STRING
+#error "SaveState.h uses strings: it cannot be compiled with VULT_NO_STRING"
+#endif
 
 typedef struct SaveState_counter_type {
    int32_t count;

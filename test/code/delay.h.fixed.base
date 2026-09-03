@@ -4,6 +4,10 @@
 
 #include "vultin.hpp"
 #include "delay.tables.h"
+/* Runtime features this file needs from vultin.hpp. */
+#ifdef VULT_NO_FIX16_MATH
+#error "delay.h uses fixed-point math functions: it cannot be compiled with VULT_NO_FIX16_MATH"
+#endif
 
 typedef struct Delay_smooth_type {
    fix16_t x;

@@ -313,23 +313,29 @@ let detect (prog : prog) : features =
   ; tuples= !tuples
   ; lists= !lists }
 
-let runtimeDefines (f : features) : Pla.t =
-  let disable flag enabled = if enabled then None else Some {%pla|#define <#flag#s><#>|} in
-  let defines =
+(* The runtime features are enabled by default in vultin.hpp; a build can trim
+   it with -DVULT_NO_*. The generated headers record which features their code
+   needs so that a mismatch is reported here and not by the standard library. *)
+let runtimeRequirements (file : string) (f : features) : Pla.t =
+  let require flag feature used =
+    if not used then None
+    else
+      Some {%pla|#ifdef <#flag#s>
+#error "<#file#s> uses <#feature#s>: it cannot be compiled with <#flag#s>"
+#endif<#>|}
+  in
+  let requirements =
     CCList.filter_map
       (fun x -> x)
-      [ disable "VULT_NO_SERIALIZATION" f.serialization
-      ; disable "VULT_NO_STRING" f.strings
-      ; disable "VULT_NO_FIX16_MATH" f.fix16_math
-      ; disable "VULT_NO_RANDOM" f.random
-      ; disable "VULT_NO_TUPLE" f.tuples
-      ; disable "VULT_NO_LIST" f.lists ]
+      [ require "VULT_NO_SERIALIZATION" "serialization" f.serialization
+      ; require "VULT_NO_STRING" "strings" f.strings
+      ; require "VULT_NO_FIX16_MATH" "fixed-point math functions" f.fix16_math
+      ; require "VULT_NO_RANDOM" "random numbers" f.random
+      ; require "VULT_NO_TUPLE" "tuples" f.tuples
+      ; require "VULT_NO_LIST" "lists" f.lists ]
   in
-  if CCList.is_empty defines then Pla.unit
+  if CCList.is_empty requirements then Pla.unit
   else
-    let defines = Pla.join defines in
-    {%pla|/* Features disabled because this program does not use them.
-   Compile with -DVULT_FULL_RUNTIME to enable the full runtime. */
-#ifndef VULT_FULL_RUNTIME
-<#defines#>#endif // VULT_FULL_RUNTIME
-|}
+    let requirements = Pla.join requirements in
+    {%pla|/* Runtime features this file needs from vultin.hpp. */
+<#requirements#>|}

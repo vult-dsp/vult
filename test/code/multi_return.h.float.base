@@ -4,6 +4,10 @@
 
 #include "vultin.hpp"
 #include "multi_return.tables.h"
+/* Runtime features this file needs from vultin.hpp. */
+#ifdef VULT_NO_TUPLE
+#error "multi_return.h uses tuples: it cannot be compiled with VULT_NO_TUPLE"
+#endif
 
 typedef struct Multi_return_foo_type {
    float Multi_return_foo_ret_0;

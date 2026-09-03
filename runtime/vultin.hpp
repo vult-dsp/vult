@@ -31,14 +31,28 @@ NOTE: The code for the fixed-point operations is based on the project:
 #ifndef VULTIN_H
 #define VULTIN_H
 
-/* The VULT_NO_* macros disable the runtime features the generated code does
-   not use. The Vult compiler emits a copy of this file next to the generated
-   code with the macros for the unused features already defined. The macros
-   can also be set manually in the build flags, and defining VULT_FULL_RUNTIME
-   overrides the compiler-generated ones to compile the full runtime. */
+/* Every runtime feature is enabled by default. A build that needs a smaller
+   runtime (an embedded target, typically) can leave out the features its
+   programs do not use by defining the matching VULT_NO_* macro in its compile
+   flags. The generated headers state which features they need, so removing
+   one that is still in use is reported as an error instead of failing deep
+   inside the standard library.
 
-#if !defined(VULT_NO_SERIALIZATION) && defined(VULT_NO_STRING)
-#error "Vult serialization requires string support: remove VULT_NO_STRING or define VULT_NO_SERIALIZATION"
+   VULT_FULL_RUNTIME cancels every VULT_NO_* macro. */
+
+#ifdef VULT_FULL_RUNTIME
+#undef VULT_NO_SERIALIZATION
+#undef VULT_NO_STRING
+#undef VULT_NO_FIX16_MATH
+#undef VULT_NO_RANDOM
+#undef VULT_NO_TUPLE
+#undef VULT_NO_LIST
+#endif
+
+/* The serialization format stores type and field names, so leaving out the
+   strings leaves out the serialization with them. */
+#ifdef VULT_NO_STRING
+#define VULT_NO_SERIALIZATION
 #endif
 
 #include <math.h>

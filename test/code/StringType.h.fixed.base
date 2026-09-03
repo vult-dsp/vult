@@ -4,6 +4,10 @@
 
 #include "vultin.hpp"
 #include "StringType.tables.h"
+/* Runtime features this file needs from vultin.hpp. */
+#ifdef VULT_NO_STRING
+#error "StringType.h uses strings: it cannot be compiled with VULT_NO_STRING"
+#endif
 
 static_inline std::string StringType_test1() {
    std::string str1 = "first";

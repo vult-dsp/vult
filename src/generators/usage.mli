@@ -63,7 +63,9 @@ val detect : Core.Prog.prog -> features
 (** Scans the final program (after replacements have been applied) and reports
     which C++ runtime features the generated code uses. *)
 
-val runtimeDefines : features -> Pla.t
-(** Preprocessor block with one [VULT_NO_*] define for every feature the
-    program does not use. It is placed at the top of the vultin.hpp copy
-    emitted along with the generated code. *)
+val runtimeRequirements : string -> features -> Pla.t
+(** [runtimeRequirements file features] is a preprocessor block with one
+    [#error] for every feature the code of [file] needs, guarded by the
+    matching [VULT_NO_*] macro. It is placed at the top of the generated
+    header so that trimming the runtime with [-DVULT_NO_*] fails with one
+    readable line instead of a wall of errors from the standard library. *)

@@ -635,19 +635,24 @@ let getLegend (args : Util.Args.args) =
     | Some text ->
         Pla.wrap (Pla.string "/*") (Pla.string "*/") (Pla.string text) )
 
-(* Emits the vultin files matching the compiler version, headed by the defines
-   that disable unused runtime features. Skipped when printing to stdout. *)
-let vultinFiles (args : Util.Args.args) (stmts : top_stmt list) =
+(* Emits the vultin files matching the compiler version. Skipped when printing
+   to stdout.
+
+   The runtime is emitted complete: vultin.hpp has a fixed name and is shared
+   by every program generated into the same directory (or reachable through
+   the include path), so it cannot be specialized for one of them. A build
+   that wants a smaller runtime trims it with -DVULT_NO_*; the generated
+   headers state which features they need so a wrong choice is reported. *)
+let vultinFiles (args : Util.Args.args) =
   match args.output with
   | None ->
       []
   | Some file ->
       let dir = Filename.dirname file in
       let legend = Common.legend in
-      let defines = Usage.runtimeDefines (Usage.detect stmts) in
       let hpp_body = Pla.string Vultin_embedded.hpp in
       let cpp_body = Pla.string Vultin_embedded.cpp in
-      let hpp = {%pla|<#legend#><#><#defines#><#hpp_body#>|} in
+      let hpp = {%pla|<#legend#><#><#hpp_body#>|} in
       let cpp = {%pla|<#legend#><#><#cpp_body#>|} in
       [(hpp, Filename.concat dir "vultin.hpp"); (cpp, Filename.concat dir "vultin.cpp")]
 
@@ -688,7 +693,8 @@ let generateSplit (args : Util.Args.args) template (stmts : top_stmt list) =
     let impl_includes = makeIncludes deps.body in
     let header =
       let ifdef, endif = makeIfdef header_file in
-      {%pla|<#legend#><#ifdef#><#>#include "vultin.hpp"<#><#header_includes#><#><#><#header#><#endif#>|}
+      let requires = Usage.runtimeRequirements header_file_base (Usage.detect stmts) in
+      {%pla|<#legend#><#ifdef#><#>#include "vultin.hpp"<#><#header_includes#><#><#requires#><#><#header#><#endif#>|}
     in
     let impl =
       {%pla|<#legend#><#><#>#include "<#header_file_base#s>"<#><#impl_includes#><#><#tables#><#><#><#impl#>|}
@@ -696,7 +702,7 @@ let generateSplit (args : Util.Args.args) template (stmts : top_stmt list) =
     [(header, header_file); (impl, impl_file)]
   in
   let (timpl_start, timpl_end), (theader_start, theader_end) = getTemplateCode template args stmts in
-  let vultin = vultinFiles args stmts in
+  let vultin = vultinFiles args in
   let stmts = Common.splitByFile stmts in
   let () =
     (* the aggregated header and implementation use the output name: a module
@@ -735,14 +741,15 @@ let generateSingle (args : Util.Args.args) template (stmts : top_stmt list) =
   let tables_file_base = Filename.basename tables_file in
   let header =
     let ifdef, endif = makeIfdef header_file in
-    {%pla|<#legend#><#ifdef#><#>#include "vultin.hpp"<#>#include "<#tables_file_base#s>"<#><#><#header#><#endif#>|}
+    let requires = Usage.runtimeRequirements header_file_base (Usage.detect stmts) in
+    {%pla|<#legend#><#ifdef#><#>#include "vultin.hpp"<#>#include "<#tables_file_base#s>"<#><#requires#><#><#header#><#endif#>|}
   in
   let impl = {%pla|<#legend#><#><#>#include "<#header_file_base#s>"<#><#><#impl#>|} in
   let tables =
     let ifdef, endif = makeIfdef tables_file in
     {%pla|<#legend#><#ifdef#><#tables#><#endif#>|}
   in
-  [(header, header_file); (impl, impl_file); (tables, tables_file)] @ vultinFiles args stmts
+  [(header, header_file); (impl, impl_file); (tables, tables_file)] @ vultinFiles args
 
 let generate split output template (stmts : top_stmt list) =
   if split then generateSplit output template stmts else generateSingle output template stmts
