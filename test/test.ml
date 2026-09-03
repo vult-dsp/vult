@@ -38,7 +38,7 @@ let in_test_directory path = Filename.concat test_directory path
 let in_tmp_dir path = Filename.concat tmp_dir path
 
 (* The tests run in parallel runners that share tmp_dir, and generating C++ also emits the
-   runtime files (vultin.hpp / vultin.cpp) whose contents differ per program. Every test that
+   runtime files (vultin.hpp / vultin.cpp) next to the generated code. Every test that
    generates and compiles code works inside its own directory to avoid races between runners. *)
 let makeTestDir (name : string) : string =
   let dir = in_tmp_dir name in
@@ -535,7 +535,33 @@ module TableRegressionTest = struct
     if Sys.command cmd <> 0 then assert_failure "Failed to build the table regression checks" ;
     if Sys.command exe <> 0 then assert_failure "The table regression checks failed"
 
-  let get () = "tables" >::: ["regression" >:: run]
+  (* A table function that is not finite at a sampled point must be reported with the function
+     name and the point. Whether the singularity is sampled depends on the table size, so the
+     diagnostic is the only thing pointing at the offending function. *)
+  let runNonFinite _context =
+    let fullfile = checkFile (in_test_directory "tables/non_finite.vult") in
+    let dir = makeTestDir "tables_non_finite" in
+    let output = Filename.concat dir "non_finite" in
+    let args =
+      Args.
+        { default_arguments with
+          files= [File fullfile]
+        ; code= CppCode
+        ; output= Some output
+        ; force_write= true
+        ; includes= in_test_directory "tables" :: includes }
+    in
+    let messages =
+      Driver.Cli.driver args
+      |> CCList.filter_map (fun result ->
+          match result with Args.Errors errors -> Some (Error.reportErrors errors) | _ -> None )
+      |> String.concat "\n"
+    in
+    let contains sub = CCString.mem ~sub messages in
+    if not (contains "diverges" && contains "not finite at x = 0") then
+      assert_failure ("Unexpected diagnostic for a non finite table:\n" ^ messages)
+
+  let get () = "tables" >::: ["regression" >:: run; "non_finite" >:: runNonFinite]
 end
 
 type compiler = Node | Native

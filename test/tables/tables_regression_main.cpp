@@ -61,6 +61,16 @@ int main() {
       check(name, Tables_regression_wavetable(x), Tables_regression_wave_raw(0, p), 1e-4f);
    }
 
+   /* A table parameter named like one of the lookup temporaries must still reach the lookup:
+      when it was shadowed, the value table evaluated at 0 for every input. */
+   check("shadow_value(mid)", Tables_regression_shadow_value(0.5f), std::tanh(1.0f), 1e-3f);
+   check("shadow_value(max)", Tables_regression_shadow_value(1.0f), std::tanh(2.0f), 1e-3f);
+   check("shadow_u(mid)", Tables_regression_shadow_u(0.5f), std::tanh(1.0f), 1e-2f);
+   check("shadow_cell(mid)", Tables_regression_shadow_cell(0.5f), std::tanh(1.0f), 1e-3f);
+   check("shadow_index(mid)", Tables_regression_shadow_index(0.5f), std::tanh(1.0f), 1e-3f);
+   check(
+      "shadow_decimal(mid)", fix_to_float(Tables_regression_shadow_decimal(float_to_fix(0.5f))), std::tanh(1.0f), 1e-2f);
+
    if (failures != 0) {
       return 1;
    }

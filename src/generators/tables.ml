@@ -144,14 +144,30 @@ let getIntResult (x : Core.Interpreter.dvalue) =
   | _ ->
       failwith "getIntResult: Function returned an unexpected type. This should not happen."
 
-let calculateIntRealTables loc iprog name min max precision =
+(* The fitting turns a non-finite sample into NaN coefficients (inf - inf), which used to reach
+   the number printer and abort with an unlocated Failure "nan". Report the function and the
+   point instead: which grid points are sampled depends on [size], so the same source can fail
+   for one table size and succeed for another. *)
+let checkFinite loc display x y =
+  if not (Float.is_finite y) then
+    let msg =
+      Printf.sprintf "The table function '%s' is not finite at x = %s. Adjust the table range so it excludes it."
+        display (Printf.sprintf "%g" x)
+    in
+    Error.raiseError msg loc
+
+let displayName (def : function_def) = match def.info.original_name with Some name -> name | None -> def.name
+
+let calculateIntRealTables loc iprog ~display name min max precision =
   let size = max - min in
   let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
   let stack = Core.Interpreter.createStack 256 in
   let data =
     CCList.init (size + 1) (fun i ->
         let x = min + i in
-        getRealResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [DInt x]) )
+        let y = getRealResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [DInt x]) in
+        let () = checkFinite loc display (float_of_int x) y in
+        y )
   in
   [makeRealTableDecl loc name "table" precision data]
 
@@ -175,7 +191,7 @@ let calculateIntIntTables loc iprog name (int_type : type_) min max =
   in
   [makeIntTableDecl loc name "table" int_type data]
 
-let calculateTablesOrder1 loc iprog name size min max precision =
+let calculateTablesOrder1 loc iprog ~display name size min max precision =
   let map x x0 x1 y0 y1 = ((x -. x0) *. (y1 -. y0) /. (x1 -. x0)) +. y0 in
   let map_x x = map x 0. (float_of_int size) min max in
   let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
@@ -183,7 +199,9 @@ let calculateTablesOrder1 loc iprog name size min max precision =
   let data =
     Array.init (size + 1) (fun i ->
         let x = map_x (float_of_int i) in
-        (x, getRealResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [DReal x])) )
+        let y = getRealResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [DReal x]) in
+        let () = checkFinite loc display x y in
+        (x, y) )
   in
   let acc0, acc1 = fitDataOrder1 data (size - 1) [] [] in
   (* One guard point holding the value at [max]: without bound checks an input of exactly [max]
@@ -192,7 +210,7 @@ let calculateTablesOrder1 loc iprog name size min max precision =
   let y_end = snd data.(size) in
   [makeCoefficientTableDecl loc name precision [acc0 @ [y_end]; acc1 @ [0.0]]]
 
-let calculateTablesOrder1Fixed loc iprog name size min max precision =
+let calculateTablesOrder1Fixed loc iprog ~display name size min max precision =
   let map x x0 x1 y0 y1 = ((x -. x0) *. (y1 -. y0) /. (x1 -. x0)) +. y0 in
   let map_x x = map x 0. (float_of_int size) min max in
   let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
@@ -200,7 +218,9 @@ let calculateTablesOrder1Fixed loc iprog name size min max precision =
   let data =
     CCList.init (size + 1) (fun i ->
         let x = map_x (float_of_int i) in
-        (x, getRealResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [DReal x])) )
+        let y = getRealResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [DReal x]) in
+        let () = checkFinite loc display x y in
+        (x, y) )
   in
   let rec increments data =
     match data with [] -> [0.0] | [_] -> [0.0] | (_, y1) :: ((_, y2) :: _ as t) -> (y2 -. y1) :: increments t
@@ -209,7 +229,7 @@ let calculateTablesOrder1Fixed loc iprog name size min max precision =
   let acc1 = increments data in
   [makeCoefficientTableDecl loc name precision [acc0; acc1]]
 
-let calculateTablesOrder2 loc iprog name size min max precision =
+let calculateTablesOrder2 loc iprog ~display name size min max precision =
   let map x x0 x1 y0 y1 = ((x -. x0) *. (y1 -. y0) /. (x1 -. x0)) +. y0 in
   let map_x x = map x 0. (float_of_int size) min max in
   let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
@@ -219,7 +239,9 @@ let calculateTablesOrder2 loc iprog name size min max precision =
       ((size * 2) + 2)
       (fun i ->
         let x = map_x (float_of_int i /. 2.0) in
-        (x, getRealResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [DReal x])) )
+        let y = getRealResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [DReal x]) in
+        let () = checkFinite loc display x y in
+        (x, y) )
   in
   let acc0, acc1, acc2 = fitDataOrder2 data (size - 1) [] [] [] in
   (* Same guard point as the order-1 tables: cell [size] returns the value at [max]. *)
@@ -245,34 +267,51 @@ let makeSub t e1 e2 =
 
 let makeMul t e1 e2 = if e2 = 1.0 then e1 else C.emul e1 (makeNuber t e2)
 
-(* Declares "value", "cell", "u" and "index": the scaled input, the cell number, the position
+(* The lookup declares its own temporaries in the same scope that holds the table function's
+   parameter, so a parameter named like one of them would be shadowed: the body would read the
+   temporary instead of the argument, and in C++ the redeclaration does not even compile. The
+   names are prefixed with underscores until none of them collides with the parameter. *)
+type locals = {value: string; cell: string; u: string; index: string; decimal: string}
+
+let base_locals = ["value"; "cell"; "u"; "index"; "decimal"]
+
+let rec makeLocalPrefix param prefix =
+  if CCList.exists (fun name -> String.equal param (prefix ^ name)) base_locals then makeLocalPrefix param ("_" ^ prefix)
+  else prefix
+
+let makeLocals (param : string) : locals =
+  let p = makeLocalPrefix param "" in
+  {value= p ^ "value"; cell= p ^ "cell"; u= p ^ "u"; index= p ^ "index"; decimal= p ^ "decimal"}
+
+(* Declares the scaled input, the cell number, the position
    within the cell that the polynomial is evaluated on, and the offset of the cell's
    coefficients in the table. When bound_check is set, the raw input is clamped before it is
    scaled: scaling first can overflow the fixed-point range for inputs far outside [min, max],
    and the clamp would then be applied to a wrapped value. Without bound checks nothing is
    clamped, and an input of exactly [max] reads the guard point stored after the fitted cells. *)
-let getIndex in_precision bound_check ~stride ~cells ~min ~max input =
+let getIndex in_precision bound_check ~locals ~stride ~cells ~min ~max input =
   let input =
     if bound_check then C.ecall "clip" [input; makeFloat in_precision min; makeFloat in_precision max] in_precision
     else input
   in
   let initial_index = float_of_int cells /. (max -. min) in
   let scaled = makeMul in_precision (makeSub in_precision input min) initial_index in
-  let value = C.eid "value" in_precision in
-  let cell = C.eid "cell" C.int_t in
+  let value = C.eid locals.value in_precision in
+  let cell = C.eid locals.cell C.int_t in
   let cell_expr = C.ecall (getCastIndexFunction in_precision) [value] C.int_t in
   let cell_expr = if bound_check then C.ecall "clip" [cell_expr; C.eint 0; C.eint (cells - 1)] C.int_t else cell_expr in
   let scale i = if stride = 1 then i else C.emul i (C.eint stride) in
-  C.sdecl_bind "value" scaled in_precision
-  @ C.sdecl_bind "cell" cell_expr C.int_t
-  @ C.sdecl_bind "u" (C.esub value (C.ecall "real" [cell] in_precision)) in_precision
-  @ C.sdecl_bind "index" (scale cell) C.int_t
+  C.sdecl_bind locals.value scaled in_precision
+  @ C.sdecl_bind locals.cell cell_expr C.int_t
+  @ C.sdecl_bind locals.u (C.esub value (C.ecall "real" [cell] in_precision)) in_precision
+  @ C.sdecl_bind locals.index (scale cell) C.int_t
 
-(* Reads coefficient [c] of the point selected by "index", which already includes the stride. *)
-let makeGetCoeff fname ~stride ~size t =
+(* Reads coefficient [c] of the point selected by the index local, which already includes the
+   stride. *)
+let makeGetCoeff fname ~index ~stride ~size t =
   let atype = makeArrayType t (size * stride) in
   let arr = C.eid (coefficientTableName fname) atype in
-  fun c -> C.eindex arr (coefficientOffset (C.eid "index" C.int_t) c) t
+  fun c -> C.eindex arr (coefficientOffset (C.eid index C.int_t) c) t
 
 let castInputVarPrecision (in_precision : type_) (out_precision : type_) (input : exp) : exp =
   match (in_precision.t, out_precision.t) with
@@ -297,17 +336,17 @@ let castInputVarPrecision (in_precision : type_) (out_precision : type_) (input 
   | _ ->
       failwith "castInputVarPrecision: invalid input"
 
-let makeNewBody1 bound_check fname ~cells ~points in_precision t min max input =
+let makeNewBody1 bound_check fname ~locals ~cells ~points in_precision t min max input =
   let stride = 2 in
-  let getCoeff = makeGetCoeff fname ~stride ~size:points t in
-  let index_stmts = getIndex in_precision bound_check ~stride ~cells ~min ~max input in
-  let u = castInputVarPrecision in_precision t (C.eid "u" in_precision) in
+  let getCoeff = makeGetCoeff fname ~index:locals.index ~stride ~size:points t in
+  let index_stmts = getIndex in_precision bound_check ~locals ~stride ~cells ~min ~max input in
+  let u = castInputVarPrecision in_precision t (C.eid locals.u in_precision) in
   let return = C.sreturn (C.eadd (getCoeff 0) (C.emul u (getCoeff 1))) in
   C.sblock (index_stmts @ [return])
 
-let makeNewBody1Fixed bound_check fname ~cells ~points in_precision t min max input =
+let makeNewBody1Fixed bound_check fname ~locals ~cells ~points in_precision t min max input =
   let stride = 2 in
-  let getCoeff = makeGetCoeff fname ~stride ~size:points t in
+  let getCoeff = makeGetCoeff fname ~index:locals.index ~stride ~size:points t in
   let initial_index = float_of_int cells /. (max -. min) in
   (* Clamp the input, not the scaled value: scaling first overflows the fixed-point range for
      inputs well outside [min, max], and the clamp would then be applied to a wrapped value.
@@ -318,23 +357,23 @@ let makeNewBody1Fixed bound_check fname ~cells ~points in_precision t min max in
     else input
   in
   let value = makeMul in_precision (makeSub in_precision clamped min) initial_index in
-  let value_decl = C.sdecl_bind "value" value in_precision in
+  let value_decl = C.sdecl_bind locals.value value in_precision in
   let decimal =
-    C.sdecl_bind "decimal"
-      (C.esub (C.eid "value" in_precision) (C.ecall "floor" [C.eid "value" in_precision] in_precision))
+    C.sdecl_bind locals.decimal
+      (C.esub (C.eid locals.value in_precision) (C.ecall "floor" [C.eid locals.value in_precision] in_precision))
       in_precision
   in
   let index =
-    C.sdecl_bind "index" (C.emul (C.ecall "int" [C.eid "value" in_precision] C.int_t) (C.eint stride)) C.int_t
+    C.sdecl_bind locals.index (C.emul (C.ecall "int" [C.eid locals.value in_precision] C.int_t) (C.eint stride)) C.int_t
   in
-  let return = C.sreturn (C.eadd (getCoeff 0) (C.emul (getCoeff 1) (C.eid "decimal" in_precision))) in
+  let return = C.sreturn (C.eadd (getCoeff 0) (C.emul (getCoeff 1) (C.eid locals.decimal in_precision))) in
   C.sblock (value_decl @ index @ decimal @ [return])
 
-let makeNewBody2 bound_check fname ~cells ~points in_precision t min max input =
+let makeNewBody2 bound_check fname ~locals ~cells ~points in_precision t min max input =
   let stride = 3 in
-  let getCoeff = makeGetCoeff fname ~stride ~size:points t in
-  let index_stmts = getIndex in_precision bound_check ~stride ~cells ~min ~max input in
-  let u = castInputVarPrecision in_precision t (C.eid "u" in_precision) in
+  let getCoeff = makeGetCoeff fname ~index:locals.index ~stride ~size:points t in
+  let index_stmts = getIndex in_precision bound_check ~locals ~stride ~cells ~min ~max input in
+  let u = castInputVarPrecision in_precision t (C.eid locals.u in_precision) in
   let k2 = C.emul (getCoeff 2) u in
   let k1 = C.emul u (C.eadd (getCoeff 1) k2) in
   let return = C.sreturn (C.eadd (getCoeff 0) k1) in
@@ -352,15 +391,19 @@ let getBoundCheckValue t =
 let getOrderValue t =
   match t with Some (Tags.Int v) -> v | None -> 2 | _ -> failwith "Invalid value of 'bound_check' tag"
 
-let checkInputVariables (loc : Loc.t) (args : param list) : exp =
+let checkInputParam (loc : Loc.t) (args : param list) : param =
   match args with
-  | [{name; t; _}] ->
-      C.eid name t
+  | [p] ->
+      p
   | _ ->
       let msg =
         "Table generation attribute requires a function with exactly one parameter (e.g., 'fun foo(x:type) : type')"
       in
       Error.raiseError msg loc
+
+let checkInputVariables (loc : Loc.t) (args : param list) : exp =
+  let p = checkInputParam loc args in
+  C.eid p.name p.t
 
 let optimizeSize (n : int) =
   let l = Float.log2 (float_of_int n) in
@@ -375,7 +418,10 @@ let makeTable vm (def : function_def) =
   | Tags.[Some (Int size); Some (Real min); Some (Real max); order; bound_check] -> (
       let bound_check = getBoundCheckValue bound_check in
       let out_precision = snd def.t in
-      let var = checkInputVariables def.loc def.args in
+      let display = displayName def in
+      let param = checkInputParam def.loc def.args in
+      let var = C.eid param.name param.t in
+      let locals = makeLocals param.name in
       let in_precision = var.t in
       match (order, in_precision, out_precision) with
       (* Fixed point defaults to the cheaper linear interpolation; an explicit order = 2
@@ -383,22 +429,26 @@ let makeTable vm (def : function_def) =
       | (None | Some (Int 1)), {t= TFix16; _}, {t= TFix16; _} ->
           let size = optimizeSize size in
           let points = size + 1 in
-          let result = calculateTablesOrder1Fixed loc vm def.name size min max out_precision in
+          let result = calculateTablesOrder1Fixed loc vm ~display def.name size min max out_precision in
           let new_body =
-            makeNewBody1Fixed bound_check def.name ~cells:size ~points in_precision out_precision min max var
+            makeNewBody1Fixed bound_check def.name ~locals ~cells:size ~points in_precision out_precision min max var
           in
           let raw = generateRawAccessFunctions loc def.name ~stride:2 ~size:points out_precision in
           result @ raw @ [{top= TopFunction (def, new_body); loc}]
       | Some (Int 1), _, _ ->
           let points = size + 1 in
-          let result = calculateTablesOrder1 loc vm def.name size min max out_precision in
-          let new_body = makeNewBody1 bound_check def.name ~cells:size ~points in_precision out_precision min max var in
+          let result = calculateTablesOrder1 loc vm ~display def.name size min max out_precision in
+          let new_body =
+            makeNewBody1 bound_check def.name ~locals ~cells:size ~points in_precision out_precision min max var
+          in
           let raw = generateRawAccessFunctions loc def.name ~stride:2 ~size:points out_precision in
           result @ raw @ [{top= TopFunction (def, new_body); loc}]
       | _ ->
           let points = size + 1 in
-          let result = calculateTablesOrder2 loc vm def.name size min max out_precision in
-          let new_body = makeNewBody2 bound_check def.name ~cells:size ~points in_precision out_precision min max var in
+          let result = calculateTablesOrder2 loc vm ~display def.name size min max out_precision in
+          let new_body =
+            makeNewBody2 bound_check def.name ~locals ~cells:size ~points in_precision out_precision min max var
+          in
           let raw = generateRawAccessFunctions loc def.name ~stride:3 ~size:points out_precision in
           result @ raw @ [{top= TopFunction (def, new_body); loc}] )
   | _ ->
@@ -414,7 +464,7 @@ let makeIntTable vm (def : function_def) =
   match (Tags.getParameterList def.tags "table" params, def.t) with
   | Tags.[Some (Int min); Some (Int max)], (_, ({t= TReal | TFix16; _} as out_precision)) ->
       let var = checkInputVariables def.loc def.args in
-      let result = calculateIntRealTables loc vm def.name min max out_precision in
+      let result = calculateIntRealTables loc vm ~display:(displayName def) def.name min max out_precision in
       let new_body = makeIntAccessBody def.name out_precision min max var in
       result @ [{top= TopFunction (def, new_body); loc}]
   | Tags.[Some (Int min); Some (Int max)], ([({t= TInt | TInt16; _} as arg_type)], ({t= TInt | TInt16; _} as int_type))
@@ -538,7 +588,9 @@ let makeWavetable (args : Args.args) _vm (def : function_def) =
   | [Some (String file); bound_check] ->
       let bound_check = getBoundCheckValue bound_check in
       let out_precision = snd def.t in
-      let var = checkInputVariables def.loc def.args in
+      let param = checkInputParam def.loc def.args in
+      let var = C.eid param.name param.t in
+      let locals = makeLocals param.name in
       let in_precision = var.t in
       let wave = readFile def.loc args.includes file in
       let () = checkNumberOfChannels def.loc 1 wave in
@@ -552,7 +604,7 @@ let makeWavetable (args : Args.args) _vm (def : function_def) =
          point for an input of exactly 1.0). *)
       let points = size_n + 1 in
       let new_body =
-        makeNewBody2 bound_check def.name ~cells:(size_n - 1) ~points in_precision out_precision 0.0 1.0 var
+        makeNewBody2 bound_check def.name ~locals ~cells:(size_n - 1) ~points in_precision out_precision 0.0 1.0 var
       in
       let raw = generateRawAccessFunctions def.loc def.name ~stride:3 ~size:points out_precision in
       let size_fun = makeSizeFunction def wave.WaveFile.samples in

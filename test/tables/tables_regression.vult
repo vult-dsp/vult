@@ -39,3 +39,26 @@ fun fix_o2(x:fix16) : fix16 @[table(min = 0.0, max = 1.0, size = 8, order = 2)] 
 fun fix_nocheck(x:fix16) : fix16 @[table(min = 0.0, max = 1.0, size = 8, bound_check = false)] {
   return tanh(2.0x * x);
 }
+
+// A parameter named like one of the temporaries the lookup declares ("value", "cell", "u",
+// "index", and "decimal" in the fixed-point path) must not be shadowed by them: the generated
+// code has to compile and still evaluate the table at the argument.
+fun shadow_value(value:real) : real @[table(min = 0.0, max = 1.0, size = 8, order = 2)] {
+  return tanh(2.0 * value);
+}
+
+fun shadow_u(u:real) : real @[table(min = 0.0, max = 1.0, size = 8, order = 1)] {
+  return tanh(2.0 * u);
+}
+
+fun shadow_cell(cell:real) : real @[table(min = 0.0, max = 1.0, size = 8, order = 2)] {
+  return tanh(2.0 * cell);
+}
+
+fun shadow_index(index:real) : real @[table(min = 0.0, max = 1.0, size = 8, order = 2)] {
+  return tanh(2.0 * index);
+}
+
+fun shadow_decimal(decimal:fix16) : fix16 @[table(min = 0.0, max = 1.0, size = 8)] {
+  return tanh(2.0x * decimal);
+}

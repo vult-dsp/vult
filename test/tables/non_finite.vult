@@ -1,0 +1,6 @@
+// The table diverges at x = 0, which with this size is sampled exactly. Fitting a cell around
+// it produces NaN coefficients, so code generation must report the function and the point
+// instead of failing in the number printer.
+fun diverges(x:real) : real @[table(min = -2.5, max = 2.5, size = 2048, order = 1)] {
+  return if x >= 0.0 then 1.0 / sqrt(x) else 1.0 / sqrt(-x);
+}
