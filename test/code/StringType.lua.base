@@ -3,7 +3,7 @@
 function StringType_test1()
    local str1 = "first"
    local str2 = "second"
-   local str3 = ((str1 + ", ") + str2)
+   local str3 = ((str1 .. ", ") .. str2)
    return str3
 end
 
@@ -12,11 +12,11 @@ function StringType_test2()
    local str2 = tostring(1.0)
    local str3 = tostring(1.0)
    local str4 = tostring(true)
-   return (((str1 + str2) + str3) + str4)
+   return (((str1 .. str2) .. str3) .. str4)
 end
 
 function StringType_test3(a, b)
-   return (a + b)
+   return (a .. b)
 end
 
 function StringType_test4()

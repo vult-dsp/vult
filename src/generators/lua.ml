@@ -376,13 +376,16 @@ let rec print_exp e =
   | EOp (op, e1, e2) -> (
       let se1 = print_exp e1 in
       let se2 = print_exp e2 in
-      match op with
+      match (op, e1.t.t) with
       (* Use optimized bit shift functions (LuaJIT uses bit library, standard Lua uses arithmetic) *)
-      | OpLsh ->
+      | OpLsh, _ ->
           {%pla|lshift(<#se1#>, <#se2#>)|}
-      | OpRsh ->
+      | OpRsh, _ ->
           {%pla|rshift(<#se1#>, <#se2#>)|}
-      | _ ->
+      (* In Lua '+' is arithmetic; strings are joined with '..' *)
+      | OpAdd, TString ->
+          {%pla|(<#se1#> .. <#se2#>)|}
+      | _, _ ->
           let op = operator op in
           {%pla|(<#se1#> <#op#> <#se2#>)|} )
   | EIf {cond; then_; else_} when isValueOrIf then_ && isValueOrIf else_ ->

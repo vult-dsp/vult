@@ -23,11 +23,18 @@
 *)
 
 open Core.Prog
+module Tags = Pparser.Ptags
 
-type vcv_config = {module_name: string; process_fn: function_def option; update_fn: function_def option}
+(* Values of 'config' that the VCV Prototype host reads once, when the script loads.
+   [frame_divider] divides the rate at which 'process' is called and [buffer_size] is the
+   number of samples it receives per call. The right values depend on the script, so they
+   are taken from the '@[vcv(...)]' tag of the 'process' function. *)
+type host_settings = {frame_divider: int; buffer_size: int}
 
-let getModuleName (args : Util.Args.args) : string =
-  match args.files with Util.Args.File s :: _ -> Pparser.Parse.moduleName s | _ -> "Top"
+let default_host_settings : host_settings = {frame_divider= 1; buffer_size= 32}
+
+type vcv_config =
+  {module_name: string; process_fn: function_def option; update_fn: function_def option; host_settings: host_settings}
 
 let matchOriginalName (suffix : string) (def : function_def) : bool =
   match def.info.original_name with
@@ -55,8 +62,25 @@ let outputCount (def : function_def) : int =
   | _, _ ->
       1
 
+let positiveSetting (name : string) (loc : Util.Loc.t) (value : int) : int =
+  if value < 1 then Util.Error.raiseError ("The VCV Prototype setting '" ^ name ^ "' must be greater than zero") loc
+  else value
+
+(* Reads '@[vcv(frameDivider = n, bufferSize = m)]'. Both arguments are optional. *)
+let extractHostSettings (def : function_def) : host_settings =
+  match Tags.getParameterList def.tags "vcv" [("frameDivider", Tags.TypeInt); ("bufferSize", Tags.TypeInt)] with
+  | [frame_divider; buffer_size] ->
+      { frame_divider=
+          Tags.getIntValueOr ~default:default_host_settings.frame_divider frame_divider
+          |> positiveSetting "frameDivider" def.loc
+      ; buffer_size=
+          Tags.getIntValueOr ~default:default_host_settings.buffer_size buffer_size
+          |> positiveSetting "bufferSize" def.loc }
+  | _ ->
+      default_host_settings
+
 let extractConfig (args : Util.Args.args) (stmts : top_stmt list) : vcv_config =
-  let module_name = getModuleName args in
+  let module_name = Common.moduleName args in
   let process_fn = ref None in
   let update_fn = ref None in
   CCList.iter
@@ -68,7 +92,8 @@ let extractConfig (args : Util.Args.args) (stmts : top_stmt list) : vcv_config =
       | _ ->
           () )
     stmts ;
-  {module_name; process_fn= !process_fn; update_fn= !update_fn}
+  let host_settings = match !process_fn with Some def -> extractHostSettings def | None -> default_host_settings in
+  {module_name; process_fn= !process_fn; update_fn= !update_fn; host_settings}
 
 let validate (config : vcv_config) : unit =
   let () =
@@ -99,10 +124,6 @@ local global_block = {}
 
 function stringAppend(s1, s2)
    return s1 .. s2
-end
-
-function string(n)
-   return tostring(n)
 end
 
 function getKnob(i)
@@ -145,9 +166,10 @@ function sampletime()
    return global_block.sampleTime
 end
 
-config.frameDivider = 1
-config.bufferSize = 32
 |}
+
+let hostSettingsCode ({frame_divider; buffer_size} : host_settings) : Pla.t =
+  {%pla|config.frameDivider = <#frame_divider#i><#>config.bufferSize = <#buffer_size#i><#>|}
 
 let generate (args : Util.Args.args) (stmts : top_stmt list) : Pla.t * Pla.t =
   let config = extractConfig args stmts in
@@ -202,8 +224,12 @@ let generate (args : Util.Args.args) (stmts : top_stmt list) : Pla.t * Pla.t =
   let update_call = if has_update_ctx then {%pla|<#m#s>_update(processor)|} else {%pla|<#m#s>_update()|} in
   let post =
     {%pla|
-function display(s)
-   print(s)
+-- 'display' is provided by the host. This is only a fallback for running the
+-- generated code outside VCV Rack.
+if display == nil then
+   function display(s)
+      print(s)
+   end
 end
 
 <#init_processor#>
@@ -218,4 +244,6 @@ function process(block)
 end
 |}
   in
-  (vcv_runtime, post)
+  let host_settings = hostSettingsCode config.host_settings in
+  let pre = {%pla|<#vcv_runtime#><#host_settings#>|} in
+  (pre, post)

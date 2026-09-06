@@ -189,5 +189,7 @@ let getStringValueOr ~default v = match v with Some (String v) -> v | _ -> defau
 
 let getBoolValueOr ~default v = match v with Some (Bool v) -> v | _ -> default
 
+let getIntValueOr ~default v = match v with Some (Int v) -> v | _ -> default
+
 (* TODO *)
 let mergeTags (a : tags) b = a @ b

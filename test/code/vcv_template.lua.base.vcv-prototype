@@ -8,10 +8,6 @@ function stringAppend(s1, s2)
    return s1 .. s2
 end
 
-function string(n)
-   return tostring(n)
-end
-
 function getKnob(i)
    if i > 6 or i < 1 then
       return 0.0
@@ -84,8 +80,12 @@ function Vcv_template_update(_ctx)
 end
 
 
-function display(s)
-   print(s)
+-- 'display' is provided by the host. This is only a fallback for running the
+-- generated code outside VCV Rack.
+if display == nil then
+   function display(s)
+      print(s)
+   end
 end
 
 local processor = Vcv_template_process_type_alloc()

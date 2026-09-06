@@ -188,7 +188,7 @@ let template_files =
   ; "pd_ctrl.vult"
   ; "pd_msg.vult" ]
 
-let vcv_template_files = ["vcv_template.vult"; "vcv_vco.vult"]
+let vcv_template_files = ["vcv_template.vult"; "vcv_vco.vult"; "vcv_config.vult"]
 
 let perf_files =
   [ "saw_eptr_perf.vult"

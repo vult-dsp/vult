@@ -32,9 +32,6 @@ type js_config =
   ; control_change_fn: function_def option
   ; default_fn: function_def option }
 
-let getModuleName (args : Util.Args.args) : string =
-  match args.files with Util.Args.File s :: _ -> Pparser.Parse.moduleName s | _ -> "Top"
-
 let matchOriginalName (suffix : string) (def : function_def) : bool =
   match def.info.original_name with
   | Some name ->
@@ -62,7 +59,7 @@ let outputCount (def : function_def) : int =
       1
 
 let extractConfig (args : Util.Args.args) (stmts : top_stmt list) : js_config =
-  let module_name = getModuleName args in
+  let module_name = Common.moduleName args in
   let process_fn = ref None in
   let note_on_fn = ref None in
   let note_off_fn = ref None in

@@ -1,7 +1,7 @@
 
 
--- Math functions
-local sin = math.sin
+-- Core runtime functions
+local function clipValue(x, low, high) if x > high then return high elseif x < low then return low else return x end end
 
 
 -- VCV Prototype functions
@@ -51,30 +51,25 @@ function sampletime()
    return global_block.sampleTime
 end
 
-config.frameDivider = 1
-config.bufferSize = 32
-function Vcv_vco_process_type_alloc()
+config.frameDivider = 8
+config.bufferSize = 64
+function Vcv_config_process_type_alloc()
    local _ctx = {};
-   _ctx.phase = 0.0
+   _ctx.out = 0.0
    return _ctx
 end
 
-function Vcv_vco_update_type_alloc(_ctx)
-   return Vcv_vco_process_type_alloc()
+function Vcv_config_update_type_alloc(_ctx)
+   return Vcv_config_process_type_alloc()
 end
 
-function Vcv_vco_process(_ctx, input_cv)
-   local knob_cv = (-0.5 + getKnob(1))
-   local freq = (440.0 * (input_cv + knob_cv))
-   local delta = (freq * sampletime())
-   _ctx.phase = (delta + _ctx.phase)
-   if (_ctx.phase > 1.0) then
-      _ctx.phase = (-1.0 + _ctx.phase)
-   end
-   return sin((6.283185 * _ctx.phase))
+function Vcv_config_process(_ctx, in1)
+   _ctx.out = clipValue((in1 * getKnob(1)), -1.0, 1.0)
+   return _ctx.out
 end
 
-function Vcv_vco_update(_ctx)
+function Vcv_config_update(_ctx)
+   display(("knob = " .. tostring(getKnob(1))))
 end
 
 
@@ -86,14 +81,14 @@ if display == nil then
    end
 end
 
-local processor = Vcv_vco_process_type_alloc()
+local processor = Vcv_config_process_type_alloc()
 
 
 function process(block)
    global_block = block
-   Vcv_vco_update(processor)
+   Vcv_config_update(processor)
    for i=1,block.bufferSize do
-      local input_cv = block.inputs[1][i] / 10.0
-      block.outputs[1][i] = 10.0 * Vcv_vco_process(processor, input_cv)
+      local in1 = block.inputs[1][i] / 10.0
+      block.outputs[1][i] = 10.0 * Vcv_config_process(processor, in1)
    end
 end

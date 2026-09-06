@@ -29,6 +29,16 @@ let legend =
 
 let setExt ext output = match output with None -> "output" ^ ext | Some file -> file ^ ext
 
+(* The prefix the code generators give to the functions of the main module. It has to be
+   derived the same way the parser names the module (see [Pparser.Parse.parseBuffer]), for
+   both input variants: the command line passes [File], the JavaScript library [Code]. *)
+let moduleName (args : Util.Args.args) : string =
+  match args.files with
+  | Util.Args.File file :: _ | Util.Args.Code (file, _) :: _ ->
+      Pparser.Parse.moduleName file
+  | [] ->
+      "Top"
+
 let splitArray into elems =
   let rec loop current acc count elems =
     match elems with

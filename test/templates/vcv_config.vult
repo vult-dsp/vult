@@ -1,0 +1,7 @@
+fun process(in1:real) @[vcv(frameDivider = 8, bufferSize = 64)] {
+   mem out = clip(in1 * getKnob(1), -1.0, 1.0);
+   return out;
+}
+and update() {
+   _ = display("knob = " + string(getKnob(1)));
+}
