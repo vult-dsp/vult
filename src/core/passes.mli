@@ -27,3 +27,8 @@ open Prog
 (* Lowers and optimizes a typed program into the form the code generators
    print. Every individual pass is an implementation detail. *)
 val run : Util.Args.args -> prog -> prog
+
+(* Rewrites every fix16 type, literal and cast to its real equivalent, for backends that have
+   no fixed-point representation. Run before generating table code, so the lookups are
+   generated in the target precision. *)
+val fix16ToReal : prog -> prog

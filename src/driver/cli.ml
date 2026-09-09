@@ -64,6 +64,8 @@ let showResult (args : args) (output : output) =
       prerr_endline error_strings ; exit 1
 
 let generateCode args (stmts, vm, acc) =
+  (* Before the tables are generated, so their lookups are built in the target's precision. *)
+  let stmts = if args.code = JavaCode then Passes.fix16ToReal stmts else stmts in
   let stmts = Util.Profile.time "Generate Tables" (fun () -> Tables.create args vm stmts) in
   if args.code <> NoCode || args.dcode then
     let stmts = Util.Profile.time "Convert" (fun () -> Tocode.prog args stmts) in

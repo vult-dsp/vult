@@ -171,8 +171,10 @@ static_inline fix16_t fix_mul(fix16_t x, fix16_t y) {
 static_inline fix16_t fix_div(fix16_t a, fix16_t b) {
   if (b == 0)
     return 0;
-  fix16_t result = (fix16_t)(((int64_t)a) << 16) / ((int64_t)b);
-  return result;
+  // The whole division has to happen in 64 bits. Narrowing the shifted numerator first
+  // truncates it, which returns 0 for any |a| >= 0.5.
+  int64_t res = (((int64_t)a) << 16) / (int64_t)b;
+  return (fix16_t)res;
 }
 
 static_inline fix16_t fix_abs(fix16_t x) {

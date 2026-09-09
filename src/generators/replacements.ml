@@ -340,10 +340,44 @@ module Java = struct
         Some "bool_to_fix"
     | "real", [TBool], TReal ->
         Some "bool_to_float"
+    (* Conversions into and out of fix16. Without these the printer falls back to the plain
+       Java casts in java.ml, which drop the 16-bit scaling: a "real" cast into fix16 emits
+       "(float)(x)" and does not even compile, and "int"/"real" casts of a fix16 value compile
+       but read the raw fixed-point integer. *)
+    | "real", [TInt], TFix16 ->
+        Some "int_to_fix"
+    | "real", [TInt16], TFix16 ->
+        Some "int16_to_fix"
+    | "real", [TBool], TFix16 ->
+        Some "bool_to_fix"
+    | "real", [TFix16], TFix16 ->
+        Some "fix_to_fix"
+    | "real", [TFix16], TReal ->
+        Some "fix_to_float"
+    | "int", [TFix16], _ ->
+        Some "fix_to_int"
+    | "int16", [TFix16], _ ->
+        Some "fix_to_int16"
     | _ ->
         None
 
-  let op_to_fun (_op : Core.Prog.operator) (_e1 : type_) (_e2 : type_) (_ret : type_) = None
+  (* fix16 is lowered to real before code generation for this backend (see
+     Passes.fix16ToReal), so in practice no fix16 reaches the printer. These entries stay as a
+     backstop: were a fix16 to slip through, the alternative is a plain int "*", which
+     overflows into a negative value for any operand past 0.5 and turns a table index
+     negative -- wrong output rather than a compile error.
+
+     fix16 is an int holding a value scaled by 2^16. Adding and subtracting two of them works
+     on the raw ints, but multiplying and dividing do not: the scale factor squares or
+     cancels, and the intermediate overflows 32 bits. *)
+  let op_to_fun (op : Core.Prog.operator) (e1 : type_) (e2 : type_) (ret : type_) =
+    match (op, e1.t, e2.t, ret.t) with
+    | OpMul, TFix16, TFix16, TFix16 ->
+        Some "fix_mul"
+    | OpDiv, TFix16, TFix16, TFix16 ->
+        Some "fix_div"
+    | _ ->
+        None
 end
 
 module Lua = struct

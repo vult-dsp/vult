@@ -307,7 +307,56 @@ static int fix_to_int(int x) {
 static float fix_to_float(int x) {
     return ((float)x) / 65536.0f;
 }
-|}) ]
+|})
+    (* The conversions below mirror the C++ runtime in runtime/vultin.hpp. Fragments are emitted
+       per direct call and nothing resolves dependencies between them, so each one is
+       self-contained instead of calling the others. *)
+  ; ( ["int_to_fix"]
+    , {%pla|
+static int int_to_fix(int x) {
+    if(x > 32767)
+        return 0x7FFFFFFF;
+    else if(x < -32768)
+        return -2147483648;
+    else return x * 65536;
+}
+|}
+    )
+  ; (["int16_to_fix"], {%pla|
+static int int16_to_fix(short x) {
+    return ((int)x) * 65536;
+}
+|})
+  ; (["bool_to_fix"], {%pla|
+static int bool_to_fix(boolean x) {
+    return x ? 65536 : 0;
+}
+|})
+  ; (["fix_to_fix"], {%pla|
+static int fix_to_fix(int x) {
+    return x;
+}
+|})
+  ; ( ["fix_to_int16"]
+    , {%pla|
+static short fix_to_int16(int x) {
+    return (short)Math.max(-32768, Math.min(32767, x >> 16));
+}
+|} )
+  ; (["fix_mul"], {%pla|
+static int fix_mul(int x, int y) {
+    return (int)((((long)x) * ((long)y)) >> 16);
+}
+|})
+  ; ( ["fix_div"]
+    , {%pla|
+static int fix_div(int x, int y) {
+    if(y == 0)
+        return 0;
+    else return (int)((((long)x) << 16) / ((long)y));
+}
+|}
+    ) ]
 
 let runtime (stmts : prog) =
   let calls = Usage.calledFunctions stmts in

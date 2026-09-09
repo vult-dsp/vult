@@ -709,6 +709,43 @@ module Cast = struct
   let mapper = {Mapper.identity with exp; type_}
 end
 
+(* Lowers fix16 to real. The Java backend has no fixed-point representation, and there is
+   nothing to gain from one on the JVM: the Q16.16 multiply needs a 64-bit intermediate, so
+   the fix16 form of a table lookup measures slower than the float form even before the
+   conversions at its boundary. Lowering here, before any table code is generated, also keeps
+   the backend from needing a second copy of the fixed-point math runtime.
+
+   Types are rewritten first by the mapper, so by the time an expression is visited its own
+   type and its arguments' types are already real. *)
+module Fix16ToReal = struct
+  let type_ =
+    Mapper.make
+    @@ fun _env state (t : type_) ->
+    match t with {t= TFix16; const; loc} -> (state, {t= TReal; const; loc}) | _ -> (state, t)
+
+  let exp =
+    Mapper.make
+    @@ fun _env state (e : exp) ->
+    match e with
+    | {e= EFixed n; t; loc} ->
+        (state, {e= EReal n; t; loc})
+    (* A fix16 cast of something already real is nothing; of anything else it is the
+       corresponding real cast. The identity casts the rewrite leaves behind are dropped the
+       same way Simplify does, since that pass has already run by this point. *)
+    | {e= ECall {path= "fix16" | "real"; args= [({t= {t= TReal; _}; _} as arg)]}; _} ->
+        (state, arg)
+    | {e= ECall {path= "fix16"; args= [arg]}; t; loc} ->
+        (state, {e= ECall {path= "real"; args= [arg]}; t; loc})
+    | _ ->
+        (state, e)
+
+  let mapper = {Mapper.identity with exp; type_}
+
+  let run (prog : prog) : prog =
+    let _, prog = Mapper.prog mapper () (Mapper.defaultState ()) prog in
+    prog
+end
+
 module Canonize = struct
   let compare_exp e1 e2 =
     match (e1.e, e2.e) with
@@ -1779,6 +1816,8 @@ let rec apply env state prog n =
         else
           let state, t = apply env state t 0 in
           (state, h @ t)
+
+let fix16ToReal (prog : prog) : prog = Fix16ToReal.run prog
 
 let run args (prog : prog) : prog =
   let _, prog = apply (default_env args) (Mapper.defaultState (default_data ())) prog 0 in

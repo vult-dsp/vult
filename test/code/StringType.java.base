@@ -17,7 +17,7 @@ private String StringType_test1() {
 private String StringType_test2() {
    String str1 = string(1);
    String str2 = string(1.0f);
-   String str3 = string(0x10000 /* 1.000000 */);
+   String str3 = string(1.0f);
    String str4 = string(true);
    return (((str1 + str2) + str3) + str4);
 }
