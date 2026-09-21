@@ -1,0 +1,25 @@
+// Arrays of arrays work as context members, as locals and as arguments.
+
+type matrix {
+  val rows : array(array(real, 2), 2);
+}
+
+fun corner(a : array(array(real, 2), 2)) : real {
+  return a[0][0] + a[1][1];
+}
+
+fun trace_of(m : matrix) : real {
+  return m.rows[0][0] + m.rows[1][1];
+}
+
+fun main() : int {
+  mem cells : array(array(real, 2), 2);
+  mem m : matrix;
+  cells[0][0] = 1.0;
+  cells[1][1] = 2.0;
+  m.rows[0][0] = 3.0;
+  m.rows[1][1] = 4.0;
+  if (corner(cells) <> 3.0) return -1;
+  if (trace_of(m) <> 7.0) return -2;
+  return 400;
+}

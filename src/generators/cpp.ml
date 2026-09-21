@@ -374,8 +374,6 @@ let print_member state (n, (t : type_), _, _) =
 let print_arg state i ({name; t; const; _} : param) =
   let const = if const then Pla.string "const " else Pla.unit in
   match t.t with
-  | TArray (_, {t= TArray _; _}) ->
-      failwith "array of arrays are not implemented"
   | TArray (Some dim, ({t= TStruct _; _} as sub)) ->
       let sub = print_type_ state sub in
       {%pla|<#const#>std::array<<#sub#>, <#dim#i>>& <#name#s>|}
@@ -394,8 +392,6 @@ let print_arg state i ({name; t; const; _} : param) =
 
 let print_decl state (n, (t : type_)) =
   match t.t with
-  | TArray (_, {t= TArray _; _}) ->
-      failwith "array of arrays are not implemented"
   | TArray (Some dim, ({t= TStruct _; _} as sub)) ->
       let sub = print_type_ state sub in
       {%pla|std::array<<#sub#>, <#dim#i>> &<#n#s>|}
@@ -412,8 +408,6 @@ let print_decl state (n, (t : type_)) =
 
 let print_decl_alloc state (n, (t : type_)) =
   match t.t with
-  | TArray (_, {t= TArray _; _}) ->
-      failwith "array of arrays are not implemented"
   | TArray (Some dim, ({t= TStruct _; _} as sub)) ->
       let sub = print_type_ state sub in
       {%pla|std::array<<#sub#>, <#dim#i>> <#n#s>|}
