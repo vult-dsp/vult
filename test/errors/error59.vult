@@ -1,0 +1,8 @@
+// The serializer writes one value per array element, so nested arrays cannot be saved.
+type grid {
+  val cells : array(array(real, 4), 4);
+}
+fun process() {
+  mem g : grid @[save];
+  return g.cells[0][0];
+}

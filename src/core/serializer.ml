@@ -204,6 +204,34 @@ let tagAllMembers fully_saved (stmts : top_stmt list) =
           stmt )
     stmts
 
+(* The emitter writes each saved member with a single call, and array and list members with one
+   loop around that call, so an element has to be a value the buffer knows how to push. Anything
+   else is reported here, where the member's location is still available, instead of reaching the
+   emitter and aborting without one. *)
+let isSerializableValue (t : type_) =
+  match t.t with
+  | TInt | TInt16 | TFix16 | TBool | TReal | TString | TStruct _ | TVoid _ | TEmptyType ->
+      true
+  | TArray _ | TList _ | TTuple _ ->
+      false
+
+let checkSavedMember (struct_path : string) (name : string) (t : type_) (loc : Util.Loc.t) =
+  let reject reason =
+    let msg = Printf.sprintf "The member '%s' of '%s' cannot be saved: %s." name struct_path reason in
+    Util.Error.raiseError msg loc
+  in
+  match t.t with
+  | TArray (None, _) ->
+      reject "the size of the array is not known"
+  | TArray (Some _, at) when not (isSerializableValue at) ->
+      reject "only arrays of simple values and records can be saved"
+  | TList at when not (isSerializableValue at) ->
+      reject "only lists of simple values and records can be saved"
+  | TTuple _ ->
+      reject "tuples cannot be saved"
+  | _ ->
+      ()
+
 let serializerForType (t : type_) =
   match t with
   | {t= TInt | TInt16 | TFix16 | TBool; _} ->
@@ -763,6 +791,18 @@ let createSerializers (prog : prog) =
   in
   *)
   let table = propagateSaveTag table in
+  let () =
+    TypeTable.iter
+      (fun _ (s, save, _, _) ->
+        match s with
+        | Some (s : struct_descr) when save ->
+            CCList.iter
+              (fun (name, t, tags, loc) -> if Pparser.Ptags.has tags "save" then checkSavedMember s.path name t loc)
+              s.members
+        | _ ->
+            () )
+      table
+  in
   let n_types = TypeTable.fold (fun _ (_, _, _, n) acc -> if n >= 0 then acc + 1 else acc) table 0 in
   let serializers = CCList.filter_map (fun stmt -> createSerializer table stmt) prog in
   let deserializers = CCList.filter_map (fun stmt -> createDeserializer table stmt) prog in
