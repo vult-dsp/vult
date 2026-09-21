@@ -89,6 +89,10 @@ let generateCode args (stmts, vm, acc) =
       | ZigCode ->
           Zig.generate args stmts
     in
+    (* The generators return a Pla.t that only runs when it is printed, and printing happens after
+       the error handler in [driver] is out of scope. Rendering the files here keeps the errors the
+       templates raise (an out-of-range fixed-point literal, an unsupported cast) reportable. *)
+    let code = CCList.map (fun (text, file) -> (Pla.string (Pla.print text), file)) code in
     (GeneratedCode code :: prog_out) @ acc
   else acc
 
