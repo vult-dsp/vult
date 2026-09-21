@@ -108,9 +108,9 @@ let rec print_exp (e : exp) =
   | EInt n ->
       {%pla|<#n#i>|}
   | EReal n ->
-      Pla.string (Util.Vfloat.to_string n)
+      Pla.string (Util.Vfloat.to_string Double n)
   | EFixed n ->
-      Pla.string (Util.Vfloat.to_string n)
+      Pla.string (Util.Vfloat.to_string Double n)
   | EString s ->
       Pla.string_quoted s
   | EId id ->

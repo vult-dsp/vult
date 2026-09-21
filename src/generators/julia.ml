@@ -93,10 +93,10 @@ let rec print_exp e =
       let n_str = string_of_int n in
       {%pla|Int32(<#n_str#s>)|}
   | EReal n ->
-      let n_str = Util.Vfloat.to_string n in
+      let n_str = Util.Vfloat.to_string Single n in
       {%pla|Float32(<#n_str#s>)|}
   | EFixed n ->
-      let n_str = Util.Vfloat.to_string n in
+      let n_str = Util.Vfloat.to_string Single n in
       {%pla|Float32(<#n_str#s>)|}
   | EString s ->
       Pla.string_quoted s

@@ -291,10 +291,10 @@ let rec print_exp (state : state) (e : exp) =
   | EInt n ->
       {%pla|<#n#i>|}
   | EReal n ->
-      let s = Util.Vfloat.to_string n in
+      let s = Util.Vfloat.to_string Single n in
       Pla.string s
   | EFixed n ->
-      let s = Util.Vfloat.to_string n in
+      let s = Util.Vfloat.to_string Single n in
       Pla.string s
   | EString s ->
       Pla.string_quoted s

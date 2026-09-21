@@ -212,7 +212,7 @@ let rec print_exp state (prec : operator option) (e : exp) =
   | EInt n ->
       {%pla|<#n#i>|}
   | EReal n ->
-      let n = Util.Vfloat.adapt n in
+      let n = Util.Vfloat.adapt Single n in
       {%pla|<#n#f>f|}
   | EFixed n ->
       let n = Common.toFixed n in
