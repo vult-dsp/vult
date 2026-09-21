@@ -254,6 +254,7 @@ let interpreter =
   ; ("instance_state.vult", 7000)
   ; ("int16_test.vult", 1000)
   ; ("memory_state.vult", 6000)
+  ; ("nested_if_expressions.vult", 300)
   ; ("nonnegative_floor.vult", 1)
   ; ("parallel_assign.vult", 1267)
   ; ("qualified_enum_patterns.vult", 100)

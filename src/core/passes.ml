@@ -233,6 +233,22 @@ module IfExpressions = struct
     | _ ->
         env
 
+  (* An if-expression bound to a variable or returned becomes an if-statement. Its branches can
+     hold if-expressions of their own, so they are split here as well: the pass loop would
+     otherwise need one round per nesting level and give up on deeply nested expressions. *)
+  let rec splitIf (s : stmt) : stmt =
+    match s with
+    | {s= StmtBind (lhs, {e= EIf {cond; then_; else_}; _}); loc} ->
+        let then_ = splitIf {s= StmtBind (lhs, then_); loc} in
+        let else_ = splitIf {s= StmtBind (lhs, else_); loc} in
+        {s= StmtIf (cond, then_, Some else_); loc}
+    | {s= StmtReturn {e= EIf {cond; then_; else_}; _}; loc} ->
+        let then_ = splitIf {s= StmtReturn then_; loc} in
+        let else_ = splitIf {s= StmtReturn else_; loc} in
+        {s= StmtIf (cond, then_, Some else_); loc}
+    | _ ->
+        s
+
   let stmt =
     Mapper.makeExpander
     @@ fun _env state (s : stmt) ->
@@ -246,14 +262,8 @@ module IfExpressions = struct
     (* Convert else if (true) -> else*)
     | {s= StmtIf (cond, then_, Some {s= StmtIf ({e= EBool true; _}, else_, None); _}); loc} ->
         (reapply state, [C.sif ~loc cond then_ (Some else_)])
-    | {s= StmtBind (lhs, {e= EIf {cond; then_; else_}; _}); loc} ->
-        let then_ = {s= StmtBind (lhs, then_); loc} in
-        let else_ = {s= StmtBind (lhs, else_); loc} in
-        (reapply state, [{s= StmtIf (cond, then_, Some else_); loc}])
-    | {s= StmtReturn {e= EIf {cond; then_; else_}; _}; loc} ->
-        let then_ = {s= StmtReturn then_; loc} in
-        let else_ = {s= StmtReturn else_; loc} in
-        (reapply state, [{s= StmtIf (cond, then_, Some else_); loc}])
+    | {s= StmtBind (_, {e= EIf _; _}); _} | {s= StmtReturn {e= EIf _; _}; _} ->
+        (reapply state, [splitIf s])
     | _ ->
         (state, [s])
 
