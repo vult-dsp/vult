@@ -1,0 +1,51 @@
+// Every statement kind must work inside a generic function: the body is typed with a
+// generic-aware declaration handler, and the compound statements have to keep using it.
+
+enum direction { Forward, Backward }
+
+fun accumulate(x : 't) : 't {
+  val total = x;
+  iter(i, 4) {
+    val step = x;
+    total = total + step;
+  }
+  return total;
+}
+
+fun clamp_high(x : 't, hi : 't) : 't {
+  if (x > hi) {
+    val limit = hi;
+    return limit;
+  }
+  return x;
+}
+
+fun pick(x : 't, d : direction) : 't {
+  match (d) {
+    Forward -> { val kept = x; return kept; }
+    Backward -> { return x; }
+    _ -> { return x; }
+  }
+}
+
+fun count_up(x : 't) : 't {
+  val total = x;
+  val i = 0;
+  while (i < 3) {
+    mem seen : 't;
+    seen = x;
+    total = total + seen;
+    i = i + 1;
+  }
+  return total;
+}
+
+fun main() : int {
+  if (accumulate(1.0) <> 5.0) return -1;
+  if (accumulate(2) <> 10) return -2;
+  if (clamp_high(3.0, 1.0) <> 1.0) return -3;
+  if (clamp_high(0.5, 1.0) <> 0.5) return -4;
+  if (pick(7, Forward) <> 7) return -5;
+  if (count_up(1.0) <> 4.0) return -6;
+  return 200;
+}

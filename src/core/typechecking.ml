@@ -1175,52 +1175,42 @@ and stmt_generic (env : env) (dexp_func : env -> Syntax.dexp -> var_kind -> env 
       let env, rhs = exp env rhs in
       unifyRaise ~bind:true rhs.loc lhs.t rhs.t ;
       (env, [{s= StmtMem (dlhs, tags); loc}; {s= StmtBind (lhs, rhs); loc}])
-  | _ ->
-      (* For other statements, use the regular dexp instead of the generic one *)
-      let rec normal_stmt (env : env) (return : type_) (s : Syntax.stmt) : env * stmt list =
-        match s with
-        | {s= SStmtError; _} ->
-            (env, [])
-        | {s= SStmtBlock stmts; loc} ->
-            let env = Env.pushScope env in
-            let env, stmts =
-              CCList.fold_left_map (fun env s -> normal_stmt env return s) env stmts
-              |> fun (env, nested_lists) -> (env, CCList.flatten nested_lists)
-            in
-            let env = Env.popScope env in
-            (env, [{s= StmtBlock stmts; loc}])
-        | {s= SStmtReturn e; loc} ->
-            let env, e = exp env e in
-            unifyRaise e.loc return e.t ;
-            (env, [{s= StmtReturn e; loc}])
-        | {s= SStmtBind (lhs, rhs); loc} ->
-            let env, lhs = lexp env lhs in
-            let env, rhs = exp env rhs in
-            unifyRaise ~bind:true rhs.loc lhs.t rhs.t ;
-            (env, [{s= StmtBind (lhs, rhs); loc}])
-        | {s= SStmtIf (cond, then_, else_); loc} ->
-            let env, cond = exp env cond in
-            let env, then_stmts = normal_stmt env return then_ in
-            let env, else_stmts =
-              match else_ with
-              | None ->
-                  (env, [])
-              | Some else_stmt ->
-                  let env, else_stmts = normal_stmt env return else_stmt in
-                  (env, else_stmts)
-            in
-            let then_stmt = stmt_block then_stmts in
-            let else_stmt_opt = match else_stmts with [] -> None | _ -> Some (stmt_block else_stmts) in
-            (env, [{s= StmtIf (cond, then_stmt, else_stmt_opt); loc}])
-        | {s= SStmtWhile (cond, body); loc} ->
-            let env, cond = exp env cond in
-            let env, body_stmts = normal_stmt env return body in
-            let body = stmt_block body_stmts in
-            (env, [{s= StmtWhile (cond, body); loc}])
-        | _ ->
-            failwith "Unhandled statement type in generic processing"
+  (* The remaining statements have no declaration of their own, so they are handled exactly like
+     in [stmt], recursing through [stmt_generic] so that any nested declaration keeps using the
+     generic-aware [dexp_func]. *)
+  | {s= SStmtBind (lhs, rhs); loc} ->
+      let env, lhs = lexp env lhs in
+      let env, rhs = exp env rhs in
+      unifyRaise ~bind:true rhs.loc lhs.t rhs.t ;
+      (env, [{s= StmtBind (lhs, rhs); loc}])
+  | {s= SStmtReturn e; loc} ->
+      let env, e = exp env e in
+      unifyRaise e.loc return e.t ;
+      (env, [{s= StmtReturn e; loc}])
+  | {s= SStmtIf (cond, then_, else_); loc} ->
+      let env, cond = exp env cond in
+      unifyRaise cond.loc (C.bool ~loc) cond.t ;
+      let env, then_ = stmt_generic env dexp_func return then_ in
+      let env, else_ =
+        match else_ with
+        | None ->
+            (env, None)
+        | Some else_ ->
+            let env, else_ = stmt_generic env dexp_func return else_ in
+            (env, Some (stmt_block else_))
       in
-      normal_stmt env return s
+      (env, [{s= StmtIf (cond, stmt_block then_, else_); loc}])
+  | {s= SStmtWhile (cond, body); loc} ->
+      let env, cond = exp env cond in
+      unifyRaise cond.loc (C.bool ~loc) cond.t ;
+      let env, body = stmt_generic env dexp_func return body in
+      (env, [{s= StmtWhile (cond, stmt_block body); loc}])
+  | {s= SStmtIter {id= name, id_loc; value; body}; loc} ->
+      let while_s = makeIterWhile env name id_loc value body loc in
+      stmt_generic env dexp_func return while_s
+  | {s= SStmtMatch {e; cases}; _} ->
+      let if_stmt = makeIfOfMatch env e cases in
+      stmt_generic env dexp_func return if_stmt
 
 and stmt_list_generic (env : env) (dexp_func : env -> Syntax.dexp -> var_kind -> env * dexp) (return : type_)
     (stmts : Syntax.stmt list) : env * stmt list =

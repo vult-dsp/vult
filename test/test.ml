@@ -230,6 +230,7 @@ let interpreter =
   ; ("math_builtins.vult", 900)
   ; ("generics.vult", 1)
   ; ("generics_comprehensive.vult", 800)
+  ; ("generics_statements.vult", 200)
   ; ("generics_context_chains.vult", 600)
   ; ("generics_cross_module.vult", 600)
   ; ("companion_cross_module.vult", 1000)
