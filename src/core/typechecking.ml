@@ -1469,7 +1469,18 @@ let insertContextArgument (env : env) (def : function_def) : function_def =
         let next = loop def.next in
         {def with args= arg :: def.args; next}
 
-let top_dexp (env : env) (d : Syntax.dexp) =
+(* A constant declaration only names one value, so the parenthesized and annotated forms are
+   unwrapped to reach the identifier that gives the constant its name and dimensions. *)
+let rec constantDecl (d : Syntax.dexp) : (string * int option) option =
+  match d.d with
+  | SDId (name, dims) ->
+      Some (name, dims)
+  | SDGroup e | SDTyped (e, _) ->
+      constantDecl e
+  | SDWild | SDTuple _ ->
+      None
+
+let rec top_dexp (env : env) (d : Syntax.dexp) =
   match d with
   | {d= SDId (name, dims); loc} ->
       let t =
@@ -1477,8 +1488,16 @@ let top_dexp (env : env) (d : Syntax.dexp) =
       in
       (*let env = Env.addVar env unify name t kind loc in*)
       (env, {d= DId (name, dims); t; loc})
-  | _ ->
-      failwith "invalid constant"
+  | {d= SDGroup e; _} ->
+      top_dexp env e
+  | {d= SDTyped (e, t); _} ->
+      let env, e = top_dexp env e in
+      let t = type_in_m env t in
+      checkArrayDimensions t ; unifyRaise ~bind:true e.loc t e.t ; (env, e)
+  | {d= SDWild; loc} ->
+      Error.raiseError "A constant needs a name." loc
+  | {d= SDTuple _; loc} ->
+      Error.raiseError "A constant can only declare one value." loc
 
 let convert_generic_param (env : env) (param : Syntax.generic_param) : Typed.generic_param =
   match param with
@@ -1618,16 +1637,19 @@ let rec top_stmt (iargs : Args.args) (env : env) (s : Syntax.top_stmt) : env * t
       let m = Env.getCurrentModule env in
       let path = Env.getPath m name loc in
       (env, [{top= TopEnum {path; members}; loc}])
-  | {top= STopConstant (({d= SDId (name, dim); _} as d), e); loc} ->
-      let env, d = top_dexp env d in
-      let env, e = exp ~context:constant_context env e in
-      unifyRaise e.loc d.t e.t ;
-      let m = Env.getCurrentModule env in
-      let path = Env.getPath m name loc in
-      let env = Env.addConstant env unify name d.t loc in
-      (env, [{top= TopConstant (path, dim, d.t, e, None); loc}])
-  | {top= STopConstant _; _} ->
-      failwith ""
+  | {top= STopConstant (d, e); loc} -> (
+    match constantDecl d with
+    | None ->
+        let env, _ = top_dexp env d in
+        (env, [])
+    | Some (name, dim) ->
+        let env, d = top_dexp env d in
+        let env, e = exp ~context:constant_context env e in
+        unifyRaise e.loc d.t e.t ;
+        let m = Env.getCurrentModule env in
+        let path = Env.getPath m name loc in
+        let env = Env.addConstant env unify name d.t loc in
+        (env, [{top= TopConstant (path, dim, d.t, e, None); loc}]) )
 
 and top_stmt_list (iargs : Args.args) (env : env) (s : Syntax.top_stmt list) : env * top_stmt list =
   let env, rev_groups =

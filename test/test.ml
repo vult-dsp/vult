@@ -176,7 +176,8 @@ let errors_files =
   ; "error54.vult"
   ; "error55.vult"
   ; "error56.vult"
-  ; "error57.vult" ]
+  ; "error57.vult"
+  ; "error60.vult" ]
 
 let template_files =
   [ "sf_f.vult"
@@ -216,7 +217,8 @@ let perf_files =
 
 (* Each file is evaluated and main() must return exactly the expected value *)
 let interpreter =
-  [ ("arithmetic.vult", 1000)
+  [ ("annotated_constants.vult", 100)
+  ; ("arithmetic.vult", 1000)
   ; ("arrays_structs.vult", 5000)
   ; ("builtins.vult", 3000)
   ; ("constant.vult", 8000)

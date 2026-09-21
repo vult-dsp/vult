@@ -1,0 +1,16 @@
+// A constant may carry a type annotation, alone or with a dimension.
+
+constant cutoff : real = 440.0;
+constant voices : int = 4;
+constant enabled : bool = true;
+constant gains : array(real, 4) = [1.0, 0.5, 0.25, 0.125];
+constant label : string = "filter";
+
+fun main() : int {
+  if (cutoff <> 440.0) return -1;
+  if (voices <> 4) return -2;
+  if (not(enabled)) return -3;
+  if (gains[0] <> 1.0 || gains[3] <> 0.125) return -4;
+  if (length(label) <> 6) return -5;
+  return 100;
+}

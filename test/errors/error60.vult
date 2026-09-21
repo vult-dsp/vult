@@ -1,0 +1,2 @@
+// A constant declares a single name.
+constant a, b = 1;

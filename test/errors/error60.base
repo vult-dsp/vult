@@ -1,0 +1,4 @@
+A constant can only declare one value.
+// A constant declares a single name.
+constant a, b = 1;
+         ^
