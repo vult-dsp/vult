@@ -357,6 +357,17 @@ let rec lookVarInScopes (scopes : var Map.t list) name : var option =
 let lookVarInContext (context : context) name : var option =
   match context with Some (_, {descr= Record members; _}) -> Map.find name members | _ -> None
 
+(* A name that starts with an uppercase letter is read as an enumeration value, so a binding
+   spelled that way could never be read back. Rejecting it at the declaration points at the name
+   itself instead of at its first use. *)
+let checkBindingName (kind : string) (name : string) (loc : Loc.t) : unit =
+  if Pparser.Syntax.startsUppercase name then
+    Error.raiseError
+      ( "The " ^ kind ^ " '" ^ name
+      ^ "' starts with an uppercase letter, which is reserved for enumeration values. Rename it to '"
+      ^ String.uncapitalize_ascii name ^ "'." )
+      loc
+
 let registerArguments (args : Typed.arg list) =
   let locals = Map.empty () in
   let report loc (found : var) =
@@ -367,6 +378,7 @@ let registerArguments (args : Typed.arg list) =
   let rev_args =
     CCList.fold_left
       (fun acc ({name; t; loc} : Typed.arg) ->
+        let () = checkBindingName "argument" name loc in
         let () = Map.update (report loc) name {name; t; kind= Val; tags= []; loc} locals in
         t :: acc )
       [] args
@@ -427,6 +439,7 @@ let getType (env : env) (path : path) : t option =
       None
 
 let addConstant (env : env) _unify (name : string) (t : Typed.type_) loc : env =
+  let () = checkBindingName "constant" name loc in
   let m = getCurrentModule env in
   let report (found : var) =
     Error.raiseError
@@ -528,6 +541,7 @@ let makeMemReporter (unify : Typed.type_ -> Typed.type_ -> bool) (t : Typed.type
 (* Helper: Add a mem or inst variable to the context record *)
 let addMemOrInst (f : f) (members : var Map.t) (unify : Typed.type_ -> Typed.type_ -> bool) (name : string)
     (t : Typed.type_) (kind : var_kind) (tags : Pparser.Ptags.tag list) (loc : Loc.t) (env : env) : env =
+  let () = match kind with Mem _ -> checkBindingName "variable" name loc | _ -> () in
   let () = checkDuplicatedVal f.locals name loc in
   let report_mem = makeMemReporter unify t in
   Map.update report_mem name {name; t; kind; tags; loc} members ;
@@ -540,6 +554,7 @@ let addValVar (f : f) (context : context) (name : string) (t : Typed.type_) (loc
       ("A variable with the name '" ^ found.name ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
       loc
   in
+  let () = checkBindingName "variable" name loc in
   let () = checkDuplicatedMem context name loc in
   let () = checkDuplicatedConstant env name loc in
   match f.locals with

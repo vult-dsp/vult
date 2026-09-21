@@ -1,3 +1,4 @@
-Return variable 'Error49_getValue_ret_0' conflicts with a mem variable declared at line 2, columns 6-28. Consider using different names for your mem variables.
+The variable 'Error49_getValue_ret_0' starts with an uppercase letter, which is reserved for enumeration values. Rename it to 'error49_getValue_ret_0'.
 fun getValue() {
-    ^^^^^^^^
+  mem Error49_getValue_ret_0 : bool;
+      ^^^^^^^^^^^^^^^^^^^^^^

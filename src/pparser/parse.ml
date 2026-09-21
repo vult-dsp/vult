@@ -1211,7 +1211,7 @@ and enum_member_type (buffer : Stream.stream) =
 
 and enum_name (buffer : Stream.stream) =
   let name, loc = id_name buffer in
-  if String.capitalize_ascii name = name then (name, loc)
+  if startsUppercase name then (name, loc)
   else raise (ParserError (Stream.makeError buffer "Enumeration elements should start with uppercase"))
 
 and stmtWhile (buffer : Stream.stream) : stmt =

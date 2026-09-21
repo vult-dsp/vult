@@ -80,6 +80,12 @@ and lexp_d =
 
 and lexp = {l: lexp_d; loc: Loc.t}
 
+(* An expression that starts with an uppercase letter is read as an enumeration value or a module
+   name, so no variable, parameter or constant may be spelled that way. Names starting with '_' or
+   a digit are ordinary identifiers. *)
+let startsUppercase (name : string) : bool =
+  String.length name > 0 && match name.[0] with 'A' .. 'Z' -> true | _ -> false
+
 type dexp_d = SDWild | SDId of string * int option | SDTuple of dexp list | SDGroup of dexp | SDTyped of dexp * type_
 
 and dexp = {d: dexp_d; loc: Loc.t}

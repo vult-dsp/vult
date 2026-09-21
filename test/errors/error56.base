@@ -1,0 +1,4 @@
+The variable 'Counter' starts with an uppercase letter, which is reserved for enumeration values. Rename it to 'counter'.
+fun process(x : real) {
+  mem Counter : int;
+      ^^^^^^^

@@ -173,7 +173,10 @@ let errors_files =
   ; "error51.vult"
   ; "error52.vult"
   ; "error53.vult"
-  ; "error54.vult" ]
+  ; "error54.vult"
+  ; "error55.vult"
+  ; "error56.vult"
+  ; "error57.vult" ]
 
 let template_files =
   [ "sf_f.vult"
@@ -221,6 +224,7 @@ let interpreter =
   ; ("edge_cases.vult", 7000)
   ; ("function_calls_in_constants.vult", 1)
   ; ("functions.vult", 4000)
+  ; ("identifier_names.vult", 500)
   ; ("math_builtins.vult", 900)
   ; ("generics.vult", 1)
   ; ("generics_comprehensive.vult", 800)

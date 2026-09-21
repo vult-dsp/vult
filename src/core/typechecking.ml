@@ -549,7 +549,7 @@ and exp ?(context = normal_context) ?(in_constant_context = false) (env : env) (
       (env, {e= EString value; t; loc})
   | {e= SEGroup e; _} ->
       exp ~context env e
-  | {e= SEId name; loc} when not (String.equal (String.capitalize_ascii name) name) -> (
+  | {e= SEId name; loc} when not (Syntax.startsUppercase name) -> (
       let name_path : path = {id= name; n= None; loc} in
       match Env.lookupExpressionSymbol env name_path context with
       | ExprVariable var ->
@@ -680,7 +680,7 @@ and exp ?(context = normal_context) ?(in_constant_context = false) (env : env) (
   | {e= SEMember (e1, m); loc} -> (
     (* First, try to interpret this as an enum reference if e1 is an SEId or SEEnum *)
     match e1 with
-    | {e= SEId module_name; _} when String.equal (String.capitalize_ascii module_name) module_name -> (
+    | {e= SEId module_name; _} when Syntax.startsUppercase module_name -> (
         (* First check if this is a module name - try module-qualified access *)
         let const_path = Syntax.{id= m; n= Some module_name; loc} in
         let results = Env.lookupPath env const_path in
@@ -762,9 +762,14 @@ and exp ?(context = normal_context) ?(in_constant_context = false) (env : env) (
           (env, {e= EInt index; t; loc})
       | ExprNotFound ->
           Error.raiseError ("Undefined symbol '" ^ id ^ "'. Check spelling or ensure it's declared before use") loc
-      | _ ->
+      (* Only names starting with an uppercase letter reach this point: they are read as
+         enumeration values, so whatever this one does resolve to cannot be used here. *)
+      | (ExprVariable _ | ExprFunction _ | ExprType _) as symbol ->
+          let kind = match symbol with ExprFunction _ -> "a function" | ExprType _ -> "a type" | _ -> "a variable" in
           Error.raiseError
-            ("Symbol '" ^ id ^ "' is not an enumeration value. Use enumeration constructors like 'MyEnum.Value'")
+            ( "'" ^ id ^ "' is " ^ kind
+            ^ ", but a name that starts with an uppercase letter is read as an enumeration value. Rename it to '"
+            ^ String.uncapitalize_ascii id ^ "' or use a module-qualified enumeration value like 'MyModule.Value'." )
             loc )
   | {e= SERecord {path; elems}; loc} -> (
       let t = Env.lookType env path loc in

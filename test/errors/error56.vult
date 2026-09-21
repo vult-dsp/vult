@@ -1,0 +1,5 @@
+// Same rule for local and mem variables.
+fun process(x : real) {
+  mem Counter : int;
+  return x;
+}
