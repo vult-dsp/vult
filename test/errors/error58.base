@@ -1,0 +1,4 @@
+The table function 'Error58.quantize' has a result of type 'int'. Tables declared with real 'min' and 'max' require 'real' or 'fix16' on both sides.
+// Tables store fitted coefficients, so the result has to be real or fix16.
+fun quantize(x : real) : int @[table(min = 0.0, max = 1.0, size = 16)] {
+    ^^^^^^^^

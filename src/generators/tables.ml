@@ -391,6 +391,24 @@ let getBoundCheckValue t =
 let getOrderValue t =
   match t with Some (Tags.Int v) -> v | None -> 2 | _ -> failwith "Invalid value of 'bound_check' tag"
 
+(* The interpolating tables store fitted polynomial coefficients and evaluate them on the input,
+   so both sides have to be a fractional type. The sampling of an 'int' or 'bool' result would
+   otherwise reach the table builder and abort there without a location. *)
+let checkTablePrecision (loc : Loc.t) (name : string) (in_precision : type_) (out_precision : type_) : unit =
+  let isFractional (t : type_) = match t.t with TReal | TFix16 -> true | _ -> false in
+  let report kind (t : type_) =
+    let msg =
+      Printf.sprintf
+        "The table function '%s' has %s of type '%s'. Tables declared with real 'min' and 'max' require 'real' or \
+         'fix16' on both sides."
+        name kind
+        (Pla.print (Print.print_type_ t))
+    in
+    Error.raiseError msg loc
+  in
+  if not (isFractional in_precision) then report "an input" in_precision ;
+  if not (isFractional out_precision) then report "a result" out_precision
+
 let checkInputParam (loc : Loc.t) (args : param list) : param =
   match args with
   | [p] ->
@@ -423,6 +441,7 @@ let makeTable vm (def : function_def) =
       let var = C.eid param.name param.t in
       let locals = makeLocals param.name in
       let in_precision = var.t in
+      let () = checkTablePrecision def.loc display in_precision out_precision in
       match (order, in_precision, out_precision) with
       (* Fixed point defaults to the cheaper linear interpolation; an explicit order = 2
          falls through to the generic quadratic path, which also handles fix16. *)
