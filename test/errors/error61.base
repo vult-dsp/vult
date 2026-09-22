@@ -1,0 +1,4 @@
+Strings cannot be compared with '<'. Only '==' and '<>' are available for strings.
+fun sorted(a : string, b : string) : bool {
+  return a < b;
+         ^^^^^

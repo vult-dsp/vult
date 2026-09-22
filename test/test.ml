@@ -179,7 +179,8 @@ let errors_files =
   ; "error57.vult"
   ; "error58.vult"
   ; "error59.vult"
-  ; "error60.vult" ]
+  ; "error60.vult"
+  ; "error61.vult" ]
 
 let template_files =
   [ "sf_f.vult"

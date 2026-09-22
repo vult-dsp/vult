@@ -257,6 +257,19 @@ let type_in_c (env : env) (t : Syntax.type_) = type_in_m (Env.exitContext env) t
 
 let type_in_f (env : env) (t : Syntax.type_) = type_in_c (Env.exitFunction env) t
 
+(* The ordering operators are typed as 'a -> 'a -> bool so that they accept every numeric type,
+   which also lets strings through. No backend agrees on what ordering two strings means, so they
+   are rejected here. Equality and inequality stay available. *)
+let checkOrderedOperands (op : string) (e1 : exp) (e2 : exp) (loc : Loc.t) : unit =
+  let isString (e : exp) = match (unlink e.t).tx with TEId {id= "string"; n= None; _} -> true | _ -> false in
+  match op with
+  | ("<" | ">" | "<=" | ">=") when isString e1 || isString e2 ->
+      Error.raiseError
+        ("Strings cannot be compared with '" ^ op ^ "'. Only '==' and '<>' are available for strings.")
+        loc
+  | _ ->
+      ()
+
 let applyFunction loc (args_t_in : type_ list) (ret : type_) (args_in : exp list) =
   let rec loop (args_t : type_ list) args =
     match (args_t, args) with
@@ -665,6 +678,7 @@ and exp ?(context = normal_context) ?(in_constant_context = false) (env : env) (
   | {e= SEOp (op, e1, e2); loc} ->
       let env, e1 = exp ~context env e1 in
       let env, e2 = exp ~context env e2 in
+      let () = checkOrderedOperands op e1 e2 loc in
       let f = if context.in_constant then Env.lookOperatorInModule env op else Env.lookOperator env op in
       let args_t, ret = f.t in
       let t = applyFunction e.loc args_t ret [e1; e2] in
