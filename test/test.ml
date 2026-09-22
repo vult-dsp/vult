@@ -260,6 +260,7 @@ let interpreter =
   ; ("nested_if_expressions.vult", 300)
   ; ("vm_lvalues.vult", 600)
   ; ("vm_strings.vult", 700)
+  ; ("vm_tail_jump.vult", 800)
   ; ("nonnegative_floor.vult", 1)
   ; ("parallel_assign.vult", 1267)
   ; ("qualified_enum_patterns.vult", 100)

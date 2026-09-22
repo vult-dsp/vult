@@ -33,6 +33,9 @@ let buildPcToIndex (instrs : instruction array) : (int, int) Hashtbl.t =
     Hashtbl.replace tbl !pc i ;
     pc := !pc + instrSize instrs.(i)
   done ;
+  (* A conditional jump that skips the last instruction targets the PC just past the end, so the
+     map carries that sentinel as well. Without it such a target has no index at all. *)
+  Hashtbl.replace tbl !pc len ;
   tbl
 
 (* Build a map from instruction index to encoded PC *)
