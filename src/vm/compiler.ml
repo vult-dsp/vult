@@ -656,10 +656,11 @@ and compileLexp (st : compile_state) (lexp : Prog.lexp) : unit =
           compileLexp st lexp )
         lexps
 
-(* Store into a member: load the container, do member store *)
+(* Store into a member. The value is already on the stack and MemberStore pops the container and
+   then the value, so the parent is loaded rather than stored into: structs are mutable objects,
+   so mutating the loaded container updates the original. A plain variable keeps the fused
+   instruction, which stores without pushing the container at all. *)
 and compileLexpMemberStore (st : compile_state) (parent : Prog.lexp) (member_idx : int) : unit =
-  (* value is on the stack *)
-  (* We need to load the parent container for mutation *)
   match parent.l with
   | LId name -> (
     match Hashtbl.find_opt st.var_to_index name with
@@ -667,24 +668,8 @@ and compileLexpMemberStore (st : compile_state) (parent : Prog.lexp) (member_idx
         stateEmit st (StoreLocalMember (var_idx, member_idx))
     | None ->
         error ("Variable not found: " ^ name) )
-  | LMember (grandparent, gp_member_name) -> (
-    match grandparent.t.t with
-    | TStruct descr ->
-        let gp_member_idx = getMemberIndex descr gp_member_name in
-        compileLexpMemberStore st grandparent gp_member_idx ;
-        stateEmit st (LoadLocal (getVarIdx st grandparent)) ;
-        stateEmit st (MemberStore member_idx)
-    | _ ->
-        error "Nested member access on non-struct" )
   | _ ->
-      error "Complex l-value member store not supported"
-
-and getVarIdx (st : compile_state) (lexp : Prog.lexp) : int =
-  match lexp.l with
-  | LId name -> (
-    match Hashtbl.find_opt st.var_to_index name with Some idx -> idx | None -> error ("Variable not found: " ^ name) )
-  | _ ->
-      error "Expected simple variable in l-value chain"
+      compileLexpLoad st parent ; stateEmit st (MemberStore member_idx)
 
 (* Store into an index *)
 and compileLexpIndexStore (st : compile_state) (arr_lexp : Prog.lexp) (index : Prog.exp) : unit =
