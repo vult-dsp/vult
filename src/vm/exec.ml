@@ -1057,9 +1057,7 @@ let run (vm : vm_state) : value =
           vm.pc <- vm.pc + 3 ;
           let s = Array.unsafe_get locals (vm.fp + local_idx) in
           ( match s with
-          | Struct fields ->
-              ipush (Array.unsafe_get fields member_idx)
-          | Array fields ->
+          | (Struct fields | Array fields) when member_idx >= 0 && member_idx < Array.length fields ->
               ipush (Array.unsafe_get fields member_idx)
           | _ ->
               error (Printf.sprintf "LoadLocalMember: not a struct (local=%d, member=%d)" local_idx member_idx) ) ;
@@ -1072,9 +1070,7 @@ let run (vm : vm_state) : value =
           let v = ipop () in
           let s = Array.unsafe_get locals (vm.fp + local_idx) in
           ( match s with
-          | Struct fields ->
-              Array.unsafe_set fields member_idx v
-          | Array fields ->
+          | (Struct fields | Array fields) when member_idx >= 0 && member_idx < Array.length fields ->
               Array.unsafe_set fields member_idx v
           | _ ->
               error (Printf.sprintf "StoreLocalMember: not a struct (local=%d, member=%d)" local_idx member_idx) ) ;
@@ -1094,9 +1090,7 @@ let run (vm : vm_state) : value =
           let v = Array.unsafe_get stack (vm.sp - 1) in
           let s = Array.unsafe_get locals (vm.fp + local_idx) in
           ( match s with
-          | Struct fields ->
-              Array.unsafe_set fields member_idx v
-          | Array fields ->
+          | (Struct fields | Array fields) when member_idx >= 0 && member_idx < Array.length fields ->
               Array.unsafe_set fields member_idx v
           | _ ->
               error "DupStoreLocalMember: not a struct" ) ;
