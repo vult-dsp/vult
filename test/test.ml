@@ -973,10 +973,13 @@ module Interpret = struct
       results ;
     if not !got_result then assert_failure "The evaluation produced no result"
 
-  (* Every file is evaluated with both backends so their semantics cannot diverge *)
+  (* Every file is evaluated with all three backends so their semantics cannot diverge *)
   let get files =
     "run"
     >::: CCList.map (fun (file, expected) -> Filename.basename file ^ ".cvm" >:: run file expected Args.CVM) files
+         @ CCList.map
+             (fun (file, expected) -> Filename.basename file ^ ".ocamlvm" >:: run file expected Args.OcamlVM)
+             files
          @ CCList.map
              (fun (file, expected) -> Filename.basename file ^ ".interp" >:: run file expected Args.Interpreter)
              files
