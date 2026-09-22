@@ -712,6 +712,29 @@ static void exec_builtin(vm_val *stack, int *sp_ptr, arena *a, int id, double sa
         }
         break;
     }
+    case 44: { /* string_concat */
+        vm_val rhs = stack[--sp];
+        vm_val lhs = stack[--sp];
+        vm_string *sl = as_string(lhs);
+        vm_string *sr = as_string(rhs);
+        int len = sl->length + sr->length;
+        vm_string *res = (vm_string*)arena_alloc(a, sizeof(vm_string) + len + 1);
+        res->length = len;
+        memcpy(res->data, sl->data, sl->length);
+        memcpy(res->data + sl->length, sr->data, sr->length);
+        res->data[len] = '\0';
+        stack[sp++] = from_string(res);
+        break;
+    }
+    case 45: { /* string_equal */
+        vm_val rhs = stack[--sp];
+        vm_val lhs = stack[--sp];
+        vm_string *sl = as_string(lhs);
+        vm_string *sr = as_string(rhs);
+        int eq = (sl->length == sr->length) && (memcmp(sl->data, sr->data, sl->length) == 0);
+        stack[sp++] = from_bool(eq);
+        break;
+    }
     default:
         fprintf(stderr, "C VM: unsupported builtin id %d\n", id);
         stack[sp++] = VM_VOID;

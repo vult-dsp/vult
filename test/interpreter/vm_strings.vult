@@ -1,0 +1,16 @@
+// '+' on strings concatenates. Compiling it as integer addition used to add the
+// string pointers instead.
+
+fun label(value : real) : string {
+  return "f=" + string(value);
+}
+
+fun main() : int {
+  val joined = "ab" + "cd";
+  if (length(joined) <> 4) return -1;
+  if (joined <> "abcd") return -2;
+  val three = "x" + "y" + "z";
+  if (three <> "xyz") return -3;
+  if (length(label(1.0)) < 3) return -4;
+  return 700;
+}

@@ -387,6 +387,20 @@ let execBuiltin (vm : vm_state) (id : int) (nargs : int) : unit =
           push vm (Int16 (Int.max x y))
       | _ ->
           error "max: expected numeric values of the same type" )
+  | 44 -> (
+      (* string_concat *)
+      let b = pop vm in
+      let a = pop vm in
+      match (a, b) with String x, String y -> push vm (String (x ^ y)) | _ -> error "string_concat: expected strings" )
+  | 45 -> (
+      (* string_equal *)
+      let b = pop vm in
+      let a = pop vm in
+      match (a, b) with
+      | String x, String y ->
+          push vm (Bool (String.equal x y))
+      | _ ->
+          error "string_equal: expected strings" )
   | _ ->
       ignore nargs ;
       error (Printf.sprintf "Unknown builtin id: %d" id)

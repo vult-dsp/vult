@@ -258,6 +258,7 @@ let interpreter =
   ; ("memory_state.vult", 6000)
   ; ("nested_arrays.vult", 400)
   ; ("nested_if_expressions.vult", 300)
+  ; ("vm_strings.vult", 700)
   ; ("nonnegative_floor.vult", 1)
   ; ("parallel_assign.vult", 1267)
   ; ("qualified_enum_patterns.vult", 100)

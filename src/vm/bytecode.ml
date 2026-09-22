@@ -80,6 +80,8 @@ type builtin_id =
   | BI_atan
   | BI_min
   | BI_max
+  | BI_string_concat
+  | BI_string_equal
 
 (* Binary operator tags for the generic BinOp instruction *)
 type binop_tag = BLe | BGe | BNe | BLand | BLor | BBand | BBor | BBxor | BLsh | BRsh | BMod
@@ -473,6 +475,10 @@ let encodeBuiltinId (id : builtin_id) : int =
       42
   | BI_max ->
       43
+  | BI_string_concat ->
+      44
+  | BI_string_equal ->
+      45
 
 (* Encode a single instruction into a list of ints (appended to acc in reverse) *)
 let encodeInstruction (instr : instruction) (acc : int list) : int list =
@@ -831,6 +837,10 @@ let printBuiltinId (id : builtin_id) : string =
       "min"
   | BI_max ->
       "max"
+  | BI_string_concat ->
+      "string_concat"
+  | BI_string_equal ->
+      "string_equal"
 
 (* Print binop tag *)
 let printBinopTag (tag : binop_tag) : string =

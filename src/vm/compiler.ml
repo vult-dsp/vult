@@ -107,6 +107,8 @@ let isRealType (typ : type_) : bool = match typ.t with TReal | TFix16 -> true | 
 
 let isInt16Type (typ : type_) : bool = match typ.t with TInt16 -> true | _ -> false
 
+let isStringType (typ : type_) : bool = match typ.t with TString -> true | _ -> false
+
 (* Patch a jump instruction at the given PC to point to the current PC *)
 (* Since we store instructions in a list and will convert later, we use a
    mutable reference approach: store placeholder, then patch *)
@@ -481,6 +483,10 @@ let rec compileExp (st : compile_state) (exp : Prog.exp) : unit =
 
 and compileOp (st : compile_state) (op : operator) (t1 : type_) (t2 : type_) : unit =
   match op with
+  (* '+' on strings concatenates. Without this the integer addition below would be emitted for
+     them, which the OCaml VM rejects and the C VM performs on the string pointers. *)
+  | OpAdd when isStringType t1 && isStringType t2 ->
+      stateEmit st (CallBuiltin (BI_string_concat, 2))
   | OpAdd when isInt16Type t1 && isInt16Type t2 ->
       stateEmit st AddInt16
   | OpAdd when isIntType t1 && isIntType t2 ->
@@ -521,6 +527,9 @@ and compileOp (st : compile_state) (op : operator) (t1 : type_) (t2 : type_) : u
       stateEmit st ModReal
   | OpMod ->
       stateEmit st (BinOp BMod)
+  (* Strings compare by content. The integer comparisons below would compare the pointers. *)
+  | OpEq when isStringType t1 && isStringType t2 ->
+      stateEmit st (CallBuiltin (BI_string_equal, 2))
   | OpEq when isInt16Type t1 && isInt16Type t2 ->
       stateEmit st EqInt16
   | OpEq when isIntType t1 && isIntType t2 ->
@@ -549,6 +558,9 @@ and compileOp (st : compile_state) (op : operator) (t1 : type_) (t2 : type_) : u
       stateEmit st (BinOp BLe)
   | OpGe ->
       stateEmit st (BinOp BGe)
+  | OpNe when isStringType t1 && isStringType t2 ->
+      stateEmit st (CallBuiltin (BI_string_equal, 2)) ;
+      stateEmit st Not
   | OpNe ->
       stateEmit st (BinOp BNe)
   | OpLand ->
