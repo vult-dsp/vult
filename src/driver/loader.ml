@@ -68,8 +68,6 @@ module Dependencies = struct
         set
     | SEIndex {e; index} ->
         exp (exp set e) index
-    | SENamed (e1, e2) ->
-        exp (exp set e1) e2
     | SEArray elems ->
         list exp set elems
     | SECall {path= p; args} ->
@@ -172,7 +170,8 @@ module Dependencies = struct
         stmt (exp set cond) s
     | SStmtIter {value; body} ->
         stmt (exp set value) body
-    | SStmtMatch {e; cases} ->
+    | SStmtMatch {e; first_case; other_cases} ->
+        let cases = first_case :: other_cases in
         let set = exp set e in
         let case set (p, case) =
           let set = pattern set p in

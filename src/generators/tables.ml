@@ -96,12 +96,6 @@ let generateRawAccessFunction loc full_name ~stride ~size c t =
 let generateRawAccessFunctions loc full_name ~stride ~size t =
   CCList.init stride (fun c -> generateRawAccessFunction loc full_name ~stride ~size c t)
 
-let getCoefficients1 l =
-  match l with [x1; x2] -> (x1, x2) | _ -> failwith "the curve fitting returned more than three points"
-
-let getCoefficients2 l =
-  match l with [x1; x2; x3] -> (x1, x2, x3) | _ -> failwith "the curve fitting returned more than three points"
-
 (* The polynomials are fitted on the position within the cell, u in [0, 1], not on the absolute
    input. The polynomial is the same one either way, but expressed in u its coefficients stay on
    the scale of the output instead of growing with (max - min) raised to the order, which costs
@@ -112,9 +106,7 @@ let rec fitDataOrder1 data index acc0 acc1 =
   else
     let p1 = data.(index) in
     let p2 = data.(index + 1) in
-    let x = [0.0; 1.0] in
-    let y = [snd p1; snd p2] in
-    let c0, c1 = Fitting.lagrange x y |> getCoefficients1 in
+    let c0, c1 = Fitting.lagrange2 (0.0, snd p1) (1.0, snd p2) in
     fitDataOrder1 data (index - 1) (c0 :: acc0) (c1 :: acc1)
 
 let rec fitDataOrder2 data index acc0 acc1 acc2 =
@@ -123,9 +115,7 @@ let rec fitDataOrder2 data index acc0 acc1 acc2 =
     let p1 = data.(index * 2) in
     let p2 = data.((index * 2) + 1) in
     let p3 = data.((index * 2) + 2) in
-    let x = [0.0; 0.5; 1.0] in
-    let y = [snd p1; snd p2; snd p3] in
-    let c0, c1, c2 = Fitting.lagrange x y |> getCoefficients2 in
+    let c0, c1, c2 = Fitting.lagrange3 (0.0, snd p1) (0.5, snd p2) (1.0, snd p3) in
     fitDataOrder2 data (index - 1) (c0 :: acc0) (c1 :: acc1) (c2 :: acc2)
 
 let getRealResult (x : Core.Interpreter.dvalue) =
@@ -611,9 +601,7 @@ let rec fitWavetableData data index acc0 acc1 acc2 =
     let p2 = wrapGet data (index + 1) in
     let p3 = wrapGet data (index + 2) in
     (* Three consecutive samples, so the cell spans u in [0, 1] and the third node sits at u = 2. *)
-    let x = [0.0; 1.0; 2.0] in
-    let y = [snd p1; snd p2; snd p3] in
-    let c0, c1, c2 = Fitting.lagrange x y |> getCoefficients2 in
+    let c0, c1, c2 = Fitting.lagrange3 (0.0, snd p1) (1.0, snd p2) (2.0, snd p3) in
     fitWavetableData data (index - 1) (c0 :: acc0) (c1 :: acc1) (c2 :: acc2)
 
 let makeWavetableOrder2 loc name size precision data =

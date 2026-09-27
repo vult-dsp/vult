@@ -132,8 +132,6 @@ and exp_d (e : exp_d) : string =
   | SERecord {path= p; elems} ->
       let elems_str = String.concat " " (List.map (fun (p, e) -> Printf.sprintf "(%s %s)" (path p) (exp e)) elems) in
       Printf.sprintf "(record %s %s)" (path p) elems_str
-  | SENamed (e1, e2) ->
-      Printf.sprintf "(named %s %s)" (exp e1) (exp e2)
   | SETypeIntrinsic (name, type_param) ->
       Printf.sprintf "(type_intrinsic %s '%s)" name type_param
 
@@ -227,7 +225,8 @@ and stmt_d (s : stmt_d) : string =
       Printf.sprintf "(while %s %s)" (exp cond) (stmt body)
   | SStmtIter {id= name, _; value; body} ->
       Printf.sprintf "(iter %s %s %s)" name (exp value) (stmt body)
-  | SStmtMatch {e= e_; cases} ->
+  | SStmtMatch {e= e_; first_case; other_cases} ->
+      let cases = first_case :: other_cases in
       let cases_str =
         String.concat " " (List.map (fun (p, s) -> Printf.sprintf "(%s %s)" (pattern p) (stmt s)) cases)
       in

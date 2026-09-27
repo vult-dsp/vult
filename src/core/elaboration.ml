@@ -798,13 +798,13 @@ module Make (T : TYPECHECKER) = struct
                           (* addVar unifies the context types when the instance already exists,
                              reporting an error if the same instance is used with an incompatible
                              specialization *)
-                          let _ = Env.addVar env unify user_inst_name ctx_t Inst loc in
+                          let _ = Env.addVar env unify user_inst_name ctx_t Env.LocalInst loc in
                           user_inst_name
                       | None -> (
                           let site = callSiteKey env loc in
                           match Hashtbl.find_opt state.call_instance_names site with
                           | Some name ->
-                              let _ = Env.addVar env unify name ctx_t Inst loc in
+                              let _ = Env.addVar env unify name ctx_t Env.LocalInst loc in
                               name
                           | None ->
                               let number =
@@ -819,7 +819,7 @@ module Make (T : TYPECHECKER) = struct
                                 else name
                               in
                               let name = generateName () in
-                              let _ = Env.addVar env unify name ctx_t Inst loc in
+                              let _ = Env.addVar env unify name ctx_t Env.LocalInst loc in
                               Hashtbl.add state.call_instance_names site name ;
                               name )
                     in
@@ -855,7 +855,7 @@ module Make (T : TYPECHECKER) = struct
                 let site = callSiteKey env loc in
                 match Hashtbl.find_opt state.call_instance_names site with
                 | Some name ->
-                    let _ = Env.addVar env unify name ctx_t Inst loc in
+                    let _ = Env.addVar env unify name ctx_t Env.LocalInst loc in
                     name
                 | None ->
                     let number =
@@ -869,7 +869,7 @@ module Make (T : TYPECHECKER) = struct
                       if checkMemExists env name || Env.checkConstantExists env name then generateName () else name
                     in
                     let name = generateName () in
-                    let _ = Env.addVar env unify name ctx_t Inst loc in
+                    let _ = Env.addVar env unify name ctx_t Env.LocalInst loc in
                     Hashtbl.add state.call_instance_names site name ;
                     name
               in
@@ -1084,7 +1084,7 @@ module Make (T : TYPECHECKER) = struct
                 match (companion_def.args, inst_name_opt) with
                 | {name; t= ctx_t; _} :: _, Some inst_name when String.equal name context_name ->
                     let current_ctx_t = (Env.currentContextArgument env loc).arg_t in
-                    let _ = Env.addVar env unify inst_name ctx_t Inst loc in
+                    let _ = Env.addVar env unify inst_name ctx_t Env.LocalInst loc in
                     let ctx_e = {e= EId context_name; t= current_ctx_t; loc} in
                     let inst_e = {e= EMember (ctx_e, inst_name); t= ctx_t; loc} in
                     inst_e :: processed_args

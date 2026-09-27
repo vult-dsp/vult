@@ -51,7 +51,6 @@ type exp_d =
   | SEMember of exp * string
   | SEGroup of exp
   | SERecord of {path: path; elems: (path * exp) list}
-  | SENamed of exp * exp
   | SETypeIntrinsic of string * string (* intrinsic_name, type_param_name e.g., ("typemax", "t") *)
 
 and exp = {e: exp_d; loc: Loc.t}
@@ -107,7 +106,7 @@ and stmt_d =
   | SStmtIf of exp * stmt * stmt option
   | SStmtWhile of exp * stmt
   | SStmtIter of {id: string * Loc.t; value: exp; body: stmt}
-  | SStmtMatch of {e: exp; cases: (pattern * stmt) list}
+  | SStmtMatch of {e: exp; first_case: pattern * stmt; other_cases: (pattern * stmt) list}
 
 and stmt = {s: stmt_d; loc: Loc.t}
 
@@ -245,10 +244,6 @@ module Print = struct
         let p = path p in
         let elems = Pla.map_sep Pla.commaspace printElem elems in
         {%pla|<#p#> { <#elems#> }|}
-    | SENamed (e1, e2) ->
-        let e1 = exp e1 in
-        let e2 = exp e2 in
-        {%pla|<#e1#>:<#e2#>|}
     | SETypeIntrinsic (intrinsic_name, type_param) ->
         {%pla|<#intrinsic_name#s>('<#type_param#s>)|}
 
@@ -380,7 +375,7 @@ module Print = struct
         let value = exp value in
         let body = stmt body in
         {%pla|iter (<#id#s>, <#value#>)<#body#>|}
-    | SStmtMatch {e; cases} ->
+    | SStmtMatch {e; first_case; other_cases} ->
         let e = exp e in
         let cases =
           Pla.map_sep_all Pla.newline
@@ -388,7 +383,7 @@ module Print = struct
               let case = stmt case in
               let p = pattern p in
               {%pla|<#p#> -> <#case#>|} )
-            cases
+            (first_case :: other_cases)
         in
         {%pla|match (<#e#>) {<#cases#+>}|}
 
@@ -803,11 +798,6 @@ module Mapper = struct
             let state, elems' = mapper_list (mapper_tuple2 map_path map_exp) mapper context state elems in
             let odata = if elems == elems' && path == path' then idata else SERecord {elems= elems'; path= path'} in
             (state, odata)
-        | SENamed (field_0, field_1) ->
-            let state, field_1' = map_exp mapper context state field_1 in
-            let state, field_0' = map_exp mapper context state field_0 in
-            let odata = if field_0 == field_0' && field_1 == field_1' then idata else SENamed (field_0', field_1') in
-            (state, odata)
         | SETypeIntrinsic _ ->
             (* Type intrinsics have no sub-expressions to map *)
             (state, idata)
@@ -975,10 +965,14 @@ module Mapper = struct
               else SStmtIter {id= id'; value= value'; body= body'}
             in
             (state, odata)
-        | SStmtMatch {e; cases} ->
+        | SStmtMatch {e; first_case; other_cases} ->
             let state, e' = map_exp mapper context state e in
-            let state, cases' = (mapper_list (mapper_tuple2 bypass map_stmt)) mapper context state cases in
-            let odata = if e == e' && cases == cases' then idata else SStmtMatch {e= e'; cases= cases'} in
+            let state, first_case' = (mapper_tuple2 bypass map_stmt) mapper context state first_case in
+            let state, other_cases' = (mapper_list (mapper_tuple2 bypass map_stmt)) mapper context state other_cases in
+            let odata =
+              if e == e' && first_case == first_case' && other_cases == other_cases' then idata
+              else SStmtMatch {e= e'; first_case= first_case'; other_cases= other_cases'}
+            in
             (state, odata)
       else (state, idata)
     in
@@ -1186,8 +1180,6 @@ module SExpr = struct
           "(SEId " ^ s ^ ")"
       | SEIndex {e; index} ->
           "(SEIndex " ^ print_exp e ^ " " ^ print_exp index ^ ")"
-      | SENamed (e1, e2) ->
-          "(SENamed " ^ print_exp e1 ^ " " ^ print_exp e2 ^ ")"
       | SEArray lst ->
           "(SEArray " ^ print_list print_exp lst ^ ")"
       | SECall {instance; path; args} ->
@@ -1281,8 +1273,10 @@ module SExpr = struct
           "(SStmtWhile " ^ print_exp cond ^ " " ^ print_stmt body ^ ")"
       | SStmtIter {id= name, _loc; value; body} ->
           "(SStmtIter " ^ name ^ " " ^ print_exp value ^ " " ^ print_stmt body ^ ")"
-      | SStmtMatch {e; cases} ->
-          let case_str = print_list (fun (p, s) -> "(" ^ print_pattern p ^ " " ^ print_stmt s ^ ")") cases in
+      | SStmtMatch {e; first_case; other_cases} ->
+          let case_str =
+            print_list (fun (p, s) -> "(" ^ print_pattern p ^ " " ^ print_stmt s ^ ")") (first_case :: other_cases)
+          in
           "(SStmtMatch " ^ print_exp e ^ " " ^ case_str ^ ")"
     in
     "(stmt " ^ s_str ^ ")"

@@ -406,13 +406,13 @@ let rec addContextArg (env : env) instance (f : Env.f) args loc =
             if checkMemExists env name || Env.checkConstantExists env name then generateName () else name
           in
           let name = generateName () in
-          let env = Env.addVar env unify name fctx_t Inst loc in
+          let env = Env.addVar env unify name fctx_t Env.LocalInst loc in
           let e = {e= EMember ({e= EId context_name; t= ctx_t; loc}, name); loc; t= fctx_t} in
           let () = if is_ctx_mutable then markExpMutable env e loc in
           (env, e :: args)
       (* intance without subscripts *)
       | _, Some (name, None) ->
-          let env = Env.addVar env unify name fctx_t Inst loc in
+          let env = Env.addVar env unify name fctx_t Env.LocalInst loc in
           let e = {e= EMember ({e= EId context_name; t= ctx_t; loc}, name); loc; t= fctx_t} in
           let () = if is_ctx_mutable then markExpMutable env e loc in
           (env, e :: args)
@@ -421,7 +421,7 @@ let rec addContextArg (env : env) instance (f : Env.f) args loc =
           let env, index = exp ~context:normal_context env index in
           unifyRaise index.loc (C.int ~loc:Loc.default) index.t ;
           let t = C.array ~loc fctx_t in
-          let env = Env.addVar env unify name t Inst loc in
+          let env = Env.addVar env unify name t Env.LocalInst loc in
           let e = {e= EMember ({e= EId context_name; t= ctx_t; loc}, name); loc; t= fctx_t} in
           let e = {e= EIndex {e; index}; loc; t= fctx_t} in
           let () = if is_ctx_mutable then markExpMutable env e loc in
@@ -697,18 +697,6 @@ and exp ?(context = normal_context) (env : env) (e : Syntax.exp) : env * exp =
             call ~context env None path args loc e.loc )
       | _ ->
           call ~context env None path args loc e.loc )
-  | {e= SENamed ({e= SEIndex {e= {e= SEId instance; _}; index}; _}, {e= SECall {instance= None; path; args}; loc}); _}
-    ->
-      call ~context env (Some (instance, Some index)) path args loc e.loc
-  | {e= SENamed ({e= SEId instance; _}, {e= SECall {instance= None; path; args}; loc}); _} ->
-      call ~context env (Some (instance, None)) path args loc e.loc
-  | {e= SENamed (e1, ({e= SECall _; _} as e2)); _} ->
-      let e1 = Pla.print (Syntax.Print.exp e1) in
-      let e2 = Pla.print (Syntax.Print.exp e2) in
-      failwith ("Inference SENamed: " ^ e1 ^ " : " ^ e2)
-  | {e= SENamed (_, _); loc} ->
-      (* Handle case where second part is not a function call *)
-      Error.raiseError "Invalid instance call syntax. After ':' you must have a function call (e.g., 'name:foo()')" loc
   | {e= SECall {instance; path; args}; loc} ->
       call ~context env instance path args loc e.loc
   | {e= SEOp (op, e1, e2); loc} ->
@@ -943,7 +931,7 @@ and lexp ?(const = false) (env : env) (e : Syntax.lexp) : env * lexp =
           let e = Pla.print (Typed.print_lexp e) in
           Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc )
 
-and dexp (env : env) (e : Syntax.dexp) (kind : var_kind) : env * dexp =
+and dexp (env : env) (e : Syntax.dexp) (kind : Env.local_kind) : env * dexp =
   match e with
   | {d= SDWild; loc} ->
       let t = C.noreturn loc in
@@ -1003,7 +991,7 @@ let makeIterWhile (env : env) name id_loc value body loc =
   let while_s = {s= SStmtWhile (cond, new_body); loc} in
   {s= SStmtBlock [decl; while_s]; loc}
 
-let makeIfOfMatch env e cases =
+let makeIfOfMatch env e first_case other_cases =
   let rec makeComparison (e : Syntax.exp) (p : Syntax.pattern) =
     let makeEq e1 e2 = Syntax.{e= SEOp ("==", e1, e2); loc= e1.loc} in
     let makeAnd e1 e2 = Syntax.{e= SEOp ("&&", e1, e2); loc= e1.loc} in
@@ -1069,14 +1057,14 @@ let makeIfOfMatch env e cases =
     | _, {p= SPMember _; loc} ->
         Error.raiseError "Invalid qualified pattern. Only Module.Variant patterns are supported" loc
   in
-  let if_stmt =
-    CCList.fold_right
-      (fun (p, case) else_ ->
-        let cond = makeComparison e p in
-        Some Syntax.{s= SStmtIf (cond, case, else_); loc= cond.loc} )
-      cases None
+  let makeCase (p, case) else_ =
+    let cond = makeComparison e p in
+    Syntax.{s= SStmtIf (cond, case, else_); loc= cond.loc}
   in
-  match if_stmt with None -> failwith "makeIfOfMatch" | Some stmt -> stmt
+  let rec chain case rest =
+    match rest with [] -> makeCase case None | next :: rest -> makeCase case (Some (chain next rest))
+  in
+  chain first_case other_cases
 
 let resolveTypeIntrinsicInline = Typed.resolveTypeIntrinsicInline
 
@@ -1195,31 +1183,29 @@ and stmt_with_generics (env : env) (generic_params : string list) (return : type
   (* Use the same stmt function but with our generic-aware dexp *)
   stmt_generic env dexp_generic return s
 
-and stmt_generic (env : env) (dexp_func : env -> Syntax.dexp -> var_kind -> env * dexp) (return : type_)
+and stmt_generic (env : env) (dexp_func : env -> Syntax.dexp -> Env.local_kind -> env * dexp) (return : type_)
     (s : Syntax.stmt) : env * stmt list =
   match s with
   | {s= SStmtError; _} ->
       (env, [])
   | {s= SStmtBlock stmts; loc} ->
-      let env = Env.pushScope env in
-      let env, stmts = stmt_list_generic env dexp_func return stmts in
-      let env = Env.popScope env in
+      let env, stmts = Env.withScope env (fun env -> stmt_list_generic env dexp_func return stmts) in
       (env, [{s= StmtBlock stmts; loc}])
   | {s= SStmtVal (lhs, None); loc} ->
-      let env, lhs = dexp_func env lhs Val in
+      let env, lhs = dexp_func env lhs LocalVal in
       (env, [{s= StmtVal lhs; loc}])
   | {s= SStmtVal (lhs, Some rhs); loc} ->
-      let env, dlhs = dexp_func env lhs Val in
+      let env, dlhs = dexp_func env lhs LocalVal in
       let env, lhs = lexp env (dexp_to_lexp lhs) in
       let env, rhs = exp env rhs in
       unifyRaise ~bind:true lhs.loc dlhs.t lhs.t ;
       unifyExpRaise ~bind:true dlhs.t rhs ;
       (env, [{s= StmtVal dlhs; loc}; {s= StmtBind (lhs, rhs); loc}])
   | {s= SStmtMem (lhs, None, tags); loc} ->
-      let env, lhs = dexp_func env lhs (Mem tags) in
+      let env, lhs = dexp_func env lhs (LocalMem tags) in
       (env, [{s= StmtMem (lhs, tags); loc}])
   | {s= SStmtMem (lhs, Some rhs, tags); loc} ->
-      let env, dlhs = dexp_func env lhs (Mem tags) in
+      let env, dlhs = dexp_func env lhs (LocalMem tags) in
       let env, lhs = lexp env (dexp_to_lexp lhs) in
       let env, rhs = exp env rhs in
       unifyExpRaise ~bind:true lhs.t rhs ;
@@ -1257,11 +1243,11 @@ and stmt_generic (env : env) (dexp_func : env -> Syntax.dexp -> var_kind -> env 
   | {s= SStmtIter {id= name, id_loc; value; body}; loc} ->
       let while_s = makeIterWhile env name id_loc value body loc in
       stmt_generic env dexp_func return while_s
-  | {s= SStmtMatch {e; cases}; _} ->
-      let if_stmt = makeIfOfMatch env e cases in
+  | {s= SStmtMatch {e; first_case; other_cases}; _} ->
+      let if_stmt = makeIfOfMatch env e first_case other_cases in
       stmt_generic env dexp_func return if_stmt
 
-and stmt_list_generic (env : env) (dexp_func : env -> Syntax.dexp -> var_kind -> env * dexp) (return : type_)
+and stmt_list_generic (env : env) (dexp_func : env -> Syntax.dexp -> Env.local_kind -> env * dexp) (return : type_)
     (stmts : Syntax.stmt list) : env * stmt list =
   CCList.fold_left_map (fun env s -> stmt_generic env dexp_func return s) env stmts
   |> fun (env, nested_lists) -> (env, CCList.flatten nested_lists)
@@ -1271,25 +1257,23 @@ let rec stmt (env : env) (return : type_) (s : Syntax.stmt) : env * stmt list =
   | {s= SStmtError; _} ->
       (env, [])
   | {s= SStmtBlock stmts; loc} ->
-      let env = Env.pushScope env in
-      let env, stmts = stmt_list env return stmts in
-      let env = Env.popScope env in
+      let env, stmts = Env.withScope env (fun env -> stmt_list env return stmts) in
       (env, [{s= StmtBlock stmts; loc}])
   | {s= SStmtVal (lhs, None); loc} ->
-      let env, lhs = dexp env lhs Val in
+      let env, lhs = dexp env lhs LocalVal in
       (env, [{s= StmtVal lhs; loc}])
   | {s= SStmtVal (lhs, Some rhs); loc} ->
-      let env, dlhs = dexp env lhs Val in
+      let env, dlhs = dexp env lhs LocalVal in
       let env, lhs = lexp ~const:true env (dexp_to_lexp lhs) in
       let env, rhs = exp env rhs in
       unifyRaise ~bind:true lhs.loc dlhs.t lhs.t ;
       unifyExpRaise ~bind:true dlhs.t rhs ;
       (env, [{s= StmtVal dlhs; loc}; {s= StmtBind (lhs, rhs); loc}])
   | {s= SStmtMem (lhs, None, tags); loc} ->
-      let env, lhs = dexp env lhs (Mem tags) in
+      let env, lhs = dexp env lhs (LocalMem tags) in
       (env, [{s= StmtMem (lhs, tags); loc}])
   | {s= SStmtMem (lhs, Some rhs, tags); loc} ->
-      let env, dlhs = dexp env lhs (Mem tags) in
+      let env, dlhs = dexp env lhs (LocalMem tags) in
       let env, lhs = lexp env (dexp_to_lexp lhs) in
       let env, rhs = exp env rhs in
       unifyExpRaise ~bind:true lhs.t rhs ;
@@ -1317,8 +1301,8 @@ let rec stmt (env : env) (return : type_) (s : Syntax.stmt) : env * stmt list =
   | {s= SStmtIter {id= name, id_loc; value; body}; loc} ->
       let while_s = makeIterWhile env name id_loc value body loc in
       stmt env return while_s
-  | {s= SStmtMatch {e; cases}; _} ->
-      let if_stmt = makeIfOfMatch env e cases in
+  | {s= SStmtMatch {e; first_case; other_cases}; _} ->
+      let if_stmt = makeIfOfMatch env e first_case other_cases in
       stmt env return if_stmt
 
 and stmt_opt env return s =

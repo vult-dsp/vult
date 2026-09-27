@@ -100,22 +100,16 @@ let getMaxPosition (pos1 : Lexing.position) (pos2 : Lexing.position) : Lexing.po
   else if pos1.Lexing.pos_cnum < pos2.Lexing.pos_cnum then pos2
   else pos1
 
-(** Retuns the minimum and maximum prositions from a given list *)
-let getMinMaxPositions (pos_list : Lexing.position list) =
-  match pos_list with
-  | [] ->
-      failwith "getMinMaxPositions: No positions passed"
-  | [h] ->
-      (h, h)
-  | h :: _ ->
-      CCList.fold_left (fun (min, max) a -> (getMinPosition a min, getMaxPosition a max)) (h, h) pos_list
+(** Returns the minimum and maximum positions of a non-empty list of positions *)
+let getMinMaxPositions (first : Lexing.position) (rest : Lexing.position list) =
+  CCList.fold_left (fun (min, max) a -> (getMinPosition a min, getMaxPosition a max)) (first, first) rest
 
 (** Returns a new location with the start and end positions updated *)
 let merge (loc1 : t) (loc2 : t) : t =
   if loc1 = default then loc2
   else if loc2 = default then loc1
   else
-    let start_pos, end_pos = getMinMaxPositions [loc1.start_pos; loc2.start_pos; loc1.end_pos; loc2.end_pos] in
+    let start_pos, end_pos = getMinMaxPositions loc1.start_pos [loc2.start_pos; loc1.end_pos; loc2.end_pos] in
     {start_pos; end_pos; source= loc1.source}
 
 let merge3 (loc1 : t) (loc2 : t) (loc3 : t) : t = merge (merge loc1 loc2) loc3

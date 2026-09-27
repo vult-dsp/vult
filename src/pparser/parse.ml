@@ -890,16 +890,18 @@ and stmtMatch (buffer : Stream.stream) : stmt =
   let e = expression 0 buffer in
   let _ = consumeInContext buffer RPAREN "match expression" in
   let _ = consumeInContext buffer LBRACE "match cases" in
-  let rec loop cases =
+  let matchCase () =
     let m = pattern 0 buffer in
     let _ = consumeInContext buffer ARROW "match case" in
     let case = stmtList buffer in
-    match Stream.peek buffer with RBRACE -> CCList.rev ((m, case) :: cases) | _ -> loop ((m, case) :: cases)
+    (m, case)
   in
-  let cases = loop [] in
+  let first_case = matchCase () in
+  let rec loop cases = match Stream.peek buffer with RBRACE -> CCList.rev cases | _ -> loop (matchCase () :: cases) in
+  let other_cases = loop [] in
   let end_loc = Stream.location buffer in
   let _ = consumeInContext buffer RBRACE "match cases" in
-  {s= SStmtMatch {e; cases}; loc= Loc.merge start_loc end_loc}
+  {s= SStmtMatch {e; first_case; other_cases}; loc= Loc.merge start_loc end_loc}
 
 and typedArgOpt (buffer : Stream.stream) =
   let _ = expectInContext buffer ID "function parameter" in
@@ -1330,17 +1332,6 @@ and topStmt (buffer : Stream.stream) : top_stmt =
     let _ = moveToNextTopStatement buffer in
     let _ = Stream.setErrors buffer true in
     {top= STopError; loc= Loc.default}
-
-and topstmtList (buffer : Stream.stream) : top_stmt list =
-  let rec loop acc =
-    match Stream.peek buffer with
-    | EOF ->
-        []
-    | _ ->
-        let s = topStmt buffer in
-        loop (s :: acc)
-  in
-  CCList.rev (loop [])
 
 let parseDExp (s : string) : dexp = dexp_expression 0 (Stream.fromString s)
 
