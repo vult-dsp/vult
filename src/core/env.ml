@@ -57,6 +57,8 @@ module Map = struct
 
   let find key t = Map.find_opt key !t
 
+  let add (key : string) (value : 'a) (t : 'a t) : unit = t := Map.add key value !t
+
   let is_empty (t : 'a t) : bool = Map.is_empty !t
 
   let fold (f : string -> 'a -> 'b -> 'b) (s : 'b) (t : 'a t) : 'b = Map.fold f !t s
@@ -117,7 +119,7 @@ type lookup_result =
   | LookupNotFound
 
 (* Location within the environment hierarchy *)
-type location = Top | InModule of string | InContext of string * context option | InFunction of string * f
+type location = Top | InModule of m | InContext of m * context option | InFunction of m * f
 
 (* Unified environment type that tracks current location internally *)
 type env =
@@ -299,12 +301,8 @@ let makeFunctionForBuiltin name t : f =
 (* Helper functions to extract current state *)
 let getCurrentModule (env : env) : m =
   match env.location with
-  | InModule name | InContext (name, _) | InFunction (name, _) -> (
-    match Map.find name env.modules with
-    | Some m ->
-        m
-    | None ->
-        failwith ("Internal error in getCurrentModule: module '" ^ name ^ "' not found in env.modules") )
+  | InModule m | InContext (m, _) | InFunction (m, _) ->
+      m
   | Top ->
       failwith "Internal error in getCurrentModule: called at Top level (not inside any module)"
 
@@ -317,10 +315,10 @@ let getCurrentFunction (env : env) : f =
   match env.location with
   | InFunction (_, f) ->
       f
-  | InModule name ->
-      failwith ("Internal error in getCurrentFunction: currently in module '" ^ name ^ "', not a function")
-  | InContext (name, _) ->
-      failwith ("Internal error in getCurrentFunction: currently in context '" ^ name ^ "', not a function")
+  | InModule m ->
+      failwith ("Internal error in getCurrentFunction: currently in module '" ^ m.name ^ "', not a function")
+  | InContext (m, _) ->
+      failwith ("Internal error in getCurrentFunction: currently in context '" ^ m.name ^ "', not a function")
   | Top ->
       failwith "Internal error in getCurrentFunction: currently at Top level, not in a function"
 
@@ -601,7 +599,7 @@ let createContextForFunction (env : env) name loc : env =
   let members = Map.empty () in
   let t = {descr= Record members; path; index; loc; generated= true} in
   let _ = Map.update (report name) type_name t m.types in
-  {env with location= InContext (m.name, Some {path; t; members})}
+  {env with location= InContext (m, Some {path; t; members})}
 
 let createContextForFunctionWithIndex (env : env) name loc (type_index : int) : env =
   let m = getCurrentModule env in
@@ -615,7 +613,7 @@ let createContextForFunctionWithIndex (env : env) name loc (type_index : int) : 
   let members = Map.empty () in
   let t = {descr= Record members; path; index= type_index; loc; generated= true} in
   let _ = Map.update (report name) type_name t m.types in
-  {env with location= InContext (m.name, Some {path; t; members})}
+  {env with location= InContext (m, Some {path; t; members})}
 
 let addAliasToContext (env : env) name loc : env =
   match getCurrentContext env with
@@ -710,11 +708,11 @@ let addEnum (env : env) type_name members loc : env =
 
 let createContextForExternal (env : env) : env =
   let m = getCurrentModule env in
-  {env with location= InContext (m.name, None)}
+  {env with location= InContext (m, None)}
 
 let exitContext (env : env) : env =
   let m = getCurrentModule env in
-  {env with location= InModule m.name}
+  {env with location= InModule m}
 
 (* Returns the current tick of the function without advancing it *)
 let currentFunctionTick (env : env) : int = (getCurrentFunction env).tick
@@ -777,14 +775,14 @@ let enterFunction (env : env) (name : string) (args : Typed.arg list) (ret : Typ
   let t = (args_t, ret) in
   let f : f = {path; t; context; scopes= {current= locals; enclosing= []}; tick= 0; args= Some args} in
   let _ = Map.update report name f m.functions in
-  ({env with location= InFunction (m.name, f)}, path, t)
+  ({env with location= InFunction (m, f)}, path, t)
 
 let isFunctionActive (f : f) = Option.is_some (activeContextArgument f)
 
 let exitFunction (env : env) : env =
   let m = getCurrentModule env in
   let f = getCurrentFunction env in
-  {env with location= InContext (m.name, contextOf f)}
+  {env with location= InContext (m, contextOf f)}
 
 (** Re-enter a function context for post-processing. Looks up the function by path
     and sets the environment to be inside that function. *)
@@ -796,7 +794,7 @@ let reenterFunction (env : env) (func_path : path) : env =
   | Some m -> (
     match Map.find func_path.id m.functions with
     | Some f ->
-        {env with location= InFunction (module_name, f)}
+        {env with location= InFunction (m, f)}
     | None ->
         failwith ("reenterFunction: function '" ^ pathString func_path ^ "' not found") )
 
@@ -811,10 +809,9 @@ let addCustomInitFunction (env : env) name =
 
 let enterModule (env : env) (name : string) : env =
   match Map.find name env.modules with
-  | Some _ ->
-      {env with location= InModule name}
+  | Some m ->
+      {env with location= InModule m}
   | None ->
-      let report _ = failwith ("Internal error in enterModule: duplicate module '" ^ name ^ "'") in
       let m : m =
         { name
         ; functions= Map.empty ()
@@ -824,8 +821,8 @@ let enterModule (env : env) (name : string) : env =
         ; init= []
         ; constants= Map.empty () }
       in
-      let () = Map.update report name m env.modules in
-      {env with location= InModule name}
+      let () = Map.add name m env.modules in
+      {env with location= InModule m}
 
 let exitModule (env : env) : env = {env with location= Top}
 
@@ -957,30 +954,23 @@ let lookOperatorInModule (env : env) (op : string) : f = lookOperator env op
 (* Generic management functions *)
 let addGeneric (env : env) (generic : Typed.generic_function) : env =
   match env.location with
-  | InModule name -> (
-      let module_opt = Map.find name env.modules in
-      match module_opt with
-      | Some m ->
-          let report found_loc =
-            Error.raiseError
-              ( "A function with the name '" ^ generic.name ^ "' has already been declared at "
-              ^ Loc.to_string_readable found_loc )
-              generic.loc
-          in
-          let () =
-            match Map.find generic.name m.functions with Some (found : f) -> report found.path.loc | None -> ()
-          in
-          let () =
-            Map.update (fun (found : Typed.generic_function) _ -> report found.loc) generic.name generic m.generics
-          in
-          env
-      | None ->
-          failwith ("Internal error in addGeneric: module '" ^ name ^ "' not found in env.modules") )
-  | InContext (name, _) ->
-      failwith ("Internal error in addGeneric: cannot add generic '" ^ generic.name ^ "' from context '" ^ name ^ "'")
-  | InFunction (name, _) ->
+  | InModule m ->
+      let report found_loc =
+        Error.raiseError
+          ( "A function with the name '" ^ generic.name ^ "' has already been declared at "
+          ^ Loc.to_string_readable found_loc )
+          generic.loc
+      in
+      let () = match Map.find generic.name m.functions with Some (found : f) -> report found.path.loc | None -> () in
+      let () =
+        Map.update (fun (found : Typed.generic_function) _ -> report found.loc) generic.name generic m.generics
+      in
+      env
+  | InContext (m, _) ->
+      failwith ("Internal error in addGeneric: cannot add generic '" ^ generic.name ^ "' from context '" ^ m.name ^ "'")
+  | InFunction (m, _) ->
       failwith
-        ( "Internal error in addGeneric: cannot add generic '" ^ generic.name ^ "' from function in module '" ^ name
+        ( "Internal error in addGeneric: cannot add generic '" ^ generic.name ^ "' from function in module '" ^ m.name
         ^ "'" )
   | Top ->
       failwith ("Internal error in addGeneric: cannot add generic '" ^ generic.name ^ "' at Top level")
@@ -1000,22 +990,16 @@ let rec hasCompanionNamed (name : string) (next : Pparser.Syntax.function_def op
     Returns the parent generic function if the given name is a companion of any generic. *)
 let lookupGenericByCompanion (env : env) (path : path) : Typed.generic_function option =
   (* Get the module to search in *)
-  let module_name =
-    match path.n with
-    | Some n ->
-        n
-    | None -> (
-      match env.location with
-      | InModule name ->
-          name
-      | InContext (name, _) ->
-          name
-      | InFunction (name, _) ->
-          name
-      | Top ->
-          "" )
+  let module_opt =
+    match (path.n, env.location) with
+    | Some n, _ ->
+        Map.find n env.modules
+    | None, (InModule m | InContext (m, _) | InFunction (m, _)) ->
+        Some m
+    | None, Top ->
+        None
   in
-  match Map.find module_name env.modules with
+  match module_opt with
   | None ->
       None
   | Some m ->
