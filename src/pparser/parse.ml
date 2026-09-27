@@ -694,7 +694,7 @@ and pair (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   let getElems e = match e.e with SETuple elems -> elems | _ -> [e] in
   let elems1 = left |> getElems in
   let elems2 = right |> getElems in
-  {e= SETuple (elems1 @ elems2); loc= left.loc}
+  {e= SETuple (elems1 @ elems2); loc= Loc.merge left.loc right.loc}
 
 and named_call (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   let right = expression (getExpLbp token) buffer in

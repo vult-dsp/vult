@@ -1,0 +1,12 @@
+// A call returning a tuple with a wrongly typed element: the error names the element.
+fun f() {
+  return 1, 2.0, true;
+}
+
+fun g() : int {
+  val x : int = 0;
+  val y : int = 0;
+  val z : int = 0;
+  x, y, z = f();
+  return x;
+}

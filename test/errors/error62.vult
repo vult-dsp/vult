@@ -1,0 +1,5 @@
+// A tuple literal with a wrongly typed element: the error points at that element.
+fun f(c : bool) {
+  if (c) return 1, 2, 3;
+  else return 1, 2.0, 3;
+}

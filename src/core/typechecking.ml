@@ -178,19 +178,71 @@ and unify ?(bind = false) (t1 : type_) (t2 : type_) =
     | TEComposed _, _ ->
         false )
 
-let unifyRaise ?(bind = false) (loc : Loc.t) (t1 : type_) (t2 : type_) : unit =
-  (* TODO: improve unify error reporting for tuples *)
-  let raise = true in
+(* Why two types failed to unify. Tuples are diagnosed element by element so that the error can
+   name the offending element instead of printing both tuples in full. *)
+type unify_failure =
+  | TypeMismatch
+  | TupleSizeMismatch of {expected: int; got: int}
+  | TupleElementMismatch of {index: int; expected: type_; got: type_}
+
+(* Returns the index and types of the first pair of elements that do not unify. *)
+let findTupleElementMismatch ~bind (expected : type_ list) (got : type_ list) : unify_failure =
+  let rec loop index expected got =
+    match (expected, got) with
+    | e :: expected, g :: got ->
+        if unify ~bind e g then loop (index + 1) expected got else TupleElementMismatch {index; expected= e; got= g}
+    | [], _ | _, [] ->
+        TypeMismatch
+  in
+  loop 0 expected got
+
+(* Called after [unify] failed. The partial unification has already happened, so re-unifying the
+   elements only fails again at the element that caused the original failure. *)
+let diagnoseUnifyFailure ~bind (expected : type_) (got : type_) : unify_failure =
+  match ((unlink expected).tx, (unlink got).tx) with
+  | TEComposed ("tuple", e1), TEComposed ("tuple", e2) ->
+      let expected_n = CCList.length e1 in
+      let got_n = CCList.length e2 in
+      if expected_n <> got_n then TupleSizeMismatch {expected= expected_n; got= got_n}
+      else findTupleElementMismatch ~bind e1 e2
+  | _ ->
+      TypeMismatch
+
+let typeMismatchMessage (expected : type_) (got : type_) : string =
+  let expected = print_type_ expected in
+  let got = print_type_ got in
+  Pla.print {%pla|This expression has type '<#got#>' but '<#expected#>' was expected|}
+
+(* Unifies [t1] (the expected type) with [t2] (the type found at [loc]), raising an error if they
+   do not match. When [t2] belongs to a tuple literal, [elem_locs] holds the locations of its
+   elements, which are used to point at the offending element. *)
+let unifyRaise ?(bind = false) ?(elem_locs = []) (loc : Loc.t) (t1 : type_) (t2 : type_) : unit =
   if not (unify ~bind t1 t2) then
-    let msg =
-      let t1 = print_type_ t1 in
-      let t2 = print_type_ t2 in
-      Pla.print {%pla|This expression has type '<#t2#>' but '<#t1#>' was expected|}
-    in
-    if raise then Error.raiseError msg loc
-    else (
-      print_endline (Loc.to_string loc) ;
-      print_endline msg )
+    match diagnoseUnifyFailure ~bind t1 t2 with
+    | TypeMismatch ->
+        Error.raiseError (typeMismatchMessage t1 t2) loc
+    | TupleSizeMismatch {expected; got} ->
+        let msg = Pla.print {%pla|This expression has <#got#i> elements but <#expected#i> were expected|} in
+        Error.raiseError msg loc
+    | TupleElementMismatch {index; expected; got} -> (
+        let position = index + 1 in
+        let element_msg =
+          let expected = print_type_ expected in
+          let got = print_type_ got in
+          Pla.print {%pla|Element <#position#i> of this tuple has type '<#got#>' but '<#expected#>' was expected|}
+        in
+        match CCList.nth_opt elem_locs index with
+        | Some elem_loc ->
+            Error.raiseError element_msg elem_loc
+        | None ->
+            let tuple_msg = typeMismatchMessage t1 t2 in
+            Error.raiseError (element_msg ^ ". " ^ tuple_msg) loc )
+
+(* Like [unifyRaise] but takes the expression itself, so that tuple literals can report the
+   location of the element that does not match. *)
+let unifyExpRaise ?(bind = false) (expected : type_) (e : exp) : unit =
+  let elem_locs = match e.e with ETuple elems -> CCList.map (fun (e : exp) -> e.loc) elems | _ -> [] in
+  unifyRaise ~bind ~elem_locs e.loc expected e.t
 
 (* Convert a type with a mapping from generic parameter names to their unbound types *)
 let rec type_in_m_with_generic_mapping (env : env) (generic_type_map : (string * type_) list) (t : Syntax.type_) =
@@ -634,7 +686,7 @@ and exp ?(context = normal_context) ?(in_constant_context = false) (env : env) (
       let env, else_ = exp ~context env else_ in
       let t = then_.t in
       unifyRaise cond.loc (C.bool ~loc) cond.t ;
-      unifyRaise else_.loc then_.t else_.t ;
+      unifyExpRaise then_.t else_ ;
       (env, {e= EIf {cond; then_; else_}; t; loc})
   (* we need to add a special case for int() in order to support conversion of enumerations *)
   | {e= SECall {instance= None; path= {id= "int"; n= None; _} as path; args= [arg] as args}; loc}
@@ -1178,7 +1230,7 @@ and stmt_generic (env : env) (dexp_func : env -> Syntax.dexp -> var_kind -> env 
       let env, lhs = lexp env (dexp_to_lexp lhs) in
       let env, rhs = exp env rhs in
       unifyRaise ~bind:true lhs.loc dlhs.t lhs.t ;
-      unifyRaise ~bind:true rhs.loc dlhs.t rhs.t ;
+      unifyExpRaise ~bind:true dlhs.t rhs ;
       (env, [{s= StmtVal dlhs; loc}; {s= StmtBind (lhs, rhs); loc}])
   | {s= SStmtMem (lhs, None, tags); loc} ->
       let env, lhs = dexp_func env lhs (Mem tags) in
@@ -1187,7 +1239,7 @@ and stmt_generic (env : env) (dexp_func : env -> Syntax.dexp -> var_kind -> env 
       let env, dlhs = dexp_func env lhs (Mem tags) in
       let env, lhs = lexp env (dexp_to_lexp lhs) in
       let env, rhs = exp env rhs in
-      unifyRaise ~bind:true rhs.loc lhs.t rhs.t ;
+      unifyExpRaise ~bind:true lhs.t rhs ;
       (env, [{s= StmtMem (dlhs, tags); loc}; {s= StmtBind (lhs, rhs); loc}])
   (* The remaining statements have no declaration of their own, so they are handled exactly like
      in [stmt], recursing through [stmt_generic] so that any nested declaration keeps using the
@@ -1195,11 +1247,11 @@ and stmt_generic (env : env) (dexp_func : env -> Syntax.dexp -> var_kind -> env 
   | {s= SStmtBind (lhs, rhs); loc} ->
       let env, lhs = lexp env lhs in
       let env, rhs = exp env rhs in
-      unifyRaise ~bind:true rhs.loc lhs.t rhs.t ;
+      unifyExpRaise ~bind:true lhs.t rhs ;
       (env, [{s= StmtBind (lhs, rhs); loc}])
   | {s= SStmtReturn e; loc} ->
       let env, e = exp env e in
-      unifyRaise e.loc return e.t ;
+      unifyExpRaise return e ;
       (env, [{s= StmtReturn e; loc}])
   | {s= SStmtIf (cond, then_, else_); loc} ->
       let env, cond = exp env cond in
@@ -1248,7 +1300,7 @@ let rec stmt (env : env) (return : type_) (s : Syntax.stmt) : env * stmt list =
       let env, lhs = lexp ~const:true env (dexp_to_lexp lhs) in
       let env, rhs = exp env rhs in
       unifyRaise ~bind:true lhs.loc dlhs.t lhs.t ;
-      unifyRaise ~bind:true rhs.loc dlhs.t rhs.t ;
+      unifyExpRaise ~bind:true dlhs.t rhs ;
       (env, [{s= StmtVal dlhs; loc}; {s= StmtBind (lhs, rhs); loc}])
   | {s= SStmtMem (lhs, None, tags); loc} ->
       let env, lhs = dexp env lhs (Mem tags) in
@@ -1257,16 +1309,16 @@ let rec stmt (env : env) (return : type_) (s : Syntax.stmt) : env * stmt list =
       let env, dlhs = dexp env lhs (Mem tags) in
       let env, lhs = lexp env (dexp_to_lexp lhs) in
       let env, rhs = exp env rhs in
-      unifyRaise ~bind:true rhs.loc lhs.t rhs.t ;
+      unifyExpRaise ~bind:true lhs.t rhs ;
       (env, [{s= StmtMem (dlhs, tags); loc}; {s= StmtBind (lhs, rhs); loc}])
   | {s= SStmtBind (lhs, rhs); loc} ->
       let env, lhs = lexp env lhs in
       let env, rhs = exp env rhs in
-      unifyRaise ~bind:true rhs.loc lhs.t rhs.t ;
+      unifyExpRaise ~bind:true lhs.t rhs ;
       (env, [{s= StmtBind (lhs, rhs); loc}])
   | {s= SStmtReturn e; loc} ->
       let env, e = exp env e in
-      unifyRaise e.loc return e.t ;
+      unifyExpRaise return e ;
       (env, [{s= StmtReturn e; loc}])
   | {s= SStmtIf (cond, then_, else_); loc} ->
       let env, cond = exp env cond in
@@ -1730,7 +1782,7 @@ let removeExistingTypes set types =
 module Elab = Elaboration.Make (struct
   let unify t1 t2 = unify t1 t2
 
-  let unifyRaise = unifyRaise
+  let unifyRaise ?bind loc t1 t2 = unifyRaise ?bind loc t1 t2
 
   let function_def_opt = function_def_opt
 

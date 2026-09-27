@@ -1,0 +1,4 @@
+This expression has 3 elements but 2 were expected
+fun g() : int {
+  val a, b = f();
+             ^
