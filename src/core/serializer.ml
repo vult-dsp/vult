@@ -138,15 +138,6 @@ let propagateSaveTag (table : (struct_descr option * bool * string list) TypeTab
           (Some {s with members}, save, deps, nextTick save) )
     table
 
-let getTypeNameString (t : type_) =
-  match t with
-  | {t= TStruct {path; _}; _} ->
-      path
-  | {t= TInt; _} ->
-      "int"
-  | _ ->
-      failwith ("This is not a struct: " ^ Pla.print (Prog.Print.print_type_ t))
-
 let rec getAllStructTypes (t : type_) =
   match t with
   | {t= TStruct {path; members}; _} ->
@@ -160,9 +151,7 @@ let rec getAllStructTypes (t : type_) =
   | _ ->
       []
 
-let getTypeNameStringExp (t : type_) =
-  let string_type = C.string_t in
-  {e= EString (getTypeNameString t); t= string_type; loc= t.loc}
+let structNameExp (path : string) (loc : Util.Loc.t) : exp = {e= EString path; t= C.string_t; loc}
 
 let collectFullySavedTypes (stmts : top_stmt list) =
   let rec loop set =
@@ -204,94 +193,107 @@ let tagAllMembers fully_saved (stmts : top_stmt list) =
           stmt )
     stmts
 
-(* The emitter writes each saved member with a single call, and array and list members with one
-   loop around that call, so an element has to be a value the buffer knows how to push. Anything
-   else is reported here, where the member's location is still available, instead of reaching the
-   emitter and aborting without one. *)
-let isSerializableValue (t : type_) =
-  match t.t with
-  | TInt | TInt16 | TFix16 | TBool | TReal | TString | TStruct _ ->
-      true
-  | TVoid _ | TEmptyType | TArray _ | TList _ | TTuple _ ->
-      false
+(* How a value is pushed to and read from the buffer *)
+type scalar = SInt | SFloat | SString
 
-let checkSavedMember (struct_path : string) (name : string) (t : type_) (loc : Util.Loc.t) =
+(* The elements of arrays and lists: values the buffer knows, or records with their own
+   serializer *)
+type element = ElemScalar of scalar | ElemStruct of string
+
+(* How a member with the 'save' tag is written. The members are classified once, when their
+   location is still available to report the ones that cannot be saved, so the emitters only
+   see what they can write. *)
+type saved_kind =
+  | Scalar of scalar
+  | Struct of string
+  | FixedArray of {size: int; elem: element; elem_t: type_}
+  | List of {elem: element; elem_t: type_}
+
+type saved_member = {name: string; t: type_; loc: Util.Loc.t; kind: saved_kind}
+
+let elementOf (t : type_) : element option =
+  match t.t with
+  | TInt | TInt16 | TFix16 | TBool ->
+      Some (ElemScalar SInt)
+  | TReal ->
+      Some (ElemScalar SFloat)
+  | TString ->
+      Some (ElemScalar SString)
+  | TStruct {path; _} ->
+      Some (ElemStruct path)
+  | TVoid _ | TEmptyType | TArray _ | TList _ | TTuple _ ->
+      None
+
+(* Returns how the member is saved, or None when it holds no data *)
+let classifySavedMember (struct_path : string) (name : string) (t : type_) (loc : Util.Loc.t) : saved_member option =
   let reject reason =
     let msg = Printf.sprintf "The member '%s' of '%s' cannot be saved: %s." name struct_path reason in
     Util.Error.raiseError msg loc
   in
+  let saved kind = Some {name; t; loc; kind} in
   match t.t with
+  | TInt | TInt16 | TFix16 | TBool ->
+      saved (Scalar SInt)
+  | TReal ->
+      saved (Scalar SFloat)
+  | TString ->
+      saved (Scalar SString)
+  | TStruct {path; _} ->
+      saved (Struct path)
+  | TVoid _ | TEmptyType ->
+      None
   | TArray (None, _) ->
       reject "the size of the array is not known"
-  | TArray (Some _, at) when not (isSerializableValue at) ->
-      reject "only arrays of simple values and records can be saved"
-  | TList at when not (isSerializableValue at) ->
-      reject "only lists of simple values and records can be saved"
+  | TArray (Some size, elem_t) -> (
+    match elementOf elem_t with
+    | Some elem ->
+        saved (FixedArray {size; elem; elem_t})
+    | None ->
+        reject "only arrays of simple values and records can be saved" )
+  | TList elem_t -> (
+    match elementOf elem_t with
+    | Some elem ->
+        saved (List {elem; elem_t})
+    | None ->
+        reject "only lists of simple values and records can be saved" )
   | TTuple _ ->
       reject "tuples cannot be saved"
-  | _ ->
-      ()
 
-let serializerForType (t : type_) =
-  match t with
-  | {t= TInt | TInt16 | TFix16 | TBool; _} ->
-      push_int
-  | {t= TReal; _} ->
-      push_float
-  | {t= TString; _} ->
-      push_string
-  | {t= TEmptyType; _} ->
-      failwith "serializerForType: void"
-  | {t= TVoid _; _} ->
-      failwith "serializerForType: void"
-  | {t= TArray _; _} ->
-      failwith "serializerForType: array"
-  | {t= TList _; _} ->
-      failwith "serializerForType: list serialization not yet supported"
-  | {t= TTuple _; _} ->
-      failwith "serializerForType: tuple"
-  | {t= TStruct {path; _}; _} ->
-      path ^ "_serialize_data"
+let savedMembers (s : struct_descr) : saved_member list =
+  CCList.filter_map
+    (fun (name, t, tags, loc) -> if Pparser.Ptags.has tags "save" then classifySavedMember s.path name t loc else None)
+    s.members
 
-let deserializerForType (t : type_) =
-  match t with
-  | {t= TInt | TInt16 | TFix16 | TBool; _} ->
-      "deserialize_int"
-  | {t= TReal; _} ->
-      "deserialize_float"
-  | {t= TString; _} ->
-      "deserialize_string"
-  | {t= TEmptyType; _} ->
-      failwith "deserializerForType: void"
-  | {t= TVoid _; _} ->
-      failwith "deserializerForType: void"
-  | {t= TArray _; _} ->
-      failwith "deserializerForType: array"
-  | {t= TList _; _} ->
-      failwith "deserializerForType: list deserialization not yet supported"
-  | {t= TTuple _; _} ->
-      failwith "deserializerForType: tuple"
-  | {t= TStruct {path; _}; _} ->
-      path ^ "_deserialize_data"
+let scalarSerializer (scalar : scalar) : string =
+  match scalar with SInt -> push_int | SFloat -> push_float | SString -> push_string
+
+let scalarDeserializer (scalar : scalar) : string =
+  match scalar with SInt -> "deserialize_int" | SFloat -> "deserialize_float" | SString -> "deserialize_string"
+
+let elementSerializer (elem : element) : string =
+  match elem with ElemScalar scalar -> scalarSerializer scalar | ElemStruct path -> path ^ "_serialize_data"
+
+let elementDeserializer (elem : element) : string =
+  match elem with ElemScalar scalar -> scalarDeserializer scalar | ElemStruct path -> path ^ "_deserialize_data"
 
 let callPush push this_type member t loc =
   let buffer_type = {t= TStruct {path= buffer_name; members= []}; loc; const= true} in
   let index = C.eid "index" C.int_t in
   let buffer = C.eid "buffer" buffer_type in
   let ectx = C.eid "_ctx" this_type in
-  Some
-    { s=
-        StmtBind
-          ( {l= LId "index"; loc; t= C.int_t}
-          , {e= ECall {path= push; args= [buffer; index; {e= EMember (ectx, member); t; loc}]}; t= C.void_t; loc} )
-    ; loc }
+  { s=
+      StmtBind
+        ( {l= LId "index"; loc; t= C.int_t}
+        , {e= ECall {path= push; args= [buffer; index; {e= EMember (ectx, member); t; loc}]}; t= C.void_t; loc} )
+  ; loc }
 
-let createSerializer table (stmt : top_stmt) =
+let createSerializer table saved (stmt : top_stmt) =
   match stmt with
-  | {top= TopType {path; _}; loc} ->
-      let s, save, _, _ = TypeTable.find path table in
-      if save && s <> None then
-        let s = Option.get s in
+  | {top= TopType {path; _}; loc} -> (
+    match TypeTable.find_opt path saved with
+    | None ->
+        None
+    | Some ((s : struct_descr), members) ->
         let name = s.path ^ "_serialize_data" in
         let this_type = {t= TStruct s; loc; const= true} in
         let buffer_type = {t= TStruct {path= buffer_name; members= []}; loc; const= false} in
@@ -306,101 +308,78 @@ let createSerializer table (stmt : top_stmt) =
         (* call serialization for each member *)
         let member_stmts =
           let tick = ref 0 in
-          CCList.filter_map
-            (fun (name, (t : type_), tags, loc) ->
-              if Pparser.Ptags.has tags "save" then
-                match t with
-                | {t= TInt | TInt16 | TFix16; _} ->
-                    callPush push_int this_type name t loc
-                | {t= TReal; _} ->
-                    callPush push_float this_type name t loc
-                | {t= TString; _} ->
-                    callPush push_string this_type name t loc
-                | {t= TBool; _} ->
-                    callPush push_int this_type name t loc
-                | {t= TStruct {path; _}; _} ->
-                    callPush (path ^ "_serialize_data") this_type name t loc
-                | {t= TVoid _; _} ->
-                    None
-                | {t= TEmptyType; _} ->
-                    None
-                | {t= TArray (Some size, at); _} ->
-                    let n = !tick in
-                    incr tick ;
-                    let iter_name = "i_" ^ string_of_int n in
-                    let iter_exp = C.eid iter_name C.int_t in
-                    let iter_lexp = C.lid iter_name C.int_t in
-                    let iter_decl = C.sdecl iter_name C.int_t in
-                    let start_name = "start_" ^ string_of_int n in
-                    let start_exp = C.eid start_name C.int_t in
-                    let start_lexp = C.lid start_name C.int_t in
-                    let start_decl = C.sdecl start_name C.int_t in
-                    let start_bind = C.sbind start_lexp index in
-                    let iter_incr = C.sbind iter_lexp (C.eadd iter_exp (C.eint 1)) in
-                    let update_array =
-                      C.sbind_wild (C.ecall "update_size" [buffer; start_exp; C.esub index start_exp] C.void_t)
-                    in
-                    let push_array = C.sbind lindex (C.ecall push_array [buffer; index; C.eint size] C.void_t) in
-                    let call =
-                      C.sbind lindex
-                        (C.ecall (serializerForType at)
-                           [buffer; index; C.eindex (C.emember (C.eid "_ctx" this_type) name t) iter_exp at]
-                           C.void_t )
-                    in
-                    let body = {s= StmtBlock [call; iter_incr]; loc} in
-                    let loop = {s= StmtWhile (C.elt iter_exp (C.eint size), body); loc} in
-                    Some {s= StmtBlock [start_decl; start_bind; iter_decl; push_array; loop; update_array]; loc}
-                | {t= TArray (None, _t); _} ->
-                    failwith "Serializing array with unknonw size"
-                | {t= TList at; _} ->
-                    let n = !tick in
-                    incr tick ;
-                    let iter_name = "i_" ^ string_of_int n in
-                    let iter_exp = C.eid iter_name C.int_t in
-                    let iter_lexp = C.lid iter_name C.int_t in
-                    let iter_decl = C.sdecl iter_name C.int_t in
-                    let start_name = "start_" ^ string_of_int n in
-                    let start_exp = C.eid start_name C.int_t in
-                    let start_lexp = C.lid start_name C.int_t in
-                    let start_decl = C.sdecl start_name C.int_t in
-                    let start_bind = C.sbind start_lexp index in
-                    let size_name = "size_" ^ string_of_int n in
-                    let size_exp = C.eid size_name C.int_t in
-                    let size_decl = C.sdecl size_name C.int_t in
-                    (* Get list size at runtime *)
-                    let list_member = C.emember (C.eid "_ctx" this_type) name t in
-                    let list_size_call = C.ecall "list_size" [list_member] C.int_t in
-                    let size_bind = C.sbind (C.lid size_name C.int_t) list_size_call in
-                    let iter_incr = C.sbind iter_lexp (C.eadd iter_exp (C.eint 1)) in
-                    let update_array =
-                      C.sbind_wild (C.ecall "update_size" [buffer; start_exp; C.esub index start_exp] C.void_t)
-                    in
-                    (* push_array with runtime size *)
-                    let push_array_stmt = C.sbind lindex (C.ecall push_array [buffer; index; size_exp] C.void_t) in
-                    let call =
-                      C.sbind lindex
-                        (C.ecall (serializerForType at)
-                           [buffer; index; C.ecall "list_get" [list_member; iter_exp] at]
-                           C.void_t )
-                    in
-                    let body = {s= StmtBlock [call; iter_incr]; loc} in
-                    let loop = {s= StmtWhile (C.elt iter_exp size_exp, body); loc} in
-                    Some
-                      { s=
-                          StmtBlock
-                            [ size_decl
-                            ; size_bind
-                            ; start_decl
-                            ; start_bind
-                            ; iter_decl
-                            ; push_array_stmt
-                            ; loop
-                            ; update_array ]
-                      ; loc }
-                | {t= TTuple _; _} ->
-                    failwith "serialization of tuple"
-              else None )
-            s.members
+          CCList.map
+            (fun (m : saved_member) ->
+              let loc = m.loc in
+              match m.kind with
+              | Scalar scalar ->
+                  callPush (scalarSerializer scalar) this_type m.name m.t loc
+              | Struct path ->
+                  callPush (path ^ "_serialize_data") this_type m.name m.t loc
+              | FixedArray {size; elem; elem_t} ->
+                  let n = !tick in
+                  incr tick ;
+                  let iter_name = "i_" ^ string_of_int n in
+                  let iter_exp = C.eid iter_name C.int_t in
+                  let iter_lexp = C.lid iter_name C.int_t in
+                  let iter_decl = C.sdecl iter_name C.int_t in
+                  let start_name = "start_" ^ string_of_int n in
+                  let start_exp = C.eid start_name C.int_t in
+                  let start_lexp = C.lid start_name C.int_t in
+                  let start_decl = C.sdecl start_name C.int_t in
+                  let start_bind = C.sbind start_lexp index in
+                  let iter_incr = C.sbind iter_lexp (C.eadd iter_exp (C.eint 1)) in
+                  let update_array =
+                    C.sbind_wild (C.ecall "update_size" [buffer; start_exp; C.esub index start_exp] C.void_t)
+                  in
+                  let push_array = C.sbind lindex (C.ecall push_array [buffer; index; C.eint size] C.void_t) in
+                  let call =
+                    C.sbind lindex
+                      (C.ecall (elementSerializer elem)
+                         [buffer; index; C.eindex (C.emember (C.eid "_ctx" this_type) m.name m.t) iter_exp elem_t]
+                         C.void_t )
+                  in
+                  let body = {s= StmtBlock [call; iter_incr]; loc} in
+                  let loop = {s= StmtWhile (C.elt iter_exp (C.eint size), body); loc} in
+                  {s= StmtBlock [start_decl; start_bind; iter_decl; push_array; loop; update_array]; loc}
+              | List {elem; elem_t} ->
+                  let n = !tick in
+                  incr tick ;
+                  let iter_name = "i_" ^ string_of_int n in
+                  let iter_exp = C.eid iter_name C.int_t in
+                  let iter_lexp = C.lid iter_name C.int_t in
+                  let iter_decl = C.sdecl iter_name C.int_t in
+                  let start_name = "start_" ^ string_of_int n in
+                  let start_exp = C.eid start_name C.int_t in
+                  let start_lexp = C.lid start_name C.int_t in
+                  let start_decl = C.sdecl start_name C.int_t in
+                  let start_bind = C.sbind start_lexp index in
+                  let size_name = "size_" ^ string_of_int n in
+                  let size_exp = C.eid size_name C.int_t in
+                  let size_decl = C.sdecl size_name C.int_t in
+                  (* Get list size at runtime *)
+                  let list_member = C.emember (C.eid "_ctx" this_type) m.name m.t in
+                  let list_size_call = C.ecall "list_size" [list_member] C.int_t in
+                  let size_bind = C.sbind (C.lid size_name C.int_t) list_size_call in
+                  let iter_incr = C.sbind iter_lexp (C.eadd iter_exp (C.eint 1)) in
+                  let update_array =
+                    C.sbind_wild (C.ecall "update_size" [buffer; start_exp; C.esub index start_exp] C.void_t)
+                  in
+                  (* push_array with runtime size *)
+                  let push_array_stmt = C.sbind lindex (C.ecall push_array [buffer; index; size_exp] C.void_t) in
+                  let call =
+                    C.sbind lindex
+                      (C.ecall (elementSerializer elem)
+                         [buffer; index; C.ecall "list_get" [list_member; iter_exp] elem_t]
+                         C.void_t )
+                  in
+                  let body = {s= StmtBlock [call; iter_incr]; loc} in
+                  let loop = {s= StmtWhile (C.elt iter_exp size_exp, body); loc} in
+                  { s=
+                      StmtBlock
+                        [size_decl; size_bind; start_decl; start_bind; iter_decl; push_array_stmt; loop; update_array]
+                  ; loc } )
+            members
         in
         (* statement to update the size *)
         let update_size =
@@ -420,8 +399,7 @@ let createSerializer table (stmt : top_stmt) =
           ( [C.param ~loc "buffer" buffer_type; C.param ~loc "index" C.int_t; C.param ~loc ~const:true "_ctx" this_type]
           , ([buffer_type; C.int_t; this_type], C.int_t) )
         in
-        Some {top= TopFunction ({name; args; t; loc; tags= []; info= default_info}, body); loc}
-      else None
+        Some {top= TopFunction ({name; args; t; loc; tags= []; info= default_info}, body); loc} )
   | {top= TopAlias {path; alias_of; _}; loc} ->
       let _, save, _, _ = TypeTable.find path table in
       if save then
@@ -445,12 +423,13 @@ let createSerializer table (stmt : top_stmt) =
   | _ ->
       None
 
-let createDeserializer table (stmt : top_stmt) =
+let createDeserializer saved (stmt : top_stmt) =
   match stmt with
-  | {top= TopType {path; _}; loc} ->
-      let s, save, _, _ = TypeTable.find path table in
-      if save && s <> None then
-        let s = Option.get s in
+  | {top= TopType {path; _}; loc} -> (
+    match TypeTable.find_opt path saved with
+    | None ->
+        None
+    | Some ((s : struct_descr), members) ->
         let name = s.path ^ "_deserialize_data" in
         let this_type = {t= TStruct s; loc; const= false} in
         let buffer_type = {t= TStruct {path= buffer_name; members= []}; loc; const= false} in
@@ -464,8 +443,11 @@ let createDeserializer table (stmt : top_stmt) =
         let ectx = {e= EId "_ctx"; t= this_type; loc} in
         let member_stmts =
           let tick = ref 0 in
-          CCList.filter_map
-            (fun (name, (t : type_), tags, loc) ->
+          CCList.map
+            (fun (m : saved_member) ->
+              let name = m.name in
+              let t = m.t in
+              let loc = m.loc in
               let search_field =
                 { e=
                     ECall
@@ -483,209 +465,184 @@ let createDeserializer table (stmt : top_stmt) =
                 { s= StmtBind ({l= LMember (lctx, name); t; loc}, {e= ECall {path; args= [buffer; field_index]}; t; loc})
                 ; loc }
               in
-              if Pparser.Ptags.has tags "save" then
-                match t with
-                | {t= TInt | TInt16 | TFix16; _} ->
-                    Some {s= StmtBlock [search_stmt; found_index [callDeserializer "deserialize_int"]]; loc}
-                | {t= TReal; _} ->
-                    Some {s= StmtBlock [search_stmt; found_index [callDeserializer "deserialize_float"]]; loc}
-                | {t= TString; _} ->
-                    Some {s= StmtBlock [search_stmt; found_index [callDeserializer "deserialize_string"]]; loc}
-                | {t= TBool; _} ->
-                    Some {s= StmtBlock [search_stmt; found_index [callDeserializer "deserialize_int"]]; loc}
-                | {t= TStruct {path= _; _}; _} ->
-                    let field_descr = "field_descr_" ^ string_of_int !tick in
-                    let () = incr tick in
-                    let decl = C.sdecl field_descr typedescr_type in
-                    let search_type =
-                      C.sbind (C.lid field_descr typedescr_type)
-                        (C.ecall "search_type_description" [buffer; getTypeNameStringExp t] typedescr_type)
+              match m.kind with
+              | Scalar scalar ->
+                  {s= StmtBlock [search_stmt; found_index [callDeserializer (scalarDeserializer scalar)]]; loc}
+              | Struct path ->
+                  let field_descr = "field_descr_" ^ string_of_int !tick in
+                  let () = incr tick in
+                  let decl = C.sdecl field_descr typedescr_type in
+                  let search_type =
+                    C.sbind (C.lid field_descr typedescr_type)
+                      (C.ecall "search_type_description" [buffer; structNameExp path loc] typedescr_type)
+                  in
+                  let call_deserializer =
+                    C.sbind_wild
+                      (C.ecall (path ^ "_deserialize_data")
+                         [buffer; C.eid field_descr typedescr_type; field_index; C.emember ectx name t]
+                         C.void_t )
+                  in
+                  C.sblock [search_stmt; found_index [decl; search_type; call_deserializer]]
+              (*  array of builtin types *)
+              | FixedArray {size= n; elem= ElemScalar scalar; elem_t= at} ->
+                  let () = incr tick in
+                  let iter_name = "i_" ^ string_of_int !tick in
+                  let () = incr tick in
+                  let iter_decl = C.sdecl_bind iter_name (C.eint 0) C.int_t in
+                  let iter_id = C.eid iter_name C.int_t in
+                  let call_deserializer =
+                    C.sbind
+                      (C.lindex (C.lmember lctx name t) iter_id at)
+                      (C.ecall (scalarDeserializer scalar) [buffer; field_index] C.void_t)
+                  in
+                  let skip_size =
+                    C.sbind (C.lid "field_index" C.int_t) (C.ecall "first_array_element" [buffer; field_index] C.int_t)
+                  in
+                  let cond = C.elt iter_id (C.eint n) in
+                  let body =
+                    let next_element =
+                      C.sbind (C.lid "field_index" C.int_t) (C.ecall "next_object" [buffer; field_index] C.int_t)
                     in
-                    let call_deserializer =
-                      C.sbind_wild
-                        (C.ecall
-                           (getTypeNameString t ^ "_deserialize_data")
-                           [buffer; C.eid field_descr typedescr_type; field_index; C.emember ectx name t]
-                           C.void_t )
+                    C.sblock
+                      [call_deserializer; C.sbind (C.lid iter_name C.int_t) (C.eadd iter_id (C.eint 1)); next_element]
+                  in
+                  let loop = C.swhile cond body in
+                  C.sblock [search_stmt; found_index ((skip_size :: iter_decl) @ [loop])]
+              (* array of structs *)
+              | FixedArray {size= n; elem= ElemStruct elem_path; elem_t= at} ->
+                  let field_descr = "field_descr_" ^ string_of_int !tick in
+                  let () = incr tick in
+                  let decl = C.sdecl field_descr typedescr_type in
+                  let search_type =
+                    C.sbind (C.lid field_descr typedescr_type)
+                      (C.ecall "search_type_description" [buffer; structNameExp elem_path loc] typedescr_type)
+                  in
+                  let iter_name = "i_" ^ string_of_int !tick in
+                  let () = incr tick in
+                  let iter_decl = C.sdecl_bind iter_name (C.eint 0) C.int_t in
+                  let iter_id = C.eid iter_name C.int_t in
+                  let call_deserializer =
+                    C.sbind_wild
+                      (C.ecall (elem_path ^ "_deserialize_data")
+                         [ buffer
+                         ; C.eid field_descr typedescr_type
+                         ; field_index
+                         ; C.eindex (C.emember ectx name t) iter_id at ]
+                         C.void_t )
+                  in
+                  let skip_size =
+                    C.sbind (C.lid "field_index" C.int_t) (C.ecall "first_array_element" [buffer; field_index] C.int_t)
+                  in
+                  let cond = C.elt iter_id (C.eint n) in
+                  let body =
+                    let next_element =
+                      C.sbind (C.lid "field_index" C.int_t) (C.ecall "next_object" [buffer; field_index] C.int_t)
                     in
-                    Some (C.sblock [search_stmt; found_index [decl; search_type; call_deserializer]])
-                | {t= TVoid _; _} ->
-                    None
-                | {t= TEmptyType; _} ->
-                    None
-                (*  array of builtin types *)
-                | {t= TArray (Some n, ({t= TInt | TInt16 | TReal | TString | TBool | TFix16; _} as at)); _} ->
-                    let () = incr tick in
-                    let iter_name = "i_" ^ string_of_int !tick in
-                    let () = incr tick in
-                    let iter_decl = C.sdecl_bind iter_name (C.eint 0) C.int_t in
-                    let iter_id = C.eid iter_name C.int_t in
-                    let call_deserializer =
-                      C.sbind
-                        (C.lindex (C.lmember lctx name t) iter_id at)
-                        (C.ecall (deserializerForType at) [buffer; field_index] C.void_t)
+                    C.sblock
+                      [call_deserializer; C.sbind (C.lid iter_name C.int_t) (C.eadd iter_id (C.eint 1)); next_element]
+                  in
+                  let loop = C.swhile cond body in
+                  C.sblock [decl; search_type; search_stmt; found_index ((skip_size :: iter_decl) @ [loop])]
+              (* list of builtin types *)
+              | List {elem= ElemScalar scalar; elem_t= at} ->
+                  let () = incr tick in
+                  let iter_name = "i_" ^ string_of_int !tick in
+                  let () = incr tick in
+                  let size_name = "list_size_" ^ string_of_int !tick in
+                  let () = incr tick in
+                  let temp_name = "temp_" ^ string_of_int !tick in
+                  let iter_decl = C.sdecl_bind iter_name (C.eint 0) C.int_t in
+                  let iter_id = C.eid iter_name C.int_t in
+                  let size_decl = C.sdecl size_name C.int_t in
+                  let size_id = C.eid size_name C.int_t in
+                  let temp_decl = C.sdecl temp_name at in
+                  let temp_id = C.eid temp_name at in
+                  (* Clear the list before deserializing *)
+                  let list_member = C.emember ectx name t in
+                  let clear_list = C.sbind_wild (C.ecall "list_clear" [list_member] C.void_t) in
+                  (* Get the array count from buffer *)
+                  let get_count =
+                    C.sbind (C.lid size_name C.int_t) (C.ecall "get_array_count" [buffer; field_index] C.int_t)
+                  in
+                  (* Deserialize element into temp and push to list *)
+                  let call_deserializer =
+                    C.sbind (C.lid temp_name at) (C.ecall (scalarDeserializer scalar) [buffer; field_index] at)
+                  in
+                  let append_elem = C.sbind_wild (C.ecall "list_append" [list_member; temp_id] C.void_t) in
+                  let skip_size =
+                    C.sbind (C.lid "field_index" C.int_t) (C.ecall "first_array_element" [buffer; field_index] C.int_t)
+                  in
+                  let cond = C.elt iter_id size_id in
+                  let body =
+                    let next_element =
+                      C.sbind (C.lid "field_index" C.int_t) (C.ecall "next_object" [buffer; field_index] C.int_t)
                     in
-                    let skip_size =
-                      C.sbind (C.lid "field_index" C.int_t)
-                        (C.ecall "first_array_element" [buffer; field_index] C.int_t)
+                    C.sblock
+                      [ call_deserializer
+                      ; append_elem
+                      ; C.sbind (C.lid iter_name C.int_t) (C.eadd iter_id (C.eint 1))
+                      ; next_element ]
+                  in
+                  let loop = C.swhile cond body in
+                  C.sblock
+                    [ search_stmt
+                    ; found_index ([size_decl; get_count; temp_decl; clear_list; skip_size] @ iter_decl @ [loop]) ]
+              (* list of structs *)
+              | List {elem= ElemStruct elem_path; elem_t= at} ->
+                  let field_descr = "field_descr_" ^ string_of_int !tick in
+                  let () = incr tick in
+                  let decl = C.sdecl field_descr typedescr_type in
+                  let search_type =
+                    C.sbind (C.lid field_descr typedescr_type)
+                      (C.ecall "search_type_description" [buffer; structNameExp elem_path loc] typedescr_type)
+                  in
+                  let iter_name = "i_" ^ string_of_int !tick in
+                  let () = incr tick in
+                  let size_name = "list_size_" ^ string_of_int !tick in
+                  let () = incr tick in
+                  let temp_name = "temp_" ^ string_of_int !tick in
+                  let iter_decl = C.sdecl_bind iter_name (C.eint 0) C.int_t in
+                  let iter_id = C.eid iter_name C.int_t in
+                  let size_decl = C.sdecl size_name C.int_t in
+                  let size_id = C.eid size_name C.int_t in
+                  let temp_decl = C.sdecl temp_name at in
+                  let temp_id = C.eid temp_name at in
+                  (* Clear the list *)
+                  let list_member = C.emember ectx name t in
+                  let clear_list = C.sbind_wild (C.ecall "list_clear" [list_member] C.void_t) in
+                  (* Get count from buffer *)
+                  let get_count =
+                    C.sbind (C.lid size_name C.int_t) (C.ecall "get_array_count" [buffer; field_index] C.int_t)
+                  in
+                  (* Deserialize struct into temp and push to list *)
+                  let call_deserializer =
+                    C.sbind_wild
+                      (C.ecall (elem_path ^ "_deserialize_data")
+                         [buffer; C.eid field_descr typedescr_type; field_index; temp_id]
+                         C.void_t )
+                  in
+                  let append_elem = C.sbind_wild (C.ecall "list_append" [list_member; temp_id] C.void_t) in
+                  let skip_size =
+                    C.sbind (C.lid "field_index" C.int_t) (C.ecall "first_array_element" [buffer; field_index] C.int_t)
+                  in
+                  let cond = C.elt iter_id size_id in
+                  let body =
+                    let next_element =
+                      C.sbind (C.lid "field_index" C.int_t) (C.ecall "next_object" [buffer; field_index] C.int_t)
                     in
-                    let cond = C.elt iter_id (C.eint n) in
-                    let body =
-                      let next_element =
-                        C.sbind (C.lid "field_index" C.int_t) (C.ecall "next_object" [buffer; field_index] C.int_t)
-                      in
-                      C.sblock
-                        [call_deserializer; C.sbind (C.lid iter_name C.int_t) (C.eadd iter_id (C.eint 1)); next_element]
-                    in
-                    let loop = C.swhile cond body in
-                    Some (C.sblock [search_stmt; found_index ((skip_size :: iter_decl) @ [loop])])
-                (* array of structs *)
-                | {t= TArray (Some n, at); _} ->
-                    let field_descr = "field_descr_" ^ string_of_int !tick in
-                    let () = incr tick in
-                    let decl = C.sdecl field_descr typedescr_type in
-                    let search_type =
-                      C.sbind (C.lid field_descr typedescr_type)
-                        (C.ecall "search_type_description" [buffer; getTypeNameStringExp at] typedescr_type)
-                    in
-                    let iter_name = "i_" ^ string_of_int !tick in
-                    let () = incr tick in
-                    let iter_decl = C.sdecl_bind iter_name (C.eint 0) C.int_t in
-                    let iter_id = C.eid iter_name C.int_t in
-                    let call_deserializer =
-                      C.sbind_wild
-                        (C.ecall (deserializerForType at)
-                           [ buffer
-                           ; C.eid field_descr typedescr_type
-                           ; field_index
-                           ; C.eindex (C.emember ectx name t) iter_id at ]
-                           C.void_t )
-                    in
-                    let skip_size =
-                      C.sbind (C.lid "field_index" C.int_t)
-                        (C.ecall "first_array_element" [buffer; field_index] C.int_t)
-                    in
-                    let cond = C.elt iter_id (C.eint n) in
-                    let body =
-                      let next_element =
-                        C.sbind (C.lid "field_index" C.int_t) (C.ecall "next_object" [buffer; field_index] C.int_t)
-                      in
-                      C.sblock
-                        [call_deserializer; C.sbind (C.lid iter_name C.int_t) (C.eadd iter_id (C.eint 1)); next_element]
-                    in
-                    let loop = C.swhile cond body in
-                    Some (C.sblock [decl; search_type; search_stmt; found_index ((skip_size :: iter_decl) @ [loop])])
-                | {t= TArray _; _} ->
-                    failwith "deserialization of array with unknow dimensions"
-                (* list of builtin types *)
-                | {t= TList ({t= TInt | TInt16 | TReal | TString | TBool | TFix16; _} as at); _} ->
-                    let () = incr tick in
-                    let iter_name = "i_" ^ string_of_int !tick in
-                    let () = incr tick in
-                    let size_name = "list_size_" ^ string_of_int !tick in
-                    let () = incr tick in
-                    let temp_name = "temp_" ^ string_of_int !tick in
-                    let iter_decl = C.sdecl_bind iter_name (C.eint 0) C.int_t in
-                    let iter_id = C.eid iter_name C.int_t in
-                    let size_decl = C.sdecl size_name C.int_t in
-                    let size_id = C.eid size_name C.int_t in
-                    let temp_decl = C.sdecl temp_name at in
-                    let temp_id = C.eid temp_name at in
-                    (* Clear the list before deserializing *)
-                    let list_member = C.emember ectx name t in
-                    let clear_list = C.sbind_wild (C.ecall "list_clear" [list_member] C.void_t) in
-                    (* Get the array count from buffer *)
-                    let get_count =
-                      C.sbind (C.lid size_name C.int_t) (C.ecall "get_array_count" [buffer; field_index] C.int_t)
-                    in
-                    (* Deserialize element into temp and push to list *)
-                    let call_deserializer =
-                      C.sbind (C.lid temp_name at) (C.ecall (deserializerForType at) [buffer; field_index] at)
-                    in
-                    let append_elem = C.sbind_wild (C.ecall "list_append" [list_member; temp_id] C.void_t) in
-                    let skip_size =
-                      C.sbind (C.lid "field_index" C.int_t)
-                        (C.ecall "first_array_element" [buffer; field_index] C.int_t)
-                    in
-                    let cond = C.elt iter_id size_id in
-                    let body =
-                      let next_element =
-                        C.sbind (C.lid "field_index" C.int_t) (C.ecall "next_object" [buffer; field_index] C.int_t)
-                      in
-                      C.sblock
-                        [ call_deserializer
-                        ; append_elem
-                        ; C.sbind (C.lid iter_name C.int_t) (C.eadd iter_id (C.eint 1))
-                        ; next_element ]
-                    in
-                    let loop = C.swhile cond body in
-                    Some
-                      (C.sblock
-                         [ search_stmt
-                         ; found_index ([size_decl; get_count; temp_decl; clear_list; skip_size] @ iter_decl @ [loop])
-                         ] )
-                (* list of structs *)
-                | {t= TList at; _} ->
-                    let field_descr = "field_descr_" ^ string_of_int !tick in
-                    let () = incr tick in
-                    let decl = C.sdecl field_descr typedescr_type in
-                    let search_type =
-                      C.sbind (C.lid field_descr typedescr_type)
-                        (C.ecall "search_type_description" [buffer; getTypeNameStringExp at] typedescr_type)
-                    in
-                    let iter_name = "i_" ^ string_of_int !tick in
-                    let () = incr tick in
-                    let size_name = "list_size_" ^ string_of_int !tick in
-                    let () = incr tick in
-                    let temp_name = "temp_" ^ string_of_int !tick in
-                    let iter_decl = C.sdecl_bind iter_name (C.eint 0) C.int_t in
-                    let iter_id = C.eid iter_name C.int_t in
-                    let size_decl = C.sdecl size_name C.int_t in
-                    let size_id = C.eid size_name C.int_t in
-                    let temp_decl = C.sdecl temp_name at in
-                    let temp_id = C.eid temp_name at in
-                    (* Clear the list *)
-                    let list_member = C.emember ectx name t in
-                    let clear_list = C.sbind_wild (C.ecall "list_clear" [list_member] C.void_t) in
-                    (* Get count from buffer *)
-                    let get_count =
-                      C.sbind (C.lid size_name C.int_t) (C.ecall "get_array_count" [buffer; field_index] C.int_t)
-                    in
-                    (* Deserialize struct into temp and push to list *)
-                    let call_deserializer =
-                      C.sbind_wild
-                        (C.ecall (deserializerForType at)
-                           [buffer; C.eid field_descr typedescr_type; field_index; temp_id]
-                           C.void_t )
-                    in
-                    let append_elem = C.sbind_wild (C.ecall "list_append" [list_member; temp_id] C.void_t) in
-                    let skip_size =
-                      C.sbind (C.lid "field_index" C.int_t)
-                        (C.ecall "first_array_element" [buffer; field_index] C.int_t)
-                    in
-                    let cond = C.elt iter_id size_id in
-                    let body =
-                      let next_element =
-                        C.sbind (C.lid "field_index" C.int_t) (C.ecall "next_object" [buffer; field_index] C.int_t)
-                      in
-                      C.sblock
-                        [ call_deserializer
-                        ; append_elem
-                        ; C.sbind (C.lid iter_name C.int_t) (C.eadd iter_id (C.eint 1))
-                        ; next_element ]
-                    in
-                    let loop = C.swhile cond body in
-                    Some
-                      (C.sblock
-                         [ decl
-                         ; search_type
-                         ; search_stmt
-                         ; found_index ([size_decl; get_count; temp_decl; clear_list; skip_size] @ iter_decl @ [loop])
-                         ] )
-                | {t= TTuple _; _} ->
-                    failwith "deserialization of tuple"
-              else None )
-            s.members
+                    C.sblock
+                      [ call_deserializer
+                      ; append_elem
+                      ; C.sbind (C.lid iter_name C.int_t) (C.eadd iter_id (C.eint 1))
+                      ; next_element ]
+                  in
+                  let loop = C.swhile cond body in
+                  C.sblock
+                    [ decl
+                    ; search_type
+                    ; search_stmt
+                    ; found_index ([size_decl; get_count; temp_decl; clear_list; skip_size] @ iter_decl @ [loop]) ] )
+            members
         in
         let field_decl = {s= StmtDecl ({d= DId ("field_index", None); t= C.int_t; loc}, None); loc} in
         let body = {s= StmtBlock ([field_decl] @ member_stmts); loc} in
@@ -696,8 +653,7 @@ let createDeserializer table (stmt : top_stmt) =
             ; C.param ~loc "_ctx" this_type ]
           , ([buffer_type; C.int_t; this_type], C.void_t) )
         in
-        Some {top= TopFunction ({name; args; t; loc; tags= []; info= default_info}, body); loc}
-      else None
+        Some {top= TopFunction ({name; args; t; loc; tags= []; info= default_info}, body); loc} )
   (*
      | { top = TopAlias { path; alias_of; _ }; loc } ->
       let name = path ^ "_serialize_data" in
@@ -791,20 +747,15 @@ let createSerializers (prog : prog) =
   in
   *)
   let table = propagateSaveTag table in
-  let () =
-    TypeTable.iter
+  (* The saved structs with their classified members *)
+  let saved =
+    TypeTable.filter_map
       (fun _ (s, save, _, _) ->
-        match s with
-        | Some (s : struct_descr) when save ->
-            CCList.iter
-              (fun (name, t, tags, loc) -> if Pparser.Ptags.has tags "save" then checkSavedMember s.path name t loc)
-              s.members
-        | _ ->
-            () )
+        match s with Some (s : struct_descr) when save -> Some (s, savedMembers s) | Some _ | None -> None )
       table
   in
   let n_types = TypeTable.fold (fun _ (_, _, _, n) acc -> if n >= 0 then acc + 1 else acc) table 0 in
-  let serializers = CCList.filter_map (fun stmt -> createSerializer table stmt) prog in
-  let deserializers = CCList.filter_map (fun stmt -> createDeserializer table stmt) prog in
+  let serializers = CCList.filter_map (fun stmt -> createSerializer table saved stmt) prog in
+  let deserializers = CCList.filter_map (fun stmt -> createDeserializer saved stmt) prog in
   let descriptors = CCList.filter_map (fun stmt -> createTypeDescriptor n_types table stmt) prog in
   serializers @ descriptors @ deserializers
