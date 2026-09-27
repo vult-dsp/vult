@@ -1,0 +1,4 @@
+// Neither can a function argument.
+fun f(_ctx : int) {
+  return _ctx;
+}

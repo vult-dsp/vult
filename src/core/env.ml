@@ -111,15 +111,21 @@ type type_descr = Simple | Record of var Map.t | Enum of (string * int * Loc.t) 
 
 type t = {path: path; descr: type_descr; index: int; loc: Loc.t; generated: bool}
 
-type context = (path * t) option
+(* The record that holds the memory of a function and of its companions *)
+type context = {path: path; t: t; members: var Map.t}
 
-type function_type = {args: Typed.arg list; ret: Typed.type_; context: context}
+(* The context of a function together with the type of its '_ctx' argument. The companions
+   share the context but each function has its own argument type. *)
+type function_context = NoContext | Context of {context: context; arg_t: Typed.type_}
+
+(* The context argument of a function: the path of its context and the type of '_ctx' *)
+type context_argument = {context_path: path; arg_t: Typed.type_}
 
 type f =
   { path: path
   ; t: Typed.type_ list * Typed.type_
   ; args: Typed.arg list option
-  ; context: context
+  ; context: function_context
   ; mutable locals: var Map.t list
   ; mutable tick: int }
 
@@ -146,7 +152,7 @@ type lookup_result =
   | LookupNotFound
 
 (* Location within the environment hierarchy *)
-type location = Top | InModule of string | InContext of string * context | InFunction of string * f
+type location = Top | InModule of string | InContext of string * context option | InFunction of string * f
 
 (* Unified environment type that tracks current location internally *)
 type env =
@@ -318,7 +324,7 @@ let rec isBuiltinType (t : Typed.type_) : bool =
       false
 
 let makeFunctionForBuiltin name t : f =
-  {path= {id= name; n= None; loc= Loc.default}; t; context= None; locals= []; tick= 0; args= None}
+  {path= {id= name; n= None; loc= Loc.default}; t; context= NoContext; locals= []; tick= 0; args= None}
 
 (* Helper functions to extract current state *)
 let getCurrentModule (env : env) : m =
@@ -332,8 +338,10 @@ let getCurrentModule (env : env) : m =
   | Top ->
       failwith "Internal error in getCurrentModule: called at Top level (not inside any module)"
 
-let getCurrentContext (env : env) : context =
-  match env.location with InContext (_, context) -> context | InFunction (_, f) -> f.context | _ -> None
+let contextOf (f : f) : context option = match f.context with Context {context; _} -> Some context | NoContext -> None
+
+let getCurrentContext (env : env) : context option =
+  match env.location with InContext (_, context) -> context | InFunction (_, f) -> contextOf f | _ -> None
 
 let getCurrentFunction (env : env) : f =
   match env.location with
@@ -354,13 +362,20 @@ let rec lookVarInScopes (scopes : var Map.t list) name : var option =
   | h :: t -> (
     match Map.find name h with Some found -> Some found | None -> lookVarInScopes t name )
 
-let lookVarInContext (context : context) name : var option =
-  match context with Some (_, {descr= Record members; _}) -> Map.find name members | _ -> None
+let lookVarInContext (context : context option) name : var option =
+  match context with Some context -> Map.find name context.members | None -> None
 
 (* A name that starts with an uppercase letter is read as an enumeration value, so a binding
    spelled that way could never be read back. Rejecting it at the declaration points at the name
    itself instead of at its first use. *)
+let context_name = "_ctx"
+
+(* The context is passed to the functions as the argument '_ctx' *)
+let checkReservedName (name : string) (loc : Loc.t) : unit =
+  if String.equal name context_name then Error.raiseError ("The name '" ^ name ^ "' is reserved.") loc
+
 let checkBindingName (kind : string) (name : string) (loc : Loc.t) : unit =
+  checkReservedName name loc ;
   if Pparser.Syntax.startsUppercase name then
     Error.raiseError
       ( "The " ^ kind ^ " '" ^ name
@@ -385,21 +400,10 @@ let registerArguments (args : Typed.arg list) =
   in
   (locals, CCList.rev rev_args)
 
-let registerContextLocal loc locals (context : context) =
-  let report loc (found : var) = Error.raiseError ("The name '" ^ found.name ^ "' is reserved.") loc in
-  match context with
-  | Some (p, _) ->
-      let name = "_ctx" in
-      let t = Typed.C.path_t loc p in
-      Map.update (report loc) name {name; t; kind= Val; tags= []; loc} locals ;
-      locals
-  | None ->
-      locals
-
 let lookVar (env : env) (name : string) (loc : Loc.t) : var =
   let f = getCurrentFunction env in
   let m = getCurrentModule env in
-  match lookVarInContext f.context name with
+  match lookVarInContext (contextOf f) name with
   | Some found ->
       found
   | None -> (
@@ -450,10 +454,10 @@ let addConstant (env : env) _unify (name : string) (t : Typed.type_) loc : env =
   env
 
 (* Helper: Check if a mem variable with the same name already exists in the context *)
-let checkDuplicatedMem (context : context) (name : string) (loc : Loc.t) : unit =
+let checkDuplicatedMem (context : context option) (name : string) (loc : Loc.t) : unit =
   match context with
-  | Some (_, {descr= Record members; _}) -> (
-    match Map.find name members with
+  | Some context -> (
+    match Map.find name context.members with
     | None ->
         ()
     | Some found ->
@@ -461,7 +465,7 @@ let checkDuplicatedMem (context : context) (name : string) (loc : Loc.t) : unit 
           ( "A mem variable with the name '" ^ found.name ^ "' has already been declared at "
           ^ Loc.to_string_readable found.loc )
           loc )
-  | _ ->
+  | None ->
       ()
 
 (* Helper: Check if a val variable with the same name already exists in any scope *)
@@ -491,15 +495,15 @@ let checkDuplicatedConstant (env : env) (name : string) (loc : Loc.t) : unit =
         loc
 
 (* Helper: Check if any argument names conflict with mem variables in the context or constants *)
-let checkArgumentsAgainstContext (env : env) (context : context) (args : Typed.arg list) : unit =
+let checkArgumentsAgainstContext (env : env) (context : context option) (args : Typed.arg list) : unit =
   let m = getCurrentModule env in
   (* Check against mem variables in context *)
   let () =
     match context with
-    | Some (_, {descr= Record members; _}) ->
+    | Some context ->
         CCList.iter
           (fun ({name; loc; _} : Typed.arg) ->
-            match Map.find name members with
+            match Map.find name context.members with
             | None ->
                 ()
             | Some found ->
@@ -509,7 +513,7 @@ let checkArgumentsAgainstContext (env : env) (context : context) (args : Typed.a
                   ^ ". Rename the parameter or the mem variable to avoid this conflict." )
                   loc )
           args
-    | _ ->
+    | None ->
         ()
   in
   (* Check against module constants *)
@@ -541,14 +545,16 @@ let makeMemReporter (unify : Typed.type_ -> Typed.type_ -> bool) (t : Typed.type
 (* Helper: Add a mem or inst variable to the context record *)
 let addMemOrInst (f : f) (members : var Map.t) (unify : Typed.type_ -> Typed.type_ -> bool) (name : string)
     (t : Typed.type_) (kind : var_kind) (tags : Pparser.Ptags.tag list) (loc : Loc.t) (env : env) : env =
-  let () = match kind with Mem _ -> checkBindingName "variable" name loc | _ -> () in
+  let () =
+    match kind with Mem _ -> checkBindingName "variable" name loc | Inst | Val | Const -> checkReservedName name loc
+  in
   let () = checkDuplicatedVal f.locals name loc in
   let report_mem = makeMemReporter unify t in
   Map.update report_mem name {name; t; kind; tags; loc} members ;
   env
 
 (* Helper: Add a val variable to the current local scope *)
-let addValVar (f : f) (context : context) (name : string) (t : Typed.type_) (loc : Loc.t) (env : env) : env =
+let addValVar (f : f) (context : context option) (name : string) (t : Typed.type_) (loc : Loc.t) (env : env) : env =
   let report (found : var) =
     Error.raiseError
       ("A variable with the name '" ^ found.name ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
@@ -568,25 +574,23 @@ let addVar (env : env) unify (name : string) (t : Typed.type_) (kind : var_kind)
   let f = getCurrentFunction env in
   let context = getCurrentContext env in
   match (kind, context) with
-  | Inst, Some (_, {descr= Record members; _}) ->
-      addMemOrInst f members unify name t kind [] loc env
-  | Mem tags, Some (_, {descr= Record members; _}) ->
-      addMemOrInst f members unify name t kind tags loc env
+  | Inst, Some context ->
+      addMemOrInst f context.members unify name t kind [] loc env
+  | Mem tags, Some context ->
+      addMemOrInst f context.members unify name t kind tags loc env
   | (Mem _ | Inst), None ->
-      failwith ("Internal error in addVar: cannot add mem/inst variable '" ^ name ^ "' to function with no context")
+      Error.raiseError ("The variable '" ^ name ^ "' cannot be stored in memory. Only functions have memory.") loc
   | Val, context ->
       addValVar f context name t loc env
   | Const, _ ->
       failwith ("Internal error in addVar: use addConstant instead for constant '" ^ name ^ "'")
-  | _, Some _ ->
-      failwith ("Internal error in addVar: context exists but is not a Record for variable '" ^ name ^ "'")
 
 let checkMemExists (env : env) name =
   let f = getCurrentFunction env in
-  match f.context with
-  | Some (_, {descr= Record members; _}) -> (
-    match Map.find name members with None -> false | Some _ -> true )
-  | _ ->
+  match contextOf f with
+  | Some context -> (
+    match Map.find name context.members with None -> false | Some _ -> true )
+  | None ->
       false
 
 let checkConstantExists (env : env) (name : string) : bool =
@@ -596,8 +600,8 @@ let checkConstantExists (env : env) (name : string) : bool =
 let addReturnVar (env : env) (name : string) (t : Typed.type_) loc : env =
   let () = Typed.setTypeMut t in
   match getCurrentContext env with
-  | Some (_, {descr= Record members; _}) -> (
-    match Map.find name members with
+  | Some context -> (
+    match Map.find name context.members with
     | Some found ->
         Error.raiseError
           ( "Return variable '" ^ name ^ "' conflicts with a mem variable declared at "
@@ -605,12 +609,10 @@ let addReturnVar (env : env) (name : string) (t : Typed.type_) loc : env =
           loc
     | None ->
         let report_mem found _ = found in
-        Map.update report_mem name {name; t; kind= Mem []; tags= []; loc} members ;
+        Map.update report_mem name {name; t; kind= Mem []; tags= []; loc} context.members ;
         env )
   | None ->
-      failwith ("Internal error in addReturnVar: cannot add return variable '" ^ name ^ "' to function with no context")
-  | Some _ ->
-      failwith ("Internal error in addReturnVar: context exists but is not a Record for variable '" ^ name ^ "'")
+      Error.raiseError "Only functions can return multiple values." loc
 
 let pushScope (env : env) : env =
   let f = getCurrentFunction env in
@@ -638,9 +640,10 @@ let createContextForFunction (env : env) name loc : env =
   let type_name = name ^ "_type" in
   let path = getPath m type_name loc in
   let index = getGlobalTick () in
-  let t = {descr= Record (Map.empty ()); path; index; loc; generated= true} in
+  let members = Map.empty () in
+  let t = {descr= Record members; path; index; loc; generated= true} in
   let _ = Map.update (report name) type_name t m.types in
-  {env with location= InContext (m.name, Some (path, t))}
+  {env with location= InContext (m.name, Some {path; t; members})}
 
 let createContextForFunctionWithIndex (env : env) name loc (type_index : int) : env =
   let m = getCurrentModule env in
@@ -651,13 +654,14 @@ let createContextForFunctionWithIndex (env : env) name loc (type_index : int) : 
   in
   let type_name = name ^ "_type" in
   let path = getPath m type_name loc in
-  let t = {descr= Record (Map.empty ()); path; index= type_index; loc; generated= true} in
+  let members = Map.empty () in
+  let t = {descr= Record members; path; index= type_index; loc; generated= true} in
   let _ = Map.update (report name) type_name t m.types in
-  {env with location= InContext (m.name, Some (path, t))}
+  {env with location= InContext (m.name, Some {path; t; members})}
 
 let addAliasToContext (env : env) name loc : env =
   match getCurrentContext env with
-  | Some (ctx, {descr= Record members; _}) when not (Map.is_empty members) -> (
+  | Some context when not (Map.is_empty context.members) -> (
       let m = getCurrentModule env in
       let type_name = name ^ "_type" in
       (* Check if alias already exists - skip if it does (can happen with multiple instantiations of generics) *)
@@ -667,7 +671,7 @@ let addAliasToContext (env : env) name loc : env =
       | None ->
           let path = getPath m type_name loc in
           let index = getGlobalTick () in
-          let t = {descr= Alias (path, ctx); path; index; loc; generated= true} in
+          let t = {descr= Alias (path, context.path); path; index; loc; generated= true} in
           let report found =
             Error.raiseError ("A context with the same name already exists at " ^ Loc.to_string_readable found.loc) loc
           in
@@ -766,17 +770,29 @@ let nextFunctionTick (env : env) : int =
 
 let getContext (env : env) : path =
   match getCurrentContext env with
-  | Some (p, _) ->
-      p
+  | Some context ->
+      context.path
   | None ->
       failwith "Internal error in getContext: trying to get context but current function has no context"
 
-let getFunctionContext (f : f) : path =
+let contextArgument (f : f) : context_argument option =
+  match f.context with Context {context; arg_t} -> Some {context_path= context.path; arg_t} | NoContext -> None
+
+(* The context argument of a function that has memory, which the callers have to pass *)
+let activeContextArgument (f : f) : context_argument option =
   match f.context with
-  | Some (p, _) ->
-      p
+  | Context {context; arg_t} when not (Map.is_empty context.members) ->
+      Some {context_path= context.path; arg_t}
+  | Context _ | NoContext ->
+      None
+
+(* The context argument of the current function, used to pass memory to the functions it calls *)
+let currentContextArgument (env : env) (loc : Loc.t) : context_argument =
+  match contextArgument (getCurrentFunction env) with
+  | Some argument ->
+      argument
   | None ->
-      failwith ("Internal error in getFunctionContext: function '" ^ f.path.id ^ "' has no context")
+      Error.raiseError "Functions with memory variables can only be called from other functions." loc
 
 let enterFunction (env : env) (name : string) (args : Typed.arg list) (ret : Typed.type_) loc :
     env * path * (Typed.type_ list * Typed.type_) =
@@ -797,19 +813,20 @@ let enterFunction (env : env) (name : string) (args : Typed.arg list) (ret : Typ
   in
   let path = getPath m name loc in
   let locals, args_t = registerArguments args in
-  let locals = registerContextLocal loc locals context in
+  let context =
+    match context with Some context -> Context {context; arg_t= Typed.C.path_t loc context.path} | None -> NoContext
+  in
   let t = (args_t, ret) in
   let f : f = {path; t; context; locals= [locals]; tick= 0; args= Some args} in
   let _ = Map.update report name f m.functions in
   ({env with location= InFunction (m.name, f)}, path, t)
 
-let isFunctionActive (f : f) =
-  match f.context with Some (_, {descr= Record members; _}) -> not (Map.is_empty members) | _ -> false
+let isFunctionActive (f : f) = Option.is_some (activeContextArgument f)
 
 let exitFunction (env : env) : env =
   let m = getCurrentModule env in
   let f = getCurrentFunction env in
-  {env with location= InContext (m.name, f.context)}
+  {env with location= InContext (m.name, contextOf f)}
 
 (** Re-enter a function context for post-processing. Looks up the function by path
     and sets the environment to be inside that function. *)
@@ -827,11 +844,11 @@ let reenterFunction (env : env) (func_path : path) : env =
 
 let addCustomInitFunction (env : env) name =
   match getCurrentContext env with
-  | Some (p, _) ->
+  | Some context ->
       let m = getCurrentModule env in
-      m.init <- (p, name) :: m.init ;
+      m.init <- (context.path, name) :: m.init ;
       env
-  | _ ->
+  | None ->
       env
 
 let enterModule (env : env) (name : string) : env =
@@ -878,7 +895,7 @@ let lookupPath (env : env) (path : path) : lookup_result list =
     |> consOpt (fun g -> LookupGeneric g) (Map.find id m.generics)
   in
   let lookupLocalVar (f : f) (id : string) : var option =
-    match lookVarInContext f.context id with Some var -> Some var | None -> lookVarInScopes f.locals id
+    match lookVarInContext (contextOf f) id with Some var -> Some var | None -> lookVarInScopes f.locals id
   in
   match path with
   | {id; n= Some module_name; _} -> (

@@ -31,7 +31,7 @@ open Pparser
 open Env
 open Typed
 
-let context_name = "_ctx"
+let context_name = Env.context_name
 
 (* ========== Helper Functions ========== *)
 
@@ -42,19 +42,19 @@ let unlink = Typed.unlink
 let checkMemExists (env : env) name =
   let f = Env.getCurrentFunction env in
   (* Check context record where Inst/Mem variables are stored by addVar *)
-  match f.context with
-  | Some (_, {descr= Record members; _}) -> (
-    match Env.Map.find name members with Some {kind= Mem _ | Inst; _} -> true | _ -> false )
-  | _ ->
+  match Env.contextOf f with
+  | Some context -> (
+    match Env.Map.find name context.members with Some {kind= Mem _ | Inst; _} -> true | _ -> false )
+  | None ->
       false
 
 (* Get the type of a mem/inst variable in the current function's context *)
 let memVarType (env : env) name : Typed.type_ option =
   let f = Env.getCurrentFunction env in
-  match f.context with
-  | Some (_, {descr= Record members; _}) -> (
-    match Env.Map.find name members with Some {kind= Mem _ | Inst; t; _} -> Some t | _ -> None )
-  | _ ->
+  match Env.contextOf f with
+  | Some context -> (
+    match Env.Map.find name context.members with Some {kind= Mem _ | Inst; t; _} -> Some t | _ -> None )
+  | None ->
       None
 
 (* Get the name of the context type of a function (its first argument when it takes a context) *)
@@ -679,13 +679,11 @@ module Make (T : TYPECHECKER) = struct
                          reuse it instead of instantiating it again *)
                       let base_args = match f.args with Some a -> a | None -> [] in
                       let def_args =
-                        if Env.isFunctionActive f then
-                          match Env.lookVarInScopes f.locals context_name with
-                          | Some var ->
-                              ({name= context_name; t= var.t; loc} : Typed.arg) :: base_args
-                          | None ->
-                              base_args
-                        else base_args
+                        match Env.activeContextArgument f with
+                        | Some {arg_t; _} ->
+                            ({name= context_name; t= arg_t; loc} : Typed.arg) :: base_args
+                        | None ->
+                            base_args
                       in
                       let def : Typed.function_def =
                         { name= f.path
@@ -772,31 +770,21 @@ module Make (T : TYPECHECKER) = struct
             let () = propagateVariability env loc (Some specialized_non_ctx_args) processed_args in
             let final_args =
               match in_progress with
-              | Some flag ->
+              | Some flag -> (
                   (* Recursive call to a specialization that is being instantiated right now.
                      When it is a direct self-call and the function has state, the context is
                      passed through unchanged (same instance). *)
                   let current_f = Env.getCurrentFunction env in
-                  if Syntax.compare_path current_f.path specialized_def.name = 0 && Env.isFunctionActive current_f then
-                    match Env.lookVarInScopes current_f.locals context_name with
-                    | Some var ->
-                        {e= EId context_name; t= var.t; loc} :: processed_args
-                    | None ->
-                        failwith "context var not declared in recursive generic function"
-                  else (
-                    flag := true ;
-                    processed_args )
+                  match Env.activeContextArgument current_f with
+                  | Some {arg_t; _} when Syntax.compare_path current_f.path specialized_def.name = 0 ->
+                      {e= EId context_name; t= arg_t; loc} :: processed_args
+                  | Some _ | None ->
+                      flag := true ;
+                      processed_args )
               | None -> (
                 match specialized_def.args with
                 | {name; t= ctx_t; _} :: _ when String.equal name context_name ->
-                    let current_f = Env.getCurrentFunction env in
-                    let current_ctx_t =
-                      match Env.lookVarInScopes current_f.locals context_name with
-                      | Some var ->
-                          var.t
-                      | None ->
-                          failwith "context var not declared in caller"
-                    in
+                    let current_ctx_t = (Env.currentContextArgument env loc).arg_t in
                     let inst_name =
                       match instance with
                       | Some user_inst_name ->
@@ -862,16 +850,7 @@ module Make (T : TYPECHECKER) = struct
         let final_args =
           match Hashtbl.find_opt state.functions_needing_context func_path_str with
           | Some ctx_t ->
-              let current_f = Env.getCurrentFunction env in
-              let current_ctx_t =
-                match Env.lookVarInScopes current_f.locals context_name with
-                | Some var ->
-                    var.t
-                | None ->
-                    failwith
-                      (Printf.sprintf "Function '%s' calls '%s' which needs context, but caller has no context"
-                         (pathString current_f.path) func_path_str )
-              in
+              let current_ctx_t = (Env.currentContextArgument env loc).arg_t in
               let inst_name =
                 let site = callSiteKey env loc in
                 match Hashtbl.find_opt state.call_instance_names site with
@@ -1104,14 +1083,7 @@ module Make (T : TYPECHECKER) = struct
               let final_args =
                 match (companion_def.args, inst_name_opt) with
                 | {name; t= ctx_t; _} :: _, Some inst_name when String.equal name context_name ->
-                    let current_f = Env.getCurrentFunction env in
-                    let current_ctx_t =
-                      match Env.lookVarInScopes current_f.locals context_name with
-                      | Some var ->
-                          var.t
-                      | None ->
-                          failwith "context var not declared in caller for companion call"
-                    in
+                    let current_ctx_t = (Env.currentContextArgument env loc).arg_t in
                     let _ = Env.addVar env unify inst_name ctx_t Inst loc in
                     let ctx_e = {e= EId context_name; t= current_ctx_t; loc} in
                     let inst_e = {e= EMember (ctx_e, inst_name); t= ctx_t; loc} in

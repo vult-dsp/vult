@@ -26,7 +26,7 @@ open Pparser
 open Env
 open Typed
 
-let context_name = "_ctx"
+let context_name = Env.context_name
 
 (* Helper functions to create common contexts *)
 let normal_context = {Env.in_constant= false; in_generic_arg= false}
@@ -346,6 +346,8 @@ let applyFunction loc (args_t_in : type_ list) (ret : type_) (args_in : exp list
 
 let rec markExpMutable env exp loc =
   match exp.e with
+  | EId name when String.equal name context_name -> (
+    match Env.contextArgument (Env.getCurrentFunction env) with Some {arg_t; _} -> Typed.setTypeMut arg_t | None -> () )
   | EId name -> (
     match Env.lookVar env name loc with var -> Typed.setTypeMut var.t | exception Error.Errors _ -> () )
   | EMember (e, _) ->
@@ -370,72 +372,60 @@ let propagateVariability env loc (args : Typed.arg list option) (exp_args : exp 
 let typeToMangledName = Typed.typeToMangledName
 
 let rec addContextArg (env : env) instance (f : Env.f) args loc =
-  if Env.isFunctionActive f then (
-    let cpath = Env.getContext env in
-    let fpath = Env.getFunctionContext f in
-    (* get the context type of the current function *)
-    let ctx_t =
-      let f = Env.getCurrentFunction env in
-      match Env.lookVarInScopes f.locals context_name with
-      | Some var ->
-          var.t
-      | None ->
-          failwith "context var not declared"
-    in
-    (* get the context type of the function we are calling *)
-    let fctx_t =
-      match Env.lookVarInScopes f.locals context_name with
-      | Some var ->
-          var.t
-      | None ->
-          failwith "context var not declared"
-    in
-    let is_ctx_mutable = isTypeConst fctx_t = false in
-    match (Syntax.compare_path cpath fpath, instance) with
-    | 0, None ->
-        let e = {e= EId context_name; t= fctx_t; loc} in
-        let () = if is_ctx_mutable then markExpMutable env e loc in
-        (env, e :: args)
-    | 0, Some _ ->
-        let msg =
-          Pla.print
-            {%pla|This function belongs to the same instance and it must not be called on a different instance.|}
-        in
-        Error.raiseError msg loc
-    (* no instance name provided *)
-    | _, None ->
-        let number =
-          Printf.sprintf "%.2x%.2x"
-            (0xFF land Hashtbl.hash (pathString fpath))
-            (0xFF land Hashtbl.hash (pathString cpath))
-        in
-        let rec generateName () =
-          let n = Env.nextFunctionTick env in
-          let name = "inst_" ^ string_of_int n ^ number in
-          if checkMemExists env name || Env.checkConstantExists env name then generateName () else name
-        in
-        let name = generateName () in
-        let env = Env.addVar env unify name fctx_t Inst loc in
-        let e = {e= EMember ({e= EId context_name; t= ctx_t; loc}, name); loc; t= fctx_t} in
-        let () = if is_ctx_mutable then markExpMutable env e loc in
-        (env, e :: args)
-    (* intance without subscripts *)
-    | _, Some (name, None) ->
-        let env = Env.addVar env unify name fctx_t Inst loc in
-        let e = {e= EMember ({e= EId context_name; t= ctx_t; loc}, name); loc; t= fctx_t} in
-        let () = if is_ctx_mutable then markExpMutable env e loc in
-        (env, e :: args)
-    (* array of instances *)
-    | _, Some (name, Some index) ->
-        let env, index = exp ~context:normal_context env index in
-        unifyRaise index.loc (C.int ~loc:Loc.default) index.t ;
-        let t = C.array ~loc fctx_t in
-        let env = Env.addVar env unify name t Inst loc in
-        let e = {e= EMember ({e= EId context_name; t= ctx_t; loc}, name); loc; t= fctx_t} in
-        let e = {e= EIndex {e; index}; loc; t= fctx_t} in
-        let () = if is_ctx_mutable then markExpMutable env e loc in
-        (env, e :: args) )
-  else (env, args)
+  match Env.activeContextArgument f with
+  | None ->
+      (env, args)
+  | Some callee -> (
+      let caller = Env.currentContextArgument env loc in
+      let cpath = caller.context_path in
+      let fpath = callee.context_path in
+      let ctx_t = caller.arg_t in
+      let fctx_t = callee.arg_t in
+      let is_ctx_mutable = isTypeConst fctx_t = false in
+      match (Syntax.compare_path cpath fpath, instance) with
+      | 0, None ->
+          let e = {e= EId context_name; t= fctx_t; loc} in
+          let () = if is_ctx_mutable then markExpMutable env e loc in
+          (env, e :: args)
+      | 0, Some _ ->
+          let msg =
+            Pla.print
+              {%pla|This function belongs to the same instance and it must not be called on a different instance.|}
+          in
+          Error.raiseError msg loc
+      (* no instance name provided *)
+      | _, None ->
+          let number =
+            Printf.sprintf "%.2x%.2x"
+              (0xFF land Hashtbl.hash (pathString fpath))
+              (0xFF land Hashtbl.hash (pathString cpath))
+          in
+          let rec generateName () =
+            let n = Env.nextFunctionTick env in
+            let name = "inst_" ^ string_of_int n ^ number in
+            if checkMemExists env name || Env.checkConstantExists env name then generateName () else name
+          in
+          let name = generateName () in
+          let env = Env.addVar env unify name fctx_t Inst loc in
+          let e = {e= EMember ({e= EId context_name; t= ctx_t; loc}, name); loc; t= fctx_t} in
+          let () = if is_ctx_mutable then markExpMutable env e loc in
+          (env, e :: args)
+      (* intance without subscripts *)
+      | _, Some (name, None) ->
+          let env = Env.addVar env unify name fctx_t Inst loc in
+          let e = {e= EMember ({e= EId context_name; t= ctx_t; loc}, name); loc; t= fctx_t} in
+          let () = if is_ctx_mutable then markExpMutable env e loc in
+          (env, e :: args)
+      (* array of instances *)
+      | _, Some (name, Some index) ->
+          let env, index = exp ~context:normal_context env index in
+          unifyRaise index.loc (C.int ~loc:Loc.default) index.t ;
+          let t = C.array ~loc fctx_t in
+          let env = Env.addVar env unify name t Inst loc in
+          let e = {e= EMember ({e= EId context_name; t= ctx_t; loc}, name); loc; t= fctx_t} in
+          let e = {e= EIndex {e; index}; loc; t= fctx_t} in
+          let () = if is_ctx_mutable then markExpMutable env e loc in
+          (env, e :: args) )
 
 and call ~(context : Env.expr_context) (env : env) instance path args loc eloc =
   (* First check if this is a generic function *)
@@ -1480,24 +1470,22 @@ let ext_function (iargs : Args.args) (env : env) (def : Syntax.ext_def) : env * 
 
 let getContextArgument (env : env) (path : path) loc : arg option =
   match Env.getCurrentContext env with
-  | Some (_, {descr= Record members; _}) ->
-      if Map.is_empty members then None
-      else
-        let ctx_t =
-          let m = Env.getCurrentModule env in
-          match Map.find path.id m.functions with
-          | Some f -> (
-            match Env.lookVarInScopes f.locals context_name with
-            | Some var ->
-                var.t
-            | None ->
-                failwith "context var not declared" )
-          | None ->
-              failwith "function not found"
-        in
-        let () = Env.Map.fold (fun _ (var : var) () -> unifyConstness ctx_t var.t) () members in
-        Some {name= context_name; t= ctx_t; loc}
-  | _ ->
+  | Some context when not (Map.is_empty context.members) -> (
+      let m = Env.getCurrentModule env in
+      let f =
+        match Map.find path.id m.functions with
+        | Some f ->
+            f
+        | None ->
+            failwith "getContextArgument: function not found"
+      in
+      match Env.contextArgument f with
+      | Some {arg_t; _} ->
+          let () = Env.Map.fold (fun _ (var : var) () -> unifyConstness arg_t var.t) () context.members in
+          Some {name= context_name; t= arg_t; loc}
+      | None ->
+          None )
+  | Some _ | None ->
       None
 
 let insertContextArgument (env : env) (def : function_def) : function_def =

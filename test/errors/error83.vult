@@ -1,0 +1,14 @@
+// A local variable cannot take the name of the hidden context argument.
+fun foo() {
+  mem x;
+  x = x + 1;
+  return x;
+}
+
+fun bar() {
+  if (true) {
+    val _ctx = 1;
+    return foo();
+  }
+  return 0;
+}
