@@ -371,6 +371,36 @@ let propagateVariability env loc (args : Typed.arg list option) (exp_args : exp 
 
 let typeToMangledName = Typed.typeToMangledName
 
+(* A parameter of a generic call whose argument is typechecked in a second pass *)
+type pending_generic_param = PendingArg of arg * Syntax.exp | ReadyParam of Typed.call_param
+
+(* Pairs the parameters of a generic function with the arguments of a call to it *)
+let pairGenericParams (generic_func : Typed.generic_function) (args : Syntax.exp list) (loc : Loc.t) :
+    (Typed.param_slot * Syntax.exp) list =
+  let rec pair slots args acc =
+    match (slots, args) with
+    | [], [] ->
+        Some (CCList.rev acc)
+    | slot :: slots, arg :: args ->
+        pair slots args ((slot, arg) :: acc)
+    | [], _ :: _ | _ :: _, [] ->
+        None
+  in
+  match pair generic_func.params args [] with
+  | Some pairs ->
+      pairs
+  | None ->
+      let explicit_count =
+        CCList.count (function Typed.SlotGeneric _ -> true | Typed.SlotArg _ -> false) generic_func.params
+      in
+      let function_count = CCList.length generic_func.args in
+      Error.raiseError
+        (Printf.sprintf
+           "Generic function '%s' expects %d arguments (%d explicit generic parameters + %d function parameters) but \
+            got %d"
+           generic_func.name (CCList.length generic_func.params) explicit_count function_count (CCList.length args) )
+        loc
+
 let rec addContextArg (env : env) instance (f : Env.f) args loc =
   match Env.activeContextArgument f with
   | None ->
@@ -472,103 +502,64 @@ and call ~(context : Env.expr_context) (env : env) instance path args loc eloc =
             ; t
             ; loc } )
       | None ->
-          (* Function not found - raise the standard error *)
-          let _ = Env.lookFunctionCall env path loc in
-          (* lookFunctionCall will raise, so this is unreachable *)
-          failwith "Unreachable" ) )
+          Error.raiseError ("A function with the name '" ^ Env.pathString path ^ "' could not be found") loc ) )
 
 and generic_call (env : env) (instance : (string * Syntax.exp option) option) (generic_path : Syntax.path)
     (generic_func : Typed.generic_function) (args : Syntax.exp list) (_ : Loc.t) (eloc : Loc.t) : env * exp =
-  (* Count only explicit generic parameters (exclude implicit type parameters) *)
-  let explicit_generic_param_count =
-    CCList.count
-      (function
-        | Typed.GParamType _ ->
-            false (* Implicit type parameters - inferred from function args *)
-        | _ ->
-            true (* Explicit parameters - require explicit arguments *) )
-      generic_func.generic_params
+  let pairs = pairGenericParams generic_func args eloc in
+  (* The explicit generic arguments are processed first, in the context of generic arguments
+     (which allows function references) *)
+  let env, pending =
+    CCList.fold_left_map
+      (fun env (slot, arg) ->
+        match slot with
+        | Typed.SlotGeneric param ->
+            let env, value = exp ~context:generic_arg_context env arg in
+            (env, ReadyParam (Typed.CallGeneric {param; value}))
+        | Typed.SlotArg decl ->
+            (env, PendingArg (decl, arg)) )
+      env pairs
   in
-  let function_param_count = CCList.length generic_func.args in
-  let total_expected = CCList.length generic_func.param_order in
-  let total_provided = CCList.length args in
-  if total_provided < total_expected then
-    Error.raiseError
-      (Printf.sprintf
-         "Generic function '%s' expects %d arguments (%d explicit generic parameters + %d function parameters) but got \
-          %d"
-         generic_func.name total_expected explicit_generic_param_count function_param_count total_provided )
-      eloc ;
-  if total_provided > total_expected then
-    Error.raiseError
-      (Printf.sprintf
-         "Generic function '%s' expects %d arguments (%d explicit generic parameters + %d function parameters) but got \
-          %d"
-         generic_func.name total_expected explicit_generic_param_count function_param_count total_provided )
-      eloc ;
-  (* Split arguments using param_order to handle interleaved params *)
-  let args_array = Array.of_list args in
-  let rec split_args (pos : int) (gen_acc : Syntax.exp list) (arg_acc : Syntax.exp list) (order : Typed.param_kind list)
-      : Syntax.exp list * Syntax.exp list =
-    match order with
-    | [] ->
-        (List.rev gen_acc, List.rev arg_acc)
-    | Typed.PKGeneric _ :: rest ->
-        split_args (pos + 1) (args_array.(pos) :: gen_acc) arg_acc rest
-    | Typed.PKArg _ :: rest ->
-        split_args (pos + 1) gen_acc (args_array.(pos) :: arg_acc) rest
-  in
-  let explicit_generic_args, function_args = split_args 0 [] [] generic_func.param_order in
-  (* Process explicit template arguments with template argument context (allows function references) *)
-  let env, processed_explicit_generic_args = exp_list ~context:generic_arg_context env explicit_generic_args in
   (* Check each constant generic argument against its declared parameter type. This applies to
      literal (specialized) and variable (non-specialized) arguments alike. A fresh copy of the
      declared type is unified so the generic definition itself is never mutated. *)
   let () =
-    let params = Array.of_list generic_func.generic_params in
-    let explicit = Array.of_list processed_explicit_generic_args in
-    ignore
-      ( CCList.fold_left
-          (fun expl_idx pk ->
-            match pk with
-            | Typed.PKArg _ ->
-                expl_idx
-            | Typed.PKGeneric i ->
-                let () =
-                  if i < Array.length params && expl_idx < Array.length explicit then
-                    match params.(i) with
-                    | Typed.GParamConstant (_, param_type) ->
-                        let fresh_param_type =
-                          match Typed.copy_types_preserving_sharing [param_type] with [t] -> t | _ -> param_type
-                        in
-                        unifyRaise explicit.(expl_idx).loc fresh_param_type explicit.(expl_idx).t
-                    | Typed.GParamType _ | Typed.GParamFunction _ ->
-                        ()
-                in
-                expl_idx + 1 )
-          0 generic_func.param_order
-        : int )
+    CCList.iter
+      (function
+        | ReadyParam (Typed.CallGeneric {param= Typed.GParamConstant (_, param_type); value}) ->
+            let fresh_param_type = (Typed.make_type_copier ()).copy param_type in
+            unifyRaise value.loc fresh_param_type value.t
+        | ReadyParam (Typed.CallGeneric {param= Typed.GParamType _ | Typed.GParamFunction _; _})
+        | ReadyParam (Typed.CallArg _)
+        | PendingArg _ ->
+            () )
+      pending
   in
   (* Process regular function arguments with normal context *)
-  let env, processed_function_args = exp_list ~context:normal_context env function_args in
-  (* Create fresh copies of the generic function's argument types for unification *)
-  (* This allows the types to be constrained by unification without polluting the original *)
-  let generic_func_arg_types, generic_func_ret_type = generic_func.t in
-  let all_orig_types = generic_func_arg_types @ [generic_func_ret_type] in
-  let all_fresh_types = Typed.copy_types_preserving_sharing all_orig_types in
-  let fresh_arg_types, fresh_ret_type =
-    match CCList.rev all_fresh_types with
-    | last :: rest ->
-        (CCList.rev rest, last)
-    | [] ->
-        failwith "copy_types_preserving_sharing returned empty list"
+  let env, params =
+    CCList.fold_left_map
+      (fun env pending_param ->
+        match pending_param with
+        | ReadyParam param ->
+            (env, param)
+        | PendingArg (arg, e) ->
+            let env, value = exp ~context:normal_context env e in
+            (env, Typed.CallArg {arg; value}) )
+      env pending
   in
+  let processed_function_args = Typed.callArgs params in
+  (* Create fresh copies of the generic function's argument types for unification. This allows
+     the types to be constrained by unification without polluting the original. *)
+  let copier = Typed.make_type_copier () in
+  let fresh_args =
+    CCList.filter_map
+      (function Typed.CallArg {arg; value} -> Some (copier.copy arg.t, value) | Typed.CallGeneric _ -> None)
+      params
+  in
+  let fresh_ret_type = copier.copy (snd generic_func.t) in
   (* Unify argument types to constrain the fresh types *)
-  CCList.iter2
-    (fun fresh_t (arg : Typed.exp) ->
-      let _ = unify fresh_t arg.t in
-      () )
-    fresh_arg_types processed_function_args ;
+  let () = CCList.iter (fun (fresh_t, (value : exp)) -> ignore (unify fresh_t value.t)) fresh_args in
+  let fresh_arg_types = CCList.map fst fresh_args in
   (* Return type is now constrained through unification (may still be unbound if type depends on *)
   (* context not yet available - that's fine, it will be resolved by further unification) *)
   let t = applyFunction eloc fresh_arg_types fresh_ret_type processed_function_args in
@@ -583,8 +574,7 @@ and generic_call (env : env) (instance : (string * Syntax.exp option) option) (g
         EGenCall
           { instance= Option.map fst instance (* Extract just the name *)
           ; generic_path (* Use full path for correct module-qualified lookup *)
-          ; args= processed_function_args
-          ; explicit_args= processed_explicit_generic_args }
+          ; params }
     ; t
     ; loc= eloc } )
 
@@ -1346,12 +1336,14 @@ let convertArguments env (args : Syntax.arg list) : arg list =
   CCList.map (fun (name, t, loc) -> {name; t= getOptType env loc t; loc}) args
 
 (* Convert arguments using a pre-created generic type mapping *)
+let convertArgumentWithGenericMapping env (generic_type_map : (string * type_) list) ((name, t, loc) : Syntax.arg) : arg
+    =
+  let t = match t with None -> C.unbound loc | Some t -> type_in_m_with_generic_mapping env generic_type_map t in
+  {name; t; loc}
+
 let convertArgumentsWithGenericMapping env (generic_type_map : (string * type_) list) (args : Syntax.arg list) :
     arg list =
-  let getOptTypeWithMapping env loc (t : Syntax.type_ option) =
-    match t with None -> C.unbound loc | Some t -> type_in_m_with_generic_mapping env generic_type_map t
-  in
-  CCList.map (fun (name, t, loc) -> {name; t= getOptTypeWithMapping env loc t; loc}) args
+  CCList.map (convertArgumentWithGenericMapping env generic_type_map) args
 
 (* Legacy wrapper that creates a fresh mapping - kept for backwards compatibility *)
 let convertArgumentsWithGenerics env (generic_params : string list) (args : Syntax.arg list) : arg list =
@@ -1588,7 +1580,6 @@ let create_generic_function (env : env) (def : Syntax.function_def) : Typed.gene
     Error.raiseError (Printf.sprintf "Generic function '%s' has duplicate generic parameter names" def.name) def.loc ;
   (* Note: Type parameter names like 'a can have the same base name as function arguments
      like 'a' since they are in separate namespaces (type vs value). *)
-  let generic_params = CCList.map (convert_generic_param env) def.generic_params in
   (* Extract just the type parameter names for context *)
   let type_param_names =
     CCList.filter_map (function Syntax.GParamType name -> Some name | _ -> None) def.generic_params
@@ -1596,7 +1587,16 @@ let create_generic_function (env : env) (def : Syntax.function_def) : Typed.gene
   (* Create a shared mapping from type parameter names to unbound types *)
   (* This ensures all occurrences of the same parameter use the same unbound type *)
   let generic_type_map = createGenericTypeMapping type_param_names def.loc in
-  let args = convertArgumentsWithGenericMapping env generic_type_map def.args in
+  let params =
+    CCList.map
+      (function
+        | Syntax.SlotArg arg ->
+            Typed.SlotArg (convertArgumentWithGenericMapping env generic_type_map arg)
+        | Syntax.SlotGeneric param ->
+            Typed.SlotGeneric (convert_generic_param env param) )
+      def.params
+  in
+  let args = CCList.filter_map (function Typed.SlotArg arg -> Some arg | Typed.SlotGeneric _ -> None) params in
   (* Process return type with the same generic type mapping *)
   let inferred_ret =
     match def.t with
@@ -1607,16 +1607,11 @@ let create_generic_function (env : env) (def : Syntax.function_def) : Typed.gene
   in
   (* Create function type from regular arguments only (exclude template params) *)
   let arg_types = CCList.map (fun (arg : Typed.arg) -> arg.t) args in
-  (* Convert param_order from Syntax to Typed *)
-  let param_order =
-    CCList.map (function Syntax.PKGeneric i -> Typed.PKGeneric i | Syntax.PKArg i -> Typed.PKArg i) def.param_order
-  in
   (* Capture the type index at definition time - this ensures specialized types appear near the generic's position *)
   let type_index = Env.getGlobalTick () in
   { name= def.name
-  ; generic_params
   ; args
-  ; param_order
+  ; params
   ; t= (arg_types, inferred_ret)
   ; type_param_map= generic_type_map
   ; body= def.body

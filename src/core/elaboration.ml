@@ -280,62 +280,37 @@ let substituteConstantsInStmt = Typed.substituteConstantsInStmt
 
 (* ========== Generic Parameter Pairing ========== *)
 
-(* Pair each GParamConstant with its explicit argument. The explicit arguments come in the
-   order the explicit generic parameters (constants and functions) appear in param_order,
-   so the pairing must count all explicit parameters, not only the constants. *)
-let constant_param_pairs (generic_func : Typed.generic_function) (explicit_args : Typed.exp list) :
-    ((string * Typed.type_) * Typed.exp) list =
-  let params = Array.of_list generic_func.generic_params in
-  let explicit = Array.of_list explicit_args in
-  let _, rev_pairs =
-    CCList.fold_left
-      (fun (expl_idx, acc) pk ->
-        match pk with
-        | Typed.PKArg _ ->
-            (expl_idx, acc)
-        | Typed.PKGeneric i -> (
-            if i >= Array.length params then failwith "Invalid generic param index in param_order" ;
-            match params.(i) with
-            | Typed.GParamConstant (name, param_type) ->
-                if expl_idx < Array.length explicit then (expl_idx + 1, ((name, param_type), explicit.(expl_idx)) :: acc)
-                else failwith "Mismatch between constant params and explicit arguments"
-            | Typed.GParamType _ | Typed.GParamFunction _ ->
-                (expl_idx + 1, acc) ) )
-      (0, []) generic_func.param_order
-  in
-  CCList.rev rev_pairs
+(* Pairs each constant generic parameter with the value the call gives it *)
+let constant_param_pairs (params : Typed.call_param list) : ((string * Typed.type_) * Typed.exp) list =
+  CCList.filter_map
+    (function
+      | Typed.CallGeneric {param= Typed.GParamConstant (name, param_type); value} ->
+          Some ((name, param_type), value)
+      | Typed.CallGeneric {param= Typed.GParamType _ | Typed.GParamFunction _; _} | Typed.CallArg _ ->
+          None )
+    params
 
 (* The argument types (excluding any context argument) that the specialization created for a
    call will have: the regular argument types, interleaved with the explicit constant
    parameters when the call is not fully specialized. Used to verify that a function found in
-   the environment really is the wanted specialization and not a mangled-name collision.
-   Out-of-range indices are skipped: a malformed param_order degrades to a length mismatch at
-   the comparison site (forcing a fresh instantiation), never to a false match. *)
-let expected_specialization_arg_types (generic_func : Typed.generic_function) (arg_types : Typed.type_ list)
-    (explicit_args : Typed.exp list) (all_constants : bool) : Typed.type_ list =
-  let regular = Array.of_list arg_types in
-  let params = Array.of_list generic_func.generic_params in
-  let explicit = Array.of_list explicit_args in
-  let _, rev_types =
-    CCList.fold_left
-      (fun (expl_idx, acc) pk ->
-        match pk with
-        | Typed.PKArg i ->
-            let acc = if i < Array.length regular then regular.(i) :: acc else acc in
-            (expl_idx, acc)
-        | Typed.PKGeneric i -> (
-            if i >= Array.length params then (expl_idx + 1, acc)
-            else
-              match params.(i) with
-              | Typed.GParamConstant (_, param_type) ->
-                  let t = if expl_idx < Array.length explicit then explicit.(expl_idx).t else param_type in
-                  let acc = if all_constants then acc else t :: acc in
-                  (expl_idx + 1, acc)
-              | Typed.GParamType _ | Typed.GParamFunction _ ->
-                  (expl_idx + 1, acc) ) )
-      (0, []) generic_func.param_order
-  in
-  CCList.rev rev_types
+   the environment really is the wanted specialization and not a mangled-name collision. *)
+let expected_specialization_arg_types (params : Typed.call_param list) (all_constants : bool) : Typed.type_ list =
+  CCList.filter_map
+    (function
+      | Typed.CallArg {value; _} ->
+          Some (unlink value.t)
+      | Typed.CallGeneric {param= Typed.GParamConstant _; value} ->
+          if all_constants then None else Some value.t
+      | Typed.CallGeneric {param= Typed.GParamType _ | Typed.GParamFunction _; _} ->
+          None )
+    params
+
+(* How a parameter of a generic function appears in one of its specializations *)
+type specialized_param =
+  | RegularParam of Typed.arg (* A regular argument, with its fresh type *)
+  | ConstantParam of Typed.arg (* A constant parameter, an argument when it is not inlined *)
+  | ResolvedParam
+(* A type or function parameter, resolved by the specialization *)
 
 (* ========== Typechecker Dependencies ========== *)
 
@@ -368,24 +343,34 @@ module Make (T : TYPECHECKER) = struct
      nested calls are stored in this function's context. *)
   let rec instantiate_generic_function (iargs : Args.args) (env : env) (state : instantiation_state)
       (generic_func : Typed.generic_function) (signature : string) (specialized_name : string)
-      (call_arg_types : Typed.type_ list) (explicit_args : Typed.exp list) (loc : Loc.t) :
-      Typed.function_def * Typed.stmt =
+      (params : Typed.call_param list) (loc : Loc.t) : Typed.function_def * Typed.stmt =
+    let explicit_args = Typed.callExplicitArgs params in
     let all_constants = CCList.length explicit_args > 0 && CCList.for_all is_constant_literal explicit_args in
-    let constant_pairs = constant_param_pairs generic_func explicit_args in
+    let constant_pairs = constant_param_pairs params in
     (* Create fresh copies of the generic types, keeping the mapping from the original unbound
        cells so the type parameters can be resolved after unification *)
-    let generic_func_arg_types, generic_func_ret_type = generic_func.t in
-    let fresh_types, unbound_mapping =
-      Typed.copy_types_with_unbound_mapping (generic_func_arg_types @ [generic_func_ret_type])
+    let copier = Typed.make_type_copier () in
+    (* Each parameter as an argument of the specialization, when it becomes one *)
+    let specialized_params =
+      CCList.map
+        (function
+          | Typed.CallArg {arg; value} ->
+              let fresh_t = copier.copy arg.t in
+              let _ = unify fresh_t (unlink value.t) in
+              RegularParam {arg with t= fresh_t}
+          | Typed.CallGeneric {param= Typed.GParamConstant (name, param_type); value} ->
+              (* Defensive check: the typechecker already validated the argument against the
+                 declared type. A fresh copy is unified so the generic definition itself is
+                 never mutated. *)
+              let fresh_param_type = (Typed.make_type_copier ()).copy param_type in
+              let () = unifyRaise value.loc fresh_param_type value.t in
+              ConstantParam ({name; t= value.t; loc} : Typed.arg)
+          | Typed.CallGeneric {param= Typed.GParamType _ | Typed.GParamFunction _; _} ->
+              ResolvedParam )
+        params
     in
-    let fresh_arg_types, fresh_ret_type =
-      match CCList.rev fresh_types with last :: rest -> (CCList.rev rest, last) | [] -> failwith "Empty type list"
-    in
-    CCList.iter2
-      (fun fresh_t call_t ->
-        let _ = unify fresh_t call_t in
-        () )
-      fresh_arg_types call_arg_types ;
+    let fresh_ret_type = copier.copy (snd generic_func.t) in
+    let unbound_mapping = copier.mapping () in
     (* Resolve each type parameter to its concrete type using the unified fresh types *)
     let type_substitution_map =
       CCList.map
@@ -408,58 +393,20 @@ module Make (T : TYPECHECKER) = struct
     let constant_substitution_map =
       if all_constants then CCList.map (fun ((name, _), value) -> (name, value)) constant_pairs else []
     in
-    let regular_args_array = Array.of_list generic_func.args in
-    let fresh_args_array = Array.of_list fresh_arg_types in
-    let generic_params_array = Array.of_list generic_func.generic_params in
-    let explicit_args_array = Array.of_list explicit_args in
     (* All arguments in declaration order: regular arguments with their fresh types and
        constant parameters turned into regular arguments *)
     let all_args_for_body =
-      let _, rev_args =
-        CCList.fold_left
-          (fun (expl_idx, acc) pk ->
-            match pk with
-            | Typed.PKArg i ->
-                let arg = regular_args_array.(i) in
-                let arg = if i < Array.length fresh_args_array then {arg with t= fresh_args_array.(i)} else arg in
-                (expl_idx, arg :: acc)
-            | Typed.PKGeneric i -> (
-                if i >= Array.length generic_params_array then failwith "Invalid generic param index in param_order" ;
-                match generic_params_array.(i) with
-                | Typed.GParamConstant (name, param_type) ->
-                    let t =
-                      if expl_idx < Array.length explicit_args_array then
-                        let arg_e = explicit_args_array.(expl_idx) in
-                        (* Defensive check: the typechecker already validated the argument
-                           against the declared type. A fresh copy is unified so the generic
-                           definition itself is never mutated. *)
-                        let fresh_param_type =
-                          match Typed.copy_types_preserving_sharing [param_type] with [t] -> t | _ -> param_type
-                        in
-                        let () = unifyRaise arg_e.loc fresh_param_type arg_e.t in
-                        arg_e.t
-                      else param_type
-                    in
-                    (expl_idx + 1, ({name; t; loc} : Typed.arg) :: acc)
-                | Typed.GParamType _ | Typed.GParamFunction _ ->
-                    (expl_idx + 1, acc) ) )
-          (0, []) generic_func.param_order
-      in
-      CCList.rev rev_args
+      CCList.filter_map
+        (function RegularParam arg | ConstantParam arg -> Some arg | ResolvedParam -> None)
+        specialized_params
     in
     (* When all constant parameters are literals they are inlined in the body and dropped
        from the argument list *)
     let specialized_args =
       if all_constants then
         CCList.filter_map
-          (fun pk ->
-            match pk with
-            | Typed.PKArg i ->
-                let arg = regular_args_array.(i) in
-                Some (if i < Array.length fresh_args_array then {arg with t= fresh_args_array.(i)} else arg)
-            | Typed.PKGeneric _ ->
-                None )
-          generic_func.param_order
+          (function RegularParam arg -> Some arg | ConstantParam _ | ResolvedParam -> None)
+          specialized_params
       else all_args_for_body
     in
     let env = Env.createContextForFunctionWithIndex env specialized_name loc generic_func.type_index in
@@ -578,10 +525,10 @@ module Make (T : TYPECHECKER) = struct
   and prescan_generic_calls_in_exp (iargs : Args.args) (env : env) (state : instantiation_state) (e : Typed.exp) : unit
       =
     match e.e with
-    | EGenCall {args; explicit_args; _} ->
+    | EGenCall {params; _} ->
         state.pending_generic_calls <- e :: state.pending_generic_calls ;
-        CCList.iter (prescan_generic_calls_in_exp iargs env state) args ;
-        CCList.iter (prescan_generic_calls_in_exp iargs env state) explicit_args
+        CCList.iter (prescan_generic_calls_in_exp iargs env state) (Typed.callArgs params) ;
+        CCList.iter (prescan_generic_calls_in_exp iargs env state) (Typed.callExplicitArgs params)
     | ECall {args; _} ->
         CCList.iter (prescan_generic_calls_in_exp iargs env state) args
     | EIf {cond; then_; else_} ->
@@ -613,7 +560,9 @@ module Make (T : TYPECHECKER) = struct
       Typed.exp =
     let loc = e.loc in
     match e.e with
-    | EGenCall {instance; generic_path; args; explicit_args} -> (
+    | EGenCall {instance; generic_path; params} -> (
+        let args = Typed.callArgs params in
+        let explicit_args = Typed.callExplicitArgs params in
         let generic_name = Pla.print (Syntax.print_path generic_path) in
         match Env.lookupGeneric env generic_path with
         | None ->
@@ -657,9 +606,7 @@ module Make (T : TYPECHECKER) = struct
                   let existing =
                     match existing with
                     | Some f ->
-                        let expected =
-                          expected_specialization_arg_types generic_func resolved_arg_types explicit_args all_constants
-                        in
+                        let expected = expected_specialization_arg_types params all_constants in
                         let found =
                           match f.args with Some a -> CCList.map (fun (a : Typed.arg) -> a.t) a | None -> []
                         in
@@ -700,7 +647,7 @@ module Make (T : TYPECHECKER) = struct
                       let specialized_name = claim_specialization_name state signature base_name in
                       let def, processed_body =
                         instantiate_generic_function iargs env_for_instantiation state generic_func signature
-                          specialized_name resolved_arg_types explicit_args loc
+                          specialized_name params loc
                       in
                       let target_module =
                         match def.name.n with
@@ -719,46 +666,34 @@ module Make (T : TYPECHECKER) = struct
                         (target_module, generic_func.name, def, processed_body) :: state.pending_functions ;
                       (def, None) )
             in
-            let processed_regular_args = CCList.map (process_exp_instantiation iargs env state) args in
-            let processed_explicit_args = CCList.map (process_exp_instantiation iargs env state) explicit_args in
+            (* The regular arguments are processed before the explicit generic ones: processing
+               can instantiate nested generics and create instances, whose names follow that order *)
+            let process = process_exp_instantiation iargs env state in
+            let processed_params =
+              params
+              |> CCList.map (function
+                | Typed.CallArg {arg; value} ->
+                    Typed.CallArg {arg; value= process value}
+                | Typed.CallGeneric _ as param ->
+                    param )
+              |> CCList.map (function
+                | Typed.CallGeneric {param; value} ->
+                    Typed.CallGeneric {param; value= process value}
+                | Typed.CallArg _ as param ->
+                    param )
+            in
+            (* The regular arguments and, unless they are inlined in the specialized body, the
+               constant arguments, in declaration order *)
             let processed_args =
-              if all_constants then
-                (* Constants are inlined in the specialized body: pass only the regular arguments *)
-                let regular_args_array = Array.of_list processed_regular_args in
-                CCList.filter_map
-                  (fun pk ->
-                    match pk with
-                    | Typed.PKArg i ->
-                        if i < Array.length regular_args_array then Some regular_args_array.(i)
-                        else failwith "Invalid arg index in param_order"
-                    | Typed.PKGeneric _ ->
-                        None )
-                  generic_func.param_order
-              else
-                (* Interleave regular arguments and explicit generic arguments in declaration order *)
-                let regular_args_array = Array.of_list processed_regular_args in
-                let generic_params_array = Array.of_list generic_func.generic_params in
-                let explicit_args_array = Array.of_list processed_explicit_args in
-                let _, rev_args =
-                  CCList.fold_left
-                    (fun (expl_idx, acc) pk ->
-                      match pk with
-                      | Typed.PKArg i ->
-                          if i < Array.length regular_args_array then (expl_idx, regular_args_array.(i) :: acc)
-                          else failwith "Invalid arg index in param_order"
-                      | Typed.PKGeneric i -> (
-                          if i >= Array.length generic_params_array then
-                            failwith "Invalid generic param index in param_order" ;
-                          match generic_params_array.(i) with
-                          | Typed.GParamConstant _ ->
-                              if expl_idx < Array.length explicit_args_array then
-                                (expl_idx + 1, explicit_args_array.(expl_idx) :: acc)
-                              else failwith "Invalid constant param index in param_order"
-                          | Typed.GParamType _ | Typed.GParamFunction _ ->
-                              (expl_idx + 1, acc) ) )
-                    (0, []) generic_func.param_order
-                in
-                CCList.rev rev_args
+              CCList.filter_map
+                (function
+                  | Typed.CallArg {value; _} ->
+                      Some value
+                  | Typed.CallGeneric {param= Typed.GParamConstant _; value} ->
+                      if all_constants then None else Some value
+                  | Typed.CallGeneric {param= Typed.GParamType _ | Typed.GParamFunction _; _} ->
+                      None )
+                processed_params
             in
             let specialized_non_ctx_args =
               match specialized_def.args with

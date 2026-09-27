@@ -760,8 +760,8 @@ module Hover = struct
             if loc_strictly_smaller sub_e.loc e.loc then find_in_exp sub_e line col else None
         | Core.Typed.ERecord {elems; _} ->
             CCList.find_map (fun (_, exp) -> find_in_exp exp line col) elems
-        | Core.Typed.EGenCall {instance= _; args; explicit_args; _} ->
-            CCList.find_map (fun exp -> find_in_exp exp line col) (explicit_args @ args)
+        | Core.Typed.EGenCall {params; _} ->
+            CCList.find_map (fun exp -> find_in_exp exp line col) (Core.Typed.callValues params)
         | Core.Typed.EUnit
         | Core.Typed.EBool _
         | Core.Typed.EInt _

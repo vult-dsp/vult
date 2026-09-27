@@ -104,8 +104,7 @@ type exp_d =
   | EGenCall of
       { instance: string option (* Instance identifier if using inst:func() syntax *)
       ; generic_path: path (* Full path to the generic function for lookup *)
-      ; args: exp list (* Processed function arguments *)
-      ; explicit_args: exp list (* Processed explicit generic arguments (functions, constants) *) }
+      ; params: call_param list (* The arguments paired with the parameters, in declaration order *) }
   | EGenCompanionCall of
       { instance: string option (* Instance identifier if using inst:func() syntax *)
       ; companion_name: string (* Name of the companion function *)
@@ -122,6 +121,19 @@ and type_intrinsic =
   | TypeMin (* typemin('t) - minimum value for the type *)
 
 and exp = {e: exp_d; loc: Loc.t; t: type_}
+
+(* An argument of a call to a generic function paired with the parameter it is given to *)
+and call_param =
+  | CallArg of {arg: arg; value: exp} (* A regular argument *)
+  | CallGeneric of {param: generic_param; value: exp}
+(* An explicit generic parameter *)
+
+and generic_param =
+  | GParamFunction of string * type_ option (* Function type using TEFunction *)
+  | GParamType of string
+  | GParamConstant of string * type_
+
+and arg = {name: string; t: type_; loc: Loc.t}
 
 and lexp_d = LWild | LId of string | LMember of lexp * string | LIndex of {e: lexp; index: exp} | LTuple of lexp list
 
@@ -141,8 +153,6 @@ and stmt_d =
   | StmtWhile of exp * stmt
 
 and stmt = {s: stmt_d; loc: Loc.t}
-
-and arg = {name: string; t: type_; loc: Loc.t}
 
 and function_def =
   { name: path
@@ -166,21 +176,14 @@ and top_stmt = {top: top_stmt_d; loc: Loc.t}
 
 type program = top_stmt list
 
-type generic_param =
-  | GParamFunction of string * type_ option (* Function type using TEFunction *)
-  | GParamType of string
-  | GParamConstant of string * type_
-
-type param_kind =
-  | PKGeneric of int
-  (* Index into generic_params list *)
-  | PKArg of int (* Index into args list *)
+(* A parameter of a generic function. Regular arguments and explicit generic parameters can be
+   interleaved; the implicit type parameters are not listed. *)
+type param_slot = SlotArg of arg | SlotGeneric of generic_param
 
 type generic_function =
   { name: string
-  ; generic_params: generic_param list
-  ; args: arg list
-  ; param_order: param_kind list (* Original order of parameters - maps call position to param *)
+  ; args: arg list (* The regular arguments, the same values listed in [params] *)
+  ; params: param_slot list (* The parameters in declaration order *)
   ; t: fun_type (* Keep as fun_type for function definitions *)
   ; type_param_map: (string * type_) list (* Type parameter name -> shared unbound cell used in [t] *)
   ; body: Syntax.stmt (* Store the unprocessed body *)
@@ -188,6 +191,28 @@ type generic_function =
   ; loc: Loc.t
   ; tags: tag list
   ; type_index: int (* Index for type ordering - captured at definition time *) }
+
+let callValue (param : call_param) : exp = match param with CallArg {value; _} | CallGeneric {value; _} -> value
+
+(* The values of the arguments of a generic call, in declaration order *)
+let callValues (params : call_param list) : exp list = CCList.map callValue params
+
+(* The values given to the regular arguments of a generic call *)
+let callArgs (params : call_param list) : exp list =
+  CCList.filter_map (function CallArg {value; _} -> Some value | CallGeneric _ -> None) params
+
+(* The values given to the explicit generic parameters of a generic call *)
+let callExplicitArgs (params : call_param list) : exp list =
+  CCList.filter_map (function CallGeneric {value; _} -> Some value | CallArg _ -> None) params
+
+let mapCallValues (f : exp -> exp) (params : call_param list) : call_param list =
+  CCList.map
+    (function
+      | CallArg {arg; value} ->
+          CallArg {arg; value= f value}
+      | CallGeneric {param; value} ->
+          CallGeneric {param; value= f value} )
+    params
 
 let rec print_constness (c : constness) =
   match c.c with TEConst i -> {%pla|const<#i#i> |} | TEMut i -> {%pla|mut<#i#i> |} | TECLink c -> print_constness c
@@ -284,9 +309,8 @@ let rec print_exp (e : exp) =
       let path = print_path path in
       let elems = Pla.map_sep Pla.commaspace printElem elems in
       {%pla|<#path#> { <#elems#> }|}
-  | EGenCall {instance; generic_path; args; explicit_args} ->
-      let all_args = explicit_args @ args in
-      let args = Pla.map_sep Pla.commaspace print_exp all_args in
+  | EGenCall {instance; generic_path; params} ->
+      let args = Pla.map_sep Pla.commaspace print_exp (callValues params) in
       let path = print_path generic_path in
       let inst = match instance with None -> Pla.unit | Some i -> Pla.string (i ^ ":") in
       {%pla|<#inst#><#path#>@generic(<#args#>)|}
@@ -794,10 +818,14 @@ module TypeHashtbl = Hashtbl.Make (struct
   let hash = Hashtbl.hash
 end)
 
-let copy_types_preserving_sharing (types : type_ list) : type_ list =
+(* Copies types giving each unbound type a fresh one. The copier is shared by all the types it
+   copies, so an unbound type that appears in several of them is replaced by the same fresh type
+   everywhere. [mapping] returns the pairs (original, fresh) of the unbound types copied so far. *)
+type type_copier = {copy: type_ -> type_; mapping: unit -> (type_ * type_) list}
+
+let make_type_copier () : type_copier =
   let memo = TypeHashtbl.create 16 in
   let rec copy_with_memo (t : type_) : type_ =
-    (* Check if we've already copied this exact type object *)
     match TypeHashtbl.find_opt memo t with
     | Some fresh_t ->
         fresh_t
@@ -805,7 +833,6 @@ let copy_types_preserving_sharing (types : type_ list) : type_ list =
         let fresh_t =
           match t.tx with
           | TEUnbound _ ->
-              (* Create a fresh unbound type and remember it *)
               {tx= TEUnbound None; const= C.const (); loc= t.loc}
           | TELink linked_t ->
               (* For linked types, copy the linked type (but don't memo the link itself) *)
@@ -831,7 +858,8 @@ let copy_types_preserving_sharing (types : type_ list) : type_ list =
         (match t.tx with TEUnbound _ -> TypeHashtbl.add memo t fresh_t | _ -> ()) ;
         fresh_t
   in
-  CCList.map copy_with_memo types
+  let mapping () = TypeHashtbl.fold (fun orig fresh acc -> (orig, fresh) :: acc) memo [] in
+  {copy= copy_with_memo; mapping}
 
 (* Find all unique unbound types in a list of types, in order of first appearance *)
 (* Uses physical identity to track uniqueness *)
@@ -856,46 +884,6 @@ let find_unbounds_in_types (types : type_ list) : type_ list =
         ()
   in
   CCList.iter walk types ; CCList.rev !result
-
-(* Copy types while preserving sharing AND return the mapping from original unbounds to fresh unbounds *)
-(* This is needed to extract type bindings after unification *)
-let copy_types_with_unbound_mapping (types : type_ list) : type_ list * (type_ * type_) list =
-  let memo = TypeHashtbl.create 16 in
-  let rec copy_with_memo (t : type_) : type_ =
-    match TypeHashtbl.find_opt memo t with
-    | Some fresh_t ->
-        fresh_t
-    | None ->
-        let fresh_t =
-          match t.tx with
-          | TEUnbound _ ->
-              {tx= TEUnbound None; const= C.const (); loc= t.loc}
-          | TELink linked_t ->
-              copy_with_memo linked_t
-          | TEId path ->
-              {tx= TEId path; const= C.const (); loc= t.loc}
-          | TESize size ->
-              {tx= TESize size; const= C.const (); loc= t.loc}
-          | TEComposed (name, type_list) ->
-              let fresh_type_list = CCList.map copy_with_memo type_list in
-              {tx= TEComposed (name, fresh_type_list); const= C.const (); loc= t.loc}
-          | TEOption type_list ->
-              let fresh_type_list = CCList.map copy_with_memo type_list in
-              {tx= TEOption fresh_type_list; const= C.const (); loc= t.loc}
-          | TEFunction (arg_types, ret_type) ->
-              let fresh_arg_types = CCList.map copy_with_memo arg_types in
-              let fresh_ret_type = copy_with_memo ret_type in
-              {tx= TEFunction (fresh_arg_types, fresh_ret_type); const= C.const (); loc= t.loc}
-          | TENoReturn ->
-              {tx= TENoReturn; const= C.const (); loc= t.loc}
-        in
-        (match t.tx with TEUnbound _ -> TypeHashtbl.add memo t fresh_t | _ -> ()) ;
-        fresh_t
-  in
-  let fresh_types = CCList.map copy_with_memo types in
-  (* Extract the mapping as a list of (original, fresh) pairs *)
-  let mapping = TypeHashtbl.fold (fun orig fresh acc -> (orig, fresh) :: acc) memo [] in
-  (fresh_types, mapping)
 
 (* ========== Shared Utility Functions ========== *)
 
@@ -1034,10 +1022,9 @@ let rec resolveTypeIntrinsicsInExp (type_substitution_map : (string * type_) lis
   | ERecord {path; elems} ->
       let elems = CCList.map (fun (n, v) -> (n, resolveTypeIntrinsicsInExp type_substitution_map v)) elems in
       {e with e= ERecord {path; elems}}
-  | EGenCall {instance; generic_path; args; explicit_args} ->
-      let args = CCList.map (resolveTypeIntrinsicsInExp type_substitution_map) args in
-      let explicit_args = CCList.map (resolveTypeIntrinsicsInExp type_substitution_map) explicit_args in
-      {e with e= EGenCall {instance; generic_path; args; explicit_args}}
+  | EGenCall {instance; generic_path; params} ->
+      let params = mapCallValues (resolveTypeIntrinsicsInExp type_substitution_map) params in
+      {e with e= EGenCall {instance; generic_path; params}}
   | EGenCompanionCall {instance; companion_name; parent_generic_path; args} ->
       let args = CCList.map (resolveTypeIntrinsicsInExp type_substitution_map) args in
       {e with e= EGenCompanionCall {instance; companion_name; parent_generic_path; args}}
@@ -1110,10 +1097,9 @@ let rec substituteConstantsInExp (constant_map : (string * exp) list) (e : exp) 
   | ERecord {path; elems} ->
       let elems = CCList.map (fun (n, v) -> (n, substituteConstantsInExp constant_map v)) elems in
       {e with e= ERecord {path; elems}}
-  | EGenCall {instance; generic_path; args; explicit_args} ->
-      let args = CCList.map (substituteConstantsInExp constant_map) args in
-      let explicit_args = CCList.map (substituteConstantsInExp constant_map) explicit_args in
-      {e with e= EGenCall {instance; generic_path; args; explicit_args}}
+  | EGenCall {instance; generic_path; params} ->
+      let params = mapCallValues (substituteConstantsInExp constant_map) params in
+      {e with e= EGenCall {instance; generic_path; params}}
   | EGenCompanionCall {instance; companion_name; parent_generic_path; args} ->
       let args = CCList.map (substituteConstantsInExp constant_map) args in
       {e with e= EGenCompanionCall {instance; companion_name; parent_generic_path; args}}

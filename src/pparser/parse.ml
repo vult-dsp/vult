@@ -978,12 +978,12 @@ and argList arg_parser (buffer : Stream.stream) =
   | _ ->
       []
 
-and parseGenericsAndArguments (buffer : Stream.stream) : generic_param list * arg list * param_kind list =
+and parseGenericsAndArguments (buffer : Stream.stream) : generic_param list * arg list * param_slot list =
   (* Helper to extract name from generic_param *)
   let getGenericName (param : generic_param) : string =
     match param with GParamFunction (name, _) -> name | GParamType name -> name | GParamConstant (name, _) -> name
   in
-  let rec loop generic_params generic_names generic_count args arg_names arg_count param_order =
+  let rec loop generic_params generic_names args arg_names params =
     match Stream.peek buffer with
     | QUOTED_ID -> (
         (* Parse specialized parameter *)
@@ -1003,14 +1003,13 @@ and parseGenericsAndArguments (buffer : Stream.stream) : generic_param list * ar
             let msg = Printf.sprintf "Generic parameter '%s' conflicts with function argument name" param_name in
             raise (ParserError (Error.PointedError (token.loc, msg)))
         in
-        let new_order = PKGeneric generic_count :: param_order in
+        let params = SlotGeneric generic_param :: params in
         match Stream.peek buffer with
         | COMMA ->
             let _ = consumeInContext buffer COMMA "parameter list" in
-            loop (generic_param :: generic_params) (param_name :: generic_names) (generic_count + 1) args arg_names
-              arg_count new_order
+            loop (generic_param :: generic_params) (param_name :: generic_names) args arg_names params
         | _ ->
-            (List.rev (generic_param :: generic_params), List.rev args, List.rev new_order) )
+            (List.rev (generic_param :: generic_params), List.rev args, List.rev params) )
     | ID -> (
         (* Parse regular argument *)
         let arg = typedArgOpt buffer in
@@ -1022,19 +1021,18 @@ and parseGenericsAndArguments (buffer : Stream.stream) : generic_param list * ar
             raise (ParserError (Error.PointedError (arg_loc, msg)))
         in
         (* Note: Duplicate argument name checking is handled by the type checker *)
-        let new_order = PKArg arg_count :: param_order in
+        let params = SlotArg arg :: params in
         match Stream.peek buffer with
         | COMMA ->
             let _ = consumeInContext buffer COMMA "parameter list" in
-            loop generic_params generic_names generic_count (arg :: args) (arg_name :: arg_names) (arg_count + 1)
-              new_order
+            loop generic_params generic_names (arg :: args) (arg_name :: arg_names) params
         | _ ->
-            (List.rev generic_params, List.rev (arg :: args), List.rev new_order) )
+            (List.rev generic_params, List.rev (arg :: args), List.rev params) )
     | _ ->
         (* No more arguments *)
-        (List.rev generic_params, List.rev args, List.rev param_order)
+        (List.rev generic_params, List.rev args, List.rev params)
   in
-  loop [] [] 0 [] [] 0 []
+  loop [] [] [] [] []
 
 and stmtExternal (buffer : Stream.stream) : top_stmt =
   let _ = Stream.skip buffer in
@@ -1087,7 +1085,7 @@ and stmtFunctionDecl (buffer : Stream.stream) : function_def * Loc.t =
   let _ = Stream.skip buffer in
   let name, loc = id_name buffer in
   let _ = consumeInContext buffer LPAREN "function parameter list" in
-  let explicit_generic_params, args, explicit_param_order =
+  let explicit_generic_params, args, params =
     match Stream.peek buffer with RPAREN -> ([], [], []) | _ -> parseGenericsAndArguments buffer
   in
   let _ = consumeInContext buffer RPAREN "function parameter list" in
@@ -1108,8 +1106,6 @@ and stmtFunctionDecl (buffer : Stream.stream) : function_def * Loc.t =
   let implicit_generic_params = create_implicit_generic_params all_quoted_ids in
   (* Combine explicit and implicit generic parameters *)
   let all_generic_params = explicit_generic_params @ implicit_generic_params in
-  (* param_order only tracks explicit params - implicit type params don't appear in call args *)
-  let param_order = explicit_param_order in
   let tags = optional_tag buffer in
   let body = stmtList buffer in
   let next =
@@ -1120,7 +1116,7 @@ and stmtFunctionDecl (buffer : Stream.stream) : function_def * Loc.t =
     | _ ->
         None
   in
-  ({name; generic_params= all_generic_params; args; param_order; t; next; tags; loc; body}, loc)
+  ({name; generic_params= all_generic_params; args; params; t; next; tags; loc; body}, loc)
 
 and stmtFunction (buffer : Stream.stream) : top_stmt =
   let def, loc = stmtFunctionDecl buffer in

@@ -289,7 +289,7 @@ let rec exp (env : env) (state : state) (e : Typed.exp) : state * Prog.exp =
       let numbered = CCList.map (fun (n, v) -> (snd (CCList.find (fun (id, _) -> id = n) sorting), (n, v))) elems_rev in
       let sorted = CCList.sort (fun (i1, _) (i2, _) -> compare i1 i2) numbered |> CCList.map snd in
       (state, {e= ERecord {path= p; elems= sorted}; t; loc})
-  | EGenCall {instance= _; generic_path; args= _; explicit_args= _} ->
+  | EGenCall {generic_path; _} ->
       (* EGenCall should have been replaced with ECall during inference post-processing.
        If we reach here, it means instantiation failed. *)
       let path_str = Pla.print (Syntax.print_path generic_path) in
