@@ -1,0 +1,5 @@
+// A function whose memory contains an instance of its own context type.
+fun main() : int {
+  mem y : main_type;
+  return 1;
+}

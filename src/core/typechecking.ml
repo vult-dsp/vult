@@ -437,9 +437,11 @@ let rec addContextArg (env : env) instance (f : Env.f) args loc =
         (env, e :: args) )
   else (env, args)
 
-and call (env : env) instance path args loc eloc =
+and call ~(context : Env.expr_context) (env : env) instance path args loc eloc =
   (* First check if this is a generic function *)
   match Env.lookupGeneric env path with
+  | Some _ when context.in_constant ->
+      Error.raiseError "Generic functions cannot be called in constant expressions" loc
   | Some generic_func ->
       (* This is a generic call - handle instantiation *)
       (* NOTE: Don't process args with exp_list yet - generic_call will handle them *)
@@ -447,9 +449,11 @@ and call (env : env) instance path args loc eloc =
   | None -> (
     (* Try regular function lookup first *)
     match Env.tryLookFunctionCall env path with
+    | Some f when context.in_constant && Env.isFunctionActive f ->
+        Error.raiseError "Functions with memory variables cannot be called in constant expressions" loc
     | Some f ->
         (* Regular function call *)
-        let env, args = exp_list env args in
+        let env, args = exp_list ~context env args in
         let args_t, ret = f.t in
         let t = applyFunction eloc args_t ret args in
         let () = propagateVariability env loc f.args args in
@@ -458,6 +462,8 @@ and call (env : env) instance path args loc eloc =
     | None -> (
       (* Check if this might be a companion function of a generic *)
       match Env.lookupGenericByCompanion env path with
+      | Some _ when context.in_constant ->
+          Error.raiseError "Companion functions of generic functions cannot be called in constant expressions" loc
       | Some parent_generic ->
           (* This is a companion call - create EGenCompanionCall for later processing *)
           let env, processed_args = exp_list env args in
@@ -592,9 +598,7 @@ and generic_call (env : env) (instance : (string * Syntax.exp option) option) (g
     ; t
     ; loc= eloc } )
 
-and exp ?(context = normal_context) ?(in_constant_context = false) (env : env) (e : Syntax.exp) : env * exp =
-  (* Convert legacy in_constant_context parameter to new context *)
-  let context = if in_constant_context then {context with in_constant= true} else context in
+and exp ?(context = normal_context) (env : env) (e : Syntax.exp) : env * exp =
   match e with
   | {e= SEBool value; loc} ->
       let t = C.bool ~loc in
@@ -700,17 +704,14 @@ and exp ?(context = normal_context) ?(in_constant_context = false) (env : env) (
         | {descr= Enum _; _} ->
             (env, {e= ECall {instance= None; path; args= [arg]}; t= Typed.C.int ~loc; loc})
         | _ ->
-            call env None path args loc e.loc )
+            call ~context env None path args loc e.loc )
       | _ ->
-          call env None path args loc e.loc )
+          call ~context env None path args loc e.loc )
   | {e= SENamed ({e= SEIndex {e= {e= SEId instance; _}; index}; _}, {e= SECall {instance= None; path; args}; loc}); _}
-    when not in_constant_context ->
-      call env (Some (instance, Some index)) path args loc e.loc
-  | {e= SENamed ({e= SEId instance; _}, {e= SECall {instance= None; path; args}; loc}); _} when not in_constant_context
     ->
-      call env (Some (instance, None)) path args loc e.loc
-  | {e= SENamed (_e1, _e2); _} when in_constant_context ->
-      failwith "top_exp: Inference SENamed"
+      call ~context env (Some (instance, Some index)) path args loc e.loc
+  | {e= SENamed ({e= SEId instance; _}, {e= SECall {instance= None; path; args}; loc}); _} ->
+      call ~context env (Some (instance, None)) path args loc e.loc
   | {e= SENamed (e1, ({e= SECall _; _} as e2)); _} ->
       let e1 = Pla.print (Syntax.Print.exp e1) in
       let e2 = Pla.print (Syntax.Print.exp e2) in
@@ -718,15 +719,8 @@ and exp ?(context = normal_context) ?(in_constant_context = false) (env : env) (
   | {e= SENamed (_, _); loc} ->
       (* Handle case where second part is not a function call *)
       Error.raiseError "Invalid instance call syntax. After ':' you must have a function call (e.g., 'name:foo()')" loc
-  | {e= SECall {instance; path; args}; loc} when in_constant_context ->
-      (* Check if the function has memory declarations *)
-      let f = Env.lookFunctionCall env path loc in
-      let function_has_mem = Env.isFunctionActive f in
-      if function_has_mem then
-        Error.raiseError "Functions with memory variables cannot be called in constant expressions" loc
-      else call env instance path args loc e.loc
   | {e= SECall {instance; path; args}; loc} ->
-      call env instance path args loc e.loc
+      call ~context env instance path args loc e.loc
   | {e= SEOp (op, e1, e2); loc} ->
       let env, e1 = exp ~context env e1 in
       let env, e2 = exp ~context env e2 in
@@ -806,7 +800,7 @@ and exp ?(context = normal_context) ?(in_constant_context = false) (env : env) (
             | Some {t; _} ->
                 let t = refreshConstness t in
                 (* if the type is a builtin (a value) do not unify the constness *)
-                let () = if (not in_constant_context) && not (Env.isBuiltinType t) then unifyConstness t e1.t in
+                let () = if (not context.in_constant) && not (Env.isBuiltinType t) then unifyConstness t e1.t in
                 (env, {e= EMember (e1, m); t; loc}) )
           | _ ->
               let t = Pla.print (Typed.print_type_ e1.t) in
@@ -864,6 +858,8 @@ and exp ?(context = normal_context) ?(in_constant_context = false) (env : env) (
           (env, {e= ERecord {path= t.path; elems}; t= Typed.C.path_t loc t.path; loc})
       | _ ->
           Error.raiseError ("The path '" ^ pathString path ^ "' is not a type.") loc )
+  | {e= SETypeIntrinsic (intrinsic_name, _); loc} when context.in_constant ->
+      Error.raiseError ("The type intrinsic '" ^ intrinsic_name ^ "' cannot be used in constant expressions") loc
   | {e= SETypeIntrinsic (intrinsic_name, type_param); loc} ->
       (* Type intrinsics - convert to typed representation *)
       (* The type is unbound here and will be resolved during generic instantiation *)
@@ -882,10 +878,7 @@ and exp ?(context = normal_context) ?(in_constant_context = false) (env : env) (
       let t = C.unbound loc in
       (env, {e= ETypeIntrinsic {intrinsic; type_param}; t; loc})
 
-and exp_list ?(context = normal_context) ?(in_constant_context = false) (env : env) (l : Syntax.exp list) :
-    env * exp list =
-  (* Convert legacy in_constant_context parameter to new context *)
-  let context = if in_constant_context then {context with in_constant= true} else context in
+and exp_list ?(context = normal_context) (env : env) (l : Syntax.exp list) : env * exp list =
   let env, rev_l =
     CCList.fold_left
       (fun (env, acc) e ->

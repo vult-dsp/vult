@@ -156,7 +156,7 @@ private int SaveState_counter_type_serialize_type_descr(CustomBuffer buffer, int
       return index;
    }
    marks[0] = true;
-   String[] _array_0 = new float[]{"count"};
+   String[] _array_0 = new String[]{"count"};
    return serialize_type_descr(buffer, index, "SaveState_counter_type", _array_0);
 }
 
@@ -165,7 +165,7 @@ private int SaveState_point_serialize_type_descr(CustomBuffer buffer, int index,
       return index;
    }
    marks[2] = true;
-   String[] _array_0 = new float[]{"x", "y"};
+   String[] _array_0 = new String[]{"x", "y"};
    return serialize_type_descr(buffer, index, "SaveState_point", _array_0);
 }
 
@@ -176,7 +176,7 @@ private int SaveState_main_type_serialize_type_descr(CustomBuffer buffer, int in
    marks[1] = true;
    index = SaveState_counter_type_serialize_type_descr(buffer, index, marks);
    index = SaveState_point_serialize_type_descr(buffer, index, marks);
-   String[] _array_0 = new float[]{"c1", "inst_19fb0", "p1", "p2", "point_array", "str", "x"};
+   String[] _array_0 = new String[]{"c1", "inst_19fb0", "p1", "p2", "point_array", "str", "x"};
    return serialize_type_descr(buffer, index, "SaveState_main_type", _array_0);
 }
 

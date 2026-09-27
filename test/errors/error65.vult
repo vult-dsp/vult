@@ -1,0 +1,10 @@
+// A function with memory called inside the arguments of a call in a constant.
+fun acc(x : int) : int {
+  mem s : int;
+  s = s + x;
+  return s;
+}
+
+fun id(x : int) : int { return x; }
+
+constant k = id(acc(1));

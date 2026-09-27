@@ -1,0 +1,4 @@
+Companion functions of generic functions cannot be called in constant expressions
+
+constant c = unity();
+             ^^^^^

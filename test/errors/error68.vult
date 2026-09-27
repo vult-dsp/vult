@@ -1,0 +1,7 @@
+// Companions of generic functions are not elaborated in constant expressions.
+fun gain(x : real, 'g : real) : real { return x * g; }
+and unity() : real { return 1.0; }
+
+constant c = unity();
+
+fun main() : real { return c; }

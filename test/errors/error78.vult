@@ -1,0 +1,2 @@
+// A file that ends in the middle of an expression.
+fun f() { return

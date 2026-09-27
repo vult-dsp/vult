@@ -142,29 +142,29 @@ private Array_return_foo7_type Array_return_foo7_type_alloc() {
 }
 
 private int[] Array_return_foo1() {
-   int[] _array_0 = new float[]{1, 2, 3};
+   int[] _array_0 = new int[]{1, 2, 3};
    return _array_0;
 }
 
 private int[] Array_return_foo2() {
-   int[] x = new float[]{1, 2, 3};
+   int[] x = new int[]{1, 2, 3};
    return x;
 }
 
 private int[] Array_return_foo3(Array_return_foo3_type _ctx) {
    _ctx.y = 0;
-   int[] _array_0 = new float[]{1, 2, 3};
+   int[] _array_0 = new int[]{1, 2, 3};
    return _array_0;
 }
 
 private int[] Array_return_foo4(Array_return_foo4_type _ctx) {
    _ctx.y = 0;
-   int[] x = new float[]{1, 2, 3};
+   int[] x = new int[]{1, 2, 3};
    return x;
 }
 
 private void Array_return_foo5(Array_return_foo5_type _ctx) {
-   int[] _array_0 = new float[]{1, 2, 3};
+   int[] _array_0 = new int[]{1, 2, 3};
    _ctx.Array_return_foo5_ret_0 = 1;
    _ctx.Array_return_foo5_ret_1 = _array_0;
    return ;
@@ -172,7 +172,7 @@ private void Array_return_foo5(Array_return_foo5_type _ctx) {
 
 private void Array_return_foo6(Array_return_foo6_type _ctx) {
    int y = 1;
-   int[] x = new float[]{1, 2, 3};
+   int[] x = new int[]{1, 2, 3};
    _ctx.Array_return_foo6_ret_0 = y;
    _ctx.Array_return_foo6_ret_1 = x;
    return ;

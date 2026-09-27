@@ -1,0 +1,4 @@
+// A wavetable is indexed by a fractional position.
+external wt(position : int) : real @[wavetable(file = "missing.wav", bound_check = false)];
+
+fun main(x : int) : real { return wt(x); }

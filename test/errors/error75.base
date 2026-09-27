@@ -1,0 +1,4 @@
+The value of 'order' must be 1 or 2.
+// Only linear and quadratic tables are supported.
+fun f(x : real) : real @[table(size = 64, min = 0.0, max = 1.0, order = 3)] {
+    ^

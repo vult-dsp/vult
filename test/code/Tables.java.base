@@ -105,12 +105,12 @@ private float Tables_power2(int x) {
    return Tables_power2_table[(int_clip(x, -4, 4) + 4)];
 }
 
-public static final int[] Tables_square_table = new float[]{16, 9, 4, 1, 0, 1, 4, 9, 16};
+public static final int[] Tables_square_table = new int[]{16, 9, 4, 1, 0, 1, 4, 9, 16};
 private int Tables_square(int x) {
    return Tables_square_table[(int_clip(x, -4, 4) + 4)];
 }
 
-public static final short[] Tables_square16_table = new float[]{16, 9, 4, 1, 0, 1, 4, 9, 16};
+public static final short[] Tables_square16_table = new short[]{16, 9, 4, 1, 0, 1, 4, 9, 16};
 private short Tables_square16(short x) {
    return Tables_square16_table[(int_clip(x, -4, 4) + 4)];
 }

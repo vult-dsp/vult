@@ -1,0 +1,8 @@
+// A mem variable that receives the tuple returned by a function.
+fun pair() { return 1, 2; }
+
+fun main() {
+  mem t;
+  t = pair();
+  return 0;
+}

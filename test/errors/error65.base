@@ -1,0 +1,4 @@
+Functions with memory variables cannot be called in constant expressions
+
+constant k = id(acc(1));
+                ^^^

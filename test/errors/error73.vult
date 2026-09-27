@@ -1,0 +1,5 @@
+// Arrays of unit values have nothing to save.
+fun main() {
+  mem a : array(unit, 4) @[save];
+  return 0;
+}

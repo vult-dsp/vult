@@ -183,7 +183,23 @@ let errors_files =
   ; "error61.vult"
   ; "error62.vult"
   ; "error63.vult"
-  ; "error64.vult" ]
+  ; "error64.vult"
+  ; "error65.vult"
+  ; "error66.vult"
+  ; "error67.vult"
+  ; "error68.vult"
+  ; "error69.vult"
+  ; "error70.vult"
+  ; "error71.vult"
+  ; "error72.vult"
+  ; "error73.vult"
+  ; "error74.vult"
+  ; "error75.vult"
+  ; "error76.vult"
+  ; "error77.vult"
+  ; "error78.vult"
+  ; "error79.vult"
+  ; "error80.vult" ]
 
 let template_files =
   [ "sf_f.vult"
@@ -270,7 +286,10 @@ let interpreter =
   ; ("qualified_enum_patterns.vult", 100)
   ; ("range_optimization.vult", -1)
   ; ("strength_reduction.vult", 523)
-  ; ("type_intrinsics.vult", 1000) ]
+  ; ("type_intrinsics.vult", 1000)
+  ; ("tuple_variables.vult", 4549)
+  ; ("long_chains.vult", 42)
+  ; ("companion_type_alias.vult", 3) ]
 
 let passes_files =
   [ "split_mem.vult"
@@ -348,7 +367,9 @@ let all_files =
   ; "../test/compile/array_no_const.vult"
   ; "../test/compile/record_init.vult"
   ; "../test/interpreter/companion_return_infer.vult"
-  ; "../test/interpreter/spec_name_collision.vult" ]
+  ; "../test/interpreter/spec_name_collision.vult"
+  ; "../test/interpreter/tuple_variables.vult"
+  ; "../test/interpreter/companion_type_alias.vult" ]
 
 let includes =
   ["effects"; "env"; "filters"; "midi"; "osc"; "unit"; "util"]

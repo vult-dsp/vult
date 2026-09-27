@@ -1,0 +1,9 @@
+// Long chains of constants are folded one level per pass, so the number of
+// passes a statement needs grows with its size.
+fun sum(x : real) : real {
+   return x + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0;
+}
+
+fun main() : int {
+   return int(sum(2.0));
+}

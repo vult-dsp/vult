@@ -210,9 +210,9 @@ let tagAllMembers fully_saved (stmts : top_stmt list) =
    emitter and aborting without one. *)
 let isSerializableValue (t : type_) =
   match t.t with
-  | TInt | TInt16 | TFix16 | TBool | TReal | TString | TStruct _ | TVoid _ | TEmptyType ->
+  | TInt | TInt16 | TFix16 | TBool | TReal | TString | TStruct _ ->
       true
-  | TArray _ | TList _ | TTuple _ ->
+  | TVoid _ | TEmptyType | TArray _ | TList _ | TTuple _ ->
       false
 
 let checkSavedMember (struct_path : string) (name : string) (t : type_) (loc : Util.Loc.t) =
@@ -514,7 +514,7 @@ let createDeserializer table (stmt : top_stmt) =
                 | {t= TEmptyType; _} ->
                     None
                 (*  array of builtin types *)
-                | {t= TArray (Some n, ({t= TInt | TReal | TString | TBool | TFix16; _} as at)); _} ->
+                | {t= TArray (Some n, ({t= TInt | TInt16 | TReal | TString | TBool | TFix16; _} as at)); _} ->
                     let () = incr tick in
                     let iter_name = "i_" ^ string_of_int !tick in
                     let () = incr tick in
@@ -578,7 +578,7 @@ let createDeserializer table (stmt : top_stmt) =
                 | {t= TArray _; _} ->
                     failwith "deserialization of array with unknow dimensions"
                 (* list of builtin types *)
-                | {t= TList ({t= TInt | TReal | TString | TBool | TFix16; _} as at); _} ->
+                | {t= TList ({t= TInt | TInt16 | TReal | TString | TBool | TFix16; _} as at); _} ->
                     let () = incr tick in
                     let iter_name = "i_" ^ string_of_int !tick in
                     let () = incr tick in

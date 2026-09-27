@@ -488,8 +488,8 @@ end
 
 (** LSP Communication Module *)
 module Communication = struct
-  (** Read LSP header and content *)
-  let read_lsp_message ic =
+  (** Read LSP header and content. A message without a valid Content-Length cannot be read. *)
+  let read_lsp_message ic : (string, string) result =
     let rec read_headers acc =
       let line = input_line ic in
       let line = String.trim line in
@@ -504,15 +504,17 @@ module Communication = struct
             read_headers acc
     in
     let headers = read_headers [] in
-    let content_length =
-      match CCList.assoc_opt ~eq:String.equal "Content-Length" headers with
-      | Some len ->
-          int_of_string len
-      | None ->
-          failwith "Missing Content-Length header"
-    in
-    let buffer = Bytes.create content_length in
-    really_input ic buffer 0 content_length ; Bytes.to_string buffer
+    match CCList.assoc_opt ~eq:String.equal "Content-Length" headers with
+    | None ->
+        Error "Missing Content-Length header"
+    | Some len -> (
+      match int_of_string_opt len with
+      | Some content_length when content_length >= 0 ->
+          let buffer = Bytes.create content_length in
+          really_input ic buffer 0 content_length ;
+          Ok (Bytes.to_string buffer)
+      | _ ->
+          Error ("Invalid Content-Length header: " ^ len) )
 
   (** Write LSP response *)
   let write_lsp_response oc json =
@@ -531,87 +533,92 @@ let run () =
   Printf.eprintf "⚡ Diagnostics engine ready\n" ;
   flush stderr ;
   let state = ref (State.create ()) in
+  let handle_message message_content =
+    Printf.eprintf "📥 Received message: %s\n" (String.sub message_content 0 (min 100 (String.length message_content))) ;
+    flush stderr ;
+    (* Parse JSON *)
+    let json = Yojson.Safe.from_string message_content in
+    (* Check if it's a request or notification *)
+    if json |> member "id" <> `Null then (
+      (* It's a request *)
+      let id = json |> member "id" in
+      let method_name = json |> member "method" |> to_string in
+      let params = json |> member "params" in
+      Printf.eprintf "📥 Request: %s\n" method_name ;
+      flush stderr ;
+      let response =
+        match method_name with
+        | "initialize" ->
+            RequestHandlers.handle_initialize id params
+        | "textDocument/completion" ->
+            RequestHandlers.handle_completion !state id params
+        | "textDocument/hover" ->
+            RequestHandlers.handle_hover !state id params
+        | "textDocument/semanticTokens/full" ->
+            RequestHandlers.handle_semantic_tokens !state id params
+        | "textDocument/documentSymbol" ->
+            RequestHandlers.handle_document_symbol !state id params
+        | "textDocument/definition" ->
+            RequestHandlers.handle_definition !state id params
+        | "shutdown" ->
+            RequestHandlers.handle_shutdown id
+        | _ ->
+            Printf.eprintf "❓ Unhandled request: %s\n" method_name ;
+            flush stderr ;
+            `Assoc
+              [ ("jsonrpc", `String "2.0")
+              ; ("id", id)
+              ; ( "error"
+                , `Assoc
+                    [ ("code", `Int (-32601))
+                    ; (* Method not found *)
+                      ("message", `String ("Method not found: " ^ method_name)) ] ) ]
+      in
+      Communication.write_lsp_response oc response ;
+      (* Handle state updates after initialize request *)
+      if method_name = "initialize" then
+        let root_uri =
+          try Some (params |> member "rootUri" |> to_string)
+          with _ -> (
+            try Some (params |> member "workspaceFolders" |> to_list |> CCList.hd |> member "uri" |> to_string)
+            with _ -> None )
+        in
+        state := State.create ?root_uri () |> State.set_initialized )
+    else
+      (* It's a notification *)
+      let method_name = json |> member "method" |> to_string in
+      let params = json |> member "params" in
+      Printf.eprintf "📥 Notification: %s\n" method_name ;
+      flush stderr ;
+      let new_state, notifications =
+        match method_name with
+        | "textDocument/didOpen" ->
+            NotificationHandlers.handle_did_open !state params
+        | "textDocument/didChange" ->
+            NotificationHandlers.handle_did_change !state params
+        | "textDocument/didClose" ->
+            NotificationHandlers.handle_did_close !state params
+        | "exit" ->
+            Printf.eprintf "👋 Exit notification received\n" ;
+            flush stderr ;
+            exit 0
+        | _ ->
+            Printf.eprintf "❓ Unhandled notification: %s\n" method_name ;
+            flush stderr ;
+            (!state, [])
+      in
+      state := new_state ;
+      (* Send any resulting notifications *)
+      CCList.iter (Communication.write_lsp_response oc) notifications
+  in
   let rec loop () =
     try
-      (* Read LSP message *)
-      let message_content = Communication.read_lsp_message ic in
-      Printf.eprintf "📥 Received message: %s\n" (String.sub message_content 0 (min 100 (String.length message_content))) ;
-      flush stderr ;
-      (* Parse JSON *)
-      let json = Yojson.Safe.from_string message_content in
-      (* Check if it's a request or notification *)
-      ( if json |> member "id" <> `Null then (
-          (* It's a request *)
-          let id = json |> member "id" in
-          let method_name = json |> member "method" |> to_string in
-          let params = json |> member "params" in
-          Printf.eprintf "📥 Request: %s\n" method_name ;
-          flush stderr ;
-          let response =
-            match method_name with
-            | "initialize" ->
-                RequestHandlers.handle_initialize id params
-            | "textDocument/completion" ->
-                RequestHandlers.handle_completion !state id params
-            | "textDocument/hover" ->
-                RequestHandlers.handle_hover !state id params
-            | "textDocument/semanticTokens/full" ->
-                RequestHandlers.handle_semantic_tokens !state id params
-            | "textDocument/documentSymbol" ->
-                RequestHandlers.handle_document_symbol !state id params
-            | "textDocument/definition" ->
-                RequestHandlers.handle_definition !state id params
-            | "shutdown" ->
-                RequestHandlers.handle_shutdown id
-            | _ ->
-                Printf.eprintf "❓ Unhandled request: %s\n" method_name ;
-                flush stderr ;
-                `Assoc
-                  [ ("jsonrpc", `String "2.0")
-                  ; ("id", id)
-                  ; ( "error"
-                    , `Assoc
-                        [ ("code", `Int (-32601))
-                        ; (* Method not found *)
-                          ("message", `String ("Method not found: " ^ method_name)) ] ) ]
-          in
-          Communication.write_lsp_response oc response ;
-          (* Handle state updates after initialize request *)
-          if method_name = "initialize" then
-            let root_uri =
-              try Some (params |> member "rootUri" |> to_string)
-              with _ -> (
-                try Some (params |> member "workspaceFolders" |> to_list |> CCList.hd |> member "uri" |> to_string)
-                with _ -> None )
-            in
-            state := State.create ?root_uri () |> State.set_initialized )
-        else
-          (* It's a notification *)
-          let method_name = json |> member "method" |> to_string in
-          let params = json |> member "params" in
-          Printf.eprintf "📥 Notification: %s\n" method_name ;
-          flush stderr ;
-          let new_state, notifications =
-            match method_name with
-            | "textDocument/didOpen" ->
-                NotificationHandlers.handle_did_open !state params
-            | "textDocument/didChange" ->
-                NotificationHandlers.handle_did_change !state params
-            | "textDocument/didClose" ->
-                NotificationHandlers.handle_did_close !state params
-            | "exit" ->
-                Printf.eprintf "👋 Exit notification received\n" ;
-                flush stderr ;
-                exit 0
-            | _ ->
-                Printf.eprintf "❓ Unhandled notification: %s\n" method_name ;
-                flush stderr ;
-                (!state, [])
-          in
-          state := new_state ;
-          (* Send any resulting notifications *)
-          CCList.iter (Communication.write_lsp_response oc) notifications ) ;
-      (* Continue loop *)
+      ( match Communication.read_lsp_message ic with
+      | Error msg ->
+          Printf.eprintf "❌ Invalid message: %s\n" msg ;
+          flush stderr
+      | Ok message_content ->
+          handle_message message_content ) ;
       loop ()
     with
     | End_of_file ->

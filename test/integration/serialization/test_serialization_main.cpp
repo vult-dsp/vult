@@ -169,6 +169,20 @@ int main() {
         std::cout << "  [OK] int_arr (array of int)" << std::endl;
     }
 
+    // Verify int16 array
+    bool int16_arr_ok = true;
+    for (int i = 0; i < 3; i++) {
+        if (original.int16_arr[i] != restored.int16_arr[i]) {
+            std::cerr << "FAIL: int16_arr[" << i << "] mismatch: "
+                      << original.int16_arr[i] << " != " << restored.int16_arr[i] << std::endl;
+            errors++;
+            int16_arr_ok = false;
+        }
+    }
+    if (int16_arr_ok) {
+        std::cout << "  [OK] int16_arr (array of int16)" << std::endl;
+    }
+
     // Verify point array
     bool pt_arr_ok = true;
     for (int i = 0; i < 3; i++) {

@@ -29,6 +29,9 @@ void Test_serialization_setTestValues(Test_serialization_main_type& _ctx) {
    _ctx.int_arr[static_cast<uint32_t>(1)] = 2;
    _ctx.int_arr[static_cast<uint32_t>(2)] = 3;
    _ctx.int_arr[static_cast<uint32_t>(3)] = 4;
+   _ctx.int16_arr[static_cast<uint32_t>(0)] = int_to_int16(-7);
+   _ctx.int16_arr[static_cast<uint32_t>(1)] = int_to_int16(300);
+   _ctx.int16_arr[static_cast<uint32_t>(2)] = int_to_int16(12);
    _ctx.pt_arr[static_cast<uint32_t>(0)].x = 1.0f;
    _ctx.pt_arr[static_cast<uint32_t>(0)].y = 1.0f;
    _ctx.pt_arr[static_cast<uint32_t>(1)].x = 2.0f;
@@ -47,17 +50,22 @@ void Test_serialization_setTestValues(Test_serialization_main_type& _ctx) {
 void Test_serialization_main_type_init(Test_serialization_main_type& _ctx) {
    _ctx.bool_val = false;
    int32_t i_0 = 0;
-   while (i_0 < 4) {
-      _ctx.int_arr[static_cast<uint32_t>(i_0)] = 0;
+   while (i_0 < 3) {
+      _ctx.int16_arr[static_cast<uint32_t>(i_0)] = 0;
       i_0 = 1 + i_0;
+   }
+   int32_t i_1 = 0;
+   while (i_1 < 4) {
+      _ctx.int_arr[static_cast<uint32_t>(i_1)] = 0;
+      i_1 = 1 + i_1;
    }
    _ctx.int_list = {};
    _ctx.int_val = 0;
    Test_serialization_point_init(_ctx.pt);
-   int32_t i_1 = 0;
-   while (i_1 < 3) {
-      Test_serialization_point_init(_ctx.pt_arr[static_cast<uint32_t>(i_1)]);
-      i_1 = 1 + i_1;
+   int32_t i_2 = 0;
+   while (i_2 < 3) {
+      Test_serialization_point_init(_ctx.pt_arr[static_cast<uint32_t>(i_2)]);
+      i_2 = 1 + i_2;
    }
    _ctx.pt_list = {};
    Test_serialization_rect_init(_ctx.rc);
@@ -101,41 +109,49 @@ int32_t Test_serialization_main_type_serialize_data(CustomBuffer& buffer, int32_
    index = push_block_header(buffer, index);
    index = push_int(buffer, index, _ctx.bool_val);
    int32_t start_0 = index;
-   index = push_array(buffer, index, 4);
+   index = push_array(buffer, index, 3);
    int32_t i_0 = 0;
-   while (i_0 < 4) {
-      index = push_int(buffer, index, _ctx.int_arr[static_cast<uint32_t>(i_0)]);
+   while (i_0 < 3) {
+      index = push_int(buffer, index, _ctx.int16_arr[static_cast<uint32_t>(i_0)]);
       i_0 = 1 + i_0;
    }
    update_size(buffer, start_0, index + (- start_0));
-   int32_t size_1 = static_cast<int32_t>(_ctx.int_list.size());
    int32_t start_1 = index;
-   index = push_array(buffer, index, size_1);
+   index = push_array(buffer, index, 4);
    int32_t i_1 = 0;
-   while (i_1 < size_1) {
-      index = push_int(buffer, index, _ctx.int_list[static_cast<uint32_t>(i_1)]);
+   while (i_1 < 4) {
+      index = push_int(buffer, index, _ctx.int_arr[static_cast<uint32_t>(i_1)]);
       i_1 = 1 + i_1;
    }
    update_size(buffer, start_1, index + (- start_1));
-   index = push_int(buffer, index, _ctx.int_val);
-   index = Test_serialization_point_serialize_data(buffer, index, _ctx.pt);
+   int32_t size_2 = static_cast<int32_t>(_ctx.int_list.size());
    int32_t start_2 = index;
-   index = push_array(buffer, index, 3);
+   index = push_array(buffer, index, size_2);
    int32_t i_2 = 0;
-   while (i_2 < 3) {
-      index = Test_serialization_point_serialize_data(buffer, index, _ctx.pt_arr[static_cast<uint32_t>(i_2)]);
+   while (i_2 < size_2) {
+      index = push_int(buffer, index, _ctx.int_list[static_cast<uint32_t>(i_2)]);
       i_2 = 1 + i_2;
    }
    update_size(buffer, start_2, index + (- start_2));
-   int32_t size_3 = static_cast<int32_t>(_ctx.pt_list.size());
+   index = push_int(buffer, index, _ctx.int_val);
+   index = Test_serialization_point_serialize_data(buffer, index, _ctx.pt);
    int32_t start_3 = index;
-   index = push_array(buffer, index, size_3);
+   index = push_array(buffer, index, 3);
    int32_t i_3 = 0;
-   while (i_3 < size_3) {
-      index = Test_serialization_point_serialize_data(buffer, index, _ctx.pt_list[static_cast<uint32_t>(i_3)]);
+   while (i_3 < 3) {
+      index = Test_serialization_point_serialize_data(buffer, index, _ctx.pt_arr[static_cast<uint32_t>(i_3)]);
       i_3 = 1 + i_3;
    }
    update_size(buffer, start_3, index + (- start_3));
+   int32_t size_4 = static_cast<int32_t>(_ctx.pt_list.size());
+   int32_t start_4 = index;
+   index = push_array(buffer, index, size_4);
+   int32_t i_4 = 0;
+   while (i_4 < size_4) {
+      index = Test_serialization_point_serialize_data(buffer, index, _ctx.pt_list[static_cast<uint32_t>(i_4)]);
+      i_4 = 1 + i_4;
+   }
+   update_size(buffer, start_4, index + (- start_4));
    index = Test_serialization_rect_serialize_data(buffer, index, _ctx.rc);
    index = push_float(buffer, index, _ctx.real_val);
    index = push_string(buffer, index, _ctx.str_1);
@@ -162,7 +178,7 @@ int32_t Test_serialization_main_type_serialize_type_descr(CustomBuffer& buffer, 
    marks[static_cast<uint32_t>(0)] = true;
    index = Test_serialization_point_serialize_type_descr(buffer, index, marks);
    index = Test_serialization_rect_serialize_type_descr(buffer, index, marks);
-   std::array<std::string, 22> _array_0 = { "bool_val", "int_arr", "int_list", "int_val", "pt", "pt_arr", "pt_list", "rc", "real_val", "str_1", "str_15", "str_16", "str_2", "str_3", "str_31", "str_32", "str_4", "str_5", "str_7", "str_8", "str_empty", "str_val" };
+   std::array<std::string, 23> _array_0 = { "bool_val", "int16_arr", "int_arr", "int_list", "int_val", "pt", "pt_arr", "pt_list", "rc", "real_val", "str_1", "str_15", "str_16", "str_2", "str_3", "str_31", "str_32", "str_4", "str_5", "str_7", "str_8", "str_empty", "str_val" };
    return serialize_type_descr(buffer, index, "Test_serialization_main_type", _array_0);
 }
 
@@ -195,27 +211,37 @@ void Test_serialization_main_type_deserialize_data(CustomBuffer& buffer, CustomT
    if (field_index >= 0) {
       _ctx.bool_val = deserialize_int(buffer, field_index);
    }
-   field_index = search_field_name(buffer, type_descr, index, "int_arr");
+   field_index = search_field_name(buffer, type_descr, index, "int16_arr");
    if (field_index >= 0) {
       field_index = first_array_element(buffer, field_index);
       int32_t i_1 = 0;
-      while (i_1 < 4) {
-         _ctx.int_arr[static_cast<uint32_t>(i_1)] = deserialize_int(buffer, field_index);
+      while (i_1 < 3) {
+         _ctx.int16_arr[static_cast<uint32_t>(i_1)] = deserialize_int(buffer, field_index);
          i_1 = 1 + i_1;
+         field_index = next_object(buffer, field_index);
+      }
+   }
+   field_index = search_field_name(buffer, type_descr, index, "int_arr");
+   if (field_index >= 0) {
+      field_index = first_array_element(buffer, field_index);
+      int32_t i_3 = 0;
+      while (i_3 < 4) {
+         _ctx.int_arr[static_cast<uint32_t>(i_3)] = deserialize_int(buffer, field_index);
+         i_3 = 1 + i_3;
          field_index = next_object(buffer, field_index);
       }
    }
    field_index = search_field_name(buffer, type_descr, index, "int_list");
    if (field_index >= 0) {
-      int32_t list_size_4 = get_array_count(buffer, field_index);
+      int32_t list_size_6 = get_array_count(buffer, field_index);
       _ctx.int_list.clear();
       field_index = first_array_element(buffer, field_index);
-      int32_t i_3 = 0;
-      int32_t temp_5 = 0;
-      while (i_3 < list_size_4) {
-         temp_5 = deserialize_int(buffer, field_index);
-         _ctx.int_list.push_back(temp_5);
-         i_3 = 1 + i_3;
+      int32_t i_5 = 0;
+      int32_t temp_7 = 0;
+      while (i_5 < list_size_6) {
+         temp_7 = deserialize_int(buffer, field_index);
+         _ctx.int_list.push_back(temp_7);
+         i_5 = 1 + i_5;
          field_index = next_object(buffer, field_index);
       }
    }
@@ -225,40 +251,40 @@ void Test_serialization_main_type_deserialize_data(CustomBuffer& buffer, CustomT
    }
    field_index = search_field_name(buffer, type_descr, index, "pt");
    if (field_index >= 0) {
-      CustomTypeDescr field_descr_5 = search_type_description(buffer, "Test_serialization_point");
-      Test_serialization_point_deserialize_data(buffer, field_descr_5, field_index, _ctx.pt);
+      CustomTypeDescr field_descr_7 = search_type_description(buffer, "Test_serialization_point");
+      Test_serialization_point_deserialize_data(buffer, field_descr_7, field_index, _ctx.pt);
    }
-   CustomTypeDescr field_descr_6 = search_type_description(buffer, "Test_serialization_point");
+   CustomTypeDescr field_descr_8 = search_type_description(buffer, "Test_serialization_point");
    field_index = search_field_name(buffer, type_descr, index, "pt_arr");
    if (field_index >= 0) {
       field_index = first_array_element(buffer, field_index);
-      int32_t i_7 = 0;
-      while (i_7 < 3) {
-         Test_serialization_point_deserialize_data(buffer, field_descr_6, field_index, _ctx.pt_arr[static_cast<uint32_t>(i_7)]);
-         i_7 = 1 + i_7;
+      int32_t i_9 = 0;
+      while (i_9 < 3) {
+         Test_serialization_point_deserialize_data(buffer, field_descr_8, field_index, _ctx.pt_arr[static_cast<uint32_t>(i_9)]);
+         i_9 = 1 + i_9;
          field_index = next_object(buffer, field_index);
       }
    }
-   CustomTypeDescr field_descr_8 = search_type_description(buffer, "Test_serialization_point");
+   CustomTypeDescr field_descr_10 = search_type_description(buffer, "Test_serialization_point");
    field_index = search_field_name(buffer, type_descr, index, "pt_list");
    if (field_index >= 0) {
-      int32_t list_size_10 = get_array_count(buffer, field_index);
+      int32_t list_size_12 = get_array_count(buffer, field_index);
       _ctx.pt_list.clear();
       field_index = first_array_element(buffer, field_index);
-      int32_t i_9 = 0;
-      Test_serialization_point temp_11;
-      Test_serialization_point_init(temp_11);
-      while (i_9 < list_size_10) {
-         Test_serialization_point_deserialize_data(buffer, field_descr_8, field_index, temp_11);
-         _ctx.pt_list.push_back(temp_11);
-         i_9 = 1 + i_9;
+      int32_t i_11 = 0;
+      Test_serialization_point temp_13;
+      Test_serialization_point_init(temp_13);
+      while (i_11 < list_size_12) {
+         Test_serialization_point_deserialize_data(buffer, field_descr_10, field_index, temp_13);
+         _ctx.pt_list.push_back(temp_13);
+         i_11 = 1 + i_11;
          field_index = next_object(buffer, field_index);
       }
    }
    field_index = search_field_name(buffer, type_descr, index, "rc");
    if (field_index >= 0) {
-      CustomTypeDescr field_descr_11 = search_type_description(buffer, "Test_serialization_rect");
-      Test_serialization_rect_deserialize_data(buffer, field_descr_11, field_index, _ctx.rc);
+      CustomTypeDescr field_descr_13 = search_type_description(buffer, "Test_serialization_rect");
+      Test_serialization_rect_deserialize_data(buffer, field_descr_13, field_index, _ctx.rc);
    }
    field_index = search_field_name(buffer, type_descr, index, "real_val");
    if (field_index >= 0) {

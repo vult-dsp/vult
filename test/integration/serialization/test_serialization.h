@@ -4,6 +4,16 @@
 
 #include "vultin.hpp"
 #include "test_serialization.tables.h"
+/* Runtime features this file needs from vultin.hpp. */
+#ifdef VULT_NO_SERIALIZATION
+#error "test_serialization.h uses serialization: it cannot be compiled with VULT_NO_SERIALIZATION"
+#endif
+#ifdef VULT_NO_STRING
+#error "test_serialization.h uses strings: it cannot be compiled with VULT_NO_STRING"
+#endif
+#ifdef VULT_NO_LIST
+#error "test_serialization.h uses lists: it cannot be compiled with VULT_NO_LIST"
+#endif
 
 typedef struct Test_serialization_point {
    float x;
@@ -17,6 +27,7 @@ typedef struct Test_serialization_rect {
 
 typedef struct Test_serialization_main_type {
    bool bool_val;
+   std::array<int16_t, 3> int16_arr;
    std::array<int32_t, 4> int_arr;
    mutable std::vector<int32_t> int_list;
    int32_t int_val;

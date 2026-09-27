@@ -34,7 +34,7 @@ type state =
         (* Emitted type name -> full path that owns it. The flattened names are not injective
            (the paths A.b_c and A_b.c both flatten to A_b_c), so a type whose flattened name is
            already taken by a different type gets a digest-suffixed name. *)
-  ; dummy: int }
+  ; converting: string list (* Full paths of the struct types whose members are being converted *) }
 
 let path (p : Syntax.path) : string = match p with {id; n= None; _} -> id | {id; n= Some n; _} -> n ^ "_" ^ id
 
@@ -69,6 +69,19 @@ let rec getDim (t : Typed.type_) =
       dim
   | _ ->
       Error.raiseError "The size of the array could not be inferred. Please add a type annotation." t.loc
+
+(* Struct members live in memory and are initialized and copied as a whole, which is not
+   possible for tuples or arrays whose size is unknown. *)
+let checkMemberType ((name, (t : type_), _, loc) : string * type_ * Ptags.tags * Loc.t) : unit =
+  match t.t with
+  | TTuple _ ->
+      Error.raiseError ("The mem variable '" ^ name ^ "' cannot hold a tuple.") loc
+  | TArray (None, _) ->
+      Error.raiseError
+        ("The size of the array in the mem variable '" ^ name ^ "' is unknown. Please add a type annotation.")
+        loc
+  | _ ->
+      ()
 
 let rec type_ ?(const = false) (env : env) (state : state) (t : Typed.type_) =
   let const = const || Typed.isTypeConst t in
@@ -107,20 +120,23 @@ let rec type_ ?(const = false) (env : env) (state : state) (t : Typed.type_) =
             (state, {t= TInt; const; loc})
         | Some {descr= Record members; _} when Maps.Map.is_empty !members ->
             (state, {t= TEmptyType; const; loc})
+        | Some {descr= Record _; _} when CCList.mem ~eq:String.equal full state.converting ->
+            Error.raiseError ("The type '" ^ p.id ^ "' cannot contain itself.") loc
         | Some {descr= Record members; _} ->
             let state, ps = claim_type_name state full (path p) in
             let members =
               CCList.map (fun (name, (var : Env.var)) -> (name, var.t, var.tags, var.loc)) (Env.Map.to_list members)
               |> CCList.sort (fun (n1, _, _, _) (n2, _, _, _) -> String.compare n1 n2)
             in
-            let state, members = type_list env state members in
+            let state, members = struct_members env state full members in
             let t = {t= TStruct {path= ps; members}; loc; const= true} in
             let types = Maps.Map.add full t state.types in
             ({state with types}, t)
         | Some {descr= Simple; _} ->
             failwith "Type does not have members"
-        | Some {descr= Alias _; _} ->
-            failwith "" ) )
+        | Some {descr= Alias (_, alias_of); _} ->
+            (* The companion functions share the context of the function they belong to *)
+            type_ ~const env state {t with tx= T.TEId alias_of} ) )
   | T.TELink t ->
       type_ ~const env state t
   | T.TEComposed ("array", [t; dim]) ->
@@ -142,6 +158,14 @@ let rec type_ ?(const = false) (env : env) (state : state) (t : Typed.type_) =
       Error.raiseError "Invalid type description." t.loc
   | T.TEFunction _ ->
       failwith "function type not implemented"
+
+(* Converts the members of the struct with the given full path, rejecting the ones that cannot
+   be stored in a struct and the types that contain themselves. *)
+and struct_members (env : env) (state : state) (full : string) members =
+  let outer_converting = state.converting in
+  let state, members = type_list env {state with converting= full :: outer_converting} members in
+  let () = CCList.iter checkMemberType members in
+  ({state with converting= outer_converting}, members)
 
 and type_list (env : env) (state : state) (l : (string * Typed.type_ * Ptags.tags * Loc.t) list) =
   let mapper env state ((n : string), (t : Typed.type_), (tags : Ptags.tags), (loc : Loc.t)) =
@@ -314,6 +338,15 @@ let rec lexp (env : env) (state : state) (e : Typed.lexp) =
 
 let dexp (env : env) (state : state) id dims t loc =
   let state, t = type_ env state t in
+  let () =
+    match t.t with
+    | TArray (None, _) ->
+        Error.raiseError
+          ("The size of the array in the variable '" ^ id ^ "' is unknown. Please add a type annotation.")
+          loc
+    | _ ->
+        ()
+  in
   match (id, dims) with
   | id, None ->
       (state, {d= DId (id, None); t; loc})
@@ -439,7 +472,7 @@ let top_stmt (env : env) (state : state) (t : Typed.top_stmt) =
   | TopType {path= p; members} ->
       let full = full_path_key p in
       let state, ps = claim_type_name state full (path p) in
-      let state, members = type_list env state members in
+      let state, members = struct_members env state full members in
       let struct_descr = {path= ps; members} in
       let t = {t= TStruct struct_descr; loc= t.loc; const= false} in
       let types = Maps.Map.add full t state.types in
@@ -459,7 +492,7 @@ let top_stmt (env : env) (state : state) (t : Typed.top_stmt) =
 let top_stmt_list (env : env) (state : state) (t : Typed.top_stmt list) = list top_stmt env state t
 
 let main env stmts =
-  let state = {types= Maps.Map.empty; type_names= Maps.Map.empty; dummy= 0} in
+  let state = {types= Maps.Map.empty; type_names= Maps.Map.empty; converting= []} in
   let _, t = top_stmt_list env state stmts in
   CCList.flatten t
 

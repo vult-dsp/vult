@@ -1,0 +1,68 @@
+
+class Tuple_variables_pair_type:
+    __slots__ = ['Tuple_variables_pair_ret_0', 'Tuple_variables_pair_ret_1']
+    def __init__(self, Tuple_variables_pair_ret_0=0, Tuple_variables_pair_ret_1=0):
+        self.Tuple_variables_pair_ret_0 = Tuple_variables_pair_ret_0
+        self.Tuple_variables_pair_ret_1 = Tuple_variables_pair_ret_1
+
+class Tuple_variables_split_type:
+    __slots__ = ['inst_14623']
+    def __init__(self, inst_14623=Tuple_variables_pair_type()):
+        self.inst_14623 = inst_14623
+
+class Tuple_variables_main_type:
+    __slots__ = ['inst_1238e', 'inst_2238e']
+    def __init__(self, inst_1238e=Tuple_variables_split_type(), inst_2238e=Tuple_variables_split_type()):
+        self.inst_1238e = inst_1238e
+        self.inst_2238e = inst_2238e
+
+def Tuple_variables_pair_type_alloc():
+   _ctx = Tuple_variables_pair_type()
+   _ctx.Tuple_variables_pair_ret_0 = 0
+   _ctx.Tuple_variables_pair_ret_1 = 0
+   return _ctx
+
+
+def Tuple_variables_split_type_alloc():
+   _ctx = Tuple_variables_split_type()
+   _ctx.inst_14623 = Tuple_variables_pair_type_alloc()
+   return _ctx
+
+
+def Tuple_variables_main_type_alloc():
+   _ctx = Tuple_variables_main_type()
+   _ctx.inst_1238e = Tuple_variables_split_type_alloc()
+   _ctx.inst_2238e = Tuple_variables_split_type_alloc()
+   return _ctx
+
+
+def Tuple_variables_pair(_ctx, x):
+   _ctx.Tuple_variables_pair_ret_0 = x
+   _ctx.Tuple_variables_pair_ret_1 = (10 * x)
+   return None
+
+
+def Tuple_variables_split(_ctx, c):
+   t = [1, 2]
+   a = t[0]
+   b = t[1]
+   _ = Tuple_variables_pair(_ctx.inst_14623, 3)
+   u = [_ctx.inst_14623.Tuple_variables_pair_ret_0, _ctx.inst_14623.Tuple_variables_pair_ret_1]
+   x = u[0]
+   y = u[1]
+   q = 0
+   p = 0
+   if c:
+      p = 4
+      q = 5
+
+   else:
+      p = 6
+      q = 7
+
+   return (a + (b + (p + (q + (x + y)))))
+
+
+def Tuple_variables_main(_ctx):
+   return ((100 * Tuple_variables_split(_ctx.inst_1238e, True)) + Tuple_variables_split(_ctx.inst_2238e, False))
+

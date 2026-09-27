@@ -1,0 +1,4 @@
+The member 'a' of 'Error73_main_type' cannot be saved: only arrays of simple values and records can be saved.
+fun main() {
+  mem a : array(unit, 4) @[save];
+      ^

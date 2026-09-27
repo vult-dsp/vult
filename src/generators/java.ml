@@ -446,6 +446,10 @@ let operator (op : operator) =
 
 let uoperator (op : uoperator) = match op with UOpNeg -> Pla.string "-" | UOpNot -> Pla.string "!"
 
+(* With -java-bin-tables, the constant arrays of these elements are loaded from binary files
+   through a FloatBuffer or an IntBuffer. The other constant arrays are written inline. *)
+let isBinaryTableElement (t : type_) = match t.t with TReal | TInt | TFix16 -> true | _ -> false
+
 let rec print_type_ (t : type_) =
   match t.t with
   | TEmptyType ->
@@ -503,8 +507,9 @@ let rec print_exp e =
       let index = print_exp index in
       {%pla|<#e#>[<#index#>]|}
   | EArray l ->
+      let t = print_type_ e.t in
       let l = Pla.map_sep Pla.commaspace print_exp l in
-      {%pla|new float[]{<#l#>}|}
+      {%pla|new <#t#>{<#l#>}|}
   | ECall {path= "size"; args= [e1]} ->
       let e1 = print_exp e1 in
       {%pla|<#e1#>.length|}
@@ -816,7 +821,7 @@ let print_top_stmt (args : Util.Args.args) root_context_types t =
       Pla.unit
   | TopConstant (name, _, t, rhs, _) -> (
     match (rhs.e, t.t, args.java_bin_tables) with
-    | EArray elems, TArray (_, elem_t), true ->
+    | EArray elems, TArray (_, elem_t), true when isBinaryTableElement elem_t ->
         let size = List.length elems in
         let elem_type = print_type_ elem_t in
         let buffer_type = match elem_t.t with TReal -> "java.nio.FloatBuffer" | _ -> "java.nio.IntBuffer" in
@@ -907,7 +912,7 @@ let generateTableData (args : Util.Args.args) (stmts : top_stmt list) : (Pla.t *
     CCList.filter_map
       (fun (stmt : top_stmt) ->
         match stmt.top with
-        | TopConstant (name, _, _, {e= EArray elems; _}, _) ->
+        | TopConstant (name, _, {t= TArray (_, elem_t); _}, {e= EArray elems; _}, _) when isBinaryTableElement elem_t ->
             let table_name = base ^ "_" ^ name ^ ".table" in
             let binary = String.concat "" (CCList.map binarizeElement elems) in
             Some (Pla.string binary, table_name)

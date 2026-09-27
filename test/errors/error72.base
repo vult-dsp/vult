@@ -1,0 +1,4 @@
+The type 'main_type' cannot contain itself.
+fun main() : int {
+  mem y : main_type;
+          ^^^^^^^^^

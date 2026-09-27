@@ -474,6 +474,12 @@ module Tuples = struct
         in
         let s = {s= StmtBind ({lhs with l= LWild}, {rhs with t= {t= TVoid None; const= false; loc= rloc}}); loc} in
         (reapply state, s :: bindings)
+    (* split a tuple variable into its elements; a variable can be read repeatedly without side effects *)
+    | {s= StmtBind ({l= LTuple elems; _}, ({e= EId _; t= {t= TTuple _; _}; _} as rhs)); loc} ->
+        let bindings =
+          CCList.mapi (fun i (l : lexp) -> {s= StmtBind (l, {rhs with e= ETMember (rhs, i); t= l.t}); loc}) elems
+        in
+        (reapply state, bindings)
     (* multi return calls bound to a tuple variable *)
     | { s=
           StmtBind
@@ -535,10 +541,12 @@ module Tuples = struct
   let mapper = {Mapper.identity with stmt; stmt_env; exp; top_stmt}
 end
 
+(* The code generators have no literal for NaN, so an expression that folds to NaN is left for
+   the target to compute at run time. *)
+let isNaNLiteral (e : exp) = match e.e with EReal v | EFixed v -> Float.is_nan v | _ -> false
+
 module FoldBuiltins = struct
-  let exp =
-    Mapper.make
-    @@ fun env state (e : exp) ->
+  let fold env state (e : exp) =
     match e with
     | {e= ECall {path= "pi"; args= []}; _} ->
         (reapply state, {e with e= EReal Float.pi})
@@ -659,6 +667,12 @@ module FoldBuiltins = struct
       match env.args.fs with Some fs -> (reapply state, {e with e= EReal fs}) | None -> (state, e) )
     | _ ->
         (state, e)
+
+  let exp =
+    Mapper.make
+    @@ fun env state (e : exp) ->
+    let folded_state, folded = fold env state e in
+    if isNaNLiteral folded then (state, e) else (folded_state, folded)
 
   let mapper = {Mapper.identity with exp}
 end
@@ -852,7 +866,7 @@ module Simplify = struct
     | _ ->
         false
 
-  let evaluate t op e1 e2 =
+  let evaluate_op t op e1 e2 =
     match (e1, e2) with
     (* boolean *)
     | {e= EBool n1; _}, {e= EBool n2; _} -> (
@@ -961,6 +975,9 @@ module Simplify = struct
       match op with OpAdd -> Some e | OpMul -> Some zero | _ -> None )
     | _ ->
         None
+
+  let evaluate t op e1 e2 =
+    match evaluate_op t op e1 e2 with Some result when isNaNLiteral result -> None | result -> result
 
   let exp =
     Mapper.make
@@ -1810,8 +1827,21 @@ let passes =
   |> Mapper.seq CircularBuffers.mapper |> Mapper.seq IfExpressions.mapper |> Mapper.seq Tuples.mapper
   |> Mapper.seq Cast.mapper |> Mapper.seq LiteralArrays.mapper |> Mapper.seq LiteralRecords.mapper
 
-let rec apply env state prog n =
-  if n > 20 then failwith "too many repeats"
+(* Number of expressions in a top statement. Some rewrites simplify one nesting level per
+   application, so the number of repetitions a statement needs grows with its size. *)
+let countExpressions (s : top_stmt) : int =
+  let count = ref 0 in
+  let exp = Mapper.make (fun _env state e -> incr count ; (state, e)) in
+  let _ = Mapper.top_stmt {Mapper.identity with exp} () (Mapper.defaultState ()) s in
+  !count
+
+(* The limit is taken from the statement before it is rewritten, since folding makes it smaller *)
+let repeatLimit (prog : prog) : int = match prog with [] -> 0 | h :: _ -> 20 + countExpressions h
+
+let rec apply env state prog n limit =
+  if n > limit then
+    let loc = match prog with h :: _ -> h.loc | [] -> Util.Loc.default in
+    Util.Error.raiseError "Internal error: the optimization of this code did not converge." loc
   else
     match prog with
     | [] ->
@@ -1821,19 +1851,19 @@ let rec apply env state prog n =
         let data = Mapper.getData state in
         if data.repeat then
           let data = {data with repeat= false} in
-          let state, h = apply env (Mapper.setData state data) h (n + 1) in
-          apply env state (h @ t) (n + 1)
+          let state, h = apply env (Mapper.setData state data) h (n + 1) limit in
+          apply env state (h @ t) (n + 1) limit
         else
-          let state, t = apply env state t 0 in
+          let state, t = apply env state t 0 (repeatLimit t) in
           (state, h @ t)
 
 let fix16ToReal (prog : prog) : prog = Fix16ToReal.run prog
 
 let run args (prog : prog) : prog =
-  let _, prog = apply (default_env args) (Mapper.defaultState (default_data ())) prog 0 in
+  let _, prog = apply (default_env args) (Mapper.defaultState (default_data ())) prog 0 (repeatLimit prog) in
   let prog = NonnegativeFloor.run prog in
   let prog = Local_optimization.run prog in
-  let _, prog = apply (default_env args) (Mapper.defaultState (default_data ())) prog 0 in
+  let _, prog = apply (default_env args) (Mapper.defaultState (default_data ())) prog 0 (repeatLimit prog) in
   let prog = Sort.run args prog in
   let prog = DeadCodeElimination.run args prog in
   prog

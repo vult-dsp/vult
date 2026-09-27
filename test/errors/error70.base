@@ -1,0 +1,4 @@
+The size of the array in the mem variable 'a' is unknown. Please add a type annotation.
+fun f(x : array(real)) {
+  mem a = x;
+      ^

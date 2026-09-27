@@ -60,10 +60,13 @@ module TokenStream (S : TokenKindSig) = struct
     buffer.peeked <- backup.peeked ;
     buffer.prev <- backup.prev
 
+  (* The last token is always EOF, so once the tokens run out the stream stays at EOF and the
+     parser reports the unexpected end of the file. *)
   let next (stream : stream) =
     match stream.tokens with
     | [] ->
-        failwith "empty stream"
+        stream.prev <- stream.peeked ;
+        stream.peeked
     | h :: r ->
         stream.prev <- stream.peeked ;
         stream.peeked <- h ;

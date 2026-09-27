@@ -786,6 +786,15 @@ let enterFunction (env : env) (name : string) (args : Typed.arg list) (ret : Typ
   let report (found : f) =
     Error.raiseError ("A function with the name '" ^ found.path.id ^ "' has already been declared.") loc
   in
+  let () =
+    match Map.find name m.generics with
+    | Some (found : Typed.generic_function) ->
+        Error.raiseError
+          ("A function with the name '" ^ name ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
+          loc
+    | None ->
+        ()
+  in
   let path = getPath m name loc in
   let locals, args_t = registerArguments args in
   let locals = registerContextLocal loc locals context in
@@ -978,10 +987,17 @@ let addGeneric (env : env) (generic : Typed.generic_function) : env =
       let module_opt = Map.find name env.modules in
       match module_opt with
       | Some m ->
+          let report found_loc =
+            Error.raiseError
+              ( "A function with the name '" ^ generic.name ^ "' has already been declared at "
+              ^ Loc.to_string_readable found_loc )
+              generic.loc
+          in
           let () =
-            Map.update
-              (fun _ _ -> failwith ("Internal error in addGeneric: duplicate generic '" ^ generic.name ^ "'"))
-              generic.name generic m.generics
+            match Map.find generic.name m.functions with Some (found : f) -> report found.path.loc | None -> ()
+          in
+          let () =
+            Map.update (fun (found : Typed.generic_function) _ -> report found.loc) generic.name generic m.generics
           in
           env
       | None ->

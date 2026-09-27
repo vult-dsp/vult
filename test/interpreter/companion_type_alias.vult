@@ -1,0 +1,16 @@
+// The context type of a companion is an alias of the context of the function
+// it belongs to, and can be used to declare memory variables.
+fun foo(x : int) : int {
+   mem acc : int;
+   acc = acc + x;
+   return acc;
+}
+and bar() : int {
+   return acc;
+}
+
+fun main() : int {
+   mem s : bar_type;
+   val a = foo(1);
+   return a + foo(2);
+}

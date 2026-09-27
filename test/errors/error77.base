@@ -1,0 +1,4 @@
+The wavetable function 'Error77.wt' has an input of type 'int'. Wavetables require 'real' or 'fix16' on both sides.
+// A wavetable is indexed by a fractional position.
+external wt(position : int) : real @[wavetable(file = "missing.wav", bound_check = false)];
+         ^^

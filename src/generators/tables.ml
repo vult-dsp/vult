@@ -385,29 +385,41 @@ let makeIntAccessBody fname out_type min max input =
   let index = C.eadd index (C.eint (-min)) in
   C.sreturn (C.eindex (C.eid (fname ^ "_table") atype) index out_type)
 
-let getBoundCheckValue t =
-  match t with Some (Tags.Bool v) -> v | None -> true | _ -> failwith "Invalid value of 'bound_check' tag"
+(* The tag parameters also accept type intrinsics such as 'typemax('t)', which have no meaning here. *)
+let getBoundCheckValue (loc : Loc.t) t =
+  match t with
+  | Some (Tags.Bool v) ->
+      v
+  | None ->
+      true
+  | Some _ ->
+      Error.raiseError "The value of 'bound_check' must be 'true' or 'false'." loc
 
-let getOrderValue t =
-  match t with Some (Tags.Int v) -> v | None -> 2 | _ -> failwith "Invalid value of 'bound_check' tag"
+let checkOrderValue (loc : Loc.t) t =
+  match t with
+  | None | Some (Tags.Int (1 | 2)) ->
+      ()
+  | Some _ ->
+      Error.raiseError "The value of 'order' must be 1 or 2." loc
+
+let isFractional (t : type_) = match t.t with TReal | TFix16 -> true | _ -> false
+
+let reportPrecision (loc : Loc.t) (attribute : string) (name : string) (requirement : string) (kind : string) (t : type_)
+    =
+  let msg =
+    Printf.sprintf "The %s function '%s' has %s of type '%s'. %s" attribute name kind
+      (Pla.print (Print.print_type_ t))
+      requirement
+  in
+  Error.raiseError msg loc
 
 (* The interpolating tables store fitted polynomial coefficients and evaluate them on the input,
    so both sides have to be a fractional type. The sampling of an 'int' or 'bool' result would
    otherwise reach the table builder and abort there without a location. *)
-let checkTablePrecision (loc : Loc.t) (name : string) (in_precision : type_) (out_precision : type_) : unit =
-  let isFractional (t : type_) = match t.t with TReal | TFix16 -> true | _ -> false in
-  let report kind (t : type_) =
-    let msg =
-      Printf.sprintf
-        "The table function '%s' has %s of type '%s'. Tables declared with real 'min' and 'max' require 'real' or \
-         'fix16' on both sides."
-        name kind
-        (Pla.print (Print.print_type_ t))
-    in
-    Error.raiseError msg loc
-  in
-  if not (isFractional in_precision) then report "an input" in_precision ;
-  if not (isFractional out_precision) then report "a result" out_precision
+let checkTablePrecision (loc : Loc.t) (attribute : string) (name : string) (requirement : string) (in_precision : type_)
+    (out_precision : type_) : unit =
+  if not (isFractional in_precision) then reportPrecision loc attribute name requirement "an input" in_precision ;
+  if not (isFractional out_precision) then reportPrecision loc attribute name requirement "a result" out_precision
 
 let checkInputParam (loc : Loc.t) (args : param list) : param =
   match args with
@@ -434,14 +446,16 @@ let makeTable vm (def : function_def) =
   let loc = def.loc in
   match Tags.getParameterList def.tags "table" params with
   | Tags.[Some (Int size); Some (Real min); Some (Real max); order; bound_check] -> (
-      let bound_check = getBoundCheckValue bound_check in
+      let bound_check = getBoundCheckValue loc bound_check in
+      let () = checkOrderValue loc order in
       let out_precision = snd def.t in
       let display = displayName def in
       let param = checkInputParam def.loc def.args in
       let var = C.eid param.name param.t in
       let locals = makeLocals param.name in
       let in_precision = var.t in
-      let () = checkTablePrecision def.loc display in_precision out_precision in
+      let requirement = "Tables declared with real 'min' and 'max' require 'real' or 'fix16' on both sides." in
+      let () = checkTablePrecision def.loc "table" display requirement in_precision out_precision in
       match (order, in_precision, out_precision) with
       (* Fixed point defaults to the cheaper linear interpolation; an explicit order = 2
          falls through to the generic quadratic path, which also handles fix16. *)
@@ -570,6 +584,11 @@ let makeWave (args : Args.args) _vm (def : function_def) =
   match Tags.getParameterList def.tags "wave" params with
   | [Some (Int channels); Some (String file)] ->
       let precision = snd def.t in
+      let () =
+        if not (isFractional precision) then
+          reportPrecision def.loc "wave" (displayName def) "Waves require a 'real' or 'fix16' result." "a result"
+            precision
+      in
       let wave = readFile def.loc args.includes file in
       let () = checkNumberOfChannels def.loc channels wave in
       let result = getDeclarations def.loc def.name wave precision in
@@ -605,12 +624,14 @@ let makeWavetable (args : Args.args) _vm (def : function_def) =
   let params = Tags.[("file", TypeString); ("bound_check", TypeBool)] in
   match Tags.getParameterList def.tags "wavetable" params with
   | [Some (String file); bound_check] ->
-      let bound_check = getBoundCheckValue bound_check in
+      let bound_check = getBoundCheckValue def.loc bound_check in
       let out_precision = snd def.t in
       let param = checkInputParam def.loc def.args in
       let var = C.eid param.name param.t in
       let locals = makeLocals param.name in
       let in_precision = var.t in
+      let requirement = "Wavetables require 'real' or 'fix16' on both sides." in
+      let () = checkTablePrecision def.loc "wavetable" (displayName def) requirement in_precision out_precision in
       let wave = readFile def.loc args.includes file in
       let () = checkNumberOfChannels def.loc 1 wave in
       let data = wave.data.(0) in
