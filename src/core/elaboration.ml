@@ -1100,7 +1100,7 @@ module Make (T : TYPECHECKER) = struct
               (* The typechecker gives companion calls a provisional return type: resolve it
                  against the selected companion's actual return type so callers whose types
                  depend on this call (e.g. unannotated wrappers) are fully inferred *)
-              let () = unifyRaise loc (snd companion_def.t) e.t in
+              let () = unifyRaise loc e.t (snd companion_def.t) in
               let final_args =
                 match (companion_def.args, inst_name_opt) with
                 | {name; t= ctx_t; _} :: _, Some inst_name when String.equal name context_name ->

@@ -1412,7 +1412,9 @@ let customInitializer (env : env) tags name = if Ptags.has tags "init" then Env.
 let reportReturnTypeMismatch is_placeholder loc (specified_ret : type_ option) (inferred_ret : type_) =
   match (specified_ret, inferred_ret) with
   | None, {tx= Typed.TENoReturn; _} ->
-      unifyRaise loc (C.noreturn loc) inferred_ret
+      (* A function without return statements returns unit. Fixing it here prevents the first
+         caller from turning it into a function of any type. *)
+      unifyRaise loc (C.unit ~loc) inferred_ret
   | None, _ ->
       ()
   | Some t, {tx= Typed.TENoReturn; _} ->

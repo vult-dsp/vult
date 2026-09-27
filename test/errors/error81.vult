@@ -1,0 +1,14 @@
+// A companion without return statements returns unit and cannot be used as a number.
+fun acc(x : int) : int {
+  mem s;
+  s = s + x;
+  return s;
+}
+and reset() {
+  s = 0;
+}
+
+fun main() {
+  val a = acc(2);
+  return a + reset();
+}

@@ -1,0 +1,4 @@
+This expression has type 'unit' but 'int' was expected
+  val a = acc(2);
+  return a + reset();
+             ^^^^^
