@@ -1,0 +1,14 @@
+// A function declared to return unit does not need a return statement.
+fun count() : unit {
+   mem n : int;
+   n = n + 1;
+}
+and value() : int {
+   return n;
+}
+
+fun main() : int {
+   _ = c:count();
+   _ = c:count();
+   return c:value();
+}

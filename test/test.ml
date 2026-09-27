@@ -203,7 +203,9 @@ let errors_files =
   ; "error81.vult"
   ; "error82.vult"
   ; "error83.vult"
-  ; "error84.vult" ]
+  ; "error84.vult"
+  ; "error85.vult"
+  ; "error86.vult" ]
 
 let template_files =
   [ "sf_f.vult"
@@ -293,7 +295,8 @@ let interpreter =
   ; ("type_intrinsics.vult", 1000)
   ; ("tuple_variables.vult", 4549)
   ; ("long_chains.vult", 42)
-  ; ("companion_type_alias.vult", 3) ]
+  ; ("companion_type_alias.vult", 3)
+  ; ("unit_function.vult", 2) ]
 
 let passes_files =
   [ "split_mem.vult"

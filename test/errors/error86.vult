@@ -1,0 +1,5 @@
+// Every return statement is checked against the declared type.
+fun f(c : bool) : real {
+  if (c) return 1.0;
+  return 2;
+}

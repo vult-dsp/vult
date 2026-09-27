@@ -1,0 +1,4 @@
+This expression has type 'int' but 'real' was expected
+  if (c) return 1.0;
+  return 2;
+         ^

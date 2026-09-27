@@ -1,0 +1,4 @@
+// The return statement that does not match the declared type is reported.
+fun f(x : int) : int {
+  return x, x;
+}

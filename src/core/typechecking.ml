@@ -35,18 +35,20 @@ let constant_context = {Env.in_constant= true; in_generic_arg= false}
 
 let generic_arg_context = {Env.in_constant= false; in_generic_arg= true}
 
-(* Check if a syntax statement contains mem declarations *)
-let rec syntax_has_mem (stmt : Syntax.stmt) : bool =
+(* Check if a syntax statement contains a return statement *)
+let rec syntax_has_return (stmt : Syntax.stmt) : bool =
   match stmt.s with
-  | SStmtMem _ ->
+  | SStmtReturn _ ->
       true
   | SStmtBlock stmts ->
-      CCList.exists syntax_has_mem stmts
+      CCList.exists syntax_has_return stmts
   | SStmtIf (_, then_stmt, else_opt) ->
-      syntax_has_mem then_stmt || Option.fold ~none:false ~some:syntax_has_mem else_opt
-  | SStmtWhile (_, body) ->
-      syntax_has_mem body
-  | _ ->
+      syntax_has_return then_stmt || Option.fold ~none:false ~some:syntax_has_return else_opt
+  | SStmtWhile (_, body) | SStmtIter {body; _} ->
+      syntax_has_return body
+  | SStmtMatch {first_case; other_cases; _} ->
+      CCList.exists (fun (_, case) -> syntax_has_return case) (first_case :: other_cases)
+  | SStmtError | SStmtVal _ | SStmtMem _ | SStmtBind _ ->
       false
 
 let pickLoc (t1 : type_) (t2 : type_) : unit =
@@ -1375,30 +1377,32 @@ let isPdRoot (args : Args.args) tags =
 
 let customInitializer (env : env) tags name = if Ptags.has tags "init" then Env.addCustomInitFunction env name else env
 
-let reportReturnTypeMismatch is_placeholder loc (specified_ret : type_ option) (inferred_ret : type_) =
-  match (specified_ret, inferred_ret) with
+(* The type the return statements of a function are checked against: the declared one, so that a
+   mismatch is reported at the return statement, or a placeholder inferred from them *)
+let bodyReturnType (specified_ret : type_ option) (loc : Loc.t) : type_ =
+  match specified_ret with Some t -> t | None -> C.noreturn loc
+
+let reportReturnTypeMismatch is_placeholder loc (specified_ret : type_ option) (body : Syntax.stmt) (ret : type_) =
+  match (specified_ret, ret) with
   | None, {tx= Typed.TENoReturn; _} ->
       (* A function without return statements returns unit. Fixing it here prevents the first
          caller from turning it into a function of any type. *)
-      unifyRaise loc (C.unit ~loc) inferred_ret
+      unifyRaise loc (C.unit ~loc) ret
   | None, _ ->
       ()
-  | Some t, {tx= Typed.TENoReturn; _} ->
-      (* If the function is a placeholder it will not have body, then the inferred type will be unbound.
-       In this case we need to unify the specified and the inferred. *)
-      if is_placeholder then unifyRaise loc t inferred_ret
-      else
+  | Some t, _ ->
+      (* A placeholder function has no body to return from, and a unit function has nothing to return *)
+      let returns_unit = match (unlink t).tx with TEId {id= "unit"; n= None; _} -> true | _ -> false in
+      if (not is_placeholder) && (not returns_unit) && not (syntax_has_return body) then
         let t = Pla.print (print_type_ t) in
         Error.raiseError ("This function is expected to have type '" ^ t ^ "' but nothing was returned.") loc
-  | Some t1, t2 ->
-      unifyRaise loc t1 t2
 
 let rec function_def (iargs : Args.args) (env : env) (def : Syntax.function_def) : env * (function_def * stmt) =
   let specified_ret = getReturnType env def.t in
-  let inferred_ret = C.noreturn def.loc in
+  let ret = bodyReturnType specified_ret def.loc in
   let args = convertArguments env def.args in
-  let env, path, t = Env.enterFunction env def.name args inferred_ret def.loc in
-  let env, body = stmt env inferred_ret def.body in
+  let env, path, t = Env.enterFunction env def.name args ret def.loc in
+  let env, body = stmt env ret def.body in
   let env = Env.exitFunction env in
   let next = addGeneratedFunctions def.tags def.name def.next in
   let env, next = function_def_opt iargs env next in
@@ -1406,7 +1410,7 @@ let rec function_def (iargs : Args.args) (env : env) (def : Syntax.function_def)
   let env = customInitializer env def.tags path in
   let is_root = isRoot iargs path || isPdRoot iargs def.tags in
   let is_placeholder = Ptags.has def.tags "placeholder" in
-  let () = reportReturnTypeMismatch is_placeholder def.loc specified_ret inferred_ret in
+  let () = reportReturnTypeMismatch is_placeholder def.loc specified_ret def.body ret in
   (env, ({name= path; args; t; loc= def.loc; tags= def.tags; next; is_root}, stmt_block body))
 
 and function_def_opt (iargs : Args.args) (env : env) def_opt =
