@@ -31,4 +31,4 @@ test: test_serialization
 	./test_serialization
 
 clean:
-	rm -f *.o test_serialization test_serialization.cpp test_serialization.h test_serialization.tables.h vultin.cpp vultin.hpp
+	rm -f *.o test_serialization test_serialization.cpp test_serialization.h test_serialization.tables.h vultin.cpp vultin*.hpp

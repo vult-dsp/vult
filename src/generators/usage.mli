@@ -50,7 +50,9 @@ val fileDependencies : (string * Core.Prog.prog) list -> (string * file_deps) li
     final program (source-level imports are not reliable: elaboration can
     place code in a module that refers to types of its callers). *)
 
-(** Optional features of the C++ runtime (vultin). *)
+(** Optional features of the C++ runtime (vultin). The fixed-point math and
+    the random numbers are part of [vultin.cpp]; every other feature has its
+    own header. *)
 type features =
   { fix16_math: bool  (** Fixed-point transcendental functions: [fix_sin], [fix_exp], etc. *)
   ; random: bool  (** Random number generators: [float_random], [fix_random], [int_random] *)
@@ -63,9 +65,15 @@ val detect : Core.Prog.prog -> features
 (** Scans the final program (after replacements have been applied) and reports
     which C++ runtime features the generated code uses. *)
 
+val runtimeIncludes : features -> Pla.t
+(** The [#include] lines for the runtime headers a generated header needs:
+    [vultin.hpp] always, plus the header of every feature built on the C++
+    standard library ([vultin_string.hpp], [vultin_tuple.hpp],
+    [vultin_list.hpp], [vultin_serialization.hpp]) that its code uses. *)
+
 val runtimeRequirements : string -> features -> Pla.t
 (** [runtimeRequirements file features] is a preprocessor block with one
-    [#error] for every feature the code of [file] needs, guarded by the
-    matching [VULT_NO_*] macro. It is placed at the top of the generated
-    header so that trimming the runtime with [-DVULT_NO_*] fails with one
-    readable line instead of a wall of errors from the standard library. *)
+    [#error] for every feature of [vultin.cpp] (fixed-point math, random
+    numbers) the code of [file] needs, guarded by the matching [VULT_NO_*]
+    macro, so that leaving it out is reported with one readable line instead
+    of an undefined symbol at link time. *)

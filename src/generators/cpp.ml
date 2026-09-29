@@ -632,11 +632,12 @@ let getLegend (args : Util.Args.args) =
 (* Emits the vultin files matching the compiler version. Skipped when printing
    to stdout.
 
-   The runtime is emitted complete: vultin.hpp has a fixed name and is shared
-   by every program generated into the same directory (or reachable through
-   the include path), so it cannot be specialized for one of them. A build
-   that wants a smaller runtime trims it with -DVULT_NO_*; the generated
-   headers state which features they need so a wrong choice is reported. *)
+   Every runtime file is emitted, unchanged: they have fixed names and are
+   shared by every program generated into the same directory (or reachable
+   through the include path), so they cannot be specialized for one of them.
+   A program pays only for what it uses because the features built on the C++
+   standard library are in separate headers that its generated headers
+   include only when needed ([Usage.runtimeIncludes]). *)
 let vultinFiles (args : Util.Args.args) =
   match args.output with
   | None ->
@@ -644,11 +645,11 @@ let vultinFiles (args : Util.Args.args) =
   | Some file ->
       let dir = Filename.dirname file in
       let legend = Common.legend in
-      let hpp_body = Pla.string Vultin_embedded.hpp in
-      let cpp_body = Pla.string Vultin_embedded.cpp in
-      let hpp = {%pla|<#legend#><#><#hpp_body#>|} in
-      let cpp = {%pla|<#legend#><#><#cpp_body#>|} in
-      [(hpp, Filename.concat dir "vultin.hpp"); (cpp, Filename.concat dir "vultin.cpp")]
+      CCList.map
+        (fun (name, contents) ->
+          let body = Pla.string contents in
+          ({%pla|<#legend#><#><#body#>|}, Filename.concat dir name) )
+        Vultin_embedded.files
 
 let generateSplit (args : Util.Args.args) template (stmts : top_stmt list) =
   let legend = getLegend args in
@@ -687,8 +688,10 @@ let generateSplit (args : Util.Args.args) template (stmts : top_stmt list) =
     let impl_includes = makeIncludes deps.body in
     let header =
       let ifdef, endif = makeIfdef header_file in
-      let requires = Usage.runtimeRequirements header_file_base (Usage.detect stmts) in
-      {%pla|<#legend#><#ifdef#><#>#include "vultin.hpp"<#><#header_includes#><#><#requires#><#><#header#><#endif#>|}
+      let features = Usage.detect stmts in
+      let runtime_includes = Usage.runtimeIncludes features in
+      let requires = Usage.runtimeRequirements header_file_base features in
+      {%pla|<#legend#><#ifdef#><#><#runtime_includes#><#><#header_includes#><#><#requires#><#><#header#><#endif#>|}
     in
     let impl =
       {%pla|<#legend#><#><#>#include "<#header_file_base#s>"<#><#impl_includes#><#><#tables#><#><#><#impl#>|}
@@ -735,8 +738,10 @@ let generateSingle (args : Util.Args.args) template (stmts : top_stmt list) =
   let tables_file_base = Filename.basename tables_file in
   let header =
     let ifdef, endif = makeIfdef header_file in
-    let requires = Usage.runtimeRequirements header_file_base (Usage.detect stmts) in
-    {%pla|<#legend#><#ifdef#><#>#include "vultin.hpp"<#>#include "<#tables_file_base#s>"<#><#requires#><#><#header#><#endif#>|}
+    let features = Usage.detect stmts in
+    let runtime_includes = Usage.runtimeIncludes features in
+    let requires = Usage.runtimeRequirements header_file_base features in
+    {%pla|<#legend#><#ifdef#><#><#runtime_includes#><#>#include "<#tables_file_base#s>"<#><#requires#><#><#header#><#endif#>|}
   in
   let impl = {%pla|<#legend#><#><#>#include "<#header_file_base#s>"<#><#><#impl#>|} in
   let tables =

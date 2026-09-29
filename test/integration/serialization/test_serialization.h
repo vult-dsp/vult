@@ -3,17 +3,10 @@
 #define TEST_SERIALIZATION_H
 
 #include "vultin.hpp"
+#include "vultin_string.hpp"
+#include "vultin_list.hpp"
+#include "vultin_serialization.hpp"
 #include "test_serialization.tables.h"
-/* Runtime features this file needs from vultin.hpp. */
-#ifdef VULT_NO_SERIALIZATION
-#error "test_serialization.h uses serialization: it cannot be compiled with VULT_NO_SERIALIZATION"
-#endif
-#ifdef VULT_NO_STRING
-#error "test_serialization.h uses strings: it cannot be compiled with VULT_NO_STRING"
-#endif
-#ifdef VULT_NO_LIST
-#error "test_serialization.h uses lists: it cannot be compiled with VULT_NO_LIST"
-#endif
 
 typedef struct Test_serialization_point {
    float x;

@@ -32,16 +32,35 @@
 
 (rule
  (targets vultin_embedded.ml)
- (deps ../../runtime/vultin.hpp ../../runtime/vultin.cpp)
+ (deps
+  ../../runtime/vultin.hpp
+  ../../runtime/vultin.cpp
+  ../../runtime/vultin_string.hpp
+  ../../runtime/vultin_tuple.hpp
+  ../../runtime/vultin_list.hpp
+  ../../runtime/vultin_serialization.hpp)
  (action
   (with-stdout-to
    vultin_embedded.ml
    (progn
     (echo
-     "(* Generated from the files in the runtime directory. Do not edit. *)\n")
-    (echo "let hpp =\n  {vultin_embedded|")
+     "(* Generated from the files in the runtime directory. Do not edit. *)\n\n")
+    (echo "(* The runtime files as (file name, contents). *)\nlet files =\n")
+    (echo "  [ ( \"vultin.hpp\"\n    , {vultin_embedded|")
     (cat ../../runtime/vultin.hpp)
-    (echo "|vultin_embedded}\n\n")
-    (echo "let cpp =\n  {vultin_embedded|")
+    (echo "|vultin_embedded} )\n")
+    (echo "  ; ( \"vultin.cpp\"\n    , {vultin_embedded|")
     (cat ../../runtime/vultin.cpp)
-    (echo "|vultin_embedded}\n")))))
+    (echo "|vultin_embedded} )\n")
+    (echo "  ; ( \"vultin_string.hpp\"\n    , {vultin_embedded|")
+    (cat ../../runtime/vultin_string.hpp)
+    (echo "|vultin_embedded} )\n")
+    (echo "  ; ( \"vultin_tuple.hpp\"\n    , {vultin_embedded|")
+    (cat ../../runtime/vultin_tuple.hpp)
+    (echo "|vultin_embedded} )\n")
+    (echo "  ; ( \"vultin_list.hpp\"\n    , {vultin_embedded|")
+    (cat ../../runtime/vultin_list.hpp)
+    (echo "|vultin_embedded} )\n")
+    (echo "  ; ( \"vultin_serialization.hpp\"\n    , {vultin_embedded|")
+    (cat ../../runtime/vultin_serialization.hpp)
+    (echo "|vultin_embedded} ) ]\n")))))

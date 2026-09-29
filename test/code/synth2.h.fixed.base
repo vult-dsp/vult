@@ -4,7 +4,7 @@
 
 #include "vultin.hpp"
 #include "synth2.tables.h"
-/* Runtime features this file needs from vultin.hpp. */
+/* Runtime features this file needs from vultin.cpp. */
 #ifdef VULT_NO_FIX16_MATH
 #error "synth2.h uses fixed-point math functions: it cannot be compiled with VULT_NO_FIX16_MATH"
 #endif

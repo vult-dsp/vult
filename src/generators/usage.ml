@@ -313,9 +313,25 @@ let detect (prog : prog) : features =
   ; tuples= !tuples
   ; lists= !lists }
 
-(* The runtime features are enabled by default in vultin.hpp; a build can trim
-   it with -DVULT_NO_*. The generated headers record which features their code
-   needs so that a mismatch is reported here and not by the standard library. *)
+(* The features built on the C++ standard library live in their own runtime
+   headers so that a program that does not use them never includes (or links)
+   <string>, <tuple> or <vector>. *)
+let runtimeIncludes (f : features) : Pla.t =
+  let headers =
+    CCList.filter_map
+      (fun (used, header) -> if used then Some header else None)
+      [ (true, "vultin.hpp")
+      ; (f.strings, "vultin_string.hpp")
+      ; (f.tuples, "vultin_tuple.hpp")
+      ; (f.lists, "vultin_list.hpp")
+      ; (f.serialization, "vultin_serialization.hpp") ]
+  in
+  Pla.map_sep Pla.newline (fun header -> {%pla|#include "<#header#s>"|}) headers
+
+(* The fixed-point math and the random numbers are implemented in vultin.cpp
+   and a build can leave them out with -DVULT_NO_*. The generated headers record
+   which of them their code needs so that a mismatch is reported here and not
+   as an undefined symbol at link time. *)
 let runtimeRequirements (file : string) (f : features) : Pla.t =
   let require flag feature used =
     if not used then None
@@ -327,15 +343,11 @@ let runtimeRequirements (file : string) (f : features) : Pla.t =
   let requirements =
     CCList.filter_map
       (fun x -> x)
-      [ require "VULT_NO_SERIALIZATION" "serialization" f.serialization
-      ; require "VULT_NO_STRING" "strings" f.strings
-      ; require "VULT_NO_FIX16_MATH" "fixed-point math functions" f.fix16_math
-      ; require "VULT_NO_RANDOM" "random numbers" f.random
-      ; require "VULT_NO_TUPLE" "tuples" f.tuples
-      ; require "VULT_NO_LIST" "lists" f.lists ]
+      [ require "VULT_NO_FIX16_MATH" "fixed-point math functions" f.fix16_math
+      ; require "VULT_NO_RANDOM" "random numbers" f.random ]
   in
   if CCList.is_empty requirements then Pla.unit
   else
     let requirements = Pla.join requirements in
-    {%pla|/* Runtime features this file needs from vultin.hpp. */
+    {%pla|/* Runtime features this file needs from vultin.cpp. */
 <#requirements#>|}

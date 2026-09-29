@@ -3,11 +3,8 @@
 #define CONSTANTS_H
 
 #include "vultin.hpp"
+#include "vultin_string.hpp"
 #include "Constants.tables.h"
-/* Runtime features this file needs from vultin.hpp. */
-#ifdef VULT_NO_STRING
-#error "Constants.h uses strings: it cannot be compiled with VULT_NO_STRING"
-#endif
 
 static_inline void Constants_foo() {
 }

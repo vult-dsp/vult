@@ -3,11 +3,8 @@
 #define TUPLE_VARIABLES_H
 
 #include "vultin.hpp"
+#include "vultin_tuple.hpp"
 #include "tuple_variables.tables.h"
-/* Runtime features this file needs from vultin.hpp. */
-#ifdef VULT_NO_TUPLE
-#error "tuple_variables.h uses tuples: it cannot be compiled with VULT_NO_TUPLE"
-#endif
 
 typedef struct Tuple_variables_pair_type {
    int32_t Tuple_variables_pair_ret_0;

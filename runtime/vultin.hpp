@@ -31,46 +31,26 @@ NOTE: The code for the fixed-point operations is based on the project:
 #ifndef VULTIN_H
 #define VULTIN_H
 
-/* Every runtime feature is enabled by default. A build that needs a smaller
-   runtime (an embedded target, typically) can leave out the features its
-   programs do not use by defining the matching VULT_NO_* macro in its compile
-   flags. The generated headers state which features they need, so removing
-   one that is still in use is reported as an error instead of failing deep
-   inside the standard library.
+/* This is the core of the runtime: it depends only on the C library and
+   <array>, so it does not allocate. The optional features live in their own
+   headers (vultin_string.hpp, vultin_tuple.hpp, vultin_list.hpp and
+   vultin_serialization.hpp), which the generated headers include only when
+   their code uses them. Every generated copy of these files is identical, so
+   programs sharing a directory also share them.
 
-   VULT_FULL_RUNTIME cancels every VULT_NO_* macro. */
+   The fixed-point math functions and the random number generators are
+   implemented in vultin.cpp; a build can leave them out by defining
+   VULT_NO_FIX16_MATH or VULT_NO_RANDOM. VULT_FULL_RUNTIME cancels both. */
 
 #ifdef VULT_FULL_RUNTIME
-#undef VULT_NO_SERIALIZATION
-#undef VULT_NO_STRING
 #undef VULT_NO_FIX16_MATH
 #undef VULT_NO_RANDOM
-#undef VULT_NO_TUPLE
-#undef VULT_NO_LIST
-#endif
-
-/* The serialization format stores type and field names, so leaving out the
-   strings leaves out the serialization with them. */
-#ifdef VULT_NO_STRING
-#define VULT_NO_SERIALIZATION
 #endif
 
 #include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <array>
-
-#ifndef VULT_NO_TUPLE
-#include <tuple>
-#endif
-
-#ifndef VULT_NO_STRING
-#include <string>
-#endif
-
-#if !defined(VULT_NO_SERIALIZATION) || !defined(VULT_NO_LIST)
-#include <vector>
-#endif
 
 #ifdef _MSC_VER
 #define static_inline static __inline
@@ -98,17 +78,6 @@ static_inline fix16_t float_to_fix(float a) {
   return (fix16_t)temp;
 }
 static_inline bool float_to_bool(float a) { return a != 0.0f; }
-
-#ifndef VULT_NO_STRING
-static_inline std::string fix_to_string(fix16_t a) { return std::to_string(fix_to_float(a)); }
-
-static_inline std::string bool_to_string(bool a) {
-  if (a)
-    return std::string("true");
-  else
-    return std::string("false");
-}
-#endif // VULT_NO_STRING
 
 static_inline float int_to_float(int a) { return (float)a; }
 
@@ -143,9 +112,6 @@ static_inline int int16_to_int(int16_t a) { return (int)a; }
 static_inline float int16_to_float(int16_t a) { return (float)a; }
 static_inline bool int16_to_bool(int16_t a) { return a != 0; }
 static_inline fix16_t int16_to_fix(int16_t a) { return int_to_fix((int)a); }
-#ifndef VULT_NO_STRING
-static_inline std::string int16_to_string(int16_t a) { return std::to_string(a); }
-#endif // VULT_NO_STRING
 
 // Int16 arithmetic operations with clamping
 static_inline int16_t int16_add(int16_t a, int16_t b) { return int_to_int16((int)a + (int)b); }
@@ -240,148 +206,5 @@ float float_random();
 fix16_t fix_random();
 int int_random();
 #endif // VULT_NO_RANDOM
-
-#ifndef VULT_NO_SERIALIZATION
-
-/* Serialization */
-
-static const uint8_t TYPE_TAG = 't';
-static const uint8_t BLOCK_TAG = 'b';
-static const uint8_t STRING_TAG = 's';
-static const uint8_t FLOAT_TAG = 'f';
-static const uint8_t SMALL_INT_TAG = 'i';
-static const uint8_t INT_TAG = 'I';
-static const uint8_t ARRAY_TAG = 'a';
-
-typedef struct CustomBuffer {
-  std::vector<uint8_t> data;
-  bool calculate_size;
-  bool error;
-} CustomBuffer;
-
-typedef struct CustomTypeDescr {
-  int32_t position;
-} CustomTypeDescr;
-
-// Safe type conversion unions to avoid type punning
-union float_bytes_union {
-  float f;
-  uint8_t bytes[4];
-};
-
-union int32_bytes_union {
-  int32_t i;
-  uint8_t bytes[4];
-};
-
-union uint32_bytes_union {
-  uint32_t u;
-  uint8_t bytes[4];
-};
-
-union int8_bytes_union {
-  int8_t i;
-  uint8_t byte;
-};
-
-int32_t search_field_name(CustomBuffer &buffer, CustomTypeDescr &descr, int32_t index, std::string name);
-
-void update_size(CustomBuffer &buffer, int32_t index, int32_t size);
-
-int32_t push_block_header(CustomBuffer &buffer, int32_t index);
-
-int32_t push_header(CustomBuffer &buffer, int32_t index, uint8_t tag);
-
-int32_t push_float(CustomBuffer &buffer, int32_t index, float value);
-
-int32_t push_int(CustomBuffer &buffer, int32_t index, int32_t value);
-
-int32_t push_string(CustomBuffer &buffer, int32_t index, const std::string &str);
-
-int32_t push_array(CustomBuffer &buffer, int32_t index, int32_t size);
-
-int32_t get_field(CustomBuffer &buffer, int32_t object, int32_t field);
-
-bool match_string(CustomBuffer &buffer, int32_t index, std::string &name);
-
-int32_t next_object(CustomBuffer &buffer, int32_t index);
-
-template <std::size_t SIZE>
-int32_t serialize_type_descr(CustomBuffer &buffer, int32_t index, const std::string &str,
-                             std::array<std::string, SIZE> &fields) {
-  int32_t start = index;
-  index = push_header(buffer, index, TYPE_TAG);
-  index = push_string(buffer, index, str);
-  int32_t array_start = index;
-  index = push_array(buffer, index, (int32_t)fields.size());
-  for (size_t i = 0; i < fields.size(); i++) {
-    index = push_string(buffer, index, fields[i]);
-  }
-  update_size(buffer, array_start, index - array_start);
-  update_size(buffer, start, index - start);
-  return index;
-}
-
-CustomTypeDescr search_type_description(CustomBuffer &buffer, std::string name);
-
-int32_t deserialize_int(CustomBuffer &buffer, int32_t index);
-
-float deserialize_float(CustomBuffer &buffer, int32_t index);
-
-std::string deserialize_string(CustomBuffer &buffer, int32_t index);
-
-int32_t goto_data(CustomBuffer &buffer);
-
-int32_t first_array_element(CustomBuffer &buffer, int32_t index);
-
-int32_t get_array_count(CustomBuffer &buffer, int32_t index);
-
-template <std::size_t SIZE, typename DATA>
-void serialize_data(CustomBuffer &buffer,
-                    int32_t (*serialize_type_descr_function)(CustomBuffer &, int32_t, std::array<bool, SIZE> &),
-                    int32_t (*serialize_data_function)(CustomBuffer &, int32_t, const DATA &), const DATA &data) {
-  buffer.data.resize(0);
-  // First we run the serializer without actually attaching data.
-  // This is done to calculate the size of buffer needed.
-  buffer.calculate_size = true;
-  // This is an array that where we mark if a type description has been serialized
-  std::array<bool, SIZE> marks;
-  // initially nothing has been serialized
-  marks.fill(false);
-  // The serializers are ran in order to calculate the size.
-  int32_t index = serialize_type_descr_function(buffer, 0, marks);
-  index = serialize_data_function(buffer, index, data);
-  // TODO: calculate the checksum
-  // Once we know the size, the buffer is allocated
-  buffer.data.reserve((size_t)index);
-  // next we are going to actually write data to the buffer
-  buffer.calculate_size = false;
-  // all marks are reset to false
-  marks.fill(false);
-  // Finally the data is written to the buffer.
-  index = serialize_type_descr_function(buffer, 0, marks);
-  index = serialize_data_function(buffer, index, data);
-}
-
-template <typename DATA>
-void deserialize_data(CustomBuffer &buffer, void (*deserializer)(CustomBuffer &, CustomTypeDescr &, int32_t, DATA &),
-                      std::string type_name, DATA &data) {
-
-  buffer.error = false;
-  buffer.calculate_size = false;
-  // search the information about the type
-  CustomTypeDescr descr = search_type_description(buffer, type_name);
-
-  if (descr.position < 0) {
-    buffer.error = true;
-    return;
-  }
-  // skip the type descriptions
-  int32_t data_index = goto_data(buffer);
-  // call the deserializer
-  deserializer(buffer, descr, data_index, data);
-}
-
-#endif // VULT_NO_SERIALIZATION
 
 #endif // VULTIN_H

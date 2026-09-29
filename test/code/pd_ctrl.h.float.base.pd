@@ -3,11 +3,8 @@
 #define PD_CTRL_H
 
 #include "vultin.hpp"
+#include "vultin_string.hpp"
 #include "pd_ctrl.tables.h"
-/* Runtime features this file needs from vultin.hpp. */
-#ifdef VULT_NO_STRING
-#error "pd_ctrl.h uses strings: it cannot be compiled with VULT_NO_STRING"
-#endif
 
 
  #include <stdint.h>
