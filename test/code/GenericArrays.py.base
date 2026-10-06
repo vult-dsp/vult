@@ -1,0 +1,18 @@
+
+def GenericArrays_sum(data):
+   total = 0.0
+   i__1 = 0
+   while (i__1 < size(data)):
+      total = (total + data[i__1])
+      i__1 = (1 + i__1)
+
+   return total
+
+
+def GenericArrays_test1():
+   data1 = [1.0, 2.0, 3.0]
+   data2 = [1.0, 2.0, 3.0, 4.0]
+   _ = GenericArrays_sum(data1)
+   _ = GenericArrays_sum(data2)
+
+

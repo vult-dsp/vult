@@ -1,0 +1,163 @@
+import math
+
+# Runtime functions
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+class Short_delay_soft_type:
+    __slots__ = ['x2', 'x3', 'x4']
+    def __init__(self, x2=0.0, x3=0.0, x4=0.0):
+        self.x2 = x2
+        self.x3 = x3
+        self.x4 = x4
+
+class Short_delay_do_type:
+    __slots__ = ['buffer', 'write_pos']
+    def __init__(self, buffer=[0.0] * 22050, write_pos=0):
+        self.buffer = buffer
+        self.write_pos = write_pos
+
+class Short_delay_process_type:
+    __slots__ = ['inst_1593b', 'inst_2ba3b']
+    def __init__(self, inst_1593b=Short_delay_soft_type(), inst_2ba3b=Short_delay_do_type()):
+        self.inst_1593b = inst_1593b
+        self.inst_2ba3b = inst_2ba3b
+
+def Short_delay_soft_type_alloc():
+   _ctx = Short_delay_soft_type()
+   _ctx.x2 = 0.0
+   _ctx.x3 = 0.0
+   _ctx.x4 = 0.0
+   return _ctx
+
+
+def Short_delay_do_type_alloc():
+   i_0 = 0
+   temp_1 = initializeArray(0.0, 22050)
+   _ctx = Short_delay_do_type()
+   while (i_0 < 22050):
+      temp_1[i_0] = 0.0
+      i_0 = (1 + i_0)
+
+   _ctx.buffer = temp_1
+   _ctx.write_pos = 0
+   return _ctx
+
+
+def Short_delay_process_type_alloc():
+   _ctx = Short_delay_process_type()
+   _ctx.inst_1593b = Short_delay_soft_type_alloc()
+   _ctx.inst_2ba3b = Short_delay_do_type_alloc()
+   return _ctx
+
+
+def Short_delay_noteOn_type_alloc(_ctx):
+   return Short_delay_process_type_alloc()
+
+def Short_delay_noteOff_type_alloc(_ctx):
+   return Short_delay_process_type_alloc()
+
+def Short_delay_controlChange_type_alloc(_ctx):
+   return Short_delay_process_type_alloc()
+
+def Short_delay_default_type_alloc(_ctx):
+   return Short_delay_process_type_alloc()
+
+Saturate_tanh_table_c = {}
+def Saturate_tanh_table_raw_c0(index):
+   return Saturate_tanh_table_c[(index * 3)]
+
+def Saturate_tanh_table_raw_c1(index):
+   return Saturate_tanh_table_c[((index * 3) + 1)]
+
+def Saturate_tanh_table_raw_c2(index):
+   return Saturate_tanh_table_c[((index * 3) + 2)]
+
+def Saturate_tanh_table(x):
+   value = ((((-24.0) if (x) < (-24.0) else ((24.0) if (x) > (24.0) else (x))) + 24.0) * 5.020833)
+   cell = ((0) if (float_to_int(value)) < (0) else ((240) if (float_to_int(value)) > (240) else (float_to_int(value))))
+   u = (value - float(cell))
+   index = (cell * 3)
+   return (Saturate_tanh_table_c[index] + (u * (Saturate_tanh_table_c[(index + 1)] + (Saturate_tanh_table_c[(index + 2)] * u))))
+
+
+def Saturate_process(x):
+   return Saturate_tanh_table(x)
+
+def Saturate_noteOn(note, velocity, channel):
+   pass
+
+def Saturate_noteOff(note, channel):
+   pass
+
+def Saturate_controlChange(control, value, channel):
+   pass
+
+def Saturate_default():
+   pass
+
+def Short_delay_soft(_ctx, x1):
+   o = (0.25 * (x1 + (_ctx.x2 + (_ctx.x3 + _ctx.x4))))
+   _ctx.x4 = _ctx.x3
+   _ctx.x3 = _ctx.x2
+   _ctx.x2 = x1
+   return o
+
+
+def Short_delay_do(_ctx, x, time_in, feedback_in):
+   time = ((0.0) if (time_in) < (0.0) else ((1.0) if (time_in) > (1.0) else (time_in)))
+   feedback = ((0.0) if (feedback_in) < (0.0) else ((1.0) if (feedback_in) > (1.0) else (feedback_in)))
+   index_r = (22050.0 * time)
+   index_i = int(index_r)
+   delta = ((-index_i) + _ctx.write_pos)
+   read_pos = 0
+   if (delta < 0):
+      read_pos = (22050 + delta)
+   else:
+      read_pos = delta
+   decimal = (index_r + (-float(index_i)))
+   x1 = _ctx.buffer[read_pos]
+   _wrap_temp_0 = (1 + read_pos)
+   x2 = 0.0
+   if (_wrap_temp_0 >= 22050):
+      if (_wrap_temp_0 == 22050):
+         _wrap_temp_0 = 0
+      else:
+         _wrap_temp_0 = (_wrap_temp_0 % 22050)
+   else:
+      if (_wrap_temp_0 <= -22050):
+         _wrap_temp_0 = (_wrap_temp_0 % 22050)
+   x2 = _ctx.buffer[_wrap_temp_0]
+   ret = (x1 + (decimal * (x2 + (-x1))))
+   _ctx.write_pos = (1 + _ctx.write_pos)
+   if (_ctx.write_pos >= 22050):
+      if (_ctx.write_pos == 22050):
+         _ctx.write_pos = 0
+      else:
+         _ctx.write_pos = (_ctx.write_pos % 22050)
+   else:
+      if (_ctx.write_pos <= -22050):
+         _ctx.write_pos = (_ctx.write_pos % 22050)
+   _ctx.buffer[_ctx.write_pos] = Saturate_process((x + (feedback * ret)))
+   return ret
+
+
+def Short_delay_process(_ctx, x, time, feedback):
+   return Short_delay_do(_ctx.inst_2ba3b, x, Short_delay_soft(_ctx.inst_1593b, time), feedback)
+
+def Short_delay_noteOn(_ctx, note, velocity, channel):
+   pass
+
+def Short_delay_noteOff(_ctx, note, channel):
+   pass
+
+def Short_delay_controlChange(_ctx, control, value, channel):
+   pass
+
+def Short_delay_default(_ctx):
+   pass
+

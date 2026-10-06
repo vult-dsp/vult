@@ -24,207 +24,164 @@
 
 open Prog
 open Util.Maps
+open Analysis
 
 type data =
-  { repeat : bool
-  ; ticks : (string, int) Hashtbl.t
-  ; function_deps : Set.t Map.t
-  ; type_deps : Set.t Map.t
-  }
+  { repeat: bool
+  ; ticks: (string, int) Hashtbl.t
+  ; function_deps: Set.t Map.t
+  ; type_deps: Set.t Map.t
+  ; constants: exp Map.t }
 
 type env =
-  { in_if_exp : bool
-  ; in_function : bool
-  ; bound_if : bool
-  ; bound_call : bool
-  ; bound_array : bool
-  ; bound_record : bool
-  ; current_function : function_def option
-  ; current_type : struct_descr option
-  ; args : Util.Args.args
-  }
-
-type enabled_disabled =
-  | Enabled
-  | Disabled
+  { in_if_exp: bool
+  ; in_function: bool
+  ; bound_if: bool
+  ; bound_call: bool
+  ; bound_array: bool
+  ; bound_record: bool
+  ; current_function: function_def option
+  ; current_type: struct_descr option
+  ; args: Util.Args.args }
 
 let default_data () : data =
-  { repeat = false; ticks = Hashtbl.create 16; function_deps = Map.empty; type_deps = Map.empty }
-
+  {repeat= false; ticks= Hashtbl.create 16; function_deps= Map.empty; type_deps= Map.empty; constants= Map.empty}
 
 let default_env args : env =
   { args
-  ; in_if_exp = false
-  ; in_function = false
-  ; bound_if = false
-  ; current_function = None
-  ; bound_call = false
-  ; bound_array = false
-  ; bound_record = false
-  ; current_type = None
-  }
-
+  ; in_if_exp= false
+  ; in_function= false
+  ; bound_if= false
+  ; current_function= None
+  ; bound_call= false
+  ; bound_array= false
+  ; bound_record= false
+  ; current_type= None }
 
 let reapply (state : data Mapper.state) =
   let data = Mapper.getData state in
-  Mapper.setData state { data with repeat = true }
-
+  Mapper.setData state {data with repeat= true}
 
 let currentFunction env =
   match env.current_function with
-  | None -> failwith "not in a function"
-  | Some { name; args = { name = ctx; t; _ } :: _; _ } -> name, ctx, t
-  | Some _ -> failwith "function has no context"
-
-
-let isValue (e : exp) =
-  match e.e with
-  | EReal _ | EInt _ | EBool _ | EFixed _ -> true
-  | _ -> false
-
-
-let getTick (env : env) (state : data Mapper.state) =
-  let name =
-    match env.current_function with
-    | None -> ""
-    | Some def -> def.name
-  in
-  let data = Mapper.getData state in
-  match Hashtbl.find_opt data.ticks name with
   | None ->
-    Hashtbl.add data.ticks name 1;
-    0
-  | Some n ->
-    Hashtbl.replace data.ticks name (n + 1);
-    n
+      failwith "not in a function"
+  | Some {name; args= {name= ctx; t; _} :: _; _} ->
+      (name, ctx, t)
+  | Some _ ->
+      failwith "function has no context"
 
+let isValue (e : exp) = match e.e with EReal _ | EInt _ | EBool _ | EFixed _ -> true | _ -> false
 
-module CollectDependencies = struct
-  let initializeDeps map name =
-    let set =
-      match Map.find_opt name map with
-      | None -> Set.empty
-      | Some set -> set
-    in
-    Map.add name set map
+module ConstantPropagation = struct
+  let isLiteral (e : exp) : bool =
+    match e.e with EReal _ | EInt _ | EBool _ | EFixed _ | EString _ -> true | _ -> false
 
-
-  let addFunctionDep (state : data Mapper.state) name dep =
-    let data = Mapper.getData state in
-    let set =
-      match Map.find_opt name data.function_deps with
-      | None -> Set.empty
-      | Some set -> set
-    in
-    let set = Set.add dep set in
-    let function_deps = Map.add name set data.function_deps in
-    let data = { data with function_deps } in
-    Mapper.setData state data
-
-
-  let addTypeDep (state : data Mapper.state) name dep =
-    let data = Mapper.getData state in
-    let set =
-      match Map.find_opt name data.type_deps with
-      | None -> Set.empty
-      | Some set -> set
-    in
-    let set = Set.add dep set in
-    let type_deps = Map.add name set data.type_deps in
-    let data = { data with type_deps } in
-    Mapper.setData state data
-
+  let top_stmt =
+    Mapper.makeExpander
+    @@ fun _env state (top : top_stmt) ->
+    match top with
+    | {top= TopConstant (name, _, _, e, _); _} when isLiteral e ->
+        let data = Mapper.getData state in
+        let constants = Map.add name e data.constants in
+        let state = Mapper.setData state {data with constants} in
+        (state, [top])
+    | _ ->
+        (state, [top])
 
   let exp =
     Mapper.make
     @@ fun env state (e : exp) ->
     match e with
-    | { e = ECall { path; _ }; _ } -> (
-      match env.current_function with
-      | None -> state, e
-      | Some def ->
-        let state = addFunctionDep state def.name path in
-        state, e)
-    | _ -> state, e
+    | {e= EId name; t; loc} when env.in_function -> (
+        let data = Mapper.getData state in
+        match Map.find_opt name data.constants with
+        | Some lit ->
+            (reapply state, {e= lit.e; t; loc})
+        | None ->
+            (state, e) )
+    | _ ->
+        (state, e)
 
+  let mapper = {Mapper.identity with exp; top_stmt}
+end
+
+let getTick (env : env) (state : data Mapper.state) =
+  let name = match env.current_function with None -> "" | Some def -> def.name in
+  let data = Mapper.getData state in
+  match Hashtbl.find_opt data.ticks name with
+  | None ->
+      Hashtbl.add data.ticks name 1 ; 0
+  | Some n ->
+      Hashtbl.replace data.ticks name (n + 1) ;
+      n
+
+module CollectDependencies = struct
+  let initializeDeps map name =
+    let set = match Map.find_opt name map with None -> Set.empty | Some set -> set in
+    Map.add name set map
+
+  let addFunctionDep (state : data Mapper.state) name dep =
+    let data = Mapper.getData state in
+    let set = match Map.find_opt name data.function_deps with None -> Set.empty | Some set -> set in
+    let set = Set.add dep set in
+    let function_deps = Map.add name set data.function_deps in
+    let data = {data with function_deps} in
+    Mapper.setData state data
+
+  let addTypeDep (state : data Mapper.state) name dep =
+    let data = Mapper.getData state in
+    let set = match Map.find_opt name data.type_deps with None -> Set.empty | Some set -> set in
+    let set = Set.add dep set in
+    let type_deps = Map.add name set data.type_deps in
+    let data = {data with type_deps} in
+    Mapper.setData state data
+
+  let exp =
+    Mapper.make
+    @@ fun env state (e : exp) ->
+    match e with
+    | {e= ECall {path; _}; _} -> (
+      match env.current_function with
+      | None ->
+          (state, e)
+      | Some def ->
+          let state = addFunctionDep state def.name path in
+          (state, e) )
+    | _ ->
+        (state, e)
 
   let type_ =
     Mapper.make
     @@ fun env state (p : type_) ->
     match p with
-    | { t = TStruct { path; _ }; _ } -> (
+    | {t= TStruct {path; _}; _} -> (
       match env.current_type with
-      | None -> state, p
-      | Some { path = name; _ } ->
-        let state = addTypeDep state name path in
-        state, p)
-    | _ -> state, p
-
+      | None ->
+          (state, p)
+      | Some {path= name; _} ->
+          let state = addTypeDep state name path in
+          (state, p) )
+    | _ ->
+        (state, p)
 
   let top_stmt =
     Mapper.makeExpander
     @@ fun _env state (top : top_stmt) ->
     let data = Mapper.getData state in
     match top with
-    | { top = TopType { path; _ }; _ } ->
-      let type_deps = initializeDeps data.type_deps path in
-      let data = { data with type_deps } in
-      Mapper.setData state data, [ top ]
-    | { top = TopFunction ({ name; _ }, _); _ } ->
-      let function_deps = initializeDeps data.function_deps name in
-      let data = { data with function_deps } in
-      Mapper.setData state data, [ top ]
-    | _ -> state, [ top ]
+    | {top= TopType {path; _}; _} ->
+        let type_deps = initializeDeps data.type_deps path in
+        let data = {data with type_deps} in
+        (Mapper.setData state data, [top])
+    | {top= TopFunction ({name; _}, _); _} ->
+        let function_deps = initializeDeps data.function_deps name in
+        let data = {data with function_deps} in
+        (Mapper.setData state data, [top])
+    | _ ->
+        (state, [top])
 
-
-  let mapper = { Mapper.identity with exp; type_; top_stmt }
-end
-
-module GetVariables = struct
-  let exp =
-    Mapper.make
-    @@ fun _env (state : Set.t Mapper.state) (e : exp) ->
-    match e with
-    | { e = EId name; _ } ->
-      let data = Mapper.getData state in
-      Mapper.setData state (Set.add name data), e
-    | _ -> state, e
-
-
-  let lexp =
-    Mapper.make
-    @@ fun _env (state : Set.t Mapper.state) (e : lexp) ->
-    match e with
-    | { l = LId name; _ } ->
-      let data = Mapper.getData state in
-      Mapper.setData state (Set.add name data), e
-    | _ -> state, e
-
-
-  let dexp =
-    Mapper.make
-    @@ fun _env (state : Set.t Mapper.state) (e : dexp) ->
-    match e with
-    | { d = DId (name, _); _ } ->
-      let data = Mapper.getData state in
-      Mapper.setData state (Set.add name data), e
-
-
-  let mapper = { Mapper.identity with exp; lexp; dexp }
-
-  let in_exp (e : exp) =
-    let state, _ = Mapper.exp mapper () (Mapper.defaultState Set.empty) e in
-    Mapper.getData state
-
-
-  let in_lexp (e : lexp) =
-    let state, _ = Mapper.lexp mapper () (Mapper.defaultState Set.empty) e in
-    Mapper.getData state
-
-
-  let in_stmts (s : stmt list) =
-    let state, _ = Mapper.mapper_list_expand Mapper.stmt mapper () (Mapper.defaultState Set.empty) s in
-    Mapper.getData state
+  let mapper = {Mapper.identity with exp; type_; top_stmt}
 end
 
 module Location = struct
@@ -232,372 +189,492 @@ module Location = struct
     Mapper.makeEnv
     @@ fun env (s : top_stmt) ->
     match s with
-    | { top = TopFunction (def, _); _ } -> { env with current_function = Some def }
-    | { top = TopType def; _ } -> { env with current_type = Some def }
-    | _ -> env
-
+    | {top= TopFunction (def, _); _} ->
+        {env with current_function= Some def}
+    | {top= TopType def; _} ->
+        {env with current_type= Some def}
+    | _ ->
+        env
 
   let exp_env =
-    Mapper.makeEnv
-    @@ fun env (e : exp) ->
-    match e with
-    | { e = EIf _; _ } -> { env with in_if_exp = true }
-    | _ -> env
+    Mapper.makeEnv @@ fun env (e : exp) -> match e with {e= EIf _; _} -> {env with in_if_exp= true} | _ -> env
 
-
-  let mapper = { Mapper.identity with top_stmt_env; exp_env }
+  let mapper = {Mapper.identity with top_stmt_env; exp_env}
 end
 
 module IfExpressions = struct
+  (* Check if an expression is simple enough to remain as a ternary operator *)
+  let rec isSimpleValue (e : exp) =
+    match e.e with
+    | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ ->
+        true
+    | EId _ | EMember _ ->
+        true
+    | EUnOp (_, e) ->
+        isSimpleValue e
+    | _ ->
+        false
+
+  let isSimpleIf (e : exp) =
+    match e.e with
+    | EIf {cond; then_; else_} ->
+        isSimpleValue cond && isSimpleValue then_ && isSimpleValue else_
+    | _ ->
+        false
+
   let stmt_env =
     Mapper.makeEnv
     @@ fun env (s : stmt) ->
     match s with
-    | { s = StmtBind (_, { e = EIf _; _ }); _ } -> { env with bound_if = true }
-    | { s = StmtReturn { e = EIf _; _ }; _ } -> { env with bound_if = true }
-    | _ -> env
+    | {s= StmtBind (_, {e= EIf _; _}); _} ->
+        {env with bound_if= true}
+    | {s= StmtReturn {e= EIf _; _}; _} ->
+        {env with bound_if= true}
+    | _ ->
+        env
 
+  (* An if-expression bound to a variable or returned becomes an if-statement. Its branches can
+     hold if-expressions of their own, so they are split here as well: the pass loop would
+     otherwise need one round per nesting level and give up on deeply nested expressions. *)
+  let rec splitIf (s : stmt) : stmt =
+    match s with
+    | {s= StmtBind (lhs, {e= EIf {cond; then_; else_}; _}); loc} ->
+        let then_ = splitIf {s= StmtBind (lhs, then_); loc} in
+        let else_ = splitIf {s= StmtBind (lhs, else_); loc} in
+        {s= StmtIf (cond, then_, Some else_); loc}
+    | {s= StmtReturn {e= EIf {cond; then_; else_}; _}; loc} ->
+        let then_ = splitIf {s= StmtReturn then_; loc} in
+        let else_ = splitIf {s= StmtReturn else_; loc} in
+        {s= StmtIf (cond, then_, Some else_); loc}
+    | _ ->
+        s
 
   let stmt =
     Mapper.makeExpander
     @@ fun _env state (s : stmt) ->
     match s with
     (* if (false) -> else *)
-    | { s = StmtIf ({ e = EBool false; _ }, _, Some else_); _ } -> reapply state, [ else_ ]
+    | {s= StmtIf ({e= EBool false; _}, _, Some else_); _} ->
+        (reapply state, [else_])
     (* if (true) -> then *)
-    | { s = StmtIf ({ e = EBool true; _ }, then_, _); _ } -> reapply state, [ then_ ]
+    | {s= StmtIf ({e= EBool true; _}, then_, _); _} ->
+        (reapply state, [then_])
     (* Convert else if (true) -> else*)
-    | { s = StmtIf (cond, then_, Some { s = StmtIf ({ e = EBool true; _ }, else_, None); _ }); loc } ->
-      reapply state, [ C.sif ~loc cond then_ (Some else_) ]
-    | { s = StmtBind (lhs, { e = EIf { cond; then_; else_ }; _ }); loc } ->
-      let then_ = { s = StmtBind (lhs, then_); loc } in
-      let else_ = { s = StmtBind (lhs, else_); loc } in
-      reapply state, [ { s = StmtIf (cond, then_, Some else_); loc } ]
-    | { s = StmtReturn { e = EIf { cond; then_; else_ }; _ }; loc } ->
-      let then_ = { s = StmtReturn then_; loc } in
-      let else_ = { s = StmtReturn else_; loc } in
-      reapply state, [ { s = StmtIf (cond, then_, Some else_); loc } ]
-    | _ -> state, [ s ]
-
+    | {s= StmtIf (cond, then_, Some {s= StmtIf ({e= EBool true; _}, else_, None); _}); loc} ->
+        (reapply state, [C.sif ~loc cond then_ (Some else_)])
+    | {s= StmtBind (_, {e= EIf _; _}); _} | {s= StmtReturn {e= EIf _; _}; _} ->
+        (reapply state, [splitIf s])
+    | _ ->
+        (state, [s])
 
   let exp =
     Mapper.make
     @@ fun env state (e : exp) ->
     match e with
     (* Evaluates if-expressions with constant condition *)
-    | { e = EIf { cond = { e = EBool cond; _ }; then_; else_ }; _ } ->
-      ( reapply state
-      , if cond then
-          then_
-        else
-          else_ )
+    | {e= EIf {cond= {e= EBool cond; _}; then_; else_}; _} ->
+        (reapply state, if cond then then_ else else_)
+    (* Preserve simple if-expressions as ternary operators *)
+    | {e= EIf _; _} when isSimpleIf e ->
+        (state, e)
     (* Bind if-expressions to a variable in function context *)
-    | { e = EIf _; t; loc } when (not env.in_if_exp) && (not env.bound_if) && env.in_function ->
-      let tick = getTick env state in
-      let temp = "_if_temp_" ^ string_of_int tick in
-      let temp_e = { e = EId temp; t; loc } in
-      let decl_stmt = { s = StmtDecl ({ d = DId (temp, None); t; loc }, None); loc } in
-      let bind_stmt = { s = StmtBind ({ l = LId temp; t; loc }, e); loc } in
-      let state = Mapper.pushStmts state [ decl_stmt; bind_stmt ] in
-      reapply state, temp_e
-    | _ -> state, e
+    | {e= EIf _; t; loc} when (not env.in_if_exp) && (not env.bound_if) && env.in_function ->
+        let tick = getTick env state in
+        let temp = "_if_temp_" ^ string_of_int tick in
+        let temp_e = {e= EId temp; t; loc} in
+        let decl_stmt = {s= StmtDecl ({d= DId (temp, None); t; loc}, None); loc} in
+        let bind_stmt = {s= StmtBind ({l= LId temp; t; loc}, e); loc} in
+        let state = Mapper.pushStmts state [decl_stmt; bind_stmt] in
+        (reapply state, temp_e)
+    | _ ->
+        (state, e)
 
-
-  let mapper enabled =
-    if enabled = Enabled then
-      { Mapper.identity with stmt; exp; stmt_env }
-    else
-      Mapper.identity
+  let mapper = {Mapper.identity with stmt; exp; stmt_env}
 end
 
 module LiteralRecords = struct
   let stmt_env =
     Mapper.makeEnv
     @@ fun env (s : stmt) ->
-    match s with
-    | { s = StmtBind (_, { e = ERecord _; _ }); _ } -> { env with bound_record = true }
-    | _ -> env
-
+    match s with {s= StmtBind (_, {e= ERecord _; _}); _} -> {env with bound_record= true} | _ -> env
 
   let top_stmt_env =
     Mapper.makeEnv
     @@ fun env (s : top_stmt) ->
-    match s with
-    | { top = TopConstant (_, _, _, { e = ERecord _; _ }, _); _ } -> { env with bound_record = true }
-    | _ -> env
-
+    match s with {top= TopConstant (_, _, _, {e= ERecord _; _}, _); _} -> {env with bound_record= true} | _ -> env
 
   let exp =
     Mapper.make
     @@ fun env state (e : exp) ->
     match e with
     (* Bind records to a variable in the context of functions *)
-    | { e = ERecord _; t; loc } when (not env.in_if_exp) && (not env.bound_record) && env.in_function ->
-      let tick = getTick env state in
-      let temp = "_record_" ^ string_of_int tick in
-      let temp_e = { e = EId temp; t; loc } in
-      let decl_stmt = { s = StmtDecl ({ d = DId (temp, None); t; loc }, None); loc } in
-      let bind_stmt = { s = StmtBind ({ l = LId temp; t; loc }, e); loc } in
-      let state = Mapper.pushStmts state [ decl_stmt; bind_stmt ] in
-      reapply state, temp_e
-    | { e = ERecord _; t; loc } when (not env.in_if_exp) && not env.bound_record ->
-      let tick = getTick env state in
-      let temp = "_record_" ^ string_of_int tick in
-      let temp_e = { e = EId temp; t; loc } in
-      let constant_decl = { top = TopConstant (temp, None, t, e, None); loc } in
-      let state = Mapper.pushTopStmts state [ constant_decl ] in
-      reapply state, temp_e
-    | _ -> state, e
+    | {e= ERecord _; t; loc} when (not env.in_if_exp) && (not env.bound_record) && env.in_function ->
+        let tick = getTick env state in
+        let temp = "_record_" ^ string_of_int tick in
+        let temp_e = {e= EId temp; t; loc} in
+        let decl_stmt = {s= StmtDecl ({d= DId (temp, None); t; loc}, None); loc} in
+        let bind_stmt = {s= StmtBind ({l= LId temp; t; loc}, e); loc} in
+        let state = Mapper.pushStmts state [decl_stmt; bind_stmt] in
+        (reapply state, temp_e)
+    | {e= ERecord _; t; loc} when (not env.in_if_exp) && not env.bound_record ->
+        let tick = getTick env state in
+        let temp = "_record_" ^ string_of_int tick in
+        let temp_e = {e= EId temp; t; loc} in
+        let constant_decl = {top= TopConstant (temp, None, t, e, None); loc} in
+        let state = Mapper.pushTopStmts state [constant_decl] in
+        (reapply state, temp_e)
+    | _ ->
+        (state, e)
 
-
-  let mapper enabled =
-    if enabled = Enabled then
-      { Mapper.identity with exp; stmt_env; top_stmt_env }
-    else
-      Mapper.identity
+  let mapper = {Mapper.identity with exp; stmt_env; top_stmt_env}
 end
 
 module Markers = struct
   let top_stmt_env =
     Mapper.makeEnv
-    @@ fun env (s : top_stmt) ->
-    match s with
-    | { top = TopFunction _; _ } -> { env with in_function = true }
-    | _ -> env
+    @@ fun env (s : top_stmt) -> match s with {top= TopFunction _; _} -> {env with in_function= true} | _ -> env
 
-
-  let mapper enabled =
-    if enabled = Enabled then
-      { Mapper.identity with top_stmt_env }
-    else
-      Mapper.identity
+  let mapper = {Mapper.identity with top_stmt_env}
 end
 
 module LiteralArrays = struct
   let stmt_env =
     Mapper.makeEnv
     @@ fun env (s : stmt) ->
-    match s with
-    | { s = StmtBind (_, { e = EArray _; _ }); _ } -> { env with bound_array = true }
-    | _ -> env
-
+    match s with {s= StmtBind (_, {e= EArray _; _}); _} -> {env with bound_array= true} | _ -> env
 
   let top_stmt_env =
     Mapper.makeEnv
     @@ fun env (s : top_stmt) ->
-    match s with
-    | { top = TopConstant (_, _, _, { e = EArray _; _ }, _); _ } -> { env with bound_array = true }
-    | _ -> env
-
+    match s with {top= TopConstant (_, _, _, {e= EArray _; _}, _); _} -> {env with bound_array= true} | _ -> env
 
   let exp =
     Mapper.make
     @@ fun env state (e : exp) ->
     match e with
     (* Bind arrays to a variable *)
-    | { e = EArray _; t; loc } when (not env.in_if_exp) && (not env.bound_array) && env.in_function ->
-      let tick = getTick env state in
-      let temp = "_array_" ^ string_of_int tick in
-      let temp_e = { e = EId temp; t; loc } in
-      let decl_stmt = { s = StmtDecl ({ d = DId (temp, None); t; loc }, None); loc } in
-      let bind_stmt = { s = StmtBind ({ l = LId temp; t; loc }, e); loc } in
-      let state = Mapper.pushStmts state [ decl_stmt; bind_stmt ] in
-      reapply state, temp_e
-    | _ -> state, e
+    | {e= EArray _; t; loc} when (not env.in_if_exp) && (not env.bound_array) && env.in_function ->
+        let tick = getTick env state in
+        let temp = "_array_" ^ string_of_int tick in
+        let temp_e = {e= EId temp; t; loc} in
+        let decl_stmt = {s= StmtDecl ({d= DId (temp, None); t; loc}, None); loc} in
+        let bind_stmt = {s= StmtBind ({l= LId temp; t; loc}, e); loc} in
+        let state = Mapper.pushStmts state [decl_stmt; bind_stmt] in
+        (reapply state, temp_e)
+    | _ ->
+        (state, e)
 
-
-  let mapper enabled =
-    if enabled = Enabled then
-      { Mapper.identity with exp; stmt_env; top_stmt_env }
-    else
-      Mapper.identity
+  let mapper = {Mapper.identity with exp; stmt_env; top_stmt_env}
 end
 
 module Tuples = struct
+  let literal_source (e : exp) = match e.e with EBool _ | EInt _ | EReal _ | EFixed _ | EString _ -> true | _ -> false
+
+  let simple_parallel_source (e : exp) = literal_source e || Option.is_some (Path.of_exp e)
+
+  let make_parallel_temps env state loc copies =
+    let temp_list = CCList.map (fun ((l : lexp), _) -> ("_t_temp_" ^ string_of_int (getTick env state), l.t)) copies in
+    let decl = CCList.map (fun (n, t) -> {s= StmtDecl ({d= DId (n, None); loc; t}, None); loc}) temp_list in
+    let bindings1 =
+      CCList.map2 (fun (l, _) (_, (r : exp)) -> {s= StmtBind ({l= LId l; t= r.t; loc= r.loc}, r); loc}) temp_list copies
+    in
+    let bindings2 =
+      CCList.map2
+        (fun ((l : lexp), _) (r, _) -> {s= StmtBind (l, {e= EId r; t= l.t; loc= l.loc}); loc})
+        copies temp_list
+    in
+    decl @ bindings1 @ bindings2
+
+  (* Emits a copy once its destination cannot overlap any value still to be
+     read. Only a remaining cycle, such as [x,y = y,x], is spilled to temps. *)
+  let schedule_parallel_copies env state loc copies =
+    let source_paths pending = CCList.filter_map (fun (_, rhs) -> Path.of_exp rhs) pending in
+    let ready pending (lhs, _) =
+      match Path.of_lexp lhs with
+      | Some destination ->
+          not (CCList.exists (Path.may_alias destination) (source_paths pending))
+      | None ->
+          false
+    in
+    let rec loop emitted pending =
+      match CCList.find_opt (ready pending) pending with
+      | Some ((lhs, rhs) as scheduled) ->
+          let pending = CCList.filter (fun copy -> copy != scheduled) pending in
+          loop ({s= StmtBind (lhs, rhs); loc} :: emitted) pending
+      | None ->
+          (CCList.rev emitted, pending)
+    in
+    (* A copy of a location onto itself is already satisfied and must not keep
+       other copies waiting. *)
+    let is_self_copy (lhs, rhs) =
+      match (Path.of_lexp lhs, Path.of_exp rhs) with Some lhs, Some rhs -> Path.equal lhs rhs | _ -> false
+    in
+    let scheduled, cyclic = loop [] (CCList.filter (fun copy -> not (is_self_copy copy)) copies) in
+    scheduled @ if cyclic = [] then [] else make_parallel_temps env state loc cyclic
+
   let stmt_env =
     Mapper.makeEnv
     @@ fun env (s : stmt) ->
     match s with
     (* Mark bound multi-return functions as bound *)
-    | { s = StmtBind (_, { e = ECall _; t = { t = TTuple _; _ }; _ }); _ } -> { env with bound_call = true }
-    | _ -> env
-
+    | {s= StmtBind (_, {e= ECall _; t= {t= TTuple _; _}; _}); _} ->
+        {env with bound_call= true}
+    | _ ->
+        env
 
   let exp =
     Mapper.make
     @@ fun env state (e : exp) ->
     match e with
     (* bind multi-return function calls *)
-    | { e = ECall _; t = { t = TTuple elems; _ } as t; loc } when (not env.bound_call) && not env.in_if_exp ->
-      let temp =
-        CCList.map
-          (fun (t : type_) ->
-            let tick = getTick env state in
-            "_call_temp_" ^ string_of_int tick, t)
-          elems
-      in
-      let decl_stmt =
-        CCList.map (fun (name, t) -> { s = StmtDecl ({ d = DId (name, None); t; loc }, None); loc }) temp
-      in
-      let temp_l = CCList.map (fun (name, t) -> { l = LId name; t; loc }) temp in
-      let bind_stmt = { s = StmtBind ({ l = LTuple temp_l; t; loc }, e); loc } in
-      let state = Mapper.pushStmts state (decl_stmt @ [ bind_stmt ]) in
-      let temp_e = CCList.map (fun (name, t) -> { e = EId name; t; loc }) temp in
-      reapply state, { e = ETuple temp_e; t; loc }
-    | _ -> state, e
-
+    | {e= ECall _; t= {t= TTuple elems; _} as t; loc} when (not env.bound_call) && not env.in_if_exp ->
+        let temp =
+          CCList.map
+            (fun (t : type_) ->
+              let tick = getTick env state in
+              ("_call_temp_" ^ string_of_int tick, t) )
+            elems
+        in
+        let decl_stmt = CCList.map (fun (name, t) -> {s= StmtDecl ({d= DId (name, None); t; loc}, None); loc}) temp in
+        let temp_l = CCList.map (fun (name, t) -> {l= LId name; t; loc}) temp in
+        let bind_stmt = {s= StmtBind ({l= LTuple temp_l; t; loc}, e); loc} in
+        let state = Mapper.pushStmts state (decl_stmt @ [bind_stmt]) in
+        let temp_e = CCList.map (fun (name, t) -> {e= EId name; t; loc}) temp in
+        (reapply state, {e= ETuple temp_e; t; loc})
+    | _ ->
+        (state, e)
 
   let stmt =
     Mapper.makeExpander
     @@ fun env state (s : stmt) ->
     match s with
     (* split tuple assings *)
-    | { s = StmtBind (({ l = LTuple l_elems; _ } as lhs), ({ e = ETuple r_elems; _ } as rhs)); loc } ->
-      let l = GetVariables.in_lexp lhs in
-      let r = GetVariables.in_exp rhs in
-      let d = Set.inter l r in
-      if Set.is_empty d then
-        let bindings = CCList.map2 (fun l r -> { s = StmtBind (l, r); loc }) l_elems r_elems in
-        reapply state, bindings
-      else
-        let temp_list = CCList.map (fun (l : lexp) -> "_t_temp_" ^ string_of_int (getTick env state), l.t) l_elems in
-        let decl = CCList.map (fun (n, t) -> { s = StmtDecl ({ d = DId (n, None); loc; t }, None); loc }) temp_list in
-        let bindings1 =
-          CCList.map2
-            (fun (l, _) (r : exp) -> { s = StmtBind ({ l = LId l; t = r.t; loc = r.loc }, r); loc })
-            temp_list
-            r_elems
-        in
-        let bindings2 =
-          CCList.map2
-            (fun (l : lexp) (r, _) -> { s = StmtBind (l, { e = EId r; t = l.t; loc = l.loc }); loc })
-            l_elems
-            temp_list
-        in
-        reapply state, decl @ bindings1 @ bindings2
+    | {s= StmtBind (({l= LTuple l_elems; _} as lhs), ({e= ETuple r_elems; _} as rhs)); loc} ->
+        let l = GetVariables.in_lexp lhs in
+        let r = GetVariables.in_exp rhs in
+        let d = Set.inter l r in
+        if Set.is_empty d then
+          let bindings = CCList.map2 (fun l r -> {s= StmtBind (l, r); loc}) l_elems r_elems in
+          (reapply state, bindings)
+        else if
+          CCList.for_all (fun l -> Option.is_some (Path.of_lexp l)) l_elems
+          && CCList.for_all simple_parallel_source r_elems
+        then
+          let copies = CCList.combine l_elems r_elems in
+          (reapply state, schedule_parallel_copies env state loc copies)
+        else (reapply state, make_parallel_temps env state loc (CCList.combine l_elems r_elems))
     (* bind multi return calls to the context *)
-    | { s = StmtBind (({ l = LTuple elems; _ } as lhs), ({ e = ECall { path; args = ctx :: _ }; loc = rloc; _ } as rhs))
-      ; loc
-      } ->
-      let bindings =
-        CCList.mapi
-          (fun i (l : lexp) ->
-            let r = { e = EMember (ctx, path ^ "_ret_" ^ string_of_int i); t = l.t; loc = l.loc } in
-            { s = StmtBind (l, r); loc })
-          elems
-      in
-      let s =
-        { s = StmtBind ({ lhs with l = LWild }, { rhs with t = { t = TVoid None; const = false; loc = rloc } }); loc }
-      in
-      reapply state, s :: bindings
+    | {s= StmtBind (({l= LTuple elems; _} as lhs), ({e= ECall {path; args= ctx :: _}; loc= rloc; _} as rhs)); loc} ->
+        let bindings =
+          CCList.mapi
+            (fun i (l : lexp) ->
+              let r = {e= EMember (ctx, path ^ "_ret_" ^ string_of_int i); t= l.t; loc= l.loc} in
+              {s= StmtBind (l, r); loc} )
+            elems
+        in
+        let s = {s= StmtBind ({lhs with l= LWild}, {rhs with t= {t= TVoid None; const= false; loc= rloc}}); loc} in
+        (reapply state, s :: bindings)
+    (* split a tuple variable into its elements; a variable can be read repeatedly without side effects *)
+    | {s= StmtBind ({l= LTuple elems; _}, ({e= EId _; t= {t= TTuple _; _}; _} as rhs)); loc} ->
+        let bindings =
+          CCList.mapi (fun i (l : lexp) -> {s= StmtBind (l, {rhs with e= ETMember (rhs, i); t= l.t}); loc}) elems
+        in
+        (reapply state, bindings)
     (* multi return calls bound to a tuple variable *)
-    | { s =
+    | { s=
           StmtBind
-            ( ({ l = LId _; t = { t = TTuple types; _ }; _ } as lhs)
-            , ({ e = ECall { path; args = ctx :: _ }; loc = rloc; _ } as rhs) )
-      ; loc
-      } ->
-      let tuple_elems =
-        CCList.mapi (fun i (t : type_) -> { e = EMember (ctx, path ^ "_ret_" ^ string_of_int i); t; loc }) types
-      in
-      let s =
-        { s = StmtBind ({ lhs with l = LWild }, { rhs with t = { t = TVoid None; const = false; loc = rloc } }); loc }
-      in
-      let binding = { s = StmtBind (lhs, { e = ETuple tuple_elems; t = rhs.t; loc = rhs.loc }); loc } in
-      reapply state, s :: [ binding ]
+            (({l= LId _; t= {t= TTuple types; _}; _} as lhs), ({e= ECall {path; args= ctx :: _}; loc= rloc; _} as rhs))
+      ; loc } ->
+        let tuple_elems =
+          CCList.mapi (fun i (t : type_) -> {e= EMember (ctx, path ^ "_ret_" ^ string_of_int i); t; loc}) types
+        in
+        let s = {s= StmtBind ({lhs with l= LWild}, {rhs with t= {t= TVoid None; const= false; loc= rloc}}); loc} in
+        let binding = {s= StmtBind (lhs, {e= ETuple tuple_elems; t= rhs.t; loc= rhs.loc}); loc} in
+        (reapply state, s :: [binding])
     (* Remove the return type of calls bound to wild *)
-    | { s = StmtBind ({ l = LWild; _ }, { e = ECall _; t = { t = TVoid _; _ }; _ }); _ } -> state, [ s ]
-    | { s = StmtBind (({ l = LWild; _ } as lhs), ({ e = ECall _; loc = rloc; _ } as rhs)); loc } ->
-      let s =
-        { s =
-            StmtBind ({ lhs with l = LWild }, { rhs with t = { t = TVoid (Some [ rhs.t ]); const = false; loc = rloc } })
-        ; loc
-        }
-      in
-      reapply state, [ s ]
+    | {s= StmtBind ({l= LWild; _}, {e= ECall _; t= {t= TVoid _; _}; _}); _} ->
+        (state, [s])
+    | {s= StmtBind (({l= LWild; _} as lhs), ({e= ECall _; loc= rloc; _} as rhs)); loc} ->
+        let s =
+          {s= StmtBind ({lhs with l= LWild}, {rhs with t= {t= TVoid (Some [rhs.t]); const= false; loc= rloc}}); loc}
+        in
+        (reapply state, [s])
     (* Bind returned tupples to the environment *)
-    | { s = StmtReturn { e = ETuple elems; loc = eloc; _ }; loc } ->
-      let name, ctx_name, ctx_t = currentFunction env in
-      let ctx = { l = LId ctx_name; t = ctx_t; loc } in
-      let bindings =
-        CCList.mapi
-          (fun i (r : exp) ->
-            let l = { l = LMember (ctx, name ^ "_ret_" ^ string_of_int i); t = r.t; loc = r.loc } in
-            { s = StmtBind (l, r); loc })
-          elems
-      in
-      let s = { s = StmtReturn { e = EUnit; t = { t = TVoid None; const = false; loc }; loc = eloc }; loc } in
-      reapply state, bindings @ [ s ]
+    | {s= StmtReturn {e= ETuple elems; loc= eloc; _}; loc} ->
+        let name, ctx_name, ctx_t = currentFunction env in
+        let ctx = {l= LId ctx_name; t= ctx_t; loc} in
+        let bindings =
+          CCList.mapi
+            (fun i (r : exp) ->
+              let l = {l= LMember (ctx, name ^ "_ret_" ^ string_of_int i); t= r.t; loc= r.loc} in
+              {s= StmtBind (l, r); loc} )
+            elems
+        in
+        let s = {s= StmtReturn {e= EUnit; t= {t= TVoid None; const= false; loc}; loc= eloc}; loc} in
+        (reapply state, bindings @ [s])
     (* Bind returned single variable tuple to the environment *)
-    | { s = StmtReturn ({ e = EId _; loc = eloc; t = { t = TTuple types; _ } } as ret); loc } ->
-      let name, ctx_name, ctx_t = currentFunction env in
-      let ctx = { l = LId ctx_name; t = ctx_t; loc } in
-      let bindings =
-        CCList.mapi
-          (fun i (t : type_) ->
-            let l = { l = LMember (ctx, name ^ "_ret_" ^ string_of_int i); t; loc } in
-            { s = StmtBind (l, { ret with e = ETMember (ret, i) }); loc })
-          types
-      in
-      let s = { s = StmtReturn { e = EUnit; t = { t = TVoid None; const = false; loc }; loc = eloc }; loc } in
-      reapply state, bindings @ [ s ]
-    | _ -> state, [ s ]
-
+    | {s= StmtReturn ({e= EId _; loc= eloc; t= {t= TTuple types; _}} as ret); loc} ->
+        let name, ctx_name, ctx_t = currentFunction env in
+        let ctx = {l= LId ctx_name; t= ctx_t; loc} in
+        let bindings =
+          CCList.mapi
+            (fun i (t : type_) ->
+              let l = {l= LMember (ctx, name ^ "_ret_" ^ string_of_int i); t; loc} in
+              {s= StmtBind (l, {ret with e= ETMember (ret, i)}); loc} )
+            types
+        in
+        let s = {s= StmtReturn {e= EUnit; t= {t= TVoid None; const= false; loc}; loc= eloc}; loc} in
+        (reapply state, bindings @ [s])
+    | _ ->
+        (state, [s])
 
   let top_stmt =
     Mapper.makeExpander
     @@ fun _env state (top : top_stmt) ->
     match top with
-    | { top = TopFunction (({ t = args_t, { t = TTuple elems; loc = tloc; _ }; _ } as def), body); loc } ->
-      let def = { def with t = args_t, { t = TVoid (Some elems); const = false; loc = tloc } } in
-      state, [ { top = TopFunction (def, body); loc } ]
-    | _ -> state, [ top ]
+    | {top= TopFunction (({t= args_t, {t= TTuple elems; loc= tloc; _}; _} as def), body); loc} ->
+        let def = {def with t= (args_t, {t= TVoid (Some elems); const= false; loc= tloc})} in
+        (state, [{top= TopFunction (def, body); loc}])
+    | _ ->
+        (state, [top])
 
-
-  let mapper enabled =
-    if enabled = Enabled then
-      { Mapper.identity with stmt; stmt_env; exp; top_stmt }
-    else
-      Mapper.identity
+  let mapper = {Mapper.identity with stmt; stmt_env; exp; top_stmt}
 end
 
-module Builtin = struct
+(* The code generators have no literal for NaN, so an expression that folds to NaN is left for
+   the target to compute at run time. *)
+let isNaNLiteral (e : exp) = match e.e with EReal v | EFixed v -> Float.is_nan v | _ -> false
+
+module FoldBuiltins = struct
+  let fold env state (e : exp) =
+    match e with
+    | {e= ECall {path= "pi"; args= []}; _} ->
+        (reapply state, {e with e= EReal Float.pi})
+    | {e= ECall {path= "exp"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (exp v)})
+    | {e= ECall {path= "exp"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (exp v)})
+    | {e= ECall {path= "sin"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (sin v)})
+    | {e= ECall {path= "sin"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (sin v)})
+    | {e= ECall {path= "cos"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (cos v)})
+    | {e= ECall {path= "cos"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (cos v)})
+    | {e= ECall {path= "abs"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (Float.abs v)})
+    | {e= ECall {path= "abs"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (Float.abs v)})
+    | {e= ECall {path= "sqrt"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (sqrt v)})
+    | {e= ECall {path= "sqrt"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (sqrt v)})
+    (* tan *)
+    | {e= ECall {path= "tan"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (tan v)})
+    | {e= ECall {path= "tan"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (tan v)})
+    (* tanh *)
+    | {e= ECall {path= "tanh"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (tanh v)})
+    | {e= ECall {path= "tanh"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (tanh v)})
+    (* sinh *)
+    | {e= ECall {path= "sinh"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (sinh v)})
+    | {e= ECall {path= "sinh"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (sinh v)})
+    (* cosh *)
+    | {e= ECall {path= "cosh"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (cosh v)})
+    | {e= ECall {path= "cosh"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (cosh v)})
+    (* asin *)
+    | {e= ECall {path= "asin"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (asin v)})
+    | {e= ECall {path= "asin"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (asin v)})
+    (* acos *)
+    | {e= ECall {path= "acos"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (acos v)})
+    | {e= ECall {path= "acos"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (acos v)})
+    (* atan *)
+    | {e= ECall {path= "atan"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (atan v)})
+    | {e= ECall {path= "atan"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (atan v)})
+    (* atan2 *)
+    | {e= ECall {path= "atan2"; args= [{e= EReal y; _}; {e= EReal x; _}]}; _} ->
+        (reapply state, {e with e= EReal (atan2 y x)})
+    | {e= ECall {path= "atan2"; args= [{e= EFixed y; _}; {e= EFixed x; _}]}; _} ->
+        (reapply state, {e with e= EFixed (atan2 y x)})
+    (* pow *)
+    | {e= ECall {path= "pow"; args= [{e= EReal b; _}; {e= EReal p; _}]}; _} ->
+        (reapply state, {e with e= EReal (Float.pow b p)})
+    | {e= ECall {path= "pow"; args= [{e= EFixed b; _}; {e= EFixed p; _}]}; _} ->
+        (reapply state, {e with e= EFixed (Float.pow b p)})
+    (* log *)
+    | {e= ECall {path= "log"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (log v)})
+    | {e= ECall {path= "log"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (log v)})
+    (* log10 *)
+    | {e= ECall {path= "log10"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (log10 v)})
+    | {e= ECall {path= "log10"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (log10 v)})
+    (* floor *)
+    | {e= ECall {path= "floor"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (floor v)})
+    | {e= ECall {path= "floor"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (floor v)})
+    (* ceil *)
+    | {e= ECall {path= "ceil"; args= [{e= EReal v; _}]}; _} ->
+        (reapply state, {e with e= EReal (ceil v)})
+    | {e= ECall {path= "ceil"; args= [{e= EFixed v; _}]}; _} ->
+        (reapply state, {e with e= EFixed (ceil v)})
+    (* min *)
+    | {e= ECall {path= "min"; args= [{e= EReal a; _}; {e= EReal b; _}]}; _} ->
+        (reapply state, {e with e= EReal (Float.min a b)})
+    | {e= ECall {path= "min"; args= [{e= EFixed a; _}; {e= EFixed b; _}]}; _} ->
+        (reapply state, {e with e= EFixed (Float.min a b)})
+    | {e= ECall {path= "min"; args= [{e= EInt a; _}; {e= EInt b; _}]}; _} ->
+        (reapply state, {e with e= EInt (Int.min a b)})
+    (* max *)
+    | {e= ECall {path= "max"; args= [{e= EReal a; _}; {e= EReal b; _}]}; _} ->
+        (reapply state, {e with e= EReal (Float.max a b)})
+    | {e= ECall {path= "max"; args= [{e= EFixed a; _}; {e= EFixed b; _}]}; _} ->
+        (reapply state, {e with e= EFixed (Float.max a b)})
+    | {e= ECall {path= "max"; args= [{e= EInt a; _}; {e= EInt b; _}]}; _} ->
+        (reapply state, {e with e= EInt (Int.max a b)})
+    (* clip *)
+    | {e= ECall {path= "clip"; args= [{e= EReal v; _}; {e= EReal lo; _}; {e= EReal hi; _}]}; _} ->
+        (reapply state, {e with e= EReal (Float.max lo (Float.min v hi))})
+    | {e= ECall {path= "clip"; args= [{e= EFixed v; _}; {e= EFixed lo; _}; {e= EFixed hi; _}]}; _} ->
+        (reapply state, {e with e= EFixed (Float.max lo (Float.min v hi))})
+    | {e= ECall {path= "clip"; args= [{e= EInt v; _}; {e= EInt lo; _}; {e= EInt hi; _}]}; _} ->
+        (reapply state, {e with e= EInt (Int.max lo (Int.min v hi))})
+    (* not *)
+    | {e= ECall {path= "not"; args= [e1]}; loc; _} ->
+        (reapply state, {e with e= EOp (OpEq, e1, {e= EBool false; t= {t= TBool; const= false; loc}; loc})})
+    | {e= ECall {path= "size"; args= [{t= {t= TArray (Some size, _); _}; _}]}; loc; _} ->
+        (reapply state, {e with e= EInt size; loc})
+    | {e= ECall {path= "length"; args= [{e= EString str; _}]}; loc; _} ->
+        (reapply state, {e with e= EInt (String.length str); loc})
+    | {e= ECall {path= "samplerate"; args= []}; _} -> (
+      match env.args.fs with Some fs -> (reapply state, {e with e= EReal fs}) | None -> (state, e) )
+    | _ ->
+        (state, e)
+
   let exp =
     Mapper.make
     @@ fun env state (e : exp) ->
-    match e with
-    | { e = ECall { path = "pi"; args = [] }; _ } -> reapply state, { e with e = EReal Float.pi }
-    | { e = ECall { path = "exp"; args = [ { e = EReal v; _ } ] }; _ } -> reapply state, { e with e = EReal (exp v) }
-    | { e = ECall { path = "exp"; args = [ { e = EFixed v; _ } ] }; _ } -> reapply state, { e with e = EFixed (exp v) }
-    | { e = ECall { path = "sin"; args = [ { e = EReal v; _ } ] }; _ } -> reapply state, { e with e = EReal (sin v) }
-    | { e = ECall { path = "sin"; args = [ { e = EFixed v; _ } ] }; _ } -> reapply state, { e with e = EFixed (sin v) }
-    | { e = ECall { path = "cos"; args = [ { e = EReal v; _ } ] }; _ } -> reapply state, { e with e = EReal (cos v) }
-    | { e = ECall { path = "cos"; args = [ { e = EFixed v; _ } ] }; _ } -> reapply state, { e with e = EFixed (cos v) }
-    | { e = ECall { path = "abs"; args = [ { e = EReal v; _ } ] }; _ } ->
-      reapply state, { e with e = EReal (Float.abs v) }
-    | { e = ECall { path = "abs"; args = [ { e = EFixed v; _ } ] }; _ } ->
-      reapply state, { e with e = EFixed (Float.abs v) }
-    | { e = ECall { path = "sqrt"; args = [ { e = EReal v; _ } ] }; _ } -> reapply state, { e with e = EReal (sqrt v) }
-    | { e = ECall { path = "sqrt"; args = [ { e = EFixed v; _ } ] }; _ } ->
-      reapply state, { e with e = EFixed (sqrt v) }
-    | { e = ECall { path = "not"; args = [ e1 ] }; loc; _ } ->
-      reapply state, { e with e = EOp (OpEq, e1, { e = EBool false; t = { t = TBool; const = false; loc }; loc }) }
-    | { e = ECall { path = "size"; args = [ { t = { t = TArray (Some size, _); _ }; _ } ] }; loc; _ } ->
-      reapply state, { e with e = EInt size; loc }
-    | { e = ECall { path = "length"; args = [ { e = EString str; _ } ] }; loc; _ } ->
-      reapply state, { e with e = EInt (String.length str); loc }
-    | { e = ECall { path = "samplerate"; args = [] }; _ } -> (
-      match env.args.fs with
-      | Some fs -> reapply state, { e with e = EReal fs }
-      | None -> state, e)
-    | _ -> state, e
+    let folded_state, folded = fold env state e in
+    if isNaNLiteral folded then (state, e) else (folded_state, folded)
 
-
-  let mapper enabled =
-    if enabled = Enabled then
-      { Mapper.identity with exp }
-    else
-      Mapper.identity
+  let mapper = {Mapper.identity with exp}
 end
 
 module Cast = struct
@@ -605,264 +682,579 @@ module Cast = struct
     Mapper.make
     @@ fun env state (e : exp) ->
     match e with
-    | { e = ECall { path = "fix16"; args = [ ({ t = { t = TFix16; _ }; _ } as e1) ] }; _ } -> reapply state, e1
-    | { e = ECall { path = "real"; args = [ ({ t = { t = TReal; _ }; _ } as e1) ] }; _ } -> reapply state, e1
-    | { e = ECall { path = "int"; args = [ ({ t = { t = TInt; _ }; _ } as e1) ] }; _ } -> reapply state, e1
-    | { e = ECall { path = "bool"; args = [ ({ t = { t = TBool; _ }; _ } as e1) ] }; _ } -> reapply state, e1
+    | {e= ECall {path= "fix16"; args= [({t= {t= TFix16; _}; _} as e1)]}; _} ->
+        (reapply state, e1)
+    | {e= ECall {path= "real"; args= [({t= {t= TReal; _}; _} as e1)]}; _} ->
+        (reapply state, e1)
+    | {e= ECall {path= "int"; args= [({t= {t= TInt; _}; _} as e1)]}; _} ->
+        (reapply state, e1)
+    | {e= ECall {path= "bool"; args= [({t= {t= TBool; _}; _} as e1)]}; _} ->
+        (reapply state, e1)
     (* casting constant inputs *)
-    | { e = ECall { path = "fix16"; args = [ ({ e = EReal v; _ } as e1) ] }; t; _ } ->
-      reapply state, { e1 with e = EFixed v; t }
-    | { e = ECall { path = "fix16"; args = [ ({ e = EInt i; _ } as e1) ] }; t; _ } ->
-      reapply state, { e1 with e = EFixed (float_of_int i); t }
-    | { e = ECall { path = "fix16"; args = [ ({ e = EBool b; _ } as e1) ] }; t; _ } ->
-      ( reapply state
-      , { e1 with
-          e =
-            EFixed
-              (if b then
-                 1.0
-               else
-                 0.0)
-        ; t
-        } )
-    | { e = ECall { path = "real"; args = [ ({ e = EFixed v; _ } as e1) ] }; t; _ } ->
-      reapply state, { e1 with e = EReal v; t }
-    | { e = ECall { path = "real"; args = [ ({ e = EInt i; _ } as e1) ] }; t; _ } ->
-      reapply state, { e1 with e = EReal (float_of_int i); t }
-    | { e = ECall { path = "real"; args = [ ({ e = EBool b; _ } as e1) ] }; t; _ } ->
-      ( reapply state
-      , { e1 with
-          e =
-            EReal
-              (if b then
-                 1.0
-               else
-                 0.0)
-        ; t
-        } )
-    | { e = ECall { path = "int"; args = [ ({ e = EFixed v; _ } as e1) ] }; t; _ } ->
-      reapply state, { e1 with e = EInt (int_of_float v); t }
-    | { e = ECall { path = "int"; args = [ ({ e = EReal v; _ } as e1) ] }; t; _ } ->
-      reapply state, { e1 with e = EInt (int_of_float v); t }
-    | { e = ECall { path = "int"; args = [ ({ e = EBool b; _ } as e1) ] }; t; _ } ->
-      ( reapply state
-      , { e1 with
-          e =
-            EInt
-              (if b then
-                 1
-               else
-                 0)
-        ; t
-        } )
-    | { e = ECall { path = "bool"; args = [ ({ e = EFixed v; _ } as e1) ] }; t; _ } ->
-      reapply state, { e1 with e = EBool (v <> 0.0); t }
-    | { e = ECall { path = "bool"; args = [ ({ e = EReal v; _ } as e1) ] }; t; _ } ->
-      reapply state, { e1 with e = EBool (v <> 0.0); t }
-    | { e = ECall { path = "bool"; args = [ ({ e = EInt v; _ } as e1) ] }; t; _ } ->
-      reapply state, { e1 with e = EBool (v <> 0); t }
+    | {e= ECall {path= "fix16"; args= [({e= EReal v; _} as e1)]}; t; _} ->
+        (reapply state, {e1 with e= EFixed v; t})
+    | {e= ECall {path= "fix16"; args= [({e= EInt i; _} as e1)]}; t; _} ->
+        (reapply state, {e1 with e= EFixed (float_of_int i); t})
+    | {e= ECall {path= "fix16"; args= [({e= EBool b; _} as e1)]}; t; _} ->
+        (reapply state, {e1 with e= EFixed (if b then 1.0 else 0.0); t})
+    | {e= ECall {path= "real"; args= [({e= EFixed v; _} as e1)]}; t; _} ->
+        (reapply state, {e1 with e= EReal v; t})
+    | {e= ECall {path= "real"; args= [({e= EInt i; _} as e1)]}; t; _} ->
+        (reapply state, {e1 with e= EReal (float_of_int i); t})
+    | {e= ECall {path= "real"; args= [({e= EBool b; _} as e1)]}; t; _} ->
+        (reapply state, {e1 with e= EReal (if b then 1.0 else 0.0); t})
+    | {e= ECall {path= "int"; args= [({e= EFixed v; _} as e1)]}; t; _} ->
+        (reapply state, {e1 with e= EInt (int_of_float v); t})
+    | {e= ECall {path= "int"; args= [({e= EReal v; _} as e1)]}; t; _} ->
+        (reapply state, {e1 with e= EInt (int_of_float v); t})
+    | {e= ECall {path= "int"; args= [({e= EBool b; _} as e1)]}; t; _} ->
+        (reapply state, {e1 with e= EInt (if b then 1 else 0); t})
+    | {e= ECall {path= "bool"; args= [({e= EFixed v; _} as e1)]}; t; _} ->
+        (reapply state, {e1 with e= EBool (v <> 0.0); t})
+    | {e= ECall {path= "bool"; args= [({e= EReal v; _} as e1)]}; t; _} ->
+        (reapply state, {e1 with e= EBool (v <> 0.0); t})
+    | {e= ECall {path= "bool"; args= [({e= EInt v; _} as e1)]}; t; _} ->
+        (reapply state, {e1 with e= EBool (v <> 0); t})
     (* Convert real type *)
-    | { e = EReal n; loc; _ } when env.args.real = Fixed -> reapply state, C.efix16 ~loc n
-    | _ -> state, e
-
+    | {e= EReal n; loc; _} when env.args.real = Fixed ->
+        (reapply state, C.efix16 ~loc n)
+    | _ ->
+        (state, e)
 
   let type_ =
     Mapper.make
     @@ fun env state (t : type_) ->
     match t with
-    | { t = TReal; const; loc } when env.args.real = Fixed -> state, { t = TFix16; const; loc }
-    | _ -> state, t
+    | {t= TReal; const; loc} when env.args.real = Fixed ->
+        (state, {t= TFix16; const; loc})
+    | _ ->
+        (state, t)
 
+  let mapper = {Mapper.identity with exp; type_}
+end
 
-  let mapper enabled =
-    if enabled = Enabled then
-      { Mapper.identity with exp; type_ }
-    else
-      Mapper.identity
+(* Lowers fix16 to real. The Java backend has no fixed-point representation, and there is
+   nothing to gain from one on the JVM: the Q16.16 multiply needs a 64-bit intermediate, so
+   the fix16 form of a table lookup measures slower than the float form even before the
+   conversions at its boundary. Lowering here, before any table code is generated, also keeps
+   the backend from needing a second copy of the fixed-point math runtime.
+
+   Types are rewritten first by the mapper, so by the time an expression is visited its own
+   type and its arguments' types are already real. *)
+module Fix16ToReal = struct
+  let type_ =
+    Mapper.make
+    @@ fun _env state (t : type_) ->
+    match t with {t= TFix16; const; loc} -> (state, {t= TReal; const; loc}) | _ -> (state, t)
+
+  let exp =
+    Mapper.make
+    @@ fun _env state (e : exp) ->
+    match e with
+    | {e= EFixed n; t; loc} ->
+        (state, {e= EReal n; t; loc})
+    (* A fix16 cast of something already real is nothing; of anything else it is the
+       corresponding real cast. The identity casts the rewrite leaves behind are dropped the
+       same way Simplify does, since that pass has already run by this point. *)
+    | {e= ECall {path= "fix16" | "real"; args= [({t= {t= TReal; _}; _} as arg)]}; _} ->
+        (state, arg)
+    | {e= ECall {path= "fix16"; args= [arg]}; t; loc} ->
+        (state, {e= ECall {path= "real"; args= [arg]}; t; loc})
+    | _ ->
+        (state, e)
+
+  let mapper = {Mapper.identity with exp; type_}
+
+  let run (prog : prog) : prog =
+    let _, prog = Mapper.prog mapper () (Mapper.defaultState ()) prog in
+    prog
 end
 
 module Canonize = struct
   let compare_exp e1 e2 =
-    match e1.e, e2.e with
-    | EInt n1, EInt n2 -> compare n1 n2
-    | EInt _, _ -> -1
-    | EBool n1, EBool n2 -> compare n1 n2
-    | EBool _, _ -> -1
-    | EReal n1, EReal n2 -> compare n1 n2
-    | EReal _, _ -> -1
-    | _ -> compare e1 e2
-
+    match (e1.e, e2.e) with
+    | EInt n1, EInt n2 ->
+        compare n1 n2
+    | EInt _, _ ->
+        -1
+    | EBool n1, EBool n2 ->
+        compare n1 n2
+    | EBool _, _ ->
+        -1
+    | EReal n1, EReal n2 ->
+        compare n1 n2
+    | EReal _, _ ->
+        -1
+    | _ ->
+        compare e1 e2
 
   let exp =
     Mapper.make
     @@ fun _env state e ->
     match e with
     (* do not modify string addition *)
-    | { e = EOp (OpAdd, { t = { t = TString; _ }; _ }, _); _ } -> state, e
+    | {e= EOp (OpAdd, {t= {t= TString; _}; _}, _); _} ->
+        (state, e)
     (* (e1 op e2) op n3 -> (e1 op (e2 op n3)) *)
-    | { e = EOp (op1, { e = EOp (op2, e1, e2); _ }, n3); _ } when (op1 = OpAdd || op1 = OpMul) && op1 = op2 ->
-      let loc2 = Util.Loc.merge e2.loc n3.loc in
-      let loc1 = Util.Loc.merge e1.loc n3.loc in
-      let n2 = { e = EOp (op1, e2, n3); t = e2.t; loc = loc2 } in
-      let n1 = { e = EOp (op1, e1, n2); t = e1.t; loc = loc1 } in
-      reapply state, n1
+    | {e= EOp (op1, {e= EOp (op2, e1, e2); _}, n3); _} when (op1 = OpAdd || op1 = OpMul) && op1 = op2 ->
+        let loc2 = Util.Loc.merge e2.loc n3.loc in
+        let loc1 = Util.Loc.merge e1.loc n3.loc in
+        let n2 = {e= EOp (op1, e2, n3); t= e2.t; loc= loc2} in
+        let n1 = {e= EOp (op1, e1, n2); t= e1.t; loc= loc1} in
+        (reapply state, n1)
     (* (e2 op (e1 op n3)) -> (e1 op (e2 op n3)) *)
-    | { e = EOp (op1, e2, ({ e = EOp (op2, e1, e3); _ } as n2)); _ } when (op1 = OpAdd || op1 = OpMul) && op1 = op2 ->
-      if compare_exp e2 e1 > 0 then
-        let n2 = { n2 with e = EOp (op2, e2, e3) } in
-        reapply state, { e with e = EOp (op1, e1, n2) }
-      else
-        state, e
-    | { e = EOp (op, e1, e2); _ } when op = OpAdd || op = OpMul ->
-      if compare_exp e1 e2 > 0 then
-        reapply state, { e with e = EOp (op, e2, e1) }
-      else
-        state, e
+    | {e= EOp (op1, e2, ({e= EOp (op2, e1, e3); _} as n2)); _} when (op1 = OpAdd || op1 = OpMul) && op1 = op2 ->
+        if compare_exp e2 e1 > 0 then
+          let n2 = {n2 with e= EOp (op2, e2, e3)} in
+          (reapply state, {e with e= EOp (op1, e1, n2)})
+        else (state, e)
+    | {e= EOp (op, e1, e2); _} when op = OpAdd || op = OpMul ->
+        if compare_exp e1 e2 > 0 then (reapply state, {e with e= EOp (op, e2, e1)}) else (state, e)
     (* e1 - e2 -> e1 + (-e2) *)
-    | { e = EOp (OpSub, e1, e2); _ } ->
-      reapply state, { e with e = EOp (OpAdd, e1, { e2 with e = EUnOp (UOpNeg, e2) }) }
+    | {e= EOp (OpSub, e1, e2); _} ->
+        (reapply state, {e with e= EOp (OpAdd, e1, {e2 with e= EUnOp (UOpNeg, e2)})})
     (* - (e1 * e2) -> (-e1) * e2 *)
-    | { e = EUnOp (UOpNeg, { e = EOp (OpMul, e1, e2); _ }); _ } when isValue e1 ->
-      reapply state, { e with e = EOp (OpMul, { e1 with e = EUnOp (UOpNeg, e1) }, e2) }
+    | {e= EUnOp (UOpNeg, {e= EOp (OpMul, e1, e2); _}); _} when isValue e1 ->
+        (reapply state, {e with e= EOp (OpMul, {e1 with e= EUnOp (UOpNeg, e1)}, e2)})
     (* - (e1 + e2) -> (-e1) + (-e2) *)
-    | { e = EUnOp (UOpNeg, { e = EOp (OpAdd, e1, e2); _ }); _ } ->
-      let e1 = { e1 with e = EUnOp (UOpNeg, e1) } in
-      let e2 = { e2 with e = EUnOp (UOpNeg, e2) } in
-      reapply state, { e with e = EOp (OpAdd, e1, e2) }
-    | _ -> state, e
+    | {e= EUnOp (UOpNeg, {e= EOp (OpAdd, e1, e2); _}); _} ->
+        let e1 = {e1 with e= EUnOp (UOpNeg, e1)} in
+        let e2 = {e2 with e= EUnOp (UOpNeg, e2)} in
+        (reapply state, {e with e= EOp (OpAdd, e1, e2)})
+    | _ ->
+        (state, e)
 
-
-  let mapper enabled =
-    if enabled = Enabled then
-      { Mapper.identity with exp }
-    else
-      Mapper.identity
+  let mapper = {Mapper.identity with exp}
 end
 
 module Simplify = struct
-  let evaluate t op e1 e2 =
-    match e1, e2 with
-    (* boolean *)
-    | e, { e = EBool true; loc; _ } | { e = EBool true; loc; _ }, e -> (
-      match op with
-      | OpLand -> Some e
-      | OpLor -> Some (C.ebool ~loc true)
-      | _ -> None)
-    | e, { e = EBool false; loc; _ } | { e = EBool false; loc; _ }, e -> (
-      match op with
-      | OpLand -> Some (C.ebool ~loc false)
-      | OpLor -> Some e
-      | _ -> None)
-    (* arithmetic *)
-    | { e = EReal n1; _ }, { e = EReal n2; _ } -> (
-      match op with
-      | OpAdd -> Some { e = EReal (n1 +. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpMul -> Some { e = EReal (n1 *. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpSub -> Some { e = EReal (n1 -. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpDiv -> Some { e = EReal (n1 /. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpEq -> Some { e = EBool (n1 = n2); t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpNe -> Some { e = EBool (n1 <> n2); t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpLe -> Some { e = EBool (n1 <= n2); t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpLt -> Some { e = EBool (n1 < n2); t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpGe -> Some { e = EBool (n1 >= n2); t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpGt -> Some { e = EBool (n1 > n2); t; loc = Util.Loc.merge e1.loc e2.loc }
-      | _ -> None)
-    | { e = EFixed n1; _ }, { e = EFixed n2; _ } -> (
-      match op with
-      | OpAdd -> Some { e = EFixed (n1 +. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpMul -> Some { e = EFixed (n1 *. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpSub -> Some { e = EFixed (n1 -. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpDiv -> Some { e = EFixed (n1 /. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpEq -> Some { e = EBool (n1 = n2); t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpNe -> Some { e = EBool (n1 <> n2); t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpLe -> Some { e = EBool (n1 <= n2); t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpLt -> Some { e = EBool (n1 < n2); t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpGe -> Some { e = EBool (n1 >= n2); t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpGt -> Some { e = EBool (n1 > n2); t; loc = Util.Loc.merge e1.loc e2.loc }
-      | _ -> None)
-    | { e = EInt n1; _ }, { e = EInt n2; _ } -> (
-      match op with
-      | OpAdd -> Some { e = EInt (n1 + n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpMul -> Some { e = EInt (n1 * n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpSub -> Some { e = EInt (n1 - n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpDiv -> Some { e = EInt (n1 / n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpEq -> Some { e = EBool (n1 = n2); t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpNe -> Some { e = EBool (n1 <> n2); t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpLe -> Some { e = EBool (n1 <= n2); t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpLt -> Some { e = EBool (n1 < n2); t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpGe -> Some { e = EBool (n1 >= n2); t; loc = Util.Loc.merge e1.loc e2.loc }
-      | OpGt -> Some { e = EBool (n1 > n2); t; loc = Util.Loc.merge e1.loc e2.loc }
-      | _ -> None)
-    | ({ e = EReal 0.0 | EFixed 0.0; _ } as zero), e | e, ({ e = EReal 0.0 | EFixed 0.0; _ } as zero) -> (
-      match op with
-      | OpAdd -> Some e
-      | OpMul -> Some zero
-      | _ -> None)
-    | _ -> None
+  (* Flipping an ordering operator needs ordered operands: for a NaN both
+     [a < b] and [a >= b] are false. Equality is safe on any type. *)
+  let negate_condition (cond : exp) =
+    let ordered (lhs : exp) = match lhs.t.t with TReal -> false | _ -> true in
+    let negate_operator (lhs : exp) = function
+      | OpEq ->
+          Some OpNe
+      | OpNe ->
+          Some OpEq
+      | OpLt when ordered lhs ->
+          Some OpGe
+      | OpLe when ordered lhs ->
+          Some OpGt
+      | OpGt when ordered lhs ->
+          Some OpLe
+      | OpGe when ordered lhs ->
+          Some OpLt
+      | _ ->
+          None
+    in
+    let logical_not (cond : exp) = {cond with e= EUnOp (UOpNot, cond)} in
+    match cond.e with
+    | EOp (op, lhs, rhs) -> (
+      match negate_operator lhs op with Some op -> {cond with e= EOp (op, lhs, rhs)} | None -> logical_not cond )
+    | EUnOp (UOpNot, e) ->
+        e
+    | _ ->
+        logical_not cond
 
+  let rec discardable_value (e : exp) =
+    match e.e with
+    | EUnit | EEmptyValue | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ ->
+        true
+    | EMember (base, _) | ETMember (base, _) ->
+        discardable_value base
+    | _ ->
+        false
+
+  let evaluate_op t op e1 e2 =
+    match (e1, e2) with
+    (* boolean *)
+    | {e= EBool n1; _}, {e= EBool n2; _} -> (
+      match op with
+      | OpEq ->
+          Some {e= EBool (n1 = n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpNe ->
+          Some {e= EBool (n1 <> n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpLand ->
+          Some {e= EBool (n1 && n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpLor ->
+          Some {e= EBool (n1 || n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | _ ->
+          None )
+    | e, {e= EBool true; loc; _} | {e= EBool true; loc; _}, e -> (
+      match op with OpLand -> Some e | OpLor -> Some (C.ebool ~loc true) | _ -> None )
+    | e, {e= EBool false; loc; _} | {e= EBool false; loc; _}, e -> (
+      match op with OpLand -> Some (C.ebool ~loc false) | OpLor -> Some e | _ -> None )
+    (* arithmetic *)
+    | {e= EReal n1; _}, {e= EReal n2; _} -> (
+      match op with
+      | OpAdd ->
+          Some {e= EReal (n1 +. n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpMul ->
+          Some {e= EReal (n1 *. n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpSub ->
+          Some {e= EReal (n1 -. n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpDiv ->
+          Some {e= EReal (n1 /. n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpEq ->
+          Some {e= EBool (n1 = n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpNe ->
+          Some {e= EBool (n1 <> n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpLe ->
+          Some {e= EBool (n1 <= n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpLt ->
+          Some {e= EBool (n1 < n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpGe ->
+          Some {e= EBool (n1 >= n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpGt ->
+          Some {e= EBool (n1 > n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | _ ->
+          None )
+    | {e= EFixed n1; _}, {e= EFixed n2; _} -> (
+      match op with
+      | OpAdd ->
+          Some {e= EFixed (n1 +. n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpMul ->
+          Some {e= EFixed (n1 *. n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpSub ->
+          Some {e= EFixed (n1 -. n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpDiv ->
+          Some {e= EFixed (n1 /. n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpEq ->
+          Some {e= EBool (n1 = n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpNe ->
+          Some {e= EBool (n1 <> n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpLe ->
+          Some {e= EBool (n1 <= n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpLt ->
+          Some {e= EBool (n1 < n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpGe ->
+          Some {e= EBool (n1 >= n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpGt ->
+          Some {e= EBool (n1 > n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | _ ->
+          None )
+    | {e= EInt n1; _}, {e= EInt n2; _} -> (
+      match op with
+      | OpAdd ->
+          Some {e= EInt (n1 + n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpMul ->
+          Some {e= EInt (n1 * n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpSub ->
+          Some {e= EInt (n1 - n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpDiv when n2 <> 0 ->
+          Some {e= EInt (n1 / n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpMod when n1 >= 0 && n2 > 0 ->
+          Some {e= EInt (n1 mod n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpLsh when n1 >= 0 && n2 >= 0 && n2 < 32 ->
+          Some
+            {e= EInt (Int32.to_int (Int32.shift_left (Int32.of_int n1) n2)); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpRsh when n1 >= 0 && n2 >= 0 && n2 < 32 ->
+          Some {e= EInt (n1 asr n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpBand ->
+          Some {e= EInt (n1 land n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpBor ->
+          Some {e= EInt (n1 lor n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpBxor ->
+          Some {e= EInt (n1 lxor n2); t= e1.t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpEq ->
+          Some {e= EBool (n1 = n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpNe ->
+          Some {e= EBool (n1 <> n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpLe ->
+          Some {e= EBool (n1 <= n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpLt ->
+          Some {e= EBool (n1 < n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpGe ->
+          Some {e= EBool (n1 >= n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | OpGt ->
+          Some {e= EBool (n1 > n2); t; loc= Util.Loc.merge e1.loc e2.loc}
+      | _ ->
+          None )
+    | ({e= EReal 0.0 | EFixed 0.0 | EInt 0; _} as zero), e | e, ({e= EReal 0.0 | EFixed 0.0 | EInt 0; _} as zero) -> (
+      match op with OpAdd -> Some e | OpMul -> Some zero | _ -> None )
+    | _ ->
+        None
+
+  let evaluate t op e1 e2 =
+    match evaluate_op t op e1 e2 with Some result when isNaNLiteral result -> None | result -> result
 
   let exp =
     Mapper.make
     @@ fun _env state e ->
     match e with
     (* -(n) -> -n *)
-    | { e = EUnOp (UOpNeg, ({ e = EReal n; _ } as e1)); _ } -> reapply state, { e1 with e = EReal (-.n) }
-    | { e = EUnOp (UOpNeg, ({ e = EFixed n; _ } as e1)); _ } -> reapply state, { e1 with e = EFixed (-.n) }
-    | { e = EUnOp (UOpNeg, ({ e = EInt n; _ } as e1)); _ } -> reapply state, { e1 with e = EInt (-n) }
-    (* x - (-n) -> x + n *)
-    | { e = EOp (OpSub, e1, ({ e = EReal n; _ } as e2)); _ } ->
-      reapply state, { e with e = EOp (OpAdd, e1, { e2 with e = EReal (-.n) }) }
-    | { e = EOp (OpSub, e1, ({ e = EFixed n; _ } as e2)); _ } ->
-      reapply state, { e with e = EOp (OpAdd, e1, { e2 with e = EFixed (-.n) }) }
-    | { e = EOp (OpSub, e1, ({ e = EInt n; _ } as e2)); _ } ->
-      reapply state, { e with e = EOp (OpAdd, e1, { e2 with e = EInt (-n) }) }
+    | {e= EUnOp (UOpNeg, ({e= EReal n; _} as e1)); _} ->
+        (reapply state, {e1 with e= EReal (-.n)})
+    | {e= EUnOp (UOpNeg, ({e= EFixed n; _} as e1)); _} ->
+        (reapply state, {e1 with e= EFixed (-.n)})
+    | {e= EUnOp (UOpNeg, ({e= EInt n; _} as e1)); _} ->
+        (reapply state, {e1 with e= EInt (-n)})
+    (* not (b) -> b' *)
+    | {e= EUnOp (UOpNot, ({e= EBool b; _} as e1)); _} ->
+        (reapply state, {e1 with e= EBool (not b)})
     (* e1 / e2 -> e1 * (1.0 / e2) *)
-    | { e = EOp (OpDiv, e1, ({ e = EReal n; _ } as e2)); _ } ->
-      reapply state, { e with e = EOp (OpMul, e1, { e2 with e = EReal (1.0 /. n) }) }
-    | { e = EOp (OpDiv, e1, ({ e = EFixed n; _ } as e2)); _ } ->
-      reapply state, { e with e = EOp (OpMul, e1, { e2 with e = EFixed (1.0 /. n) }) }
+    | {e= EOp (OpDiv, e1, ({e= EReal n; _} as e2)); _} ->
+        (reapply state, {e with e= EOp (OpMul, e1, {e2 with e= EReal (1.0 /. n)})})
+    | {e= EOp (OpDiv, e1, ({e= EFixed n; _} as e2)); _} ->
+        (reapply state, {e with e= EOp (OpMul, e1, {e2 with e= EFixed (1.0 /. n)})})
     (* k1 * (k2 + e) -> k1 * k2 + k1 * e *)
-    | { e =
+    | { e=
           EOp
             ( OpMul
-            , ({ e = EReal _ | EInt _ | EFixed _; loc = loc1; _ } as k1)
-            , { e = EOp (OpAdd, ({ e = EReal _ | EInt _ | EFixed _; _ } as k2), e); loc = loc2; _ } )
-      ; _
-      } ->
-      let loc = Util.Loc.merge loc1 loc2 in
-      let e1 = { e = EOp (OpMul, k1, k2); loc; t = k1.t } in
-      let e2 = { e = EOp (OpMul, k1, e); loc; t = k1.t } in
-      reapply state, { e with e = EOp (OpAdd, e1, e2) }
-    | { e = EOp (op1, e1, { e = EOp (op2, e2, e3); _ }); _ } when op1 = op2 -> (
-      match evaluate e.t op1 e1 e2 with
-      | Some en -> reapply state, { e with e = EOp (op1, en, e3) }
-      | None -> state, e)
-    | { e = EOp (op, e1, e2); _ } -> (
-      match evaluate e.t op e1 e2 with
-      | Some e -> reapply state, e
-      | None -> state, e)
-    | _ -> state, e
+            , ({e= EReal _ | EInt _ | EFixed _; loc= loc1; _} as k1)
+            , {e= EOp (OpAdd, ({e= EReal _ | EInt _ | EFixed _; _} as k2), e); loc= loc2; _} )
+      ; _ } ->
+        let loc = Util.Loc.merge loc1 loc2 in
+        let e1 = {e= EOp (OpMul, k1, k2); loc; t= k1.t} in
+        let e2 = {e= EOp (OpMul, k1, e); loc; t= k1.t} in
+        (reapply state, {e with e= EOp (OpAdd, e1, e2)})
+    | {e= EOp (op1, e1, {e= EOp (op2, e2, e3); _}); _} when op1 = op2 -> (
+      match evaluate e.t op1 e1 e2 with Some en -> (reapply state, {e with e= EOp (op1, en, e3)}) | None -> (state, e) )
+    | {e= EOp (op, e1, e2); _} -> (
+      match evaluate e.t op e1 e2 with Some e -> (reapply state, e) | None -> (state, e) )
+    | _ ->
+        (state, e)
 
+  (* A bind that stores a value where it already is, or discards one that costs
+     nothing. Indexed locations are excluded: an index can have effects. *)
+  let redundant_bind (lhs : lexp) rhs =
+    match (lhs.l, Path.exp_of_lexp lhs) with
+    | LWild, _ ->
+        discardable_value rhs
+    | _, Some location ->
+        Compare.exp location rhs = 0
+    | _, None ->
+        false
 
   let stmt =
     Mapper.makeExpander
     @@ fun _env state (s : stmt) ->
     match s with
-    (* removes a = a *)
-    | { s = StmtBind ({ l = LId name1; _ }, { e = EId name2; _ }); _ } when String.compare name1 name2 = 0 -> state, []
+    | {s= StmtBind (lhs, rhs); _} when redundant_bind lhs rhs ->
+        (state, [])
     (* removes else {} *)
-    | { s = StmtIf (cond, then_, Some { s = StmtBlock []; _ }); _ } ->
-      state, [ { s with s = StmtIf (cond, then_, None) } ]
+    | {s= StmtIf (cond, then_, Some {s= StmtBlock []; _}); _} ->
+        (state, [{s with s= StmtIf (cond, then_, None)}])
+    (* An empty then-branch is not valid in all target languages. Invert the
+       condition and keep the non-empty branch as the then-branch. *)
+    | {s= StmtIf (cond, {s= StmtBlock []; _}, Some else_); _} ->
+        let cond = negate_condition cond in
+        (reapply state, [{s with s= StmtIf (cond, else_, None)}])
     (* removes if (cond) {} *)
-    | { s = StmtIf (_, { s = StmtBlock []; _ }, None); _ } -> state, []
-    | _ -> state, [ s ]
+    | {s= StmtIf (_, {s= StmtBlock []; _}, None); _} ->
+        (state, [])
+    | _ ->
+        (state, [s])
 
+  let mapper = {Mapper.identity with exp; stmt}
+end
 
-  let mapper enabled =
-    if enabled = Enabled then
-      { Mapper.identity with exp; stmt }
-    else
-      Mapper.identity
+(* Rewrites [int(floor(e))] into [int(e)] when [e] cannot be negative. A plain
+   traversal, because a Mapper's linear state cannot join branches or loops. *)
+module NonnegativeFloor = struct
+  let literal_nonnegative (e : exp) = match e.e with EInt n -> n >= 0 | EReal n | EFixed n -> n >= 0.0 | _ -> false
+
+  let rec is_nonnegative known (e : exp) =
+    match e.e with
+    | EInt n ->
+        n >= 0
+    | EReal n | EFixed n ->
+        n >= 0.0
+    | EId name ->
+        Set.mem name known
+    | EOp (OpAdd, lhs, rhs) | EOp (OpMul, lhs, rhs) ->
+        is_nonnegative known lhs && is_nonnegative known rhs
+    | ECall {path; args} -> (
+      match (Builtin.of_name path, args) with
+      | Some (Abs | Sqrt), [_] ->
+          true
+      | Some Clip, [_; lower; _] ->
+          literal_nonnegative lower
+      | Some (Real | Fix16 | Int | Floor), [arg] ->
+          is_nonnegative known arg
+      | _ ->
+          false )
+    | _ ->
+        false
+
+  let assigned_lexp assigned (l : lexp) =
+    let rec loop assigned (l : lexp) =
+      match l.l with
+      | LId name ->
+          Set.add name assigned
+      | LTuple elems ->
+          CCList.fold_left loop assigned elems
+      | LWild | LMember _ | LIndex _ ->
+          assigned
+    in
+    loop assigned l
+
+  (* Every name a statement or anything nested in it may write. *)
+  let assigned_stmt assigned s =
+    fold_stmt
+      (fun assigned (s : stmt) -> match s.s with StmtBind (lhs, _) -> assigned_lexp assigned lhs | _ -> assigned)
+      assigned s
+
+  let mapper =
+    let exp =
+      Mapper.make
+      @@ fun _env state (e : exp) ->
+      match e.e with
+      | ECall {path; args= [({e= ECall {path= inner; args= [arg]}; t= {t= TReal | TFix16; _}; _} : exp)]} -> (
+        match (Builtin.of_name path, Builtin.of_name inner) with
+        | Some Int, Some Floor when is_nonnegative (Mapper.getData state) arg ->
+            (state, {e with e= ECall {path; args= [arg]}})
+        | _ ->
+            (state, e) )
+      | _ ->
+          (state, e)
+    in
+    {Mapper.identity with exp}
+
+  let rewrite_exp known e = snd (Mapper.exp mapper () (Mapper.defaultState known) e)
+
+  (* Returns the rewritten statement and the facts holding after it. Branches
+     and loops drop every name they may write, so no fact outlives its scope. *)
+  let rec rewrite_stmt known (s : stmt) =
+    match s.s with
+    | StmtDecl (({d= DId (name, _); _} as decl), Some rhs) ->
+        let rhs = rewrite_exp known rhs in
+        let known = if is_nonnegative known rhs then Set.add name known else Set.remove name known in
+        (known, {s with s= StmtDecl (decl, Some rhs)})
+    | StmtDecl ({d= DId (name, _); _}, None) ->
+        (Set.remove name known, s)
+    | StmtBind (({l= LId name; _} as lhs), rhs) ->
+        let rhs = rewrite_exp known rhs in
+        let known = if is_nonnegative known rhs then Set.add name known else Set.remove name known in
+        (known, {s with s= StmtBind (lhs, rhs)})
+    | StmtBind (lhs, rhs) ->
+        (known, {s with s= StmtBind (lhs, rewrite_exp known rhs)})
+    | StmtReturn e ->
+        (known, {s with s= StmtReturn (rewrite_exp known e)})
+    | StmtBlock stmts ->
+        let known, stmts =
+          CCList.fold_left
+            (fun (known, result) stmt ->
+              let known, stmt = rewrite_stmt known stmt in
+              (known, stmt :: result) )
+            (known, []) stmts
+        in
+        (known, {s with s= StmtBlock (CCList.rev stmts)})
+    | StmtIf (cond, then_, else_) ->
+        let cond = rewrite_exp known cond in
+        let _, then_ = rewrite_stmt known then_ in
+        let else_ = Option.map (fun else_ -> snd (rewrite_stmt known else_)) else_ in
+        (Set.diff known (assigned_stmt Set.empty s), {s with s= StmtIf (cond, then_, else_)})
+    | StmtWhile (cond, body) ->
+        let known = Set.diff known (assigned_stmt Set.empty s) in
+        let cond = rewrite_exp known cond in
+        let _, body = rewrite_stmt known body in
+        (known, {s with s= StmtWhile (cond, body)})
+    | StmtSwitch (cond, cases, default) ->
+        let cond = rewrite_exp known cond in
+        let cases = CCList.map (fun (case, body) -> (case, snd (rewrite_stmt known body))) cases in
+        let default = Option.map (fun body -> snd (rewrite_stmt known body)) default in
+        (Set.diff known (assigned_stmt Set.empty s), {s with s= StmtSwitch (cond, cases, default)})
+
+  let run prog =
+    CCList.map
+      (fun (top : top_stmt) ->
+        match top.top with
+        | TopFunction (def, body) ->
+            {top with top= TopFunction (def, snd (rewrite_stmt Set.empty body))}
+        | _ ->
+            top )
+      prog
+end
+
+(* Replaces [i = (i + 1) % n] with an increment plus a range check, so the
+   common case costs a comparison instead of an integer division. *)
+module CircularBuffers = struct
+  (* Below this, the branchy form is not worth it: small wraps are usually
+     powers of two that StrengthReduction already turns into a mask. *)
+  let minimum_modulus = 16
+
+  let increment_modulo (e : exp) =
+    let increment_base (increment : exp) =
+      match increment.e with
+      | EOp (OpAdd, {e= EInt 1; _}, base) | EOp (OpAdd, base, {e= EInt 1; _}) ->
+          Some base
+      | _ ->
+          None
+    in
+    match e with
+    | {e= EOp (OpMod, increment, ({e= EInt modulus; _} as modulus_exp)); t= {t= TInt; _}; _}
+      when modulus > minimum_modulus ->
+        Option.map (fun base -> (increment, base, modulus, modulus_exp)) (increment_base increment)
+    | _ ->
+        None
+
+  let comparison loc op lhs rhs = {e= EOp (op, lhs, rhs); t= {C.bool_t with loc}; loc}
+
+  (* [value] is already incremented; (-modulus, modulus) needs no repair, which
+     matches truncated [%] and so aligns Lua and Python with the interpreter. *)
+  let range_guard loc lhs value modulus modulus_exp =
+    let zero = C.eint ~loc 0 in
+    let negative_modulus = {modulus_exp with e= EInt (-modulus)} in
+    let modulo = {value with e= EOp (OpMod, value, modulus_exp)} in
+    let bind rhs = {s= StmtBind (lhs, rhs); loc} in
+    let at_upper = comparison loc OpEq value modulus_exp in
+    let upper_repair = {s= StmtIf (at_upper, bind zero, Some (bind modulo)); loc} in
+    let below_lower = comparison loc OpLe value negative_modulus in
+    let lower_repair = {s= StmtIf (below_lower, bind modulo, None); loc} in
+    let above_upper = comparison loc OpGe value modulus_exp in
+    {s= StmtIf (above_upper, upper_repair, Some lower_repair); loc}
+
+  let lower_index env state loc index =
+    match increment_modulo index with
+    | None ->
+        None
+    | Some (increment, _, modulus, modulus_exp) ->
+        let name = "_wrap_temp_" ^ string_of_int (getTick env state) in
+        let temp_lhs = {l= LId name; t= index.t; loc} in
+        let temp_value = {e= EId name; t= index.t; loc} in
+        let decl = {s= StmtDecl ({d= DId (name, None); t= index.t; loc}, None); loc} in
+        let initialize = {s= StmtBind (temp_lhs, increment); loc} in
+        let guard = range_guard loc temp_lhs temp_value modulus modulus_exp in
+        Some ([decl; initialize; guard], temp_value)
+
+  let stmt =
+    Mapper.makeExpander
+    @@ fun env state (s : stmt) ->
+    match s.s with
+    | StmtBind (lhs, rhs) -> (
+      match (Path.exp_of_lexp lhs, increment_modulo rhs) with
+      | Some lhs_value, Some (increment, base, modulus, modulus_exp) when Compare.exp lhs_value base = 0 ->
+          let initialize = {s= StmtBind (lhs, increment); loc= s.loc} in
+          let guard = range_guard s.loc lhs lhs_value modulus modulus_exp in
+          (reapply state, [initialize; guard])
+      | _ -> (
+        match rhs.e with
+        | EIndex {e; index} -> (
+          match lower_index env state s.loc index with
+          | Some (prefix, index) ->
+              (reapply state, prefix @ [{s with s= StmtBind (lhs, {rhs with e= EIndex {e; index}})}])
+          | None ->
+              (state, [s]) )
+        | _ ->
+            (state, [s]) ) )
+    | StmtDecl (decl, Some ({e= EIndex {e; index}; _} as rhs)) -> (
+      match lower_index env state s.loc index with
+      | Some (prefix, index) ->
+          (reapply state, prefix @ [{s with s= StmtDecl (decl, Some {rhs with e= EIndex {e; index}})}])
+      | None ->
+          (state, [s]) )
+    | StmtReturn ({e= EIndex {e; index}; _} as rhs) -> (
+      match lower_index env state s.loc index with
+      | Some (prefix, index) ->
+          (reapply state, prefix @ [{s with s= StmtReturn {rhs with e= EIndex {e; index}}}])
+      | None ->
+          (state, [s]) )
+    | _ ->
+        (state, [s])
+
+  let mapper = {Mapper.identity with stmt}
 end
 
 module StrengthReduction = struct
@@ -870,33 +1262,12 @@ module StrengthReduction = struct
   let is_power_of_two n = n > 0 && n land (n - 1) = 0
 
   let log2 n =
-    let rec loop acc x =
-      if x = 1 then
-        acc
-      else
-        loop (acc + 1) (x lsr 1)
-    in
+    let rec loop acc x = if x = 1 then acc else loop (acc + 1) (x lsr 1) in
     loop 0 n
 
-
-  (* Check if a floating point number is close to an integer *)
-  let is_close_to_int f =
-    let rounded = Float.round f in
-    Float.abs (f -. rounded) < 1e-10
-
-
-  (* Check if a floating point number is a power of 2 *)
-  let is_float_power_of_two f =
-    is_close_to_int f
-    &&
-    let i = int_of_float (Float.round f) in
-    i > 0 && is_power_of_two i
-
-
-  let float_log2 f =
-    let i = int_of_float (Float.round f) in
-    log2 i
-
+  (* Rules that drop or duplicate a matched subexpression require it to be a simple value:
+     removing or repeating a function call would change how many times its side effects run. *)
+  let isSimpleValue = IfExpressions.isSimpleValue
 
   (* Main strength reduction for expressions *)
   let exp =
@@ -906,122 +1277,250 @@ module StrengthReduction = struct
     (* ========== INTEGER ARITHMETIC OPTIMIZATIONS ========== *)
 
     (* x * 0 -> 0, x * 1 -> x (extend existing patterns) *)
-    | { e = EOp (OpMul, _, { e = EInt 0; _ }); _ } | { e = EOp (OpMul, { e = EInt 0; _ }, _); _ } ->
-      reapply state, { e with e = EInt 0 }
-    | { e = EOp (OpMul, e1, { e = EInt 1; _ }); _ } -> reapply state, e1
-    | { e = EOp (OpMul, { e = EInt 1; _ }, e2); _ } -> reapply state, e2
+    | {e= EOp (OpMul, _, {e= EInt 0; _}); _} | {e= EOp (OpMul, {e= EInt 0; _}, _); _} ->
+        (reapply state, {e with e= EInt 0})
+    | {e= EOp (OpMul, e1, {e= EInt 1; _}); _} ->
+        (reapply state, e1)
+    | {e= EOp (OpMul, {e= EInt 1; _}, e2); _} ->
+        (reapply state, e2)
     (* x * 2^n -> x << n (for integer types) *)
-    | { e = EOp (OpMul, e1, { e = EInt n; _ }); t = { t = TInt; _ }; loc } when is_power_of_two n ->
-      let shift_amount = log2 n in
-      reapply state, { e = EOp (OpLsh, e1, C.eint ~loc shift_amount); t = e.t; loc }
-    | { e = EOp (OpMul, { e = EInt n; _ }, e2); t = { t = TInt; _ }; loc } when is_power_of_two n ->
-      let shift_amount = log2 n in
-      reapply state, { e = EOp (OpLsh, e2, C.eint ~loc shift_amount); t = e.t; loc }
+    | {e= EOp (OpMul, e1, {e= EInt n; _}); t= {t= TInt; _}; loc} when is_power_of_two n ->
+        let shift_amount = log2 n in
+        (reapply state, {e= EOp (OpLsh, e1, C.eint ~loc shift_amount); t= e.t; loc})
+    | {e= EOp (OpMul, {e= EInt n; _}, e2); t= {t= TInt; _}; loc} when is_power_of_two n ->
+        let shift_amount = log2 n in
+        (reapply state, {e= EOp (OpLsh, e2, C.eint ~loc shift_amount); t= e.t; loc})
     (* x / 2^n -> x >> n (for positive integers only, to preserve sign behavior) *)
-    | { e = EOp (OpDiv, e1, { e = EInt n; _ }); t = { t = TInt; _ }; loc } when is_power_of_two n ->
-      let shift_amount = log2 n in
-      reapply state, { e = EOp (OpRsh, e1, C.eint ~loc shift_amount); t = e.t; loc }
+    | {e= EOp (OpDiv, e1, {e= EInt n; _}); t= {t= TInt; _}; loc} when is_power_of_two n ->
+        let shift_amount = log2 n in
+        (reapply state, {e= EOp (OpRsh, e1, C.eint ~loc shift_amount); t= e.t; loc})
     (* Removed x + x -> x * 2 transformation as it causes issues with constant propagation *)
-    (* x - x -> 0 (preserve type) *)
-    | { e = EOp (OpSub, e1, e2); _ } when Compare.exp e1 e2 = 0 -> (
+    (* x + (-x) -> 0 (the canonical form of x - x, preserve type) *)
+    | {e= EOp (OpAdd, e1, {e= EUnOp (UOpNeg, e2); _}); _} when Compare.exp e1 e2 = 0 && isSimpleValue e1 -> (
       match e1.t.t with
-      | TInt -> reapply state, C.eint ~loc:e.loc 0
-      | TReal -> reapply state, C.ereal ~loc:e.loc 0.0
-      | TFix16 -> reapply state, C.efix16 ~loc:e.loc 0.0
-      | _ -> state, e)
+      | TInt ->
+          (reapply state, C.eint ~loc:e.loc 0)
+      | TReal ->
+          (reapply state, C.ereal ~loc:e.loc 0.0)
+      | TFix16 ->
+          (reapply state, C.efix16 ~loc:e.loc 0.0)
+      | _ ->
+          (state, e) )
+    | {e= EOp (OpAdd, {e= EUnOp (UOpNeg, e1); _}, e2); _} when Compare.exp e1 e2 = 0 && isSimpleValue e1 -> (
+      match e1.t.t with
+      | TInt ->
+          (reapply state, C.eint ~loc:e.loc 0)
+      | TReal ->
+          (reapply state, C.ereal ~loc:e.loc 0.0)
+      | TFix16 ->
+          (reapply state, C.efix16 ~loc:e.loc 0.0)
+      | _ ->
+          (state, e) )
+    (* x * -1 -> -x *)
+    | {e= EOp (OpMul, e1, {e= EInt -1; _}); _} ->
+        (reapply state, {e with e= EUnOp (UOpNeg, e1)})
+    | {e= EOp (OpMul, {e= EInt -1; _}, e2); _} ->
+        (reapply state, {e with e= EUnOp (UOpNeg, e2)})
+    (* x % 1 -> 0 *)
+    | {e= EOp (OpMod, _, {e= EInt 1; _}); loc; _} ->
+        (reapply state, C.eint ~loc 0)
+    (* NOTE: x % 2^n -> x & (2^n - 1) optimization removed because Lua 5.1/LuaJIT
+       doesn't support native bitwise operators, and modulo works correctly *)
+    (* 0 / x -> 0 *)
+    | {e= EOp (OpDiv, {e= EInt 0; _}, _); loc; _} ->
+        (reapply state, C.eint ~loc 0)
     (* ========== FLOATING POINT ARITHMETIC OPTIMIZATIONS ========== *)
     (* x * 0.0 -> 0.0, x * 1.0 -> x *)
-    | { e = EOp (OpMul, _, { e = EReal 0.0; _ }); _ } | { e = EOp (OpMul, { e = EReal 0.0; _ }, _); _ } ->
-      reapply state, { e with e = EReal 0.0 }
-    | { e = EOp (OpMul, e1, { e = EReal 1.0; _ }); _ } -> reapply state, e1
-    | { e = EOp (OpMul, { e = EReal 1.0; _ }, e2); _ } -> reapply state, e2
+    | {e= EOp (OpMul, _, {e= EReal 0.0; _}); _} | {e= EOp (OpMul, {e= EReal 0.0; _}, _); _} ->
+        (reapply state, {e with e= EReal 0.0})
+    | {e= EOp (OpMul, e1, {e= EReal 1.0; _}); _} ->
+        (reapply state, e1)
+    | {e= EOp (OpMul, {e= EReal 1.0; _}, e2); _} ->
+        (reapply state, e2)
+    (* x * -1.0 -> -x *)
+    | {e= EOp (OpMul, e1, {e= EReal -1.0; _}); _} ->
+        (reapply state, {e with e= EUnOp (UOpNeg, e1)})
+    | {e= EOp (OpMul, {e= EReal -1.0; _}, e2); _} ->
+        (reapply state, {e with e= EUnOp (UOpNeg, e2)})
+    (* 0.0 / x -> 0.0 *)
+    | {e= EOp (OpDiv, {e= EReal 0.0; _}, _); loc; _} ->
+        (reapply state, C.ereal ~loc 0.0)
     (* Removed x * 2.0 -> x + x transformation as it interferes with constant folding *)
     (* Removed x * 0.5 <-> x / 2.0 transformations as they create cycles with other passes *)
     (* Removed problematic power-of-2 real multiplication transformation *)
     (* ========== FIXED POINT ARITHMETIC OPTIMIZATIONS ========== *)
     (* Similar patterns for fixed point (TFix16) *)
-    | { e = EOp (OpMul, _, { e = EFixed 0.0; _ }); _ } | { e = EOp (OpMul, { e = EFixed 0.0; _ }, _); _ } ->
-      reapply state, { e with e = EFixed 0.0 }
-    | { e = EOp (OpMul, e1, { e = EFixed 1.0; _ }); _ } -> reapply state, e1
-    | { e = EOp (OpMul, { e = EFixed 1.0; _ }, e2); _ } ->
-      reapply state, e2 (* Removed x * 2.0 -> x + x for fixed point as it interferes with constant folding *)
+    | {e= EOp (OpMul, _, {e= EFixed 0.0; _}); _} | {e= EOp (OpMul, {e= EFixed 0.0; _}, _); _} ->
+        (reapply state, {e with e= EFixed 0.0})
+    | {e= EOp (OpMul, e1, {e= EFixed 1.0; _}); _} ->
+        (reapply state, e1)
+    | {e= EOp (OpMul, {e= EFixed 1.0; _}, e2); _} ->
+        (reapply state, e2 (* Removed x * 2.0 -> x + x for fixed point as it interferes with constant folding *))
+    (* x * -1.0 -> -x (fixed) *)
+    | {e= EOp (OpMul, e1, {e= EFixed -1.0; _}); _} ->
+        (reapply state, {e with e= EUnOp (UOpNeg, e1)})
+    | {e= EOp (OpMul, {e= EFixed -1.0; _}, e2); _} ->
+        (reapply state, {e with e= EUnOp (UOpNeg, e2)})
+    (* 0.0 / x -> 0.0 (fixed) *)
+    | {e= EOp (OpDiv, {e= EFixed 0.0; _}, _); loc; _} ->
+        (reapply state, C.efix16 ~loc 0.0)
+    (* ========== DIVISION BY 1 OPTIMIZATIONS ========== *)
+    (* x / 1 -> x (for all numeric types) *)
+    | {e= EOp (OpDiv, e1, {e= EInt 1; _}); _} ->
+        (reapply state, e1)
+    | {e= EOp (OpDiv, e1, {e= EReal 1.0; _}); _} ->
+        (reapply state, e1)
+    | {e= EOp (OpDiv, e1, {e= EFixed 1.0; _}); _} ->
+        (reapply state, e1)
     (* ========== FUNCTION CALL OPTIMIZATIONS ========== *)
     (* pow(x, 2) -> x * x *)
-    | { e = ECall { path = "pow"; args = [ x; { e = EReal 2.0; _ } ] }; _ } ->
-      reapply state, { e with e = EOp (OpMul, x, x) }
-    | { e = ECall { path = "pow"; args = [ x; { e = EInt 2; _ } ] }; _ } ->
-      reapply state, { e with e = EOp (OpMul, x, x) }
-    | { e = ECall { path = "pow"; args = [ x; { e = EFixed 2.0; _ } ] }; _ } ->
-      reapply state, { e with e = EOp (OpMul, x, x) }
+    | {e= ECall {path= "pow"; args= [x; {e= EReal 2.0; _}]}; _} when isSimpleValue x ->
+        (reapply state, {e with e= EOp (OpMul, x, x)})
+    | {e= ECall {path= "pow"; args= [x; {e= EInt 2; _}]}; _} when isSimpleValue x ->
+        (reapply state, {e with e= EOp (OpMul, x, x)})
+    | {e= ECall {path= "pow"; args= [x; {e= EFixed 2.0; _}]}; _} when isSimpleValue x ->
+        (reapply state, {e with e= EOp (OpMul, x, x)})
     (* pow(x, 3) -> x * x * x *)
-    | { e = ECall { path = "pow"; args = [ x; { e = EReal 3.0; _ } ] }; _ } ->
-      let x_squared = { e with e = EOp (OpMul, x, x) } in
-      reapply state, { e with e = EOp (OpMul, x, x_squared) }
-    | { e = ECall { path = "pow"; args = [ x; { e = EInt 3; _ } ] }; _ } ->
-      let x_squared = { e with e = EOp (OpMul, x, x) } in
-      reapply state, { e with e = EOp (OpMul, x, x_squared) }
+    | {e= ECall {path= "pow"; args= [x; {e= EReal 3.0; _}]}; _} when isSimpleValue x ->
+        let x_squared = {e with e= EOp (OpMul, x, x)} in
+        (reapply state, {e with e= EOp (OpMul, x, x_squared)})
+    | {e= ECall {path= "pow"; args= [x; {e= EInt 3; _}]}; _} when isSimpleValue x ->
+        let x_squared = {e with e= EOp (OpMul, x, x)} in
+        (reapply state, {e with e= EOp (OpMul, x, x_squared)})
     (* pow(x, 4) -> (x * x) * (x * x) *)
-    | { e = ECall { path = "pow"; args = [ x; { e = EReal 4.0; _ } ] }; _ } ->
-      let x_squared = { e with e = EOp (OpMul, x, x) } in
-      reapply state, { e with e = EOp (OpMul, x_squared, x_squared) }
-    | { e = ECall { path = "pow"; args = [ x; { e = EInt 4; _ } ] }; _ } ->
-      let x_squared = { e with e = EOp (OpMul, x, x) } in
-      reapply state, { e with e = EOp (OpMul, x_squared, x_squared) }
+    | {e= ECall {path= "pow"; args= [x; {e= EReal 4.0; _}]}; _} when isSimpleValue x ->
+        let x_squared = {e with e= EOp (OpMul, x, x)} in
+        (reapply state, {e with e= EOp (OpMul, x_squared, x_squared)})
+    | {e= ECall {path= "pow"; args= [x; {e= EInt 4; _}]}; _} when isSimpleValue x ->
+        let x_squared = {e with e= EOp (OpMul, x, x)} in
+        (reapply state, {e with e= EOp (OpMul, x_squared, x_squared)})
     (* pow(x, 0.5) -> sqrt(x) *)
-    | { e = ECall { path = "pow"; args = [ x; { e = EReal 0.5; _ } ] }; _ } ->
-      reapply state, { e with e = ECall { path = "sqrt"; args = [ x ] } }
+    | {e= ECall {path= "pow"; args= [x; {e= EReal 0.5; _}]}; _} ->
+        (reapply state, {e with e= ECall {path= "sqrt"; args= [x]}})
     (* pow(x, -1) -> 1.0 / x *)
-    | { e = ECall { path = "pow"; args = [ x; { e = EReal -1.0; _ } ] }; loc; _ } ->
-      reapply state, { e with e = EOp (OpDiv, C.ereal ~loc 1.0, x) }
-    | { e = ECall { path = "pow"; args = [ x; { e = EInt -1; _ } ] }; loc; _ } ->
-      reapply state, { e with e = EOp (OpDiv, C.ereal ~loc 1.0, x) }
+    | {e= ECall {path= "pow"; args= [x; {e= EReal -1.0; _}]}; loc; _} ->
+        (reapply state, {e with e= EOp (OpDiv, C.ereal ~loc 1.0, x)})
+    | {e= ECall {path= "pow"; args= [x; {e= EInt -1; _}]}; loc; _} ->
+        (reapply state, {e with e= EOp (OpDiv, C.ereal ~loc 1.0, x)})
+    (* pow(x, -2) -> 1.0 / (x * x) *)
+    | {e= ECall {path= "pow"; args= [x; {e= EReal -2.0; _}]}; loc; _} when isSimpleValue x ->
+        let x_squared = {e with e= EOp (OpMul, x, x)} in
+        (reapply state, {e with e= EOp (OpDiv, C.ereal ~loc 1.0, x_squared)})
+    | {e= ECall {path= "pow"; args= [x; {e= EInt -2; _}]}; loc; _} when isSimpleValue x ->
+        let x_squared = {e with e= EOp (OpMul, x, x)} in
+        (reapply state, {e with e= EOp (OpDiv, C.ereal ~loc 1.0, x_squared)})
     (* pow(x, 1) -> x *)
-    | { e = ECall { path = "pow"; args = [ x; { e = EReal 1.0; _ } ] }; _ } -> reapply state, x
-    | { e = ECall { path = "pow"; args = [ x; { e = EInt 1; _ } ] }; _ } -> reapply state, x
-    | { e = ECall { path = "pow"; args = [ x; { e = EFixed 1.0; _ } ] }; _ } -> reapply state, x
+    | {e= ECall {path= "pow"; args= [x; {e= EReal 1.0; _}]}; _} ->
+        (reapply state, x)
+    | {e= ECall {path= "pow"; args= [x; {e= EInt 1; _}]}; _} ->
+        (reapply state, x)
+    | {e= ECall {path= "pow"; args= [x; {e= EFixed 1.0; _}]}; _} ->
+        (reapply state, x)
     (* pow(x, 0) -> 1 *)
-    | { e = ECall { path = "pow"; args = [ _; { e = EReal 0.0; _ } ] }; loc; _ } -> reapply state, C.ereal ~loc 1.0
-    | { e = ECall { path = "pow"; args = [ _; { e = EInt 0; _ } ] }; loc; _ } -> reapply state, C.eint ~loc 1
-    | { e = ECall { path = "pow"; args = [ _; { e = EFixed 0.0; _ } ] }; loc; _ } ->
-      reapply state, C.efix16 ~loc 1.0 (* ========== MATHEMATICAL IDENTITIES ========== *)
+    | {e= ECall {path= "pow"; args= [x; {e= EReal 0.0; _}]}; loc; _} when isSimpleValue x ->
+        (reapply state, C.ereal ~loc 1.0)
+    | {e= ECall {path= "pow"; args= [x; {e= EInt 0; _}]}; loc; _} when isSimpleValue x ->
+        (reapply state, C.eint ~loc 1)
+    | {e= ECall {path= "pow"; args= [x; {e= EFixed 0.0; _}]}; loc; _} when isSimpleValue x ->
+        (reapply state, C.efix16 ~loc 1.0 (* ========== MATHEMATICAL IDENTITIES ========== *))
     (* abs(abs(x)) -> abs(x) *)
-    | { e = ECall { path = "abs"; args = [ { e = ECall { path = "abs"; args = [ x ] }; _ } ] }; _ } ->
-      reapply state, { e with e = ECall { path = "abs"; args = [ x ] } }
+    | {e= ECall {path= "abs"; args= [{e= ECall {path= "abs"; args= [x]}; _}]}; _} ->
+        (reapply state, {e with e= ECall {path= "abs"; args= [x]}})
     (* sqrt(x * x) -> abs(x) (mathematically correct) *)
-    | { e = ECall { path = "sqrt"; args = [ { e = EOp (OpMul, x1, x2); _ } ] }; _ } when Compare.exp x1 x2 = 0 ->
-      reapply state, { e with e = ECall { path = "abs"; args = [ x1 ] } }
+    | {e= ECall {path= "sqrt"; args= [{e= EOp (OpMul, x1, x2); _}]}; _} when Compare.exp x1 x2 = 0 && isSimpleValue x1
+      ->
+        (reapply state, {e with e= ECall {path= "abs"; args= [x1]}})
     (* Removed log(exp(x)) <-> exp(log(x)) transformations as they may create cycles *)
     (* Removed sin/cos constant optimizations as they conflict with existing Builtin pass *)
 
-    (* ========== AUDIO-SPECIFIC OPTIMIZATIONS ========== *)
-    (* tanh(x) where x is very small -> x (linear approximation) *)
-    | { e = ECall { path = "tanh"; args = [ { e = EReal x; _ } ] }; _ } when Float.abs x < 0.1 ->
-      reapply state, { e with e = EReal x }
-    | { e = ECall { path = "tanh"; args = [ { e = EFixed x; _ } ] }; _ } when Float.abs x < 0.1 ->
-      reapply state, { e with e = EFixed x } (* ========== BITWISE OPERATIONS OPTIMIZATIONS ========== *)
+    (* ========== BITWISE OPERATIONS OPTIMIZATIONS ========== *)
     (* x & 0 -> 0 *)
-    | { e = EOp (OpBand, _, { e = EInt 0; _ }); _ } | { e = EOp (OpBand, { e = EInt 0; _ }, _); _ } ->
-      reapply state, { e with e = EInt 0 }
+    | {e= EOp (OpBand, _, {e= EInt 0; _}); _} | {e= EOp (OpBand, {e= EInt 0; _}, _); _} ->
+        (reapply state, {e with e= EInt 0})
     (* x | 0 -> x *)
-    | { e = EOp (OpBor, e1, { e = EInt 0; _ }); _ } -> reapply state, e1
-    | { e = EOp (OpBor, { e = EInt 0; _ }, e2); _ } -> reapply state, e2
+    | {e= EOp (OpBor, e1, {e= EInt 0; _}); _} ->
+        (reapply state, e1)
+    | {e= EOp (OpBor, {e= EInt 0; _}, e2); _} ->
+        (reapply state, e2)
     (* x ^ 0 -> x *)
-    | { e = EOp (OpBxor, e1, { e = EInt 0; _ }); _ } -> reapply state, e1
-    | { e = EOp (OpBxor, { e = EInt 0; _ }, e2); _ } -> reapply state, e2
+    | {e= EOp (OpBxor, e1, {e= EInt 0; _}); _} ->
+        (reapply state, e1)
+    | {e= EOp (OpBxor, {e= EInt 0; _}, e2); _} ->
+        (reapply state, e2)
     (* x ^ x -> 0 *)
-    | { e = EOp (OpBxor, e1, e2); _ } when Compare.exp e1 e2 = 0 -> reapply state, C.eint ~loc:e.loc 0
+    | {e= EOp (OpBxor, e1, e2); _} when Compare.exp e1 e2 = 0 && isSimpleValue e1 ->
+        (reapply state, C.eint ~loc:e.loc 0)
     (* x << 0 -> x, x >> 0 -> x *)
-    | { e = EOp (OpLsh, e1, { e = EInt 0; _ }); _ } -> reapply state, e1
-    | { e = EOp (OpRsh, e1, { e = EInt 0; _ }); _ } -> reapply state, e1
+    | {e= EOp (OpLsh, e1, {e= EInt 0; _}); _} ->
+        (reapply state, e1)
+    | {e= EOp (OpRsh, e1, {e= EInt 0; _}); _} ->
+        (reapply state, e1)
+    (* x & x -> x, x | x -> x *)
+    | {e= EOp (OpBand, e1, e2); _} when Compare.exp e1 e2 = 0 && isSimpleValue e1 ->
+        (reapply state, e1)
+    | {e= EOp (OpBor, e1, e2); _} when Compare.exp e1 e2 = 0 && isSimpleValue e1 ->
+        (reapply state, e1)
+    (* x & -1 -> x (all bits set) *)
+    | {e= EOp (OpBand, e1, {e= EInt -1; _}); _} ->
+        (reapply state, e1)
+    | {e= EOp (OpBand, {e= EInt -1; _}, e2); _} ->
+        (reapply state, e2)
+    (* ========== NEGATION OPTIMIZATIONS ========== *)
+    (* -(-x) -> x *)
+    | {e= EUnOp (UOpNeg, {e= EUnOp (UOpNeg, x); _}); _} ->
+        (reapply state, x)
+    (* not(not(x)) -> x *)
+    | {e= EUnOp (UOpNot, {e= EUnOp (UOpNot, x); _}); _} ->
+        (reapply state, x)
+    (* ========== BOOLEAN LOGIC OPTIMIZATIONS ========== *)
+    (* x && true -> x *)
+    | {e= EOp (OpLand, e1, {e= EBool true; _}); _} ->
+        (reapply state, e1)
+    | {e= EOp (OpLand, {e= EBool true; _}, e2); _} ->
+        (reapply state, e2)
+    (* x && false -> false *)
+    | {e= EOp (OpLand, _, {e= EBool false; loc; _}); _} ->
+        (reapply state, C.ebool ~loc false)
+    | {e= EOp (OpLand, {e= EBool false; loc; _}, _); _} ->
+        (reapply state, C.ebool ~loc false)
+    (* x || false -> x *)
+    | {e= EOp (OpLor, e1, {e= EBool false; _}); _} ->
+        (reapply state, e1)
+    | {e= EOp (OpLor, {e= EBool false; _}, e2); _} ->
+        (reapply state, e2)
+    (* x || true -> true *)
+    | {e= EOp (OpLor, _, {e= EBool true; loc; _}); _} ->
+        (reapply state, C.ebool ~loc true)
+    | {e= EOp (OpLor, {e= EBool true; loc; _}, _); _} ->
+        (reapply state, C.ebool ~loc true)
+    (* ========== COMPARISON SELF-IDENTITIES ========== *)
+    (* x == x -> true (int only, floats have NaN) *)
+    | {e= EOp (OpEq, e1, e2); loc; _} when Compare.exp e1 e2 = 0 && e1.t.t = TInt && isSimpleValue e1 ->
+        (reapply state, C.ebool ~loc true)
+    (* x != x -> false (int only) *)
+    | {e= EOp (OpNe, e1, e2); loc; _} when Compare.exp e1 e2 = 0 && e1.t.t = TInt && isSimpleValue e1 ->
+        (reapply state, C.ebool ~loc false)
+    (* x < x -> false, x > x -> false *)
+    | {e= EOp (OpLt, e1, e2); loc; _} when Compare.exp e1 e2 = 0 && isSimpleValue e1 ->
+        (reapply state, C.ebool ~loc false)
+    | {e= EOp (OpGt, e1, e2); loc; _} when Compare.exp e1 e2 = 0 && isSimpleValue e1 ->
+        (reapply state, C.ebool ~loc false)
+    (* x <= x -> true, x >= x -> true (int only) *)
+    | {e= EOp (OpLe, e1, e2); loc; _} when Compare.exp e1 e2 = 0 && e1.t.t = TInt && isSimpleValue e1 ->
+        (reapply state, C.ebool ~loc true)
+    | {e= EOp (OpGe, e1, e2); loc; _} when Compare.exp e1 e2 = 0 && e1.t.t = TInt && isSimpleValue e1 ->
+        (reapply state, C.ebool ~loc true)
+    (* ========== MIN/MAX OPTIMIZATIONS ========== *)
+    (* min(x, x) -> x, max(x, x) -> x *)
+    | {e= ECall {path= "min"; args= [x1; x2]}; _} when Compare.exp x1 x2 = 0 && isSimpleValue x1 ->
+        (reapply state, x1)
+    | {e= ECall {path= "max"; args= [x1; x2]}; _} when Compare.exp x1 x2 = 0 && isSimpleValue x1 ->
+        (reapply state, x1)
     (* No optimization found *)
-    | _ -> state, e
+    | _ ->
+        (state, e)
 
-
-  let mapper enabled =
-    if enabled = Enabled then
-      { Mapper.identity with exp }
-    else
-      Mapper.identity
+  let mapper = {Mapper.identity with exp}
 end
 
 module Sort = struct
@@ -1029,52 +1528,51 @@ module Sort = struct
 
   let rec split types functions externals constants stmts =
     match stmts with
-    | [] -> CCList.rev types, CCList.rev functions, CCList.rev externals, CCList.rev constants
-    | ({ top = TopType { path; _ }; _ } as h) :: t -> split ((path, h) :: types) functions externals constants t
-    | ({ top = TopAlias { path; _ }; _ } as h) :: t -> split ((path, h) :: types) functions externals constants t
-    | ({ top = TopFunction ({ name; _ }, _); _ } as h) :: t ->
-      split types ((name, h) :: functions) externals constants t
-    | ({ top = TopExternal _; _ } as h) :: t -> split types functions (h :: externals) constants t
-    | ({ top = TopConstant _; _ } as h) :: t -> split types functions externals (h :: constants) t
-
+    | [] ->
+        (CCList.rev types, CCList.rev functions, CCList.rev externals, CCList.rev constants)
+    | ({top= TopType {path; _}; _} as h) :: t ->
+        split ((path, h) :: types) functions externals constants t
+    | ({top= TopAlias {path; _}; _} as h) :: t ->
+        split ((path, h) :: types) functions externals constants t
+    | ({top= TopFunction ({name; _}, _); _} as h) :: t ->
+        split types ((name, h) :: functions) externals constants t
+    | ({top= TopExternal _; _} as h) :: t ->
+        split types functions (h :: externals) constants t
+    | ({top= TopConstant _; _} as h) :: t ->
+        split types functions externals (h :: constants) t
 
   let rec sort deps table visited sorted stmts =
     match stmts with
-    | [] -> CCList.rev sorted
-    | { top = TopType { path = name; _ }; _ } :: t
-     |{ top = TopAlias { path = name; _ }; _ } :: t
-     |{ top = TopFunction ({ name; _ }, _); _ } :: t
-     |{ top = TopExternal ({ name; _ }, _); _ } :: t
-     |{ top = TopConstant (name, _, _, _, _); _ } :: t ->
-      let visited, sorted = pullIn deps table visited sorted name in
-      sort deps table visited sorted t
-
+    | [] ->
+        CCList.rev sorted
+    | {top= TopType {path= name; _}; _} :: t
+    | {top= TopAlias {path= name; _}; _} :: t
+    | {top= TopFunction ({name; _}, _); _} :: t
+    | {top= TopExternal ({name; _}, _); _} :: t
+    | {top= TopConstant (name, _, _, _, _); _} :: t ->
+        let visited, sorted = pullIn deps table visited sorted name in
+        sort deps table visited sorted t
 
   and pullIn deps table visited sorted name =
-    if Set.mem name visited then
-      visited, sorted
+    if Set.mem name visited then (visited, sorted)
     else
       match Map.find_opt name deps with
       | None -> (
-        let visited = Set.add name visited in
-        match Map.find_opt name table with
-        | Some stmt -> visited, stmt :: sorted
-        | None -> visited, sorted)
+          let visited = Set.add name visited in
+          match Map.find_opt name table with Some stmt -> (visited, stmt :: sorted) | None -> (visited, sorted) )
       | Some dep_set ->
-        let visited = Set.add name visited in
-        let missing = Set.filter (fun name -> not (Set.mem name visited)) dep_set in
-        let visited, sorted =
-          Set.fold (fun name (visited, sorted) -> pullIn deps table visited sorted name) missing (visited, sorted)
-        in
-        let stmt = Map.find name table in
-        visited, stmt :: sorted
-
+          let visited = Set.add name visited in
+          let missing = Set.filter (fun name -> not (Set.mem name visited)) dep_set in
+          let visited, sorted =
+            Set.fold (fun name (visited, sorted) -> pullIn deps table visited sorted name) missing (visited, sorted)
+          in
+          let stmt = Map.find name table in
+          (visited, stmt :: sorted)
 
   let getDependencies args prog =
     let state, _ = Mapper.prog dependencies (default_env args) (Mapper.defaultState (default_data ())) prog in
     let data = Mapper.getData state in
-    data.type_deps, data.function_deps
-
+    (data.type_deps, data.function_deps)
 
   let run args prog =
     let type_deps, function_deps = getDependencies args prog in
@@ -1086,55 +1584,286 @@ module Sort = struct
     types @ constants @ externals @ functions
 end
 
+module DeadCodeElimination = struct
+  let nameOfTopStmt (s : top_stmt) : string =
+    match s.top with
+    | TopFunction ({name; _}, _) | TopExternal ({name; _}, _) ->
+        name
+    | TopType {path; _} | TopAlias {path; _} ->
+        path
+    | TopConstant (name, _, _, _, _) ->
+        name
+
+  let rec depsOfType (acc : Set.t) (t : type_) : Set.t =
+    match t.t with
+    | TStruct {path; members; _} ->
+        let acc = Set.add path acc in
+        List.fold_left (fun acc (_, mt, _, _) -> depsOfType acc mt) acc members
+    | TArray (_, elem) ->
+        depsOfType acc elem
+    | TList elem ->
+        depsOfType acc elem
+    | TTuple elems ->
+        List.fold_left depsOfType acc elems
+    | TVoid (Some elems) ->
+        List.fold_left depsOfType acc elems
+    | TVoid None | TInt | TInt16 | TReal | TString | TBool | TFix16 | TEmptyType ->
+        acc
+
+  let rec depsOfExp (constants : Set.t) (acc : Set.t) (e : exp) : Set.t =
+    let acc = depsOfType acc e.t in
+    match e.e with
+    | ECall {path; args} ->
+        let acc = Set.add path acc in
+        List.fold_left (depsOfExp constants) acc args
+    | ERecord {path; elems} ->
+        let acc = Set.add path acc in
+        List.fold_left (fun acc (_, v) -> depsOfExp constants acc v) acc elems
+    | EId name ->
+        if Set.mem name constants then Set.add name acc else acc
+    | EUnOp (_, e1) ->
+        depsOfExp constants acc e1
+    | EOp (_, e1, e2) ->
+        let acc = depsOfExp constants acc e1 in
+        depsOfExp constants acc e2
+    | EIndex {e= e1; index} ->
+        let acc = depsOfExp constants acc e1 in
+        depsOfExp constants acc index
+    | EArray elems ->
+        List.fold_left (depsOfExp constants) acc elems
+    | EIf {cond; then_; else_} ->
+        let acc = depsOfExp constants acc cond in
+        let acc = depsOfExp constants acc then_ in
+        depsOfExp constants acc else_
+    | ETuple elems ->
+        List.fold_left (depsOfExp constants) acc elems
+    | EMember (e1, _) | ETMember (e1, _) ->
+        depsOfExp constants acc e1
+    | EUnit | EEmptyValue | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ ->
+        acc
+
+  let depsOfLexp (constants : Set.t) (acc : Set.t) (l : lexp) : Set.t =
+    let rec aux (acc : Set.t) (l : lexp) : Set.t =
+      let acc = depsOfType acc l.t in
+      match l.l with
+      | LWild | LId _ ->
+          acc
+      | LMember (l1, _) ->
+          aux acc l1
+      | LIndex {e= l1; index} ->
+          let acc = aux acc l1 in
+          depsOfExp constants acc index
+      | LTuple ls ->
+          List.fold_left aux acc ls
+    in
+    aux acc l
+
+  let rec depsOfStmt (constants : Set.t) (acc : Set.t) (s : stmt) : Set.t =
+    match s.s with
+    | StmtDecl (d, init) -> (
+        let acc = depsOfType acc d.t in
+        match init with None -> acc | Some e -> depsOfExp constants acc e )
+    | StmtBind (l, e) ->
+        let acc = depsOfLexp constants acc l in
+        depsOfExp constants acc e
+    | StmtReturn e ->
+        depsOfExp constants acc e
+    | StmtBlock stmts ->
+        List.fold_left (depsOfStmt constants) acc stmts
+    | StmtIf (cond, then_, else_) -> (
+        let acc = depsOfExp constants acc cond in
+        let acc = depsOfStmt constants acc then_ in
+        match else_ with None -> acc | Some s -> depsOfStmt constants acc s )
+    | StmtWhile (cond, body) ->
+        let acc = depsOfExp constants acc cond in
+        depsOfStmt constants acc body
+    | StmtSwitch (cond, cases, default) -> (
+        let acc = depsOfExp constants acc cond in
+        let acc =
+          List.fold_left
+            (fun acc (e, s) ->
+              let acc = depsOfExp constants acc e in
+              depsOfStmt constants acc s )
+            acc cases
+        in
+        match default with None -> acc | Some s -> depsOfStmt constants acc s )
+
+  let depsOfParams (acc : Set.t) (params : param list) : Set.t =
+    List.fold_left (fun acc (p : param) -> depsOfType acc p.t) acc params
+
+  let depsOfReturnType (acc : Set.t) (t : type_ list * type_) : Set.t =
+    let acc = List.fold_left depsOfType acc (fst t) in
+    depsOfType acc (snd t)
+
+  let contextTypeOfFunction (def : function_def) : string option =
+    match def.args with {t= {t= TStruct {path; _}; _}; _} :: _ -> Some path | _ -> None
+
+  let addDep (graph : Set.t Map.t) (from_name : string) (to_name : string) : Set.t Map.t =
+    let deps = match Map.find_opt from_name graph with None -> Set.empty | Some s -> s in
+    Map.add from_name (Set.add to_name deps) graph
+
+  let buildDependencyGraph (constants : Set.t) (prog : prog) : Set.t Map.t =
+    let graph =
+      List.fold_left
+        (fun graph (s : top_stmt) ->
+          let name = nameOfTopStmt s in
+          let deps =
+            match s.top with
+            | TopFunction (def, body) ->
+                let acc = depsOfParams Set.empty def.args in
+                let acc = depsOfReturnType acc def.t in
+                depsOfStmt constants acc body
+            | TopExternal (def, _) ->
+                let acc = depsOfParams Set.empty def.args in
+                depsOfReturnType acc def.t
+            | TopType {members; _} ->
+                List.fold_left (fun acc (_, mt, _, _) -> depsOfType acc mt) Set.empty members
+            | TopAlias {alias_of; _} ->
+                Set.singleton alias_of
+            | TopConstant (_, _, t, e, _) ->
+                let acc = depsOfType Set.empty t in
+                depsOfExp constants acc e
+          in
+          Map.add name deps graph )
+        Map.empty prog
+    in
+    (* Reverse alias edges: when a base type is reachable, its aliases become reachable.
+       This ensures that and-grouped functions sharing context types via aliases are preserved. *)
+    let graph =
+      List.fold_left
+        (fun graph (s : top_stmt) ->
+          match s.top with TopAlias {path; alias_of} -> addDep graph alias_of path | _ -> graph )
+        graph prog
+    in
+    (* Reverse context-type edges: a reachable context type makes the functions
+       taking it as their first parameter reachable too. *)
+    let graph =
+      List.fold_left
+        (fun graph (s : top_stmt) ->
+          match s.top with
+          | TopFunction (def, _) | TopExternal (def, _) -> (
+            match contextTypeOfFunction def with Some ctx_type -> addDep graph ctx_type def.name | None -> graph )
+          | _ ->
+              graph )
+        graph prog
+    in
+    graph
+
+  let findRoots (prog : prog) (all_names : Set.t) : Set.t =
+    (* Phase 1: Collect context types of is_root functions *)
+    let root_context_types =
+      List.fold_left
+        (fun acc (s : top_stmt) ->
+          match s.top with
+          | TopFunction (def, _) when def.info.is_root -> (
+            match contextTypeOfFunction def with Some path -> Set.add path acc | None -> acc )
+          | _ ->
+              acc )
+        Set.empty prog
+    in
+    (* Phase 2: Mark roots *)
+    List.fold_left
+      (fun roots (s : top_stmt) ->
+        match s.top with
+        (* All is_root functions *)
+        | TopFunction (def, _) when def.info.is_root ->
+            Set.add def.name roots
+        | TopExternal (def, _) when def.info.is_root ->
+            Set.add def.name roots
+        (* Functions whose first param is a root context type *)
+        | TopFunction (def, _) | TopExternal (def, _) -> (
+          match contextTypeOfFunction def with
+          | Some path when Set.mem path root_context_types ->
+              Set.add def.name roots
+          | _ ->
+              roots )
+        (* Root context types themselves *)
+        | TopType {path; _} when Set.mem path root_context_types ->
+            (* Also add _init and _alloc companions if they exist *)
+            let roots = Set.add path roots in
+            let init_name = path ^ "_init" in
+            let alloc_name = path ^ "_alloc" in
+            let roots = if Set.mem init_name all_names then Set.add init_name roots else roots in
+            if Set.mem alloc_name all_names then Set.add alloc_name roots else roots
+        | TopAlias {path; _} when Set.mem path root_context_types ->
+            Set.add path roots
+        | _ ->
+            roots )
+      Set.empty prog
+
+  let reachable (graph : Set.t Map.t) (roots : Set.t) : Set.t =
+    let rec dfs (visited : Set.t) (name : string) : Set.t =
+      if Set.mem name visited then visited
+      else
+        let visited = Set.add name visited in
+        match Map.find_opt name graph with
+        | None ->
+            visited
+        | Some deps ->
+            Set.fold (fun dep visited -> dfs visited dep) deps visited
+    in
+    Set.fold (fun root visited -> dfs visited root) roots Set.empty
+
+  let run (args : Util.Args.args) (prog : prog) : prog =
+    match args.roots with
+    | [] ->
+        prog
+    | _ ->
+        let all_names = List.fold_left (fun acc s -> Set.add (nameOfTopStmt s) acc) Set.empty prog in
+        let constants =
+          List.fold_left
+            (fun acc (s : top_stmt) -> match s.top with TopConstant (name, _, _, _, _) -> Set.add name acc | _ -> acc)
+            Set.empty prog
+        in
+        let graph = buildDependencyGraph constants prog in
+        let roots = findRoots prog all_names in
+        let reachable_set = reachable graph roots in
+        List.filter (fun s -> Set.mem (nameOfTopStmt s) reachable_set) prog
+end
+
 let passes =
-  Location.mapper
-  |> Mapper.seq (Markers.mapper Enabled)
-  |> Mapper.seq (Canonize.mapper Enabled)
-  |> Mapper.seq (StrengthReduction.mapper Enabled)
-  |> Mapper.seq (Simplify.mapper Enabled)
-  |> Mapper.seq (Builtin.mapper Enabled)
-  |> Mapper.seq (IfExpressions.mapper Enabled)
-  |> Mapper.seq (Tuples.mapper Enabled)
-  |> Mapper.seq (Cast.mapper Enabled)
-  |> Mapper.seq (LiteralArrays.mapper Enabled)
-  |> Mapper.seq (LiteralRecords.mapper Enabled)
+  Location.mapper |> Mapper.seq Markers.mapper |> Mapper.seq Canonize.mapper |> Mapper.seq ConstantPropagation.mapper
+  |> Mapper.seq StrengthReduction.mapper |> Mapper.seq Simplify.mapper |> Mapper.seq FoldBuiltins.mapper
+  |> Mapper.seq CircularBuffers.mapper |> Mapper.seq IfExpressions.mapper |> Mapper.seq Tuples.mapper
+  |> Mapper.seq Cast.mapper |> Mapper.seq LiteralArrays.mapper |> Mapper.seq LiteralRecords.mapper
 
+(* Number of expressions in a top statement. Some rewrites simplify one nesting level per
+   application, so the number of repetitions a statement needs grows with its size. *)
+let countExpressions (s : top_stmt) : int =
+  let count = ref 0 in
+  let exp = Mapper.make (fun _env state e -> incr count ; (state, e)) in
+  let _ = Mapper.top_stmt {Mapper.identity with exp} () (Mapper.defaultState ()) s in
+  !count
 
-let rec apply env state prog n =
-  if n > 20 then
-    failwith "too many repeats"
+(* The limit is taken from the statement before it is rewritten, since folding makes it smaller *)
+let repeatLimit (prog : prog) : int = match prog with [] -> 0 | h :: _ -> 20 + countExpressions h
+
+let rec apply env state prog n limit =
+  if n > limit then
+    let loc = match prog with h :: _ -> h.loc | [] -> Util.Loc.default in
+    Util.Error.raiseError "Internal error: the optimization of this code did not converge." loc
   else
     match prog with
-    | [] -> state, []
+    | [] ->
+        (state, [])
     | h :: t ->
-      let state, h = Mapper.top_stmt passes env state h in
-      let data = Mapper.getData state in
-      if data.repeat then
-        let data = { data with repeat = false } in
-        let state, h = apply env (Mapper.setData state data) h (n + 1) in
-        apply env state (h @ t) (n + 1)
-      else
-        let state, t = apply env state t 0 in
-        state, h @ t
+        let state, h = Mapper.top_stmt passes env state h in
+        let data = Mapper.getData state in
+        if data.repeat then
+          let data = {data with repeat= false} in
+          let state, h = apply env (Mapper.setData state data) h (n + 1) limit in
+          apply env state (h @ t) (n + 1) limit
+        else
+          let state, t = apply env state t 0 (repeatLimit t) in
+          (state, h @ t)
 
+let fix16ToReal (prog : prog) : prog = Fix16ToReal.run prog
 
 let run args (prog : prog) : prog =
-  let _, prog = apply (default_env args) (Mapper.defaultState (default_data ())) prog 0 in
+  let _, prog = apply (default_env args) (Mapper.defaultState (default_data ())) prog 0 (repeatLimit prog) in
+  let prog = NonnegativeFloor.run prog in
+  let prog = Local_optimization.run prog in
+  let _, prog = apply (default_env args) (Mapper.defaultState (default_data ())) prog 0 (repeatLimit prog) in
   let prog = Sort.run args prog in
+  let prog = DeadCodeElimination.run args prog in
   prog
-
-
-let simplifyExp (e : exp) : exp =
-  let rec loop n env state e =
-    if n > 20 then
-      failwith "too many repeats"
-    else
-      let state, e = Mapper.exp passes env state e in
-      let data = Mapper.getData state in
-      if data.repeat then
-        let data = { data with repeat = false } in
-        loop (n + 1) env (Mapper.setData state data) e
-      else
-        e
-  in
-  loop 0 (default_env Util.Args.default_arguments) (Mapper.defaultState (default_data ())) e

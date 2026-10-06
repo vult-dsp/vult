@@ -112,7 +112,7 @@ float Synth2_osc(Synth2_osc_type& _ctx, float pitch, float pw, float wave) {
 
 float Synth2_svf_step(Synth2_svf_step_type& _ctx, float input, float g, float q, int32_t sel) {
    float low = g * _ctx.dband + _ctx.dlow;
-   float high = input + (- low) + (- q * _ctx.dband);
+   float high = input + (- low) + (- (q * _ctx.dband));
    float band = g * high + _ctx.dband;
    float notch = high + low;
    _ctx.dband = float_clip(band, -1.0f, 1.0f);
@@ -149,7 +149,8 @@ float Synth2_svf(Synth2_svf_type& _ctx, float input, float fc, float q, int32_t 
 }
 
 float Synth2_lfo(Synth2_lfo_type& _ctx, float f, bool gate) {
-   float rate = 100.0f * f * Synth2_minFixed() + Synth2_minFixed();
+   float _cse_temp_0 = Synth2_minFixed();
+   float rate = _cse_temp_0 + 100.0f * _cse_temp_0 * f;
    if (Synth2_edge(_ctx.inst_1445f, gate)) {
       _ctx.phase = 0.0f;
    }
@@ -205,15 +206,7 @@ float Synth2_process(Synth2_process_type& _ctx, float i) {
    bool gate = Synth2_mono_isGateOn(_ctx.monoin);
    float lfo1 = Synth2_lfo(_ctx.inst_15fb7, _ctx.lfo_rate, gate) * _ctx.lfo_amt;
    float o1 = Synth2_osc(_ctx.inst_2e5b7, _ctx.pitch, lfo1 + _ctx.pw, _ctx.wave);
-   float amp_env = 0.0f;
-   float _if_temp_0 = 0.0f;
-   if (gate) {
-      _if_temp_0 = 1.0f;
-   }
-   else {
-      _if_temp_0 = 0.0f;
-   }
-   amp_env = Synth2_smooth(_ctx.inst_3dfb7, _if_temp_0);
+   float amp_env = Synth2_smooth(_ctx.inst_3dfb7, (gate ? 1.0f : 0.0f));
    float output = amp_env * Synth2_svf(_ctx.inst_4a7b7, o1, _ctx.cut, _ctx.res, 0);
    return output * _ctx.volume;
 }

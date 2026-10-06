@@ -1,0 +1,6 @@
+// Module defining the Button enum for cross-module qualified pattern tests
+enum state {
+   Push,
+   Release,
+   Hold
+}

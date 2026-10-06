@@ -25,14 +25,18 @@ jscompiler:
 	js_of_ocaml --custom-header="#!/usr/bin/env node" --disable use-js-string _build/default/src/vultjs.bc -o vult.js
 	chmod +x vult.js
 
-lsp:
-	dune build src/lsp/vult_lsp_exe.exe src/lsp/vult_lsp_js.bc $(FORMAT)
-	js_of_ocaml --custom-header="#!/usr/bin/env node" --disable use-js-string _build/default/src/lsp/vult_lsp_js.bc -o vult_lsp_js.js
-	chmod +x vult_lsp_js.js
-	cp vult_lsp_js.js src/lsp/vscode-extension/
+vultweb:
+	dune build src/js/vultweb.bc $(FORMAT)
+	js_of_ocaml --target-env=browser --disable use-js-string _build/default/src/js/vultweb.bc -o vultweb.js
 
-lsp-install:
-	cp ./_build/default/src/lsp/vult_lsp_exe.exe $(PREFIX)/vult-lsp
+vultlib:
+	dune build src/js/vultlib_js.bc $(FORMAT)
+	js_of_ocaml --target-env=browser --disable use-js-string _build/default/src/js/vultlib_js.bc -o vultlib.js
+
+# The language server is part of the compiler: `vult -lsp`. This only builds the
+# VS Code client that launches it.
+vscode-extension:
+	cd src/lsp/vscode-extension && npm install && npm run compile
 
 #web:
 #	$(OCB) src/js/vultweb.byte
@@ -63,12 +67,14 @@ coverage:
 	open _coverage/index.html
 #	bisect-ppx-report send-to Coveralls --source-path _build
 
-VERSION:=$(shell git describe --tags --abbrev=0)
+# Shallow CI checkouts have no tags, so `git describe` fails there. Fall back to
+# a placeholder instead of writing an empty version string.
+VERSION:=$(shell git describe --tags --abbrev=0 2>/dev/null || echo v1-dev)
 
 version :
-	@echo "let version = String.trim \"" $(VERSION) "\"" > src/core/version.ml
+	@echo "let version = \"$(VERSION)\"" > src/core/version.ml
 
-all: version compiler lsp jscompiler test perf
+all: version compiler jscompiler test perf
 
 clean:
 	dune clean
@@ -78,9 +84,16 @@ clean:
 	rm -rf _build
 
 install:
+	# Remove the old binary first. Overwriting a code-signed executable in place
+	# invalidates its signature, and macOS then kills every exec of it with
+	# SIGKILL (Code Signature Invalid) before main runs. On macOS re-sign the
+	# installed copy ad-hoc so it is valid regardless of how it got there.
+	rm -f $(PREFIX)/vult
 	cp _build/default/src/vult.exe $(PREFIX)/vult
+	if [ "$$(uname -s)" = "Darwin" ]; then codesign -f -s - $(PREFIX)/vult; fi
+	$(PREFIX)/vult -version
 
 install-lib:
 	dune build -p vult @install
 
-.PHONY: 	all clean compiler js test
+.PHONY: 	all clean compiler js test vscode-extension

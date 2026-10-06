@@ -1,0 +1,4 @@
+A constant with the name 'pi_value' has already been declared at line 1, columns 0-8. Local variables cannot shadow constants.
+fun calculate(x: real) {
+  val pi_value = 2.0;
+      ^^^^^^^^

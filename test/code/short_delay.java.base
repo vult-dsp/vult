@@ -1,315 +1,268 @@
+
 package vult.com.short_delay;
 
 import java.util.Arrays;
 import java.util.Random;
 import vult.com.external.*;
 
-public class short_delay {
+public class Short_delay {
 
 static int clip(int x, int minv, int maxv) {
-   if(x > maxv)
-      return maxv;
-   else if(x < minv)
-      return minv;
-   else return x;
+    if(x > maxv)
+        return maxv;
+    else if(x < minv)
+        return minv;
+    else return x;
 }
 
 static float clip(float x, float minv, float maxv) {
-   if(x > maxv)
-      return maxv;
-   else if(x < minv)
-      return minv;
-   else return x;
+    if(x > maxv)
+        return maxv;
+    else if(x < minv)
+        return minv;
+    else return x;
 }
 
-int[] makeArray(int size, int init) {
-   int a[] = new int[size];
-   Arrays.fill(a, init);
-   return a;
+static int[] makeArray(int size, int init) {
+    int a[] = new int[size];
+    Arrays.fill(a, init);
+    return a;
 }
 
-float[] makeArray(int size, float init) {
-   float a[] = new float[size];
-   Arrays.fill(a, init);
-   return a;
+static float[] makeArray(int size, float init) {
+    float a[] = new float[size];
+    Arrays.fill(a, init);
+    return a;
 }
 
-boolean[] makeArray(int size, boolean init) {
-   boolean a[] = new boolean[size];
-   Arrays.fill(a, init);
-   return a;
+static boolean[] makeArray(int size, boolean init) {
+    boolean a[] = new boolean[size];
+    Arrays.fill(a, init);
+    return a;
 }
 
-int int_to_fix16(int a) { return a * 0x00010000; }
-
-int fix16_to_int(int a) { return (a >> 16); }
-
-int fix16_add(int x, int y) { return x + y; }
-
-int fix16_sub(int x, int y) { return x - y; }
-
-int fix16_minus(int x) { return -x; }
-
-float fix16_to_float(int a) { return (float)a / 0x00010000; }
-int float_to_fix16(float a) {
-   float temp = a * 0x00010000;
-   return (int)temp;
+static int float_to_int(float x) {
+    return (int)x;
 }
 
-int fix16_mul(int x, int y) {
-   long res = (long)x * (long)y;
-   return (int)(res >> 16);
+static float[] initializeArray(float v, int size) {
+    float[] a = new float[size];
+    Arrays.fill(a, v);
+    return a;
 }
 
-int fix16_div(int a, int b) {
-   if (b == 0)
-      return 0;
-   int result = (int)(((long)a << 16) / b);
-   return result;
+static int[] initializeArray(int v, int size) {
+    int[] a = new int[size];
+    Arrays.fill(a, v);
+    return a;
 }
 
-static boolean not(boolean x) {
-   return !x;
+static boolean[] initializeArray(boolean v, int size) {
+    boolean[] a = new boolean[size];
+    Arrays.fill(a, v);
+    return a;
 }
 
-static float int_to_float(int x) {
-   return (float)x;
-}
-
-int float_to_int(float x) {
-   return (int)x;
-}
-
-float floor(float x) {
-   return (float)Math.floor(x);
-}
-
-static Random rand = new Random();
-
-float random() {
-   return rand.nextFloat();
-}
-
-int irandom() {
-   return rand.nextInt();
-}
-
-float get(float[] a, int i) {
-   return a[i];
-}
-
-void set(float[] a, int i, float val) {
-   a[i] = val;
-}
-
-int get(int[] a, int i) {
-   return a[i];
-}
-
-void set(int[] a, int i, int val) {
-   a[i] = val;
-}
-
-float[] wrap_array(float x[]) {
-   return x;
-}
-
-int[] wrap_array(int x[]) {
-   return x;
-}
-
-float cosh(float x) {
-   return (float)Math.cosh(x);
-}
-
-float cos(float x) {
-   return (float)Math.cos(x);
-}
-
-float sin(float x) {
-   return (float)Math.sin(x);
-}
-
-float sinh(float x) {
-   return (float)Math.sinh(x);
-}
-
-float tan(float x) {
-   return (float)Math.tan(x);
-}
-
-float tanh(float x) {
-   return (float)Math.tanh(x);
-}
-
-float sqrt(float x) {
-   return (float)Math.sqrt(x);
-}
-
-float pow(float x, float y) {
-   return (float)Math.pow(x, y);
-}
-
-float exp(float x) {
-   return (float)Math.exp(x);
-}
-
-
-float Saturate_tanh_table_c0[];
-         public void set_Saturate_tanh_table_c0(java.nio.FloatBuffer buffer){
-            Saturate_tanh_table_c0 = new float[241];
-            buffer.get(Saturate_tanh_table_c0);
-            }
-float Saturate_tanh_table_c1[];
-         public void set_Saturate_tanh_table_c1(java.nio.FloatBuffer buffer){
-            Saturate_tanh_table_c1 = new float[241];
-            buffer.get(Saturate_tanh_table_c1);
-            }
-float Saturate_tanh_table_c2[];
-         public void set_Saturate_tanh_table_c2(java.nio.FloatBuffer buffer){
-            Saturate_tanh_table_c2 = new float[241];
-            buffer.get(Saturate_tanh_table_c2);
-            }
-private class Short_delay__ctx_type_0 {
-   public float x4;
-   public float x3;
+public static class Short_delay_soft_type {
    public float x2;
- 
-   Short_delay__ctx_type_0(){ this.x4 = 0.0f;
-   this.x3 = 0.0f;
-   this.x2 = 0.0f;
-    } 
-   Short_delay__ctx_type_0(float x4,float x3,float x2){ this.x4 = x4;
-   this.x3 = x3;
-   this.x2 = x2;
-    } }
+   public float x3;
+   public float x4;
 
-private class Short_delay__ctx_type_1 {
+   public Short_delay_soft_type() {
+      this.x2 = 0.0f;
+      this.x3 = 0.0f;
+      this.x4 = 0.0f;
+   }
+   public Short_delay_soft_type(float x2, float x3, float x4) {
+      this.x2 = x2;
+      this.x3 = x3;
+      this.x4 = x4;
+   }}public static class Short_delay_do_type {
+   public float[] buffer;
    public int write_pos;
-   public float buffer[];
- 
-   Short_delay__ctx_type_1(){ this.write_pos = 0;
-   this.buffer = makeArray(22050,0.0f);
-    } 
-   Short_delay__ctx_type_1(int write_pos,float buffer[]){ this.write_pos = write_pos;
-   this.buffer = buffer;
-    } }
 
-private class Short_delay__ctx_type_2 {
-   public Short_delay__ctx_type_1 _inst2e3;
-   public Short_delay__ctx_type_0 _inst180;
- 
-   Short_delay__ctx_type_2(){ this._inst2e3 = new Short_delay__ctx_type_1();
-   this._inst180 = new Short_delay__ctx_type_0();
-    } 
-   Short_delay__ctx_type_2(Short_delay__ctx_type_1 _inst2e3,Short_delay__ctx_type_0 _inst180){ this._inst2e3 = _inst2e3;
-   this._inst180 = _inst180;
-    } }
+   public Short_delay_do_type() {
+      this.buffer = makeArray(22050, 0.0f);
+      this.write_pos = 0;
+   }
+   public Short_delay_do_type(float[] buffer, int write_pos) {
+      this.buffer = buffer;
+      this.write_pos = write_pos;
+   }}public static class Short_delay_process_type {
+   public Short_delay_soft_type inst_1593b;
+   public Short_delay_do_type inst_2ba3b;
 
-private float Saturate_tanh_table_raw_c0(int index){return Saturate_tanh_table_c0[index];}
-
-private float Saturate_tanh_table_raw_c1(int index){return Saturate_tanh_table_c1[index];}
-
-private float Saturate_tanh_table_raw_c2(int index){return Saturate_tanh_table_c2[index];}
-
-private float Saturate_tanh_table(float x){
-   int index = clip(float_to_int((5.f * (24.f + x))),0,240); 
-   return (wrap_array(Saturate_tanh_table_c0)[index] + (x * (wrap_array(Saturate_tanh_table_c1)[index] + (x * wrap_array(Saturate_tanh_table_c2)[index]))));
-}
-
-private float Saturate_process(float x){return Saturate_tanh_table(x);}
-
-private void Saturate_noteOn(int note, int velocity, int channel){
-}
-
-private void Saturate_noteOff(int note, int channel){
-}
-
-private void Saturate_controlChange(int control, int value, int channel){
-}
-
-private void Saturate_default(){
-}
-
-private Short_delay__ctx_type_0 Short_delay__ctx_type_0_init(){
-   Short_delay__ctx_type_0 _ctx = new Short_delay__ctx_type_0(); 
-   _ctx.x4 = 0.0f;
-   _ctx.x3 = 0.0f;
+   public Short_delay_process_type() {
+      this.inst_1593b = new Short_delay_soft_type();
+      this.inst_2ba3b = new Short_delay_do_type();
+   }
+   public Short_delay_process_type(Short_delay_soft_type inst_1593b, Short_delay_do_type inst_2ba3b) {
+      this.inst_1593b = inst_1593b;
+      this.inst_2ba3b = inst_2ba3b;
+   }}private Short_delay_soft_type Short_delay_soft_type_alloc() {
+   Short_delay_soft_type _ctx = new Short_delay_soft_type();
    _ctx.x2 = 0.0f;
+   _ctx.x3 = 0.0f;
+   _ctx.x4 = 0.0f;
    return _ctx;
 }
 
-private Short_delay__ctx_type_0 Short_delay_soft_init(){return Short_delay__ctx_type_0_init();}
+private Short_delay_do_type Short_delay_do_type_alloc() {
+   int i_0 = 0;
+   float[] temp_1 = initializeArray(0.0f, 22050);
+   Short_delay_do_type _ctx = new Short_delay_do_type();
+   while ((i_0 < 22050)) {
+      {
+         temp_1[i_0] = 0.0f;
+         i_0 = (1 + i_0);
+      }
+   }
+   _ctx.buffer = temp_1;
+   _ctx.write_pos = 0;
+   return _ctx;
+}
 
-private float Short_delay_soft(Short_delay__ctx_type_0 _ctx, float x1){
-   float o = (0.25f * (_ctx.x2 + _ctx.x3 + _ctx.x4 + x1)); 
-   float _tmp_1_0 = x1; 
-   float _tmp_1_1 = _ctx.x2; 
-   float _tmp_1_2 = _ctx.x3; 
-   _ctx.x2 = _tmp_1_0;
-   _ctx.x3 = _tmp_1_1;
-   _ctx.x4 = _tmp_1_2;
+private Short_delay_process_type Short_delay_process_type_alloc() {
+   Short_delay_process_type _ctx = new Short_delay_process_type();
+   _ctx.inst_1593b = Short_delay_soft_type_alloc();
+   _ctx.inst_2ba3b = Short_delay_do_type_alloc();
+   return _ctx;
+}
+
+private Short_delay_noteOn_type Short_delay_noteOn_type_alloc(Short_delay_noteOn_type _ctx) {
+   return new Short_delay_noteOn_type();
+}
+
+private Short_delay_noteOff_type Short_delay_noteOff_type_alloc(Short_delay_noteOff_type _ctx) {
+   return new Short_delay_noteOff_type();
+}
+
+private Short_delay_controlChange_type Short_delay_controlChange_type_alloc(Short_delay_controlChange_type _ctx) {
+   return new Short_delay_controlChange_type();
+}
+
+private Short_delay_default_type Short_delay_default_type_alloc(Short_delay_default_type _ctx) {
+   return new Short_delay_default_type();
+}
+
+public static final float[] Saturate_tanh_table_c = new float[]{-1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, -1e-06f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, -1e-06f, 0.0f, -1.0f, -1e-06f, 0.0f, -1.0f, -1e-06f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -0.999999f, 0.0f, 0.0f, -0.999998f, 0.0f, 0.0f, -0.999997f, 1e-06f, 0.0f, -0.999996f, 1e-06f, 0.0f, -0.999993f, 2e-06f, 0.0f, -0.99999f, 4e-06f, 1e-06f, -0.999985f, 6e-06f, 1e-06f, -0.999977f, 9e-06f, 2e-06f, -0.999966f, 1.3e-05f, 3e-06f, -0.999948f, 2e-05f, 5e-06f, -0.999923f, 3e-05f, 7e-06f, -0.999885f, 4.5e-05f, 1.1e-05f, -0.999828f, 6.7e-05f, 1.6e-05f, -0.999744f, 0.0001f, 2.4e-05f, -0.999619f, 0.000149f, 3.7e-05f, -0.999432f, 0.000222f, 5.5e-05f, -0.999154f, 0.000331f, 8.2e-05f, -0.998741f, 0.000493f, 0.000122f, -0.998125f, 0.000735f, 0.000181f, -0.997208f, 0.001093f, 0.000269f, -0.995845f, 0.001627f, 0.0004f, -0.993817f, 0.002418f, 0.000593f, -0.990805f, 0.003591f, 0.000877f, -0.986336f, 0.005326f, 0.001292f, -0.979717f, 0.007883f, 0.001892f, -0.969941f, 0.011632f, 0.00275f, -0.955558f, 0.017085f, 0.00395f, -0.934522f, 0.024929f, 0.005575f, -0.904018f, 0.036021f, 0.007667f, -0.860329f, 0.051319f, 0.010154f, -0.798854f, 0.071651f, 0.012727f, -0.714475f, 0.097237f, 0.014716f, -0.602521f, 0.126944f, 0.015092f, -0.460484f, 0.157513f, 0.012797f, -0.290174f, 0.183465f, 0.00745f, -0.099258f, 0.198514f, 0.0f, 0.099257f, 0.198366f, -0.007451f, 0.290173f, 0.183108f, -0.012798f, 0.460483f, 0.157129f, -0.015093f, 0.60252f, 0.12667f, -0.014717f, 0.714474f, 0.097106f, -0.012728f, 0.798853f, 0.071629f, -0.010155f, 0.860328f, 0.051356f, -0.007668f, 0.904017f, 0.036079f, -0.005576f, 0.934521f, 0.024986f, -0.003951f, 0.955557f, 0.017133f, -0.002751f, 0.96994f, 0.011669f, -0.001893f, 0.979716f, 0.00791f, -0.001293f, 0.986335f, 0.005346f, -0.000878f, 0.990804f, 0.003605f, -0.000594f, 0.993816f, 0.002427f, -0.000401f, 0.995844f, 0.001633f, -0.00027f, 0.997207f, 0.001098f, -0.000182f, 0.998124f, 0.000738f, -0.000123f, 0.99874f, 0.000495f, -8.3e-05f, 0.999153f, 0.000333f, -5.6e-05f, 0.999431f, 0.000223f, -3.8e-05f, 0.999618f, 0.00015f, -2.5e-05f, 0.999743f, 0.0001f, -1.7e-05f, 0.999827f, 6.7e-05f, -1.2e-05f, 0.999884f, 4.5e-05f, -8e-06f, 0.999922f, 3e-05f, -6e-06f, 0.999947f, 2e-05f, -4e-06f, 0.999965f, 1.3e-05f, -3e-06f, 0.999976f, 9e-06f, -2e-06f, 0.999984f, 6e-06f, -2e-06f, 0.999989f, 4e-06f, -1e-06f, 0.999992f, 2e-06f, -1e-06f, 0.999995f, 1e-06f, -1e-06f, 0.999996f, 1e-06f, -1e-06f, 0.999997f, 0.0f, -1e-06f, 0.999998f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, 0.0f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, 0.0f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, 0.0f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, 0.0f, 0.999999f, 0.0f, 0.0f, 0.999999f, 0.0f, -1e-06f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f};
+private float Saturate_tanh_table_raw_c0(int index) {
+   return Saturate_tanh_table_c[(index * 3)];
+}
+
+private float Saturate_tanh_table_raw_c1(int index) {
+   return Saturate_tanh_table_c[((index * 3) + 1)];
+}
+
+private float Saturate_tanh_table_raw_c2(int index) {
+   return Saturate_tanh_table_c[((index * 3) + 2)];
+}
+
+private float Saturate_tanh_table(float x) {
+   float value = ((clip(x, -24.0f, 24.0f) + 24.0f) * 5.020833f);
+   int cell = clip(float_to_int(value), 0, 240);
+   float u = (value - (float)(cell));
+   int index = (cell * 3);
+   return (Saturate_tanh_table_c[index] + (u * (Saturate_tanh_table_c[(index + 1)] + (Saturate_tanh_table_c[(index + 2)] * u))));
+}
+
+private float Saturate_process(float x) {
+   return Saturate_tanh_table(x);
+}
+
+private void Saturate_noteOn(int note, int velocity, int channel) {
+}
+
+private void Saturate_noteOff(int note, int channel) {
+}
+
+private void Saturate_controlChange(int control, int value, int channel) {
+}
+
+private void Saturate_default() {
+}
+
+private float Short_delay_soft(Short_delay_soft_type _ctx, float x1) {
+   float o = (0.25f * (x1 + (_ctx.x2 + (_ctx.x3 + _ctx.x4))));
+   _ctx.x4 = _ctx.x3;
+   _ctx.x3 = _ctx.x2;
+   _ctx.x2 = x1;
    return o;
 }
 
-private Short_delay__ctx_type_1 Short_delay__ctx_type_1_init(){
-   Short_delay__ctx_type_1 _ctx = new Short_delay__ctx_type_1(); 
-   _ctx.write_pos = 0;
-   _ctx.buffer = makeArray(22050,0.0f);
-   return _ctx;
-}
-
-private Short_delay__ctx_type_1 Short_delay_do_init(){return Short_delay__ctx_type_1_init();}
-
-private float Short_delay_do(Short_delay__ctx_type_1 _ctx, float x, float time, float feedback){
-   time = clip(time,0.0f,1.f);
-   feedback = clip(feedback,0.0f,1.f);
-   float index_r = (22050.f * time); 
-   int index_i = float_to_int(floor(index_r)); 
-   int delta = (_ctx.write_pos + (- index_i)); 
-   int read_pos = 0; 
-   if(delta < 0){ read_pos = (22050 + delta); }
-   else
-   { read_pos = delta; }
-   float decimal = (index_r + (- int_to_float(index_i))); 
-   float x1 = get(_ctx.buffer,read_pos); 
-   float x2 = get(_ctx.buffer,((1 + read_pos) % 22050)); 
-   float ret = (x1 + (decimal * (x2 + (- x1)))); 
-   _ctx.write_pos = ((1 + _ctx.write_pos) % 22050);
-   set(_ctx.buffer,_ctx.write_pos,Saturate_process((x + (feedback * ret))));
+private float Short_delay_do(Short_delay_do_type _ctx, float x, float time_in, float feedback_in) {
+   float time = clip(time_in, 0.0f, 1.0f);
+   float feedback = clip(feedback_in, 0.0f, 1.0f);
+   float index_r = (22050.0f * time);
+   int index_i = (int)(index_r);
+   int delta = ((-index_i) + _ctx.write_pos);
+   int read_pos = 0;
+   if ((delta < 0)) {
+      read_pos = (22050 + delta);
+   } else {
+      read_pos = delta;
+   }
+   float decimal = (index_r + (-(float)(index_i)));
+   float x1 = _ctx.buffer[read_pos];
+   int _wrap_temp_0 = (1 + read_pos);
+   float x2 = 0.0f;
+   if ((_wrap_temp_0 >= 22050)) {
+      if ((_wrap_temp_0 == 22050)) {
+         _wrap_temp_0 = 0;
+      } else {
+         _wrap_temp_0 = (_wrap_temp_0 % 22050);
+      }
+   } else {
+      if ((_wrap_temp_0 <= -22050)) {
+         _wrap_temp_0 = (_wrap_temp_0 % 22050);
+      }
+   }
+   x2 = _ctx.buffer[_wrap_temp_0];
+   float ret = (x1 + (decimal * (x2 + (-x1))));
+   _ctx.write_pos = (1 + _ctx.write_pos);
+   if ((_ctx.write_pos >= 22050)) {
+      if ((_ctx.write_pos == 22050)) {
+         _ctx.write_pos = 0;
+      } else {
+         _ctx.write_pos = (_ctx.write_pos % 22050);
+      }
+   } else {
+      if ((_ctx.write_pos <= -22050)) {
+         _ctx.write_pos = (_ctx.write_pos % 22050);
+      }
+   }
+   _ctx.buffer[_ctx.write_pos] = Saturate_process((x + (feedback * ret)));
    return ret;
 }
 
-private Short_delay__ctx_type_2 Short_delay__ctx_type_2_init(){
-   Short_delay__ctx_type_2 _ctx = new Short_delay__ctx_type_2(); 
-   _ctx._inst2e3 = Short_delay__ctx_type_1_init();
-   _ctx._inst180 = Short_delay__ctx_type_0_init();
-   return _ctx;
+private float Short_delay_process(Short_delay_process_type _ctx, float x, float time, float feedback) {
+   return Short_delay_do(_ctx.inst_2ba3b, x, Short_delay_soft(_ctx.inst_1593b, time), feedback);
 }
 
-private Short_delay__ctx_type_2 Short_delay_process_init(){return Short_delay__ctx_type_2_init();}
-
-private float Short_delay_process(Short_delay__ctx_type_2 _ctx, float x, float time, float feedback){return Short_delay_do(_ctx._inst2e3,x,Short_delay_soft(_ctx._inst180,time),feedback);}
-
-private Short_delay__ctx_type_2 Short_delay_noteOn_init(){return Short_delay__ctx_type_2_init();}
-
-private void Short_delay_noteOn(Short_delay__ctx_type_2 _ctx, int note, int velocity, int channel){
+private void Short_delay_noteOn(Short_delay_process_type _ctx, int note, int velocity, int channel) {
 }
 
-private Short_delay__ctx_type_2 Short_delay_noteOff_init(){return Short_delay__ctx_type_2_init();}
-
-private void Short_delay_noteOff(Short_delay__ctx_type_2 _ctx, int note, int channel){
+private void Short_delay_noteOff(Short_delay_process_type _ctx, int note, int channel) {
 }
 
-private Short_delay__ctx_type_2 Short_delay_controlChange_init(){return Short_delay__ctx_type_2_init();}
-
-private void Short_delay_controlChange(Short_delay__ctx_type_2 _ctx, int control, int value, int channel){
+private void Short_delay_controlChange(Short_delay_process_type _ctx, int control, int value, int channel) {
 }
 
-private Short_delay__ctx_type_2 Short_delay_default_init(){return Short_delay__ctx_type_2_init();}
-
-private void Short_delay_default(Short_delay__ctx_type_2 _ctx){
+private void Short_delay_default(Short_delay_process_type _ctx) {
 }
 
+
+   public static class Short_delay_default_type extends Short_delay_process_type {
+       public Short_delay_default_type() { super(); }
+   }
+   public static class Short_delay_controlChange_type extends Short_delay_process_type {
+       public Short_delay_controlChange_type() { super(); }
+   }
+   public static class Short_delay_noteOff_type extends Short_delay_process_type {
+       public Short_delay_noteOff_type() { super(); }
+   }
+   public static class Short_delay_noteOn_type extends Short_delay_process_type {
+       public Short_delay_noteOn_type() { super(); }
+   }
 
 }

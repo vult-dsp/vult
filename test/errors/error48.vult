@@ -1,0 +1,6 @@
+constant limit = 100;
+
+fun clamp_to(limit: int, value: int) : int {
+  if (value > limit) return limit;
+  return value;
+}

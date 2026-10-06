@@ -26,9 +26,6 @@ float Phasedist_phasor(Phasedist_phasor_type& _ctx, float pitch, bool reset) {
    if (_ctx.phase > 1.0f) {
       _ctx.phase = -1.0f + _ctx.phase;
    }
-   else {
-      _ctx.phase = _ctx.phase;
-   }
    return _ctx.phase;
 }
 

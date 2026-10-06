@@ -28,14 +28,21 @@ type path = Syntax.path
 
 let print_exp_types = false
 
+let print_exp_locs = ref false
+
 let print_path (p : path) = Syntax.print_path p
 
-type constness_d =
-  | TEConst of int
-  | TEMut of int
-  | TECLink of constness
+(** Print location in format [line:col-line:col] *)
+let print_loc (loc : Loc.t) : Pla.t =
+  let start_line = Loc.startLine loc in
+  let end_line = Loc.endLine loc in
+  let start_col = Loc.startColumn loc in
+  let end_col = Loc.endColumn loc in
+  {%pla|[<#start_line#i>:<#start_col#i>-<#end_line#i>:<#end_col#i>]|}
 
-and constness = { mutable c : constness_d }
+type constness_d = TEConst of int | TEMut of int | TECLink of constness
+
+and constness = {mutable c: constness_d}
 
 type type_d_ =
   | TENoReturn
@@ -43,110 +50,34 @@ type type_d_ =
   | TEId of path
   | TESize of int
   | TELink of type_
-  | TEOption of int * type_ list (* ID for substitution binding, list of alternative types *)
+  | TEOption of type_ list
   | TEComposed of string * type_ list
   | TEFunction of type_ list * type_
 
-and type_ =
-  { mutable tx : type_d_
-  ; const : constness
-  ; mutable loc : Loc.t
-  }
-
-(* ============================================================================
-   Substitution-based type resolution infrastructure
-
-   This module provides an immutable alternative to the mutable TELink approach.
-   Type variable bindings are stored in a substitution map, which is threaded
-   through inference functions. This enables:
-   - Pure functional style (no hidden mutations)
-   - Built-in occurs check (prevents infinite types)
-   - Easy backtracking on unification failure
-   ============================================================================ *)
-
-(** Substitution map for immutable type variable bindings.
-    Maps type variable IDs (int) to their resolved types. *)
-module TypeVarMap = Map.Make (Int)
-
-type substitution = type_ TypeVarMap.t
-
-let empty_substitution : substitution = TypeVarMap.empty
-
-(** Walk: resolve a type variable through the substitution.
-    If the type is a variable bound in the substitution, recursively resolve it.
-    Also handles legacy TELink for backward compatibility during migration.
-    TEOption types can also be resolved if they have been unified with a concrete type. *)
-let rec walk (t : type_) (subs : substitution) : type_ =
-  match t.tx with
-  | TEUnbound (Some id) -> (
-    match TypeVarMap.find_opt id subs with
-    | Some resolved -> walk resolved subs
-    | None -> t)
-  | TEOption (id, _) -> (
-    (* Check if this TEOption has been resolved *)
-    match TypeVarMap.find_opt id subs with
-    | Some resolved -> walk resolved subs
-    | None -> t)
-  | TELink linked -> walk linked subs (* Backward compatibility *)
-  | _ -> t
-
-
-(** Walk-star: fully resolve all type variables in a type.
-    Unlike walk, this recursively resolves type variables inside composite types. *)
-let rec walk_star (t : type_) (subs : substitution) : type_ =
-  let t = walk t subs in
-  match t.tx with
-  | TEUnbound _ -> t
-  | TEId _ -> t
-  | TENoReturn -> t
-  | TESize _ -> t
-  | TELink _ -> t (* Should not happen after walk *)
-  | TEOption (id, ts) -> { t with tx = TEOption (id, List.map (fun t -> walk_star t subs) ts) }
-  | TEComposed (name, ts) -> { t with tx = TEComposed (name, List.map (fun t -> walk_star t subs) ts) }
-  | TEFunction (args, ret) -> { t with tx = TEFunction (List.map (fun t -> walk_star t subs) args, walk_star ret subs) }
-
-
-(** Occurs check: returns true if var_id occurs in type t.
-    This prevents creating infinite/cyclic types during unification. *)
-let rec occurs (var_id : int) (t : type_) (subs : substitution) : bool =
-  let t = walk t subs in
-  match t.tx with
-  | TEUnbound (Some id) -> id = var_id
-  | TEUnbound None -> false
-  | TEId _ -> false
-  | TENoReturn -> false
-  | TESize _ -> false
-  | TELink _ -> false (* Should not happen after walk *)
-  | TEOption (id, ts) -> id = var_id || List.exists (fun t -> occurs var_id t subs) ts
-  | TEComposed (_, ts) -> List.exists (fun t -> occurs var_id t subs) ts
-  | TEFunction (args, ret) -> List.exists (fun t -> occurs var_id t subs) args || occurs var_id ret subs
-
-
-(** Extend substitution: add a binding from var_id to type t.
-    Returns None if the occurs check fails (would create infinite type). *)
-let ext_s (var_id : int) (t : type_) (subs : substitution) : substitution option =
-  if occurs var_id t subs then
-    None
-  else
-    Some (TypeVarMap.add var_id t subs)
-
+and type_ = {mutable tx: type_d_; const: constness; mutable loc: Loc.t}
 
 type fun_type = type_ list * type_
 
 let rec compare_type_ (a : type_) (b : type_) =
-  if a == b then
-    0
+  if a == b then 0
   else
-    match a.tx, b.tx with
-    | TELink a, _ -> compare_type_ a b
-    | _, TELink b -> compare_type_ a b
-    | TEId p1, TEId p2 -> Syntax.compare_path p1 p2
-    | TESize p1, TESize p2 -> compare p1 p2
-    | TEComposed (n1, e1), TEComposed (n2, e2) -> CCOrd.(string n1 n2 <?> (compare_type_list_, e1, e2))
-    | TEOption (_, e1), TEOption (_, e2) -> compare_type_list_ e1 e2
-    | TEUnbound n1, TEUnbound n2 -> compare n1 n2
-    | _ -> compare a.tx b.tx
-
+    match (a.tx, b.tx) with
+    | TELink a, _ ->
+        compare_type_ a b
+    | _, TELink b ->
+        compare_type_ a b
+    | TEId p1, TEId p2 ->
+        Syntax.compare_path p1 p2
+    | TESize p1, TESize p2 ->
+        compare p1 p2
+    | TEComposed (n1, e1), TEComposed (n2, e2) ->
+        CCOrd.(string n1 n2 <?> (compare_type_list_, e1, e2))
+    | TEOption e1, TEOption e2 ->
+        compare_type_list_ e1 e2
+    | TEUnbound n1, TEUnbound n2 ->
+        compare n1 n2
+    | _ ->
+        compare a.tx b.tx
 
 and compare_type_list_ a b = CCOrd.list compare_type_ a b
 
@@ -161,62 +92,56 @@ type exp_d =
   | EString of string
   | EId of string
   | EConst of path
-  | EIndex of
-      { e : exp
-      ; index : exp
-      }
+  | EIndex of {e: exp; index: exp}
   | EArray of exp list
-  | ECall of
-      { instance : string option
-      ; path : path
-      ; args : exp list
-      }
+  | ECall of {instance: string option; path: path; args: exp list}
   | EUnOp of string * exp
   | EOp of string * exp * exp
-  | EIf of
-      { cond : exp
-      ; then_ : exp
-      ; else_ : exp
-      }
+  | EIf of {cond: exp; then_: exp; else_: exp}
   | ETuple of exp list
   | EMember of exp * string
-  | ERecord of
-      { path : path
-      ; elems : (string * exp) list
-      }
+  | ERecord of {path: path; elems: (string * exp) list}
+  | EGenCall of
+      { instance: string option (* Instance identifier if using inst:func() syntax *)
+      ; generic_path: path (* Full path to the generic function for lookup *)
+      ; params: call_param list (* The arguments paired with the parameters, in declaration order *) }
+  | EGenCompanionCall of
+      { instance: string option (* Instance identifier if using inst:func() syntax *)
+      ; companion_name: string (* Name of the companion function *)
+      ; parent_generic_path: path (* Path to the parent generic function *)
+      ; args: exp list (* Processed arguments *) }
+  | ETypeIntrinsic of
+      { intrinsic: type_intrinsic (* Which intrinsic: typedefault, typemax, typemin *)
+      ; type_param: string (* The generic type parameter name, e.g., "t" from 't *) }
 
-and exp =
-  { e : exp_d
-  ; loc : Loc.t
-  ; t : type_
-  }
+(** Type intrinsics that depend on the concrete type during generic instantiation *)
+and type_intrinsic =
+  | TypeDefault (* typedefault('t) - default value for the type *)
+  | TypeMax (* typemax('t) - maximum value for the type *)
+  | TypeMin (* typemin('t) - minimum value for the type *)
 
-and lexp_d =
-  | LWild
-  | LId of string
-  | LMember of lexp * string
-  | LIndex of
-      { e : lexp
-      ; index : exp
-      }
-  | LTuple of lexp list
+and exp = {e: exp_d; loc: Loc.t; t: type_}
 
-and lexp =
-  { l : lexp_d
-  ; loc : Loc.t
-  ; t : type_
-  }
+(* An argument of a call to a generic function paired with the parameter it is given to *)
+and call_param =
+  | CallArg of {arg: arg; value: exp} (* A regular argument *)
+  | CallGeneric of {param: generic_param; value: exp}
+(* An explicit generic parameter *)
 
-type dexp_d =
-  | DWild
-  | DId of string * int option
-  | DTuple of dexp list
+and generic_param =
+  | GParamFunction of string * type_ option (* Function type using TEFunction *)
+  | GParamType of string
+  | GParamConstant of string * type_
 
-and dexp =
-  { d : dexp_d
-  ; loc : Loc.t
-  ; t : type_
-  }
+and arg = {name: string; t: type_; loc: Loc.t}
+
+and lexp_d = LWild | LId of string | LMember of lexp * string | LIndex of {e: lexp; index: exp} | LTuple of lexp list
+
+and lexp = {l: lexp_d; loc: Loc.t; t: type_}
+
+type dexp_d = DWild | DId of string * int option | DTuple of dexp list
+
+and dexp = {d: dexp_d; loc: Loc.t; t: type_}
 
 and stmt_d =
   | StmtVal of dexp
@@ -227,391 +152,292 @@ and stmt_d =
   | StmtIf of exp * stmt * stmt option
   | StmtWhile of exp * stmt
 
-and stmt =
-  { s : stmt_d
-  ; loc : Loc.t
-  }
-
-and arg =
-  { name : string
-  ; t : type_
-  ; loc : Loc.t
-  }
+and stmt = {s: stmt_d; loc: Loc.t}
 
 and function_def =
-  { name : path
-  ; args : arg list
-  ; t : type_ list * type_
-  ; next : (function_def * stmt) option
-  ; loc : Loc.t
-  ; tags : tag list
-  ; is_root : bool
-  }
+  { name: path
+  ; args: arg list
+  ; t: type_ list * type_
+  ; next: (function_def * stmt) option
+  ; loc: Loc.t
+  ; tags: tag list
+  ; is_root: bool }
 
 type top_stmt_d =
   | TopExternal of function_def * string option
   | TopFunction of function_def * stmt
-  | TopType of
-      { path : path
-      ; members : (string * type_ * Ptags.tags * Loc.t) list
-      }
-  | TopAlias of
-      { path : path
-      ; alias_of : path
-      }
-  | TopEnum of
-      { path : path
-      ; members : (string * Loc.t) list
-      }
+  | TopGenericPlaceholder of string (* Marks where specializations of a generic function should be inserted *)
+  | TopType of {path: path; members: (string * type_ * Ptags.tags * Loc.t) list}
+  | TopAlias of {path: path; alias_of: path}
+  | TopEnum of {path: path; members: (string * Loc.t) list}
   | TopConstant of path * int option * type_ * exp * Ptags.tags option
 
-and top_stmt =
-  { top : top_stmt_d
-  ; loc : Loc.t
-  }
+and top_stmt = {top: top_stmt_d; loc: Loc.t}
 
 type program = top_stmt list
 
-type generic_param =
-  | GParamFunction of string * type_ option (* Function type using TEFunction *)
-  | GParamType of string
-  | GParamConstant of string * type_
+(* A parameter of a generic function. Regular arguments and explicit generic parameters can be
+   interleaved; the implicit type parameters are not listed. *)
+type param_slot = SlotArg of arg | SlotGeneric of generic_param
 
 type generic_function =
-  { name : string
-  ; generic_params : generic_param list
-  ; args : arg list
-  ; t : fun_type (* Keep as fun_type for function definitions *)
-  ; body : Syntax.stmt (* Store the unprocessed body *)
-  ; loc : Loc.t
-  ; tags : tag list
-  }
+  { name: string
+  ; args: arg list (* The regular arguments, the same values listed in [params] *)
+  ; params: param_slot list (* The parameters in declaration order *)
+  ; t: fun_type (* Keep as fun_type for function definitions *)
+  ; type_param_map: (string * type_) list (* Type parameter name -> shared unbound cell used in [t] *)
+  ; body: Syntax.stmt (* Store the unprocessed body *)
+  ; next: Syntax.function_def option (* Companion 'and' functions *)
+  ; loc: Loc.t
+  ; tags: tag list
+  ; type_index: int (* Index for type ordering - captured at definition time *) }
 
-type generic_binding =
-  | BindFunction of string * type_ (* Function type using TEFunction *)
-  | BindType of type_
-  | BindConstant of exp * type_
-  | BindNonSpecializable (* Marker for non-specializable parameters *)
+let callValue (param : call_param) : exp = match param with CallArg {value; _} | CallGeneric {value; _} -> value
 
-(* Concrete constant values for generic instantiation *)
-type constant_value =
-  | IntConstant of int
-  | RealConstant of float
-  | BoolConstant of bool
-  | StringConstant of string
+(* The values of the arguments of a generic call, in declaration order *)
+let callValues (params : call_param list) : exp list = CCList.map callValue params
 
-(* Enhanced generic binding with complete type information *)
-type generic_binding_value =
-  | FunctionBinding of
-      { func_name : string
-      ; arg_types : type_ list
-      ; return_type : type_
-      }
-  | TypeBinding of type_
-  | ConstantBinding of
-      { value : constant_value
-      ; value_type : type_
-      }
+(* The values given to the regular arguments of a generic call *)
+let callArgs (params : call_param list) : exp list =
+  CCList.filter_map (function CallArg {value; _} -> Some value | CallGeneric _ -> None) params
 
-(* Individual generic parameter binding *)
-type generic_param_binding =
-  { param_name : string
-  ; binding : generic_binding_value
-  }
+(* The values given to the explicit generic parameters of a generic call *)
+let callExplicitArgs (params : call_param list) : exp list =
+  CCList.filter_map (function CallGeneric {value; _} -> Some value | CallArg _ -> None) params
 
-(* Regular function argument signature *)
-type function_arg_signature =
-  { param_name : string
-  ; arg_type : type_
-  }
-
-(* Complete instantiation signature including generic params, function args, and return type *)
-type instantiation_signature =
-  { generic_name : string
-  ; generic_params : generic_param_binding list
-  ; function_args : function_arg_signature list
-  ; return_type : type_
-  }
-
-type generic_instantiation =
-  { signature : instantiation_signature
-  ; specialized_name : string
-  ; bindings : (string * generic_binding) list (* Legacy - will be removed *)
-  ; specialized_def : function_def
-  }
-
-(* Comparison functions for signature-based lookup *)
-let compare_constant_value (c1 : constant_value) (c2 : constant_value) : int =
-  match c1, c2 with
-  | IntConstant i1, IntConstant i2 -> Int.compare i1 i2
-  | RealConstant r1, RealConstant r2 -> Float.compare r1 r2
-  | BoolConstant b1, BoolConstant b2 -> Bool.compare b1 b2
-  | StringConstant s1, StringConstant s2 -> String.compare s1 s2
-  | IntConstant _, _ -> -1
-  | RealConstant _, IntConstant _ -> 1
-  | RealConstant _, _ -> -1
-  | BoolConstant _, (IntConstant _ | RealConstant _) -> 1
-  | BoolConstant _, _ -> -1
-  | StringConstant _, _ -> 1
-
-
-let compare_type (t1 : type_) (t2 : type_) : int =
-  (* Use existing type comparison function *)
-  compare_type_ t1 t2
-
-
-let compare_generic_binding_value (b1 : generic_binding_value) (b2 : generic_binding_value) : int =
-  match b1, b2 with
-  | FunctionBinding f1, FunctionBinding f2 ->
-    let name_cmp = String.compare f1.func_name f2.func_name in
-    if name_cmp <> 0 then
-      name_cmp
-    else
-      let args_cmp = CCList.compare compare_type f1.arg_types f2.arg_types in
-      if args_cmp <> 0 then
-        args_cmp
-      else
-        compare_type f1.return_type f2.return_type
-  | TypeBinding t1, TypeBinding t2 -> compare_type t1 t2
-  | ConstantBinding c1, ConstantBinding c2 ->
-    let value_cmp = compare_constant_value c1.value c2.value in
-    if value_cmp <> 0 then
-      value_cmp
-    else
-      compare_type c1.value_type c2.value_type
-  | FunctionBinding _, _ -> -1
-  | TypeBinding _, FunctionBinding _ -> 1
-  | TypeBinding _, _ -> -1
-  | ConstantBinding _, _ -> 1
-
-
-let compare_generic_param_binding (p1 : generic_param_binding) (p2 : generic_param_binding) : int =
-  let name_cmp = String.compare p1.param_name p2.param_name in
-  if name_cmp <> 0 then
-    name_cmp
-  else
-    compare_generic_binding_value p1.binding p2.binding
-
-
-let compare_function_arg_signature (a1 : function_arg_signature) (a2 : function_arg_signature) : int =
-  let name_cmp = String.compare a1.param_name a2.param_name in
-  if name_cmp <> 0 then
-    name_cmp
-  else
-    compare_type a1.arg_type a2.arg_type
-
-
-let compare_instantiation_signature (s1 : instantiation_signature) (s2 : instantiation_signature) : int =
-  let name_cmp = String.compare s1.generic_name s2.generic_name in
-  if name_cmp <> 0 then
-    name_cmp
-  else
-    let generic_params_cmp = CCList.compare compare_generic_param_binding s1.generic_params s2.generic_params in
-    if generic_params_cmp <> 0 then
-      generic_params_cmp
-    else
-      let function_args_cmp = CCList.compare compare_function_arg_signature s1.function_args s2.function_args in
-      if function_args_cmp <> 0 then
-        function_args_cmp
-      else
-        compare_type s1.return_type s2.return_type
-
+let mapCallValues (f : exp -> exp) (params : call_param list) : call_param list =
+  CCList.map
+    (function
+      | CallArg {arg; value} ->
+          CallArg {arg; value= f value}
+      | CallGeneric {param; value} ->
+          CallGeneric {param; value= f value} )
+    params
 
 let rec print_constness (c : constness) =
-  match c.c with
-  | TEConst i -> {%pla|const<#i#i> |}
-  | TEMut i -> {%pla|mut<#i#i> |}
-  | TECLink c -> print_constness c
-
+  match c.c with TEConst i -> {%pla|const<#i#i> |} | TEMut i -> {%pla|mut<#i#i> |} | TECLink c -> print_constness c
 
 let rec print_type_ ?(detailed = false) (t : type_) : Pla.t =
-  let prefix pt =
-    if detailed || print_exp_types then
-      Pla.append (print_constness t.const) pt
-    else
-      pt
-  in
+  let prefix pt = if detailed || print_exp_types then Pla.append (print_constness t.const) pt else pt in
   match t.tx with
-  | TENoReturn -> Pla.string "noreturn"
-  | TELink t -> print_type_ ~detailed t
+  | TENoReturn ->
+      Pla.string "noreturn"
+  | TELink t ->
+      print_type_ ~detailed t
   | TEUnbound (Some i) ->
-    if detailed then
-      {%pla|_<#i#i>|}
-    else
+      if detailed then {%pla|_<#i#i>|} else Pla.string "_"
+  | TEUnbound None ->
       Pla.string "_"
-  | TEUnbound None -> Pla.string "_"
-  | TEId p -> prefix @@ print_path p
-  | TESize n -> Pla.int n
-  | TEOption (_, alt) -> prefix @@ Pla.parenthesize @@ Pla.map_sep (Pla.string "|") print_type_ alt
+  | TEId p ->
+      prefix @@ print_path p
+  | TESize n ->
+      Pla.int n
+  | TEOption alt ->
+      prefix @@ Pla.parenthesize @@ Pla.map_sep (Pla.string "|") print_type_ alt
   | TEComposed (name, elems) ->
-    let elems = Pla.map_sep Pla.commaspace (print_type_ ~detailed) elems in
-    prefix {%pla|<#name#s>(<#elems#>)|}
+      let elems = Pla.map_sep Pla.commaspace (print_type_ ~detailed) elems in
+      prefix {%pla|<#name#s>(<#elems#>)|}
   | TEFunction (args, ret) ->
-    let args = Pla.map_sep Pla.commaspace (print_type_ ~detailed) args in
-    let ret = print_type_ ~detailed ret in
-    prefix {%pla|<#args#> -> <#ret#>|}
-
+      let args = Pla.map_sep Pla.commaspace (print_type_ ~detailed) args in
+      let ret = print_type_ ~detailed ret in
+      prefix {%pla|<#args#> -> <#ret#>|}
 
 let rec print_exp (e : exp) =
   (fun es ->
-    if print_exp_types then
-      let t = print_type_ e.t in
-      {%pla|(<#es#> : <#t#>)|}
-    else
-      es)
+    let with_type =
+      if print_exp_types then
+        let t = print_type_ e.t in
+        {%pla|(<#es#> : <#t#>)|}
+      else es
+    in
+    if !print_exp_locs then
+      let loc = print_loc e.loc in
+      {%pla|<#with_type#><#loc#>|}
+    else with_type )
   @@
   match e.e with
-  | EUnit -> Pla.string "()"
+  | EUnit ->
+      Pla.string "()"
   | EBool v ->
-    Pla.string
-      (if v then
-         "true"
-       else
-         "false")
-  | EInt n -> Pla.int n
-  | EReal n -> Pla.float n
-  | EFixed n -> {%pla|<#n#f>x]|}
-  | EString s -> Pla.string_quoted s
-  | EId id -> Pla.string id
-  | EConst p -> print_path p
-  | EIndex { e; index } ->
-    let e = print_exp e in
-    let index = print_exp index in
-    {%pla|<#e#>[<#index#>]|}
-  | EArray l -> Pla.wrap (Pla.string "[ ") (Pla.string " ]") (Pla.map_sep Pla.commaspace print_exp l)
-  | ECall { instance; path; args } ->
-    let instance = Option.value (Option.map (fun s -> {%pla|<#s#s>:|}) instance) ~default:Pla.unit in
-    let path = print_path path in
-    let args = Pla.map_sep Pla.commaspace print_exp args in
-    {%pla|<#instance#><#path#>(<#args#>)|}
+      Pla.string (if v then "true" else "false")
+  | EInt n ->
+      Pla.int n
+  | EReal n ->
+      Pla.float n
+  | EFixed n ->
+      {%pla|<#n#f>x]|}
+  | EString s ->
+      Pla.string_quoted s
+  | EId id ->
+      Pla.string id
+  | EConst p ->
+      print_path p
+  | EIndex {e; index} ->
+      let e = print_exp e in
+      let index = print_exp index in
+      {%pla|<#e#>[<#index#>]|}
+  | EArray l ->
+      Pla.wrap (Pla.string "[ ") (Pla.string " ]") (Pla.map_sep Pla.commaspace print_exp l)
+  | ECall {instance; path; args} ->
+      let instance = Option.value (Option.map (fun s -> {%pla|<#s#s>:|}) instance) ~default:Pla.unit in
+      let path = print_path path in
+      let args = Pla.map_sep Pla.commaspace print_exp args in
+      {%pla|<#instance#><#path#>(<#args#>)|}
   | EUnOp (op, e) ->
-    let e = print_exp e in
-    {%pla|(<#op#s><#e#>)|}
+      let e = print_exp e in
+      {%pla|(<#op#s><#e#>)|}
   | EOp (op, e1, e2) ->
-    let e1 = print_exp e1 in
-    let e2 = print_exp e2 in
-    {%pla|(<#e1#> <#op#s> <#e2#>)|}
-  | EIf { cond; then_; else_ } ->
-    let cond = print_exp cond in
-    let then_ = print_exp then_ in
-    let else_ = print_exp else_ in
-    {%pla|(if <#cond#> then <#then_#> else <#else_#>)|}
+      let e1 = print_exp e1 in
+      let e2 = print_exp e2 in
+      {%pla|(<#e1#> <#op#s> <#e2#>)|}
+  | EIf {cond; then_; else_} ->
+      let cond = print_exp cond in
+      let then_ = print_exp then_ in
+      let else_ = print_exp else_ in
+      {%pla|(if <#cond#> then <#then_#> else <#else_#>)|}
   | ETuple l ->
-    let l = Pla.map_sep Pla.commaspace print_exp l in
-    {%pla|(<#l#>)|}
+      let l = Pla.map_sep Pla.commaspace print_exp l in
+      {%pla|(<#l#>)|}
   | EMember (e, m) ->
-    let e = print_exp e in
-    {%pla|<#e#>.<#m#s>|}
-  | ERecord { path; elems } ->
-    let printElem (id, v) =
-      let v = print_exp v in
-      {%pla|<#id#s> = <#v#>|}
-    in
-    let path = print_path path in
-    let elems = Pla.map_sep Pla.commaspace printElem elems in
-    {%pla|<#path#> { <#elems#> }|}
-
+      let e = print_exp e in
+      {%pla|<#e#>.<#m#s>|}
+  | ERecord {path; elems} ->
+      let printElem (id, v) =
+        let v = print_exp v in
+        {%pla|<#id#s> = <#v#>|}
+      in
+      let path = print_path path in
+      let elems = Pla.map_sep Pla.commaspace printElem elems in
+      {%pla|<#path#> { <#elems#> }|}
+  | EGenCall {instance; generic_path; params} ->
+      let args = Pla.map_sep Pla.commaspace print_exp (callValues params) in
+      let path = print_path generic_path in
+      let inst = match instance with None -> Pla.unit | Some i -> Pla.string (i ^ ":") in
+      {%pla|<#inst#><#path#>@generic(<#args#>)|}
+  | EGenCompanionCall {instance; companion_name; parent_generic_path; args} ->
+      let args = Pla.map_sep Pla.commaspace print_exp args in
+      let path = print_path parent_generic_path in
+      let inst = match instance with None -> Pla.unit | Some i -> Pla.string (i ^ ":") in
+      {%pla|<#inst#><#path#>@companion:<#companion_name#s>(<#args#>)|}
+  | ETypeIntrinsic {intrinsic; type_param} ->
+      let intrinsic_name =
+        match intrinsic with TypeDefault -> "typedefault" | TypeMax -> "typemax" | TypeMin -> "typemin"
+      in
+      {%pla|<#intrinsic_name#s>('<#type_param#s>)|}
 
 let rec print_lexp (e : lexp) =
   (fun es ->
-    if print_exp_types then
-      let t = print_type_ e.t in
-      {%pla|(<#es#> : <#t#>)|}
-    else
-      es)
+    let with_type =
+      if print_exp_types then
+        let t = print_type_ e.t in
+        {%pla|(<#es#> : <#t#>)|}
+      else es
+    in
+    if !print_exp_locs then
+      let loc = print_loc e.loc in
+      {%pla|<#with_type#><#loc#>|}
+    else with_type )
   @@
   match e.l with
-  | LWild -> Pla.string "_"
-  | LId s -> Pla.string s
+  | LWild ->
+      Pla.string "_"
+  | LId s ->
+      Pla.string s
   | LMember (e, m) ->
-    let e = print_lexp e in
-    {%pla|<#e#>.<#m#s>|}
-  | LIndex { e; index } ->
-    let e = print_lexp e in
-    let index = print_exp index in
-    {%pla|<#e#>[<#index#>]|}
+      let e = print_lexp e in
+      {%pla|<#e#>.<#m#s>|}
+  | LIndex {e; index} ->
+      let e = print_lexp e in
+      let index = print_exp index in
+      {%pla|<#e#>[<#index#>]|}
   | LTuple l ->
-    let l = Pla.map_sep Pla.commaspace print_lexp l in
-    {%pla|(<#l#>)|}
-
+      let l = Pla.map_sep Pla.commaspace print_lexp l in
+      {%pla|(<#l#>)|}
 
 let rec print_dexp (e : dexp) =
   let t = print_type_ ~detailed:true e.t in
-  match e.d with
-  | DWild -> {%pla|_ : <#t#>|}
-  | DId (id, None) -> {%pla|<#id#s> : <#t#>|}
-  | DId (id, Some dim) -> {%pla|<#id#s>[<#dim#i>] : <#t#>|}
-  | DTuple l ->
-    let l = Pla.map_sep Pla.commaspace print_dexp l in
-    {%pla|(<#l#>) : <#t#>|}
-
+  let base =
+    match e.d with
+    | DWild ->
+        {%pla|_ : <#t#>|}
+    | DId (id, None) ->
+        {%pla|<#id#s> : <#t#>|}
+    | DId (id, Some dim) ->
+        {%pla|<#id#s>[<#dim#i>] : <#t#>|}
+    | DTuple l ->
+        let l = Pla.map_sep Pla.commaspace print_dexp l in
+        {%pla|(<#l#>) : <#t#>|}
+  in
+  if !print_exp_locs then
+    let loc = print_loc e.loc in
+    {%pla|<#base#><#loc#>|}
+  else base
 
 let rec print_stmt s =
-  match s.s with
-  | StmtVal lhs ->
-    let lhs = print_dexp lhs in
-    {%pla|val <#lhs#>;|}
-  | StmtMem (lhs, tags) ->
-    let tags = Ptags.print_tags tags in
-    let lhs = print_dexp lhs in
-    {%pla|mem <#lhs#><#tags#>;|}
-  | StmtBind (lhs, rhs) ->
-    let lhs = print_lexp lhs in
-    let rhs = print_exp rhs in
-    {%pla|<#lhs#> = <#rhs#>;|}
-  | StmtReturn e ->
-    let e = print_exp e in
-    {%pla|return <#e#>;|}
-  | StmtIf (cond, then_, None) ->
-    let e = print_exp cond in
-    let then_ = print_stmt then_ in
-    {%pla|if (<#e#>) <#then_#>|}
-  | StmtIf (cond, then_, Some else_) ->
-    let cond = print_exp cond in
-    let then_ = print_stmt then_ in
-    let else_ = print_stmt else_ in
-    {%pla|if (<#cond#>) <#then_#><#>else <#else_#>|}
-  | StmtWhile (cond, stmt) ->
-    let cond = print_exp cond in
-    let stmt = print_stmt stmt in
-    {%pla|while (<#cond#>)<#stmt#+>|}
-  | StmtBlock stmts ->
-    let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
-    {%pla|{<#stmt#+>}|}
-
+  let base =
+    match s.s with
+    | StmtVal lhs ->
+        let lhs = print_dexp lhs in
+        {%pla|val <#lhs#>;|}
+    | StmtMem (lhs, tags) ->
+        let tags = Ptags.print_tags tags in
+        let lhs = print_dexp lhs in
+        {%pla|mem <#lhs#><#tags#>;|}
+    | StmtBind (lhs, rhs) ->
+        let lhs = print_lexp lhs in
+        let rhs = print_exp rhs in
+        {%pla|<#lhs#> = <#rhs#>;|}
+    | StmtReturn e ->
+        let e = print_exp e in
+        {%pla|return <#e#>;|}
+    | StmtIf (cond, then_, None) ->
+        let e = print_exp cond in
+        let then_ = print_stmt then_ in
+        {%pla|if (<#e#>) <#then_#>|}
+    | StmtIf (cond, then_, Some else_) ->
+        let cond = print_exp cond in
+        let then_ = print_stmt then_ in
+        let else_ = print_stmt else_ in
+        {%pla|if (<#cond#>) <#then_#><#>else <#else_#>|}
+    | StmtWhile (cond, stmt) ->
+        let cond = print_exp cond in
+        let stmt = print_stmt stmt in
+        {%pla|while (<#cond#>)<#stmt#+>|}
+    | StmtBlock stmts ->
+        let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
+        {%pla|{<#stmt#+>}|}
+  in
+  if !print_exp_locs then
+    let loc = print_loc s.loc in
+    {%pla|<#base#><#loc#>|}
+  else base
 
 let print_arg (arg : arg) =
   let t = print_type_ ~detailed:true arg.t in
   let name = arg.name in
-  {%pla|<#name#s> : <#t#>|}
-
+  let base = {%pla|<#name#s> : <#t#>|} in
+  if !print_exp_locs then
+    let loc = print_loc arg.loc in
+    {%pla|<#base#><#loc#>|}
+  else base
 
 (* Variant type for function definition keywords *)
-type fun_kind =
-  | FunKindFun
-  | FunKindAnd
-  | FunKindExternal
+type fun_kind = FunKindFun | FunKindAnd | FunKindExternal
 
 let fun_kind_to_string (kind : fun_kind) : string =
-  match kind with
-  | FunKindFun -> "fun"
-  | FunKindAnd -> "and"
-  | FunKindExternal -> "external"
-
+  match kind with FunKindFun -> "fun" | FunKindAnd -> "and" | FunKindExternal -> "external"
 
 let next_kind (kind : fun_kind) : fun_kind =
-  match kind with
-  | FunKindFun -> FunKindAnd
-  | FunKindAnd -> FunKindAnd
-  | FunKindExternal -> FunKindExternal
-
+  match kind with FunKindFun -> FunKindAnd | FunKindAnd -> FunKindAnd | FunKindExternal -> FunKindExternal
 
 let print_body_linkname body_linkname =
   match body_linkname with
-  | `Body stmt -> print_stmt stmt
-  | `LinkName name -> {%pla| "<#name#s>"|}
-  | `NoLinkName -> Pla.unit
-
+  | `Body stmt ->
+      print_stmt stmt
+  | `LinkName name ->
+      {%pla| "<#name#s>"|}
+  | `NoLinkName ->
+      Pla.unit
 
 let rec print_function_def (kind : fun_kind) (def : function_def) body_linkname =
   let kind_str = fun_kind_to_string kind in
@@ -621,50 +447,57 @@ let rec print_function_def (kind : fun_kind) (def : function_def) body_linkname 
   let t = print_type_ ~detailed:true (snd def.t) in
   let body = print_body_linkname body_linkname in
   let next = print_next_function_def kind def.next in
-  {%pla|<#kind_str#s> <#name#>(<#args#>) : <#t#> <#tags#><#body#><#><#next#>|}
-
+  let def_loc =
+    if !print_exp_locs then
+      let loc = print_loc def.loc in
+      {%pla| #def<#loc#>|}
+    else Pla.unit
+  in
+  {%pla|<#kind_str#s> <#name#>(<#args#>) : <#t#><#def_loc#> <#tags#><#body#><#><#next#>|}
 
 and print_next_function_def kind next =
-  match next with
-  | None -> Pla.unit
-  | Some (def, body) -> print_function_def (next_kind kind) def (`Body body)
-
+  match next with None -> Pla.unit | Some (def, body) -> print_function_def (next_kind kind) def (`Body body)
 
 let print_record_member (name, t, tags, _) =
   let tags = Ptags.print_tags tags in
   let t = print_type_ t in
   {%pla|<#name#s> : <#t#><#tags#>;|}
 
-
 let print_enum_member (name, _) = {%pla|<#name#s>|}
 
 let print_top_stmt t =
-  match t.top with
-  | TopFunction (def, body) -> print_function_def FunKindFun def (`Body body)
-  | TopExternal (def, Some linkname) -> print_function_def FunKindExternal def (`LinkName linkname)
-  | TopExternal (def, None) -> print_function_def FunKindExternal def `NoLinkName
-  | TopAlias { path = p; alias_of } ->
-    let p = print_path p in
-    let alias_of = print_path alias_of in
-    {%pla|type <#p#> = <#alias_of#><#>|}
-  | TopType { path = p; members } ->
-    let p = print_path p in
-    let members = Pla.map_sep_all Pla.newline print_record_member members in
-    {%pla|type <#p#> {<#members#+>}<#>|}
-  | TopEnum { path = p; members } ->
-    let p = print_path p in
-    let members = Pla.map_sep {%pla|,<#>|} print_enum_member members in
-    {%pla|enum <#p#> {<#members#+><#>}<#>|}
-  | TopConstant (path, dim, _, e, _) ->
-    let path = print_path path in
-    let e = print_exp e in
-    let dim =
-      match dim with
-      | None -> Pla.unit
-      | Some dim -> {%pla|[<#dim#i>]|}
-    in
-    {%pla|constant <#path#><#dim#> = <#e#>|}
-
+  let base =
+    match t.top with
+    | TopFunction (def, body) ->
+        print_function_def FunKindFun def (`Body body)
+    | TopExternal (def, Some linkname) ->
+        print_function_def FunKindExternal def (`LinkName linkname)
+    | TopExternal (def, None) ->
+        print_function_def FunKindExternal def `NoLinkName
+    | TopGenericPlaceholder name ->
+        {%pla|(* generic placeholder: <#name#s> *)|}
+    | TopAlias {path= p; alias_of} ->
+        let p = print_path p in
+        let alias_of = print_path alias_of in
+        {%pla|type <#p#> = <#alias_of#><#>|}
+    | TopType {path= p; members} ->
+        let p = print_path p in
+        let members = Pla.map_sep_all Pla.newline print_record_member members in
+        {%pla|type <#p#> {<#members#+>}<#>|}
+    | TopEnum {path= p; members} ->
+        let p = print_path p in
+        let members = Pla.map_sep {%pla|,<#>|} print_enum_member members in
+        {%pla|enum <#p#> {<#members#+><#>}<#>|}
+    | TopConstant (path, dim, _, e, _) ->
+        let path = print_path path in
+        let e = print_exp e in
+        let dim = match dim with None -> Pla.unit | Some dim -> {%pla|[<#dim#i>]|} in
+        {%pla|constant <#path#><#dim#> = <#e#>|}
+  in
+  if !print_exp_locs then
+    let loc = print_loc t.loc in
+    {%pla|<#base#> @<#loc#>|}
+  else base
 
 let print_prog prog = Pla.map_sep_all Pla.newline print_top_stmt prog
 
@@ -673,27 +506,17 @@ module C = struct
 
   let ctick = ref 0
 
-  let const () =
-    incr ctick;
-    { c = TEConst !ctick }
+  let const () = incr ctick ; {c= TEConst !ctick}
 
+  let makeId loc id = {tx= TEId {id; n= None; loc}; loc; const= const ()}
 
-  let makeId loc id = { tx = TEId { id; n = None; loc }; loc; const = const () }
-
-  let path_t loc path = { tx = TEId path; loc; const = const () }
+  let path_t loc path = {tx= TEId path; loc; const= const ()}
 
   let unbound loc =
-    incr tick;
-    { tx = TEUnbound (Some !tick); loc; const = const () }
+    incr tick ;
+    {tx= TEUnbound (Some !tick); loc; const= const ()}
 
-
-  (** Create a TEOption with a fresh unique ID *)
-  let option loc (types : type_ list) : type_ =
-    incr tick;
-    { tx = TEOption (!tick, types); loc; const = const () }
-
-
-  let noreturn loc = { tx = TENoReturn; loc; const = const () }
+  let noreturn loc = {tx= TENoReturn; loc; const= const ()}
 
   let unit ~loc = makeId loc "unit"
 
@@ -709,226 +532,279 @@ module C = struct
 
   let fix16 ~loc = makeId loc "fix16"
 
-  let num loc = option loc [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc ]
+  let num loc = {tx= TEOption [real ~loc; int ~loc; int16 ~loc; fix16 ~loc]; loc; const= const ()}
 
-  let numstr loc = option loc [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; string ~loc ]
+  let numstr loc = {tx= TEOption [real ~loc; int ~loc; int16 ~loc; fix16 ~loc; string ~loc]; loc; const= const ()}
 
-  let num_bool loc = option loc [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ]
+  let num_bool loc = {tx= TEOption [real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc]; loc; const= const ()}
 
-  let size ?(loc = Loc.default) n = { tx = TESize n; loc; const = const () }
+  let size ?(loc = Loc.default) n = {tx= TESize n; loc; const= const ()}
 
   let array ?(fixed = true) ?(loc = Loc.default) ?(size = unbound loc) t =
-    let a_dim = { tx = TEComposed ("array", [ t; size ]); loc; const = const () } in
-    if fixed then
-      a_dim
+    let a_dim = {tx= TEComposed ("array", [t; size]); loc; const= const ()} in
+    if fixed then a_dim
     else
-      let a = { tx = TEComposed ("array", [ t ]); loc; const = const () } in
-      option loc [ a; a_dim ]
+      let a = {tx= TEComposed ("array", [t]); loc; const= const ()} in
+      {tx= TEOption [a; a_dim]; loc; const= const ()}
 
+  let tuple ?(loc = Loc.default) l = {tx= TEComposed ("tuple", l); loc; const= const ()}
 
-  let tuple ?(loc = Loc.default) l = { tx = TEComposed ("tuple", l); loc; const = const () }
+  let list ?(loc = Loc.default) t = {tx= TEComposed ("list", [t]); loc; const= const ()}
 
-  let freal_type ?(loc = Loc.default) () = option loc [ real ~loc; fix16 ~loc ]
+  (* Type for indexable collections: arrays and lists *)
+  let indexable ?(loc = Loc.default) t =
+    let a = {tx= TEComposed ("array", [t]); loc; const= const ()} in
+    let a_dim = {tx= TEComposed ("array", [t; unbound loc]); loc; const= const ()} in
+    let l = {tx= TEComposed ("list", [t]); loc; const= const ()} in
+    {tx= TEOption [a; a_dim; l]; loc; const= const ()}
+
+  let freal_type ?(loc = Loc.default) () = {tx= TEOption [real ~loc; fix16 ~loc]; loc; const= const ()}
 
   let array_size () : fun_type =
     let loc = Loc.default in
     let a = unbound loc in
     let a_array = array ~fixed:false a in
-    [ a_array ], int ~loc
+    ([a_array], int ~loc)
 
+  (* List functions *)
+  let list_size () : fun_type =
+    let loc = Loc.default in
+    let a = unbound loc in
+    let a_list = list a in
+    ([a_list], int ~loc)
+
+  let list_append () : fun_type =
+    let loc = Loc.default in
+    let a = unbound loc in
+    let a_list = list a in
+    ([a_list; a], unit ~loc)
+
+  let list_insert () : fun_type =
+    let loc = Loc.default in
+    let a = unbound loc in
+    let a_list = list a in
+    ([a_list; int ~loc; a], unit ~loc)
+
+  let list_remove () : fun_type =
+    let loc = Loc.default in
+    let a = unbound loc in
+    let a_list = list a in
+    ([a_list; int ~loc], unit ~loc)
+
+  let list_clear () : fun_type =
+    let loc = Loc.default in
+    let a = unbound loc in
+    let a_list = list a in
+    ([a_list], unit ~loc)
+
+  let list_reserve () : fun_type =
+    let loc = Loc.default in
+    let a = unbound loc in
+    let a_list = list a in
+    ([a_list; int ~loc], unit ~loc)
+
+  let list_capacity () : fun_type =
+    let loc = Loc.default in
+    let a = unbound loc in
+    let a_list = list a in
+    ([a_list], int ~loc)
+
+  let list_get () : fun_type =
+    let loc = Loc.default in
+    let a = unbound loc in
+    let a_list = list a in
+    ([a_list; int ~loc], a)
+
+  let list_set () : fun_type =
+    let loc = Loc.default in
+    let a = unbound loc in
+    let a_list = list a in
+    ([a_list; int ~loc; a], unit ~loc)
 
   let str_length () : fun_type =
     let loc = Loc.default in
-    [ string ~loc ], int ~loc
-
+    ([string ~loc], int ~loc)
 
   let array_make () : fun_type =
     let loc = Loc.default in
     let a = unbound loc in
     let a_array = array a in
-    [ int ~loc; a ], a_array
-
+    ([int ~loc; a], a_array)
 
   let wrap_array () : fun_type =
     let loc = Loc.default in
     let a = unbound loc in
     let array_type = array a in
-    [ array_type ], array_type
-
+    ([array_type], array_type)
 
   let freal_freal () : fun_type =
     let t = freal_type () in
-    [ t ], t
-
+    ([t], t)
 
   let real_real_real () : fun_type =
     let loc = Loc.default in
     let t = real ~loc in
-    [ t; t ], t
-
+    ([t; t], t)
 
   let clip () : fun_type =
     let loc = Loc.default in
     let t = unbound loc in
-    [ t; t; t ], t
-
+    ([t; t; t], t)
 
   let valid_int () : fun_type =
     let loc = Loc.default in
-    [ option loc [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ] ], int ~loc
-
+    ([{tx= TEOption [real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc]; loc; const= const ()}], int ~loc)
 
   let valid_real () : fun_type =
     let loc = Loc.default in
-    [ option loc [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ] ], real ~loc
-
+    ([{tx= TEOption [real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc]; loc; const= const ()}], real ~loc)
 
   let valid_fix16 () : fun_type =
     let loc = Loc.default in
-    [ option loc [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ] ], fix16 ~loc
-
+    ([{tx= TEOption [real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc]; loc; const= const ()}], fix16 ~loc)
 
   let valid_int16 () : fun_type =
     let loc = Loc.default in
-    [ option loc [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ] ], int16 ~loc
-
+    ([{tx= TEOption [real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc]; loc; const= const ()}], int16 ~loc)
 
   let valid_bool () : fun_type =
     let loc = Loc.default in
-    [ option loc [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc ] ], bool ~loc
-
+    ([{tx= TEOption [real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc]; loc; const= const ()}], bool ~loc)
 
   let valid_string () : fun_type =
     let loc = Loc.default in
-    [ option loc [ real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc; string ~loc ] ], string ~loc
-
+    ( [{tx= TEOption [real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc; string ~loc]; loc; const= const ()}]
+    , string ~loc )
 
   let num_num () : fun_type =
     let loc = Loc.default in
     let t = num loc in
-    [ t ], t
-
+    ([t], t)
 
   let num_num_num () : fun_type =
     let loc = Loc.default in
     let t = num loc in
-    [ t; t ], t
-
+    ([t; t], t)
 
   let numstr_numstr_numstr () : fun_type =
     let loc = Loc.default in
     let t = numstr loc in
-    [ t; t ], t
-
+    ([t; t], t)
 
   let int_int_int () : fun_type =
     let loc = Loc.default in
     let t = int ~loc in
-    [ t; t ], t
-
+    ([t; t], t)
 
   let num_num_bool () : fun_type =
     let loc = Loc.default in
     let t = num loc in
-    [ t; t ], bool ~loc
-
+    ([t; t], bool ~loc)
 
   let a_a_bool () : fun_type =
     let loc = Loc.default in
     let t = unbound loc in
-    [ t; t ], bool ~loc
-
+    ([t; t], bool ~loc)
 
   let bool_bool () : fun_type =
     let loc = Loc.default in
     let t = bool ~loc in
-    [ t ], t
-
+    ([t], t)
 
   let bool_bool_bool () : fun_type =
     let loc = Loc.default in
     let t = bool ~loc in
-    [ t; t ], t
-
+    ([t; t], t)
 
   let unit_int () : fun_type =
     let loc = Loc.default in
-    [], int ~loc
-
+    ([], int ~loc)
 
   let unit_real () : fun_type =
     let loc = Loc.default in
-    [], real ~loc
-
+    ([], real ~loc)
 
   let unit_freal () : fun_type =
     let loc = Loc.default in
-    [], freal_type ~loc ()
-
+    ([], freal_type ~loc ())
 
   let string_string () : fun_type =
     let loc = Loc.default in
     let t = string ~loc in
-    [ t; t ], t
+    ([t; t], t)
+
+  (* VCV Prototype builtins *)
+  let int_real () : fun_type =
+    let loc = Loc.default in
+    ([int ~loc], real ~loc)
+
+  let int_bool () : fun_type =
+    let loc = Loc.default in
+    ([int ~loc], bool ~loc)
+
+  let string_unit () : fun_type =
+    let loc = Loc.default in
+    ([string ~loc], unit ~loc)
+
+  let string_string_string () : fun_type =
+    let loc = Loc.default in
+    let t = string ~loc in
+    ([t; t], t)
+
+  let int_real_real_real_unit () : fun_type =
+    let loc = Loc.default in
+    ([int ~loc; real ~loc; real ~loc; real ~loc], unit ~loc)
 end
 
 let rec setConstness (c : constness) (v : bool) =
-  match c.c with
-  | TEConst i | TEMut i ->
-    c.c <-
-      (if v then
-         TEConst i
-       else
-         TEMut i)
-  | TECLink c -> setConstness c v
-
+  match c.c with TEConst i | TEMut i -> c.c <- (if v then TEConst i else TEMut i) | TECLink c -> setConstness c v
 
 let setTypeMut (t : type_) = setConstness t.const false
 
 let setTypeConstness (t : type_) v = setConstness t.const v
 
 let isTypeConst (t : type_) =
-  let rec loop const =
-    match const.c with
-    | TEConst _ -> true
-    | TEMut _ -> false
-    | TECLink c -> loop c
-  in
+  let rec loop const = match const.c with TEConst _ -> true | TEMut _ -> false | TECLink c -> loop c in
   loop t.const
-
 
 let rec refreshConstness (t : type_) =
   let t =
     match t.tx with
-    | TELink t -> refreshConstness t
-    | TEOption (id, options) -> { t with tx = TEOption (id, CCList.map refreshConstness options) }
-    | TEComposed (name, subs) -> { t with tx = TEComposed (name, CCList.map refreshConstness subs) }
-    | _ -> t
+    | TELink t ->
+        refreshConstness t
+    | TEOption options ->
+        {t with tx= TEOption (CCList.map refreshConstness options)}
+    | TEComposed (name, subs) ->
+        {t with tx= TEComposed (name, CCList.map refreshConstness subs)}
+    | _ ->
+        t
   in
-  { t with const = C.const () }
-
+  {t with const= C.const ()}
 
 (* Create fresh copies of types with new mutable cells to avoid type constraint sharing *)
 let rec copy_type (t : type_) : type_ =
   match t.tx with
   | TEUnbound _ ->
-    (* Create a completely fresh unbound type *)
-    { tx = TEUnbound None; const = C.const (); loc = t.loc }
-  | TELink linked_t -> copy_type linked_t
-  | TEId path -> { tx = TEId path; const = C.const (); loc = t.loc }
-  | TESize size -> { tx = TESize size; const = C.const (); loc = t.loc }
+      (* Create a completely fresh unbound type *)
+      {tx= TEUnbound None; const= C.const (); loc= t.loc}
+  | TELink linked_t ->
+      copy_type linked_t
+  | TEId path ->
+      {tx= TEId path; const= C.const (); loc= t.loc}
+  | TESize size ->
+      {tx= TESize size; const= C.const (); loc= t.loc}
   | TEComposed (name, type_list) ->
-    let fresh_type_list = CCList.map copy_type type_list in
-    { tx = TEComposed (name, fresh_type_list); const = C.const (); loc = t.loc }
-  | TEOption (_, type_list) ->
-    let fresh_type_list = CCList.map copy_type type_list in
-    C.option t.loc fresh_type_list
+      let fresh_type_list = CCList.map copy_type type_list in
+      {tx= TEComposed (name, fresh_type_list); const= C.const (); loc= t.loc}
+  | TEOption type_list ->
+      let fresh_type_list = CCList.map copy_type type_list in
+      {tx= TEOption fresh_type_list; const= C.const (); loc= t.loc}
   | TEFunction (arg_types, ret_type) ->
-    let fresh_arg_types = CCList.map copy_type arg_types in
-    let fresh_ret_type = copy_type ret_type in
-    { tx = TEFunction (fresh_arg_types, fresh_ret_type); const = C.const (); loc = t.loc }
-  | TENoReturn -> { tx = TENoReturn; const = C.const (); loc = t.loc }
-
+      let fresh_arg_types = CCList.map copy_type arg_types in
+      let fresh_ret_type = copy_type ret_type in
+      {tx= TEFunction (fresh_arg_types, fresh_ret_type); const= C.const (); loc= t.loc}
+  | TENoReturn ->
+      {tx= TENoReturn; const= C.const (); loc= t.loc}
 
 (* Copy types while preserving sharing: if the same original unbound type appears *)
 (* in multiple places (e.g., 't in both array('t, 3) and return type 't), they *)
@@ -942,43 +818,48 @@ module TypeHashtbl = Hashtbl.Make (struct
   let hash = Hashtbl.hash
 end)
 
-let copy_types_preserving_sharing (types : type_ list) : type_ list =
+(* Copies types giving each unbound type a fresh one. The copier is shared by all the types it
+   copies, so an unbound type that appears in several of them is replaced by the same fresh type
+   everywhere. [mapping] returns the pairs (original, fresh) of the unbound types copied so far. *)
+type type_copier = {copy: type_ -> type_; mapping: unit -> (type_ * type_) list}
+
+let make_type_copier () : type_copier =
   let memo = TypeHashtbl.create 16 in
   let rec copy_with_memo (t : type_) : type_ =
-    (* Check if we've already copied this exact type object *)
     match TypeHashtbl.find_opt memo t with
-    | Some fresh_t -> fresh_t
+    | Some fresh_t ->
+        fresh_t
     | None ->
-      let fresh_t =
-        match t.tx with
-        | TEUnbound _ ->
-          (* Create a fresh unbound type and remember it *)
-          { tx = TEUnbound None; const = C.const (); loc = t.loc }
-        | TELink linked_t ->
-          (* For linked types, copy the linked type (but don't memo the link itself) *)
-          copy_with_memo linked_t
-        | TEId path -> { tx = TEId path; const = C.const (); loc = t.loc }
-        | TESize size -> { tx = TESize size; const = C.const (); loc = t.loc }
-        | TEComposed (name, type_list) ->
-          let fresh_type_list = CCList.map copy_with_memo type_list in
-          { tx = TEComposed (name, fresh_type_list); const = C.const (); loc = t.loc }
-        | TEOption (_, type_list) ->
-          let fresh_type_list = CCList.map copy_with_memo type_list in
-          C.option t.loc fresh_type_list
-        | TEFunction (arg_types, ret_type) ->
-          let fresh_arg_types = CCList.map copy_with_memo arg_types in
-          let fresh_ret_type = copy_with_memo ret_type in
-          { tx = TEFunction (fresh_arg_types, fresh_ret_type); const = C.const (); loc = t.loc }
-        | TENoReturn -> { tx = TENoReturn; const = C.const (); loc = t.loc }
-      in
-      (* Only memoize unbound types - these are the ones we need to preserve sharing for *)
-      (match t.tx with
-      | TEUnbound _ -> TypeHashtbl.add memo t fresh_t
-      | _ -> ());
-      fresh_t
+        let fresh_t =
+          match t.tx with
+          | TEUnbound _ ->
+              {tx= TEUnbound None; const= C.const (); loc= t.loc}
+          | TELink linked_t ->
+              (* For linked types, copy the linked type (but don't memo the link itself) *)
+              copy_with_memo linked_t
+          | TEId path ->
+              {tx= TEId path; const= C.const (); loc= t.loc}
+          | TESize size ->
+              {tx= TESize size; const= C.const (); loc= t.loc}
+          | TEComposed (name, type_list) ->
+              let fresh_type_list = CCList.map copy_with_memo type_list in
+              {tx= TEComposed (name, fresh_type_list); const= C.const (); loc= t.loc}
+          | TEOption type_list ->
+              let fresh_type_list = CCList.map copy_with_memo type_list in
+              {tx= TEOption fresh_type_list; const= C.const (); loc= t.loc}
+          | TEFunction (arg_types, ret_type) ->
+              let fresh_arg_types = CCList.map copy_with_memo arg_types in
+              let fresh_ret_type = copy_with_memo ret_type in
+              {tx= TEFunction (fresh_arg_types, fresh_ret_type); const= C.const (); loc= t.loc}
+          | TENoReturn ->
+              {tx= TENoReturn; const= C.const (); loc= t.loc}
+        in
+        (* Only memoize unbound types - these are the ones we need to preserve sharing for *)
+        (match t.tx with TEUnbound _ -> TypeHashtbl.add memo t fresh_t | _ -> ()) ;
+        fresh_t
   in
-  CCList.map copy_with_memo types
-
+  let mapping () = TypeHashtbl.fold (fun orig fresh acc -> (orig, fresh) :: acc) memo [] in
+  {copy= copy_with_memo; mapping}
 
 (* Find all unique unbound types in a list of types, in order of first appearance *)
 (* Uses physical identity to track uniqueness *)
@@ -988,53 +869,284 @@ let find_unbounds_in_types (types : type_ list) : type_ list =
   let rec walk (t : type_) : unit =
     match t.tx with
     | TEUnbound _ ->
-      if not (TypeHashtbl.mem seen t) then (
-        TypeHashtbl.add seen t ();
-        result := t :: !result)
-    | TELink linked_t -> walk linked_t
-    | TEComposed (_, type_list) -> CCList.iter walk type_list
-    | TEOption (_, type_list) -> CCList.iter walk type_list
+        if not (TypeHashtbl.mem seen t) then (
+          TypeHashtbl.add seen t () ;
+          result := t :: !result )
+    | TELink linked_t ->
+        walk linked_t
+    | TEComposed (_, type_list) ->
+        CCList.iter walk type_list
+    | TEOption type_list ->
+        CCList.iter walk type_list
     | TEFunction (arg_types, ret_type) ->
-      CCList.iter walk arg_types;
-      walk ret_type
-    | TEId _ | TESize _ | TENoReturn -> ()
+        CCList.iter walk arg_types ; walk ret_type
+    | TEId _ | TESize _ | TENoReturn ->
+        ()
   in
-  CCList.iter walk types;
-  CCList.rev !result
+  CCList.iter walk types ; CCList.rev !result
 
+(* ========== Shared Utility Functions ========== *)
 
-(* Copy types while preserving sharing AND return the mapping from original unbounds to fresh unbounds *)
-(* This is needed to extract type bindings after unification *)
-let copy_types_with_unbound_mapping (types : type_ list) : type_ list * (type_ * type_) list =
-  let memo = TypeHashtbl.create 16 in
-  let rec copy_with_memo (t : type_) : type_ =
-    match TypeHashtbl.find_opt memo t with
-    | Some fresh_t -> fresh_t
+(** Follows TELink chains to get the underlying type. *)
+let rec unlink (t : type_) : type_ = match t.tx with TELink t -> unlink t | _ -> t
+
+(** Converts a Syntax.path to a string. *)
+let pathString (p : path) : string = match p with {id; n= None; _} -> id | {id; n= Some n; _} -> n ^ "_" ^ id
+
+(** Converts a type to a mangled name for specialized function names. *)
+let rec typeToMangledName (t : type_) : string =
+  match (unlink t).tx with
+  | TEId {id; n= None; _} ->
+      id
+  | TEId {id; n= Some module_name; _} ->
+      module_name ^ "_" ^ id
+  | TEFunction (arg_types, ret_type) ->
+      let args_str = CCList.map typeToMangledName arg_types |> String.concat "_" in
+      let ret_str = typeToMangledName ret_type in
+      "fn_" ^ args_str ^ "_to_" ^ ret_str
+  | TEComposed (name, type_args) ->
+      let args_str = CCList.map typeToMangledName type_args |> String.concat "_" in
+      if args_str = "" then name else name ^ "_of_" ^ args_str
+  | TEUnbound (Some id) ->
+      "unbound" ^ string_of_int id
+  | TEUnbound None ->
+      "unbound"
+  | TEOption type_list -> (
+    match type_list with
+    | [single_type] ->
+        typeToMangledName single_type
+    | multiple_types -> (
+        let non_option_types =
+          CCList.filter (fun t -> match (unlink t).tx with TEOption _ -> false | _ -> true) multiple_types
+        in
+        match non_option_types with
+        | concrete_type :: _ ->
+            typeToMangledName concrete_type
+        | [] ->
+            "opt_" ^ (CCList.map typeToMangledName type_list |> String.concat "_") ) )
+  | TENoReturn ->
+      "noreturn"
+  | TESize i ->
+      "size_" ^ string_of_int i
+  | TELink _ ->
+      "link"
+
+(** Resolves a type intrinsic to a concrete expression for a given type. *)
+let resolveTypeIntrinsicInline (intrinsic : type_intrinsic) (concrete_type : type_) (loc : Loc.t) : exp =
+  let t = concrete_type in
+  let unlinked = unlink concrete_type in
+  match (intrinsic, unlinked.tx) with
+  | TypeDefault, TEId {id= "int"; _} ->
+      {e= EInt 0; t; loc}
+  | TypeDefault, TEId {id= "int16"; _} ->
+      {e= EInt 0; t; loc}
+  | TypeDefault, TEId {id= "real"; _} ->
+      {e= EReal 0.0; t; loc}
+  | TypeDefault, TEId {id= "fix16"; _} ->
+      {e= EFixed 0.0; t; loc}
+  | TypeDefault, TEId {id= "bool"; _} ->
+      {e= EBool false; t; loc}
+  | TypeDefault, TEId {id= "string"; _} ->
+      {e= EString ""; t; loc}
+  | TypeMax, TEId {id= "int"; _} ->
+      (* int is 32 bits in the generated code *)
+      {e= EInt 2147483647; t; loc}
+  | TypeMax, TEId {id= "int16"; _} ->
+      {e= EInt 32767; t; loc}
+  | TypeMax, TEId {id= "real"; _} ->
+      (* real is a 32-bit float in the generated code *)
+      {e= EReal 3.40282346638528859812e+38; t; loc}
+  | TypeMax, TEId {id= "fix16"; _} ->
+      {e= EFixed 32767.99998; t; loc}
+  | TypeMax, TEId {id= "bool"; _} ->
+      {e= EBool true; t; loc}
+  | TypeMin, TEId {id= "int"; _} ->
+      (* int is 32 bits in the generated code *)
+      {e= EInt (-2147483648); t; loc}
+  | TypeMin, TEId {id= "int16"; _} ->
+      {e= EInt (-32768); t; loc}
+  | TypeMin, TEId {id= "real"; _} ->
+      (* Most negative finite 32-bit float (Float.min_float is the smallest positive value) *)
+      {e= EReal (-3.40282346638528859812e+38); t; loc}
+  | TypeMin, TEId {id= "fix16"; _} ->
+      {e= EFixed (-32768.0); t; loc}
+  | TypeMin, TEId {id= "bool"; _} ->
+      {e= EBool false; t; loc}
+  | TypeMax, _ ->
+      let type_str = Pla.print (print_type_ concrete_type) in
+      Error.raiseError (Printf.sprintf "typemax() is not supported for type '%s'" type_str) loc
+  | TypeMin, _ ->
+      let type_str = Pla.print (print_type_ concrete_type) in
+      Error.raiseError (Printf.sprintf "typemin() is not supported for type '%s'" type_str) loc
+  | TypeDefault, _ ->
+      let type_str = Pla.print (print_type_ concrete_type) in
+      Error.raiseError (Printf.sprintf "typedefault() is not supported for type '%s'" type_str) loc
+
+(** Resolves type intrinsics in an expression tree using the type substitution map. *)
+let rec resolveTypeIntrinsicsInExp (type_substitution_map : (string * type_) list) (e : exp) : exp =
+  match e.e with
+  | ETypeIntrinsic {intrinsic; type_param} -> (
+    match CCList.assoc_opt ~eq:String.equal type_param type_substitution_map with
+    | Some concrete_type ->
+        resolveTypeIntrinsicInline intrinsic concrete_type e.loc
     | None ->
-      let fresh_t =
-        match t.tx with
-        | TEUnbound _ -> { tx = TEUnbound None; const = C.const (); loc = t.loc }
-        | TELink linked_t -> copy_with_memo linked_t
-        | TEId path -> { tx = TEId path; const = C.const (); loc = t.loc }
-        | TESize size -> { tx = TESize size; const = C.const (); loc = t.loc }
-        | TEComposed (name, type_list) ->
-          let fresh_type_list = CCList.map copy_with_memo type_list in
-          { tx = TEComposed (name, fresh_type_list); const = C.const (); loc = t.loc }
-        | TEOption (_, type_list) ->
-          let fresh_type_list = CCList.map copy_with_memo type_list in
-          C.option t.loc fresh_type_list
-        | TEFunction (arg_types, ret_type) ->
-          let fresh_arg_types = CCList.map copy_with_memo arg_types in
-          let fresh_ret_type = copy_with_memo ret_type in
-          { tx = TEFunction (fresh_arg_types, fresh_ret_type); const = C.const (); loc = t.loc }
-        | TENoReturn -> { tx = TENoReturn; const = C.const (); loc = t.loc }
-      in
-      (match t.tx with
-      | TEUnbound _ -> TypeHashtbl.add memo t fresh_t
-      | _ -> ());
-      fresh_t
-  in
-  let fresh_types = CCList.map copy_with_memo types in
-  (* Extract the mapping as a list of (original, fresh) pairs *)
-  let mapping = TypeHashtbl.fold (fun orig fresh acc -> (orig, fresh) :: acc) memo [] in
-  fresh_types, mapping
+        Error.raiseError (Printf.sprintf "Type parameter '%s' not found in generic bindings" type_param) e.loc )
+  | ECall {instance; path; args} ->
+      let args = CCList.map (resolveTypeIntrinsicsInExp type_substitution_map) args in
+      {e with e= ECall {instance; path; args}}
+  | EOp (op, e1, e2) ->
+      let e1 = resolveTypeIntrinsicsInExp type_substitution_map e1 in
+      let e2 = resolveTypeIntrinsicsInExp type_substitution_map e2 in
+      {e with e= EOp (op, e1, e2)}
+  | EUnOp (op, e1) ->
+      let e1 = resolveTypeIntrinsicsInExp type_substitution_map e1 in
+      {e with e= EUnOp (op, e1)}
+  | EIf {cond; then_; else_} ->
+      let cond = resolveTypeIntrinsicsInExp type_substitution_map cond in
+      let then_ = resolveTypeIntrinsicsInExp type_substitution_map then_ in
+      let else_ = resolveTypeIntrinsicsInExp type_substitution_map else_ in
+      {e with e= EIf {cond; then_; else_}}
+  | EIndex {e= arr; index} ->
+      let arr = resolveTypeIntrinsicsInExp type_substitution_map arr in
+      let index = resolveTypeIntrinsicsInExp type_substitution_map index in
+      {e with e= EIndex {e= arr; index}}
+  | EArray elems ->
+      let elems = CCList.map (resolveTypeIntrinsicsInExp type_substitution_map) elems in
+      {e with e= EArray elems}
+  | ETuple elems ->
+      let elems = CCList.map (resolveTypeIntrinsicsInExp type_substitution_map) elems in
+      {e with e= ETuple elems}
+  | EMember (e1, m) ->
+      let e1 = resolveTypeIntrinsicsInExp type_substitution_map e1 in
+      {e with e= EMember (e1, m)}
+  | ERecord {path; elems} ->
+      let elems = CCList.map (fun (n, v) -> (n, resolveTypeIntrinsicsInExp type_substitution_map v)) elems in
+      {e with e= ERecord {path; elems}}
+  | EGenCall {instance; generic_path; params} ->
+      let params = mapCallValues (resolveTypeIntrinsicsInExp type_substitution_map) params in
+      {e with e= EGenCall {instance; generic_path; params}}
+  | EGenCompanionCall {instance; companion_name; parent_generic_path; args} ->
+      let args = CCList.map (resolveTypeIntrinsicsInExp type_substitution_map) args in
+      {e with e= EGenCompanionCall {instance; companion_name; parent_generic_path; args}}
+  | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ | EConst _ ->
+      e
+
+(** Resolves type intrinsics in a statement tree. *)
+and resolveTypeIntrinsicsInStmt (type_substitution_map : (string * type_) list) (s : stmt) : stmt =
+  match s.s with
+  | StmtVal _ ->
+      s
+  | StmtMem (_, _) ->
+      s
+  | StmtBind (lhs, rhs) ->
+      let rhs = resolveTypeIntrinsicsInExp type_substitution_map rhs in
+      {s with s= StmtBind (lhs, rhs)}
+  | StmtReturn e ->
+      let e = resolveTypeIntrinsicsInExp type_substitution_map e in
+      {s with s= StmtReturn e}
+  | StmtIf (cond, then_, else_opt) ->
+      let cond = resolveTypeIntrinsicsInExp type_substitution_map cond in
+      let then_ = resolveTypeIntrinsicsInStmt type_substitution_map then_ in
+      let else_opt = Option.map (resolveTypeIntrinsicsInStmt type_substitution_map) else_opt in
+      {s with s= StmtIf (cond, then_, else_opt)}
+  | StmtWhile (cond, body) ->
+      let cond = resolveTypeIntrinsicsInExp type_substitution_map cond in
+      let body = resolveTypeIntrinsicsInStmt type_substitution_map body in
+      {s with s= StmtWhile (cond, body)}
+  | StmtBlock stmts ->
+      let stmts = CCList.map (resolveTypeIntrinsicsInStmt type_substitution_map) stmts in
+      {s with s= StmtBlock stmts}
+
+(** Substitutes constant parameter references with their literal values in expressions. *)
+let rec substituteConstantsInExp (constant_map : (string * exp) list) (e : exp) : exp =
+  match e.e with
+  | EId name -> (
+    match CCList.assoc_opt ~eq:String.equal name constant_map with
+    | Some const_exp ->
+        {const_exp with loc= e.loc; t= e.t}
+    | None ->
+        e )
+  | ECall {instance; path; args} ->
+      let args = CCList.map (substituteConstantsInExp constant_map) args in
+      {e with e= ECall {instance; path; args}}
+  | EOp (op, e1, e2) ->
+      let e1 = substituteConstantsInExp constant_map e1 in
+      let e2 = substituteConstantsInExp constant_map e2 in
+      {e with e= EOp (op, e1, e2)}
+  | EUnOp (op, e1) ->
+      let e1 = substituteConstantsInExp constant_map e1 in
+      {e with e= EUnOp (op, e1)}
+  | EIf {cond; then_; else_} ->
+      let cond = substituteConstantsInExp constant_map cond in
+      let then_ = substituteConstantsInExp constant_map then_ in
+      let else_ = substituteConstantsInExp constant_map else_ in
+      {e with e= EIf {cond; then_; else_}}
+  | EIndex {e= arr; index} ->
+      let arr = substituteConstantsInExp constant_map arr in
+      let index = substituteConstantsInExp constant_map index in
+      {e with e= EIndex {e= arr; index}}
+  | EArray elems ->
+      let elems = CCList.map (substituteConstantsInExp constant_map) elems in
+      {e with e= EArray elems}
+  | ETuple elems ->
+      let elems = CCList.map (substituteConstantsInExp constant_map) elems in
+      {e with e= ETuple elems}
+  | EMember (e1, m) ->
+      let e1 = substituteConstantsInExp constant_map e1 in
+      {e with e= EMember (e1, m)}
+  | ERecord {path; elems} ->
+      let elems = CCList.map (fun (n, v) -> (n, substituteConstantsInExp constant_map v)) elems in
+      {e with e= ERecord {path; elems}}
+  | EGenCall {instance; generic_path; params} ->
+      let params = mapCallValues (substituteConstantsInExp constant_map) params in
+      {e with e= EGenCall {instance; generic_path; params}}
+  | EGenCompanionCall {instance; companion_name; parent_generic_path; args} ->
+      let args = CCList.map (substituteConstantsInExp constant_map) args in
+      {e with e= EGenCompanionCall {instance; companion_name; parent_generic_path; args}}
+  | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EConst _ | ETypeIntrinsic _ ->
+      e
+
+(** Substitutes constant parameter references in a left-hand side expression. *)
+and substituteConstantsInLexp (constant_map : (string * exp) list) (l : lexp) : lexp =
+  match l.l with
+  | LWild ->
+      l
+  | LId _ ->
+      l
+  | LMember (e, member_name) ->
+      let e = substituteConstantsInLexp constant_map e in
+      {l with l= LMember (e, member_name)}
+  | LIndex {e; index} ->
+      let e = substituteConstantsInLexp constant_map e in
+      let index = substituteConstantsInExp constant_map index in
+      {l with l= LIndex {e; index}}
+  | LTuple lexps ->
+      let lexps = CCList.map (substituteConstantsInLexp constant_map) lexps in
+      {l with l= LTuple lexps}
+
+(** Substitutes constant parameter references in a statement tree. *)
+and substituteConstantsInStmt (constant_map : (string * exp) list) (s : stmt) : stmt =
+  match s.s with
+  | StmtVal _ ->
+      s
+  | StmtMem (_, _) ->
+      s
+  | StmtBind (lhs, rhs) ->
+      let lhs = substituteConstantsInLexp constant_map lhs in
+      let rhs = substituteConstantsInExp constant_map rhs in
+      {s with s= StmtBind (lhs, rhs)}
+  | StmtReturn e ->
+      let e = substituteConstantsInExp constant_map e in
+      {s with s= StmtReturn e}
+  | StmtIf (cond, then_, else_opt) ->
+      let cond = substituteConstantsInExp constant_map cond in
+      let then_ = substituteConstantsInStmt constant_map then_ in
+      let else_opt = Option.map (substituteConstantsInStmt constant_map) else_opt in
+      {s with s= StmtIf (cond, then_, else_opt)}
+  | StmtWhile (cond, body) ->
+      let cond = substituteConstantsInExp constant_map cond in
+      let body = substituteConstantsInStmt constant_map body in
+      {s with s= StmtWhile (cond, body)}
+  | StmtBlock stmts ->
+      let stmts = CCList.map (substituteConstantsInStmt constant_map) stmts in
+      {s with s= StmtBlock stmts}

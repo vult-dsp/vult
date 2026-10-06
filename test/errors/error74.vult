@@ -1,0 +1,6 @@
+// Type intrinsics are accepted by the tag parser but are not valid for 'bound_check'.
+fun f(x : real) : real @[table(size = 64, min = 0.0, max = 1.0, bound_check = typemax('t))] {
+  return x * x;
+}
+
+fun main(x : real) : real { return f(x); }

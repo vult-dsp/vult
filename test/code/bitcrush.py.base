@@ -1,0 +1,49 @@
+import math
+
+# Runtime functions
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+Bitcrush_factor_c = {}
+def Bitcrush_factor_raw_c0(index):
+   return Bitcrush_factor_c[(index * 3)]
+
+def Bitcrush_factor_raw_c1(index):
+   return Bitcrush_factor_c[((index * 3) + 1)]
+
+def Bitcrush_factor_raw_c2(index):
+   return Bitcrush_factor_c[((index * 3) + 2)]
+
+def Bitcrush_factor(cv):
+   value = (((0.0) if (cv) < (0.0) else ((1.0) if (cv) > (1.0) else (cv))) * 128.0)
+   cell = ((0) if (float_to_int(value)) < (0) else ((127) if (float_to_int(value)) > (127) else (float_to_int(value))))
+   u = (value - float(cell))
+   index = (cell * 3)
+   return (Bitcrush_factor_c[index] + (u * (Bitcrush_factor_c[(index + 1)] + (Bitcrush_factor_c[(index + 2)] * u))))
+
+
+def Bitcrush_process(i, cv):
+   out = 0.0
+   if (cv == 0.0):
+      out = i
+   else:
+      b = Bitcrush_factor(cv)
+      x = int((b * i))
+      out = (float(x) / b)
+
+   return out
+
+
+def Bitcrush_noteOn(note, velocity, channel):
+   pass
+
+def Bitcrush_noteOff(note, channel):
+   pass
+
+def Bitcrush_controlChange(control, value, channel):
+   pass
+
+def Bitcrush_default():
+   pass
+

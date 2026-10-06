@@ -1,0 +1,4 @@
+This expression has type 'tuple(int, int)' but 'int' was expected
+fun f(x : int) : int {
+  return x, x;
+         ^^^^

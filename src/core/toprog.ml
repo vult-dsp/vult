@@ -29,292 +29,407 @@ module Maps = Util.Maps
 open Env
 
 type state =
-  { types : type_ Maps.Map.t
-  ; dummy : int
-  }
+  { types: type_ Maps.Map.t (* Converted struct types, keyed by the full path of the type *)
+  ; type_names: string Maps.Map.t
+        (* Emitted type name -> full path that owns it. The flattened names are not injective
+           (the paths A.b_c and A_b.c both flatten to A_b_c), so a type whose flattened name is
+           already taken by a different type gets a digest-suffixed name. *)
+  ; converting: string list (* Full paths of the struct types whose members are being converted *) }
 
-let path (p : Syntax.path) : string =
-  match p with
-  | { id; n = None; _ } -> id
-  | { id; n = Some n; _ } -> n ^ "_" ^ id
+let path (p : Syntax.path) : string = match p with {id; n= None; _} -> id | {id; n= Some n; _} -> n ^ "_" ^ id
 
+(* Full path key of a type: injective, unlike the flattened emitted name, because module
+   names cannot contain '.' *)
+let full_path_key (p : Syntax.path) : string =
+  match p with {id; n= None; _} -> id | {id; n= Some n; _} -> n ^ "." ^ id
+
+(* Reserve the emitted name for the type with the given full path. When distinct type paths
+   flatten to the same name, the later one gets the name extended with a digest of its full
+   path (see [Util.Names.disambiguate]). *)
+let claim_type_name (state : state) (full : string) (base : string) : state * string =
+  let taken candidate = Maps.Map.find_opt candidate state.type_names in
+  let name = Util.Names.disambiguate ~taken full base in
+  ({state with type_names= Maps.Map.add name full state.type_names}, name)
 
 let list mapper (env : env) (state : state) (l : 'a list) =
   let state, rev =
     CCList.fold_left
       (fun (state, acc) e ->
         let state, e = mapper env state e in
-        state, e :: acc)
-      (state, [])
-      l
+        (state, e :: acc) )
+      (state, []) l
   in
-  state, CCList.rev rev
-
+  (state, CCList.rev rev)
 
 let rec getDim (t : Typed.type_) =
   match t.tx with
-  | T.TELink t -> getDim t
-  | T.TESize dim -> dim
-  | _ -> Error.raiseError "The size of the array could not be inferred. Please add a type annotation." t.loc
+  | T.TELink t ->
+      getDim t
+  | T.TESize dim ->
+      dim
+  | _ ->
+      Error.raiseError "The size of the array could not be inferred. Please add a type annotation." t.loc
 
+(* Struct members live in memory and are initialized and copied as a whole, which is not
+   possible for tuples or arrays whose size is unknown. *)
+let checkMemberType ((name, (t : type_), _, loc) : string * type_ * Ptags.tags * Loc.t) : unit =
+  match t.t with
+  | TTuple _ ->
+      Error.raiseError ("The mem variable '" ^ name ^ "' cannot hold a tuple.") loc
+  | TArray (None, _) ->
+      Error.raiseError
+        ("The size of the array in the mem variable '" ^ name ^ "' is unknown. Please add a type annotation.")
+        loc
+  | _ ->
+      ()
 
 let rec type_ ?(const = false) (env : env) (state : state) (t : Typed.type_) =
   let const = const || Typed.isTypeConst t in
   let loc = t.loc in
   match t.tx with
-  | T.TENoReturn -> state, { t = TVoid None; const; loc }
-  | T.TEUnbound _ -> Error.raiseError "The type could not be infered. Please add a type annotation." t.loc
-  | T.TEOption _ -> Error.raiseError "undecided type" t.loc
-  | T.TEId { id = "unit"; n = None; _ } -> state, { t = TVoid None; const; loc }
-  | T.TEId { id = "int"; n = None; _ } -> state, { t = TInt; const; loc }
-  | T.TEId { id = "int16"; n = None; _ } -> state, { t = TInt16; const; loc }
-  | T.TEId { id = "real"; n = None; _ } -> state, { t = TReal; const; loc }
-  | T.TEId { id = "fix16"; n = None; _ } -> state, { t = TFix16; const; loc }
-  | T.TEId { id = "string"; n = None; _ } -> state, { t = TString; const; loc }
-  | T.TEId { id = "bool"; n = None; _ } -> state, { t = TBool; const; loc }
+  | T.TENoReturn ->
+      (state, {t= TVoid None; const; loc})
+  | T.TEUnbound _ ->
+      Error.raiseError "The type could not be infered. Please add a type annotation." t.loc
+  | T.TEOption _ ->
+      Error.raiseError "undecided type" t.loc
+  | T.TEId {id= "unit"; n= None; _} ->
+      (state, {t= TVoid None; const; loc})
+  | T.TEId {id= "int"; n= None; _} ->
+      (state, {t= TInt; const; loc})
+  | T.TEId {id= "int16"; n= None; _} ->
+      (state, {t= TInt16; const; loc})
+  | T.TEId {id= "real"; n= None; _} ->
+      (state, {t= TReal; const; loc})
+  | T.TEId {id= "fix16"; n= None; _} ->
+      (state, {t= TFix16; const; loc})
+  | T.TEId {id= "string"; n= None; _} ->
+      (state, {t= TString; const; loc})
+  | T.TEId {id= "bool"; n= None; _} ->
+      (state, {t= TBool; const; loc})
   | T.TEId p -> (
-    let ps = path p in
-    match Maps.Map.find_opt ps state.types with
-    | Some t -> state, { t with const }
-    | None -> (
-      match Env.getType env p with
-      | None -> failwith "unknown type"
-      | Some { descr = Enum _; _ } -> state, { t = TInt; const; loc }
-      | Some { descr = Record members; _ } when Maps.Map.is_empty !members -> state, { t = TEmptyType; const; loc }
-      | Some { descr = Record members; _ } ->
-        let members =
-          CCList.map (fun (name, (var : Env.var)) -> name, var.t, var.tags, var.loc) (Env.Map.to_list members)
-          |> CCList.sort (fun (n1, _, _, _) (n2, _, _, _) -> String.compare n1 n2)
-        in
-        let state, members = type_list env state members in
-        let t = { t = TStruct { path = ps; members }; loc; const = true } in
-        let types = Maps.Map.add ps t state.types in
-        { state with types }, t
-      | Some { descr = Simple; _ } -> failwith "Type does not have members"
-      | Some { descr = Alias _; _ } -> failwith ""))
-  | T.TELink t -> type_ ~const env state t
-  | T.TEComposed ("array", [ t; dim ]) ->
-    let state, t = type_ ~const env state t in
-    let dim = getDim dim in
-    state, { t = TArray (Some dim, t); const; loc }
-  | T.TEComposed ("array", [ t ]) ->
-    let state, t = type_ ~const env state t in
-    state, { t = TArray (None, t); const; loc }
+      let full = full_path_key p in
+      match Maps.Map.find_opt full state.types with
+      | Some t ->
+          (state, {t with const})
+      | None -> (
+        match Env.getType env p with
+        | None ->
+            failwith "unknown type"
+        | Some {descr= Enum _; _} ->
+            (state, {t= TInt; const; loc})
+        | Some {descr= Record members; _} when Maps.Map.is_empty !members ->
+            (state, {t= TEmptyType; const; loc})
+        | Some {descr= Record _; _} when CCList.mem ~eq:String.equal full state.converting ->
+            Error.raiseError ("The type '" ^ p.id ^ "' cannot contain itself.") loc
+        | Some {descr= Record members; _} ->
+            let state, ps = claim_type_name state full (path p) in
+            let members =
+              CCList.map (fun (name, (var : Env.var)) -> (name, var.t, var.tags, var.loc)) (Env.Map.to_list members)
+              |> CCList.sort (fun (n1, _, _, _) (n2, _, _, _) -> String.compare n1 n2)
+            in
+            let state, members = struct_members env state full members in
+            let t = {t= TStruct {path= ps; members}; loc; const= true} in
+            let types = Maps.Map.add full t state.types in
+            ({state with types}, t)
+        | Some {descr= Simple; _} ->
+            failwith "Type does not have members"
+        | Some {descr= Alias (_, alias_of); _} ->
+            (* The companion functions share the context of the function they belong to *)
+            type_ ~const env state {t with tx= T.TEId alias_of} ) )
+  | T.TELink t ->
+      type_ ~const env state t
+  | T.TEComposed ("array", [t; dim]) ->
+      let state, t = type_ ~const env state t in
+      let dim = getDim dim in
+      (state, {t= TArray (Some dim, t); const; loc})
+  | T.TEComposed ("array", [t]) ->
+      let state, t = type_ ~const env state t in
+      (state, {t= TArray (None, t); const; loc})
   | T.TEComposed ("tuple", elems) ->
-    let state, elems = list (type_ ~const) env state elems in
-    state, { t = TTuple elems; const; loc }
-  | T.TEComposed (name, _) -> Error.raiseError ("Unknown composed type '" ^ name ^ "'.") t.loc
-  | T.TESize _ -> Error.raiseError "Invalid type description." t.loc
-  | T.TEFunction _ -> failwith "function type not implemented"
+      let state, elems = list (type_ ~const) env state elems in
+      (state, {t= TTuple elems; const; loc})
+  | T.TEComposed ("list", [t]) ->
+      let state, t = type_ ~const env state t in
+      (state, {t= TList t; const; loc})
+  | T.TEComposed (name, _) ->
+      Error.raiseError ("Unknown composed type '" ^ name ^ "'.") t.loc
+  | T.TESize _ ->
+      Error.raiseError "Invalid type description." t.loc
+  | T.TEFunction _ ->
+      failwith "function type not implemented"
 
+(* Converts the members of the struct with the given full path, rejecting the ones that cannot
+   be stored in a struct and the types that contain themselves. *)
+and struct_members (env : env) (state : state) (full : string) members =
+  let outer_converting = state.converting in
+  let state, members = type_list env {state with converting= full :: outer_converting} members in
+  let () = CCList.iter checkMemberType members in
+  ({state with converting= outer_converting}, members)
 
 and type_list (env : env) (state : state) (l : (string * Typed.type_ * Ptags.tags * Loc.t) list) =
   let mapper env state ((n : string), (t : Typed.type_), (tags : Ptags.tags), (loc : Loc.t)) =
     let state, t = type_ env state t in
-    state, (n, t, tags, loc)
+    (state, (n, t, tags, loc))
   in
   list mapper env state l
 
-
 let operator op =
   match op with
-  | "+" -> OpAdd
-  | "-" -> OpSub
-  | "*" -> OpMul
-  | "/" -> OpDiv
-  | "%" -> OpMod
-  | "&&" -> OpLand
-  | "||" -> OpLor
-  | "|" -> OpBor
-  | "&" -> OpBand
-  | "^" -> OpBxor
-  | "<<" -> OpLsh
-  | ">>" -> OpRsh
-  | "==" -> OpEq
-  | "<>" -> OpNe
-  | "<" -> OpLt
-  | "<=" -> OpLe
-  | ">" -> OpGt
-  | ">=" -> OpGe
-  | _ -> failwith "unknown operator"
+  | "+" ->
+      OpAdd
+  | "-" ->
+      OpSub
+  | "*" ->
+      OpMul
+  | "/" ->
+      OpDiv
+  | "%" ->
+      OpMod
+  | "&&" ->
+      OpLand
+  | "||" ->
+      OpLor
+  | "|" ->
+      OpBor
+  | "&" ->
+      OpBand
+  | "^" ->
+      OpBxor
+  | "<<" ->
+      OpLsh
+  | ">>" ->
+      OpRsh
+  | "==" ->
+      OpEq
+  | "<>" ->
+      OpNe
+  | "<" ->
+      OpLt
+  | "<=" ->
+      OpLe
+  | ">" ->
+      OpGt
+  | ">=" ->
+      OpGe
+  | _ ->
+      failwith "unknown operator"
 
-
-let uoperator op =
-  match op with
-  | "-" -> UOpNeg
-  | "not" -> UOpNot
-  | _ -> failwith "unknown uoperator"
-
+let uoperator op = match op with "-" -> UOpNeg | "not" -> UOpNot | _ -> failwith "unknown uoperator"
 
 let rec exp (env : env) (state : state) (e : Typed.exp) : state * Prog.exp =
   let loc = e.loc in
   let state, t = type_ env state e.t in
   match e.e with
-  | EUnit -> state, { e = EUnit; t; loc }
-  | EBool v -> state, { e = EBool v; t; loc }
-  | EInt n -> state, { e = EInt n; t; loc }
-  | EReal n -> state, { e = EReal n; t; loc }
-  | EFixed n -> state, { e = EFixed n; t; loc }
-  | EString s -> state, { e = EString s; t; loc }
-  | EId id -> state, { e = EId id; t; loc }
+  | EUnit ->
+      (state, {e= EUnit; t; loc})
+  | EBool v ->
+      (state, {e= EBool v; t; loc})
+  | EInt n ->
+      (state, {e= EInt n; t; loc})
+  | EReal n ->
+      (state, {e= EReal n; t; loc})
+  | EFixed n ->
+      (state, {e= EFixed n; t; loc})
+  | EString s ->
+      (state, {e= EString s; t; loc})
+  | EId id ->
+      (state, {e= EId id; t; loc})
   | EConst id ->
-    let id = path id in
-    state, { e = EId id; t; loc }
-  | EIndex { e; index } ->
-    let state, e = exp env state e in
-    let state, index = exp env state index in
-    state, { e = EIndex { e; index }; t; loc }
+      let id = path id in
+      (state, {e= EId id; t; loc})
+  | EIndex {e; index} ->
+      let state, e = exp env state e in
+      let state, index = exp env state index in
+      (state, {e= EIndex {e; index}; t; loc})
   | EArray l ->
-    let state, l = list exp env state l in
-    state, { e = EArray l; t; loc }
-  | ECall { path = p; args; _ } ->
-    let p = path p in
-    let state, args = list exp env state args in
-    state, { e = ECall { path = p; args }; t; loc }
+      let state, l = list exp env state l in
+      (state, {e= EArray l; t; loc})
+  | ECall {path= p; args; _} ->
+      let p = path p in
+      let state, args = list exp env state args in
+      (state, {e= ECall {path= p; args}; t; loc})
   | EUnOp (op, e) ->
-    let op = uoperator op in
-    let state, e = exp env state e in
-    state, { e = EUnOp (op, e); t; loc }
+      let op = uoperator op in
+      let state, e = exp env state e in
+      (state, {e= EUnOp (op, e); t; loc})
   | EOp (op, e1, e2) ->
-    let state, e1 = exp env state e1 in
-    let state, e2 = exp env state e2 in
-    let op = operator op in
-    state, { e = EOp (op, e1, e2); t; loc }
-  | EIf { cond; then_; else_ } ->
-    let state, cond = exp env state cond in
-    let state, then_ = exp env state then_ in
-    let state, else_ = exp env state else_ in
-    state, { e = EIf { cond; then_; else_ }; t; loc }
+      let state, e1 = exp env state e1 in
+      let state, e2 = exp env state e2 in
+      let op = operator op in
+      (state, {e= EOp (op, e1, e2); t; loc})
+  | EIf {cond; then_; else_} ->
+      let state, cond = exp env state cond in
+      let state, then_ = exp env state then_ in
+      let state, else_ = exp env state else_ in
+      (state, {e= EIf {cond; then_; else_}; t; loc})
   | ETuple l ->
-    let state, l = list exp env state l in
-    state, { e = ETuple l; t; loc }
+      let state, l = list exp env state l in
+      (state, {e= ETuple l; t; loc})
   | EMember (e, m) ->
-    let state, e = exp env state e in
-    state, { e = EMember (e, m); t; loc }
-  | ERecord { path = p; elems } ->
-    let p = path p in
-    let state, elems_rev =
-      CCList.fold_left
-        (fun (state, acc) (n, v) ->
-          let state, v = exp env state v in
-          state, (n, v) :: acc)
-        (state, [])
-        elems
-    in
-    let sorting =
-      match t with
-      | { t = TStruct { members; _ }; _ } -> CCList.mapi (fun i (name, _, _, _) -> name, i) members
-      | _ -> failwith "This should be a record"
-    in
-    let numbered = CCList.map (fun (n, v) -> snd (CCList.find (fun (id, _) -> id = n) sorting), (n, v)) elems_rev in
-    let sorted = CCList.sort (fun (i1, _) (i2, _) -> compare i1 i2) numbered |> CCList.map snd in
-    state, { e = ERecord { path = p; elems = sorted }; t; loc }
-
+      let state, e = exp env state e in
+      (state, {e= EMember (e, m); t; loc})
+  | ERecord {path= _; elems} ->
+      let state, elems_rev =
+        CCList.fold_left
+          (fun (state, acc) (n, v) ->
+            let state, v = exp env state v in
+            (state, (n, v) :: acc) )
+          (state, []) elems
+      in
+      (* The emitted record name comes from the converted struct type: flattening the record's
+         own path here could disagree with the (collision-disambiguated) name of the type *)
+      let sorting, p =
+        match t with
+        | {t= TStruct {members; path= struct_path; _}; _} ->
+            (CCList.mapi (fun i (name, _, _, _) -> (name, i)) members, struct_path)
+        | _ ->
+            failwith "This should be a record"
+      in
+      let numbered = CCList.map (fun (n, v) -> (snd (CCList.find (fun (id, _) -> id = n) sorting), (n, v))) elems_rev in
+      let sorted = CCList.sort (fun (i1, _) (i2, _) -> compare i1 i2) numbered |> CCList.map snd in
+      (state, {e= ERecord {path= p; elems= sorted}; t; loc})
+  | EGenCall {generic_path; _} ->
+      (* EGenCall should have been replaced with ECall during inference post-processing.
+       If we reach here, it means instantiation failed. *)
+      let path_str = Pla.print (Syntax.print_path generic_path) in
+      failwith
+        (Printf.sprintf
+           "Internal error: EGenCall for '%s' at %s reached toprog - should have been replaced during inference"
+           path_str (Loc.to_string_readable loc) )
+  | ETypeIntrinsic {intrinsic; type_param} ->
+      (* ETypeIntrinsic should have been resolved during generic instantiation.
+       If we reach here, it means the intrinsic was used outside a generic context. *)
+      let intrinsic_name =
+        match intrinsic with TypeDefault -> "typedefault" | TypeMax -> "typemax" | TypeMin -> "typemin"
+      in
+      failwith
+        (Printf.sprintf
+           "Internal error: ETypeIntrinsic '%s('%s)' at %s reached toprog - should have been resolved during generic \
+            instantiation"
+           intrinsic_name type_param (Loc.to_string_readable loc) )
+  | EGenCompanionCall {companion_name; parent_generic_path; _} ->
+      (* EGenCompanionCall should have been resolved during generic instantiation.
+       If we reach here, the companion was called without the parent generic being called first. *)
+      failwith
+        (Printf.sprintf
+           "Internal error: EGenCompanionCall '%s' (companion of '%s') at %s reached toprog - should have been \
+            resolved during generic instantiation"
+           companion_name parent_generic_path.id (Loc.to_string_readable loc) )
 
 let rec lexp (env : env) (state : state) (e : Typed.lexp) =
   let loc = e.loc in
   let state, t = type_ env state e.t in
   match e.l with
-  | LWild -> state, { l = LWild; t; loc }
-  | LId s -> state, { l = LId s; t; loc }
+  | LWild ->
+      (state, {l= LWild; t; loc})
+  | LId s ->
+      (state, {l= LId s; t; loc})
   | LMember (e, m) ->
-    let state, e = lexp env state e in
-    state, { l = LMember (e, m); t; loc }
-  | LIndex { e; index } ->
-    let state, e = lexp env state e in
-    let state, index = exp env state index in
-    state, { l = LIndex { e; index }; t; loc }
+      let state, e = lexp env state e in
+      (state, {l= LMember (e, m); t; loc})
+  | LIndex {e; index} ->
+      let state, e = lexp env state e in
+      let state, index = exp env state index in
+      (state, {l= LIndex {e; index}; t; loc})
   | LTuple l ->
-    let state, l = list lexp env state l in
-    state, { l = LTuple l; t; loc }
-
+      let state, l = list lexp env state l in
+      (state, {l= LTuple l; t; loc})
 
 let dexp (env : env) (state : state) id dims t loc =
   let state, t = type_ env state t in
-  match id, dims with
-  | id, None -> state, { d = DId (id, None); t; loc }
-  | id, Some dim -> state, { d = DId (id, Some dim); t; loc }
-
+  let () =
+    match t.t with
+    | TArray (None, _) ->
+        Error.raiseError
+          ("The size of the array in the variable '" ^ id ^ "' is unknown. Please add a type annotation.")
+          loc
+    | _ ->
+        ()
+  in
+  match (id, dims) with
+  | id, None ->
+      (state, {d= DId (id, None); t; loc})
+  | id, Some dim ->
+      (state, {d= DId (id, Some dim); t; loc})
 
 let block (stmts : stmt list) : stmt =
-  match stmts with
-  | [] -> { s = StmtBlock []; loc = Loc.default }
-  | [ s ] -> s
-  | _ -> { s = StmtBlock stmts; loc = Loc.default }
-
+  match stmts with [] -> {s= StmtBlock []; loc= Loc.default} | [s] -> s | _ -> {s= StmtBlock stmts; loc= Loc.default}
 
 let rec flattenTupleDeclarations env state (l : T.dexp list) =
   let state, l =
     CCList.fold_left
       (fun (state, acc) (d : T.dexp) ->
         match d.d with
-        | DWild -> state, acc
+        | DWild ->
+            (state, acc)
         | DTuple elems ->
-          let state, inner = flattenTupleDeclarations env state elems in
-          state, CCList.rev inner @ acc
+            let state, inner = flattenTupleDeclarations env state elems in
+            (state, CCList.rev inner @ acc)
         | DId (id, dims) ->
-          let state, d = dexp env state id dims d.t d.loc in
-          state, d :: acc)
-      (state, [])
-      l
+            let state, d = dexp env state id dims d.t d.loc in
+            (state, d :: acc) )
+      (state, []) l
   in
-  state, CCList.rev l
-
+  (state, CCList.rev l)
 
 let rec stmt (env : env) (state : state) (s : Typed.stmt) =
   let loc = s.loc in
   match s.s with
-  | StmtVal { d = DWild; _ } -> state, []
-  | StmtVal { d = DTuple elems; _ } ->
-    let state, dexp_elems = flattenTupleDeclarations env state elems in
-    let decls = CCList.map (fun lhs -> { s = StmtDecl (lhs, None); loc }) dexp_elems in
-    state, decls
-  | StmtVal { d = DId (id, dims); t; loc } ->
-    let state, lhs = dexp env state id dims t loc in
-    state, [ { s = StmtDecl (lhs, None); loc } ]
-  | StmtMem (_, _) -> state, []
+  | StmtVal {d= DWild; _} ->
+      (state, [])
+  | StmtVal {d= DTuple elems; _} ->
+      let state, dexp_elems = flattenTupleDeclarations env state elems in
+      let decls = CCList.map (fun lhs -> {s= StmtDecl (lhs, None); loc}) dexp_elems in
+      (state, decls)
+  | StmtVal {d= DId (id, dims); t; loc} ->
+      let state, lhs = dexp env state id dims t loc in
+      (state, [{s= StmtDecl (lhs, None); loc}])
+  | StmtMem (_, _) ->
+      (state, [])
   | StmtBind (lhs, rhs) ->
-    let state, lhs = lexp env state lhs in
-    let state, rhs = exp env state rhs in
-    state, [ { s = StmtBind (lhs, rhs); loc } ]
+      let state, lhs = lexp env state lhs in
+      let state, rhs = exp env state rhs in
+      (state, [{s= StmtBind (lhs, rhs); loc}])
   | StmtReturn e ->
-    let state, e = exp env state e in
-    state, [ { s = StmtReturn e; loc } ]
+      let state, e = exp env state e in
+      (state, [{s= StmtReturn e; loc}])
   | StmtIf (cond, then_, None) ->
-    let state, cond = exp env state cond in
-    let state, then_ = stmt env state then_ in
-    state, [ { s = StmtIf (cond, block then_, None); loc } ]
+      let state, cond = exp env state cond in
+      let state, then_ = stmt env state then_ in
+      (state, [{s= StmtIf (cond, block then_, None); loc}])
   | StmtIf (cond, then_, Some else_) ->
-    let state, cond = exp env state cond in
-    let state, then_ = stmt env state then_ in
-    let state, else_ = stmt env state else_ in
-    state, [ { s = StmtIf (cond, block then_, Some (block else_)); loc } ]
+      let state, cond = exp env state cond in
+      let state, then_ = stmt env state then_ in
+      let state, else_ = stmt env state else_ in
+      (state, [{s= StmtIf (cond, block then_, Some (block else_)); loc}])
   | StmtWhile (cond, s) ->
-    let state, cond = exp env state cond in
-    let state, s = stmt env state s in
-    state, [ { s = StmtWhile (cond, block s); loc } ]
+      let state, cond = exp env state cond in
+      let state, s = stmt env state s in
+      (state, [{s= StmtWhile (cond, block s); loc}])
   | StmtBlock stmts -> (
-    let state, stmts = list stmt env state stmts in
-    match CCList.flatten stmts with
-    | [] -> state, [ { s = StmtBlock []; loc } ]
-    | [ { s = StmtBlock subs; _ } ] -> state, [ { s = StmtBlock subs; loc } ]
-    | [ s ] -> state, [ s ]
-    | subs -> state, [ { s = StmtBlock subs; loc } ])
+      let state, stmts = list stmt env state stmts in
+      match CCList.flatten stmts with
+      | [] ->
+          (state, [{s= StmtBlock []; loc}])
+      | [{s= StmtBlock subs; _}] ->
+          (state, [{s= StmtBlock subs; loc}])
+      | [s] ->
+          (state, [s])
+      | subs ->
+          (state, [{s= StmtBlock subs; loc}]) )
 
-
-let arg (env : env) (state : state) ({ name; t; loc } : Typed.arg) =
+let arg (env : env) (state : state) ({name; t; loc} : Typed.arg) =
   let const = Typed.isTypeConst t = true in
   let state, t = type_ env state t in
-  state, { name; t; const; loc }
-
+  (state, {name; t; const; loc})
 
 let function_type env state t =
   match t with
   | args, ret ->
-    let state, args = list type_ env state args in
-    let state, ret = type_ env state ret in
-    state, (args, ret)
-
+      let state, args = list type_ env state args in
+      let state, ret = type_ env state ret in
+      (state, (args, ret))
 
 let rec function_def (env : env) (state : state) (def : Typed.function_def) body =
   let name = path def.name in
@@ -324,16 +439,12 @@ let rec function_def (env : env) (state : state) (def : Typed.function_def) body
   let body = block body in
   let state, next = next_def env state def.next in
   let original_name = Some (Pla.print (Syntax.print_path def.name)) in
-  let info = { original_name; is_root = def.is_root } in
-  let stmt = { top = TopFunction ({ name; args; t; loc = def.loc; tags = def.tags; info }, body); loc = def.loc } in
-  state, stmt :: next
-
+  let info = {original_name; is_root= def.is_root} in
+  let stmt = {top= TopFunction ({name; args; t; loc= def.loc; tags= def.tags; info}, body); loc= def.loc} in
+  (state, stmt :: next)
 
 and next_def env state def_opt =
-  match def_opt with
-  | None -> state, []
-  | Some (def, body) -> function_def env state def body
-
+  match def_opt with None -> (state, []) | Some (def, body) -> function_def env state def body
 
 let ext_function_def (env : env) (state : state) (def : Typed.function_def) (linkname : string option) =
   let name = path def.name in
@@ -341,61 +452,74 @@ let ext_function_def (env : env) (state : state) (def : Typed.function_def) (lin
   let state, t = function_type env state def.t in
   let state, next = next_def env state def.next in
   let original_name = Some (Pla.print (Syntax.print_path def.name)) in
-  let info = { original_name; is_root = false } in
-  let stmt = { top = TopExternal ({ name; args; t; loc = def.loc; tags = def.tags; info }, linkname); loc = def.loc } in
-  state, stmt :: next
-
+  let info = {original_name; is_root= false} in
+  let stmt = {top= TopExternal ({name; args; t; loc= def.loc; tags= def.tags; info}, linkname); loc= def.loc} in
+  (state, stmt :: next)
 
 let top_stmt (env : env) (state : state) (t : Typed.top_stmt) =
   match t.top with
   | TopFunction (def, body) ->
-    let state, functions = function_def env state def body in
-    state, functions
+      let state, functions = function_def env state def body in
+      (state, functions)
   | TopExternal (def, linkname) ->
-    let state, functions = ext_function_def env state def linkname in
-    state, functions
-  | TopType { members = []; _ } -> state, []
-  | TopType { path = p; members } ->
-    let p = path p in
-    let state, members = type_list env state members in
-    let struct_descr = { path = p; members } in
-    let t = { t = TStruct struct_descr; loc = t.loc; const = false } in
-    let types = Maps.Map.add p t state.types in
-    { state with types }, [ { top = TopType struct_descr; loc = t.loc } ]
-  | TopEnum _ -> state, []
-  | TopAlias { path = p; alias_of } ->
-    let p = path p in
-    let alias_of = path alias_of in
-    state, [ { top = TopAlias { path = p; alias_of }; loc = t.loc } ]
+      let state, functions = ext_function_def env state def linkname in
+      (state, functions)
+  | TopGenericPlaceholder _ ->
+      (* Placeholder should have been replaced during inference - skip if it somehow remains *)
+      (state, [])
+  | TopType {members= []; _} ->
+      (state, [])
+  | TopType {path= p; members} ->
+      let full = full_path_key p in
+      let state, ps = claim_type_name state full (path p) in
+      let state, members = struct_members env state full members in
+      let struct_descr = {path= ps; members} in
+      let t = {t= TStruct struct_descr; loc= t.loc; const= false} in
+      let types = Maps.Map.add full t state.types in
+      ({state with types}, [{top= TopType struct_descr; loc= t.loc}])
+  | TopEnum _ ->
+      (state, [])
+  | TopAlias {path= p; alias_of} ->
+      let p = path p in
+      let alias_of = path alias_of in
+      (state, [{top= TopAlias {path= p; alias_of}; loc= t.loc}])
   | TopConstant (p, dim, t, e, tags) ->
-    let p = path p in
-    let state, e = exp env state e in
-    let state, t = type_ env state t in
-    state, [ { top = TopConstant (p, dim, t, e, tags); loc = t.loc } ]
-
+      let p = path p in
+      let state, e = exp env state e in
+      let state, t = type_ env state t in
+      (state, [{top= TopConstant (p, dim, t, e, tags); loc= t.loc}])
 
 let top_stmt_list (env : env) (state : state) (t : Typed.top_stmt list) = list top_stmt env state t
 
 let main env stmts =
-  let state = { types = Maps.Map.empty; dummy = 0 } in
+  let state = {types= Maps.Map.empty; type_names= Maps.Map.empty; converting= []} in
   let _, t = top_stmt_list env state stmts in
   CCList.flatten t
 
-
-let isType s =
-  match s with
-  | { top = TopType _; _ } -> true
-  | { top = TopAlias _; _ } -> true
-  | _ -> false
-
+let isType s = match s with {top= TopType _; _} -> true | {top= TopAlias _; _} -> true | _ -> false
 
 let getInitializersFromModule table m =
   CCList.fold_left (fun s (key, t) -> Maps.Map.add (path key) (path t) s) table m.Env.init
 
-
 let createInitizerTable (env : env) =
   Env.Map.fold (fun _ m s -> getInitializersFromModule s m) Maps.Map.empty env.modules
 
+(* Generate TopExternal stubs for extension builtins so the interpreter treats them as external calls *)
+let extensionExternals (iargs : Args.args) : top_stmt list =
+  let extensionOfString (s : string) : Env.extension option =
+    match s with "vcv-prototype" -> Some Env.VCVPrototype | _ -> None
+  in
+  let implicit =
+    match (iargs.code, iargs.template) with Args.LuaCode, Some "vcv-prototype" -> [Env.VCVPrototype] | _ -> []
+  in
+  let explicit = CCList.filter_map extensionOfString iargs.extensions in
+  let extensions = CCList.sort_uniq ~cmp:compare (implicit @ explicit) in
+  let extension_builtins = CCList.concat_map Env.builtins_for_extension extensions in
+  CCList.map
+    (fun (name, _) ->
+      let def : function_def = {name; args= []; t= ([], C.void_t); loc= Loc.default; tags= []; info= default_info} in
+      {top= TopExternal (def, None); loc= Loc.default} )
+    extension_builtins
 
 let convert (iargs : Args.args) env stmts =
   let stmts = main env stmts in
@@ -403,4 +527,5 @@ let convert (iargs : Args.args) env stmts =
   let custom_initializers = createInitizerTable env in
   let initializers = CCList.map Initializer.(createInitFunction custom_initializers iargs) types in
   let serializers = Serializer.createSerializers types in
-  env, types @ initializers @ serializers @ functions
+  let ext_builtins = extensionExternals iargs in
+  (env, types @ initializers @ serializers @ ext_builtins @ functions)

@@ -59,20 +59,23 @@ static_inline void Short_delay_default_type_init(Short_delay_default_type& _ctx)
 }
 
 static_inline float Saturate_tanh_table_raw_c0(int32_t index) {
-   return Saturate_tanh_table_c0[static_cast<uint32_t>(index)];
+   return Saturate_tanh_table_c[static_cast<uint32_t>(index * 3)];
 }
 
 static_inline float Saturate_tanh_table_raw_c1(int32_t index) {
-   return Saturate_tanh_table_c1[static_cast<uint32_t>(index)];
+   return Saturate_tanh_table_c[static_cast<uint32_t>(index * 3 + 1)];
 }
 
 static_inline float Saturate_tanh_table_raw_c2(int32_t index) {
-   return Saturate_tanh_table_c2[static_cast<uint32_t>(index)];
+   return Saturate_tanh_table_c[static_cast<uint32_t>(index * 3 + 2)];
 }
 
 static_inline float Saturate_tanh_table(float x) {
-   int32_t index = int_clip(float_to_int((x + 24.0f) * 5.0f), 0, 240);
-   return Saturate_tanh_table_c0[static_cast<uint32_t>(index)] + x * (Saturate_tanh_table_c1[static_cast<uint32_t>(index)] + Saturate_tanh_table_c2[static_cast<uint32_t>(index)] * x);
+   float value = (float_clip(x, -24.0f, 24.0f) + 24.0f) * 5.020833f;
+   int32_t cell = int_clip(float_to_int(value), 0, 240);
+   float u = value - int_to_float(cell);
+   int32_t index = cell * 3;
+   return Saturate_tanh_table_c[static_cast<uint32_t>(index)] + u * (Saturate_tanh_table_c[static_cast<uint32_t>(index + 1)] + Saturate_tanh_table_c[static_cast<uint32_t>((index + 2))] * u);
 }
 
 static_inline float Saturate_process(float x) {
@@ -91,7 +94,13 @@ static_inline void Saturate_controlChange(int32_t control, int32_t value, int32_
 static_inline void Saturate_default() {
 }
 
-float Short_delay_soft(Short_delay_soft_type& _ctx, float x1);
+static_inline float Short_delay_soft(Short_delay_soft_type& _ctx, float x1) {
+   float o = 0.25f * (x1 + _ctx.x2 + _ctx.x3 + _ctx.x4);
+   _ctx.x4 = _ctx.x3;
+   _ctx.x3 = _ctx.x2;
+   _ctx.x2 = x1;
+   return o;
+}
 
 float Short_delay_do(Short_delay_do_type& _ctx, float x, float time_in, float feedback_in);
 

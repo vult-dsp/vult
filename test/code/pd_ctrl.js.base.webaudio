@@ -1,0 +1,65 @@
+
+(function(audioContext) {
+   var code = function () {
+   this.Pd_ctrl_scale_type_alloc = function () {
+   var _ctx = {};
+   _ctx.Pd_ctrl_scale_ret_0 = 0.0;
+   _ctx.Pd_ctrl_scale_ret_1 = 0.0;
+   _ctx.last = 0.0;
+   return _ctx;
+};
+
+this.Pd_ctrl_tagger_type_alloc = function () {
+   var _ctx = {};
+   _ctx.Pd_ctrl_tagger_ret_0 = "";
+   _ctx.Pd_ctrl_tagger_ret_1 = (0|0);
+   _ctx.count = (0|0);
+   return _ctx;
+};
+
+this.Pd_ctrl_scale = function (_ctx, x, k, offset) {
+   _ctx.last = (offset + (k * x));
+   _ctx.Pd_ctrl_scale_ret_0 = _ctx.last;
+   _ctx.Pd_ctrl_scale_ret_1 = (0.5 * _ctx.last);
+   return ;
+};
+
+this.Pd_ctrl_tagger = function (_ctx, value, prefix) {
+   _ctx.count = ((1|0) + _ctx.count);
+   var out = "";
+   if ((value > 0.5)) {
+      out = prefix;
+   } else {
+      out = "low";
+   }
+   _ctx.Pd_ctrl_tagger_ret_0 = out;
+   _ctx.Pd_ctrl_tagger_ret_1 = _ctx.count;
+   return ;
+};
+
+
+      this.context = {};
+      };
+   var processor = new code ();
+   
+   var node = audioContext.createScriptProcessor(0, 1, 1);
+   node.inputs = 1;
+   node.outputs = 1;
+   node.onaudioprocess = function (e) {
+
+
+   var in_0 = e.inputBuffer.getChannelData(0); 
+
+
+   var out_0 = e.outputBuffer.getChannelData(0); 
+
+
+   for (var n = 0; n < e.inputBuffer.length; n++) {
+   
+   }
+   }
+
+
+
+   return node;
+   })

@@ -8,9 +8,8 @@
 
  #include <stdint.h>
  #include <math.h>
+ #include <new>
  #include <m_pd.h>
-
-static inline float samplerate() { return sys_getsr(); }
 
  #if defined(_MSC_VER)
      //  Microsoft VC++
@@ -22,10 +21,10 @@ static inline float samplerate() { return sys_getsr(); }
 
  extern "C" {
  EXPORT void sff_ff_setup(void);
- }
+ EXPORT void process_tilde_setup(void);
+}
 
- extern "C" void Sff_ff_process_tilde_setup(void);
-typedef struct Sff_ff_process_type {
+ typedef struct Sff_ff_process_type {
    float Sff_ff_process_ret_0;
    float Sff_ff_process_ret_1;
 } Sff_ff_process_type;
@@ -39,6 +38,18 @@ static_inline void Sff_ff_process(Sff_ff_process_type& _ctx, float a, float b) {
    _ctx.Sff_ff_process_ret_0 = a + b;
    _ctx.Sff_ff_process_ret_1 = a + (- b);
    return ;
+}
+
+static_inline void Sff_ff_noteOn(Sff_ff_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
+}
+
+static_inline void Sff_ff_noteOff(Sff_ff_process_type& _ctx, int32_t note, int32_t channel) {
+}
+
+static_inline void Sff_ff_controlChange(Sff_ff_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+}
+
+static_inline void Sff_ff_default(Sff_ff_process_type& _ctx) {
 }
 
 

@@ -1,0 +1,281 @@
+
+package vult.com.savestate;
+
+import java.util.Arrays;
+import java.util.Random;
+import vult.com.external.*;
+
+public class SaveState {
+
+public static class SaveState_counter_type {
+   public int count;
+
+   public SaveState_counter_type() {
+      this.count = 0;
+   }
+   public SaveState_counter_type(int count) {
+      this.count = count;
+   }}public static class SaveState_nosave_type {
+   public int x;
+
+   public SaveState_nosave_type() {
+      this.x = 0;
+   }
+   public SaveState_nosave_type(int x) {
+      this.x = x;
+   }}public static class SaveState_point {
+   public float x;
+   public float y;
+
+   public SaveState_point() {
+      this.x = 0.0f;
+      this.y = 0.0f;
+   }
+   public SaveState_point(float x, float y) {
+      this.x = x;
+      this.y = y;
+   }}public static class SaveState_main_type {
+   public SaveState_counter_type c1;
+   public SaveState_counter_type inst_19fb0;
+   public SaveState_nosave_type inst_21bb0;
+   public SaveState_point p1;
+   public SaveState_point p2;
+   public SaveState_point[] point_array;
+   public String str;
+   public float x;
+
+   public SaveState_main_type() {
+      this.c1 = new SaveState_counter_type();
+      this.inst_19fb0 = new SaveState_counter_type();
+      this.inst_21bb0 = new SaveState_nosave_type();
+      this.p1 = new SaveState_point();
+      this.p2 = new SaveState_point();
+      this.point_array = new SaveState_point[]{new SaveState_point(),new SaveState_point(),new SaveState_point()};
+      this.str = "";
+      this.x = 0.0f;
+   }
+   public SaveState_main_type(SaveState_counter_type c1, SaveState_counter_type inst_19fb0, SaveState_nosave_type inst_21bb0, SaveState_point p1, SaveState_point p2, SaveState_point[] point_array, String str, float x) {
+      this.c1 = c1;
+      this.inst_19fb0 = inst_19fb0;
+      this.inst_21bb0 = inst_21bb0;
+      this.p1 = p1;
+      this.p2 = p2;
+      this.point_array = point_array;
+      this.str = str;
+      this.x = x;
+   }}private SaveState_counter_type SaveState_counter_type_alloc() {
+   SaveState_counter_type _ctx = new SaveState_counter_type();
+   _ctx.count = 0;
+   return _ctx;
+}
+
+private SaveState_reset_type SaveState_reset_type_alloc(SaveState_reset_type _ctx) {
+   return new SaveState_reset_type();
+}
+
+private SaveState_nosave_type SaveState_nosave_type_alloc() {
+   SaveState_nosave_type _ctx = new SaveState_nosave_type();
+   _ctx.x = 0;
+   return _ctx;
+}
+
+private SaveState_point SaveState_point_alloc() {
+   SaveState_point _ctx = new SaveState_point();
+   _ctx.x = 0.0f;
+   _ctx.y = 0.0f;
+   return _ctx;
+}
+
+private SaveState_main_type SaveState_main_type_alloc() {
+   SaveState_main_type _ctx = new SaveState_main_type();
+   _ctx.c1 = SaveState_counter_type_alloc();
+   _ctx.inst_19fb0 = SaveState_counter_type_alloc();
+   _ctx.inst_21bb0 = SaveState_nosave_type_alloc();
+   _ctx.p1 = SaveState_point_alloc();
+   _ctx.p2 = SaveState_point_alloc();
+   int i_0 = 0;
+   SaveState_point[] temp_1 = new SaveState_point[]{new SaveState_point(),new SaveState_point(),new SaveState_point()};
+   while ((i_0 < 3)) {
+      {
+         temp_1[i_0] = SaveState_point_alloc();
+         i_0 = (1 + i_0);
+      }
+   }
+   _ctx.point_array = temp_1;
+   _ctx.str = "";
+   _ctx.x = 0.0f;
+   return _ctx;
+}
+
+private int SaveState_counter_type_serialize_data(CustomBuffer buffer, int index, SaveState_counter_type _ctx) {
+   int start = index;
+   index = push_block_header(buffer, index);
+   index = push_int(buffer, index, _ctx.count);
+   update_size(buffer, start, (index + (-start)));
+   return index;
+}
+
+private int SaveState_reset_type_serialize_data(CustomBuffer buffer, int index, SaveState_reset_type _ctx) {
+   return SaveState_counter_type_serialize_data(buffer, index, _ctx);
+}
+
+private int SaveState_point_serialize_data(CustomBuffer buffer, int index, SaveState_point _ctx) {
+   int start = index;
+   index = push_block_header(buffer, index);
+   index = push_float(buffer, index, _ctx.x);
+   index = push_float(buffer, index, _ctx.y);
+   update_size(buffer, start, (index + (-start)));
+   return index;
+}
+
+private int SaveState_main_type_serialize_data(CustomBuffer buffer, int index, SaveState_main_type _ctx) {
+   int start = index;
+   index = push_block_header(buffer, index);
+   index = SaveState_counter_type_serialize_data(buffer, index, _ctx.c1);
+   index = SaveState_counter_type_serialize_data(buffer, index, _ctx.inst_19fb0);
+   index = SaveState_point_serialize_data(buffer, index, _ctx.p1);
+   index = SaveState_point_serialize_data(buffer, index, _ctx.p2);
+   int start_0 = index;
+   index = push_array(buffer, index, 3);
+   int i_0 = 0;
+   while ((i_0 < 3)) {
+      {
+         index = SaveState_point_serialize_data(buffer, index, _ctx.point_array[i_0]);
+         i_0 = (1 + i_0);
+      }
+   }
+   update_size(buffer, start_0, (index + (-start_0)));
+   index = push_string(buffer, index, _ctx.str);
+   index = push_float(buffer, index, _ctx.x);
+   update_size(buffer, start, (index + (-start)));
+   return index;
+}
+
+private int SaveState_counter_type_serialize_type_descr(CustomBuffer buffer, int index, boolean[] marks) {
+   if (marks[0]) {
+      return index;
+   }
+   marks[0] = true;
+   String[] _array_0 = new String[]{"count"};
+   return serialize_type_descr(buffer, index, "SaveState_counter_type", _array_0);
+}
+
+private int SaveState_point_serialize_type_descr(CustomBuffer buffer, int index, boolean[] marks) {
+   if (marks[2]) {
+      return index;
+   }
+   marks[2] = true;
+   String[] _array_0 = new String[]{"x", "y"};
+   return serialize_type_descr(buffer, index, "SaveState_point", _array_0);
+}
+
+private int SaveState_main_type_serialize_type_descr(CustomBuffer buffer, int index, boolean[] marks) {
+   if (marks[1]) {
+      return index;
+   }
+   marks[1] = true;
+   index = SaveState_counter_type_serialize_type_descr(buffer, index, marks);
+   index = SaveState_point_serialize_type_descr(buffer, index, marks);
+   String[] _array_0 = new String[]{"c1", "inst_19fb0", "p1", "p2", "point_array", "str", "x"};
+   return serialize_type_descr(buffer, index, "SaveState_main_type", _array_0);
+}
+
+private void SaveState_counter_type_deserialize_data(CustomBuffer buffer, CustomTypeDescr type_descr, int index, SaveState_counter_type _ctx) {
+   int field_index = search_field_name(buffer, type_descr, index, "count");
+   if ((field_index >= 0)) {
+      _ctx.count = deserialize_int(buffer, field_index);
+   }
+}
+
+private void SaveState_point_deserialize_data(CustomBuffer buffer, CustomTypeDescr type_descr, int index, SaveState_point _ctx) {
+   int field_index = search_field_name(buffer, type_descr, index, "x");
+   if ((field_index >= 0)) {
+      _ctx.x = deserialize_float(buffer, field_index);
+   }
+   field_index = search_field_name(buffer, type_descr, index, "y");
+   if ((field_index >= 0)) {
+      _ctx.y = deserialize_float(buffer, field_index);
+   }
+}
+
+private void SaveState_main_type_deserialize_data(CustomBuffer buffer, CustomTypeDescr type_descr, int index, SaveState_main_type _ctx) {
+   int field_index = search_field_name(buffer, type_descr, index, "c1");
+   if ((field_index >= 0)) {
+      {
+         CustomTypeDescr field_descr_0 = search_type_description(buffer, "SaveState_counter_type");
+         SaveState_counter_type_deserialize_data(buffer, field_descr_0, field_index, _ctx.c1);
+      }
+   }
+   field_index = search_field_name(buffer, type_descr, index, "inst_19fb0");
+   if ((field_index >= 0)) {
+      {
+         CustomTypeDescr field_descr_1 = search_type_description(buffer, "SaveState_counter_type");
+         SaveState_counter_type_deserialize_data(buffer, field_descr_1, field_index, _ctx.inst_19fb0);
+      }
+   }
+   field_index = search_field_name(buffer, type_descr, index, "p1");
+   if ((field_index >= 0)) {
+      {
+         CustomTypeDescr field_descr_2 = search_type_description(buffer, "SaveState_point");
+         SaveState_point_deserialize_data(buffer, field_descr_2, field_index, _ctx.p1);
+      }
+   }
+   field_index = search_field_name(buffer, type_descr, index, "p2");
+   if ((field_index >= 0)) {
+      {
+         CustomTypeDescr field_descr_3 = search_type_description(buffer, "SaveState_point");
+         SaveState_point_deserialize_data(buffer, field_descr_3, field_index, _ctx.p2);
+      }
+   }
+   CustomTypeDescr field_descr_4 = search_type_description(buffer, "SaveState_point");
+   field_index = search_field_name(buffer, type_descr, index, "point_array");
+   if ((field_index >= 0)) {
+      {
+         field_index = first_array_element(buffer, field_index);
+         int i_5 = 0;
+         while ((i_5 < 3)) {
+            {
+               SaveState_point_deserialize_data(buffer, field_descr_4, field_index, _ctx.point_array[i_5]);
+               i_5 = (1 + i_5);
+               field_index = next_object(buffer, field_index);
+            }
+         }
+      }
+   }
+   field_index = search_field_name(buffer, type_descr, index, "str");
+   if ((field_index >= 0)) {
+      _ctx.str = deserialize_string(buffer, field_index);
+   }
+   field_index = search_field_name(buffer, type_descr, index, "x");
+   if ((field_index >= 0)) {
+      _ctx.x = deserialize_float(buffer, field_index);
+   }
+}
+
+private int SaveState_counter(SaveState_counter_type _ctx) {
+   _ctx.count = (1 + _ctx.count);
+   return _ctx.count;
+}
+
+private void SaveState_reset(SaveState_counter_type _ctx) {
+   _ctx.count = 0;
+}
+
+private void SaveState_nosave(SaveState_nosave_type _ctx) {
+   _ctx.x = 0;
+}
+
+private void SaveState_main(SaveState_main_type _ctx) {
+   _ctx.x = 0.0f;
+   _ctx.str = "";
+   SaveState_counter(_ctx.c1);
+   SaveState_counter(_ctx.inst_19fb0);
+   SaveState_nosave(_ctx.inst_21bb0);
+}
+
+
+   public static class SaveState_reset_type extends SaveState_counter_type {
+       public SaveState_reset_type() { super(); }
+   }
+
+}

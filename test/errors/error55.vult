@@ -1,0 +1,3 @@
+// A constant whose name starts with an uppercase letter can never be read back,
+// because such names are parsed as enumeration values.
+constant Gain = 0.5;

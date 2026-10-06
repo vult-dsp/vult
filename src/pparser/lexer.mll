@@ -360,7 +360,8 @@ and line_comment_capture source config buffer start_loc = parse
      {
       let _ = updateLocation lexbuf 1 0 in
       if config.emit_comments then
-        let end_loc = Loc.getLocation source lexbuf in
+        (* The location ends right before the newline, the comment does not cover it *)
+        let end_loc = { Loc.start_pos = lexbuf.lex_start_p; end_pos = lexbuf.lex_start_p; source } in
         let loc = Loc.merge start_loc end_loc in
         { kind = LINE_COMMENT; value = Buffer.contents buffer; loc = loc }
       else
@@ -412,7 +413,15 @@ and block_comment_capture source config buffer start_loc level = parse
       let () = Buffer.add_char buffer c in
       block_comment_capture source config buffer start_loc level lexbuf
     }
-  | eof { makeToken source EOF lexbuf }
+  (* Unterminated block comment: report what was read so far so editors keep highlighting it *)
+  | eof {
+      if config.emit_comments then
+        let end_loc = Loc.getLocation source lexbuf in
+        let loc = Loc.merge start_loc end_loc in
+        { kind = BLOCK_COMMENT; value = Buffer.contents buffer; loc = loc }
+      else
+        makeToken source EOF lexbuf
+    }
 
 and string source buffer = parse
   |  '"' { () }

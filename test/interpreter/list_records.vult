@@ -1,0 +1,291 @@
+// Test list(T) with record types - polyphonic MIDI handler example
+
+type note {
+   val pitch : int;
+   val velocity : int;
+   val active : bool;
+}
+
+type voice {
+   val n : note;
+   val envelope : real;
+   val pan : real;
+}
+
+// Test basic list operations with primitives
+fun testBasicList() : int {
+   mem items : list(int);
+
+   // Test empty list
+   if (list_size(items) <> 0) return -1;
+
+   // Test append
+   list_append(items, 10);
+   list_append(items, 20);
+   list_append(items, 30);
+   if (list_size(items) <> 3) return -2;
+
+   // Test access
+   if (list_get(items, 0) <> 10) return -3;
+   if (list_get(items, 1) <> 20) return -4;
+   if (list_get(items, 2) <> 30) return -5;
+
+   // Test modification
+   list_set(items, 1, 25);
+   if (list_get(items, 1) <> 25) return -6;
+
+   // Test clear
+   list_clear(items);
+   if (list_size(items) <> 0) return -7;
+
+   return 100;
+}
+
+// Test list with simple records
+fun testListWithRecords() : int {
+   mem notes : list(note);
+
+   // Append notes
+   list_append(notes, note { pitch = 60, velocity = 100, active = true });
+   list_append(notes, note { pitch = 64, velocity = 80, active = true });
+   list_append(notes, note { pitch = 67, velocity = 90, active = true });
+
+   if (list_size(notes) <> 3) return -10;
+
+   // Access record fields
+   if (list_get(notes, 0).pitch <> 60) return -11;
+   if (list_get(notes, 1).velocity <> 80) return -12;
+   if (list_get(notes, 2).active <> true) return -13;
+
+   // Modify entire record
+   list_set(notes, 0, note { pitch = 48, velocity = 50, active = false });
+   if (list_get(notes, 0).pitch <> 48) return -15;
+   if (list_get(notes, 0).velocity <> 50) return -16;
+   if (list_get(notes, 0).active <> false) return -17;
+
+   return 200;
+}
+
+// Test list with nested records
+fun testNestedRecords() : int {
+   mem voices : list(voice);
+
+   // Append voices with nested note struct
+   list_append(voices, voice { n = note { pitch = 60, velocity = 100, active = true }, envelope = 1.0, pan = 0.0 });
+   list_append(voices, voice { n = note { pitch = 64, velocity = 80, active = true }, envelope = 0.8, pan = -0.5 });
+
+   if (list_size(voices) <> 2) return -20;
+
+   // Access nested fields
+   if (list_get(voices, 0).n.pitch <> 60) return -21;
+   if (list_get(voices, 1).n.velocity <> 80) return -22;
+   if (list_get(voices, 0).envelope <> 1.0) return -23;
+   if (list_get(voices, 1).pan <> -0.5) return -24;
+
+   return 300;
+}
+
+// Test insert and remove
+fun testInsertRemove() : int {
+   mem items : list(int);
+
+   list_append(items, 1);
+   list_append(items, 3);
+
+   // Insert at position 1
+   list_insert(items, 1, 2);
+   if (list_size(items) <> 3) return -30;
+   if (list_get(items, 0) <> 1) return -31;
+   if (list_get(items, 1) <> 2) return -32;
+   if (list_get(items, 2) <> 3) return -33;
+
+   // Insert at beginning
+   list_insert(items, 0, 0);
+   if (list_size(items) <> 4) return -34;
+   if (list_get(items, 0) <> 0) return -35;
+   if (list_get(items, 1) <> 1) return -36;
+
+   // Remove middle element
+   list_remove(items, 1);
+   if (list_size(items) <> 3) return -37;
+   if (list_get(items, 0) <> 0) return -38;
+   if (list_get(items, 1) <> 2) return -39;
+   if (list_get(items, 2) <> 3) return -40;
+
+   // Remove first element
+   list_remove(items, 0);
+   if (list_size(items) <> 2) return -41;
+   if (list_get(items, 0) <> 2) return -42;
+
+   return 400;
+}
+
+// Test insert and remove with records
+fun testInsertRemoveRecords() : int {
+   mem notes : list(note);
+
+   list_append(notes, note { pitch = 60, velocity = 100, active = true });
+   list_append(notes, note { pitch = 67, velocity = 90, active = true });
+
+   // Insert in the middle
+   list_insert(notes, 1, note { pitch = 64, velocity = 80, active = true });
+
+   if (list_size(notes) <> 3) return -50;
+   if (list_get(notes, 0).pitch <> 60) return -51;
+   if (list_get(notes, 1).pitch <> 64) return -52;
+   if (list_get(notes, 2).pitch <> 67) return -53;
+
+   // Remove the middle one
+   list_remove(notes, 1);
+   if (list_size(notes) <> 2) return -54;
+   if (list_get(notes, 0).pitch <> 60) return -55;
+   if (list_get(notes, 1).pitch <> 67) return -56;
+
+   return 500;
+}
+
+// Simulate polyphonic note handler
+fun testNoteHandler() : int {
+   mem voices : list(note);
+
+   // Note on events - simulating MIDI note on messages
+   list_append(voices, note { pitch = 60, velocity = 100, active = true });  // C4
+   list_append(voices, note { pitch = 64, velocity = 80, active = true });   // E4
+   list_append(voices, note { pitch = 67, velocity = 90, active = true });   // G4
+
+   // Note off for pitch 64 (E4) - mark as inactive
+   val i = 0;
+   while (i < list_size(voices)) {
+      if (list_get(voices, i).pitch == 64) {
+         val v = list_get(voices, i);
+         list_set(voices, i, note { pitch = v.pitch, velocity = 0, active = false });
+      }
+      i = i + 1;
+   }
+
+   // Count active voices
+   val active_count = 0;
+   i = 0;
+   while (i < list_size(voices)) {
+      if (list_get(voices, i).active) {
+         active_count = active_count + 1;
+      }
+      i = i + 1;
+   }
+
+   if (active_count <> 2) return -60;
+
+   // Verify the right voices are active
+   if (list_get(voices, 0).active <> true) return -61;
+   if (list_get(voices, 1).active <> false) return -62;
+   if (list_get(voices, 2).active <> true) return -63;
+
+   // Simulate voice stealing - remove inactive voices
+   i = 0;
+   while (i < list_size(voices)) {
+      if (list_get(voices, i).active == false) {
+         list_remove(voices, i);
+         // Don't increment i since we removed an element
+      } else {
+         i = i + 1;
+      }
+   }
+
+   if (list_size(voices) <> 2) return -64;
+   if (list_get(voices, 0).pitch <> 60) return -65;
+   if (list_get(voices, 1).pitch <> 67) return -66;
+
+   return 600;
+}
+
+// Test list of reals
+fun testRealList() : int {
+   mem samples : list(real);
+
+   list_append(samples, 0.0);
+   list_append(samples, 0.5);
+   list_append(samples, 1.0);
+   list_append(samples, 0.5);
+
+   if (list_size(samples) <> 4) return -70;
+
+   // Sum the samples
+   val sum = 0.0;
+   val i = 0;
+   while (i < list_size(samples)) {
+      sum = sum + list_get(samples, i);
+      i = i + 1;
+   }
+
+   if (sum <> 2.0) return -71;
+
+   // Modify sample
+   list_set(samples, 2, 0.75);
+   if (list_get(samples, 2) <> 0.75) return -72;
+
+   return 700;
+}
+
+// Test multiple lists in same scope
+fun testMultipleLists() : int {
+   mem pitches : list(int);
+   mem velocities : list(int);
+
+   list_append(pitches, 60);
+   list_append(pitches, 64);
+   list_append(pitches, 67);
+
+   list_append(velocities, 100);
+   list_append(velocities, 80);
+   list_append(velocities, 90);
+
+   if (list_size(pitches) <> 3) return -80;
+   if (list_size(velocities) <> 3) return -81;
+
+   // Create notes from parallel lists
+   val i = 0;
+   val sum = 0;
+   while (i < list_size(pitches)) {
+      sum = sum + list_get(pitches, i) + list_get(velocities, i);
+      i = i + 1;
+   }
+
+   // Expected: (60+100) + (64+80) + (67+90) = 461
+   if (sum <> 461) return -82;
+
+   // Clear one list, other should remain
+   list_clear(pitches);
+   if (list_size(pitches) <> 0) return -83;
+   if (list_size(velocities) <> 3) return -84;
+
+   return 800;
+}
+
+fun main() : int {
+   val t1 = testBasicList();
+   if (t1 < 0) return t1;
+
+   val t2 = testListWithRecords();
+   if (t2 < 0) return t2;
+
+   val t3 = testNestedRecords();
+   if (t3 < 0) return t3;
+
+   val t4 = testInsertRemove();
+   if (t4 < 0) return t4;
+
+   val t5 = testInsertRemoveRecords();
+   if (t5 < 0) return t5;
+
+   val t6 = testNoteHandler();
+   if (t6 < 0) return t6;
+
+   val t7 = testRealList();
+   if (t7 < 0) return t7;
+
+   val t8 = testMultipleLists();
+   if (t8 < 0) return t8;
+
+   // All tests passed - return sum of all results
+   return t1 + t2 + t3 + t4 + t5 + t6 + t7 + t8;  // Should be 3600
+}

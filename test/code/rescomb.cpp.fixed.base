@@ -20,7 +20,20 @@ void Rescomb_do_type_init(Rescomb_do_type& _ctx) {
 }
 
 fix16_t Rescomb_delay(Rescomb_delay_type& _ctx, fix16_t x, fix16_t cv) {
-   _ctx.write_pos = (1 + _ctx.write_pos) % 675;
+   _ctx.write_pos = 1 + _ctx.write_pos;
+   if (_ctx.write_pos >= 675) {
+      if (_ctx.write_pos == 675) {
+         _ctx.write_pos = 0;
+      }
+      else {
+         _ctx.write_pos = _ctx.write_pos % 675;
+      }
+   }
+   else {
+      if (_ctx.write_pos <= -675) {
+         _ctx.write_pos = _ctx.write_pos % 675;
+      }
+   }
    _ctx.buffer[static_cast<uint32_t>(_ctx.write_pos)] = x;
    fix16_t r_size = 0x2a30000 /* 675.000000 */;
    fix16_t r_index = ((- Util_cvToperiod(cv)) + int_to_fix(_ctx.write_pos)) % r_size;

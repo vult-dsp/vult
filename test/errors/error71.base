@@ -1,0 +1,4 @@
+The size of the array in the variable 'b' is unknown. Please add a type annotation.
+fun first(a : array(int)) : int {
+  val b = a;
+      ^

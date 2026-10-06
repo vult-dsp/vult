@@ -3,6 +3,7 @@
 #define MATCH_H
 
 #include "vultin.hpp"
+#include "vultin_string.hpp"
 #include "Match.tables.h"
 
 static_inline int32_t Match_foo1(int32_t x) {

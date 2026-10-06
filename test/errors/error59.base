@@ -1,0 +1,4 @@
+The member 'cells' of 'Error59_grid' cannot be saved: only arrays of simple values and records can be saved.
+type grid {
+  val cells : array(array(real, 4), 4);
+      ^^^^^

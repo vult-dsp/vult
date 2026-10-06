@@ -1,0 +1,4 @@
+Element 2 of this tuple has type 'real' but 'int' was expected. This expression has type 'tuple(int, real, bool)' but 'tuple(int, int, int)' was expected
+  val z : int = 0;
+  x, y, z = f();
+            ^

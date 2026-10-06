@@ -19,8 +19,8 @@ static_inline float GenericArrays_sum(const std::array<float, SIZE_0>& data) {
 static_inline void GenericArrays_test1() {
    std::array<float, 3> data1 = { 1.0f, 2.0f, 3.0f };
    std::array<float, 4> data2 = { 1.0f, 2.0f, 3.0f, 4.0f };
-   float result1 = GenericArrays_sum(data1);
-   float result2 = GenericArrays_sum(data2);
+   GenericArrays_sum(data1);
+   GenericArrays_sum(data2);
 }
 
 

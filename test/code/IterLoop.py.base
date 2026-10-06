@@ -1,0 +1,10 @@
+
+def IterLoop_test():
+   total = 0
+   i__1 = 0
+   while (i__1 < 2):
+      total = (i__1 + total)
+      i__1 = (1 + i__1)
+
+
+

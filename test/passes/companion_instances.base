@@ -1,0 +1,71 @@
+struct Companion_instances_change_real_type {
+   pre_x : real;
+}
+
+struct Companion_instances_process_type {
+   a : real;
+   b : real;
+   c : real;
+   inst_14d3e : struct Companion_instances_change_real_type;
+   inst_24d3e : struct Companion_instances_change_real_type;
+   inst_34d3e : struct Companion_instances_change_real_type;
+}
+
+type Companion_instances_setA_type = Companion_instances_process_type
+
+type Companion_instances_setB_type = Companion_instances_process_type
+
+type Companion_instances_setC_type = Companion_instances_process_type
+
+fun Companion_instances_change_real_type_alloc() : struct Companion_instances_change_real_type {
+   val _ctx : struct Companion_instances_change_real_type;
+   (_ctx : struct Companion_instances_change_real_type).pre_x = 0.0;
+   return (_ctx : struct Companion_instances_change_real_type);
+}
+
+fun Companion_instances_process_type_alloc() : struct Companion_instances_process_type {
+   val _ctx : struct Companion_instances_process_type;
+   (_ctx : struct Companion_instances_process_type).a = 0.0;
+   (_ctx : struct Companion_instances_process_type).b = 0.0;
+   (_ctx : struct Companion_instances_process_type).c = 0.0;
+   (_ctx : struct Companion_instances_process_type).inst_14d3e = (Companion_instances_change_real_type_alloc() : struct Companion_instances_change_real_type);
+   (_ctx : struct Companion_instances_process_type).inst_24d3e = (Companion_instances_change_real_type_alloc() : struct Companion_instances_change_real_type);
+   (_ctx : struct Companion_instances_process_type).inst_34d3e = (Companion_instances_change_real_type_alloc() : struct Companion_instances_change_real_type);
+   return (_ctx : struct Companion_instances_process_type);
+}
+
+fun Companion_instances_setA_type_alloc(_ctx : struct Companion_instances_setA_type) : struct Companion_instances_setA_type {
+   return (Companion_instances_process_type_alloc() : void);
+}
+
+fun Companion_instances_setB_type_alloc(_ctx : struct Companion_instances_setB_type) : struct Companion_instances_setB_type {
+   return (Companion_instances_process_type_alloc() : void);
+}
+
+fun Companion_instances_setC_type_alloc(_ctx : struct Companion_instances_setC_type) : struct Companion_instances_setC_type {
+   return (Companion_instances_process_type_alloc() : void);
+}
+
+fun Companion_instances_change_real(_ctx : struct Companion_instances_change_real_type, x : real) : bool {
+   val v : bool;
+   (v : bool) = ((_ctx : struct Companion_instances_change_real_type).pre_x <> (x : real));
+   (_ctx : struct Companion_instances_change_real_type).pre_x = (x : real);
+   return (v : bool);
+}
+
+fun Companion_instances_process(_ctx : struct Companion_instances_process_type, input : real) : real {
+   return ((input : real) + ((_ctx : struct Companion_instances_process_type).a + ((_ctx : struct Companion_instances_process_type).b + (_ctx : struct Companion_instances_process_type).c)));
+}
+
+fun Companion_instances_setA(_ctx : struct Companion_instances_process_type, value : real) : void {
+   if ((Companion_instances_change_real((_ctx : struct Companion_instances_process_type).inst_14d3e, (value : real)) : bool)) (_ctx : struct Companion_instances_process_type).a = (value : real);
+}
+
+fun Companion_instances_setB(_ctx : struct Companion_instances_process_type, value : real) : void {
+   if ((Companion_instances_change_real((_ctx : struct Companion_instances_process_type).inst_24d3e, (value : real)) : bool)) (_ctx : struct Companion_instances_process_type).b = (value : real);
+}
+
+fun Companion_instances_setC(_ctx : struct Companion_instances_process_type, value : real) : void {
+   if ((Companion_instances_change_real((_ctx : struct Companion_instances_process_type).inst_34d3e, (value : real)) : bool)) (_ctx : struct Companion_instances_process_type).c = (value : real);
+}
+

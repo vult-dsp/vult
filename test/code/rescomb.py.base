@@ -1,0 +1,383 @@
+import math
+
+# Runtime functions
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+def initializeArray(v, size):
+    return [v for _ in range(size)]
+
+class Util_edge_type:
+    __slots__ = ['pre']
+    def __init__(self, pre=False):
+        self.pre = pre
+
+class Util_change_type:
+    __slots__ = ['pre_x']
+    def __init__(self, pre_x=0.0):
+        self.pre_x = pre_x
+
+class Util_dcblock_type:
+    __slots__ = ['x1', 'y1']
+    def __init__(self, x1=0.0, y1=0.0):
+        self.x1 = x1
+        self.y1 = y1
+
+class Util_smooth_type:
+    __slots__ = ['x']
+    def __init__(self, x=0.0):
+        self.x = x
+
+class Util_average2_type:
+    __slots__ = ['x0']
+    def __init__(self, x0=0.0):
+        self.x0 = x0
+
+class Rescomb_delay_type:
+    __slots__ = ['buffer', 'write_pos']
+    def __init__(self, buffer=[0.0] * 675, write_pos=0):
+        self.buffer = buffer
+        self.write_pos = write_pos
+
+class Rescomb_do_type:
+    __slots__ = ['inst_1b000', 'inst_26400', 'inst_3a900', 'output', 'stone']
+    def __init__(self, inst_1b000=Util_change_type(), inst_26400=Util_dcblock_type(), inst_3a900=Rescomb_delay_type(), output=0.0, stone=0.0):
+        self.inst_1b000 = inst_1b000
+        self.inst_26400 = inst_26400
+        self.inst_3a900 = inst_3a900
+        self.output = output
+        self.stone = stone
+
+class Rescomb_process_type:
+    __slots__ = ['inst_100b6']
+    def __init__(self, inst_100b6=Rescomb_do_type()):
+        self.inst_100b6 = inst_100b6
+
+def Util_edge_type_alloc():
+   _ctx = Util_edge_type()
+   _ctx.pre = False
+   return _ctx
+
+
+def Util_change_type_alloc():
+   _ctx = Util_change_type()
+   _ctx.pre_x = 0.0
+   return _ctx
+
+
+def Util_dcblock_type_alloc():
+   _ctx = Util_dcblock_type()
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
+   return _ctx
+
+
+def Util_smooth_type_alloc():
+   _ctx = Util_smooth_type()
+   _ctx.x = 0.0
+   return _ctx
+
+
+def Util_average2_type_alloc():
+   _ctx = Util_average2_type()
+   _ctx.x0 = 0.0
+   return _ctx
+
+
+def Rescomb_delay_type_alloc():
+   i_0 = 0
+   temp_1 = initializeArray(0.0, 675)
+   _ctx = Rescomb_delay_type()
+   while (i_0 < 675):
+      temp_1[i_0] = 0.0
+      i_0 = (1 + i_0)
+
+   _ctx.buffer = temp_1
+   _ctx.write_pos = 0
+   return _ctx
+
+
+def Rescomb_do_type_alloc():
+   _ctx = Rescomb_do_type()
+   _ctx.inst_1b000 = Util_change_type_alloc()
+   _ctx.inst_26400 = Util_dcblock_type_alloc()
+   _ctx.inst_3a900 = Rescomb_delay_type_alloc()
+   _ctx.output = 0.0
+   _ctx.stone = 0.0
+   return _ctx
+
+
+def Rescomb_process_type_alloc():
+   _ctx = Rescomb_process_type()
+   _ctx.inst_100b6 = Rescomb_do_type_alloc()
+   return _ctx
+
+
+def Rescomb_noteOn_type_alloc(_ctx):
+   return Rescomb_process_type_alloc()
+
+def Rescomb_noteOff_type_alloc(_ctx):
+   return Rescomb_process_type_alloc()
+
+def Rescomb_controlChange_type_alloc(_ctx):
+   return Rescomb_process_type_alloc()
+
+def Rescomb_default_type_alloc(_ctx):
+   return Rescomb_process_type_alloc()
+
+Saturate_soft_tanh_table_c = {}
+def Saturate_soft_tanh_table_raw_c0(index):
+   return Saturate_soft_tanh_table_c[(index * 3)]
+
+def Saturate_soft_tanh_table_raw_c1(index):
+   return Saturate_soft_tanh_table_c[((index * 3) + 1)]
+
+def Saturate_soft_tanh_table_raw_c2(index):
+   return Saturate_soft_tanh_table_c[((index * 3) + 2)]
+
+def Saturate_soft_tanh_table(x):
+   value = ((((-24.0) if (x) < (-24.0) else ((24.0) if (x) > (24.0) else (x))) + 24.0) * 5.020833)
+   cell = ((0) if (float_to_int(value)) < (0) else ((240) if (float_to_int(value)) > (240) else (float_to_int(value))))
+   u = (value - float(cell))
+   index = (cell * 3)
+   return (Saturate_soft_tanh_table_c[index] + (u * (Saturate_soft_tanh_table_c[(index + 1)] + (Saturate_soft_tanh_table_c[(index + 2)] * u))))
+
+
+def Saturate_soft_process(x):
+   return Saturate_soft_tanh_table(x)
+
+def Saturate_soft_noteOn(note, velocity, channel):
+   pass
+
+def Saturate_soft_noteOff(note, channel):
+   pass
+
+def Saturate_soft_controlChange(control, value, channel):
+   pass
+
+def Saturate_soft_default():
+   pass
+
+def Util_edge(_ctx, x):
+   ret = (x and (_ctx.pre == False))
+   _ctx.pre = x
+   return ret
+
+
+def Util_change(_ctx, x):
+   v = (_ctx.pre_x != x)
+   _ctx.pre_x = x
+   return v
+
+
+def Util_map(x, x0, x1, y0, y1):
+   return (y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))))
+
+def Util_dcblock(_ctx, x0):
+   y0 = (x0 + ((-_ctx.x1) + (0.995 * _ctx.y1)))
+   _ctx.x1 = x0
+   _ctx.y1 = y0
+   return y0
+
+
+def Util_smooth(_ctx, input):
+   _ctx.x = ((0.005 * (input + (-_ctx.x))) + _ctx.x)
+   return _ctx.x
+
+
+def Util_average2(_ctx, x1):
+   result = (0.5 * (x1 + _ctx.x0))
+   _ctx.x0 = x1
+   return result
+
+
+def Util_cubic_clipper(x):
+   if (x <= -0.666667):
+      return -0.666667
+   else:
+      if (x >= 0.666666):
+         return 0.666666
+      else:
+         return (x + (-0.333334 * (x * (x * x))))
+
+Util_pitchToRate_1024_c = {}
+def Util_pitchToRate_1024_raw_c0(index):
+   return Util_pitchToRate_1024_c[(index * 3)]
+
+def Util_pitchToRate_1024_raw_c1(index):
+   return Util_pitchToRate_1024_c[((index * 3) + 1)]
+
+def Util_pitchToRate_1024_raw_c2(index):
+   return Util_pitchToRate_1024_c[((index * 3) + 2)]
+
+def Util_pitchToRate_1024(pitch):
+   value = (((0.0) if (pitch) < (0.0) else ((127.0) if (pitch) > (127.0) else (pitch))) * 0.251968)
+   cell = ((0) if (float_to_int(value)) < (0) else ((31) if (float_to_int(value)) > (31) else (float_to_int(value))))
+   u = (value - float(cell))
+   index = (cell * 3)
+   return (Util_pitchToRate_1024_c[index] + (u * (Util_pitchToRate_1024_c[(index + 1)] + (Util_pitchToRate_1024_c[(index + 2)] * u))))
+
+
+Util_pitchToRate_c = {}
+def Util_pitchToRate_raw_c0(index):
+   return Util_pitchToRate_c[(index * 3)]
+
+def Util_pitchToRate_raw_c1(index):
+   return Util_pitchToRate_c[((index * 3) + 1)]
+
+def Util_pitchToRate_raw_c2(index):
+   return Util_pitchToRate_c[((index * 3) + 2)]
+
+def Util_pitchToRate(pitch):
+   value = (((0.0) if (pitch) < (0.0) else ((127.0) if (pitch) > (127.0) else (pitch))) * 0.251968)
+   cell = ((0) if (float_to_int(value)) < (0) else ((31) if (float_to_int(value)) > (31) else (float_to_int(value))))
+   u = (value - float(cell))
+   index = (cell * 3)
+   return (Util_pitchToRate_c[index] + (u * (Util_pitchToRate_c[(index + 1)] + (Util_pitchToRate_c[(index + 2)] * u))))
+
+
+def Util_cvToPitch(cv):
+   return (24.0 + (120.0 * cv))
+
+Util_cvToRate_1024_c = {}
+def Util_cvToRate_1024_raw_c0(index):
+   return Util_cvToRate_1024_c[(index * 3)]
+
+def Util_cvToRate_1024_raw_c1(index):
+   return Util_cvToRate_1024_c[((index * 3) + 1)]
+
+def Util_cvToRate_1024_raw_c2(index):
+   return Util_cvToRate_1024_c[((index * 3) + 2)]
+
+def Util_cvToRate_1024(cv):
+   value = (((0.0) if (cv) < (0.0) else ((0.9) if (cv) > (0.9) else (cv))) * 35.555555)
+   cell = ((0) if (float_to_int(value)) < (0) else ((31) if (float_to_int(value)) > (31) else (float_to_int(value))))
+   u = (value - float(cell))
+   index = (cell * 3)
+   return (Util_cvToRate_1024_c[index] + (u * (Util_cvToRate_1024_c[(index + 1)] + (Util_cvToRate_1024_c[(index + 2)] * u))))
+
+
+Util_cvToRate_c = {}
+def Util_cvToRate_raw_c0(index):
+   return Util_cvToRate_c[(index * 3)]
+
+def Util_cvToRate_raw_c1(index):
+   return Util_cvToRate_c[((index * 3) + 1)]
+
+def Util_cvToRate_raw_c2(index):
+   return Util_cvToRate_c[((index * 3) + 2)]
+
+def Util_cvToRate(cv):
+   value = (((0.0) if (cv) < (0.0) else ((0.9) if (cv) > (0.9) else (cv))) * 142.222222)
+   cell = ((0) if (float_to_int(value)) < (0) else ((127) if (float_to_int(value)) > (127) else (float_to_int(value))))
+   u = (value - float(cell))
+   index = (cell * 3)
+   return (Util_cvToRate_c[index] + (u * (Util_cvToRate_c[(index + 1)] + (Util_cvToRate_c[(index + 2)] * u))))
+
+
+def Util_pitchToCv(pitch):
+   return (-0.2 + (0.008333 * pitch))
+
+Util_cvToperiod_c = {}
+def Util_cvToperiod_raw_c0(index):
+   return Util_cvToperiod_c[(index * 3)]
+
+def Util_cvToperiod_raw_c1(index):
+   return Util_cvToperiod_c[((index * 3) + 1)]
+
+def Util_cvToperiod_raw_c2(index):
+   return Util_cvToperiod_c[((index * 3) + 2)]
+
+def Util_cvToperiod(cv):
+   value = (((0.0) if (cv) < (0.0) else ((1.0) if (cv) > (1.0) else (cv))) * 32.0)
+   cell = ((0) if (float_to_int(value)) < (0) else ((31) if (float_to_int(value)) > (31) else (float_to_int(value))))
+   u = (value - float(cell))
+   index = (cell * 3)
+   return (Util_cvToperiod_c[index] + (u * (Util_cvToperiod_c[(index + 1)] + (Util_cvToperiod_c[(index + 2)] * u))))
+
+
+Util_cvTokHz_c = {}
+def Util_cvTokHz_raw_c0(index):
+   return Util_cvTokHz_c[(index * 3)]
+
+def Util_cvTokHz_raw_c1(index):
+   return Util_cvTokHz_c[((index * 3) + 1)]
+
+def Util_cvTokHz_raw_c2(index):
+   return Util_cvTokHz_c[((index * 3) + 2)]
+
+def Util_cvTokHz(cv):
+   value = (((0.0) if (cv) < (0.0) else ((1.0) if (cv) > (1.0) else (cv))) * 32.0)
+   cell = ((0) if (float_to_int(value)) < (0) else ((31) if (float_to_int(value)) > (31) else (float_to_int(value))))
+   u = (value - float(cell))
+   index = (cell * 3)
+   return (Util_cvTokHz_c[index] + (u * (Util_cvTokHz_c[(index + 1)] + (Util_cvTokHz_c[(index + 2)] * u))))
+
+
+def Rescomb_delay(_ctx, x, cv):
+   _ctx.write_pos = (1 + _ctx.write_pos)
+   if (_ctx.write_pos >= 675):
+      if (_ctx.write_pos == 675):
+         _ctx.write_pos = 0
+      else:
+         _ctx.write_pos = (_ctx.write_pos % 675)
+   else:
+      if (_ctx.write_pos <= -675):
+         _ctx.write_pos = (_ctx.write_pos % 675)
+   _ctx.buffer[_ctx.write_pos] = x
+   r_size = 675.0
+   r_index = (((-Util_cvToperiod(cv)) + float(_ctx.write_pos)) % r_size)
+   if (r_index < 0.0):
+      r_index = (r_index + r_size)
+   t1 = (int(math.floor(r_index)) % 675)
+   t2 = ((1 + t1) % 675)
+   decimal = (r_index + (-float(t1)))
+   x1 = _ctx.buffer[t1]
+   x2 = _ctx.buffer[t2]
+   ret = (x1 + (decimal * (x2 + (-x1))))
+   return ret
+
+
+Rescomb_toneCurve_c = {}
+def Rescomb_toneCurve_raw_c0(index):
+   return Rescomb_toneCurve_c[(index * 3)]
+
+def Rescomb_toneCurve_raw_c1(index):
+   return Rescomb_toneCurve_c[((index * 3) + 1)]
+
+def Rescomb_toneCurve_raw_c2(index):
+   return Rescomb_toneCurve_c[((index * 3) + 2)]
+
+def Rescomb_toneCurve(tone):
+   value = ((((-1.2) if (tone) < (-1.2) else ((1.2) if (tone) > (1.2) else (tone))) + 1.2) * 26.666666)
+   cell = ((0) if (float_to_int(value)) < (0) else ((63) if (float_to_int(value)) > (63) else (float_to_int(value))))
+   u = (value - float(cell))
+   index = (cell * 3)
+   return (Rescomb_toneCurve_c[index] + (u * (Rescomb_toneCurve_c[(index + 1)] + (Rescomb_toneCurve_c[(index + 2)] * u))))
+
+
+def Rescomb_do(_ctx, in_, cv, tone, res):
+   if Util_change(_ctx.inst_1b000, tone):
+      _ctx.stone = Rescomb_toneCurve(tone)
+   feedback = Util_dcblock(_ctx.inst_26400, (res * _ctx.output))
+   saturated_input = Saturate_soft_process((feedback + in_))
+   _ctx.output = (in_ + (Rescomb_delay(_ctx.inst_3a900, saturated_input, cv) * _ctx.stone))
+   return Saturate_soft_process(_ctx.output)
+
+
+def Rescomb_process(_ctx, in_, cv, tone, res):
+   return Rescomb_do(_ctx.inst_100b6, in_, cv, tone, res)
+
+def Rescomb_noteOn(_ctx, note, velocity, channel):
+   pass
+
+def Rescomb_noteOff(_ctx, note, channel):
+   pass
+
+def Rescomb_controlChange(_ctx, control, value, channel):
+   pass
+
+def Rescomb_default(_ctx):
+   pass
+

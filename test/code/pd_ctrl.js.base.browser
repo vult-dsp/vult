@@ -1,0 +1,45 @@
+function vultProcess() {
+this.Pd_ctrl_scale_type_alloc = function () {
+   var _ctx = {};
+   _ctx.Pd_ctrl_scale_ret_0 = 0.0;
+   _ctx.Pd_ctrl_scale_ret_1 = 0.0;
+   _ctx.last = 0.0;
+   return _ctx;
+};
+
+this.Pd_ctrl_tagger_type_alloc = function () {
+   var _ctx = {};
+   _ctx.Pd_ctrl_tagger_ret_0 = "";
+   _ctx.Pd_ctrl_tagger_ret_1 = (0|0);
+   _ctx.count = (0|0);
+   return _ctx;
+};
+
+this.Pd_ctrl_scale = function (_ctx, x, k, offset) {
+   _ctx.last = (offset + (k * x));
+   _ctx.Pd_ctrl_scale_ret_0 = _ctx.last;
+   _ctx.Pd_ctrl_scale_ret_1 = (0.5 * _ctx.last);
+   return ;
+};
+
+this.Pd_ctrl_tagger = function (_ctx, value, prefix) {
+   _ctx.count = ((1|0) + _ctx.count);
+   var out = "";
+   if ((value > 0.5)) {
+      out = prefix;
+   } else {
+      out = "low";
+   }
+   _ctx.Pd_ctrl_tagger_ret_0 = out;
+   _ctx.Pd_ctrl_tagger_ret_1 = _ctx.count;
+   return ;
+};
+
+
+   this.context = {};
+   this.liveNoteOn        = function(note,velocity,channel) { if(this.Pd_ctrl_noteOn)        this.Pd_ctrl_noteOn(this.context,note,velocity,channel); };
+   this.liveNoteOff       = function(note,velocity,channel) { if(this.Pd_ctrl_noteOff)       this.Pd_ctrl_noteOff(this.context,note,velocity,channel); };
+   this.liveControlChange = function(note,velocity,channel) { if(this.Pd_ctrl_controlChange) this.Pd_ctrl_controlChange(this.context,note,velocity,channel); };
+   this.liveProcess       = function(input)         { if(this.Pd_ctrl_process)       return this.Pd_ctrl_process(this.context,input); else return 0; };
+   this.liveDefault       = function() { if(this.Pd_ctrl_default)      return this.Pd_ctrl_default(this.context); };
+   }

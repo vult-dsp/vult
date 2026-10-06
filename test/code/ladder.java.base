@@ -1,674 +1,548 @@
+
 package vult.com.ladder;
 
 import java.util.Arrays;
 import java.util.Random;
 import vult.com.external.*;
 
-public class ladder {
+public class Ladder {
 
 static int clip(int x, int minv, int maxv) {
-   if(x > maxv)
-      return maxv;
-   else if(x < minv)
-      return minv;
-   else return x;
+    if(x > maxv)
+        return maxv;
+    else if(x < minv)
+        return minv;
+    else return x;
 }
 
 static float clip(float x, float minv, float maxv) {
-   if(x > maxv)
-      return maxv;
-   else if(x < minv)
-      return minv;
-   else return x;
+    if(x > maxv)
+        return maxv;
+    else if(x < minv)
+        return minv;
+    else return x;
 }
 
-int[] makeArray(int size, int init) {
-   int a[] = new int[size];
-   Arrays.fill(a, init);
-   return a;
+static int[] makeArray(int size, int init) {
+    int a[] = new int[size];
+    Arrays.fill(a, init);
+    return a;
 }
 
-float[] makeArray(int size, float init) {
-   float a[] = new float[size];
-   Arrays.fill(a, init);
-   return a;
+static float[] makeArray(int size, float init) {
+    float a[] = new float[size];
+    Arrays.fill(a, init);
+    return a;
 }
 
-boolean[] makeArray(int size, boolean init) {
-   boolean a[] = new boolean[size];
-   Arrays.fill(a, init);
-   return a;
+static boolean[] makeArray(int size, boolean init) {
+    boolean a[] = new boolean[size];
+    Arrays.fill(a, init);
+    return a;
 }
 
-int int_to_fix16(int a) { return a * 0x00010000; }
-
-int fix16_to_int(int a) { return (a >> 16); }
-
-int fix16_add(int x, int y) { return x + y; }
-
-int fix16_sub(int x, int y) { return x - y; }
-
-int fix16_minus(int x) { return -x; }
-
-float fix16_to_float(int a) { return (float)a / 0x00010000; }
-int float_to_fix16(float a) {
-   float temp = a * 0x00010000;
-   return (int)temp;
+static int float_to_int(float x) {
+    return (int)x;
 }
 
-int fix16_mul(int x, int y) {
-   long res = (long)x * (long)y;
-   return (int)(res >> 16);
-}
-
-int fix16_div(int a, int b) {
-   if (b == 0)
-      return 0;
-   int result = (int)(((long)a << 16) / b);
-   return result;
-}
-
-static boolean not(boolean x) {
-   return !x;
-}
-
-static float int_to_float(int x) {
-   return (float)x;
-}
-
-int float_to_int(float x) {
-   return (int)x;
-}
-
-float floor(float x) {
-   return (float)Math.floor(x);
-}
-
-static Random rand = new Random();
-
-float random() {
-   return rand.nextFloat();
-}
-
-int irandom() {
-   return rand.nextInt();
-}
-
-float get(float[] a, int i) {
-   return a[i];
-}
-
-void set(float[] a, int i, float val) {
-   a[i] = val;
-}
-
-int get(int[] a, int i) {
-   return a[i];
-}
-
-void set(int[] a, int i, int val) {
-   a[i] = val;
-}
-
-float[] wrap_array(float x[]) {
-   return x;
-}
-
-int[] wrap_array(int x[]) {
-   return x;
-}
-
-float cosh(float x) {
-   return (float)Math.cosh(x);
-}
-
-float cos(float x) {
-   return (float)Math.cos(x);
-}
-
-float sin(float x) {
-   return (float)Math.sin(x);
-}
-
-float sinh(float x) {
-   return (float)Math.sinh(x);
-}
-
-float tan(float x) {
-   return (float)Math.tan(x);
-}
-
-float tanh(float x) {
-   return (float)Math.tanh(x);
-}
-
-float sqrt(float x) {
-   return (float)Math.sqrt(x);
-}
-
-float pow(float x, float y) {
-   return (float)Math.pow(x, y);
-}
-
-float exp(float x) {
-   return (float)Math.exp(x);
-}
-
-
-private class Util__ctx_type_0 {
+public static class Util_edge_type {
    public boolean pre;
- 
-   Util__ctx_type_0(){ this.pre = false;
-    } 
-   Util__ctx_type_0(boolean pre){ this.pre = pre;
-    } }
 
-private class Util__ctx_type_1 {
+   public Util_edge_type() {
+      this.pre = false;
+   }
+   public Util_edge_type(boolean pre) {
+      this.pre = pre;
+   }}public static class Util_change_type {
    public float pre_x;
- 
-   Util__ctx_type_1(){ this.pre_x = 0.0f;
-    } 
-   Util__ctx_type_1(float pre_x){ this.pre_x = pre_x;
-    } }
 
-private class Util__ctx_type_3 {
-   public float y1;
+   public Util_change_type() {
+      this.pre_x = 0.0f;
+   }
+   public Util_change_type(float pre_x) {
+      this.pre_x = pre_x;
+   }}public static class Util_dcblock_type {
    public float x1;
- 
-   Util__ctx_type_3(){ this.y1 = 0.0f;
-   this.x1 = 0.0f;
-    } 
-   Util__ctx_type_3(float y1,float x1){ this.y1 = y1;
-   this.x1 = x1;
-    } }
+   public float y1;
 
-private class Util__ctx_type_4 {
+   public Util_dcblock_type() {
+      this.x1 = 0.0f;
+      this.y1 = 0.0f;
+   }
+   public Util_dcblock_type(float x1, float y1) {
+      this.x1 = x1;
+      this.y1 = y1;
+   }}public static class Util_smooth_type {
    public float x;
- 
-   Util__ctx_type_4(){ this.x = 0.0f;
-    } 
-   Util__ctx_type_4(float x){ this.x = x;
-    } }
 
-private class Util__ctx_type_5 {
+   public Util_smooth_type() {
+      this.x = 0.0f;
+   }
+   public Util_smooth_type(float x) {
+      this.x = x;
+   }}public static class Util_average2_type {
    public float x0;
- 
-   Util__ctx_type_5(){ this.x0 = 0.0f;
-    } 
-   Util__ctx_type_5(float x0){ this.x0 = x0;
-    } }
 
-float Util_pitchToRate_1024_c0[];
-         public void set_Util_pitchToRate_1024_c0(java.nio.FloatBuffer buffer){
-            Util_pitchToRate_1024_c0 = new float[32];
-            buffer.get(Util_pitchToRate_1024_c0);
-            }
-float Util_pitchToRate_1024_c1[];
-         public void set_Util_pitchToRate_1024_c1(java.nio.FloatBuffer buffer){
-            Util_pitchToRate_1024_c1 = new float[32];
-            buffer.get(Util_pitchToRate_1024_c1);
-            }
-float Util_pitchToRate_1024_c2[];
-         public void set_Util_pitchToRate_1024_c2(java.nio.FloatBuffer buffer){
-            Util_pitchToRate_1024_c2 = new float[32];
-            buffer.get(Util_pitchToRate_1024_c2);
-            }
-float Util_pitchToRate_c0[];
-         public void set_Util_pitchToRate_c0(java.nio.FloatBuffer buffer){
-            Util_pitchToRate_c0 = new float[32];
-            buffer.get(Util_pitchToRate_c0);
-            }
-float Util_pitchToRate_c1[];
-         public void set_Util_pitchToRate_c1(java.nio.FloatBuffer buffer){
-            Util_pitchToRate_c1 = new float[32];
-            buffer.get(Util_pitchToRate_c1);
-            }
-float Util_pitchToRate_c2[];
-         public void set_Util_pitchToRate_c2(java.nio.FloatBuffer buffer){
-            Util_pitchToRate_c2 = new float[32];
-            buffer.get(Util_pitchToRate_c2);
-            }
-float Util_cvToRate_1024_c0[];
-         public void set_Util_cvToRate_1024_c0(java.nio.FloatBuffer buffer){
-            Util_cvToRate_1024_c0 = new float[32];
-            buffer.get(Util_cvToRate_1024_c0);
-            }
-float Util_cvToRate_1024_c1[];
-         public void set_Util_cvToRate_1024_c1(java.nio.FloatBuffer buffer){
-            Util_cvToRate_1024_c1 = new float[32];
-            buffer.get(Util_cvToRate_1024_c1);
-            }
-float Util_cvToRate_1024_c2[];
-         public void set_Util_cvToRate_1024_c2(java.nio.FloatBuffer buffer){
-            Util_cvToRate_1024_c2 = new float[32];
-            buffer.get(Util_cvToRate_1024_c2);
-            }
-float Util_cvToRate_c0[];
-         public void set_Util_cvToRate_c0(java.nio.FloatBuffer buffer){
-            Util_cvToRate_c0 = new float[128];
-            buffer.get(Util_cvToRate_c0);
-            }
-float Util_cvToRate_c1[];
-         public void set_Util_cvToRate_c1(java.nio.FloatBuffer buffer){
-            Util_cvToRate_c1 = new float[128];
-            buffer.get(Util_cvToRate_c1);
-            }
-float Util_cvToRate_c2[];
-         public void set_Util_cvToRate_c2(java.nio.FloatBuffer buffer){
-            Util_cvToRate_c2 = new float[128];
-            buffer.get(Util_cvToRate_c2);
-            }
-float Util_cvToperiod_c0[];
-         public void set_Util_cvToperiod_c0(java.nio.FloatBuffer buffer){
-            Util_cvToperiod_c0 = new float[32];
-            buffer.get(Util_cvToperiod_c0);
-            }
-float Util_cvToperiod_c1[];
-         public void set_Util_cvToperiod_c1(java.nio.FloatBuffer buffer){
-            Util_cvToperiod_c1 = new float[32];
-            buffer.get(Util_cvToperiod_c1);
-            }
-float Util_cvToperiod_c2[];
-         public void set_Util_cvToperiod_c2(java.nio.FloatBuffer buffer){
-            Util_cvToperiod_c2 = new float[32];
-            buffer.get(Util_cvToperiod_c2);
-            }
-float Util_cvTokHz_c0[];
-         public void set_Util_cvTokHz_c0(java.nio.FloatBuffer buffer){
-            Util_cvTokHz_c0 = new float[32];
-            buffer.get(Util_cvTokHz_c0);
-            }
-float Util_cvTokHz_c1[];
-         public void set_Util_cvTokHz_c1(java.nio.FloatBuffer buffer){
-            Util_cvTokHz_c1 = new float[32];
-            buffer.get(Util_cvTokHz_c1);
-            }
-float Util_cvTokHz_c2[];
-         public void set_Util_cvTokHz_c2(java.nio.FloatBuffer buffer){
-            Util_cvTokHz_c2 = new float[32];
-            buffer.get(Util_cvTokHz_c2);
-            }
-float Ladder_tune_c0[];
-         public void set_Ladder_tune_c0(java.nio.FloatBuffer buffer){
-            Ladder_tune_c0 = new float[128];
-            buffer.get(Ladder_tune_c0);
-            }
-float Ladder_tune_c1[];
-         public void set_Ladder_tune_c1(java.nio.FloatBuffer buffer){
-            Ladder_tune_c1 = new float[128];
-            buffer.get(Ladder_tune_c1);
-            }
-float Ladder_tune_c2[];
-         public void set_Ladder_tune_c2(java.nio.FloatBuffer buffer){
-            Ladder_tune_c2 = new float[128];
-            buffer.get(Ladder_tune_c2);
-            }
-private class Ladder__ctx_type_4 {
-   public float p3;
-   public float p2;
-   public float p1;
+   public Util_average2_type() {
+      this.x0 = 0.0f;
+   }
+   public Util_average2_type(float x0) {
+      this.x0 = x0;
+   }}public static class Ladder_heun_type {
    public float p0;
- 
-   Ladder__ctx_type_4(){ this.p3 = 0.0f;
-   this.p2 = 0.0f;
-   this.p1 = 0.0f;
-   this.p0 = 0.0f;
-    } 
-   Ladder__ctx_type_4(float p3,float p2,float p1,float p0){ this.p3 = p3;
-   this.p2 = p2;
-   this.p1 = p1;
-   this.p0 = p0;
-    } }
-
-private class Ladder__ctx_type_5 {
-   public float p3;
-   public float p2;
    public float p1;
+   public float p2;
+   public float p3;
+
+   public Ladder_heun_type() {
+      this.p0 = 0.0f;
+      this.p1 = 0.0f;
+      this.p2 = 0.0f;
+      this.p3 = 0.0f;
+   }
+   public Ladder_heun_type(float p0, float p1, float p2, float p3) {
+      this.p0 = p0;
+      this.p1 = p1;
+      this.p2 = p2;
+      this.p3 = p3;
+   }}public static class Ladder_euler_type {
    public float p0;
- 
-   Ladder__ctx_type_5(){ this.p3 = 0.0f;
-   this.p2 = 0.0f;
-   this.p1 = 0.0f;
-   this.p0 = 0.0f;
-    } 
-   Ladder__ctx_type_5(float p3,float p2,float p1,float p0){ this.p3 = p3;
-   this.p2 = p2;
-   this.p1 = p1;
-   this.p0 = p0;
-    } }
+   public float p1;
+   public float p2;
+   public float p3;
 
-private class Ladder__ctx_type_6 {
+   public Ladder_euler_type() {
+      this.p0 = 0.0f;
+      this.p1 = 0.0f;
+      this.p2 = 0.0f;
+      this.p3 = 0.0f;
+   }
+   public Ladder_euler_type(float p0, float p1, float p2, float p3) {
+      this.p0 = p0;
+      this.p1 = p1;
+      this.p2 = p2;
+      this.p3 = p3;
+   }}public static class Ladder_process_euler_type {
+   public Ladder_euler_type e;
    public float fh;
-   public Ladder__ctx_type_5 e;
-   public Util__ctx_type_1 _inst13b;
- 
-   Ladder__ctx_type_6(){ this.fh = 0.0f;
-   this.e = new Ladder__ctx_type_5();
-   this._inst13b = new Util__ctx_type_1();
-    } 
-   Ladder__ctx_type_6(float fh,Ladder__ctx_type_5 e,Util__ctx_type_1 _inst13b){ this.fh = fh;
-   this.e = e;
-   this._inst13b = _inst13b;
-    } }
+   public Util_change_type inst_1b099;
 
-private class Ladder__ctx_type_7 {
-   public Ladder__ctx_type_4 h;
+   public Ladder_process_euler_type() {
+      this.e = new Ladder_euler_type();
+      this.fh = 0.0f;
+      this.inst_1b099 = new Util_change_type();
+   }
+   public Ladder_process_euler_type(Ladder_euler_type e, float fh, Util_change_type inst_1b099) {
+      this.e = e;
+      this.fh = fh;
+      this.inst_1b099 = inst_1b099;
+   }}public static class Ladder_process_heun_type {
    public float fh;
-   public Util__ctx_type_1 _inst13b;
- 
-   Ladder__ctx_type_7(){ this.h = new Ladder__ctx_type_4();
-   this.fh = 0.0f;
-   this._inst13b = new Util__ctx_type_1();
-    } 
-   Ladder__ctx_type_7(Ladder__ctx_type_4 h,float fh,Util__ctx_type_1 _inst13b){ this.h = h;
-   this.fh = fh;
-   this._inst13b = _inst13b;
-    } }
+   public Ladder_heun_type h;
+   public Util_change_type inst_1b0a0;
 
-private class Ladder__ctx_type_8 {
-   public Ladder__ctx_type_7 _inst112;
- 
-   Ladder__ctx_type_8(){ this._inst112 = new Ladder__ctx_type_7();
-    } 
-   Ladder__ctx_type_8(Ladder__ctx_type_7 _inst112){ this._inst112 = _inst112;
-    } }
+   public Ladder_process_heun_type() {
+      this.fh = 0.0f;
+      this.h = new Ladder_heun_type();
+      this.inst_1b0a0 = new Util_change_type();
+   }
+   public Ladder_process_heun_type(float fh, Ladder_heun_type h, Util_change_type inst_1b0a0) {
+      this.fh = fh;
+      this.h = h;
+      this.inst_1b0a0 = inst_1b0a0;
+   }}public static class Ladder_process_type {
+   public Ladder_process_heun_type inst_1a0c3;
 
-private Util__ctx_type_0 Util__ctx_type_0_init(){
-   Util__ctx_type_0 _ctx = new Util__ctx_type_0(); 
+   public Ladder_process_type() {
+      this.inst_1a0c3 = new Ladder_process_heun_type();
+   }
+   public Ladder_process_type(Ladder_process_heun_type inst_1a0c3) {
+      this.inst_1a0c3 = inst_1a0c3;
+   }}private Util_edge_type Util_edge_type_alloc() {
+   Util_edge_type _ctx = new Util_edge_type();
    _ctx.pre = false;
    return _ctx;
 }
 
-private Util__ctx_type_0 Util_edge_init(){return Util__ctx_type_0_init();}
-
-private boolean Util_edge(Util__ctx_type_0 _ctx, boolean x){
-   boolean ret = (x && not(_ctx.pre)); 
-   _ctx.pre = x;
-   return ret;
-}
-
-private Util__ctx_type_1 Util__ctx_type_1_init(){
-   Util__ctx_type_1 _ctx = new Util__ctx_type_1(); 
+private Util_change_type Util_change_type_alloc() {
+   Util_change_type _ctx = new Util_change_type();
    _ctx.pre_x = 0.0f;
    return _ctx;
 }
 
-private Util__ctx_type_1 Util_change_init(){return Util__ctx_type_1_init();}
+private Util_dcblock_type Util_dcblock_type_alloc() {
+   Util_dcblock_type _ctx = new Util_dcblock_type();
+   _ctx.x1 = 0.0f;
+   _ctx.y1 = 0.0f;
+   return _ctx;
+}
 
-private boolean Util_change(Util__ctx_type_1 _ctx, float x){
-   boolean v = (_ctx.pre_x != x); 
+private Util_smooth_type Util_smooth_type_alloc() {
+   Util_smooth_type _ctx = new Util_smooth_type();
+   _ctx.x = 0.0f;
+   return _ctx;
+}
+
+private Util_average2_type Util_average2_type_alloc() {
+   Util_average2_type _ctx = new Util_average2_type();
+   _ctx.x0 = 0.0f;
+   return _ctx;
+}
+
+private Ladder_heun_type Ladder_heun_type_alloc() {
+   Ladder_heun_type _ctx = new Ladder_heun_type();
+   _ctx.p0 = 0.0f;
+   _ctx.p1 = 0.0f;
+   _ctx.p2 = 0.0f;
+   _ctx.p3 = 0.0f;
+   return _ctx;
+}
+
+private Ladder_euler_type Ladder_euler_type_alloc() {
+   Ladder_euler_type _ctx = new Ladder_euler_type();
+   _ctx.p0 = 0.0f;
+   _ctx.p1 = 0.0f;
+   _ctx.p2 = 0.0f;
+   _ctx.p3 = 0.0f;
+   return _ctx;
+}
+
+private Ladder_process_euler_type Ladder_process_euler_type_alloc() {
+   Ladder_process_euler_type _ctx = new Ladder_process_euler_type();
+   _ctx.e = Ladder_euler_type_alloc();
+   _ctx.fh = 0.0f;
+   _ctx.inst_1b099 = Util_change_type_alloc();
+   return _ctx;
+}
+
+private Ladder_process_heun_type Ladder_process_heun_type_alloc() {
+   Ladder_process_heun_type _ctx = new Ladder_process_heun_type();
+   _ctx.fh = 0.0f;
+   _ctx.h = Ladder_heun_type_alloc();
+   _ctx.inst_1b0a0 = Util_change_type_alloc();
+   return _ctx;
+}
+
+private Ladder_process_type Ladder_process_type_alloc() {
+   Ladder_process_type _ctx = new Ladder_process_type();
+   _ctx.inst_1a0c3 = Ladder_process_heun_type_alloc();
+   return _ctx;
+}
+
+private Ladder_noteOn_type Ladder_noteOn_type_alloc(Ladder_noteOn_type _ctx) {
+   return new Ladder_noteOn_type();
+}
+
+private Ladder_noteOff_type Ladder_noteOff_type_alloc(Ladder_noteOff_type _ctx) {
+   return new Ladder_noteOff_type();
+}
+
+private Ladder_controlChange_type Ladder_controlChange_type_alloc(Ladder_controlChange_type _ctx) {
+   return new Ladder_controlChange_type();
+}
+
+private Ladder_default_type Ladder_default_type_alloc(Ladder_default_type _ctx) {
+   return new Ladder_default_type();
+}
+
+private boolean Util_edge(Util_edge_type _ctx, boolean x) {
+   boolean ret = (x && (_ctx.pre == false));
+   _ctx.pre = x;
+   return ret;
+}
+
+private boolean Util_change(Util_change_type _ctx, float x) {
+   boolean v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
 
-private float Util_map(float x, float x0, float x1, float y0, float y1){return (y0 + (((x + (- x0)) * (y1 + (- y0))) / (x1 + (- x0))));}
-
-private Util__ctx_type_3 Util__ctx_type_3_init(){
-   Util__ctx_type_3 _ctx = new Util__ctx_type_3(); 
-   _ctx.y1 = 0.0f;
-   _ctx.x1 = 0.0f;
-   return _ctx;
+private float Util_map(float x, float x0, float x1, float y0, float y1) {
+   return (y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))));
 }
 
-private Util__ctx_type_3 Util_dcblock_init(){return Util__ctx_type_3_init();}
-
-private float Util_dcblock(Util__ctx_type_3 _ctx, float x0){
-   float y0 = (x0 + (- _ctx.x1) + (0.995f * _ctx.y1)); 
+private float Util_dcblock(Util_dcblock_type _ctx, float x0) {
+   float y0 = (x0 + ((-_ctx.x1) + (0.995f * _ctx.y1)));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
 }
 
-private Util__ctx_type_4 Util__ctx_type_4_init(){
-   Util__ctx_type_4 _ctx = new Util__ctx_type_4(); 
-   _ctx.x = 0.0f;
-   return _ctx;
-}
-
-private Util__ctx_type_4 Util_smooth_init(){return Util__ctx_type_4_init();}
-
-private float Util_smooth(Util__ctx_type_4 _ctx, float input){
-   _ctx.x = (_ctx.x + (0.005f * (input + (- _ctx.x))));
+private float Util_smooth(Util_smooth_type _ctx, float input) {
+   _ctx.x = ((0.005f * (input + (-_ctx.x))) + _ctx.x);
    return _ctx.x;
 }
 
-private Util__ctx_type_5 Util__ctx_type_5_init(){
-   Util__ctx_type_5 _ctx = new Util__ctx_type_5(); 
-   _ctx.x0 = 0.0f;
-   return _ctx;
-}
-
-private Util__ctx_type_5 Util_average2_init(){return Util__ctx_type_5_init();}
-
-private float Util_average2(Util__ctx_type_5 _ctx, float x1){
-   float result = (0.5f * (_ctx.x0 + x1)); 
+private float Util_average2(Util_average2_type _ctx, float x1) {
+   float result = (0.5f * (x1 + _ctx.x0));
    _ctx.x0 = x1;
    return result;
 }
 
-private float Util_cubic_clipper(float x){if(x <= -0.6666666f){ return -0.6666666f; }
-else
-{ if(x >= 0.6666667f){ return 0.6666667f; }
-else
-{ return (x + (-0.3333333f * x * x * x)); } }}
-
-private float Util_pitchToRate_1024_raw_c0(int index){return Util_pitchToRate_1024_c0[index];}
-
-private float Util_pitchToRate_1024_raw_c1(int index){return Util_pitchToRate_1024_c1[index];}
-
-private float Util_pitchToRate_1024_raw_c2(int index){return Util_pitchToRate_1024_c2[index];}
-
-private float Util_pitchToRate_1024(float pitch){
-   int index = clip(float_to_int((0.2440945f * pitch)),0,31); 
-   return (wrap_array(Util_pitchToRate_1024_c0)[index] + (pitch * (wrap_array(Util_pitchToRate_1024_c1)[index] + (pitch * wrap_array(Util_pitchToRate_1024_c2)[index]))));
+private float Util_cubic_clipper(float x) {
+   if ((x <= -0.666667f)) {
+      return -0.666667f;
+   } else {
+      if ((x >= 0.666666f)) {
+         return 0.666666f;
+      } else {
+         return (x + (-0.333334f * (x * (x * x))));
+      }
+   }
 }
 
-private float Util_pitchToRate_raw_c0(int index){return Util_pitchToRate_c0[index];}
-
-private float Util_pitchToRate_raw_c1(int index){return Util_pitchToRate_c1[index];}
-
-private float Util_pitchToRate_raw_c2(int index){return Util_pitchToRate_c2[index];}
-
-private float Util_pitchToRate(float pitch){
-   int index = clip(float_to_int((0.2440945f * pitch)),0,31); 
-   return (wrap_array(Util_pitchToRate_c0)[index] + (pitch * (wrap_array(Util_pitchToRate_c1)[index] + (pitch * wrap_array(Util_pitchToRate_c2)[index]))));
+public static final float[] Util_pitchToRate_1024_c = new float[]{0.189841f, 0.043312f, 0.0056f, 0.238754f, 0.054471f, 0.007043f, 0.300268f, 0.068506f, 0.008857f, 0.377632f, 0.086156f, 0.01114f, 0.474929f, 0.108354f, 0.01401f, 0.597294f, 0.136272f, 0.01762f, 0.751186f, 0.171382f, 0.022159f, 0.944729f, 0.215538f, 0.027869f, 1.188137f, 0.271072f, 0.035049f, 1.494259f, 0.340913f, 0.04408f, 1.879254f, 0.428749f, 0.055437f, 2.363442f, 0.539216f, 0.069721f, 2.97238f, 0.678145f, 0.087685f, 3.73821f, 0.852868f, 0.110276f, 4.701356f, 1.072609f, 0.138689f, 5.912655f, 1.348965f, 0.174422f, 7.436044f, 1.696525f, 0.219362f, 9.351932f, 2.133633f, 0.275881f, 11.761447f, 2.683361f, 0.346961f, 14.79177f, 3.374726f, 0.436356f, 18.602853f, 4.24422f, 0.548782f, 23.395857f, 5.337739f, 0.690176f, 29.423772f, 6.713002f, 0.867999f, 37.004774f, 8.442599f, 1.091638f, 46.539011f, 10.617825f, 1.372897f, 58.529735f, 13.353495f, 1.726623f, 73.609854f, 16.794008f, 2.171485f, 92.575349f, 21.120965f, 2.730966f, 116.427281f, 26.562758f, 3.434597f, 146.424637f, 33.406622f, 4.319517f, 184.150777f, 42.0138f, 5.432435f, 231.597014f, 52.838608f, 6.832096f, 291.267719f, 0.0f, 0.0f};
+private float Util_pitchToRate_1024_raw_c0(int index) {
+   return Util_pitchToRate_1024_c[(index * 3)];
 }
 
-private float Util_cvToPitch(float cv){return (24.f + (120.f * cv));}
-
-private float Util_cvToRate_1024_raw_c0(int index){return Util_cvToRate_1024_c0[index];}
-
-private float Util_cvToRate_1024_raw_c1(int index){return Util_cvToRate_1024_c1[index];}
-
-private float Util_cvToRate_1024_raw_c2(int index){return Util_cvToRate_1024_c2[index];}
-
-private float Util_cvToRate_1024(float cv){
-   int index = clip(float_to_int((34.4444445f * cv)),0,31); 
-   return (wrap_array(Util_cvToRate_1024_c0)[index] + (cv * (wrap_array(Util_cvToRate_1024_c1)[index] + (cv * wrap_array(Util_cvToRate_1024_c2)[index]))));
+private float Util_pitchToRate_1024_raw_c1(int index) {
+   return Util_pitchToRate_1024_c[((index * 3) + 1)];
 }
 
-private float Util_cvToRate_raw_c0(int index){return Util_cvToRate_c0[index];}
-
-private float Util_cvToRate_raw_c1(int index){return Util_cvToRate_c1[index];}
-
-private float Util_cvToRate_raw_c2(int index){return Util_cvToRate_c2[index];}
-
-private float Util_cvToRate(float cv){
-   int index = clip(float_to_int((141.1111112f * cv)),0,127); 
-   return (wrap_array(Util_cvToRate_c0)[index] + (cv * (wrap_array(Util_cvToRate_c1)[index] + (cv * wrap_array(Util_cvToRate_c2)[index]))));
+private float Util_pitchToRate_1024_raw_c2(int index) {
+   return Util_pitchToRate_1024_c[((index * 3) + 2)];
 }
 
-private float Util_pitchToCv(float pitch){return (0.0083334f * (-24.f + pitch));}
-
-private float Util_cvToperiod_raw_c0(int index){return Util_cvToperiod_c0[index];}
-
-private float Util_cvToperiod_raw_c1(int index){return Util_cvToperiod_c1[index];}
-
-private float Util_cvToperiod_raw_c2(int index){return Util_cvToperiod_c2[index];}
-
-private float Util_cvToperiod(float cv){
-   int index = clip(float_to_int((31.f * cv)),0,31); 
-   return (wrap_array(Util_cvToperiod_c0)[index] + (cv * (wrap_array(Util_cvToperiod_c1)[index] + (cv * wrap_array(Util_cvToperiod_c2)[index]))));
+private float Util_pitchToRate_1024(float pitch) {
+   float value = (clip(pitch, 0.0f, 127.0f) * 0.251968f);
+   int cell = clip(float_to_int(value), 0, 31);
+   float u = (value - (float)(cell));
+   int index = (cell * 3);
+   return (Util_pitchToRate_1024_c[index] + (u * (Util_pitchToRate_1024_c[(index + 1)] + (Util_pitchToRate_1024_c[(index + 2)] * u))));
 }
 
-private float Util_cvTokHz_raw_c0(int index){return Util_cvTokHz_c0[index];}
-
-private float Util_cvTokHz_raw_c1(int index){return Util_cvTokHz_c1[index];}
-
-private float Util_cvTokHz_raw_c2(int index){return Util_cvTokHz_c2[index];}
-
-private float Util_cvTokHz(float cv){
-   int index = clip(float_to_int((31.f * cv)),0,31); 
-   return (wrap_array(Util_cvTokHz_c0)[index] + (cv * (wrap_array(Util_cvTokHz_c1)[index] + (cv * wrap_array(Util_cvTokHz_c2)[index]))));
+public static final float[] Util_pitchToRate_c = new float[]{0.000185f, 4.2e-05f, 5e-06f, 0.000233f, 5.3e-05f, 6e-06f, 0.000293f, 6.6e-05f, 8e-06f, 0.000368f, 8.4e-05f, 1e-05f, 0.000463f, 0.000105f, 1.3e-05f, 0.000583f, 0.000133f, 1.7e-05f, 0.000733f, 0.000167f, 2.1e-05f, 0.000922f, 0.00021f, 2.7e-05f, 0.00116f, 0.000264f, 3.4e-05f, 0.001459f, 0.000332f, 4.3e-05f, 0.001835f, 0.000418f, 5.4e-05f, 0.002308f, 0.000526f, 6.8e-05f, 0.002902f, 0.000662f, 8.5e-05f, 0.00365f, 0.000832f, 0.000107f, 0.004591f, 0.001047f, 0.000135f, 0.005774f, 0.001317f, 0.00017f, 0.007261f, 0.001656f, 0.000214f, 0.009132f, 0.002083f, 0.000269f, 0.011485f, 0.00262f, 0.000338f, 0.014445f, 0.003295f, 0.000426f, 0.018166f, 0.004144f, 0.000535f, 0.022847f, 0.005212f, 0.000674f, 0.028734f, 0.006555f, 0.000847f, 0.036137f, 0.008244f, 0.001066f, 0.045448f, 0.010368f, 0.00134f, 0.057157f, 0.01304f, 0.001686f, 0.071884f, 0.0164f, 0.00212f, 0.090405f, 0.020625f, 0.002666f, 0.113698f, 0.02594f, 0.003354f, 0.142992f, 0.032623f, 0.004218f, 0.179834f, 0.041029f, 0.005305f, 0.226168f, 0.0516f, 0.006671f, 0.284441f, 0.0f, 0.0f};
+private float Util_pitchToRate_raw_c0(int index) {
+   return Util_pitchToRate_c[(index * 3)];
 }
 
-private float Ladder_tune_raw_c0(int index){return Ladder_tune_c0[index];}
-
-private float Ladder_tune_raw_c1(int index){return Ladder_tune_c1[index];}
-
-private float Ladder_tune_raw_c2(int index){return Ladder_tune_c2[index];}
-
-private float Ladder_tune(float cut){
-   int index = clip(float_to_int((127.f * cut)),0,127); 
-   return (wrap_array(Ladder_tune_c0)[index] + (cut * (wrap_array(Ladder_tune_c1)[index] + (cut * wrap_array(Ladder_tune_c2)[index]))));
+private float Util_pitchToRate_raw_c1(int index) {
+   return Util_pitchToRate_c[((index * 3) + 1)];
 }
 
-private Ladder__ctx_type_4 Ladder__ctx_type_4_init(){
-   Ladder__ctx_type_4 _ctx = new Ladder__ctx_type_4(); 
-   _ctx.p3 = 0.0f;
-   _ctx.p2 = 0.0f;
-   _ctx.p1 = 0.0f;
-   _ctx.p0 = 0.0f;
-   return _ctx;
+private float Util_pitchToRate_raw_c2(int index) {
+   return Util_pitchToRate_c[((index * 3) + 2)];
 }
 
-private Ladder__ctx_type_4 Ladder_heun_init(){return Ladder__ctx_type_4_init();}
+private float Util_pitchToRate(float pitch) {
+   float value = (clip(pitch, 0.0f, 127.0f) * 0.251968f);
+   int cell = clip(float_to_int(value), 0, 31);
+   float u = (value - (float)(cell));
+   int index = (cell * 3);
+   return (Util_pitchToRate_c[index] + (u * (Util_pitchToRate_c[(index + 1)] + (Util_pitchToRate_c[(index + 2)] * u))));
+}
 
-private float Ladder_heun(Ladder__ctx_type_4 _ctx, float input, float fh, float res){
-   float wt0 = Util_cubic_clipper((input + (-4.f * _ctx.p3 * res))); 
-   float wt1 = Util_cubic_clipper(_ctx.p0); 
-   float dpt0 = (fh * (wt0 + (- wt1))); 
-   float wt3 = Util_cubic_clipper(_ctx.p1); 
-   float dpt1 = (fh * (wt1 + (- wt3))); 
-   float wt5 = Util_cubic_clipper(_ctx.p2); 
-   float dpt2 = (fh * (wt3 + (- wt5))); 
-   float wt7 = Util_cubic_clipper(_ctx.p3); 
-   float dpt3 = (fh * (wt5 + (- wt7))); 
-   float pt0 = (_ctx.p0 + dpt0); 
-   float pt1 = (_ctx.p1 + dpt1); 
-   float pt2 = (_ctx.p2 + dpt2); 
-   float pt3 = (_ctx.p3 + dpt3); 
-   float w0 = Util_cubic_clipper((input + (-4.f * pt3 * res))); 
-   float w1 = Util_cubic_clipper(pt0); 
-   float dp0 = (fh * (w0 + (- w1))); 
-   float w3 = Util_cubic_clipper(pt1); 
-   float dp1 = (fh * (w1 + (- w3))); 
-   float w5 = Util_cubic_clipper(pt2); 
-   float dp2 = (fh * (w3 + (- w5))); 
-   float w7 = Util_cubic_clipper(pt3); 
-   float dp3 = (fh * (w5 + (- w7))); 
-   _ctx.p0 = (_ctx.p0 + (0.5f * (dp0 + dpt0)));
-   _ctx.p1 = (_ctx.p1 + (0.5f * (dp1 + dpt1)));
-   _ctx.p2 = (_ctx.p2 + (0.5f * (dp2 + dpt2)));
-   _ctx.p3 = (_ctx.p3 + (0.5f * (dp3 + dpt3)));
+private float Util_cvToPitch(float cv) {
+   return (24.0f + (120.0f * cv));
+}
+
+public static final float[] Util_cvToRate_1024_c = new float[]{0.759366f, 0.147532f, 0.015919f, 0.922818f, 0.179287f, 0.019346f, 1.121452f, 0.217879f, 0.02351f, 1.362842f, 0.264777f, 0.028571f, 1.65619f, 0.321769f, 0.034721f, 2.012681f, 0.391029f, 0.042194f, 2.445905f, 0.475197f, 0.051276f, 2.97238f, 0.577482f, 0.062314f, 3.612177f, 0.701784f, 0.075727f, 4.389688f, 0.852841f, 0.092027f, 5.334557f, 1.036413f, 0.111835f, 6.482807f, 1.259499f, 0.135908f, 7.878214f, 1.530602f, 0.165161f, 9.573979f, 1.860061f, 0.200712f, 11.634752f, 2.260434f, 0.243915f, 14.139102f, 2.746986f, 0.296417f, 17.182507f, 3.338268f, 0.36022f, 20.880996f, 4.056822f, 0.437757f, 25.375576f, 4.930042f, 0.531983f, 30.837602f, 5.991221f, 0.646491f, 37.475314f, 7.280815f, 0.785646f, 45.541776f, 8.847991f, 0.954755f, 55.344524f, 10.752498f, 1.160264f, 67.257286f, 13.066945f, 1.410007f, 81.73424f, 15.879571f, 1.713508f, 99.327319f, 19.297607f, 2.082336f, 120.707263f, 23.451365f, 2.530553f, 146.689182f, 28.49921f, 3.075248f, 178.263642f, 34.63359f, 3.737187f, 216.63442f, 42.088379f, 4.541607f, 263.264407f, 51.147791f, 5.519176f, 319.931376f, 62.157219f, 6.707165f, 388.79576f, 0.0f, 0.0f};
+private float Util_cvToRate_1024_raw_c0(int index) {
+   return Util_cvToRate_1024_c[(index * 3)];
+}
+
+private float Util_cvToRate_1024_raw_c1(int index) {
+   return Util_cvToRate_1024_c[((index * 3) + 1)];
+}
+
+private float Util_cvToRate_1024_raw_c2(int index) {
+   return Util_cvToRate_1024_c[((index * 3) + 2)];
+}
+
+private float Util_cvToRate_1024(float cv) {
+   float value = (clip(cv, 0.0f, 0.9f) * 35.555555f);
+   int cell = clip(float_to_int(value), 0, 31);
+   float u = (value - (float)(cell));
+   int index = (cell * 3);
+   return (Util_cvToRate_1024_c[index] + (u * (Util_cvToRate_1024_c[(index + 1)] + (Util_cvToRate_1024_c[(index + 2)] * u))));
+}
+
+public static final float[] Util_cvToRate_c = new float[]{0.000741f, 3.6e-05f, 0.0f, 0.000778f, 3.7e-05f, 0.0f, 0.000817f, 3.9e-05f, 0.0f, 0.000858f, 4.1e-05f, 1e-06f, 0.000901f, 4.3e-05f, 1e-06f, 0.000946f, 4.6e-05f, 1e-06f, 0.000993f, 4.8e-05f, 1e-06f, 0.001043f, 5e-05f, 1e-06f, 0.001095f, 5.3e-05f, 1e-06f, 0.001149f, 5.6e-05f, 1e-06f, 0.001207f, 5.8e-05f, 1e-06f, 0.001267f, 6.1e-05f, 1e-06f, 0.00133f, 6.4e-05f, 1e-06f, 0.001397f, 6.8e-05f, 1e-06f, 0.001467f, 7.1e-05f, 1e-06f, 0.00154f, 7.5e-05f, 1e-06f, 0.001617f, 7.8e-05f, 1e-06f, 0.001698f, 8.2e-05f, 2e-06f, 0.001782f, 8.6e-05f, 2e-06f, 0.001872f, 9.1e-05f, 2e-06f, 0.001965f, 9.5e-05f, 2e-06f, 0.002063f, 0.0001f, 2e-06f, 0.002166f, 0.000105f, 2e-06f, 0.002274f, 0.00011f, 2e-06f, 0.002388f, 0.000116f, 2e-06f, 0.002507f, 0.000122f, 3e-06f, 0.002633f, 0.000128f, 3e-06f, 0.002764f, 0.000134f, 3e-06f, 0.002902f, 0.000141f, 3e-06f, 0.003047f, 0.000148f, 3e-06f, 0.003199f, 0.000155f, 3e-06f, 0.003359f, 0.000163f, 4e-06f, 0.003527f, 0.000171f, 4e-06f, 0.003703f, 0.00018f, 4e-06f, 0.003888f, 0.000189f, 4e-06f, 0.004082f, 0.000198f, 4e-06f, 0.004286f, 0.000208f, 5e-06f, 0.0045f, 0.000219f, 5e-06f, 0.004725f, 0.00023f, 5e-06f, 0.004961f, 0.000241f, 6e-06f, 0.005209f, 0.000253f, 6e-06f, 0.005469f, 0.000266f, 6e-06f, 0.005742f, 0.000279f, 6e-06f, 0.006029f, 0.000293f, 7e-06f, 0.00633f, 0.000308f, 7e-06f, 0.006647f, 0.000323f, 8e-06f, 0.006979f, 0.00034f, 8e-06f, 0.007327f, 0.000357f, 8e-06f, 0.007693f, 0.000374f, 9e-06f, 0.008077f, 0.000393f, 9e-06f, 0.008481f, 0.000413f, 1e-05f, 0.008904f, 0.000433f, 1e-05f, 0.009349f, 0.000455f, 1.1e-05f, 0.009816f, 0.000478f, 1.1e-05f, 0.010306f, 0.000502f, 1.2e-05f, 0.010821f, 0.000527f, 1.3e-05f, 0.011362f, 0.000553f, 1.3e-05f, 0.011929f, 0.000581f, 1.4e-05f, 0.012525f, 0.00061f, 1.5e-05f, 0.01315f, 0.00064f, 1.6e-05f, 0.013807f, 0.000672f, 1.6e-05f, 0.014497f, 0.000706f, 1.7e-05f, 0.015221f, 0.000741f, 1.8e-05f, 0.015981f, 0.000778f, 1.9e-05f, 0.016779f, 0.000817f, 2e-05f, 0.017617f, 0.000858f, 2.1e-05f, 0.018497f, 0.000901f, 2.2e-05f, 0.019421f, 0.000946f, 2.3e-05f, 0.020391f, 0.000993f, 2.4e-05f, 0.02141f, 0.001043f, 2.6e-05f, 0.022479f, 0.001095f, 2.7e-05f, 0.023602f, 0.00115f, 2.8e-05f, 0.02478f, 0.001207f, 3e-05f, 0.026018f, 0.001267f, 3.1e-05f, 0.027317f, 0.001331f, 3.3e-05f, 0.028682f, 0.001397f, 3.4e-05f, 0.030114f, 0.001467f, 3.6e-05f, 0.031618f, 0.00154f, 3.8e-05f, 0.033198f, 0.001617f, 4e-05f, 0.034856f, 0.001698f, 4.2e-05f, 0.036596f, 0.001783f, 4.4e-05f, 0.038424f, 0.001872f, 4.6e-05f, 0.040343f, 0.001965f, 4.9e-05f, 0.042358f, 0.002064f, 5.1e-05f, 0.044474f, 0.002167f, 5.4e-05f, 0.046695f, 0.002275f, 5.6e-05f, 0.049027f, 0.002388f, 5.9e-05f, 0.051476f, 0.002508f, 6.2e-05f, 0.054047f, 0.002633f, 6.5e-05f, 0.056746f, 0.002765f, 6.9e-05f, 0.05958f, 0.002903f, 7.2e-05f, 0.062556f, 0.003048f, 7.6e-05f, 0.06568f, 0.0032f, 7.9e-05f, 0.068961f, 0.00336f, 8.3e-05f, 0.072405f, 0.003528f, 8.8e-05f, 0.076021f, 0.003704f, 9.2e-05f, 0.079818f, 0.003889f, 9.7e-05f, 0.083805f, 0.004083f, 0.000101f, 0.08799f, 0.004287f, 0.000107f, 0.092385f, 0.004501f, 0.000112f, 0.096999f, 0.004726f, 0.000118f, 0.101843f, 0.004962f, 0.000123f, 0.10693f, 0.00521f, 0.00013f, 0.11227f, 0.00547f, 0.000136f, 0.117878f, 0.005743f, 0.000143f, 0.123765f, 0.00603f, 0.00015f, 0.129946f, 0.006331f, 0.000158f, 0.136436f, 0.006648f, 0.000166f, 0.143251f, 0.00698f, 0.000174f, 0.150405f, 0.007328f, 0.000183f, 0.157917f, 0.007694f, 0.000192f, 0.165804f, 0.008079f, 0.000201f, 0.174085f, 0.008482f, 0.000211f, 0.18278f, 0.008906f, 0.000222f, 0.191908f, 0.009351f, 0.000233f, 0.201493f, 0.009818f, 0.000245f, 0.211557f, 0.010308f, 0.000257f, 0.222123f, 0.010823f, 0.00027f, 0.233216f, 0.011363f, 0.000283f, 0.244864f, 0.011931f, 0.000298f, 0.257094f, 0.012527f, 0.000312f, 0.269934f, 0.013153f, 0.000328f, 0.283416f, 0.01381f, 0.000344f, 0.297571f, 0.014499f, 0.000362f, 0.312432f, 0.015223f, 0.00038f, 0.328037f, 0.015984f, 0.000399f, 0.34442f, 0.016782f, 0.000419f, 0.361622f, 0.01762f, 0.00044f, 0.379683f, 0.0f, 0.0f};
+private float Util_cvToRate_raw_c0(int index) {
+   return Util_cvToRate_c[(index * 3)];
+}
+
+private float Util_cvToRate_raw_c1(int index) {
+   return Util_cvToRate_c[((index * 3) + 1)];
+}
+
+private float Util_cvToRate_raw_c2(int index) {
+   return Util_cvToRate_c[((index * 3) + 2)];
+}
+
+private float Util_cvToRate(float cv) {
+   float value = (clip(cv, 0.0f, 0.9f) * 142.222222f);
+   int cell = clip(float_to_int(value), 0, 127);
+   float u = (value - (float)(cell));
+   int index = (cell * 3);
+   return (Util_cvToRate_c[index] + (u * (Util_cvToRate_c[(index + 1)] + (Util_cvToRate_c[(index + 2)] * u))));
+}
+
+private float Util_pitchToCv(float pitch) {
+   return (-0.2f + (0.008333f * pitch));
+}
+
+public static final float[] Util_cvToperiod_c = new float[]{674.246034f, -145.52051f, 14.207835f, 542.93336f, -117.179687f, 11.44079f, 437.194463f, -94.358377f, 9.212641f, 352.048728f, -75.981627f, 7.418434f, 283.485536f, -61.183838f, 5.973658f, 228.275358f, -49.26799f, 4.810259f, 183.817628f, -39.672811f, 3.873438f, 148.018256f, -31.946339f, 3.119067f, 119.190985f, -25.724635f, 2.511614f, 95.977965f, -20.714638f, 2.022465f, 77.285792f, -16.680362f, 1.62858f, 62.23401f, -13.431781f, 1.311406f, 50.113636f, -10.815877f, 1.056003f, 40.353763f, -8.709433f, 0.850341f, 32.494672f, -7.013229f, 0.684733f, 26.166178f, -5.647369f, 0.551378f, 21.070188f, -4.547516f, 0.443994f, 16.966667f, -3.661866f, 0.357524f, 13.662326f, -2.9487f, 0.287895f, 11.001522f, -2.374426f, 0.231826f, 8.858923f, -1.911995f, 0.186676f, 7.133604f, -1.539625f, 0.15032f, 5.7443f, -1.239776f, 0.121044f, 4.62557f, -0.998324f, 0.09747f, 3.724718f, -0.803895f, 0.078487f, 2.999311f, -0.647333f, 0.063202f, 2.415181f, -0.521262f, 0.050893f, 1.944812f, -0.419744f, 0.040981f, 1.566051f, -0.337997f, 0.033f, 1.261055f, -0.27217f, 0.026573f, 1.015458f, -0.219164f, 0.021397f, 0.817693f, -0.176481f, 0.01723f, 0.658443f, 0.0f, 0.0f};
+private float Util_cvToperiod_raw_c0(int index) {
+   return Util_cvToperiod_c[(index * 3)];
+}
+
+private float Util_cvToperiod_raw_c1(int index) {
+   return Util_cvToperiod_c[((index * 3) + 1)];
+}
+
+private float Util_cvToperiod_raw_c2(int index) {
+   return Util_cvToperiod_c[((index * 3) + 2)];
+}
+
+private float Util_cvToperiod(float cv) {
+   float value = (clip(cv, 0.0f, 1.0f) * 32.0f);
+   int cell = clip(float_to_int(value), 0, 31);
+   float u = (value - (float)(cell));
+   int index = (cell * 3);
+   return (Util_cvToperiod_c[index] + (u * (Util_cvToperiod_c[(index + 1)] + (Util_cvToperiod_c[(index + 2)] * u))));
+}
+
+public static final float[] Util_cvTokHz_c = new float[]{0.032703f, 0.007053f, 0.000855f, 0.040612f, 0.008759f, 0.001062f, 0.050435f, 0.010878f, 0.001319f, 0.062633f, 0.013509f, 0.001639f, 0.077781f, 0.016776f, 0.002035f, 0.096593f, 0.020834f, 0.002527f, 0.119955f, 0.025873f, 0.003139f, 0.148968f, 0.03213f, 0.003898f, 0.184997f, 0.039901f, 0.004841f, 0.22974f, 0.049552f, 0.006011f, 0.285304f, 0.061537f, 0.007466f, 0.354307f, 0.07642f, 0.009271f, 0.439999f, 0.094903f, 0.011514f, 0.546417f, 0.117856f, 0.014299f, 0.678572f, 0.14636f, 0.017757f, 0.84269f, 0.181759f, 0.022052f, 1.046502f, 0.225719f, 0.027385f, 1.299607f, 0.280311f, 0.034008f, 1.613927f, 0.348106f, 0.042234f, 2.004267f, 0.432298f, 0.052448f, 2.489015f, 0.536853f, 0.065134f, 3.091003f, 0.666696f, 0.080887f, 3.838587f, 0.827941f, 0.10045f, 4.766979f, 1.028185f, 0.124745f, 5.91991f, 1.27686f, 0.154916f, 7.351687f, 1.585679f, 0.192383f, 9.12975f, 1.969188f, 0.238913f, 11.337851f, 2.445451f, 0.296696f, 14.079999f, 3.036903f, 0.368454f, 17.485357f, 3.771402f, 0.457568f, 21.714328f, 4.683545f, 0.568234f, 26.966108f, 5.816297f, 0.705666f, 33.488072f, 0.0f, 0.0f};
+private float Util_cvTokHz_raw_c0(int index) {
+   return Util_cvTokHz_c[(index * 3)];
+}
+
+private float Util_cvTokHz_raw_c1(int index) {
+   return Util_cvTokHz_c[((index * 3) + 1)];
+}
+
+private float Util_cvTokHz_raw_c2(int index) {
+   return Util_cvTokHz_c[((index * 3) + 2)];
+}
+
+private float Util_cvTokHz(float cv) {
+   float value = (clip(cv, 0.0f, 1.0f) * 32.0f);
+   int cell = clip(float_to_int(value), 0, 31);
+   float u = (value - (float)(cell));
+   int index = (cell * 3);
+   return (Util_cvTokHz_c[index] + (u * (Util_cvTokHz_c[(index + 1)] + (Util_cvTokHz_c[(index + 2)] * u))));
+}
+
+public static final float[] Ladder_tune_c = new float[]{0.001164f, 6.3e-05f, 1e-06f, 0.001229f, 6.6e-05f, 1e-06f, 0.001298f, 7e-05f, 1e-06f, 0.00137f, 7.4e-05f, 2e-06f, 0.001446f, 7.8e-05f, 2e-06f, 0.001527f, 8.2e-05f, 2e-06f, 0.001612f, 8.7e-05f, 2e-06f, 0.001701f, 9.2e-05f, 2e-06f, 0.001796f, 9.7e-05f, 2e-06f, 0.001896f, 0.000102f, 2e-06f, 0.002001f, 0.000108f, 3e-06f, 0.002113f, 0.000114f, 3e-06f, 0.00223f, 0.00012f, 3e-06f, 0.002355f, 0.000127f, 3e-06f, 0.002486f, 0.000134f, 3e-06f, 0.002624f, 0.000142f, 3e-06f, 0.00277f, 0.000149f, 4e-06f, 0.002924f, 0.000158f, 4e-06f, 0.003087f, 0.000167f, 4e-06f, 0.003259f, 0.000176f, 4e-06f, 0.00344f, 0.000186f, 5e-06f, 0.003632f, 0.000196f, 5e-06f, 0.003834f, 0.000207f, 5e-06f, 0.004047f, 0.000219f, 6e-06f, 0.004272f, 0.000231f, 6e-06f, 0.00451f, 0.000244f, 6e-06f, 0.004761f, 0.000257f, 7e-06f, 0.005026f, 0.000272f, 7e-06f, 0.005306f, 0.000287f, 7e-06f, 0.005601f, 0.000303f, 8e-06f, 0.005913f, 0.00032f, 8e-06f, 0.006242f, 0.000337f, 9e-06f, 0.006589f, 0.000356f, 9e-06f, 0.006956f, 0.000376f, 1e-05f, 0.007343f, 0.000397f, 1.1e-05f, 0.007751f, 0.000419f, 1.1e-05f, 0.008183f, 0.000443f, 1.2e-05f, 0.008638f, 0.000467f, 1.3e-05f, 0.009119f, 0.000493f, 1.3e-05f, 0.009626f, 0.000521f, 1.4e-05f, 0.010162f, 0.00055f, 1.5e-05f, 0.010727f, 0.00058f, 1.6e-05f, 0.011324f, 0.000613f, 1.7e-05f, 0.011954f, 0.000647f, 1.8e-05f, 0.01262f, 0.000683f, 1.9e-05f, 0.013322f, 0.000721f, 2e-05f, 0.014063f, 0.000761f, 2.1e-05f, 0.014846f, 0.000803f, 2.2e-05f, 0.015672f, 0.000848f, 2.3e-05f, 0.016544f, 0.000895f, 2.4e-05f, 0.017465f, 0.000945f, 2.6e-05f, 0.018436f, 0.000998f, 2.7e-05f, 0.019462f, 0.001053f, 2.9e-05f, 0.020545f, 0.001112f, 3e-05f, 0.021689f, 0.001174f, 3.2e-05f, 0.022896f, 0.001239f, 3.4e-05f, 0.02417f, 0.001308f, 3.6e-05f, 0.025515f, 0.001381f, 3.8e-05f, 0.026934f, 0.001458f, 4e-05f, 0.028433f, 0.001539f, 4.2e-05f, 0.030015f, 0.001625f, 4.5e-05f, 0.031686f, 0.001715f, 4.7e-05f, 0.033449f, 0.00181f, 5e-05f, 0.03531f, 0.001911f, 5.3e-05f, 0.037275f, 0.002018f, 5.6e-05f, 0.039349f, 0.00213f, 5.9e-05f, 0.041539f, 0.002248f, 6.2e-05f, 0.04385f, 0.002374f, 6.6e-05f, 0.04629f, 0.002506f, 6.9e-05f, 0.048866f, 0.002645f, 7.3e-05f, 0.051585f, 0.002792f, 7.7e-05f, 0.054456f, 0.002948f, 8.2e-05f, 0.057486f, 0.003112f, 8.6e-05f, 0.060685f, 0.003285f, 9.1e-05f, 0.064062f, 0.003468f, 9.6e-05f, 0.067626f, 0.003661f, 0.000101f, 0.071389f, 0.003864f, 0.000107f, 0.075362f, 0.00408f, 0.000113f, 0.079556f, 0.004307f, 0.000119f, 0.083982f, 0.004546f, 0.000126f, 0.088656f, 0.004799f, 0.000133f, 0.093589f, 0.005066f, 0.00014f, 0.098797f, 0.005348f, 0.000148f, 0.104294f, 0.005646f, 0.000157f, 0.110098f, 0.00596f, 0.000165f, 0.116224f, 0.006292f, 0.000175f, 0.122692f, 0.006642f, 0.000184f, 0.129519f, 0.007011f, 0.000195f, 0.136726f, 0.007402f, 0.000205f, 0.144334f, 0.007814f, 0.000217f, 0.152366f, 0.008248f, 0.000229f, 0.160844f, 0.008707f, 0.000242f, 0.169794f, 0.009192f, 0.000255f, 0.179243f, 0.009703f, 0.00027f, 0.189217f, 0.010243f, 0.000285f, 0.199746f, 0.010813f, 0.0003f, 0.210861f, 0.011415f, 0.000317f, 0.222594f, 0.01205f, 0.000335f, 0.23498f, 0.012721f, 0.000354f, 0.248056f, 0.013429f, 0.000373f, 0.261859f, 0.014176f, 0.000394f, 0.27643f, 0.014965f, 0.000416f, 0.291812f, 0.015798f, 0.000439f, 0.30805f, 0.016677f, 0.000464f, 0.325192f, 0.017605f, 0.000489f, 0.343287f, 0.018585f, 0.000517f, 0.362389f, 0.019619f, 0.000545f, 0.382555f, 0.020711f, 0.000576f, 0.403842f, 0.021863f, 0.000608f, 0.426314f, 0.02308f, 0.000642f, 0.450036f, 0.024364f, 0.000678f, 0.475079f, 0.02572f, 0.000715f, 0.501515f, 0.027151f, 0.000755f, 0.529421f, 0.028662f, 0.000797f, 0.558881f, 0.030257f, 0.000841f, 0.58998f, 0.03194f, 0.000888f, 0.62281f, 0.033718f, 0.000938f, 0.657466f, 0.035594f, 0.00099f, 0.694051f, 0.054983f, -0.036656f, 0.712379f, 0.0f, 0.0f, 0.712379f, 0.0f, 0.0f, 0.712379f, 0.0f, 0.0f, 0.712379f, 0.0f, 0.0f, 0.712379f, 0.0f, 0.0f, 0.712379f, 0.0f, 0.0f, 0.712379f, 0.0f, 0.0f, 0.712379f, 0.0f, 0.0f, 0.712379f, 0.0f, 0.0f, 0.712379f, 0.0f, 0.0f};
+private float Ladder_tune_raw_c0(int index) {
+   return Ladder_tune_c[(index * 3)];
+}
+
+private float Ladder_tune_raw_c1(int index) {
+   return Ladder_tune_c[((index * 3) + 1)];
+}
+
+private float Ladder_tune_raw_c2(int index) {
+   return Ladder_tune_c[((index * 3) + 2)];
+}
+
+private float Ladder_tune(float cut) {
+   float value = (clip(cut, 0.0f, 1.0f) * 128.0f);
+   int cell = clip(float_to_int(value), 0, 127);
+   float u = (value - (float)(cell));
+   int index = (cell * 3);
+   return (Ladder_tune_c[index] + (u * (Ladder_tune_c[(index + 1)] + (Ladder_tune_c[(index + 2)] * u))));
+}
+
+private float Ladder_heun(Ladder_heun_type _ctx, float input, float fh, float res) {
+   float wt0 = Util_cubic_clipper((input + (-4.0f * (res * _ctx.p3))));
+   float wt1 = Util_cubic_clipper(_ctx.p0);
+   float dpt0 = (fh * (wt0 + (-wt1)));
+   float wt3 = Util_cubic_clipper(_ctx.p1);
+   float dpt1 = (fh * (wt1 + (-wt3)));
+   float wt5 = Util_cubic_clipper(_ctx.p2);
+   float dpt2 = (fh * (wt3 + (-wt5)));
+   float wt7 = Util_cubic_clipper(_ctx.p3);
+   float dpt3 = (fh * (wt5 + (-wt7)));
+   float pt0 = (dpt0 + _ctx.p0);
+   float pt1 = (dpt1 + _ctx.p1);
+   float pt2 = (dpt2 + _ctx.p2);
+   float pt3 = (dpt3 + _ctx.p3);
+   float w0 = Util_cubic_clipper((input + (-4.0f * (pt3 * res))));
+   float w1 = Util_cubic_clipper(pt0);
+   float dp0 = (fh * (w0 + (-w1)));
+   float w3 = Util_cubic_clipper(pt1);
+   float dp1 = (fh * (w1 + (-w3)));
+   float w5 = Util_cubic_clipper(pt2);
+   float dp2 = (fh * (w3 + (-w5)));
+   float w7 = Util_cubic_clipper(pt3);
+   float dp3 = (fh * (w5 + (-w7)));
+   _ctx.p0 = ((0.5f * (dp0 + dpt0)) + _ctx.p0);
+   _ctx.p1 = ((0.5f * (dp1 + dpt1)) + _ctx.p1);
+   _ctx.p2 = ((0.5f * (dp2 + dpt2)) + _ctx.p2);
+   _ctx.p3 = ((0.5f * (dp3 + dpt3)) + _ctx.p3);
    return _ctx.p3;
 }
 
-private Ladder__ctx_type_5 Ladder__ctx_type_5_init(){
-   Ladder__ctx_type_5 _ctx = new Ladder__ctx_type_5(); 
-   _ctx.p3 = 0.0f;
-   _ctx.p2 = 0.0f;
-   _ctx.p1 = 0.0f;
-   _ctx.p0 = 0.0f;
-   return _ctx;
-}
-
-private Ladder__ctx_type_5 Ladder_euler_init(){return Ladder__ctx_type_5_init();}
-
-private float Ladder_euler(Ladder__ctx_type_5 _ctx, float input, float fh, float res){
-   float w0 = Util_cubic_clipper((input + (-4.f * _ctx.p3 * res))); 
-   float w1 = Util_cubic_clipper(_ctx.p0); 
-   float dpt0 = (fh * (w0 + (- w1))); 
-   float w3 = Util_cubic_clipper(_ctx.p1); 
-   float dpt1 = (fh * (w1 + (- w3))); 
-   float w5 = Util_cubic_clipper(_ctx.p2); 
-   float dpt2 = (fh * (w3 + (- w5))); 
-   float w7 = Util_cubic_clipper(_ctx.p3); 
-   float dpt3 = (fh * (w5 + (- w7))); 
-   _ctx.p0 = (_ctx.p0 + dpt0);
-   _ctx.p1 = (_ctx.p1 + dpt1);
-   _ctx.p2 = (_ctx.p2 + dpt2);
-   _ctx.p3 = (_ctx.p3 + dpt3);
+private float Ladder_euler(Ladder_euler_type _ctx, float input, float fh, float res) {
+   float w0 = Util_cubic_clipper((input + (-4.0f * (res * _ctx.p3))));
+   float w1 = Util_cubic_clipper(_ctx.p0);
+   float dpt0 = (fh * (w0 + (-w1)));
+   float w3 = Util_cubic_clipper(_ctx.p1);
+   float dpt1 = (fh * (w1 + (-w3)));
+   float w5 = Util_cubic_clipper(_ctx.p2);
+   float dpt2 = (fh * (w3 + (-w5)));
+   float w7 = Util_cubic_clipper(_ctx.p3);
+   float dpt3 = (fh * (w5 + (-w7)));
+   _ctx.p0 = (dpt0 + _ctx.p0);
+   _ctx.p1 = (dpt1 + _ctx.p1);
+   _ctx.p2 = (dpt2 + _ctx.p2);
+   _ctx.p3 = (dpt3 + _ctx.p3);
    return _ctx.p3;
 }
 
-private Ladder__ctx_type_6 Ladder__ctx_type_6_init(){
-   Ladder__ctx_type_6 _ctx = new Ladder__ctx_type_6(); 
-   _ctx.fh = 0.0f;
-   _ctx.e = Ladder__ctx_type_5_init();
-   _ctx._inst13b = Util__ctx_type_1_init();
-   return _ctx;
-}
-
-private Ladder__ctx_type_6 Ladder_process_euler_init(){return Ladder__ctx_type_6_init();}
-
-private float Ladder_process_euler(Ladder__ctx_type_6 _ctx, float input, float cut, float res){
-   if(Util_change(_ctx._inst13b,cut)){ _ctx.fh = Ladder_tune(cut); }
-   Ladder_euler(_ctx.e,input,_ctx.fh,res);
-   Ladder_euler(_ctx.e,input,_ctx.fh,res);
-   Ladder_euler(_ctx.e,input,_ctx.fh,res);
-   float out = Ladder_euler(_ctx.e,input,_ctx.fh,res); 
+private float Ladder_process_euler(Ladder_process_euler_type _ctx, float input, float cut, float res) {
+   if (Util_change(_ctx.inst_1b099, cut)) {
+      _ctx.fh = Ladder_tune(cut);
+   }
+   Ladder_euler(_ctx.e, input, _ctx.fh, res);
+   Ladder_euler(_ctx.e, input, _ctx.fh, res);
+   Ladder_euler(_ctx.e, input, _ctx.fh, res);
+   float out = Ladder_euler(_ctx.e, input, _ctx.fh, res);
    return out;
 }
 
-private Ladder__ctx_type_7 Ladder__ctx_type_7_init(){
-   Ladder__ctx_type_7 _ctx = new Ladder__ctx_type_7(); 
-   _ctx.h = Ladder__ctx_type_4_init();
-   _ctx.fh = 0.0f;
-   _ctx._inst13b = Util__ctx_type_1_init();
-   return _ctx;
-}
-
-private Ladder__ctx_type_7 Ladder_process_heun_init(){return Ladder__ctx_type_7_init();}
-
-private float Ladder_process_heun(Ladder__ctx_type_7 _ctx, float input, float cut, float res){
-   if(Util_change(_ctx._inst13b,cut)){ _ctx.fh = Ladder_tune(cut); }
-   Ladder_heun(_ctx.h,input,_ctx.fh,res);
-   Ladder_heun(_ctx.h,input,_ctx.fh,res);
-   Ladder_heun(_ctx.h,input,_ctx.fh,res);
-   float out = Ladder_heun(_ctx.h,input,_ctx.fh,res); 
+private float Ladder_process_heun(Ladder_process_heun_type _ctx, float input, float cut, float res) {
+   if (Util_change(_ctx.inst_1b0a0, cut)) {
+      _ctx.fh = Ladder_tune(cut);
+   }
+   Ladder_heun(_ctx.h, input, _ctx.fh, res);
+   Ladder_heun(_ctx.h, input, _ctx.fh, res);
+   Ladder_heun(_ctx.h, input, _ctx.fh, res);
+   float out = Ladder_heun(_ctx.h, input, _ctx.fh, res);
    return out;
 }
 
-private Ladder__ctx_type_8 Ladder__ctx_type_8_init(){
-   Ladder__ctx_type_8 _ctx = new Ladder__ctx_type_8(); 
-   _ctx._inst112 = Ladder__ctx_type_7_init();
-   return _ctx;
+private float Ladder_process(Ladder_process_type _ctx, float input, float cut, float res) {
+   return Ladder_process_heun(_ctx.inst_1a0c3, input, cut, res);
 }
 
-private Ladder__ctx_type_8 Ladder_process_init(){return Ladder__ctx_type_8_init();}
-
-private float Ladder_process(Ladder__ctx_type_8 _ctx, float input, float cut, float res){return Ladder_process_heun(_ctx._inst112,input,cut,res);}
-
-private Ladder__ctx_type_8 Ladder_noteOn_init(){return Ladder__ctx_type_8_init();}
-
-private void Ladder_noteOn(Ladder__ctx_type_8 _ctx, int note, int velocity, int channel){
+private void Ladder_noteOn(Ladder_process_type _ctx, int note, int velocity, int channel) {
 }
 
-private Ladder__ctx_type_8 Ladder_noteOff_init(){return Ladder__ctx_type_8_init();}
-
-private void Ladder_noteOff(Ladder__ctx_type_8 _ctx, int note, int channel){
+private void Ladder_noteOff(Ladder_process_type _ctx, int note, int channel) {
 }
 
-private Ladder__ctx_type_8 Ladder_controlChange_init(){return Ladder__ctx_type_8_init();}
-
-private void Ladder_controlChange(Ladder__ctx_type_8 _ctx, int control, int value, int channel){
+private void Ladder_controlChange(Ladder_process_type _ctx, int control, int value, int channel) {
 }
 
-private Ladder__ctx_type_8 Ladder_default_init(){return Ladder__ctx_type_8_init();}
-
-private void Ladder_default(Ladder__ctx_type_8 _ctx){
+private void Ladder_default(Ladder_process_type _ctx) {
 }
 
+
+   public static class Ladder_default_type extends Ladder_process_type {
+       public Ladder_default_type() { super(); }
+   }
+   public static class Ladder_controlChange_type extends Ladder_process_type {
+       public Ladder_controlChange_type() { super(); }
+   }
+   public static class Ladder_noteOff_type extends Ladder_process_type {
+       public Ladder_noteOff_type() { super(); }
+   }
+   public static class Ladder_noteOn_type extends Ladder_process_type {
+       public Ladder_noteOn_type() { super(); }
+   }
 
 }

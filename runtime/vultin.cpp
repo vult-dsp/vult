@@ -28,7 +28,8 @@ NOTE: The code for the fixed-point operations is based on the project:
 
 */
 #include "vultin.hpp"
-#include "stdio.h"
+
+#ifndef VULT_NO_FIX16_MATH
 
 fix16_t fix_exp(fix16_t inValue) {
   if (inValue == 0)
@@ -60,6 +61,7 @@ fix16_t fix_exp(fix16_t inValue) {
 
 fix16_t fix_sin(fix16_t x0) {
   fix16_t x1 = (x0 % 0x6487e /* 6.283185 */);
+  if (x1 < 0) x1 += 0x6487e; // normalize to [0, 2*pi)
   uint8_t sign = (x1 > 0x3243f /* 3.141593 */);
   fix16_t x2 = (x1 % 0x3243f /* 3.141593 */);
   fix16_t x3;
@@ -90,6 +92,7 @@ fix16_t fix_tanh(fix16_t inAngle) {
 }
 
 fix16_t fix_sqrt(fix16_t inValue) {
+  if (inValue == FIX16_MIN) inValue = FIX16_MIN + 1;
   uint8_t neg = (inValue < 0);
   uint32_t num = (uint32_t)(neg ? -inValue : inValue);
   uint32_t result = 0;
@@ -145,6 +148,10 @@ fix16_t fix_sqrt(fix16_t inValue) {
   return (neg ? -(int32_t)result : (int32_t)result);
 }
 
+#endif // VULT_NO_FIX16_MATH
+
+#ifndef VULT_NO_RANDOM
+
 float float_random() { return (float)rand() / (float)RAND_MAX; }
 
 fix16_t fix_random() {
@@ -152,295 +159,6 @@ fix16_t fix_random() {
   return (fix16_t)temp;
 }
 
-int irandom() { return (int)rand(); }
+int int_random() { return (int)rand(); }
 
-void float_print(float value) { printf("%f\n", value); }
-void fix_print(fix16_t value) { printf("%f\n", fix_to_float(value)); }
-void int_print(int value) { printf("%i\n", value); }
-void string_print(char *value) { printf("%s\n", value); }
-void bool_print(uint8_t value) { printf("%s\n", value ? "true" : "false"); }
-
-void push_byte(CustomBuffer &buffer, uint8_t byte) {
-  if (!buffer.calculate_size) {
-    buffer.data.push_back(byte);
-  }
-}
-
-void modify_byte(CustomBuffer &buffer, int32_t index, uint8_t byte) {
-  if (!buffer.calculate_size) {
-    buffer.data[static_cast<uint32_t>(index)] = byte;
-  }
-}
-
-uint8_t read_byte(CustomBuffer &buffer, int32_t index) {
-  if (index < 0 || (size_t)index > buffer.data.size()) {
-    buffer.error = true;
-    return 0;
-  }
-  return buffer.data[static_cast<uint32_t>(index)];
-}
-
-int32_t search_field_name(CustomBuffer &buffer, CustomTypeDescr &descr, int32_t index, std::string name) {
-  int32_t descr_names = get_field(buffer, descr.position, 1);                   // get the array of names
-  int32_t n_elems = deserialize_int(buffer, get_field(buffer, descr_names, 0)); // get the number of elements
-
-  // GET the first object of the array
-  int32_t current_name = get_field(buffer, descr_names, 1); // get the first name
-  int32_t name_position = -1;
-  int32_t i = 0;
-
-  while (i < n_elems) {
-    if (match_string(buffer, current_name, name)) {
-      name_position = i;
-      break;
-    }
-    current_name = next_object(buffer, current_name);
-    i++;
-  }
-
-  if (name_position < 0) {
-    return -1;
-  }
-
-  return get_field(buffer, index, name_position);
-}
-
-int32_t push_header(CustomBuffer &buffer, int32_t index, uint8_t tag) {
-  push_byte(buffer, tag);
-  // Space for the size
-  push_byte(buffer, 0);
-  push_byte(buffer, 0);
-  push_byte(buffer, 0);
-  return index + 4;
-}
-
-int32_t push_block_header(CustomBuffer &buffer, int32_t index) { return push_header(buffer, index, BLOCK_TAG); }
-
-int32_t push_array(CustomBuffer &buffer, int32_t index, int32_t size) {
-  index = push_header(buffer, index, ARRAY_TAG); // array tag
-  index = push_int(buffer, index, size);         // push the number of elements
-  return index;
-}
-
-void update_size(CustomBuffer &buffer, int32_t index, int32_t size) {
-  uint32_bytes_union converter;
-  converter.u = static_cast<uint32_t>(size);
-
-  modify_byte(buffer, index + 1, converter.bytes[0]);
-  modify_byte(buffer, index + 2, converter.bytes[1]);
-  modify_byte(buffer, index + 3, converter.bytes[2]);
-}
-
-int32_t push_float(CustomBuffer &buffer, int32_t index, float value) {
-  float_bytes_union converter;
-  converter.f = value;
-
-  push_byte(buffer, FLOAT_TAG);
-  push_byte(buffer, converter.bytes[0]);
-  push_byte(buffer, converter.bytes[1]);
-  push_byte(buffer, converter.bytes[2]);
-  push_byte(buffer, converter.bytes[3]);
-  return index + 5;
-}
-
-int32_t push_int(CustomBuffer &buffer, int32_t index, int32_t value) {
-  if (value <= 127 && value >= -128) {
-    int8_bytes_union converter;
-    converter.i = static_cast<int8_t>(value);
-    push_byte(buffer, SMALL_INT_TAG);
-    push_byte(buffer, converter.byte);
-    return index + 2;
-  } else {
-    int32_bytes_union converter;
-    converter.i = value;
-    push_byte(buffer, INT_TAG);
-    push_byte(buffer, converter.bytes[0]);
-    push_byte(buffer, converter.bytes[1]);
-    push_byte(buffer, converter.bytes[2]);
-    push_byte(buffer, converter.bytes[3]);
-    return index + 5;
-  }
-}
-
-int32_t push_string(CustomBuffer &buffer, int32_t index, const std::string &str) {
-  int32_t start = index;
-  index = push_header(buffer, index, STRING_TAG);
-  for (size_t i = 0; i < str.length(); i++) {
-    push_byte(buffer, (uint8_t)str[i]);
-    index++;
-  }
-  push_byte(buffer, 0);
-  index++;
-  update_size(buffer, start, index - start);
-  return index;
-}
-
-// Returns the object size (the index points to the tag of the object)
-int32_t block_size(CustomBuffer &buffer, int32_t index) {
-  uint8_t b0 = read_byte(buffer, index + 1);
-  uint8_t b1 = read_byte(buffer, index + 2);
-  uint8_t b2 = read_byte(buffer, index + 3);
-  return b2 << 16 | b1 << 8 | b0;
-}
-
-bool match_string(CustomBuffer &buffer, int32_t index, std::string &name) {
-  if (buffer.error == true)
-    return false;
-  if (read_byte(buffer, index) != STRING_TAG) {
-    buffer.error = true;
-    return false;
-  }
-  // Check the size of the strings
-  int32_t expected_size = static_cast<int32_t>(name.length());
-  if ((block_size(buffer, index) - 5) == expected_size) {
-    bool match = true;
-    int32_t i = index + 4;
-    int32_t j = 0;
-    while (match && j < expected_size) {
-      match = match && (read_byte(buffer, i) == name[static_cast<uint32_t>(j)]);
-      i++;
-      j++;
-    }
-    return match;
-  } else
-    return false;
-}
-
-int32_t next_object(CustomBuffer &buffer, int32_t index) {
-  uint8_t tag = read_byte(buffer, (index));
-  switch (tag) {
-  case SMALL_INT_TAG:
-    return index + 2;
-  case INT_TAG:
-    return index + 5;
-
-  case FLOAT_TAG:
-    return index + 5;
-
-  default:
-    uint32_t b0 = read_byte(buffer, (index + 1));
-    uint32_t b1 = read_byte(buffer, (index + 2));
-    uint32_t b2 = read_byte(buffer, (index + 3));
-    uint32_t size = (b2 << 16 | b1 << 8 | b0);
-    return index + (int32_t)size;
-  }
-}
-
-int32_t first_array_element(CustomBuffer &buffer, int32_t index) {
-  index = index + 4; // skip header
-  return next_object(buffer, index);
-}
-
-int32_t get_field(CustomBuffer &buffer, int32_t object, int32_t field) {
-  int32_t index = object + 4; // Skip the header
-  int32_t n = 0;
-  while (n < field) {
-    index = next_object(buffer, index);
-    n++;
-  }
-  return index;
-}
-
-CustomTypeDescr search_type_description(CustomBuffer &buffer, std::string name) {
-  int32_t position = -1;
-
-  int32_t index = 0;
-
-  while (index < (int32_t)buffer.data.size()) {
-    // Check it is a description
-    if (read_byte(buffer, index) == TYPE_TAG) {
-      int32_t type_name = get_field(buffer, index, 0);
-      if (match_string(buffer, type_name, name)) {
-        position = index;
-        break;
-      }
-    } else
-      break;
-    index = next_object(buffer, index);
-  }
-
-  return CustomTypeDescr{position};
-}
-
-int32_t goto_data(CustomBuffer &buffer) {
-  int32_t index = 0;
-  int32_t position = -1;
-
-  while (index < (int32_t)buffer.data.size()) {
-    if (read_byte(buffer, index) == BLOCK_TAG) {
-      position = index;
-      break;
-    }
-    index = next_object(buffer, index);
-  }
-  return position;
-}
-
-int32_t deserialize_int(CustomBuffer &buffer, int32_t index) {
-  // Check the tag
-  if (read_byte(buffer, index) == SMALL_INT_TAG) {
-    int8_bytes_union converter;
-    converter.byte = read_byte(buffer, index + 1);
-    return static_cast<int32_t>(converter.i);
-  } else if (read_byte(buffer, index) == INT_TAG) {
-    int32_bytes_union converter;
-    converter.bytes[0] = read_byte(buffer, index + 1);
-    converter.bytes[1] = read_byte(buffer, index + 2);
-    converter.bytes[2] = read_byte(buffer, index + 3);
-    converter.bytes[3] = read_byte(buffer, index + 4);
-    return converter.i;
-  } else {
-    buffer.error = true;
-    return 0;
-  }
-}
-
-float deserialize_float(CustomBuffer &buffer, int32_t index) {
-  // Check the tag
-  if (read_byte(buffer, index) == FLOAT_TAG) {
-    float_bytes_union converter;
-    converter.bytes[0] = read_byte(buffer, index + 1);
-    converter.bytes[1] = read_byte(buffer, index + 2);
-    converter.bytes[2] = read_byte(buffer, index + 3);
-    converter.bytes[3] = read_byte(buffer, index + 4);
-    return converter.f;
-  } else {
-    buffer.error = true;
-    return 0.0f;
-  }
-}
-
-std::string deserialize_string(CustomBuffer &buffer, int32_t index) {
-  // Check the tag
-  if (read_byte(buffer, index) == STRING_TAG) {
-    int32_t total_size = block_size(buffer, index);
-    // String size = total_size - header(4) - tag(1) = total_size - 5
-    // But we need to account for null terminator, so actual string length = total_size - 5 - 1
-    int32_t string_length = total_size - 5 - 1;
-
-    if (string_length < 0) {
-      buffer.error = true;
-      return "";
-    }
-
-    index = index + 4; // move to the first characters
-    std::string str;
-    str.reserve(static_cast<size_t>(string_length));
-
-    for (int i = 0; i < string_length; i++) {
-      char c = static_cast<char>(read_byte(buffer, index++));
-      if (buffer.error) {
-        return "";
-      }
-      str.push_back(c);
-    }
-
-    // Skip the null terminator
-    index++;
-
-    return str;
-  } else {
-    buffer.error = true;
-    return "";
-  }
-}
+#endif // VULT_NO_RANDOM

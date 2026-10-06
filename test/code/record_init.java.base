@@ -1,0 +1,32 @@
+
+package vult.com.record_init;
+
+import java.util.Arrays;
+import java.util.Random;
+import vult.com.external.*;
+
+public class Record_init {
+
+public static class Record_init_point {
+   public float x;
+   public float y;
+
+   public Record_init_point() {
+      this.x = 0.0f;
+      this.y = 0.0f;
+   }
+   public Record_init_point(float x, float y) {
+      this.x = x;
+      this.y = y;
+   }}private Record_init_point Record_init_point_alloc() {
+   Record_init_point _ctx = new Record_init_point();
+   _ctx.x = 0.0f;
+   _ctx.y = 0.0f;
+   return _ctx;
+}
+
+private void Record_init_foo() {
+}
+
+
+}

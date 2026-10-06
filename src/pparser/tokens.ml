@@ -24,10 +24,7 @@
 
 open Util
 
-type lexed_lines =
-  { current_line : Buffer.t
-  ; mutable all_lines : string list
-  }
+type lexed_lines = {current_line: Buffer.t; mutable all_lines: string list}
 
 (** Tokens *)
 type token_enum =
@@ -80,32 +77,24 @@ type token_enum =
   | LINE_COMMENT
 
 (* Tokenizer configuration for controlling emission of different token types *)
-type tokenizer_config =
-  { emit_comments : bool
-  ; emit_whitespace : bool
-  }
+type tokenizer_config = {emit_comments: bool; emit_whitespace: bool}
 
 (* Default configuration for backward compatibility - skips comments and whitespace *)
-let default_config : tokenizer_config = { emit_comments = false; emit_whitespace = false }
+let default_config : tokenizer_config = {emit_comments= false; emit_whitespace= false}
 
 (* Configuration with only comments enabled *)
-let comment_config : tokenizer_config = { emit_comments = true; emit_whitespace = false }
+let comment_config : tokenizer_config = {emit_comments= true; emit_whitespace= false}
 
 (* Configuration with both comments and whitespace enabled *)
-let full_config : tokenizer_config = { emit_comments = true; emit_whitespace = true }
+let full_config : tokenizer_config = {emit_comments= true; emit_whitespace= true}
 
-type 'kind token =
-  { kind : 'kind
-  ; value : string
-  ; loc : Loc.t
-  }
+type 'kind token = {kind: 'kind; value: string; loc: Loc.t}
 
 (** Type containing the stream of tokens *)
 type 'kind stream =
-  { lexbuf : Lexing.lexbuf
-  ; mutable has_errors : bool
-  ; mutable errors : Error.t list
-  ; mutable peeked : 'kind token
-  ; mutable prev : 'kind token
-  ; lines : lexed_lines
-  }
+  { lexbuf: Lexing.lexbuf
+  ; mutable has_errors: bool
+  ; mutable errors: Error.t list
+  ; mutable peeked: 'kind token
+  ; mutable prev: 'kind token
+  ; lines: lexed_lines }

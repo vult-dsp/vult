@@ -19,7 +19,5 @@ function Record_init_point_alloc()
 end
 
 function Record_init_foo()
-   _record_0 = (; x = Float32(0.0), y = Float32(0.0) )
-   p1 = _record_0.x
 end
 

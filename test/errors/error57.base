@@ -1,0 +1,4 @@
+The argument 'X' starts with an uppercase letter, which is reserved for enumeration values. Rename it to 'x'.
+// Same rule for function arguments.
+fun scale(X : real) : real {
+          ^

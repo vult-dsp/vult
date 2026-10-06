@@ -1,92 +1,10 @@
 
--- LuaJIT detection and optimization
-local isLuaJIT = type(jit) == "table" and jit.version
 
--- Optimized array creation for LuaJIT using FFI
-local initializeArray
-if isLuaJIT then
-    local ffi = require("ffi")
-    ffi.cdef[[
-        typedef struct { double data[1]; } vult_array_t;
-    ]]
-    
-    function initializeArray(v, n) 
-        if type(v) == "number" then
-            -- Use FFI for numeric arrays in LuaJIT
-            local arr = ffi.new("double[?]", n)
-            for i = 0, n-1 do arr[i] = v end
-            return setmetatable({}, {
-                __index = function(t, k) return arr[k-1] end,
-                __newindex = function(t, k, v) arr[k-1] = v end,
-                __len = function() return n end
-            })
-        else
-            -- Fallback for non-numeric values
-            local a = {} 
-            for i=1, n do a[i] = v end 
-            return a 
-        end
-    end
-else
-    -- Standard Lua implementation
-    function initializeArray(v, n) 
-        local a = {} 
-        for i=1, n do a[i] = v end 
-        return a 
-    end
-end
-
--- Math functions with LuaJIT optimizations
-local sin, cos, abs, exp, floor, tan, tanh, sqrt
-if isLuaJIT then
-    -- LuaJIT has faster math operations
-    sin = math.sin
-    cos = math.cos
-    abs = math.abs
-    exp = math.exp
-    floor = math.floor
-    tan = math.tan
-    tanh = math.tanh
-    sqrt = math.sqrt
-else
-    -- Standard Lua (same functions but explicit for potential future optimizations)
-    sin = math.sin
-    cos = math.cos
-    abs = math.abs
-    exp = math.exp
-    floor = math.floor
-    tan = math.tan
-    tanh = math.tanh
-    sqrt = math.sqrt
-end
-
--- Bit operations optimized for LuaJIT
-local lshift, rshift
-if isLuaJIT then
-    local bit = require("bit")
-    lshift = bit.lshift
-    rshift = bit.rshift
-else
-    -- Fallback to arithmetic operations for standard Lua
-    function lshift(a, b) return a * (2 ^ b) end
-    function rshift(a, b) return math.floor(a / (2 ^ b)) end
-end
+-- Math functions
+local floor = math.floor
 
 -- Core runtime functions
-function ifExpressionValue(cond,then_,else_) if cond then return then_ else return else_ end end
-function ifExpression(cond,then_,else_) if cond then return then_() else return else_() end end
-function eps()              return 1e-18 end
-function pi()               return 3.1415926535897932384 end
-function random()           return math.random() end
-function irandom()          return math.floor(math.random() * 4294967296) end
-function clip(x,low,high)   if x > high then return high else if x < low then return low else return x end end end
-function real(x)            return x end
-function int(x)             if type(x) == "boolean" then x = x and 1 or 0 end local int_part,_ = math.modf(x) return int_part end
-function int16(x)           if type(x) == "boolean" then x = x and 1 or 0 end local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end
-function bool(x)            return x ~= 0 and x ~= false end
-function set(a, i, v)       a[i+1]=v end
-function get(a, i)          return a[i+1] end
-function intDiv(a, b)       return math.floor(a / b) end
+local function clipValue(x, low, high) if x > high then return high elseif x < low then return low else return x end end
 
 function Util_edge_type_alloc()
    local _ctx = {};
@@ -123,44 +41,46 @@ function Util_cvToPitch(cv)
    return (24.0 + (120.0 * cv))
 end
 
-Util_pitchToRate_c0 = {};
-Util_pitchToRate_c1 = {};
-Util_pitchToRate_c2 = {};
+Util_pitchToRate_c = {};
 function Util_pitchToRate_raw_c0(index)
-   return Util_pitchToRate_c0[index + 1]
+   return Util_pitchToRate_c[((index * 3)) + 1]
 end
 
 function Util_pitchToRate_raw_c1(index)
-   return Util_pitchToRate_c1[index + 1]
+   return Util_pitchToRate_c[(((index * 3) + 1)) + 1]
 end
 
 function Util_pitchToRate_raw_c2(index)
-   return Util_pitchToRate_c2[index + 1]
+   return Util_pitchToRate_c[(((index * 3) + 2)) + 1]
 end
 
 function Util_pitchToRate(pitch)
-   local index = clip(math.floor((pitch * 0.244094)), 0, 31)
-   return (Util_pitchToRate_c0[index + 1] + (pitch * (Util_pitchToRate_c1[index + 1] + (Util_pitchToRate_c2[index + 1] * pitch))))
+   local value = (((pitch) > (127.0) and (127.0) or ((pitch) < (0.0) and (0.0) or (pitch))) * 0.251968)
+   local cell = clipValue(floor(value), 0, 31)
+   local u = (value - (cell))
+   local index = (cell * 3)
+   return (Util_pitchToRate_c[(index) + 1] + (u * (Util_pitchToRate_c[((index + 1)) + 1] + (Util_pitchToRate_c[((index + 2)) + 1] * u))))
 end
 
-Util_cvToRate_c0 = {};
-Util_cvToRate_c1 = {};
-Util_cvToRate_c2 = {};
+Util_cvToRate_c = {};
 function Util_cvToRate_raw_c0(index)
-   return Util_cvToRate_c0[index + 1]
+   return Util_cvToRate_c[((index * 3)) + 1]
 end
 
 function Util_cvToRate_raw_c1(index)
-   return Util_cvToRate_c1[index + 1]
+   return Util_cvToRate_c[(((index * 3) + 1)) + 1]
 end
 
 function Util_cvToRate_raw_c2(index)
-   return Util_cvToRate_c2[index + 1]
+   return Util_cvToRate_c[(((index * 3) + 2)) + 1]
 end
 
 function Util_cvToRate(cv)
-   local index = clip(math.floor((cv * 141.111111)), 0, 127)
-   return (Util_cvToRate_c0[index + 1] + (cv * (Util_cvToRate_c1[index + 1] + (Util_cvToRate_c2[index + 1] * cv))))
+   local value = (((cv) > (0.9) and (0.9) or ((cv) < (0.0) and (0.0) or (cv))) * 142.222222)
+   local cell = clipValue(floor(value), 0, 127)
+   local u = (value - (cell))
+   local index = (cell * 3)
+   return (Util_cvToRate_c[(index) + 1] + (u * (Util_cvToRate_c[((index + 1)) + 1] + (Util_cvToRate_c[((index + 2)) + 1] * u))))
 end
 
 function Saw_ptr2_default(_ctx)
@@ -238,88 +158,92 @@ function Util_cubic_clipper(x)
    end
 end
 
-Util_pitchToRate_1024_c0 = {};
-Util_pitchToRate_1024_c1 = {};
-Util_pitchToRate_1024_c2 = {};
+Util_pitchToRate_1024_c = {};
 function Util_pitchToRate_1024_raw_c0(index)
-   return Util_pitchToRate_1024_c0[index + 1]
+   return Util_pitchToRate_1024_c[((index * 3)) + 1]
 end
 
 function Util_pitchToRate_1024_raw_c1(index)
-   return Util_pitchToRate_1024_c1[index + 1]
+   return Util_pitchToRate_1024_c[(((index * 3) + 1)) + 1]
 end
 
 function Util_pitchToRate_1024_raw_c2(index)
-   return Util_pitchToRate_1024_c2[index + 1]
+   return Util_pitchToRate_1024_c[(((index * 3) + 2)) + 1]
 end
 
 function Util_pitchToRate_1024(pitch)
-   local index = clip(math.floor((pitch * 0.244094)), 0, 31)
-   return (Util_pitchToRate_1024_c0[index + 1] + (pitch * (Util_pitchToRate_1024_c1[index + 1] + (Util_pitchToRate_1024_c2[index + 1] * pitch))))
+   local value = (((pitch) > (127.0) and (127.0) or ((pitch) < (0.0) and (0.0) or (pitch))) * 0.251968)
+   local cell = clipValue(floor(value), 0, 31)
+   local u = (value - (cell))
+   local index = (cell * 3)
+   return (Util_pitchToRate_1024_c[(index) + 1] + (u * (Util_pitchToRate_1024_c[((index + 1)) + 1] + (Util_pitchToRate_1024_c[((index + 2)) + 1] * u))))
 end
 
-Util_cvToRate_1024_c0 = {};
-Util_cvToRate_1024_c1 = {};
-Util_cvToRate_1024_c2 = {};
+Util_cvToRate_1024_c = {};
 function Util_cvToRate_1024_raw_c0(index)
-   return Util_cvToRate_1024_c0[index + 1]
+   return Util_cvToRate_1024_c[((index * 3)) + 1]
 end
 
 function Util_cvToRate_1024_raw_c1(index)
-   return Util_cvToRate_1024_c1[index + 1]
+   return Util_cvToRate_1024_c[(((index * 3) + 1)) + 1]
 end
 
 function Util_cvToRate_1024_raw_c2(index)
-   return Util_cvToRate_1024_c2[index + 1]
+   return Util_cvToRate_1024_c[(((index * 3) + 2)) + 1]
 end
 
 function Util_cvToRate_1024(cv)
-   local index = clip(math.floor((cv * 34.444444)), 0, 31)
-   return (Util_cvToRate_1024_c0[index + 1] + (cv * (Util_cvToRate_1024_c1[index + 1] + (Util_cvToRate_1024_c2[index + 1] * cv))))
+   local value = (((cv) > (0.9) and (0.9) or ((cv) < (0.0) and (0.0) or (cv))) * 35.555555)
+   local cell = clipValue(floor(value), 0, 31)
+   local u = (value - (cell))
+   local index = (cell * 3)
+   return (Util_cvToRate_1024_c[(index) + 1] + (u * (Util_cvToRate_1024_c[((index + 1)) + 1] + (Util_cvToRate_1024_c[((index + 2)) + 1] * u))))
 end
 
 function Util_pitchToCv(pitch)
    return (-0.2 + (0.008333 * pitch))
 end
 
-Util_cvToperiod_c0 = {};
-Util_cvToperiod_c1 = {};
-Util_cvToperiod_c2 = {};
+Util_cvToperiod_c = {};
 function Util_cvToperiod_raw_c0(index)
-   return Util_cvToperiod_c0[index + 1]
+   return Util_cvToperiod_c[((index * 3)) + 1]
 end
 
 function Util_cvToperiod_raw_c1(index)
-   return Util_cvToperiod_c1[index + 1]
+   return Util_cvToperiod_c[(((index * 3) + 1)) + 1]
 end
 
 function Util_cvToperiod_raw_c2(index)
-   return Util_cvToperiod_c2[index + 1]
+   return Util_cvToperiod_c[(((index * 3) + 2)) + 1]
 end
 
 function Util_cvToperiod(cv)
-   local index = clip(math.floor((cv * 31.0)), 0, 31)
-   return (Util_cvToperiod_c0[index + 1] + (cv * (Util_cvToperiod_c1[index + 1] + (Util_cvToperiod_c2[index + 1] * cv))))
+   local value = (((cv) > (1.0) and (1.0) or ((cv) < (0.0) and (0.0) or (cv))) * 32.0)
+   local cell = clipValue(floor(value), 0, 31)
+   local u = (value - (cell))
+   local index = (cell * 3)
+   return (Util_cvToperiod_c[(index) + 1] + (u * (Util_cvToperiod_c[((index + 1)) + 1] + (Util_cvToperiod_c[((index + 2)) + 1] * u))))
 end
 
-Util_cvTokHz_c0 = {};
-Util_cvTokHz_c1 = {};
-Util_cvTokHz_c2 = {};
+Util_cvTokHz_c = {};
 function Util_cvTokHz_raw_c0(index)
-   return Util_cvTokHz_c0[index + 1]
+   return Util_cvTokHz_c[((index * 3)) + 1]
 end
 
 function Util_cvTokHz_raw_c1(index)
-   return Util_cvTokHz_c1[index + 1]
+   return Util_cvTokHz_c[(((index * 3) + 1)) + 1]
 end
 
 function Util_cvTokHz_raw_c2(index)
-   return Util_cvTokHz_c2[index + 1]
+   return Util_cvTokHz_c[(((index * 3) + 2)) + 1]
 end
 
 function Util_cvTokHz(cv)
-   local index = clip(math.floor((cv * 31.0)), 0, 31)
-   return (Util_cvTokHz_c0[index + 1] + (cv * (Util_cvTokHz_c1[index + 1] + (Util_cvTokHz_c2[index + 1] * cv))))
+   local value = (((cv) > (1.0) and (1.0) or ((cv) < (0.0) and (0.0) or (cv))) * 32.0)
+   local cell = clipValue(floor(value), 0, 31)
+   local u = (value - (cell))
+   local index = (cell * 3)
+   return (Util_cvTokHz_c[(index) + 1] + (u * (Util_cvTokHz_c[((index + 1)) + 1] + (Util_cvTokHz_c[((index + 2)) + 1] * u))))
 end
 
 function Saw_ptr2_process(_ctx, cv)
@@ -332,8 +256,6 @@ function Saw_ptr2_process(_ctx, cv)
    local out = 0.0
    if (_ctx.phase > 1.0) then
       _ctx.phase = (-1.0 + _ctx.phase)
-   else
-      _ctx.phase = _ctx.phase
    end
    if (_ctx.phase < s1) then
       do

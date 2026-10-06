@@ -1,0 +1,72 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct Review_sig_a_b_c
+       first::Int32
+end
+
+# Default constructor for Review_sig_a_b_c
+function Review_sig_a_b_c()
+    return Review_sig_a_b_c(Int32(0))
+end
+
+mutable struct Review_sig_a_b_c_318de1b9
+       second::Int32
+end
+
+# Default constructor for Review_sig_a_b_c_318de1b9
+function Review_sig_a_b_c_318de1b9()
+    return Review_sig_a_b_c_318de1b9(Int32(0))
+end
+
+function Review_sig_a_b_c_alloc()
+   _ctx = Review_sig_a_b_c()
+   _ctx.first = Int32(0)
+   return _ctx
+end
+
+function Review_sig_a_b_c_318de1b9_alloc()
+   _ctx = Review_sig_a_b_c_318de1b9()
+   _ctx.second = Int32(0)
+   return _ctx
+end
+
+function Spec_name_collision_keep_Review_sig_a_b_c(v)
+   return v
+end
+
+function Spec_name_collision_keep_Review_sig_a_b_c_b37a7a88(v)
+   return v
+end
+
+function Spec_name_collision_test_distinct_specializations()
+   _record_0 = (; first = Int32(11) )
+   ra = Spec_name_collision_keep_Review_sig_a_b_c(_record_0)
+   _record_1 = (; second = Int32(22) )
+   rb = Spec_name_collision_keep_Review_sig_a_b_c_b37a7a88(_record_1)
+   if ((ra.first == Int32(11)) && (rb.second == Int32(22)))
+      return Int32(100)
+   end
+   return Int32(-1)
+end
+
+function Spec_name_collision_test_reversed_order()
+   _record_0 = (; second = Int32(44) )
+   rb = Spec_name_collision_keep_Review_sig_a_b_c_b37a7a88(_record_0)
+   _record_1 = (; first = Int32(33) )
+   ra = Spec_name_collision_keep_Review_sig_a_b_c(_record_1)
+   if ((ra.first == Int32(33)) && (rb.second == Int32(44)))
+      return Int32(200)
+   end
+   return Int32(-2)
+end
+
+function Spec_name_collision_main()
+   t1 = Spec_name_collision_test_distinct_specializations()
+   t2 = Spec_name_collision_test_reversed_order()
+   if ((t1 == Int32(100)) && (t2 == Int32(200)))
+      return Int32(1100)
+   end
+   return (t1 + t2)
+end
+

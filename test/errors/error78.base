@@ -1,0 +1,9 @@
+Unexpected token in expression. Expected a value, variable, or operator
+// A file that ends in the middle of an expression.
+fun f() { return
+                 ^ 
+
+Expecting a '}' but the file ended in statement block
+// A file that ends in the middle of an expression.
+fun f() { return
+                 ^ 

@@ -46,7 +46,7 @@ $ vult -code code infile.vult -o outfile  # v1.0
 $ vultc -ccode infile.vult -o outfile     # v0.4.15
 ```
 
-This will produce the files `outfile.h` and `outfile.cpp`. In order to compile and link these files you need to include in your project the files `runtime/vultin.hpp` and `runtime/vultin.cpp`.
+This will produce the files `outfile.h` and `outfile.cpp`. The compiler also writes the runtime files next to them: `vultin.hpp` and `vultin.cpp`, which you need to compile and link with your project, and the header-only features `vultin_string.hpp`, `vultin_tuple.hpp`, `vultin_list.hpp` and `vultin_serialization.hpp`, which the generated headers include only when the program uses them. A program that does not use strings, tuples, lists or serialization does not depend on `<string>`, `<tuple>` or `<vector>`.
 
 To generate code with fixed point arithmetics you need to execute:
 ```

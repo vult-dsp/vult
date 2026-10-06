@@ -1,0 +1,4 @@
+A function with the name 'g' has already been declared at line 2, columns 4-5
+fun g('a : int, b : int) : int { return a + b; }
+fun g('a : int, b : int) : int { return a - b; }
+    ^

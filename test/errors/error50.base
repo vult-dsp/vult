@@ -1,0 +1,4 @@
+This declaration tries to change the type of i1. The previous type is 'Error50.track_int_type' and the new is 'Error50.track_real_type'
+  val a = i1:track(3);
+  val b = i1:track(0.5);
+             ^^^^^

@@ -2,23 +2,3 @@
 
 #include "FixedAndFloat.h"
 
-void FixedAndFloat_test1() {
-   fix16_t fixed_value = 0x0 /* 0.000000 */;
-   float real_value = 0.0f;
-   int32_t int_value = 0;
-   bool bool_value = false;
-   fix16_t result = fixed_value + float_to_fix(real_value);
-   fix16_t from_int = int_to_fix(int_value);
-   fix16_t from_real = float_to_fix(real_value);
-   fix16_t from_bool = bool_to_fix(bool_value);
-   int32_t to_int = fix_to_int(fixed_value);
-   float to_real = fix_to_float(fixed_value);
-   bool to_bool = fix_to_bool(fixed_value);
-   from_int = 0x0 /* 0.000000 */;
-   from_real = 0x0 /* 0.000000 */;
-   from_bool = 0x0 /* 0.000000 */;
-   to_int = 0;
-   to_real = 0.0f;
-   to_bool = false;
-}
-

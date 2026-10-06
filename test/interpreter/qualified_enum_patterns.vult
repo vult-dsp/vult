@@ -1,0 +1,40 @@
+// Test for qualified enum patterns in match expressions
+// Tests cross-module access to enum variants like ButtonEnum.Push
+
+// Test function using qualified enum patterns in match
+fun handleButton(b : ButtonEnum.state) : int {
+   match (b) {
+      ButtonEnum.Push -> return 1;
+      ButtonEnum.Release -> return 2;
+      ButtonEnum.Hold -> return 3;
+   }
+}
+
+// Test with mixed patterns (qualified and wildcard)
+fun handleButtonWithDefault(b : ButtonEnum.state) : int {
+   match (b) {
+      ButtonEnum.Push -> return 10;
+      _ -> return 0;
+   }
+}
+
+// Main test function
+fun main() : int {
+   // Test basic qualified enum patterns
+   val result1 = handleButton(ButtonEnum.Push);    // Should return 1
+   val result2 = handleButton(ButtonEnum.Release); // Should return 2
+   val result3 = handleButton(ButtonEnum.Hold);    // Should return 3
+   
+   // Test with default case
+   val result4 = handleButtonWithDefault(ButtonEnum.Push);    // Should return 10
+   val result5 = handleButtonWithDefault(ButtonEnum.Release); // Should return 0
+   
+   // Verify all results
+   if (result1 == 1 && result2 == 2 && result3 == 3) {
+      if (result4 == 10 && result5 == 0) {
+         return 100; // All tests passed
+      }
+   }
+   
+   return -1; // Some test failed
+}

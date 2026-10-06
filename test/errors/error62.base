@@ -1,0 +1,4 @@
+Element 2 of this tuple has type 'real' but 'int' was expected
+  if (c) return 1, 2, 3;
+  else return 1, 2.0, 3;
+                 ^^^

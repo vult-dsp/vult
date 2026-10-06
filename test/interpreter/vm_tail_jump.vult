@@ -1,0 +1,12 @@
+// A conditional jump that skips the last instruction of the last function targets the
+// position just past the end of the code, which still has to resolve to an index.
+
+fun pick(flag : bool) : int {
+  return if flag then 1 else 2;
+}
+
+fun main() : int {
+  if (pick(true) <> 1) return -1;
+  if (pick(false) <> 2) return -2;
+  return 800;
+}

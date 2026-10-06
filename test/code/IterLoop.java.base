@@ -1,0 +1,22 @@
+
+package vult.com.iterloop;
+
+import java.util.Arrays;
+import java.util.Random;
+import vult.com.external.*;
+
+public class IterLoop {
+
+private void IterLoop_test() {
+   int total = 0;
+   int i__1 = 0;
+   while ((i__1 < 2)) {
+      {
+         total = (i__1 + total);
+         i__1 = (1 + i__1);
+      }
+   }
+}
+
+
+}

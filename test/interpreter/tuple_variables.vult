@@ -1,0 +1,18 @@
+// Tuple variables can be split into their elements, whether the tuple was a
+// literal or the result of a call.
+fun pair(x : int) {
+   return x, x * 10;
+}
+
+fun split(c : bool) : int {
+   val t = (1, 2);
+   val a, b = t;
+   val u = pair(3);
+   val x, y = u;
+   val p, q = if c then (4, 5) else (6, 7);
+   return a + b + x + y + p + q;
+}
+
+fun main() : int {
+   return split(true) * 100 + split(false);
+}

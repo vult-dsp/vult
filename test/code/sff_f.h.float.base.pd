@@ -8,9 +8,8 @@
 
  #include <stdint.h>
  #include <math.h>
+ #include <new>
  #include <m_pd.h>
-
-static inline float samplerate() { return sys_getsr(); }
 
  #if defined(_MSC_VER)
      //  Microsoft VC++
@@ -22,11 +21,23 @@ static inline float samplerate() { return sys_getsr(); }
 
  extern "C" {
  EXPORT void sff_f_setup(void);
- }
+ EXPORT void process_tilde_setup(void);
+}
 
- extern "C" void Sff_f_process_tilde_setup(void);
-static_inline float Sff_f_process(float a, float b) {
+ static_inline float Sff_f_process(float a, float b) {
    return a * b;
+}
+
+static_inline void Sff_f_noteOn(int32_t note, int32_t velocity, int32_t channel) {
+}
+
+static_inline void Sff_f_noteOff(int32_t note, int32_t channel) {
+}
+
+static_inline void Sff_f_controlChange(int32_t control, int32_t value, int32_t channel) {
+}
+
+static_inline void Sff_f_default() {
 }
 
 

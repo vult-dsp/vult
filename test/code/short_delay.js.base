@@ -1,22 +1,5 @@
 
-this.random = function()         { return Math.random(); };
-this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };
-this.eps  = function()           { return 1e-18 };
-this.pi   = function()           { return 3.1415926535897932384; }
-this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
-this.not  = function(x)          { return x==0?1:0; };
-this.real = function(x)          { return x; };
-this.int_  = function(x)         { return x|0; };
-this.sin  = function(x)          { return Math.sin(x); };
-this.cos  = function(x)          { return Math.cos(x); };
-this.abs  = function(x)          { return Math.abs(x); };
-this.exp  = function(x)          { return Math.exp(x); };
-this.floor = function(x)          { return Math.floor(x); };
-this.tan  = function(x)          { return Math.tan(x); };
-this.tanh = function(x)          { return Math.tanh(x); };
-this.pow  = function(a,b)         { return Math.pow(a,b); };
-this.sqrt = function(x)          { return x; };
-this.int_to_float = function(i)  { return i; };
+// Runtime functions
 this.float_to_int = function(i)  { return Math.floor(i); };
 this.initializeArray = function(v, size){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
 this.Short_delay_soft_type_alloc = function () {
@@ -29,15 +12,15 @@ this.Short_delay_soft_type_alloc = function () {
 
 this.Short_delay_do_type_alloc = function () {
    var i_0 = (0|0);
-   var temp = this.initializeArray(0.0, (22050|0));
+   var temp_1 = this.initializeArray(0.0, (22050|0));
    var _ctx = {};
    while ((i_0 < (22050|0))) {
       {
-         temp[i_0] = 0.0;
+         temp_1[i_0] = 0.0;
          i_0 = ((1|0) + i_0);
       }
    }
-   _ctx.buffer = temp;
+   _ctx.buffer = temp_1;
    _ctx.write_pos = (0|0);
    return _ctx;
 };
@@ -65,24 +48,25 @@ this.Short_delay_default_type_alloc = function (_ctx) {
    return this.Short_delay_process_type_alloc();
 };
 
-var Saturate_tanh_table_c0 = {};
-var Saturate_tanh_table_c1 = {};
-var Saturate_tanh_table_c2 = {};
+var Saturate_tanh_table_c = {};
 this.Saturate_tanh_table_raw_c0 = function (index) {
-   return Saturate_tanh_table_c0[index];
+   return Saturate_tanh_table_c[(index * (3|0))];
 };
 
 this.Saturate_tanh_table_raw_c1 = function (index) {
-   return Saturate_tanh_table_c1[index];
+   return Saturate_tanh_table_c[((index * (3|0)) + (1|0))];
 };
 
 this.Saturate_tanh_table_raw_c2 = function (index) {
-   return Saturate_tanh_table_c2[index];
+   return Saturate_tanh_table_c[((index * (3|0)) + (2|0))];
 };
 
 this.Saturate_tanh_table = function (x) {
-   var index = this.clip(this.float_to_int(((x + 24.0) * 5.0)), (0|0), (240|0));
-   return (Saturate_tanh_table_c0[index] + (x * (Saturate_tanh_table_c1[index] + (Saturate_tanh_table_c2[index] * x))));
+   var value = ((((x) < (-24.0) ? (-24.0) : ((x) > (24.0) ? (24.0) : (x))) + 24.0) * 5.020833);
+   var cell = ((this.float_to_int(value)) < ((0|0)) ? ((0|0)) : ((this.float_to_int(value)) > ((240|0)) ? ((240|0)) : (this.float_to_int(value))));
+   var u = (value - (cell));
+   var index = (cell * (3|0));
+   return (Saturate_tanh_table_c[index] + (u * (Saturate_tanh_table_c[(index + (1|0))] + (Saturate_tanh_table_c[(index + (2|0))] * u))));
 };
 
 this.Saturate_process = function (x) {
@@ -103,20 +87,17 @@ this.Saturate_default = function () {
 
 this.Short_delay_soft = function (_ctx, x1) {
    var o = (0.25 * (x1 + (_ctx.x2 + (_ctx.x3 + _ctx.x4))));
-   var _t_temp_0 = x1;
-   var _t_temp_1 = _ctx.x2;
-   var _t_temp_2 = _ctx.x3;
-   _ctx.x2 = _t_temp_0;
-   _ctx.x3 = _t_temp_1;
-   _ctx.x4 = _t_temp_2;
+   _ctx.x4 = _ctx.x3;
+   _ctx.x3 = _ctx.x2;
+   _ctx.x2 = x1;
    return o;
 };
 
 this.Short_delay_do = function (_ctx, x, time_in, feedback_in) {
-   var time = this.clip(time_in, 0.0, 1.0);
-   var feedback = this.clip(feedback_in, 0.0, 1.0);
+   var time = ((time_in) < (0.0) ? (0.0) : ((time_in) > (1.0) ? (1.0) : (time_in)));
+   var feedback = ((feedback_in) < (0.0) ? (0.0) : ((feedback_in) > (1.0) ? (1.0) : (feedback_in)));
    var index_r = (22050.0 * time);
-   var index_i = this.int_(this.floor(index_r));
+   var index_i = ((index_r)|0);
    var delta = ((-index_i) + _ctx.write_pos);
    var read_pos = (0|0);
    if ((delta < (0|0))) {
@@ -124,11 +105,35 @@ this.Short_delay_do = function (_ctx, x, time_in, feedback_in) {
    } else {
       read_pos = delta;
    }
-   var decimal = (index_r + (-this.real(index_i)));
+   var decimal = (index_r + (-(index_i)));
    var x1 = _ctx.buffer[read_pos];
-   var x2 = _ctx.buffer[(((1|0) + read_pos) % (22050|0))];
+   var _wrap_temp_0 = ((1|0) + read_pos);
+   var x2 = 0.0;
+   if ((_wrap_temp_0 >= (22050|0))) {
+      if ((_wrap_temp_0 == (22050|0))) {
+         _wrap_temp_0 = (0|0);
+      } else {
+         _wrap_temp_0 = (_wrap_temp_0 % (22050|0));
+      }
+   } else {
+      if ((_wrap_temp_0 <= (-22050|0))) {
+         _wrap_temp_0 = (_wrap_temp_0 % (22050|0));
+      }
+   }
+   x2 = _ctx.buffer[_wrap_temp_0];
    var ret = (x1 + (decimal * (x2 + (-x1))));
-   _ctx.write_pos = (((1|0) + _ctx.write_pos) % (22050|0));
+   _ctx.write_pos = ((1|0) + _ctx.write_pos);
+   if ((_ctx.write_pos >= (22050|0))) {
+      if ((_ctx.write_pos == (22050|0))) {
+         _ctx.write_pos = (0|0);
+      } else {
+         _ctx.write_pos = (_ctx.write_pos % (22050|0));
+      }
+   } else {
+      if ((_ctx.write_pos <= (-22050|0))) {
+         _ctx.write_pos = (_ctx.write_pos % (22050|0));
+      }
+   }
    _ctx.buffer[_ctx.write_pos] = this.Saturate_process((x + (feedback * ret)));
    return ret;
 };

@@ -1,0 +1,54 @@
+this.Tuple_variables_pair_type_alloc = function () {
+   var _ctx = {};
+   _ctx.Tuple_variables_pair_ret_0 = (0|0);
+   _ctx.Tuple_variables_pair_ret_1 = (0|0);
+   return _ctx;
+};
+
+this.Tuple_variables_split_type_alloc = function () {
+   var _ctx = {};
+   _ctx.inst_14623 = this.Tuple_variables_pair_type_alloc();
+   return _ctx;
+};
+
+this.Tuple_variables_main_type_alloc = function () {
+   var _ctx = {};
+   _ctx.inst_1238e = this.Tuple_variables_split_type_alloc();
+   _ctx.inst_2238e = this.Tuple_variables_split_type_alloc();
+   return _ctx;
+};
+
+this.Tuple_variables_pair = function (_ctx, x) {
+   _ctx.Tuple_variables_pair_ret_0 = x;
+   _ctx.Tuple_variables_pair_ret_1 = ((10|0) * x);
+   return ;
+};
+
+this.Tuple_variables_split = function (_ctx, c) {
+   var t = [ (1|0), (2|0) ];
+   var a = t[0];
+   var b = t[1];
+   this.Tuple_variables_pair(_ctx.inst_14623, (3|0));
+   var u = [ _ctx.inst_14623.Tuple_variables_pair_ret_0, _ctx.inst_14623.Tuple_variables_pair_ret_1 ];
+   var x = u[0];
+   var y = u[1];
+   var q = (0|0);
+   var p = (0|0);
+   if (c) {
+      {
+         p = (4|0);
+         q = (5|0);
+      }
+   } else {
+      {
+         p = (6|0);
+         q = (7|0);
+      }
+   }
+   return (a + (b + (p + (q + (x + y)))));
+};
+
+this.Tuple_variables_main = function (_ctx) {
+   return (((100|0) * this.Tuple_variables_split(_ctx.inst_1238e, true)) + this.Tuple_variables_split(_ctx.inst_2238e, false));
+};
+

@@ -1,0 +1,87 @@
+
+package vult.com.instancearray;
+
+import java.util.Arrays;
+import java.util.Random;
+import vult.com.external.*;
+
+public class InstanceArray {
+
+public static class InstanceArray_counter_type {
+   public float total;
+
+   public InstanceArray_counter_type() {
+      this.total = 0.0f;
+   }
+   public InstanceArray_counter_type(float total) {
+      this.total = total;
+   }}public static class InstanceArray_test1_type {
+   public InstanceArray_counter_type[] instances;
+
+   public InstanceArray_test1_type() {
+      this.instances = new InstanceArray_counter_type[]{new InstanceArray_counter_type(),new InstanceArray_counter_type(),new InstanceArray_counter_type(),new InstanceArray_counter_type()};
+   }
+   public InstanceArray_test1_type(InstanceArray_counter_type[] instances) {
+      this.instances = instances;
+   }}public static class InstanceArray_test2_type {
+   public InstanceArray_counter_type case1;
+   public InstanceArray_counter_type case2;
+
+   public InstanceArray_test2_type() {
+      this.case1 = new InstanceArray_counter_type();
+      this.case2 = new InstanceArray_counter_type();
+   }
+   public InstanceArray_test2_type(InstanceArray_counter_type case1, InstanceArray_counter_type case2) {
+      this.case1 = case1;
+      this.case2 = case2;
+   }}private InstanceArray_counter_type InstanceArray_counter_type_alloc() {
+   InstanceArray_counter_type _ctx = new InstanceArray_counter_type();
+   _ctx.total = 0.0f;
+   return _ctx;
+}
+
+private InstanceArray_test1_type InstanceArray_test1_type_alloc() {
+   int i_0 = 0;
+   InstanceArray_counter_type[] temp_1 = new InstanceArray_counter_type[]{new InstanceArray_counter_type(),new InstanceArray_counter_type(),new InstanceArray_counter_type(),new InstanceArray_counter_type()};
+   InstanceArray_test1_type _ctx = new InstanceArray_test1_type();
+   while ((i_0 < 4)) {
+      {
+         temp_1[i_0] = InstanceArray_counter_type_alloc();
+         i_0 = (1 + i_0);
+      }
+   }
+   _ctx.instances = temp_1;
+   return _ctx;
+}
+
+private InstanceArray_test2_type InstanceArray_test2_type_alloc() {
+   InstanceArray_test2_type _ctx = new InstanceArray_test2_type();
+   _ctx.case1 = InstanceArray_counter_type_alloc();
+   _ctx.case2 = InstanceArray_counter_type_alloc();
+   return _ctx;
+}
+
+private float InstanceArray_counter(InstanceArray_counter_type _ctx) {
+   _ctx.total = (1.0f + _ctx.total);
+   return _ctx.total;
+}
+
+private float InstanceArray_test1(InstanceArray_test1_type _ctx) {
+   float sum = 0.0f;
+   int i__1 = 0;
+   while ((i__1 < 4)) {
+      {
+         sum = (sum + InstanceArray_counter(_ctx.instances[i__1]));
+         i__1 = (1 + i__1);
+      }
+   }
+   return sum;
+}
+
+private void InstanceArray_test2(InstanceArray_test2_type _ctx) {
+   InstanceArray_counter(_ctx.case1);
+   InstanceArray_counter(_ctx.case2);
+}
+
+
+}

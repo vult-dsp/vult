@@ -1,0 +1,6 @@
+constant pi_value = 3.14;
+
+fun calculate(x: real) {
+  val pi_value = 2.0;
+  return x * pi_value;
+}

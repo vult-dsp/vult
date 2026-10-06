@@ -23,9 +23,6 @@ float Phase_process(Phase_process_type& _ctx, float cv, float reset) {
    if (_ctx.phase > 1024.0f) {
       _ctx.phase = -1024.0f + _ctx.phase;
    }
-   else {
-      _ctx.phase = _ctx.phase;
-   }
    return 0.000976f * _ctx.phase;
 }
 

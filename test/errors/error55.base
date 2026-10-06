@@ -1,0 +1,4 @@
+The constant 'Gain' starts with an uppercase letter, which is reserved for enumeration values. Rename it to 'gain'.
+// because such names are parsed as enumeration values.
+constant Gain = 0.5;
+^^^^^^^^

@@ -112,15 +112,15 @@ end
 
 function Rescomb_delay_type_alloc()
    i_0 = Int32(0)
-   temp = fill(Float32(0.0), Int32(675))
+   temp_1 = fill(Float32(0.0), Int32(675))
    _ctx = Rescomb_delay_type()
    while (i_0 < Int32(675))
       begin
-         @inbounds temp[i_0 + 1] = Float32(0.0)
+         @inbounds temp_1[i_0 + 1] = Float32(0.0)
          i_0 = (Int32(1) + i_0)
       end
    end
-   _ctx.buffer = temp
+   _ctx.buffer = temp_1
    _ctx.write_pos = Int32(0)
    return _ctx
 end
@@ -157,24 +157,25 @@ function Rescomb_default_type_alloc(_ctx)
    return Rescomb_process_type_alloc()
 end
 
-Saturate_soft_tanh_table_c0 = nothing
-Saturate_soft_tanh_table_c1 = nothing
-Saturate_soft_tanh_table_c2 = nothing
+Saturate_soft_tanh_table_c = nothing
 function Saturate_soft_tanh_table_raw_c0(index)
-   return @inbounds Saturate_soft_tanh_table_c0[index + 1]
+   return @inbounds Saturate_soft_tanh_table_c[(index * Int32(3)) + 1]
 end
 
 function Saturate_soft_tanh_table_raw_c1(index)
-   return @inbounds Saturate_soft_tanh_table_c1[index + 1]
+   return @inbounds Saturate_soft_tanh_table_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Saturate_soft_tanh_table_raw_c2(index)
-   return @inbounds Saturate_soft_tanh_table_c2[index + 1]
+   return @inbounds Saturate_soft_tanh_table_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Saturate_soft_tanh_table(x)
-   index = clamp(trunc(Int32, ((x + Float32(24.0)) * Float32(5.0))), Int32(0), Int32(240))
-   return (@inbounds Saturate_soft_tanh_table_c0[index + 1] + (x * (@inbounds Saturate_soft_tanh_table_c1[index + 1] + (@inbounds Saturate_soft_tanh_table_c2[index + 1] * x))))
+   value = ((clamp(x, Float32(-24.0), Float32(24.0)) + Float32(24.0)) * Float32(5.020833))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(240))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Saturate_soft_tanh_table_c[index + 1] + (u * (@inbounds Saturate_soft_tanh_table_c[(index + Int32(1)) + 1] + (@inbounds Saturate_soft_tanh_table_c[(index + Int32(2)) + 1] * u))))
 end
 
 function Saturate_soft_process(x)
@@ -239,136 +240,153 @@ function Util_cubic_clipper(x)
    end
 end
 
-Util_pitchToRate_1024_c0 = nothing
-Util_pitchToRate_1024_c1 = nothing
-Util_pitchToRate_1024_c2 = nothing
+Util_pitchToRate_1024_c = nothing
 function Util_pitchToRate_1024_raw_c0(index)
-   return @inbounds Util_pitchToRate_1024_c0[index + 1]
+   return @inbounds Util_pitchToRate_1024_c[(index * Int32(3)) + 1]
 end
 
 function Util_pitchToRate_1024_raw_c1(index)
-   return @inbounds Util_pitchToRate_1024_c1[index + 1]
+   return @inbounds Util_pitchToRate_1024_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Util_pitchToRate_1024_raw_c2(index)
-   return @inbounds Util_pitchToRate_1024_c2[index + 1]
+   return @inbounds Util_pitchToRate_1024_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Util_pitchToRate_1024(pitch)
-   index = clamp(trunc(Int32, (pitch * Float32(0.244094))), Int32(0), Int32(31))
-   return (@inbounds Util_pitchToRate_1024_c0[index + 1] + (pitch * (@inbounds Util_pitchToRate_1024_c1[index + 1] + (@inbounds Util_pitchToRate_1024_c2[index + 1] * pitch))))
+   value = (clamp(pitch, Float32(0.0), Float32(127.0)) * Float32(0.251968))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(31))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Util_pitchToRate_1024_c[index + 1] + (u * (@inbounds Util_pitchToRate_1024_c[(index + Int32(1)) + 1] + (@inbounds Util_pitchToRate_1024_c[(index + Int32(2)) + 1] * u))))
 end
 
-Util_pitchToRate_c0 = nothing
-Util_pitchToRate_c1 = nothing
-Util_pitchToRate_c2 = nothing
+Util_pitchToRate_c = nothing
 function Util_pitchToRate_raw_c0(index)
-   return @inbounds Util_pitchToRate_c0[index + 1]
+   return @inbounds Util_pitchToRate_c[(index * Int32(3)) + 1]
 end
 
 function Util_pitchToRate_raw_c1(index)
-   return @inbounds Util_pitchToRate_c1[index + 1]
+   return @inbounds Util_pitchToRate_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Util_pitchToRate_raw_c2(index)
-   return @inbounds Util_pitchToRate_c2[index + 1]
+   return @inbounds Util_pitchToRate_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Util_pitchToRate(pitch)
-   index = clamp(trunc(Int32, (pitch * Float32(0.244094))), Int32(0), Int32(31))
-   return (@inbounds Util_pitchToRate_c0[index + 1] + (pitch * (@inbounds Util_pitchToRate_c1[index + 1] + (@inbounds Util_pitchToRate_c2[index + 1] * pitch))))
+   value = (clamp(pitch, Float32(0.0), Float32(127.0)) * Float32(0.251968))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(31))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Util_pitchToRate_c[index + 1] + (u * (@inbounds Util_pitchToRate_c[(index + Int32(1)) + 1] + (@inbounds Util_pitchToRate_c[(index + Int32(2)) + 1] * u))))
 end
 
 function Util_cvToPitch(cv)
    return (Float32(24.0) + (Float32(120.0) * cv))
 end
 
-Util_cvToRate_1024_c0 = nothing
-Util_cvToRate_1024_c1 = nothing
-Util_cvToRate_1024_c2 = nothing
+Util_cvToRate_1024_c = nothing
 function Util_cvToRate_1024_raw_c0(index)
-   return @inbounds Util_cvToRate_1024_c0[index + 1]
+   return @inbounds Util_cvToRate_1024_c[(index * Int32(3)) + 1]
 end
 
 function Util_cvToRate_1024_raw_c1(index)
-   return @inbounds Util_cvToRate_1024_c1[index + 1]
+   return @inbounds Util_cvToRate_1024_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Util_cvToRate_1024_raw_c2(index)
-   return @inbounds Util_cvToRate_1024_c2[index + 1]
+   return @inbounds Util_cvToRate_1024_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Util_cvToRate_1024(cv)
-   index = clamp(trunc(Int32, (cv * Float32(34.444444))), Int32(0), Int32(31))
-   return (@inbounds Util_cvToRate_1024_c0[index + 1] + (cv * (@inbounds Util_cvToRate_1024_c1[index + 1] + (@inbounds Util_cvToRate_1024_c2[index + 1] * cv))))
+   value = (clamp(cv, Float32(0.0), Float32(0.9)) * Float32(35.555555))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(31))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Util_cvToRate_1024_c[index + 1] + (u * (@inbounds Util_cvToRate_1024_c[(index + Int32(1)) + 1] + (@inbounds Util_cvToRate_1024_c[(index + Int32(2)) + 1] * u))))
 end
 
-Util_cvToRate_c0 = nothing
-Util_cvToRate_c1 = nothing
-Util_cvToRate_c2 = nothing
+Util_cvToRate_c = nothing
 function Util_cvToRate_raw_c0(index)
-   return @inbounds Util_cvToRate_c0[index + 1]
+   return @inbounds Util_cvToRate_c[(index * Int32(3)) + 1]
 end
 
 function Util_cvToRate_raw_c1(index)
-   return @inbounds Util_cvToRate_c1[index + 1]
+   return @inbounds Util_cvToRate_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Util_cvToRate_raw_c2(index)
-   return @inbounds Util_cvToRate_c2[index + 1]
+   return @inbounds Util_cvToRate_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Util_cvToRate(cv)
-   index = clamp(trunc(Int32, (cv * Float32(141.111111))), Int32(0), Int32(127))
-   return (@inbounds Util_cvToRate_c0[index + 1] + (cv * (@inbounds Util_cvToRate_c1[index + 1] + (@inbounds Util_cvToRate_c2[index + 1] * cv))))
+   value = (clamp(cv, Float32(0.0), Float32(0.9)) * Float32(142.222222))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(127))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Util_cvToRate_c[index + 1] + (u * (@inbounds Util_cvToRate_c[(index + Int32(1)) + 1] + (@inbounds Util_cvToRate_c[(index + Int32(2)) + 1] * u))))
 end
 
 function Util_pitchToCv(pitch)
    return (Float32(-0.2) + (Float32(0.008333) * pitch))
 end
 
-Util_cvToperiod_c0 = nothing
-Util_cvToperiod_c1 = nothing
-Util_cvToperiod_c2 = nothing
+Util_cvToperiod_c = nothing
 function Util_cvToperiod_raw_c0(index)
-   return @inbounds Util_cvToperiod_c0[index + 1]
+   return @inbounds Util_cvToperiod_c[(index * Int32(3)) + 1]
 end
 
 function Util_cvToperiod_raw_c1(index)
-   return @inbounds Util_cvToperiod_c1[index + 1]
+   return @inbounds Util_cvToperiod_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Util_cvToperiod_raw_c2(index)
-   return @inbounds Util_cvToperiod_c2[index + 1]
+   return @inbounds Util_cvToperiod_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Util_cvToperiod(cv)
-   index = clamp(trunc(Int32, (cv * Float32(31.0))), Int32(0), Int32(31))
-   return (@inbounds Util_cvToperiod_c0[index + 1] + (cv * (@inbounds Util_cvToperiod_c1[index + 1] + (@inbounds Util_cvToperiod_c2[index + 1] * cv))))
+   value = (clamp(cv, Float32(0.0), Float32(1.0)) * Float32(32.0))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(31))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Util_cvToperiod_c[index + 1] + (u * (@inbounds Util_cvToperiod_c[(index + Int32(1)) + 1] + (@inbounds Util_cvToperiod_c[(index + Int32(2)) + 1] * u))))
 end
 
-Util_cvTokHz_c0 = nothing
-Util_cvTokHz_c1 = nothing
-Util_cvTokHz_c2 = nothing
+Util_cvTokHz_c = nothing
 function Util_cvTokHz_raw_c0(index)
-   return @inbounds Util_cvTokHz_c0[index + 1]
+   return @inbounds Util_cvTokHz_c[(index * Int32(3)) + 1]
 end
 
 function Util_cvTokHz_raw_c1(index)
-   return @inbounds Util_cvTokHz_c1[index + 1]
+   return @inbounds Util_cvTokHz_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Util_cvTokHz_raw_c2(index)
-   return @inbounds Util_cvTokHz_c2[index + 1]
+   return @inbounds Util_cvTokHz_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Util_cvTokHz(cv)
-   index = clamp(trunc(Int32, (cv * Float32(31.0))), Int32(0), Int32(31))
-   return (@inbounds Util_cvTokHz_c0[index + 1] + (cv * (@inbounds Util_cvTokHz_c1[index + 1] + (@inbounds Util_cvTokHz_c2[index + 1] * cv))))
+   value = (clamp(cv, Float32(0.0), Float32(1.0)) * Float32(32.0))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(31))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Util_cvTokHz_c[index + 1] + (u * (@inbounds Util_cvTokHz_c[(index + Int32(1)) + 1] + (@inbounds Util_cvTokHz_c[(index + Int32(2)) + 1] * u))))
 end
 
 function Rescomb_delay(_ctx, x, cv)
-   _ctx.write_pos = ((Int32(1) + _ctx.write_pos) % Int32(675))
+   _ctx.write_pos = (Int32(1) + _ctx.write_pos)
+   if (_ctx.write_pos >= Int32(675))
+      if (_ctx.write_pos == Int32(675))
+         _ctx.write_pos = Int32(0)
+      else
+         _ctx.write_pos = (_ctx.write_pos % Int32(675))
+      end
+   else
+      if (_ctx.write_pos <= Int32(-675))
+         _ctx.write_pos = (_ctx.write_pos % Int32(675))
+      end
+   end
    @inbounds _ctx.buffer[_ctx.write_pos + 1] = x
    r_size = Float32(675.0)
    r_index = mod(((-Util_cvToperiod(cv)) + Float32(_ctx.write_pos)), r_size)
@@ -384,24 +402,25 @@ function Rescomb_delay(_ctx, x, cv)
    return ret
 end
 
-Rescomb_toneCurve_c0 = nothing
-Rescomb_toneCurve_c1 = nothing
-Rescomb_toneCurve_c2 = nothing
+Rescomb_toneCurve_c = nothing
 function Rescomb_toneCurve_raw_c0(index)
-   return @inbounds Rescomb_toneCurve_c0[index + 1]
+   return @inbounds Rescomb_toneCurve_c[(index * Int32(3)) + 1]
 end
 
 function Rescomb_toneCurve_raw_c1(index)
-   return @inbounds Rescomb_toneCurve_c1[index + 1]
+   return @inbounds Rescomb_toneCurve_c[((index * Int32(3)) + Int32(1)) + 1]
 end
 
 function Rescomb_toneCurve_raw_c2(index)
-   return @inbounds Rescomb_toneCurve_c2[index + 1]
+   return @inbounds Rescomb_toneCurve_c[((index * Int32(3)) + Int32(2)) + 1]
 end
 
 function Rescomb_toneCurve(tone)
-   index = clamp(trunc(Int32, ((tone + Float32(1.2)) * Float32(26.25))), Int32(0), Int32(63))
-   return (@inbounds Rescomb_toneCurve_c0[index + 1] + (tone * (@inbounds Rescomb_toneCurve_c1[index + 1] + (@inbounds Rescomb_toneCurve_c2[index + 1] * tone))))
+   value = ((clamp(tone, Float32(-1.2), Float32(1.2)) + Float32(1.2)) * Float32(26.666666))
+   cell = clamp(trunc(Int32, value), Int32(0), Int32(63))
+   u = (value - Float32(cell))
+   index = (cell * Int32(3))
+   return (@inbounds Rescomb_toneCurve_c[index + 1] + (u * (@inbounds Rescomb_toneCurve_c[(index + Int32(1)) + 1] + (@inbounds Rescomb_toneCurve_c[(index + Int32(2)) + 1] * u))))
 end
 
 function Rescomb_do(_ctx, in, cv, tone, res)

@@ -1,0 +1,22 @@
+
+def StringType_test1():
+   str1 = "first"
+   str2 = "second"
+   str3 = ((str1 + ", ") + str2)
+   return str3
+
+
+def StringType_test2():
+   str1 = str(1)
+   str2 = str(1.0)
+   str3 = str(1.0)
+   str4 = str(True)
+   return (((str1 + str2) + str3) + str4)
+
+
+def StringType_test3(a, b):
+   return (a + b)
+
+def StringType_test4():
+   _ = StringType_test3("first", "second")
+

@@ -1,0 +1,58 @@
+
+class Volume_smooth_type:
+    __slots__ = ['x']
+    def __init__(self, x=0.0):
+        self.x = x
+
+class Volume_process_type:
+    __slots__ = ['inst_1d7d3', 'volume']
+    def __init__(self, inst_1d7d3=Volume_smooth_type(), volume=0.0):
+        self.inst_1d7d3 = inst_1d7d3
+        self.volume = volume
+
+def Volume_smooth_type_alloc():
+   _ctx = Volume_smooth_type()
+   _ctx.x = 0.0
+   return _ctx
+
+
+def Volume_process_type_alloc():
+   _ctx = Volume_process_type()
+   _ctx.inst_1d7d3 = Volume_smooth_type_alloc()
+   _ctx.volume = 0.0
+   return _ctx
+
+
+def Volume_noteOn_type_alloc(_ctx):
+   return Volume_process_type_alloc()
+
+def Volume_noteOff_type_alloc(_ctx):
+   return Volume_process_type_alloc()
+
+def Volume_controlChange_type_alloc(_ctx):
+   return Volume_process_type_alloc()
+
+def Volume_default_type_alloc(_ctx):
+   return Volume_process_type_alloc()
+
+def Volume_smooth(_ctx, input):
+   _ctx.x = ((0.005 * (input + (-_ctx.x))) + _ctx.x)
+   return _ctx.x
+
+
+def Volume_process(_ctx, input):
+   return (input * Volume_smooth(_ctx.inst_1d7d3, _ctx.volume))
+
+def Volume_noteOn(_ctx, note, velocity, channel):
+   pass
+
+def Volume_noteOff(_ctx, note, channel):
+   pass
+
+def Volume_controlChange(_ctx, control, value, channel):
+   if (control == 30):
+      _ctx.volume = (0.007874 * float(value))
+
+def Volume_default(_ctx):
+   _ctx.volume = 0.0
+

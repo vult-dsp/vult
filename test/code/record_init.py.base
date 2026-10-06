@@ -1,0 +1,17 @@
+
+class Record_init_point:
+    __slots__ = ['x', 'y']
+    def __init__(self, x=0.0, y=0.0):
+        self.x = x
+        self.y = y
+
+def Record_init_point_alloc():
+   _ctx = Record_init_point()
+   _ctx.x = 0.0
+   _ctx.y = 0.0
+   return _ctx
+
+
+def Record_init_foo():
+   pass
+

@@ -1,0 +1,4 @@
+The mem variable 't' cannot hold a tuple.
+fun main() {
+  mem t;
+      ^

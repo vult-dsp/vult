@@ -1,0 +1,70 @@
+// Regression test: generic function calls appearing inside the index expression
+// on the left-hand side of an assignment must be elaborated like any other call.
+
+fun pick_index(x : 't) : int {
+  if (x > x - x) {
+    return 1;
+  }
+  return 0;
+}
+
+fun test_generic_call_in_lhs_index() : int {
+  val arr = [10, 20, 30];
+  arr[pick_index(0.5)] = 42;   // real specialization returns 1
+
+  if (arr[0] == 10 && arr[1] == 42 && arr[2] == 30) {
+    return 100;
+  }
+  return -1;
+}
+
+// Stateful generic in the LHS index: the index advances on every assignment
+fun next_slot(limit : 't) : 't {
+  mem n : 't;
+  val current = n;
+  n = n + 1;
+  if (n >= limit) {
+    n = 0;
+  }
+  return current;
+}
+
+fun test_stateful_call_in_lhs_index() : int {
+  val arr = [0, 0, 0];
+  arr[next_slot(3)] = 5;
+  arr[next_slot(3)] = 6;
+
+  // Each call site has its own instance, so both assignments write index 0
+  // of their own sequence: first site writes arr[0] = 5, second site writes arr[0] = 6
+  if (arr[0] == 6 && arr[1] == 0 && arr[2] == 0) {
+    return 200;
+  }
+  return -2;
+}
+
+// Generic call in the LHS index inside a loop (single call site advances)
+fun test_loop_lhs_index() : int {
+  val arr = [0, 0, 0];
+  val i = 0;
+  while (i < 3) {
+    arr[next_slot(3)] = i + 1;
+    i = i + 1;
+  }
+
+  if (arr[0] == 1 && arr[1] == 2 && arr[2] == 3) {
+    return 300;
+  }
+  return -3;
+}
+
+fun main() : int {
+  val t1 = test_generic_call_in_lhs_index();
+  val t2 = test_stateful_call_in_lhs_index();
+  val t3 = test_loop_lhs_index();
+
+  // All tests pass: 100 + 200 + 300 = 600
+  if (t1 == 100 && t2 == 200 && t3 == 300) {
+    return 600;
+  }
+  return t1 + t2 + t3;
+}

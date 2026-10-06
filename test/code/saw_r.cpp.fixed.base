@@ -17,9 +17,6 @@ fix16_t Saw_r_process(Saw_r_process_type& _ctx, fix16_t cv) {
    if (_ctx.phase > 0x20000 /* 2.000000 */) {
       _ctx.phase = -0x20000 /* -2.000000 */ + _ctx.phase;
    }
-   else {
-      _ctx.phase = _ctx.phase;
-   }
    fix16_t ph = -0x10000 /* -1.000000 */ + _ctx.phase;
    fix16_t o = 0x0 /* 0.000000 */;
    if (ph >= (0x10000 /* 1.000000 */ + (- i))) {

@@ -1,0 +1,15 @@
+
+def Multi_iter_test():
+   acc = 0
+   x__1 = 0
+   while (x__1 < 2):
+      acc = (acc + x__1)
+      x__1 = (1 + x__1)
+
+   x__2 = 0
+   while (x__2 < 2):
+      acc = (acc + x__2)
+      x__2 = (1 + x__2)
+
+
+

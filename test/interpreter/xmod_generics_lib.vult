@@ -1,0 +1,20 @@
+// Support library for generics_cross_module.vult (not a test by itself)
+
+fun tw(x : 't) : 't {
+  return x + x;
+}
+
+fun track(x : 't) : 't {
+  mem last : 't;
+  last = last + x;
+  return last;
+}
+
+fun local_user() : int {
+  // Unqualified call: instantiates tw for int inside this module
+  return tw(21);
+}
+
+fun stateful_user() : real {
+  return track(0.25);
+}

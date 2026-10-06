@@ -163,15 +163,15 @@ end
 
 function Delay_delay_type_alloc()
    i_0 = Int32(0)
-   temp = fill(Float32(0.0), Int32(30000))
+   temp_1 = fill(Float32(0.0), Int32(30000))
    _ctx = Delay_delay_type()
    while (i_0 < Int32(30000))
       begin
-         @inbounds temp[i_0 + 1] = Float32(0.0)
+         @inbounds temp_1[i_0 + 1] = Float32(0.0)
          i_0 = (Int32(1) + i_0)
       end
    end
-   _ctx.buffer = temp
+   _ctx.buffer = temp_1
    _ctx.write_pos = Int32(0)
    return _ctx
 end
@@ -180,14 +180,14 @@ function Delay_mono_noteOn_type_alloc()
    _ctx = Delay_mono_noteOn_type()
    _ctx.count = Int32(0)
    i_0 = Int32(0)
-   temp = fill(Int32(0), Int32(4))
+   temp_1 = fill(Int32(0), Int32(4))
    while (i_0 < Int32(4))
       begin
-         @inbounds temp[i_0 + 1] = Int32(0)
+         @inbounds temp_1[i_0 + 1] = Int32(0)
          i_0 = (Int32(1) + i_0)
       end
    end
-   _ctx.notes = temp
+   _ctx.notes = temp_1
    _ctx.pre = Int32(0)
    return _ctx
 end
@@ -300,7 +300,7 @@ function Delay_delay(_ctx, x, time, feedback)
    time = clamp(time, Float32(0.0), Float32(1.0))
    feedback = clamp(feedback, Float32(0.0), Float32(1.0))
    index_r = (Float32(30000.0) * time)
-   index_i = trunc(Int32, floor(index_r))
+   index_i = trunc(Int32, index_r)
    delta = ((-index_i) + _ctx.write_pos)
    read_pos = Int32(0)
    if (delta < Int32(0))
@@ -310,9 +310,33 @@ function Delay_delay(_ctx, x, time, feedback)
    end
    decimal = (index_r + (-Float32(index_i)))
    x1 = @inbounds _ctx.buffer[read_pos + 1]
-   x2 = @inbounds _ctx.buffer[((Int32(1) + read_pos) % Int32(30000)) + 1]
+   _wrap_temp_0 = (Int32(1) + read_pos)
+   x2 = Float32(0.0)
+   if (_wrap_temp_0 >= Int32(30000))
+      if (_wrap_temp_0 == Int32(30000))
+         _wrap_temp_0 = Int32(0)
+      else
+         _wrap_temp_0 = (_wrap_temp_0 % Int32(30000))
+      end
+   else
+      if (_wrap_temp_0 <= Int32(-30000))
+         _wrap_temp_0 = (_wrap_temp_0 % Int32(30000))
+      end
+   end
+   x2 = @inbounds _ctx.buffer[_wrap_temp_0 + 1]
    ret = (x1 + (decimal * (x2 + (-x1))))
-   _ctx.write_pos = ((Int32(1) + _ctx.write_pos) % Int32(30000))
+   _ctx.write_pos = (Int32(1) + _ctx.write_pos)
+   if (_ctx.write_pos >= Int32(30000))
+      if (_ctx.write_pos == Int32(30000))
+         _ctx.write_pos = Int32(0)
+      else
+         _ctx.write_pos = (_ctx.write_pos % Int32(30000))
+      end
+   else
+      if (_ctx.write_pos <= Int32(-30000))
+         _ctx.write_pos = (_ctx.write_pos % Int32(30000))
+      end
+   end
    @inbounds _ctx.buffer[_ctx.write_pos + 1] = clamp((x + (feedback * ret)), Float32(-1.0), Float32(1.0))
    return ret
 end
@@ -376,14 +400,7 @@ function Delay_process(_ctx, input)
    gate = Delay_mono_isGateOn(_ctx.notes)
    lfo_val = (Delay_lfo(_ctx.inst_16101, _ctx.lfo_rate, gate) * _ctx.lfo_amt)
    o1 = Delay_phd_osc(_ctx.inst_2c401, _ctx.pitch, (lfo_val + _ctx.detune))
-   amp = Float32(0.0)
-   _if_temp_0 = Float32(0.0)
-   if gate
-      _if_temp_0 = Float32(1.0)
-   else
-      _if_temp_0 = Float32(0.0)
-   end
-   amp = Delay_smooth(_ctx.inst_37701, _if_temp_0)
+   amp = Delay_smooth(_ctx.inst_37701, (gate ? Float32(1.0) : Float32(0.0)))
    osc_out = (amp * o1)
    delay_out = Delay_delay(_ctx.inst_68e01, osc_out, Delay_smooth(_ctx.inst_47701, _ctx.time), Delay_smooth(_ctx.inst_57701, _ctx.feedback))
    return (Float32(0.5) * ((delay_out + osc_out) * _ctx.volume))

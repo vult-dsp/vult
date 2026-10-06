@@ -1,0 +1,63 @@
+// Regression test: recursive generic functions. A recursive call inside a
+// generic body must reuse the specialization being created instead of trying
+// to instantiate it again.
+
+fun rfact(n : 't) : 't {
+  if (n <= 1) {
+    return 1;
+  }
+  return n * rfact(n - 1);
+}
+
+fun test_recursive_int() : int {
+  if (rfact(5) == 120) {
+    return 100;
+  }
+  return -1;
+}
+
+// Real instantiation needs real literals in the body
+fun rprod(n : 't) : 't {
+  if (n <= 1.0) {
+    return 1.0;
+  }
+  return n * rprod(n - 1.0);
+}
+
+fun test_recursive_real() : int {
+  if (rprod(5.0) == 120.0) {
+    return 200;
+  }
+  return -2;
+}
+
+// Recursive generic with state: the mem is declared before the recursive call,
+// so the context is threaded through the recursion (same instance)
+fun rsum(n : 't) : 't {
+  mem calls : int;
+  calls = calls + 1;
+  if (n <= 1) {
+    return 1;
+  }
+  return n + rsum(n - 1);
+}
+
+fun test_recursive_with_state() : int {
+  // 5 + 4 + 3 + 2 + 1 = 15
+  if (rsum(5) == 15) {
+    return 300;
+  }
+  return -3;
+}
+
+fun main() : int {
+  val t1 = test_recursive_int();
+  val t2 = test_recursive_real();
+  val t3 = test_recursive_with_state();
+
+  // All tests pass: 100 + 200 + 300 = 600
+  if (t1 == 100 && t2 == 200 && t3 == 300) {
+    return 600;
+  }
+  return t1 + t2 + t3;
+}

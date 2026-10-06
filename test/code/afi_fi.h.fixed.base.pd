@@ -8,9 +8,8 @@
 
  #include <stdint.h>
  #include <math.h>
+ #include <new>
  #include <m_pd.h>
-
-static inline float samplerate() { return sys_getsr(); }
 
  #if defined(_MSC_VER)
      //  Microsoft VC++
@@ -22,14 +21,22 @@ static inline float samplerate() { return sys_getsr(); }
 
  extern "C" {
  EXPORT void afi_fi_setup(void);
- }
+ EXPORT void process_tilde_setup(void);
+}
 
- extern "C" void Afi_fi_process_tilde_setup(void);
-typedef struct Afi_fi_process_type {
+ typedef struct Afi_fi_process_type {
    fix16_t Afi_fi_process_ret_0;
    int32_t Afi_fi_process_ret_1;
    int32_t x;
 } Afi_fi_process_type;
+
+typedef struct Afi_fi_process_type Afi_fi_noteOn_type;
+
+typedef struct Afi_fi_process_type Afi_fi_noteOff_type;
+
+typedef struct Afi_fi_process_type Afi_fi_controlChange_type;
+
+typedef struct Afi_fi_process_type Afi_fi_default_type;
 
 static_inline void Afi_fi_process_type_init(Afi_fi_process_type& _ctx) {
    _ctx.Afi_fi_process_ret_0 = 0x0 /* 0.000000 */;
@@ -37,11 +44,39 @@ static_inline void Afi_fi_process_type_init(Afi_fi_process_type& _ctx) {
    _ctx.x = 0;
 }
 
+static_inline void Afi_fi_noteOn_type_init(Afi_fi_noteOn_type& _ctx) {
+   Afi_fi_process_type_init(_ctx);
+}
+
+static_inline void Afi_fi_noteOff_type_init(Afi_fi_noteOff_type& _ctx) {
+   Afi_fi_process_type_init(_ctx);
+}
+
+static_inline void Afi_fi_controlChange_type_init(Afi_fi_controlChange_type& _ctx) {
+   Afi_fi_process_type_init(_ctx);
+}
+
+static_inline void Afi_fi_default_type_init(Afi_fi_default_type& _ctx) {
+   Afi_fi_process_type_init(_ctx);
+}
+
 static_inline void Afi_fi_process(Afi_fi_process_type& _ctx, fix16_t a, int32_t b) {
    _ctx.x = 1 + _ctx.x;
    _ctx.Afi_fi_process_ret_0 = a;
    _ctx.Afi_fi_process_ret_1 = b;
    return ;
+}
+
+static_inline void Afi_fi_noteOn(Afi_fi_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
+}
+
+static_inline void Afi_fi_noteOff(Afi_fi_process_type& _ctx, int32_t note, int32_t channel) {
+}
+
+static_inline void Afi_fi_controlChange(Afi_fi_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+}
+
+static_inline void Afi_fi_default(Afi_fi_process_type& _ctx) {
 }
 
 

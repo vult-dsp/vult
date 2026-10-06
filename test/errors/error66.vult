@@ -1,0 +1,6 @@
+// Generic functions are not elaborated in constant expressions.
+fun twice(x : 't) : 't { return x + x; }
+
+constant c = twice(3);
+
+fun main() : int { return c; }

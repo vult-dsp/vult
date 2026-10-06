@@ -1,0 +1,83 @@
+this.Companion_return_infer_accum_int_type_alloc = function () {
+   var _ctx = {};
+   _ctx.total = (0|0);
+   return _ctx;
+};
+
+this.Companion_return_infer_wrapper_stateful_type_alloc = function () {
+   var _ctx = {};
+   _ctx.inst_1c525 = this.Companion_return_infer_accum_int_type_alloc();
+   return _ctx;
+};
+
+this.Companion_return_infer_wrapper_instance_type_alloc = function () {
+   var _ctx = {};
+   _ctx.i1 = this.Companion_return_infer_accum_int_type_alloc();
+   return _ctx;
+};
+
+this.Companion_return_infer_main_type_alloc = function () {
+   var _ctx = {};
+   _ctx.inst_19106 = this.Companion_return_infer_wrapper_stateful_type_alloc();
+   _ctx.inst_2af06 = this.Companion_return_infer_wrapper_instance_type_alloc();
+   return _ctx;
+};
+
+this.Companion_return_infer_current_int_type_alloc = function (_ctx) {
+   return this.Companion_return_infer_accum_int_type_alloc();
+};
+
+this.Cret_lib_pick_int = function (x) {
+   return x;
+};
+
+this.Cret_lib_tag_int = function () {
+   return (7|0);
+};
+
+this.Companion_return_infer_choose_int = function (x) {
+   return x;
+};
+
+this.Companion_return_infer_marker_int = function () {
+   return (42|0);
+};
+
+this.Companion_return_infer_accum_int = function (_ctx, x) {
+   _ctx.total = (x + _ctx.total);
+   return _ctx.total;
+};
+
+this.Companion_return_infer_current_int = function (_ctx) {
+   return _ctx.total;
+};
+
+this.Companion_return_infer_wrapper_stateless = function () {
+   return this.Companion_return_infer_marker_int();
+};
+
+this.Companion_return_infer_wrapper_stateful = function (_ctx) {
+   this.Companion_return_infer_accum_int(_ctx.inst_1c525, (3|0));
+   return this.Companion_return_infer_current_int(_ctx.inst_1c525);
+};
+
+this.Companion_return_infer_wrapper_instance = function (_ctx) {
+   this.Companion_return_infer_accum_int(_ctx.i1, (20|0));
+   return this.Companion_return_infer_current_int(_ctx.i1);
+};
+
+this.Companion_return_infer_wrapper_qualified = function () {
+   return this.Cret_lib_tag_int();
+};
+
+this.Companion_return_infer_main = function (_ctx) {
+   var w1 = this.Companion_return_infer_wrapper_stateless();
+   var w2 = this.Companion_return_infer_wrapper_stateful(_ctx.inst_19106);
+   var w3 = this.Companion_return_infer_wrapper_instance(_ctx.inst_2af06);
+   var w4 = this.Companion_return_infer_wrapper_qualified();
+   if (((((w1 == (42|0)) && (w2 == (3|0))) && (w3 == (20|0))) && (w4 == (7|0)))) {
+      return (700|0);
+   }
+   return (-1|0);
+};
+

@@ -1,92 +1,33 @@
 
--- LuaJIT detection and optimization
+-- LuaJIT detection
 local isLuaJIT = type(jit) == "table" and jit.version
 
--- Optimized array creation for LuaJIT using FFI
+
+-- Numeric arrays use FFI storage under LuaJIT, tables everywhere else.
 local initializeArray
 if isLuaJIT then
     local ffi = require("ffi")
-    ffi.cdef[[
-        typedef struct { double data[1]; } vult_array_t;
-    ]]
-    
-    function initializeArray(v, n) 
+    function initializeArray(v, n)
         if type(v) == "number" then
-            -- Use FFI for numeric arrays in LuaJIT
-            local arr = ffi.new("double[?]", n)
-            for i = 0, n-1 do arr[i] = v end
-            return setmetatable({}, {
-                __index = function(t, k) return arr[k-1] end,
-                __newindex = function(t, k, v) arr[k-1] = v end,
-                __len = function() return n end
-            })
+            -- One-based, so element zero is unused. This is cdata, not a
+            -- table: indexing works, '#' and pairs() do not.
+            local a = ffi.new("double[?]", n + 1)
+            for i = 1, n do a[i] = v end
+            return a
         else
-            -- Fallback for non-numeric values
-            local a = {} 
-            for i=1, n do a[i] = v end 
-            return a 
+            local a = {}
+            for i = 1, n do a[i] = v end
+            return a
         end
     end
 else
-    -- Standard Lua implementation
-    function initializeArray(v, n) 
-        local a = {} 
-        for i=1, n do a[i] = v end 
-        return a 
+    function initializeArray(v, n)
+        local a = {}
+        for i = 1, n do a[i] = v end
+        return a
     end
 end
 
--- Math functions with LuaJIT optimizations
-local sin, cos, abs, exp, floor, tan, tanh, sqrt
-if isLuaJIT then
-    -- LuaJIT has faster math operations
-    sin = math.sin
-    cos = math.cos
-    abs = math.abs
-    exp = math.exp
-    floor = math.floor
-    tan = math.tan
-    tanh = math.tanh
-    sqrt = math.sqrt
-else
-    -- Standard Lua (same functions but explicit for potential future optimizations)
-    sin = math.sin
-    cos = math.cos
-    abs = math.abs
-    exp = math.exp
-    floor = math.floor
-    tan = math.tan
-    tanh = math.tanh
-    sqrt = math.sqrt
-end
-
--- Bit operations optimized for LuaJIT
-local lshift, rshift
-if isLuaJIT then
-    local bit = require("bit")
-    lshift = bit.lshift
-    rshift = bit.rshift
-else
-    -- Fallback to arithmetic operations for standard Lua
-    function lshift(a, b) return a * (2 ^ b) end
-    function rshift(a, b) return math.floor(a / (2 ^ b)) end
-end
-
--- Core runtime functions
-function ifExpressionValue(cond,then_,else_) if cond then return then_ else return else_ end end
-function ifExpression(cond,then_,else_) if cond then return then_() else return else_() end end
-function eps()              return 1e-18 end
-function pi()               return 3.1415926535897932384 end
-function random()           return math.random() end
-function irandom()          return math.floor(math.random() * 4294967296) end
-function clip(x,low,high)   if x > high then return high else if x < low then return low else return x end end end
-function real(x)            return x end
-function int(x)             if type(x) == "boolean" then x = x and 1 or 0 end local int_part,_ = math.modf(x) return int_part end
-function int16(x)           if type(x) == "boolean" then x = x and 1 or 0 end local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end
-function bool(x)            return x ~= 0 and x ~= false end
-function set(a, i, v)       a[i+1]=v end
-function get(a, i)          return a[i+1] end
-function intDiv(a, b)       return math.floor(a / b) end
 
 function Gates_gates_noteOn_type_alloc()
    local _ctx = {};
@@ -99,14 +40,14 @@ function Gates_gates_noteOn_type_alloc()
    _ctx.Gates_gates_state_ret_6 = 0.0
    _ctx.Gates_gates_state_ret_7 = 0.0
    local i_0 = 0
-   local temp = initializeArray(0, 8)
+   local temp_1 = initializeArray(0, 8)
    while (i_0 < 8) do
       do
-         temp[i_0 + 1] = 0
+         temp_1[i_0 + 1] = 0
          i_0 = (1 + i_0)
       end
    end
-   _ctx.vel = temp
+   _ctx.vel = temp_1
    return _ctx
 end
 
@@ -150,7 +91,7 @@ function Gates_default_type_alloc(_ctx)
 end
 
 function Gates_velToCV(vel)
-   return (0.007874 * real(vel))
+   return (0.007874 * (vel))
 end
 
 function Gates_gates_noteOn(_ctx, note, velocity)

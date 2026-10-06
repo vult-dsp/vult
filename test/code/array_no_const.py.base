@@ -1,0 +1,19 @@
+
+def Array_no_const_bar1(a):
+   a[0] = 1.0
+
+def Array_no_const_bob1(a):
+   _ = Array_no_const_bar1(a)
+
+def Array_no_const_bar2(a):
+   _ = foo(a)
+
+def Array_no_const_bob2(a):
+   _ = Array_no_const_bar2(a)
+
+def Array_no_const_bar3(a):
+   pass
+
+def Array_no_const_bob3(a):
+   _ = Array_no_const_bar3(a)
+

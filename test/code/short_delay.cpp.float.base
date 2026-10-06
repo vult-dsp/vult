@@ -11,22 +11,11 @@ void Short_delay_do_type_init(Short_delay_do_type& _ctx) {
    _ctx.write_pos = 0;
 }
 
-float Short_delay_soft(Short_delay_soft_type& _ctx, float x1) {
-   float o = 0.25f * (x1 + _ctx.x2 + _ctx.x3 + _ctx.x4);
-   float _t_temp_0 = x1;
-   float _t_temp_1 = _ctx.x2;
-   float _t_temp_2 = _ctx.x3;
-   _ctx.x2 = _t_temp_0;
-   _ctx.x3 = _t_temp_1;
-   _ctx.x4 = _t_temp_2;
-   return o;
-}
-
 float Short_delay_do(Short_delay_do_type& _ctx, float x, float time_in, float feedback_in) {
    float time = float_clip(time_in, 0.0f, 1.0f);
    float feedback = float_clip(feedback_in, 0.0f, 1.0f);
    float index_r = 22050.0f * time;
-   int32_t index_i = float_to_int(floorf(index_r));
+   int32_t index_i = float_to_int(index_r);
    int32_t delta = (- index_i) + _ctx.write_pos;
    int32_t read_pos = 0;
    if (delta < 0) {
@@ -37,9 +26,37 @@ float Short_delay_do(Short_delay_do_type& _ctx, float x, float time_in, float fe
    }
    float decimal = index_r + (- int_to_float(index_i));
    float x1 = _ctx.buffer[static_cast<uint32_t>(read_pos)];
-   float x2 = _ctx.buffer[static_cast<uint32_t>((1 + read_pos) % 22050)];
+   int32_t _wrap_temp_0 = 1 + read_pos;
+   float x2 = 0.0f;
+   if (_wrap_temp_0 >= 22050) {
+      if (_wrap_temp_0 == 22050) {
+         _wrap_temp_0 = 0;
+      }
+      else {
+         _wrap_temp_0 = _wrap_temp_0 % 22050;
+      }
+   }
+   else {
+      if (_wrap_temp_0 <= -22050) {
+         _wrap_temp_0 = _wrap_temp_0 % 22050;
+      }
+   }
+   x2 = _ctx.buffer[static_cast<uint32_t>(_wrap_temp_0)];
    float ret = x1 + decimal * (x2 + (- x1));
-   _ctx.write_pos = (1 + _ctx.write_pos) % 22050;
+   _ctx.write_pos = 1 + _ctx.write_pos;
+   if (_ctx.write_pos >= 22050) {
+      if (_ctx.write_pos == 22050) {
+         _ctx.write_pos = 0;
+      }
+      else {
+         _ctx.write_pos = _ctx.write_pos % 22050;
+      }
+   }
+   else {
+      if (_ctx.write_pos <= -22050) {
+         _ctx.write_pos = _ctx.write_pos % 22050;
+      }
+   }
    _ctx.buffer[static_cast<uint32_t>(_ctx.write_pos)] = Saturate_process(x + feedback * ret);
    return ret;
 }

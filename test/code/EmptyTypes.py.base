@@ -1,0 +1,31 @@
+
+class EmptyTypes_foo_type:
+    __slots__ = ['screen', 'settings']
+    def __init__(self, screen=None, settings=None):
+        self.screen = screen
+        self.settings = settings
+
+def EmptyTypes_foo_type_alloc():
+   _ctx = EmptyTypes_foo_type()
+   _ctx.screen = None
+   _ctx.settings = None
+   return _ctx
+
+
+def EmptyTypes_setSettings_type_alloc(_ctx):
+   return EmptyTypes_foo_type_alloc()
+
+def EmptyTypes_setScreen_type_alloc(_ctx):
+   return EmptyTypes_foo_type_alloc()
+
+def EmptyTypes_foo(_ctx):
+   _ = setSomething(_ctx.settings)
+   _ = drawSomething(_ctx.screen)
+
+
+def EmptyTypes_setSettings(_ctx, s):
+   _ctx.settings = s
+
+def EmptyTypes_setScreen(_ctx, s):
+   _ctx.settings = s
+

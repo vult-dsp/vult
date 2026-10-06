@@ -50,12 +50,9 @@ fun Context_simple_set(_ctx : struct Context_simple_change_type, x : real) : voi
 }
 
 fun Context_simple_foo(_ctx : struct Context_simple_foo_type, x : real) : void {
-   val v1 : bool;
-   (v1 : bool) = (Context_simple_change((_ctx : struct Context_simple_foo_type).inst_1e8dd, (x : real)) : bool);
-   val v2 : bool;
-   (v2 : bool) = (Context_simple_change((_ctx : struct Context_simple_foo_type).inst_2e8dd, (x : real)) : bool);
-   val v3 : bool;
-   (v3 : bool) = (Context_simple_change((_ctx : struct Context_simple_foo_type).c, (x : real)) : bool);
+   _ = (Context_simple_change((_ctx : struct Context_simple_foo_type).inst_1e8dd, (x : real)) : void);
+   _ = (Context_simple_change((_ctx : struct Context_simple_foo_type).inst_2e8dd, (x : real)) : void);
+   _ = (Context_simple_change((_ctx : struct Context_simple_foo_type).c, (x : real)) : void);
    _ = (Context_simple_reset((_ctx : struct Context_simple_foo_type).c) : void);
    _ = (Context_simple_set((_ctx : struct Context_simple_foo_type).c, 0.0) : void);
 }

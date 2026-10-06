@@ -1,0 +1,23 @@
+// Support module for companion_cross_module.vult: same-named generic and
+// companion as cmod_b.vult but returning different values.
+fun choose(x : 't) : 't {
+  return x;
+}
+and marker() : int {
+  return 11;
+}
+
+fun local_marker() : int {
+  // Unqualified calls inside the defining module must keep working
+  val unused = choose(1);
+  return marker();
+}
+
+// Only instantiated from the main test module, so companion calls there can
+// exercise the companion-before-parent fallback
+fun probe(x : 't) : 't {
+  return x;
+}
+and pval() : int {
+  return 1100;
+}

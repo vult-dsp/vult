@@ -1,0 +1,100 @@
+// Regression test: a generic function that calls a stateful generic function.
+// The instance of the inner generic must live in the specialized outer function's
+// context, and the outer function must receive its own context argument.
+
+fun inner(x : 't) : 't {
+  mem acc : 't;
+  acc = acc + x;
+  return acc;
+}
+
+fun outer(x : 't) : 't {
+  return inner(x);
+}
+
+fun test_nested_accumulation() : int {
+  // A single call site keeps its state across calls
+  val i = 0;
+  val r = 0.0;
+  while (i < 4) {
+    r = outer(0.5);
+    i = i + 1;
+  }
+  if (r == 2.0) {
+    return 100;
+  }
+  return -1;
+}
+
+fun test_nested_int() : int {
+  val i = 0;
+  val r = 0;
+  while (i < 3) {
+    r = outer(2);
+    i = i + 1;
+  }
+  if (r == 6) {
+    return 200;
+  }
+  return -2;
+}
+
+// Two levels of nesting with state at the innermost level
+fun middle(x : 't) : 't {
+  return inner(x);
+}
+
+fun outer2(x : 't) : 't {
+  return middle(x);
+}
+
+fun test_double_nested() : int {
+  val i = 0;
+  val r = 0.0;
+  while (i < 2) {
+    r = outer2(1.5);
+    i = i + 1;
+  }
+  if (r == 3.0) {
+    return 300;
+  }
+  return -3;
+}
+
+// State at both levels
+fun counter_outer(x : 't) : 't {
+  mem count : int;
+  count = count + 1;
+  return inner(x) + inner(x);
+}
+
+fun test_state_both_levels() : int {
+  // A single call site: each of the two inner call sites accumulates separately
+  // call 1: 1.0 + 1.0 = 2.0, call 2: 2.0 + 2.0 = 4.0
+  val i = 0;
+  val r1 = 0.0;
+  val r2 = 0.0;
+  while (i < 2) {
+    val r = counter_outer(1.0);
+    if (i == 0) { r1 = r; }
+    if (i == 1) { r2 = r; }
+    i = i + 1;
+  }
+  if (r1 == 2.0 && r2 == 4.0) {
+    return 400;
+  }
+  return -4;
+}
+
+fun main() : int {
+  val t1 = test_nested_accumulation();
+  val t2 = test_nested_int();
+  val t3 = test_double_nested();
+  val t4 = test_state_both_levels();
+
+  // All tests pass: 100 + 200 + 300 + 400 = 1000
+  if (t1 == 100 && t2 == 200 && t3 == 300 && t4 == 400) {
+    return 1000;
+  }
+  return t1 + t2 + t3 + t4;
+}

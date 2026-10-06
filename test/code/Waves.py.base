@@ -1,0 +1,50 @@
+import math
+
+# Runtime functions
+
+def float_to_int(i):
+    return int(math.floor(i))
+
+Waves_sineTable1_chan_0 = {}
+def Waves_sineTable1_samples():
+   return 256
+
+def Waves_sineTable1(channel, index):
+   if (channel == 0):
+      return Waves_sineTable1_chan_0[(index % 256)]
+   return 0.0
+
+
+Waves_sineTable2_c = {}
+def Waves_sineTable2_samples():
+   return 256
+
+def Waves_sineTable2_raw_c0(index):
+   return Waves_sineTable2_c[(index * 3)]
+
+def Waves_sineTable2_raw_c1(index):
+   return Waves_sineTable2_c[((index * 3) + 1)]
+
+def Waves_sineTable2_raw_c2(index):
+   return Waves_sineTable2_c[((index * 3) + 2)]
+
+def Waves_sineTable2(position):
+   value = (((0.0) if (position) < (0.0) else ((1.0) if (position) > (1.0) else (position))) * 255.0)
+   cell = ((0) if (float_to_int(value)) < (0) else ((254) if (float_to_int(value)) > (254) else (float_to_int(value))))
+   u = (value - float(cell))
+   index = (cell * 3)
+   return (Waves_sineTable2_c[index] + (u * (Waves_sineTable2_c[(index + 1)] + (Waves_sineTable2_c[(index + 2)] * u))))
+
+
+def Waves_test1():
+   n = Waves_sineTable1_samples()
+   i__1 = 0
+   while (i__1 < n):
+      _ = Waves_sineTable1(0, i__1)
+      i__1 = (1 + i__1)
+
+
+
+def Waves_test2():
+   _ = Waves_sineTable2(0.5)
+

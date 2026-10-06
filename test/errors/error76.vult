@@ -1,0 +1,4 @@
+// The samples of a wave are fractional values.
+external ext_wave(channel : int, index : int) : int @[wave(channels = 1, file = "missing.wav")];
+
+fun main(i : int) : int { return ext_wave(0, i); }

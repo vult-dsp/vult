@@ -1,0 +1,111 @@
+struct Strength_reduction_counter_type {
+   count : real;
+}
+
+struct Strength_reduction_pow_stateful_type {
+   inst_1d264 : struct Strength_reduction_counter_type;
+}
+
+struct Strength_reduction_pow_zero_stateful_type {
+   inst_1d204 : struct Strength_reduction_counter_type;
+}
+
+struct Strength_reduction_min_stateful_type {
+   inst_1d246 : struct Strength_reduction_counter_type;
+   inst_2d246 : struct Strength_reduction_counter_type;
+}
+
+struct Strength_reduction_sqrt_square_stateful_type {
+   inst_1d2a3 : struct Strength_reduction_counter_type;
+   inst_2d2a3 : struct Strength_reduction_counter_type;
+}
+
+fun Strength_reduction_counter_type_alloc() : struct Strength_reduction_counter_type {
+   val _ctx : struct Strength_reduction_counter_type;
+   (_ctx : struct Strength_reduction_counter_type).count = 0.0;
+   return (_ctx : struct Strength_reduction_counter_type);
+}
+
+fun Strength_reduction_pow_stateful_type_alloc() : struct Strength_reduction_pow_stateful_type {
+   val _ctx : struct Strength_reduction_pow_stateful_type;
+   (_ctx : struct Strength_reduction_pow_stateful_type).inst_1d264 = (Strength_reduction_counter_type_alloc() : struct Strength_reduction_counter_type);
+   return (_ctx : struct Strength_reduction_pow_stateful_type);
+}
+
+fun Strength_reduction_pow_zero_stateful_type_alloc() : struct Strength_reduction_pow_zero_stateful_type {
+   val _ctx : struct Strength_reduction_pow_zero_stateful_type;
+   (_ctx : struct Strength_reduction_pow_zero_stateful_type).inst_1d204 = (Strength_reduction_counter_type_alloc() : struct Strength_reduction_counter_type);
+   return (_ctx : struct Strength_reduction_pow_zero_stateful_type);
+}
+
+fun Strength_reduction_min_stateful_type_alloc() : struct Strength_reduction_min_stateful_type {
+   val _ctx : struct Strength_reduction_min_stateful_type;
+   (_ctx : struct Strength_reduction_min_stateful_type).inst_1d246 = (Strength_reduction_counter_type_alloc() : struct Strength_reduction_counter_type);
+   (_ctx : struct Strength_reduction_min_stateful_type).inst_2d246 = (Strength_reduction_counter_type_alloc() : struct Strength_reduction_counter_type);
+   return (_ctx : struct Strength_reduction_min_stateful_type);
+}
+
+fun Strength_reduction_sqrt_square_stateful_type_alloc() : struct Strength_reduction_sqrt_square_stateful_type {
+   val _ctx : struct Strength_reduction_sqrt_square_stateful_type;
+   (_ctx : struct Strength_reduction_sqrt_square_stateful_type).inst_1d2a3 = (Strength_reduction_counter_type_alloc() : struct Strength_reduction_counter_type);
+   (_ctx : struct Strength_reduction_sqrt_square_stateful_type).inst_2d2a3 = (Strength_reduction_counter_type_alloc() : struct Strength_reduction_counter_type);
+   return (_ctx : struct Strength_reduction_sqrt_square_stateful_type);
+}
+
+fun Strength_reduction_mul_pow2(const x : int) : int {
+   return ((x : int) << 3);
+}
+
+fun Strength_reduction_div_pow2(const x : int) : int {
+   return ((x : int) >> 2);
+}
+
+fun Strength_reduction_pow_two(const x : real) : real {
+   return ((x : real) * (x : real));
+}
+
+fun Strength_reduction_pow_three(const x : real) : real {
+   return ((x : real) * ((x : real) * (x : real)));
+}
+
+fun Strength_reduction_pow_four(const x : real) : real {
+   return ((x : real) * ((x : real) * ((x : real) * (x : real))));
+}
+
+fun Strength_reduction_pow_half(const x : real) : real {
+   return (sqrt((x : real)) : real);
+}
+
+fun Strength_reduction_pow_neg_one(const x : real) : real {
+   return (1.0 / (x : real));
+}
+
+fun Strength_reduction_pow_zero(const x : real) : real {
+   return 1.0;
+}
+
+fun Strength_reduction_sqrt_square(const x : real) : real {
+   return (abs((x : real)) : real);
+}
+
+fun Strength_reduction_counter(_ctx : struct Strength_reduction_counter_type) : real {
+   (_ctx : struct Strength_reduction_counter_type).count = (1.0 + (_ctx : struct Strength_reduction_counter_type).count);
+   return (_ctx : struct Strength_reduction_counter_type).count;
+}
+
+fun Strength_reduction_pow_stateful(_ctx : struct Strength_reduction_pow_stateful_type) : real {
+   return (pow((Strength_reduction_counter((_ctx : struct Strength_reduction_pow_stateful_type).inst_1d264) : real), 2.0) : real);
+}
+
+fun Strength_reduction_pow_zero_stateful(_ctx : struct Strength_reduction_pow_zero_stateful_type) : real {
+   return (pow((Strength_reduction_counter((_ctx : struct Strength_reduction_pow_zero_stateful_type).inst_1d204) : real), 0.0) : real);
+}
+
+fun Strength_reduction_min_stateful(_ctx : struct Strength_reduction_min_stateful_type) : real {
+   return (min((Strength_reduction_counter((_ctx : struct Strength_reduction_min_stateful_type).inst_1d246) : real), (Strength_reduction_counter((_ctx : struct Strength_reduction_min_stateful_type).inst_2d246) : real)) : real);
+}
+
+fun Strength_reduction_sqrt_square_stateful(_ctx : struct Strength_reduction_sqrt_square_stateful_type) : real {
+   return (sqrt(((Strength_reduction_counter((_ctx : struct Strength_reduction_sqrt_square_stateful_type).inst_1d2a3) : real) * (Strength_reduction_counter((_ctx : struct Strength_reduction_sqrt_square_stateful_type).inst_2d2a3) : real))) : real);
+}
+

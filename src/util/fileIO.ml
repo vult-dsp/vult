@@ -40,15 +40,12 @@ let read_fun =
           while true do
             let c = input_char file in
             Buffer.add_char buffer c
-          done;
+          done ;
           None
-        with
-        | _ ->
-          close_in file;
-          Some (Buffer.contents buffer))
-      else
-        None)
-
+        with _ ->
+          close_in file ;
+          Some (Buffer.contents buffer) )
+      else None )
 
 (** ref holding the read_bytes file function.
     The default function is the native. *)
@@ -61,15 +58,10 @@ let read_bytes_fun =
           while true do
             let c = input_char file in
             Buffer.add_char buffer c
-          done;
+          done ;
           None
-        with
-        | End_of_file ->
-          close_in file;
-          Some buffer)
-      else
-        None)
-
+        with End_of_file -> close_in file ; Some buffer )
+      else None )
 
 (** ref holding the read file function.
     The default function is the native. *)
@@ -77,12 +69,8 @@ let write_fun =
   ref (fun path text ->
       try
         let file = open_out path in
-        output_string file text;
-        close_out file;
-        true
-      with
-      | _ -> false)
-
+        output_string file text ; close_out file ; true
+      with _ -> false )
 
 (** ref holding the write bytes file function.
     The default function is the native. *)
@@ -90,12 +78,8 @@ let write_bytes_fun =
   ref (fun path bytes ->
       try
         let file = open_out_bin path in
-        output_string file bytes;
-        close_out file;
-        true
-      with
-      | _ -> false)
-
+        output_string file bytes ; close_out file ; true
+      with _ -> false )
 
 (** ref holding the file exists.
     The default function is the native. *)
@@ -144,26 +128,18 @@ let exists (path : string) : bool = !exists_fun path
 let cwd () : string = !cwd_fun ()
 
 let findFile (includes : string list) (filename : string) : string option =
-  if exists filename then
-    Some filename
+  if exists filename then Some filename
   else
     let rec loop inc =
       match inc with
-      | [] -> None
+      | [] ->
+          None
       | h :: t ->
-        let fullname = Filename.concat h filename in
-        if exists fullname then
-          Some fullname
-        else
-          loop t
+          let fullname = Filename.concat h filename in
+          if exists fullname then Some fullname else loop t
     in
     loop includes
 
-
 let writeIfDifferent (path : string) (text : string) : bool =
-  if exists path then
-    match read path with
-    | Some current when compare current text = 0 -> true
-    | _ -> write path text
-  else
-    write path text
+  if exists path then match read path with Some current when compare current text = 0 -> true | _ -> write path text
+  else write path text

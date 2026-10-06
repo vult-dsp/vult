@@ -1,0 +1,4 @@
+Generic functions cannot be called in constant expressions
+
+constant c = twice(3);
+             ^^^^^

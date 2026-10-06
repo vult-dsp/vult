@@ -1,0 +1,71 @@
+
+package vult.com.datatypes;
+
+import java.util.Arrays;
+import java.util.Random;
+import vult.com.external.*;
+
+public class DataTypes {
+
+public static class DataTypes_point {
+   public float x;
+   public float y;
+
+   public DataTypes_point() {
+      this.x = 0.0f;
+      this.y = 0.0f;
+   }
+   public DataTypes_point(float x, float y) {
+      this.x = x;
+      this.y = y;
+   }}public static class DataTypes_test2_type {
+   public DataTypes_point p2;
+   public DataTypes_point result;
+
+   public DataTypes_test2_type() {
+      this.p2 = new DataTypes_point();
+      this.result = new DataTypes_point();
+   }
+   public DataTypes_test2_type(DataTypes_point p2, DataTypes_point result) {
+      this.p2 = p2;
+      this.result = result;
+   }}private DataTypes_point DataTypes_point_alloc() {
+   DataTypes_point _ctx = new DataTypes_point();
+   _ctx.x = 0.0f;
+   _ctx.y = 0.0f;
+   return _ctx;
+}
+
+private DataTypes_test2_type DataTypes_test2_type_alloc() {
+   DataTypes_test2_type _ctx = new DataTypes_test2_type();
+   _ctx.p2 = DataTypes_point_alloc();
+   _ctx.result = DataTypes_point_alloc();
+   return _ctx;
+}
+
+private DataTypes_point DataTypes_addPoint1(DataTypes_point p1, DataTypes_point p2) {
+   DataTypes_point p3 = new DataTypes_point();
+   p3.x = (p1.x + p2.x);
+   p3.y = (p1.y + p2.y);
+   return p3;
+}
+
+private void DataTypes_addPoint2(DataTypes_point p1, DataTypes_point p2, DataTypes_point result) {
+   result.x = (p1.x + p2.x);
+   result.y = (p1.y + p2.y);
+}
+
+private void DataTypes_test1() {
+   DataTypes_point p1 = new DataTypes_point();
+   DataTypes_point p2 = new DataTypes_point();
+   DataTypes_point result = DataTypes_addPoint1(p1, p2);
+   DataTypes_addPoint2(p1, p2, result);
+}
+
+private void DataTypes_test2(DataTypes_test2_type _ctx) {
+   DataTypes_point p1 = new DataTypes_point();
+   _ctx.result = DataTypes_addPoint1(p1, _ctx.p2);
+}
+
+
+}

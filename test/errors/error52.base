@@ -1,0 +1,4 @@
+This expression has type 'real' but 'int' was expected
+fun main() : int {
+  return ignore_constant(1.5, 7);
+                         ^^^

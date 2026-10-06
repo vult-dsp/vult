@@ -1,0 +1,56 @@
+
+
+function Tuple_variables_pair_type_alloc()
+   local _ctx = {};
+   _ctx.Tuple_variables_pair_ret_0 = 0
+   _ctx.Tuple_variables_pair_ret_1 = 0
+   return _ctx
+end
+
+function Tuple_variables_split_type_alloc()
+   local _ctx = {};
+   _ctx.inst_14623 = Tuple_variables_pair_type_alloc()
+   return _ctx
+end
+
+function Tuple_variables_main_type_alloc()
+   local _ctx = {};
+   _ctx.inst_1238e = Tuple_variables_split_type_alloc()
+   _ctx.inst_2238e = Tuple_variables_split_type_alloc()
+   return _ctx
+end
+
+function Tuple_variables_pair(_ctx, x)
+   _ctx.Tuple_variables_pair_ret_0 = x
+   _ctx.Tuple_variables_pair_ret_1 = (10 * x)
+   return 
+end
+
+function Tuple_variables_split(_ctx, c)
+   local t = { 1, 2 }
+   local a = t[1]
+   local b = t[2]
+   Tuple_variables_pair(_ctx.inst_14623, 3)
+   local u = { _ctx.inst_14623.Tuple_variables_pair_ret_0, _ctx.inst_14623.Tuple_variables_pair_ret_1 }
+   local x = u[1]
+   local y = u[2]
+   local q = 0
+   local p = 0
+   if c then
+      do
+         p = 4
+         q = 5
+      end
+   else
+      do
+         p = 6
+         q = 7
+      end
+   end
+   return (a + (b + (p + (q + (x + y)))))
+end
+
+function Tuple_variables_main(_ctx)
+   return ((100 * Tuple_variables_split(_ctx.inst_1238e, true)) + Tuple_variables_split(_ctx.inst_2238e, false))
+end
+

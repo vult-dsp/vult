@@ -27,15 +27,15 @@ end
 
 function Array_instance_foo_type_alloc()
    i_0 = Int32(0)
-   temp = nothing
+   temp_1 = nothing
    _ctx = Array_instance_foo_type()
    while (i_0 < Int32(2))
       begin
-         @inbounds temp[i_0 + 1] = Array_instance_counter_type_alloc()
+         @inbounds temp_1[i_0 + 1] = Array_instance_counter_type_alloc()
          i_0 = (Int32(1) + i_0)
       end
    end
-   _ctx.x = temp
+   _ctx.x = temp_1
    return _ctx
 end
 

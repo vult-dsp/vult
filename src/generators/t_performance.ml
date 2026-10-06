@@ -34,19 +34,9 @@ let implPre (args : Util.Args.args) : Pla.t =
 #include <stdio.h>
 |}
 
-
 let implPost (args : Util.Args.args) : Pla.t =
-  let real =
-    if args.real = Fixed then
-      "fx"
-    else
-      "fl"
-  in
-  let module_name =
-    match args.files with
-    | Util.Args.File s :: _ -> Pparser.Parse.moduleName s
-    | _ -> "Top"
-  in
+  let real = if args.real = Fixed then "fx" else "fl" in
+  let module_name = Common.moduleName args in
   {%pla|
 int main(void)
 {
@@ -73,17 +63,11 @@ int main(void)
 }
 |}
 
-
 let generateC (args : Util.Args.args) : (Pla.t * Pla.t) * (Pla.t * Pla.t) =
-  (implPre args, implPost args), (Pla.unit, Pla.unit)
-
+  ((implPre args, implPost args), (Pla.unit, Pla.unit))
 
 let luaPost (args : Util.Args.args) =
-  let module_name =
-    match args.files with
-    | Util.Args.File s :: _ -> Pparser.Parse.moduleName s
-    | _ -> "Top"
-  in
+  let module_name = Common.moduleName args in
   {%pla|
      -- Performance measurement with LuaJIT detection
      local engine = isLuaJIT and "LuaJIT" or "Lua"
@@ -112,15 +96,10 @@ let luaPost (args : Util.Args.args) =
      print(string.format("<#module_name#s>\t%s\t%.2f ms/s", engine, finish / time))
      |}
 
-
-let generateLua (args : Util.Args.args) = Pla.unit, luaPost args
+let generateLua (args : Util.Args.args) = (Pla.unit, luaPost args)
 
 let jsPostWithLabel (args : Util.Args.args) (label : string) =
-  let module_name =
-    match args.files with
-    | Util.Args.File s :: _ -> Pparser.Parse.moduleName s
-    | _ -> "Top"
-  in
+  let module_name = Common.moduleName args in
   {%pla|
 var data = this.<#module_name#s>_process_type_alloc();
 this.<#module_name#s>_default(data);
@@ -141,21 +120,16 @@ var finish = Number(process.hrtime.bigint() - start) / 1000000 / time;
 console.log(`<#module_name#s>\t<#label#s>\t${finish.toFixed(2)} ms/s`)
 |}
 
-
 let jsPost (args : Util.Args.args) = jsPostWithLabel args "Js"
 
 let jsBunPost (args : Util.Args.args) = jsPostWithLabel args "Bun"
 
-let generateJs (args : Util.Args.args) = Pla.unit, jsPost args
+let generateJs (args : Util.Args.args) = (Pla.unit, jsPost args)
 
-let generateJsBun (args : Util.Args.args) = Pla.unit, jsBunPost args
+let generateJsBun (args : Util.Args.args) = (Pla.unit, jsBunPost args)
 
 let juliaPost (args : Util.Args.args) =
-  let module_name =
-    match args.files with
-    | Util.Args.File s :: _ -> Pparser.Parse.moduleName s
-    | _ -> "Top"
-  in
+  let module_name = Common.moduleName args in
   {%pla|
 # Performance measurement for <#module_name#s>
 function measure_performance()
@@ -199,19 +173,16 @@ end
 measure_performance()
 |}
 
-
-let generateJulia (args : Util.Args.args) = Pla.unit, juliaPost args
+let generateJulia (args : Util.Args.args) = (Pla.unit, juliaPost args)
 
 let javaPost (args : Util.Args.args) =
-  let module_name =
-    match args.files with
-    | Util.Args.File s :: _ -> Pparser.Parse.moduleName s
-    | _ -> "Top"
-  in
+  let module_name = Common.moduleName args in
   let class_name =
     match args.output with
-    | Some output -> String.capitalize_ascii (Filename.basename (Filename.remove_extension output))
-    | None -> "VultCode"
+    | Some output ->
+        String.capitalize_ascii (Filename.basename (Filename.remove_extension output))
+    | None ->
+        "VultCode"
   in
   {%pla|
 public class <#module_name#s>Perf {
@@ -250,5 +221,87 @@ public class <#module_name#s>Perf {
 }
 |}
 
+let generateJava (args : Util.Args.args) = (Pla.unit, javaPost args)
 
-let generateJava (args : Util.Args.args) = Pla.unit, javaPost args
+let pythonPost (args : Util.Args.args) =
+  let module_name = Common.moduleName args in
+  {%pla|
+# Performance measurement for <#module_name#s>
+import time
+
+def measure_performance():
+    # Initialize the process state
+    data = <#module_name#s>_process_type_alloc()
+    <#module_name#s>_default(data)
+
+    # Setup timing parameters
+    time_seconds = <#time#f>
+    sample_rate = 44100
+    samples = int(sample_rate * time_seconds)
+
+    # Warm up - run a few iterations
+    for i in range(1000):
+        <#module_name#s>_process(data, 0.0)
+
+    # Actual performance measurement
+    start_time = time.perf_counter()
+    acc = 0.0
+    ramp = 0.0
+
+    for i in range(samples):
+        ramp += 0.001
+        if ramp > 1.0:
+            ramp = ramp - 1.0
+        acc += <#module_name#s>_process(data, ramp)
+
+    elapsed_seconds = time.perf_counter() - start_time
+    ms_per_second = (elapsed_seconds / time_seconds) * 1000.0
+
+    print(f"<#module_name#s>\tPython\t{ms_per_second:.2f} ms/s")
+
+    # Return accumulated value to prevent dead code elimination
+    return acc
+
+# Run the performance measurement
+measure_performance()
+|}
+
+let generatePython (args : Util.Args.args) = (Pla.unit, pythonPost args)
+
+let zigPost (args : Util.Args.args) =
+  let module_name = Common.moduleName args in
+  {%pla|
+pub fn main() void {
+    var data: <#module_name#s>_process_type = undefined;
+    <#module_name#s>_process_type_init(&data);
+    <#module_name#s>_default(&data);
+
+    const total_time: f64 = <#time#f>;
+    var samples: i32 = @intFromFloat(44100.0 * total_time);
+
+    // Warm up
+    var warm: i32 = 0;
+    while (warm < 1000) : (warm += 1) {
+        _ = <#module_name#s>_process(&data, 0.0);
+    }
+
+    const start = now_ns();
+    var ramp: f32 = 0.0;
+    var acc: f32 = 0.0;
+    while (samples > 0) : (samples -= 1) {
+        ramp += 0.001;
+        if (ramp > 1.0) {
+            ramp = ramp - 1.0;
+        }
+        acc += <#module_name#s>_process(&data, ramp);
+    }
+    const elapsed_ns = now_ns() - start;
+    const elapsed_s = @as(f64, @floatFromInt(elapsed_ns)) / 1_000_000_000.0;
+    const ms_per_s = (elapsed_s / total_time) * 1000.0;
+
+    std.mem.doNotOptimizeAway(acc);
+    printResult("<#module_name#s>", ms_per_s);
+}
+|}
+
+let generateZig (args : Util.Args.args) = (Pla.unit, zigPost args)

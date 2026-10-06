@@ -1,0 +1,4 @@
+// Tables store fitted coefficients, so the result has to be real or fix16.
+fun quantize(x : real) : int @[table(min = 0.0, max = 1.0, size = 16)] {
+  return int(x * 10.0);
+}

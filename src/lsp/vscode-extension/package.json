@@ -29,7 +29,7 @@
         "vult.languageServer.path": {
           "type": "string",
           "default": "",
-          "description": "Path to Vult language server executable"
+          "description": "Path to the vult compiler executable, launched as the language server with -lsp"
         },
         "vult.trace.server": {
           "type": "string",

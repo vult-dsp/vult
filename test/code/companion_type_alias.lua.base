@@ -1,0 +1,34 @@
+
+
+function Companion_type_alias_foo_type_alloc()
+   local _ctx = {};
+   _ctx.acc = 0
+   return _ctx
+end
+
+function Companion_type_alias_bar_type_alloc(_ctx)
+   return Companion_type_alias_foo_type_alloc()
+end
+
+function Companion_type_alias_main_type_alloc()
+   local _ctx = {};
+   _ctx.inst_1cad1 = Companion_type_alias_foo_type_alloc()
+   _ctx.inst_2cad1 = Companion_type_alias_foo_type_alloc()
+   _ctx.s = Companion_type_alias_foo_type_alloc()
+   return _ctx
+end
+
+function Companion_type_alias_foo(_ctx, x)
+   _ctx.acc = (x + _ctx.acc)
+   return _ctx.acc
+end
+
+function Companion_type_alias_bar(_ctx)
+   return _ctx.acc
+end
+
+function Companion_type_alias_main(_ctx)
+   local a = Companion_type_alias_foo(_ctx.inst_1cad1, 1)
+   return (a + Companion_type_alias_foo(_ctx.inst_2cad1, 2))
+end
+

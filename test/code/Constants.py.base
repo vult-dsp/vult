@@ -1,0 +1,7 @@
+
+Constants_str = {}
+Constants_num = {}
+Constants_some_array = {}
+def Constants_foo():
+   pass
+

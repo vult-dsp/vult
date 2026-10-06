@@ -1,0 +1,33 @@
+// Stores through a member of a mem variable, a nested record and an array element.
+// Each of these is compiled by loading the container and mutating it in place.
+
+type point { val x : int; val y : int; }
+type wrapper { val inner : point; }
+
+fun store_in_mem() : int {
+  mem p : point;
+  p.x = 3;
+  p.y = 4;
+  return p.x + p.y;
+}
+
+fun store_nested() : int {
+  mem w : wrapper;
+  w.inner.x = 5;
+  w.inner.y = 6;
+  return w.inner.x + w.inner.y;
+}
+
+fun store_in_array() : int {
+  mem ps : array(point, 3);
+  ps[0].x = 7;
+  ps[2].y = 8;
+  return ps[0].x + ps[2].y;
+}
+
+fun main() : int {
+  if (store_in_mem() <> 7) return -1;
+  if (store_nested() <> 11) return -2;
+  if (store_in_array() <> 15) return -3;
+  return 600;
+}

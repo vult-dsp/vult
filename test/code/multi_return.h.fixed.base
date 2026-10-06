@@ -3,6 +3,7 @@
 #define MULTI_RETURN_H
 
 #include "vultin.hpp"
+#include "vultin_tuple.hpp"
 #include "multi_return.tables.h"
 
 typedef struct Multi_return_foo_type {

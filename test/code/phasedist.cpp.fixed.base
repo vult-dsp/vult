@@ -26,9 +26,6 @@ fix16_t Phasedist_phasor(Phasedist_phasor_type& _ctx, fix16_t pitch, bool reset)
    if (_ctx.phase > 0x10000 /* 1.000000 */) {
       _ctx.phase = -0x10000 /* -1.000000 */ + _ctx.phase;
    }
-   else {
-      _ctx.phase = _ctx.phase;
-   }
    return _ctx.phase;
 }
 

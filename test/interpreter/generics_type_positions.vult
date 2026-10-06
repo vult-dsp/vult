@@ -1,0 +1,95 @@
+// Regression test: type parameters must resolve correctly regardless of their
+// position in the argument list. The substitution used for type intrinsics and
+// body annotations must bind each type parameter to the type of the argument
+// that actually uses it, not to the argument at the same position.
+
+// 't is the second argument
+fun max_of(a : int, x : 't) : 't {
+  return typemax('t);
+}
+
+fun min_of(a : int, x : 't) : 't {
+  return typemin('t);
+}
+
+fun default_of(a : int, x : 't) : 't {
+  return typedefault('t);
+}
+
+fun test_intrinsics_second_position() : int {
+  val rmax = max_of(1, 0.5);       // 't = real
+  val rmin = min_of(1, 0.5);
+  val rdef = default_of(1, 0.5);
+
+  if (rmax > 1.0e30 && rmin < -1.0e30 && rdef == 0.0) {
+    return 100;
+  }
+  return -1;
+}
+
+// mem declared with 't when 't is not the first argument
+fun track(a : int, x : 't) : 't {
+  mem acc : 't;
+  acc = acc + x;
+  return acc;
+}
+
+fun test_mem_second_position() : int {
+  val i = 0;
+  val r = 0.0;
+  while (i < 3) {
+    r = track(1, 0.5);
+    i = i + 1;
+  }
+  if (r == 1.5) {
+    return 200;
+  }
+  return -2;
+}
+
+// Two type parameters in mixed positions
+fun second_max(x : 't, n : int, y : 'u) : 'u {
+  mem last_x : 't;
+  last_x = x;
+  return typemax('u);
+}
+
+fun test_two_type_params() : int {
+  val r = second_max(1, 2, 0.5);  // 't = int, 'u = real
+  val i = second_max(0.5, 2, 3);  // 't = real, 'u = int
+
+  if (r > 1.0e30 && i > 1000000) {
+    return 300;
+  }
+  return -3;
+}
+
+// Type parameter used in several arguments and the return type
+fun clip_like(low : 't, a : int, value : 't) : 't {
+  mem lowest : 't;
+  lowest = low;
+  if (value > lowest) { return value; }
+  return lowest;
+}
+
+fun test_shared_param() : int {
+  val r = clip_like(0.25, 7, 0.75);
+  val s = clip_like(0.25, 7, 0.1);
+  if (r == 0.75 && s == 0.25) {
+    return 400;
+  }
+  return -4;
+}
+
+fun main() : int {
+  val t1 = test_intrinsics_second_position();
+  val t2 = test_mem_second_position();
+  val t3 = test_two_type_params();
+  val t4 = test_shared_param();
+
+  // All tests pass: 100 + 200 + 300 + 400 = 1000
+  if (t1 == 100 && t2 == 200 && t3 == 300 && t4 == 400) {
+    return 1000;
+  }
+  return t1 + t2 + t3 + t4;
+}

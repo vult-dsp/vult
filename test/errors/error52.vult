@@ -1,0 +1,9 @@
+// A real literal passed to an int constant generic parameter must be rejected
+// even when the function body does not use the parameter.
+fun ignore_constant('n : int, x : int) : int {
+  return x;
+}
+
+fun main() : int {
+  return ignore_constant(1.5, 7);
+}

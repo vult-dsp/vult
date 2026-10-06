@@ -1,0 +1,186 @@
+// Tests for value-based specialization of constant parameters
+//
+// When ALL constant params are compile-time literals -> specialized version with constants inlined
+// When ANY constant param is a variable -> non-specialized version with all params as arguments
+
+// =============================================================================
+// Basic constant specialization
+// =============================================================================
+
+// Generic function with constant parameter
+fun add_n('n : int, x : int) : int {
+   return n + x;
+}
+
+// Specialized: n=5 inlined
+fun test_specialized_5() : int {
+   return add_n(5, 10);  // 5 + 10 = 15
+}
+
+// Specialized: n=100 inlined (different specialization)
+fun test_specialized_100() : int {
+   return add_n(100, 10);  // 100 + 10 = 110
+}
+
+// Non-specialized: variable argument
+fun test_nonspec(n : int) : int {
+   return add_n(n, 10);  // n + 10
+}
+
+// =============================================================================
+// Multiple constant parameters
+// =============================================================================
+
+fun weighted('w1 : real, 'w2 : real, x : real, y : real) : real {
+   return w1 * x + w2 * y;
+}
+
+// Specialized: w1=0.3, w2=0.7 inlined
+fun test_weighted_spec() : real {
+   return weighted(0.3, 0.7, 10.0, 20.0);  // 0.3*10 + 0.7*20 = 17
+}
+
+// Non-specialized: first weight is variable
+fun test_weighted_nonspec(w : real) : real {
+   return weighted(w, 0.7, 10.0, 20.0);
+}
+
+// =============================================================================
+// Interleaved constant and regular parameters
+// =============================================================================
+
+fun interleaved(x : real, 'a : real, y : real, 'b : real) : real {
+   return a * x + b * y;
+}
+
+// Specialized: a=2.0, b=3.0 inlined
+fun test_interleaved_spec() : real {
+   return interleaved(5.0, 2.0, 4.0, 3.0);  // 2*5 + 3*4 = 22
+}
+
+// Non-specialized: 'a is variable
+fun test_interleaved_nonspec(a : real) : real {
+   return interleaved(5.0, a, 4.0, 3.0);
+}
+
+// =============================================================================
+// Stateful function with constant parameter
+// =============================================================================
+
+fun accumulate('scale : real, x : real) : real {
+   mem sum : real;
+   sum = sum + scale * x;
+   return sum;
+}
+
+// Specialized: scale=2.0 inlined
+fun test_accumulate_spec() : real {
+   return accumulate(2.0, 5.0);  // sum = 0 + 2*5 = 10
+}
+
+// Non-specialized: scale is variable
+fun test_accumulate_nonspec(s : real, x : real) : real {
+   return accumulate(s, x);
+}
+
+// =============================================================================
+// Constant parameter with type generic
+// =============================================================================
+
+fun scale_typed('factor : int, x : 't) : 't {
+   mem last : 't;
+   last = x;
+   return x;
+}
+
+// Specialized for int type with factor=2
+fun test_typed_int() : int {
+   return scale_typed(2, 42);
+}
+
+// Specialized for real type with factor=2
+fun test_typed_real() : real {
+   return scale_typed(2, 3.14);
+}
+
+// =============================================================================
+// Array mutation with constant parameter (Bug fix: const qualifier mismatch)
+// =============================================================================
+
+// Generic function that writes to an array parameter
+// When specialized, the caller must also receive a non-const array reference
+fun setArrayElement(m : array(real, 4), 'index : int, value : real) {
+   m[index] = value;
+}
+
+// This function passes an array to a specialized generic function that mutates it.
+// Bug: Previously generated caller with const array, causing C++ compilation error:
+//   "cannot bind non-const reference to const"
+fun test_array_mutation(m : array(real, 4), x : array(real, 2)) {
+   setArrayElement(m, 0, x[0]);
+   setArrayElement(m, 1, x[1]);
+}
+
+// Matrix-style array mutation with row/col specialization
+fun setMatrix2(m : array(real, 4), 'row : int, 'col : int, value : real) {
+   m[col * 2 + row] = value;
+}
+
+fun getMatrix2(m : array(real, 4), 'row : int, 'col : int) : real {
+   return m[col * 2 + row];
+}
+
+// Tests multiple specialized calls with different constant values
+fun test_matrix_mutation(m : array(real, 4), x : array(real, 2)) {
+   setMatrix2(m, 0, 0, x[0]);  // Sets m[0]
+   setMatrix2(m, 0, 1, x[1]);  // Sets m[2]
+}
+
+// =============================================================================
+// Chain of function calls with variable args to specialized generic
+// Tests that const propagation works through multiple levels of function calls
+// =============================================================================
+
+// This function calls setMatrix2 with VARIABLE row/col (non-specialized)
+// Its m parameter should be marked non-const because it mutates via setMatrix2
+fun eliminate_row(m : array(real, 4), row : int, col : int) {
+   val k = getMatrix2(m, row, col);
+   setMatrix2(m, row, col, k + 1.0);
+}
+
+// This function calls eliminate_row (a regular function)
+// Its m parameter should also be marked non-const (propagated from eliminate_row)
+fun process_matrix(m : array(real, 4)) {
+   val row = 0;
+   while (row < 2) {
+      eliminate_row(m, row, 0);
+      row = row + 1;
+   }
+}
+
+// =============================================================================
+// Main function to exercise all test functions
+// =============================================================================
+
+fun main() {
+   val r1 = test_specialized_5();
+   val r2 = test_specialized_100();
+   val r3 = test_nonspec(50);
+   val r4 = test_weighted_spec();
+   val r5 = test_weighted_nonspec(0.5);
+   val r6 = test_interleaved_spec();
+   val r7 = test_interleaved_nonspec(1.5);
+   val r8 = test_accumulate_spec();
+   val r9 = test_accumulate_nonspec(3.0, 4.0);
+   val r10 = test_typed_int();
+   val r11 = test_typed_real();
+   // Test array mutation with specialized generic functions
+   val arr : array(real, 4);
+   val inputs : array(real, 2);
+   inputs[0] = 1.0;
+   inputs[1] = 2.0;
+   test_array_mutation(arr, inputs);
+   test_matrix_mutation(arr, inputs);
+   // Test chain of function calls (process_matrix -> eliminate_row -> setMatrix2)
+   process_matrix(arr);
+}

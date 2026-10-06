@@ -4,6 +4,7 @@
  (name util)
  (public_name vult.util)
  (modules
+  Binarize
   Components
   Error
   FileIO
@@ -11,6 +12,7 @@
   Loc
   Args
   Maps
+  Names
   Fitting
   WaveFile
   Profile

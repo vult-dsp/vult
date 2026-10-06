@@ -1,0 +1,44 @@
+// Parallel assignment must read every source before writing any destination.
+// Comparing whole access paths is not enough: writing 'q' also destroys 'q.a',
+// so a destination conflicts with any source it may overlap.
+type point {
+   val a : real;
+   val b : real;
+}
+
+// 'y' must keep the old 'q.a', not the 'a' of the record copied over 'q'.
+fun destination_covers_source(p : point) : real {
+   val q : point;
+   q.a = 3.0;
+   q.b = 4.0;
+   val y = 0.0;
+   q, y = p, q.a;
+   return ((y * 100.0) + (q.a * 10.0)) + q.b;
+}
+
+// Writing 'q.a' first would change the value the other copies still have to
+// read, while 'q.b' is disjoint and can be scheduled freely.
+fun destination_overlaps_member() : real {
+   val q : point;
+   q.a = 3.0;
+   q.b = 4.0;
+   val u = 0.0;
+   val v = 0.0;
+   q.a, u, v = 9.0, q.a, q.b;
+   return (((q.a * 100.0) + (u * 10.0)) + v);
+}
+
+// Disjoint members of the same record still form a cycle and must be spilled.
+fun swap_members() : real {
+   val q : point;
+   q.a = 1.0;
+   q.b = 2.0;
+   q.a, q.b = q.b, q.a;
+   return (q.a * 10.0) + q.b;
+}
+
+fun main() : int {
+   val p = point { a = 1.0, b = 2.0 };
+   val total = destination_covers_source(p) + destination_overlaps_member();
+   return int(total + swap_members());
+}

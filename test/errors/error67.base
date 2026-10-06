@@ -1,0 +1,4 @@
+The type intrinsic 'typemax' cannot be used in constant expressions
+// Type intrinsics need a generic type parameter to resolve.
+constant c = typemax('t) + 1;
+             ^^^^^^^

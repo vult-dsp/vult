@@ -1,0 +1,13 @@
+// Control-rate objects: one inlet per argument, the left inlet triggers, one outlet
+// per output. Includes a string argument and a string output.
+fun scale(x:real, k:real, offset:real) @[pd] {
+  mem last;
+  last = x * k + offset;
+  return last, last * 0.5;
+}
+
+fun tagger(value:real, prefix:string) @[pd(name = "vtag")] {
+  mem count = count + 1;
+  val out = if value > 0.5 then prefix else "low";
+  return out, count;
+}

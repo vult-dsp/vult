@@ -1,0 +1,99 @@
+// Literal folding performed by the Simplify, Builtin and Cast passes.
+
+// integer arithmetic
+fun int_arith() {
+   return 3 + 4 * 5 - 6 / 2;
+}
+
+// integer bitwise, shift and modulo operators
+fun int_shift() {
+   return (1 << 4) + (256 >> 2);
+}
+
+fun int_bitwise() {
+   return (12 & 10) + (12 | 3) + (12 ^ 10);
+}
+
+fun int_mod() {
+   return 7 % 3;
+}
+
+// division and modulo by zero, and shifts of negative values, are not folded:
+// their result is left to the target language
+fun int_not_folded() {
+   return (1 / 0) + (7 % 0) + ((-8) >> 1);
+}
+
+// boolean operators on literals
+fun bool_eq() {
+   return true == false;
+}
+
+fun bool_ne() {
+   return true <> false;
+}
+
+fun bool_and() {
+   return true && false;
+}
+
+fun bool_or() {
+   return false || true;
+}
+
+fun bool_not() {
+   return not(true);
+}
+
+fun cmp_fold() {
+   return 1 < 2;
+}
+
+// tanh of a literal folds to the exact value, not the small-angle approximation
+fun tanh_exact() {
+   return tanh(0.05);
+}
+
+// math builtins on literals
+fun math_fold() {
+   return sin(0.5) + cos(0.5) + exp(1.0) + sqrt(4.0) + log(2.0) + log10(100.0) + floor(1.7) + ceil(1.2);
+}
+
+fun trig_fold() {
+   return asin(0.3) + acos(0.3) + atan(0.3) + atan2(1.0, 2.0);
+}
+
+fun minmax_fold() {
+   return min(1.0, 2.0) + max(1.0, 2.0) + clip(5.0, 0.0, 1.0) + abs(-3.0);
+}
+
+fun minmax_fold_int() {
+   return min(1, 2) + max(1, 2) + clip(5, 0, 1);
+}
+
+fun pow_fold() {
+   return pow(2.0, 10.0);
+}
+
+fun pi_fold() {
+   return pi();
+}
+
+// numeric casts of literals
+fun cast_real() {
+   return real(1) + real(true) + real(fix16(0.25));
+}
+
+fun cast_int() {
+   return int(2.7) + int(true);
+}
+
+// string length and array size
+fun str_length() {
+   return length("hello");
+}
+
+fun array_size() {
+   val a = [1.0, 2.0, 3.0];
+   return size(a);
+}

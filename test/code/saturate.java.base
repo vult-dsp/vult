@@ -1,198 +1,85 @@
+
 package vult.com.saturate;
 
 import java.util.Arrays;
 import java.util.Random;
 import vult.com.external.*;
 
-public class saturate {
+public class Saturate {
 
 static int clip(int x, int minv, int maxv) {
-   if(x > maxv)
-      return maxv;
-   else if(x < minv)
-      return minv;
-   else return x;
+    if(x > maxv)
+        return maxv;
+    else if(x < minv)
+        return minv;
+    else return x;
 }
 
 static float clip(float x, float minv, float maxv) {
-   if(x > maxv)
-      return maxv;
-   else if(x < minv)
-      return minv;
-   else return x;
+    if(x > maxv)
+        return maxv;
+    else if(x < minv)
+        return minv;
+    else return x;
 }
 
-int[] makeArray(int size, int init) {
-   int a[] = new int[size];
-   Arrays.fill(a, init);
-   return a;
+static int[] makeArray(int size, int init) {
+    int a[] = new int[size];
+    Arrays.fill(a, init);
+    return a;
 }
 
-float[] makeArray(int size, float init) {
-   float a[] = new float[size];
-   Arrays.fill(a, init);
-   return a;
+static float[] makeArray(int size, float init) {
+    float a[] = new float[size];
+    Arrays.fill(a, init);
+    return a;
 }
 
-boolean[] makeArray(int size, boolean init) {
-   boolean a[] = new boolean[size];
-   Arrays.fill(a, init);
-   return a;
+static boolean[] makeArray(int size, boolean init) {
+    boolean a[] = new boolean[size];
+    Arrays.fill(a, init);
+    return a;
 }
 
-int int_to_fix16(int a) { return a * 0x00010000; }
-
-int fix16_to_int(int a) { return (a >> 16); }
-
-int fix16_add(int x, int y) { return x + y; }
-
-int fix16_sub(int x, int y) { return x - y; }
-
-int fix16_minus(int x) { return -x; }
-
-float fix16_to_float(int a) { return (float)a / 0x00010000; }
-int float_to_fix16(float a) {
-   float temp = a * 0x00010000;
-   return (int)temp;
+static int float_to_int(float x) {
+    return (int)x;
 }
 
-int fix16_mul(int x, int y) {
-   long res = (long)x * (long)y;
-   return (int)(res >> 16);
+public static final float[] Saturate_tanh_table_c = new float[]{-1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, -1e-06f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, -1e-06f, 0.0f, -1.0f, -1e-06f, 0.0f, -1.0f, -1e-06f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -0.999999f, 0.0f, 0.0f, -0.999998f, 0.0f, 0.0f, -0.999997f, 1e-06f, 0.0f, -0.999996f, 1e-06f, 0.0f, -0.999993f, 2e-06f, 0.0f, -0.99999f, 4e-06f, 1e-06f, -0.999985f, 6e-06f, 1e-06f, -0.999977f, 9e-06f, 2e-06f, -0.999966f, 1.3e-05f, 3e-06f, -0.999948f, 2e-05f, 5e-06f, -0.999923f, 3e-05f, 7e-06f, -0.999885f, 4.5e-05f, 1.1e-05f, -0.999828f, 6.7e-05f, 1.6e-05f, -0.999744f, 0.0001f, 2.4e-05f, -0.999619f, 0.000149f, 3.7e-05f, -0.999432f, 0.000222f, 5.5e-05f, -0.999154f, 0.000331f, 8.2e-05f, -0.998741f, 0.000493f, 0.000122f, -0.998125f, 0.000735f, 0.000181f, -0.997208f, 0.001093f, 0.000269f, -0.995845f, 0.001627f, 0.0004f, -0.993817f, 0.002418f, 0.000593f, -0.990805f, 0.003591f, 0.000877f, -0.986336f, 0.005326f, 0.001292f, -0.979717f, 0.007883f, 0.001892f, -0.969941f, 0.011632f, 0.00275f, -0.955558f, 0.017085f, 0.00395f, -0.934522f, 0.024929f, 0.005575f, -0.904018f, 0.036021f, 0.007667f, -0.860329f, 0.051319f, 0.010154f, -0.798854f, 0.071651f, 0.012727f, -0.714475f, 0.097237f, 0.014716f, -0.602521f, 0.126944f, 0.015092f, -0.460484f, 0.157513f, 0.012797f, -0.290174f, 0.183465f, 0.00745f, -0.099258f, 0.198514f, 0.0f, 0.099257f, 0.198366f, -0.007451f, 0.290173f, 0.183108f, -0.012798f, 0.460483f, 0.157129f, -0.015093f, 0.60252f, 0.12667f, -0.014717f, 0.714474f, 0.097106f, -0.012728f, 0.798853f, 0.071629f, -0.010155f, 0.860328f, 0.051356f, -0.007668f, 0.904017f, 0.036079f, -0.005576f, 0.934521f, 0.024986f, -0.003951f, 0.955557f, 0.017133f, -0.002751f, 0.96994f, 0.011669f, -0.001893f, 0.979716f, 0.00791f, -0.001293f, 0.986335f, 0.005346f, -0.000878f, 0.990804f, 0.003605f, -0.000594f, 0.993816f, 0.002427f, -0.000401f, 0.995844f, 0.001633f, -0.00027f, 0.997207f, 0.001098f, -0.000182f, 0.998124f, 0.000738f, -0.000123f, 0.99874f, 0.000495f, -8.3e-05f, 0.999153f, 0.000333f, -5.6e-05f, 0.999431f, 0.000223f, -3.8e-05f, 0.999618f, 0.00015f, -2.5e-05f, 0.999743f, 0.0001f, -1.7e-05f, 0.999827f, 6.7e-05f, -1.2e-05f, 0.999884f, 4.5e-05f, -8e-06f, 0.999922f, 3e-05f, -6e-06f, 0.999947f, 2e-05f, -4e-06f, 0.999965f, 1.3e-05f, -3e-06f, 0.999976f, 9e-06f, -2e-06f, 0.999984f, 6e-06f, -2e-06f, 0.999989f, 4e-06f, -1e-06f, 0.999992f, 2e-06f, -1e-06f, 0.999995f, 1e-06f, -1e-06f, 0.999996f, 1e-06f, -1e-06f, 0.999997f, 0.0f, -1e-06f, 0.999998f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, 0.0f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, 0.0f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, 0.0f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, -1e-06f, 0.999999f, 0.0f, 0.0f, 0.999999f, 0.0f, 0.0f, 0.999999f, 0.0f, -1e-06f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f};
+private float Saturate_tanh_table_raw_c0(int index) {
+   return Saturate_tanh_table_c[(index * 3)];
 }
 
-int fix16_div(int a, int b) {
-   if (b == 0)
-      return 0;
-   int result = (int)(((long)a << 16) / b);
-   return result;
+private float Saturate_tanh_table_raw_c1(int index) {
+   return Saturate_tanh_table_c[((index * 3) + 1)];
 }
 
-static boolean not(boolean x) {
-   return !x;
+private float Saturate_tanh_table_raw_c2(int index) {
+   return Saturate_tanh_table_c[((index * 3) + 2)];
 }
 
-static float int_to_float(int x) {
-   return (float)x;
+private float Saturate_tanh_table(float x) {
+   float value = ((clip(x, -24.0f, 24.0f) + 24.0f) * 5.020833f);
+   int cell = clip(float_to_int(value), 0, 240);
+   float u = (value - (float)(cell));
+   int index = (cell * 3);
+   return (Saturate_tanh_table_c[index] + (u * (Saturate_tanh_table_c[(index + 1)] + (Saturate_tanh_table_c[(index + 2)] * u))));
 }
 
-int float_to_int(float x) {
-   return (int)x;
+private float Saturate_process(float x) {
+   return Saturate_tanh_table(x);
 }
 
-float floor(float x) {
-   return (float)Math.floor(x);
+private void Saturate_noteOn(int note, int velocity, int channel) {
 }
 
-static Random rand = new Random();
-
-float random() {
-   return rand.nextFloat();
+private void Saturate_noteOff(int note, int channel) {
 }
 
-int irandom() {
-   return rand.nextInt();
+private void Saturate_controlChange(int control, int value, int channel) {
 }
 
-float get(float[] a, int i) {
-   return a[i];
-}
-
-void set(float[] a, int i, float val) {
-   a[i] = val;
-}
-
-int get(int[] a, int i) {
-   return a[i];
-}
-
-void set(int[] a, int i, int val) {
-   a[i] = val;
-}
-
-float[] wrap_array(float x[]) {
-   return x;
-}
-
-int[] wrap_array(int x[]) {
-   return x;
-}
-
-float cosh(float x) {
-   return (float)Math.cosh(x);
-}
-
-float cos(float x) {
-   return (float)Math.cos(x);
-}
-
-float sin(float x) {
-   return (float)Math.sin(x);
-}
-
-float sinh(float x) {
-   return (float)Math.sinh(x);
-}
-
-float tan(float x) {
-   return (float)Math.tan(x);
-}
-
-float tanh(float x) {
-   return (float)Math.tanh(x);
-}
-
-float sqrt(float x) {
-   return (float)Math.sqrt(x);
-}
-
-float pow(float x, float y) {
-   return (float)Math.pow(x, y);
-}
-
-float exp(float x) {
-   return (float)Math.exp(x);
-}
-
-
-float Saturate_tanh_table_c0[];
-         public void set_Saturate_tanh_table_c0(java.nio.FloatBuffer buffer){
-            Saturate_tanh_table_c0 = new float[241];
-            buffer.get(Saturate_tanh_table_c0);
-            }
-float Saturate_tanh_table_c1[];
-         public void set_Saturate_tanh_table_c1(java.nio.FloatBuffer buffer){
-            Saturate_tanh_table_c1 = new float[241];
-            buffer.get(Saturate_tanh_table_c1);
-            }
-float Saturate_tanh_table_c2[];
-         public void set_Saturate_tanh_table_c2(java.nio.FloatBuffer buffer){
-            Saturate_tanh_table_c2 = new float[241];
-            buffer.get(Saturate_tanh_table_c2);
-            }
-private float Saturate_tanh_table_raw_c0(int index){return Saturate_tanh_table_c0[index];}
-
-private float Saturate_tanh_table_raw_c1(int index){return Saturate_tanh_table_c1[index];}
-
-private float Saturate_tanh_table_raw_c2(int index){return Saturate_tanh_table_c2[index];}
-
-private float Saturate_tanh_table(float x){
-   int index = clip(float_to_int((5.f * (24.f + x))),0,240); 
-   return (wrap_array(Saturate_tanh_table_c0)[index] + (x * (wrap_array(Saturate_tanh_table_c1)[index] + (x * wrap_array(Saturate_tanh_table_c2)[index]))));
-}
-
-private float Saturate_process(float x){return Saturate_tanh_table(x);}
-
-private void Saturate_noteOn(int note, int velocity, int channel){
-}
-
-private void Saturate_noteOff(int note, int channel){
-}
-
-private void Saturate_controlChange(int control, int value, int channel){
-}
-
-private void Saturate_default(){
+private void Saturate_default() {
 }
 
 

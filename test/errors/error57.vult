@@ -1,0 +1,4 @@
+// Same rule for function arguments.
+fun scale(X : real) : real {
+  return X;
+}

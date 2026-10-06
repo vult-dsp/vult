@@ -8,9 +8,8 @@
 
  #include <stdint.h>
  #include <math.h>
+ #include <new>
  #include <m_pd.h>
-
-static inline float samplerate() { return sys_getsr(); }
 
  #if defined(_MSC_VER)
      //  Microsoft VC++
@@ -22,14 +21,22 @@ static inline float samplerate() { return sys_getsr(); }
 
  extern "C" {
  EXPORT void aff_ff_setup(void);
- }
+ EXPORT void process_tilde_setup(void);
+}
 
- extern "C" void Aff_ff_process_tilde_setup(void);
-typedef struct Aff_ff_process_type {
+ typedef struct Aff_ff_process_type {
    fix16_t Aff_ff_process_ret_0;
    fix16_t Aff_ff_process_ret_1;
    int32_t x;
 } Aff_ff_process_type;
+
+typedef struct Aff_ff_process_type Aff_ff_noteOn_type;
+
+typedef struct Aff_ff_process_type Aff_ff_noteOff_type;
+
+typedef struct Aff_ff_process_type Aff_ff_controlChange_type;
+
+typedef struct Aff_ff_process_type Aff_ff_default_type;
 
 static_inline void Aff_ff_process_type_init(Aff_ff_process_type& _ctx) {
    _ctx.Aff_ff_process_ret_0 = 0x0 /* 0.000000 */;
@@ -37,11 +44,39 @@ static_inline void Aff_ff_process_type_init(Aff_ff_process_type& _ctx) {
    _ctx.x = 0;
 }
 
+static_inline void Aff_ff_noteOn_type_init(Aff_ff_noteOn_type& _ctx) {
+   Aff_ff_process_type_init(_ctx);
+}
+
+static_inline void Aff_ff_noteOff_type_init(Aff_ff_noteOff_type& _ctx) {
+   Aff_ff_process_type_init(_ctx);
+}
+
+static_inline void Aff_ff_controlChange_type_init(Aff_ff_controlChange_type& _ctx) {
+   Aff_ff_process_type_init(_ctx);
+}
+
+static_inline void Aff_ff_default_type_init(Aff_ff_default_type& _ctx) {
+   Aff_ff_process_type_init(_ctx);
+}
+
 static_inline void Aff_ff_process(Aff_ff_process_type& _ctx, fix16_t a, fix16_t b) {
    _ctx.x = 1 + _ctx.x;
    _ctx.Aff_ff_process_ret_0 = a + b;
    _ctx.Aff_ff_process_ret_1 = a + (- b);
    return ;
+}
+
+static_inline void Aff_ff_noteOn(Aff_ff_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
+}
+
+static_inline void Aff_ff_noteOff(Aff_ff_process_type& _ctx, int32_t note, int32_t channel) {
+}
+
+static_inline void Aff_ff_controlChange(Aff_ff_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+}
+
+static_inline void Aff_ff_default(Aff_ff_process_type& _ctx) {
 }
 
 

@@ -29,7 +29,7 @@ fun Tuple_assign_foo(_ctx : struct Tuple_assign_foo_type) : void {
    return ();
 }
 
-fun Tuple_assign_bar(_ctx : struct Tuple_assign_bar_type) : void {
+fun Tuple_assign_bar(_ctx : struct Tuple_assign_bar_type) : int {
    val x : int;
    val y : int;
    val z : int;
@@ -61,16 +61,24 @@ fun Tuple_assign_bar(_ctx : struct Tuple_assign_bar_type) : void {
    (t : int) = 1;
    val _t_temp_3 : int;
    val _t_temp_4 : int;
-   val _t_temp_5 : int;
    (_t_temp_3 : int) = (t : int);
    (_t_temp_4 : int) = (r : int);
-   (_t_temp_5 : int) = 0;
    (r : int) = (_t_temp_3 : int);
    (t : int) = (_t_temp_4 : int);
-   _ = (_t_temp_5 : int);
    val t1 : int;
    val t2 : int;
    (t1 : int) = 3;
    (t2 : int) = 6;
+   val q1 : int;
+   val q2 : int;
+   val q3 : int;
+   val q4 : int;
+   (q1 : int) = 1;
+   (q2 : int) = 2;
+   (q3 : int) = 3;
+   (q4 : int) = (q3 : int);
+   (q3 : int) = (q2 : int);
+   (q2 : int) = (q1 : int);
+   return ((a : int) + ((b : int) + ((c : int) + ((d : int) + ((q2 : int) + ((q3 : int) + ((q4 : int) + ((r : int) + ((t : int) + ((t1 : int) + ((t2 : int) + ((w : int) + ((x : int) + ((y : int) + (z : int)))))))))))))));
 }
 

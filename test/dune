@@ -11,7 +11,7 @@
 (executable
  (name perf)
  (modules Perf)
- (libraries core util driver pparser oUnit str pla)
+ (libraries core util driver vm pparser oUnit str pla)
  (preprocess
   (pps pla.ppx))
  (ocamlopt_flags -O3 -unbox-closures)

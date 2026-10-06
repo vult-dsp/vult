@@ -1,0 +1,10 @@
+// A local variable that stores an array argument of unknown size.
+fun first(a : array(int)) : int {
+  val b = a;
+  return b[0];
+}
+
+fun main() : int {
+  mem x : array(int, 4);
+  return first(x);
+}

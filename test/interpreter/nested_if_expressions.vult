@@ -1,0 +1,21 @@
+// A chain of if-expressions is lowered in one pass, so its depth is not limited by the
+// number of rounds the pass loop is allowed to make.
+
+fun staircase(x : real) : real {
+  return
+    if x > 24.0 then 24.0 else if x > 23.0 then 23.0 else if x > 22.0 then 22.0 else
+    if x > 21.0 then 21.0 else if x > 20.0 then 20.0 else if x > 19.0 then 19.0 else
+    if x > 18.0 then 18.0 else if x > 17.0 then 17.0 else if x > 16.0 then 16.0 else
+    if x > 15.0 then 15.0 else if x > 14.0 then 14.0 else if x > 13.0 then 13.0 else
+    if x > 12.0 then 12.0 else if x > 11.0 then 11.0 else if x > 10.0 then 10.0 else
+    if x > 9.0 then 9.0 else if x > 8.0 then 8.0 else if x > 7.0 then 7.0 else
+    if x > 6.0 then 6.0 else if x > 5.0 then 5.0 else if x > 4.0 then 4.0 else
+    if x > 3.0 then 3.0 else if x > 2.0 then 2.0 else if x > 1.0 then 1.0 else 0.0;
+}
+
+fun main() : int {
+  if (staircase(24.5) <> 24.0) return -1;
+  if (staircase(12.5) <> 12.0) return -2;
+  if (staircase(0.5) <> 0.0) return -3;
+  return 300;
+}

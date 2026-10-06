@@ -1,0 +1,9 @@
+// Binding a tuple to a different number of variables.
+fun f() {
+  return 1, 2, 3;
+}
+
+fun g() : int {
+  val a, b = f();
+  return a + b;
+}

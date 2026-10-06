@@ -37,6 +37,19 @@ let in_test_directory path = Filename.concat test_directory path
 
 let in_tmp_dir path = Filename.concat tmp_dir path
 
+(* The tests run in parallel runners that share tmp_dir, and generating C++ also emits the
+   runtime files (vultin.hpp / vultin.cpp) next to the generated code. Every test that
+   generates and compiles code works inside its own directory to avoid races between runners. *)
+let makeTestDir (name : string) : string =
+  let dir = in_tmp_dir name in
+  let () = if Sys.command ("mkdir -p " ^ dir) <> 0 then failwith ("failed to create " ^ dir) in
+  dir
+
+(* Runs a command inside a directory without changing the working directory of the test
+   runner: the tests run several per process, and an assert_failure raised between a
+   Sys.chdir and its restore would leave every later test in the wrong directory. *)
+let runInDir (dir : string) (cmd : string) : int = Sys.command (Printf.sprintf "cd %s && %s" (Filename.quote dir) cmd)
+
 (** checks if node can be called with flag -c *)
 let has_node =
   if tryToRun ("node -c " ^ in_test_directory "other/test.js") then
@@ -45,7 +58,6 @@ let has_node =
   else
     let () = print_endline "Js syntax will not be checked" in
     false
-
 
 (** checks if luajit can be called *)
 let has_lua =
@@ -56,7 +68,6 @@ let has_lua =
     let () = print_endline "Lua syntax will not be checked" in
     false
 
-
 (** checks if julia can be called *)
 let has_julia =
   if tryToRun "julia --check-bounds=no --compile=min --optimize=0 -e 'exit(0)' > out 2>&1" then
@@ -66,6 +77,23 @@ let has_julia =
     let () = print_endline "Julia syntax will not be checked" in
     false
 
+(** checks if python3 can be called *)
+let has_python =
+  if tryToRun ("python3 -m py_compile " ^ in_test_directory "other/test.py") then
+    let () = print_endline "Python syntax will be checked" in
+    true
+  else
+    let () = print_endline "Python syntax will not be checked" in
+    false
+
+(** checks if a C++ compiler is available to build and run the table regression checks *)
+let has_cpp =
+  if tryToRun "c++ --version > out 2>&1" then
+    let () = print_endline "Generated tables will be checked" in
+    true
+  else
+    let () = print_endline "Generated tables will not be checked" in
+    false
 
 let has_wl = false
 (*
@@ -93,9 +121,7 @@ let parser_files =
   ; "member_access.vult"
   ; "stmt_call.vult"
   ; "new_type_spec.vult"
-  ; "unbound.vult"
-  ]
-
+  ; "unbound.vult" ]
 
 let errors_files =
   [ "error1.vult"
@@ -139,12 +165,62 @@ let errors_files =
   ; "error43.vult"
   ; "error44.vult"
   ; "error45.vult"
-  ]
-
+  ; "error46.vult"
+  ; "error47.vult"
+  ; "error48.vult"
+  ; "error49.vult"
+  ; "error50.vult"
+  ; "error51.vult"
+  ; "error52.vult"
+  ; "error53.vult"
+  ; "error54.vult"
+  ; "error55.vult"
+  ; "error56.vult"
+  ; "error57.vult"
+  ; "error58.vult"
+  ; "error59.vult"
+  ; "error60.vult"
+  ; "error61.vult"
+  ; "error62.vult"
+  ; "error63.vult"
+  ; "error64.vult"
+  ; "error65.vult"
+  ; "error66.vult"
+  ; "error67.vult"
+  ; "error68.vult"
+  ; "error69.vult"
+  ; "error70.vult"
+  ; "error71.vult"
+  ; "error72.vult"
+  ; "error73.vult"
+  ; "error74.vult"
+  ; "error75.vult"
+  ; "error76.vult"
+  ; "error77.vult"
+  ; "error78.vult"
+  ; "error79.vult"
+  ; "error80.vult"
+  ; "error81.vult"
+  ; "error82.vult"
+  ; "error83.vult"
+  ; "error84.vult"
+  ; "error85.vult"
+  ; "error86.vult" ]
 
 let template_files =
-  [ "sf_f.vult"; "sff_f.vult"; "sff_ff.vult"; "sfi_fi.vult"; "af_f.vult"; "aff_f.vult"; "aff_ff.vult"; "afi_fi.vult" ]
+  [ "sf_f.vult"
+  ; "sff_f.vult"
+  ; "sff_ff.vult"
+  ; "sfi_fi.vult"
+  ; "af_f.vult"
+  ; "aff_f.vult"
+  ; "aff_ff.vult"
+  ; "afi_fi.vult"
+  ; "pd_osc0.vult"
+  ; "pd_ctrl.vult"
+  ; "pd_msg.vult" ]
 
+let vcv_template_files = ["vcv_template.vult"; "vcv_vco.vult"; "vcv_config.vult"]
 
 let perf_files =
   [ "saw_eptr_perf.vult"
@@ -165,30 +241,62 @@ let perf_files =
   ; "saturate_soft_perf.vult"
   ; "saturate_perf.vult"
   ; "clipper_perf.vult"
-  ; "short_delay_perf.vult"
-  ]
+  ; "short_delay_perf.vult" ]
 
-
+(* Each file is evaluated and main() must return exactly the expected value *)
 let interpreter =
-  [ "arithmetic.vult"
-  ; "arrays_structs.vult"
-  ; "builtins.vult"
-  ; "constant.vult"
-  ; "control_flow.vult"
-  ; "edge_cases.vult"
-  ; "function_calls_in_constants.vult"
-  ; "functions.vult"
-  ; "generics.vult"
-  ; "generics_comprehensive.vult"
-  ; "generics_multiple_types.vult"
-  ; "generics_nested.vult"
-  ; "generics_stress.vult"
-  ; "instance_state.vult"
-  ; "int16_test.vult"
-  ; "memory_state.vult"
-  ; "strength_reduction.vult"
-  ]
-
+  [ ("annotated_constants.vult", 100)
+  ; ("arithmetic.vult", 1000)
+  ; ("arrays_structs.vult", 5000)
+  ; ("builtins.vult", 3000)
+  ; ("constant.vult", 8000)
+  ; ("control_flow.vult", 2000)
+  ; ("edge_cases.vult", 7000)
+  ; ("function_calls_in_constants.vult", 1)
+  ; ("functions.vult", 4000)
+  ; ("identifier_names.vult", 500)
+  ; ("math_builtins.vult", 900)
+  ; ("generics.vult", 1)
+  ; ("generics_comprehensive.vult", 800)
+  ; ("generics_statements.vult", 200)
+  ; ("generics_context_chains.vult", 600)
+  ; ("generics_cross_module.vult", 600)
+  ; ("companion_cross_module.vult", 1000)
+  ; ("companion_return_infer.vult", 700)
+  ; ("spec_name_collision.vult", 1100)
+  ; ("generics_lhs_index_call.vult", 600)
+  ; ("generics_multiple_types.vult", 600)
+  ; ("generics_nested.vult", 600)
+  ; ("generics_nested_state.vult", 1000)
+  ; ("generics_recursive.vult", 600)
+  ; ("generics_shared_types.vult", 3600)
+  ; ("generics_stress.vult", 2100)
+  ; ("generics_type_positions.vult", 1000)
+  ; ("specialization_const_params.vult", 21000)
+  ; ("specialization_const_precision.vult", 600)
+  ; ("specialization_interleaved.vult", 12000)
+  ; ("specialization_lhs_index.vult", 2100)
+  ; ("specialization_companions.vult", 2100)
+  ; ("specialization_companions_typed.vult", 600)
+  ; ("specialization_nonspec_types.vult", 600)
+  ; ("instance_state.vult", 7000)
+  ; ("int16_test.vult", 1000)
+  ; ("memory_state.vult", 6000)
+  ; ("nested_arrays.vult", 400)
+  ; ("nested_if_expressions.vult", 300)
+  ; ("vm_lvalues.vult", 600)
+  ; ("vm_strings.vult", 700)
+  ; ("vm_tail_jump.vult", 800)
+  ; ("nonnegative_floor.vult", 1)
+  ; ("parallel_assign.vult", 1267)
+  ; ("qualified_enum_patterns.vult", 100)
+  ; ("range_optimization.vult", -1)
+  ; ("strength_reduction.vult", 523)
+  ; ("type_intrinsics.vult", 1000)
+  ; ("tuple_variables.vult", 4549)
+  ; ("long_chains.vult", 42)
+  ; ("companion_type_alias.vult", 3)
+  ; ("unit_function.vult", 2) ]
 
 let passes_files =
   [ "split_mem.vult"
@@ -198,11 +306,14 @@ let passes_files =
   ; "context_nested.vult"
   ; "tuple_to_types.vult"
   ; "simplify.vult"
+  ; "constant_folding.vult"
+  ; "algebraic_identities.vult"
+  ; "strength_reduction.vult"
+  ; "local_optimization.vult"
   ; "external_calls.vult"
   ; "output_references.vult"
   ; "nested_if.vult"
-  ]
-
+  ; "companion_instances.vult" ]
 
 let all_files =
   [ "web/phasedist.vult"
@@ -251,6 +362,7 @@ let all_files =
   ; "features/SaveState.vult"
   ; "features/Match.vult"
   ; "features/Constants.vult"
+  ; "features/ConstSpecialization.vult"
   ; "features/EmptyTypes.vult"
   ; "../test/compile/defined_types.vult"
   ; "../test/compile/array_defined_type.vult"
@@ -261,23 +373,21 @@ let all_files =
   ; "../test/compile/multi_iter.vult"
   ; "../test/compile/array_no_const.vult"
   ; "../test/compile/record_init.vult"
-  ]
-
+  ; "../test/interpreter/companion_return_infer.vult"
+  ; "../test/interpreter/spec_name_collision.vult"
+  ; "../test/interpreter/tuple_variables.vult"
+  ; "../test/interpreter/companion_type_alias.vult" ]
 
 let includes =
-  [ "effects"; "env"; "filters"; "midi"; "osc"; "unit"; "util" ]
+  ["effects"; "env"; "filters"; "midi"; "osc"; "unit"; "util"]
   |> CCList.map (fun dir -> in_test_directory ("../examples/" ^ dir))
 
+(* multi-module examples used to check the -split-files mode *)
+let split_files = ["units/kick.vult"; "units/voice_4.vult"; "effects/rescomb.vult"]
 
 let test_random_code =
-  let rec loop n =
-    if n > 0 then
-      Printf.sprintf "test%i.vult" n :: loop (n - 1)
-    else
-      []
-  in
+  let rec loop n = if n > 0 then Printf.sprintf "test%i.vult" n :: loop (n - 1) else [] in
   loop 1
-
 
 (** Flags that defines if a baseline should be created for tests *)
 let update_test = Conf.make_bool "update" false "Creates a file with the current results"
@@ -288,18 +398,13 @@ let internal_test = Conf.make_bool "internal" false "Uses static linked compiler
 
 let write file contents =
   let oc = open_out file in
-  Printf.fprintf oc "%s" contents;
-  close_out oc
-
+  Printf.fprintf oc "%s" contents ; close_out oc
 
 let read file =
   let ic = open_in file in
   let n = in_channel_length ic in
   let s = Bytes.create n in
-  really_input ic s 0 n;
-  close_in ic;
-  Bytes.to_string s
-
+  really_input ic s 0 n ; close_in ic ; Bytes.to_string s
 
 let readOutputAndReference (create : bool) (outdir : string) (output, reference) =
   let output_txt =
@@ -307,21 +412,17 @@ let readOutputAndReference (create : bool) (outdir : string) (output, reference)
       let contents = read output in
       let () = Sys.remove output in
       contents
-    else
-      assert_failure (Printf.sprintf "The file '%s' was not generated" output)
+    else assert_failure (Printf.sprintf "The file '%s' was not generated" output)
   in
   let reference = Filename.concat outdir (Filename.basename reference) in
   let reference_txt =
     if create then
       let () = write reference output_txt in
       output_txt
-    else if Sys.file_exists reference then
-      read reference
-    else
-      assert_failure (Printf.sprintf "The file '%s' has no reference data" reference)
+    else if Sys.file_exists reference then read reference
+    else assert_failure (Printf.sprintf "The file '%s' has no reference data" reference)
   in
-  output_txt, reference_txt
-
+  (output_txt, reference_txt)
 
 (** Returns the contents of the reference file for the given vult file *)
 let readReference (update : bool) (ext : string) (contents : string) (file : string) (outdir : string) : string =
@@ -330,19 +431,12 @@ let readReference (update : bool) (ext : string) (contents : string) (file : str
   if update then
     let () = write ref_file contents in
     contents
-  else if Sys.file_exists ref_file then
-    read ref_file
-  else
-    assert_failure (Printf.sprintf "The file '%s' has no reference data" file)
-
+  else if Sys.file_exists ref_file then read ref_file
+  else assert_failure (Printf.sprintf "The file '%s' has no reference data" file)
 
 (** Asserts if the file does not exists *)
 let checkFile (filename : string) : string =
-  if Sys.file_exists filename then
-    filename
-  else
-    assert_failure (Printf.sprintf "The file '%s' does not exits" filename)
-
+  if Sys.file_exists filename then filename else assert_failure (Printf.sprintf "The file '%s' does not exits" filename)
 
 let showResults (result : Pparser.Parse.parsed_file) : string = Pparser.Syntax.Print.print result.stmts
 
@@ -355,13 +449,9 @@ module ParserTest = struct
     let fullfile = checkFile (in_test_directory (folder ^ "/" ^ file)) in
     let current = process fullfile in
     let reference = readReference (update_test context) "base" current fullfile (in_test_directory folder) in
-    assert_equal
-      ~cmp:Diff.compare
-      ~msg:("Parsing file " ^ fullfile)
+    assert_equal ~cmp:Diff.compare ~msg:("Parsing file " ^ fullfile)
       ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff file a b))
-      reference
-      current
-
+      reference current
 
   let get files = "parser" >::: CCList.map (fun file -> Filename.basename file >:: run file) files
 end
@@ -369,290 +459,406 @@ end
 module ErrorTest = struct
   let process (fullfile : string) =
     let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
-    let args = Args.{ default_arguments with includes; check = true } in
-    let args = { args with output = Some basefile; files = [ File fullfile ] } in
+    let args = Args.{default_arguments with includes; check= true} in
+    let args = {args with output= Some basefile; files= [File fullfile]} in
     let results = Driver.Cli.driver args in
     CCList.fold_left
       (fun s a ->
         match a with
         | Args.Errors e ->
-          CCList.map
-            (fun a ->
-              let msg, _, _, _ = Error.reportErrorStringNoLoc a in
-              msg)
-            e
-          @ s
-        | _ -> s)
-      []
-      results
+            CCList.map
+              (fun a ->
+                let msg, _, _, _ = Error.reportErrorStringNoLoc a in
+                msg )
+              e
+            @ s
+        | _ ->
+            s )
+      [] results
     |> String.concat "\n"
-
 
   let run (file : string) context =
     let folder = "errors" in
     let fullfile = checkFile (in_test_directory (folder ^ "/" ^ file)) in
     let current = process fullfile in
     let reference = readReference (update_test context) "base" current fullfile (in_test_directory folder) in
-    assert_equal
-      ~cmp:Diff.compare
-      ~msg:("Error mismatch in file " ^ fullfile)
+    assert_equal ~cmp:Diff.compare ~msg:("Error mismatch in file " ^ fullfile)
       ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff file a b))
-      reference
-      current
-
+      reference current
 
   let get files = "errors" >::: CCList.map (fun file -> Filename.basename file >:: run file) files
 end
 
 (** Module to perform transformation tests *)
 module PassesTest = struct
-  let show o =
-    match o with
-    | Args.Prog s -> s
-    | _ -> ""
-
+  let show o = match o with Args.Prog s -> s | _ -> ""
 
   let process (fullfile : string) : string =
-    let args = Args.{ default_arguments with dprog = true; files = [ File fullfile ] } in
+    let args = Args.{default_arguments with dprog= true; files= [File fullfile]} in
     Driver.Cli.driver args |> CCList.map show |> String.concat "\n"
-
 
   let run (file : string) context =
     let folder = "passes" in
     let fullfile = checkFile (in_test_directory (folder ^ "/" ^ file)) in
     let current = process fullfile in
     let reference = readReference (update_test context) "base" current fullfile (in_test_directory folder) in
-    assert_equal
-      ~cmp:Diff.compare
-      ~msg:("Transforming file " ^ fullfile)
+    assert_equal ~cmp:Diff.compare ~msg:("Transforming file " ^ fullfile)
       ~pp_diff:(fun fmt (a, b) -> Format.fprintf fmt "\n%s" (Diff.lineDiff file a b))
-      reference
-      current
-
+      reference current
 
   let get files = "passes" >::: CCList.map (fun file -> Filename.basename file >:: run file) files
 end
 
 (** Tries to compile all the examples *)
 module RandomCompileTest = struct
-  let compileFile (file : string) =
+  let compileFile (dir : string) (file : string) =
     let basename = Filename.chop_extension (Filename.basename file) in
     let cmd =
       Printf.sprintf
         "gcc -O0 -Wno-return-type -Wno-div-by-zero -Wno-narrowing -Wno-constant-logical-operand -Wno-division-by-zero \
          -Wno-unused-value -Wno-tautological-compare -Wconversion -I%s -c %s -o %s"
-        (in_test_directory "../runtime")
-        file
-        basename
+        (in_test_directory "../runtime") file basename
     in
-    if Sys.command cmd <> 0 then
-      assert_failure ("Failed to compile " ^ file)
-
+    if runInDir dir cmd <> 0 then assert_failure ("Failed to compile " ^ file)
 
   let generateCPP (filename : string) (output : string) : unit =
-    let args = Args.{ default_arguments with files = [ File filename ]; code = CppCode; output = Some output } in
+    let args = Args.{default_arguments with files= [File filename]; code= CppCode; output= Some output} in
     let seed = Hashtbl.hash filename in
     let code = RandProg.run (seed + 1) in
-    write filename code;
+    write filename code ;
     let parser_results = Pparser.Parse.parseString (Some filename) code in
-    let deps = Hashtbl.create 16 in
-    let () = Hashtbl.add deps (Filename.basename filename) [] in
-    let env, stmts = Core.Inference.infer args [ parser_results ] in
+    let env, stmts = Core.Typechecking.typecheck_and_elaborate args [parser_results] in
     let stmts, vm, _ = Driver.Cli.compileCode args env stmts in
-    let gen = Driver.Cli.generateCode args deps (stmts, vm, []) in
+    let gen = Driver.Cli.generateCode args (stmts, vm, []) in
     writeFiles args gen
-
 
   let run (file : string) _ =
     let output = Filename.chop_extension (Filename.basename file) in
-    Sys.chdir tmp_dir;
-    generateCPP file output;
-    assert_bool "No code generated" (Sys.file_exists (output ^ ".cpp"));
-    compileFile (output ^ ".cpp");
-    Sys.remove (output ^ ".cpp");
-    Sys.remove (output ^ ".h");
-    Sys.remove (output ^ ".vult");
-    Sys.remove output;
-    Sys.chdir initial_dir
-
+    let dir = makeTestDir ("random_" ^ output) in
+    let in_dir name = Filename.concat dir name in
+    generateCPP (in_dir file) (in_dir output) ;
+    assert_bool "No code generated" (Sys.file_exists (in_dir (output ^ ".cpp"))) ;
+    compileFile dir (output ^ ".cpp")
 
   let get files = "compile" >::: CCList.map (fun file -> Filename.basename file ^ ".float" >:: run file) files
 end
 
-type compiler =
-  | Node
-  | Native
+(** Functional checks of the generated lookup tables: the fixture is compiled with the C++
+    backend and the resulting tables are evaluated at their edges by tables_regression_main.cpp,
+    which compares them against the functions they were fitted on. This exercises behavior the
+    code snapshots cannot: the upper endpoint of tables with bound_check = false, the clamping
+    of fixed-point inputs far outside the table, and the wavetable grid alignment. *)
+module TableRegressionTest = struct
+  let run _context =
+    skip_if (not has_cpp) "no C++ compiler available" ;
+    let fullfile = checkFile (in_test_directory "tables/tables_regression.vult") in
+    let dir = makeTestDir "tables_regression" in
+    let output = Filename.concat dir "tables_regression" in
+    let args =
+      Args.
+        { default_arguments with
+          files= [File fullfile]
+        ; code= CppCode
+        ; output= Some output
+        ; force_write= true
+        ; includes= in_test_directory "tables" :: in_test_directory "passes" :: includes }
+    in
+    let results = Driver.Cli.driver args in
+    let () =
+      CCList.iter
+        (fun result ->
+          match result with
+          | Args.Errors errors ->
+              assert_failure (Error.reportErrors errors)
+          | result ->
+              Driver.Cli.showResult args result )
+        results
+    in
+    let main_file = in_test_directory "tables/tables_regression_main.cpp" in
+    let runtime = in_test_directory "../runtime" in
+    let exe = Filename.concat dir "tables_regression_check" in
+    let cmd = Printf.sprintf "c++ -std=c++11 -O0 -I%s -I%s %s %s/vultin.cpp -o %s" runtime dir main_file dir exe in
+    if Sys.command cmd <> 0 then assert_failure "Failed to build the table regression checks" ;
+    if Sys.command exe <> 0 then assert_failure "The table regression checks failed"
 
-let callCompiler (file : string) : unit =
+  (* A table function that is not finite at a sampled point must be reported with the function
+     name and the point. Whether the singularity is sampled depends on the table size, so the
+     diagnostic is the only thing pointing at the offending function. *)
+  let runNonFinite _context =
+    let fullfile = checkFile (in_test_directory "tables/non_finite.vult") in
+    let dir = makeTestDir "tables_non_finite" in
+    let output = Filename.concat dir "non_finite" in
+    let args =
+      Args.
+        { default_arguments with
+          files= [File fullfile]
+        ; code= CppCode
+        ; output= Some output
+        ; force_write= true
+        ; includes= in_test_directory "tables" :: includes }
+    in
+    let messages =
+      Driver.Cli.driver args
+      |> CCList.filter_map (fun result ->
+          match result with Args.Errors errors -> Some (Error.reportErrors errors) | _ -> None )
+      |> String.concat "\n"
+    in
+    let contains sub = CCString.mem ~sub messages in
+    if not (contains "diverges" && contains "not finite at x = 0") then
+      assert_failure ("Unexpected diagnostic for a non finite table:\n" ^ messages)
+
+  let get () = "tables" >::: ["regression" >:: run; "non_finite" >:: runNonFinite]
+end
+
+type compiler = Node | Native
+
+let callCompilerIn (dir : string) (file : string) : unit =
   let basename = Filename.chop_extension (Filename.basename file) in
   let cmd =
-    Printf.sprintf
-      "gcc -std=c++11 -O0 -Werror -Wno-write-strings -Wconversion -I%s -I%s -c %s -o %s"
+    Printf.sprintf "gcc -std=c++11 -O0 -Werror -Wno-write-strings -Wconversion -I%s -I%s -c %s -o %s"
       (in_test_directory "../runtime")
       (in_test_directory "../examples/cmake/pd-deps")
-      file
-      basename
+      file basename
   in
-  if Sys.command cmd <> 0 then
-    assert_failure ("Failed to compile " ^ file)
+  if runInDir dir cmd <> 0 then assert_failure ("Failed to compile " ^ file)
 
-
-let compileCppFile ext (file : string) : unit =
+let compileCppFile ext (dir : string) (file : string) : unit =
   let output = Filename.chop_extension (Filename.basename file) in
-  Sys.chdir tmp_dir;
-  assert_bool "No code generated" (Sys.file_exists (output ^ ext));
-  callCompiler (output ^ ext);
-  callCompiler (in_test_directory "../runtime/vultin.cpp");
-  Sys.chdir initial_dir
+  assert_bool "No code generated" (Sys.file_exists (Filename.concat dir (output ^ ext))) ;
+  callCompilerIn dir (output ^ ext) ;
+  callCompilerIn dir "vultin.cpp"
 
+(* Links the generated Pure Data external against the API stubs and runs its setup,
+   instantiating every registered class. This catches undefined symbols (the compile step
+   alone cannot) and exercises the registration and constructor paths. *)
+let linkAndRunPd (filename : string) : unit =
+  let dir = Filename.dirname filename in
+  let base = Filename.chop_extension (Filename.basename filename) in
+  let cmd =
+    Printf.sprintf "c++ -std=c++11 -O0 -DPD -DVULT_TEST_SETUP=%s_setup -I%s -I. %s.cpp vultin.cpp %s -o %s_smoke" base
+      (in_test_directory "../examples/cmake/pd-deps")
+      base
+      (in_test_directory "templates/pd_stubs.cpp")
+      base
+  in
+  if runInDir dir cmd <> 0 then assert_failure ("Failed to link the pd external " ^ base) ;
+  if runInDir dir ("./" ^ base ^ "_smoke > /dev/null") <> 0 then
+    assert_failure ("The pd external smoke test failed for " ^ base)
+
+(** Generates multi-module examples with -split-files and compiles every produced file. The
+    per-module headers must include the headers of the modules they depend on (computed from the
+    final program, since elaboration can create dependencies that are not visible in the source
+    imports), otherwise the individual files do not compile. *)
+module SplitCompileTest = struct
+  let run ~(split : bool) ~(prefix : string option) (file : string) context =
+    skip_if (not has_cpp) "no C++ compiler available" ;
+    Sys.chdir initial_dir ;
+    let fullfile = checkFile (in_test_directory ("../examples/" ^ file)) in
+    let name = Filename.chop_extension (Filename.basename file) in
+    let variant = (if split then "split_" else "single_") ^ CCOption.get_or ~default:"" prefix in
+    let outdir = in_tmp_dir (variant ^ name) in
+    let () = if Sys.command ("mkdir -p " ^ outdir) <> 0 then assert_failure ("failed to create " ^ outdir) in
+    let args =
+      Args.
+        { default_arguments with
+          files= [File fullfile]
+        ; code= CppCode
+        ; split
+        ; output_prefix= prefix
+        ; force_write= update_test context
+        ; includes
+        ; output= Some (Filename.concat outdir "engine") }
+    in
+    let results = Driver.Cli.driver args in
+    let () =
+      CCList.iter
+        (fun result ->
+          match result with
+          | Args.Errors errors ->
+              assert_failure (Error.reportErrors errors)
+          | result ->
+              Driver.Cli.showResult args result )
+        results
+    in
+    let cpp_files = Sys.readdir outdir |> Array.to_list |> CCList.filter (fun f -> Filename.check_suffix f ".cpp") in
+    (* in split mode: at least one module file, the aggregated file and the runtime *)
+    let () = if split then assert_bool "the code was not split in multiple files" (CCList.length cpp_files > 3) in
+    let () =
+      (* the module files must carry the prefix so two programs can share a directory *)
+      match (split, prefix) with
+      | true, Some prefix ->
+          let unprefixed f = f <> "vultin.cpp" && f <> "engine.cpp" && not (CCString.prefix ~pre:prefix f) in
+          assert_bool "the module files are not prefixed" (not (CCList.exists unprefixed cpp_files))
+      | _ ->
+          ()
+    in
+    CCList.iter (callCompilerIn outdir) cpp_files
+
+  let get files =
+    "split"
+    >::: CCList.flat_map
+           (fun file ->
+             let name = Filename.basename file in
+             [ name >:: run ~split:true ~prefix:None file
+             ; name ^ ".prefix" >:: run ~split:true ~prefix:(Some "pfx_") file
+             ; name ^ ".single.prefix" >:: run ~split:false ~prefix:(Some "pfx_") file ] )
+           files
+end
 
 module CliTest = struct
-  let checkJsFile (file : string) : unit =
+  let checkJsFile (dir : string) (file : string) : unit =
     let output = Filename.chop_extension (Filename.basename file) in
-    Sys.chdir tmp_dir;
-    assert_bool "No code generated" (Sys.file_exists (output ^ ".js"));
+    assert_bool "No code generated" (Sys.file_exists (Filename.concat dir (output ^ ".js"))) ;
     let cmd = "node -c " ^ output ^ ".js" in
-    if Sys.command cmd <> 0 then
-      assert_failure ("Failed to check " ^ file);
-    Sys.chdir initial_dir
+    if runInDir dir cmd <> 0 then assert_failure ("Failed to check " ^ file)
 
-
-  let checkLuaFile (file : string) : unit =
+  let checkLuaFile (dir : string) (file : string) : unit =
     let output = Filename.chop_extension (Filename.basename file) in
-    Sys.chdir tmp_dir;
-    assert_bool "No code generated" (Sys.file_exists (output ^ ".lua"));
+    assert_bool "No code generated" (Sys.file_exists (Filename.concat dir (output ^ ".lua"))) ;
     let cmd = "luajit -bl " ^ output ^ ".lua > " ^ output ^ ".b" in
-    if Sys.command cmd <> 0 then
-      assert_failure ("Failed to check " ^ file);
-    Sys.remove (output ^ ".b");
-    Sys.chdir initial_dir
+    if runInDir dir cmd <> 0 then assert_failure ("Failed to check " ^ file) ;
+    Sys.remove (Filename.concat dir (output ^ ".b"))
 
-
-  let checkJuliaFile (file : string) : unit =
+  let checkJuliaFile (dir : string) (file : string) : unit =
     let output = Filename.chop_extension (Filename.basename file) in
-    Sys.chdir tmp_dir;
-    assert_bool "No code generated" (Sys.file_exists (output ^ ".jl"));
+    assert_bool "No code generated" (Sys.file_exists (Filename.concat dir (output ^ ".jl"))) ;
     let cmd = "julia --check-bounds=no --compile=min --optimize=0 " ^ output ^ ".jl > " ^ output ^ ".out 2>&1" in
-    if Sys.command cmd <> 0 then
-      assert_failure ("Failed to check " ^ file);
-    Sys.remove (output ^ ".out");
-    Sys.chdir initial_dir
+    if runInDir dir cmd <> 0 then assert_failure ("Failed to check " ^ file) ;
+    Sys.remove (Filename.concat dir (output ^ ".out"))
 
-
-  let checkWLFile (file : string) : unit =
+  let checkPythonFile (dir : string) (file : string) : unit =
     let output = Filename.chop_extension (Filename.basename file) in
-    Sys.chdir tmp_dir;
-    assert_bool ("No code generated for file " ^ output ^ ".wl") (Sys.file_exists (output ^ ".wl"));
-    let cmd = "wolframscript -f " ^ output ^ ".wl" in
-    if Sys.command cmd <> 0 then
-      assert_failure ("Failed to check " ^ file);
-    Sys.chdir initial_dir
+    assert_bool "No code generated" (Sys.file_exists (Filename.concat dir (output ^ ".py"))) ;
+    let cmd = "python3 -m py_compile " ^ output ^ ".py" in
+    if runInDir dir cmd <> 0 then assert_failure ("Failed to check " ^ file)
 
+  let checkWLFile (dir : string) (file : string) : unit =
+    let output = Filename.chop_extension (Filename.basename file) in
+    assert_bool
+      ("No code generated for file " ^ output ^ ".wl")
+      (Sys.file_exists (Filename.concat dir (output ^ ".wl"))) ;
+    let cmd = "wolframscript -f " ^ output ^ ".wl" in
+    if runInDir dir cmd <> 0 then assert_failure ("Failed to check " ^ file)
 
   let getFlags code_type =
     match code_type with
-    | "fixed" -> "-code cpp -real fixed", [ ".cpp", ".cpp.fixed.base"; ".h", ".h.fixed.base" ]
-    | "float" -> "-code cpp", [ ".cpp", ".cpp.float.base"; ".h", ".h.float.base" ]
-    | "c" -> "-code c", [ ".c", ".c.float.base"; ".h", ".h.float.base" ]
-    | "js" -> "-code js", [ ".js", ".js.base" ]
-    | "lua" -> "-code lua", [ ".lua", ".lua.base" ]
-    | "julia" -> "-code julia", [ ".jl", ".jl.base" ]
-    | "wl" -> "-code wl", [ ".wl", ".wl.base" ]
-    | "java" -> "-code java -prefix vult.com", [ ".java", ".java.base" ]
-    | _ -> failwith "Unknown target to run test"
+    | "fixed" ->
+        ("-code cpp -real fixed", [(".cpp", ".cpp.fixed.base"); (".h", ".h.fixed.base")])
+    | "float" ->
+        ("-code cpp", [(".cpp", ".cpp.float.base"); (".h", ".h.float.base")])
+    | "c" ->
+        ("-code c", [(".c", ".c.float.base"); (".h", ".h.float.base")])
+    | "js" ->
+        ("-code js", [(".js", ".js.base")])
+    | "lua" ->
+        ("-code lua", [(".lua", ".lua.base")])
+    | "julia" ->
+        ("-code julia", [(".jl", ".jl.base")])
+    | "python" ->
+        ("-code python", [(".py", ".py.base")])
+    | "wl" ->
+        ("-code wl", [(".wl", ".wl.base")])
+    | "java" ->
+        ("-code java -java-prefix vult.com", [(".java", ".java.base")])
+    | _ ->
+        failwith "Unknown target to run test"
 
+  let testDirFor (compiler : compiler) (fullfile : string) code_type =
+    let base = Filename.chop_extension (Filename.basename fullfile) in
+    let suffix = match compiler with Node -> ".node" | Native -> "" in
+    (makeTestDir (base ^ "." ^ code_type ^ suffix), base)
 
   let callVultCli (compiler : compiler) (fullfile : string) code_type =
-    let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
+    let dir, base = testDirFor compiler fullfile code_type in
+    let basefile = Filename.concat dir base in
     let flags, ext = getFlags code_type in
     let includes_flags = CCList.map (fun a -> "-i " ^ a) includes |> String.concat " " in
     let flags = flags ^ " " ^ includes_flags in
-    let vultc =
-      if compiler = Node then
-        "node ./vult.js"
-      else
-        "./_build/default/src/vult.exe"
-    in
+    let vultc = if compiler = Node then "node ./vult.js" else "./_build/default/src/vult.exe" in
     let cmd = vultc ^ " -test " ^ flags ^ " -o " ^ basefile ^ " " ^ fullfile in
     let generated_files =
       match Sys.command cmd with
-      | 0 -> CCList.map (fun e -> basefile ^ fst e, basefile ^ snd e) ext
-      | _ -> assert_failure "failed to call the compiler"
-      | exception _ -> assert_failure "failed to call the compiler in a bad way"
+      | 0 ->
+          CCList.map (fun e -> (basefile ^ fst e, basefile ^ snd e)) ext
+      | _ ->
+          assert_failure "failed to call the compiler"
+      | exception _ ->
+          assert_failure "failed to call the compiler in a bad way"
     in
     let () =
       match code_type with
-      | "fixed" | "float" -> compileCppFile ".cpp" fullfile
-      | "c" -> compileCppFile ".c" fullfile
+      | "fixed" | "float" ->
+          compileCppFile ".cpp" dir fullfile
+      | "c" ->
+          compileCppFile ".c" dir fullfile
       | "js" ->
-        if has_node then
-          checkJsFile fullfile
+          if has_node then checkJsFile dir fullfile
       | "lua" ->
-        if has_lua then
-          checkLuaFile fullfile
+          if has_lua then checkLuaFile dir fullfile
       | "julia" ->
-        if has_julia then
-          checkJuliaFile fullfile
+          if has_julia then checkJuliaFile dir fullfile
+      | "python" ->
+          if has_python then checkPythonFile dir fullfile
       | "wl" ->
-        if has_wl then
-          checkWLFile fullfile
-      | _ -> ()
+          if has_wl then checkWLFile dir fullfile
+      | _ ->
+          ()
     in
     generated_files
 
-
-  let callVultInternal (_ : compiler) (fullfile : string) code_type =
-    let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
-    let args = Args.{ default_arguments with includes; test_mode = true } in
+  let callVultInternal (compiler : compiler) (fullfile : string) code_type =
+    let dir, base = testDirFor compiler fullfile code_type in
+    let basefile = Filename.concat dir base in
+    let args = Args.{default_arguments with includes; test_mode= true} in
     let args, ext =
       match code_type with
-      | "fixed" -> { args with code = CppCode; real = Fixed }, [ ".cpp", ".cpp.fixed.base"; ".h", ".h.fixed.base" ]
-      | "float" -> { args with code = CppCode }, [ ".cpp", ".cpp.float.base"; ".h", ".h.float.base" ]
-      | "js" -> { args with code = JSCode }, [ ".js", ".js.base" ]
-      | "lua" -> { args with code = LuaCode }, [ ".lua", ".lua.base" ]
-      | "julia" -> { args with code = JuliaCode }, [ ".jl", ".jl.base" ]
-      | "java" -> { args with code = JavaCode; prefix = Some "vult.com" }, [ ".java", ".java.base" ]
-      | _ -> failwith "Unknown target to run test"
+      | "fixed" ->
+          ({args with code= CppCode; real= Fixed}, [(".cpp", ".cpp.fixed.base"); (".h", ".h.fixed.base")])
+      | "float" ->
+          ({args with code= CppCode}, [(".cpp", ".cpp.float.base"); (".h", ".h.float.base")])
+      | "js" ->
+          ({args with code= JSCode}, [(".js", ".js.base")])
+      | "lua" ->
+          ({args with code= LuaCode}, [(".lua", ".lua.base")])
+      | "julia" ->
+          ({args with code= JuliaCode}, [(".jl", ".jl.base")])
+      | "python" ->
+          ({args with code= PythonCode}, [(".py", ".py.base")])
+      | "java" ->
+          ({args with code= JavaCode; java_prefix= Some "vult.com"}, [(".java", ".java.base")])
+      | _ ->
+          failwith "Unknown target to run test"
     in
-    let args = { args with output = Some basefile; files = [ File fullfile ] } in
+    let args = {args with output= Some basefile; files= [File fullfile]} in
     let results = Driver.Cli.driver args in
     let () = CCList.iter (Driver.Cli.showResult args) results in
-    let generated_files = CCList.map (fun e -> basefile ^ fst e, basefile ^ snd e) ext in
+    let generated_files = CCList.map (fun e -> (basefile ^ fst e, basefile ^ snd e)) ext in
     generated_files
 
-
   let callVult context (compiler : compiler) (fullfile : string) code_type =
-    if internal_test context then
-      callVultInternal compiler fullfile code_type
-    else
-      callVultCli compiler fullfile code_type
-
+    if internal_test context then callVultInternal compiler fullfile code_type
+    else callVultCli compiler fullfile code_type
 
   let process context (compiler : compiler) (fullfile : string) code_type =
-    try callVult context compiler fullfile code_type with
-    | Error.Errors errors ->
+    try callVult context compiler fullfile code_type
+    with Error.Errors errors ->
       let msg = Error.reportErrors errors in
       assert_failure msg
 
-
   let run (file : string) use_node real_type context : unit =
-    Sys.chdir initial_dir;
+    Sys.chdir initial_dir ;
     let fullfile = checkFile (in_test_directory ("../examples/" ^ file)) in
     let generated_files = process context use_node fullfile real_type in
     let files_content =
       CCList.map (readOutputAndReference (update_test context) (in_test_directory "code")) generated_files
     in
-    assert_bool "No code generated" (files_content <> []);
+    assert_bool "No code generated" (files_content <> []) ;
     CCList.iter
       (fun (current, reference) ->
-        assert_equal
-          ~cmp:Diff.compare
-          ~msg:("Generating file " ^ fullfile)
+        assert_equal ~cmp:Diff.compare ~msg:("Generating file " ^ fullfile)
           ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff file a b))
-          reference
-          current)
+          reference current )
       files_content
-
 
   let get files use_node real_type =
     "cli" >::: CCList.map (fun file -> Filename.basename file ^ "." ^ real_type >:: run file use_node real_type) files
@@ -660,65 +866,78 @@ end
 
 module Templates = struct
   let tryCompile (args : Args.args) generated_files =
-    match args.template, args.code, generated_files with
-    | Some "pd", CppCode, (filename, _) :: _ -> compileCppFile ".cpp" filename
-    | _ -> ()
-
+    match (args.template, args.code, generated_files) with
+    | Some "pd", CppCode, (filename, _) :: _ ->
+        compileCppFile ".cpp" (Filename.dirname filename) filename ;
+        linkAndRunPd filename
+    | _ ->
+        ()
 
   let callVult template (fullfile : string) code_type =
     let basefile = Filename.chop_extension (Filename.basename fullfile) in
     let moduleName = String.capitalize_ascii basefile in
-    let output = in_tmp_dir basefile in
-    let args = Args.{ default_arguments with includes; roots = [ moduleName ^ ".process" ] } in
+    let dir = makeTestDir (basefile ^ "." ^ code_type ^ "." ^ template) in
+    let output = Filename.concat dir basefile in
+    let roots =
+      match (code_type, template) with
+      | "js", _ ->
+          []
+      | _, "vcv-prototype" ->
+          []
+      | _, "pd" ->
+          (* the pd objects are selected with the @[pdtilde]/@[pd] tags, which are roots *)
+          []
+      | _ ->
+          [moduleName ^ ".process"]
+    in
+    let args = Args.{default_arguments with includes; roots} in
     let args, ext =
       match code_type with
       | "fixed" ->
-        ( { args with template = Some template; code = CppCode; real = Fixed }
-        , [ ".cpp", ".cpp.fixed.base." ^ template; ".h", ".h.fixed.base." ^ template ] )
+          ( {args with template= Some template; code= CppCode; real= Fixed}
+          , [(".cpp", ".cpp.fixed.base." ^ template); (".h", ".h.fixed.base." ^ template)] )
       | "float" ->
-        ( { args with template = Some template; code = CppCode }
-        , [ ".cpp", ".cpp.float.base." ^ template; ".h", ".h.float.base." ^ template ] )
+          ( {args with template= Some template; code= CppCode}
+          , [(".cpp", ".cpp.float.base." ^ template); (".h", ".h.float.base." ^ template)] )
       | "java" ->
-        ( { args with template = Some template; code = JavaCode; prefix = Some "vult.com" }
-        , [ ".java", ".java.base." ^ template ] )
-      | "js" -> { args with template = Some template; code = JSCode }, [ ".js", ".js.base." ^ template ]
-      | "lua" -> { args with template = Some template; code = LuaCode }, [ ".lua", ".lua.base." ^ template ]
-      | "julia" -> { args with template = Some template; code = JuliaCode }, [ ".jl", ".jl.base." ^ template ]
-      | _ -> failwith "Unknown target to run test"
+          ( {args with template= Some template; code= JavaCode; java_prefix= Some "vult.com"}
+          , [(".java", ".java.base." ^ template)] )
+      | "js" ->
+          ({args with template= Some template; code= JSCode}, [(".js", ".js.base." ^ template)])
+      | "lua" ->
+          ({args with template= Some template; code= LuaCode}, [(".lua", ".lua.base." ^ template)])
+      | "julia" ->
+          ({args with template= Some template; code= JuliaCode}, [(".jl", ".jl.base." ^ template)])
+      | _ ->
+          failwith "Unknown target to run test"
     in
-    let args = { args with output = Some output; files = [ File fullfile ] } in
+    let args = {args with output= Some output; files= [File fullfile]} in
     let results = Driver.Cli.driver args in
     let () = CCList.iter (Driver.Cli.showResult args) results in
-    let generated_files = CCList.map (fun e -> output ^ fst e, output ^ snd e) ext in
+    let generated_files = CCList.map (fun e -> (output ^ fst e, output ^ snd e)) ext in
     let () = tryCompile args generated_files in
     generated_files
 
-
   let process _context template (fullfile : string) code_type =
-    try callVult template fullfile code_type with
-    | Error.Errors errors ->
+    try callVult template fullfile code_type
+    with Error.Errors errors ->
       let msg = Error.reportErrors errors in
       assert_failure msg
 
-
   let run (file : string) template real_type context : unit =
-    Sys.chdir initial_dir;
+    Sys.chdir initial_dir ;
     let fullfile = checkFile (in_test_directory ("templates/" ^ file)) in
     let generated_files = process context template fullfile real_type in
     let files_content =
       CCList.map (readOutputAndReference (update_test context) (in_test_directory "code")) generated_files
     in
-    assert_bool "No code generated" (files_content <> []);
+    assert_bool "No code generated" (files_content <> []) ;
     CCList.iter
       (fun (current, reference) ->
-        assert_equal
-          ~cmp:Diff.compare
-          ~msg:("Generating file " ^ fullfile)
+        assert_equal ~cmp:Diff.compare ~msg:("Generating file " ^ fullfile)
           ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff file a b))
-          reference
-          current)
+          reference current )
       files_content
-
 
   let get files template real_type =
     "template"
@@ -747,138 +966,95 @@ module InterpretPerf = struct
     let args =
       Args.
         { default_arguments with
-          files = [ Code ("intepret.vult", code) ]
-        ; eval = Some "Intepret.run()"
-        ; includes = in_test_directory "perf" :: includes
-        }
+          files= [Code ("intepret.vult", code)]
+        ; eval= Some "Intepret.run()"
+        ; eval_backend= CVM
+        ; includes= in_test_directory "perf" :: includes }
     in
     let results = Driver.Cli.driver args in
     CCList.iter
-      (fun result ->
-        match result with
-        | Args.Errors errors -> assert_failure (Error.reportErrors errors)
-        | _ -> ())
+      (fun result -> match result with Args.Errors errors -> assert_failure (Error.reportErrors errors) | _ -> ())
       results
-
 
   let get files = "run" >::: CCList.map (fun file -> Filename.basename file >:: run file) files
 end
 
 module Interpret = struct
-  let run file _context =
+  let run file expected backend _context =
     let fullfile = checkFile (in_test_directory ("interpreter/" ^ file)) in
     let moduleName file = Filename.basename file |> Filename.chop_extension |> String.capitalize_ascii in
     let args =
       Args.
         { default_arguments with
-          eval = Some (moduleName fullfile ^ ".main()")
-        ; includes = in_test_directory "interpreter" :: includes
-        }
+          files= [File fullfile]
+        ; eval= Some (moduleName fullfile ^ ".main()")
+        ; eval_backend= backend
+        ; includes= in_test_directory "interpreter" :: includes }
     in
     let results = Driver.Cli.driver args in
+    let got_result = ref false in
     CCList.iter
       (fun result ->
         match result with
-        | Args.Errors errors -> assert_failure (Error.reportErrors errors)
-        | Args.EvalResult int ->
-          if int_of_string int > 0 then
-            ()
-          else
-            assert_failure ("Evaluation returned: " ^ int)
-        | _ -> ())
-      results
+        | Args.Errors errors ->
+            assert_failure (Error.reportErrors errors)
+        | Args.EvalResult value ->
+            got_result := true ;
+            let expected_str = string_of_int expected in
+            if String.equal value expected_str then ()
+            else assert_failure (Printf.sprintf "Evaluation returned %s but %s was expected" value expected_str)
+        | _ ->
+            () )
+      results ;
+    if not !got_result then assert_failure "The evaluation produced no result"
 
-
-  let get files = "run" >::: CCList.map (fun file -> Filename.basename file >:: run file) files
+  (* Every file is evaluated with all three backends so their semantics cannot diverge *)
+  let get files =
+    "run"
+    >::: CCList.map (fun (file, expected) -> Filename.basename file ^ ".cvm" >:: run file expected Args.CVM) files
+         @ CCList.map
+             (fun (file, expected) -> Filename.basename file ^ ".ocamlvm" >:: run file expected Args.OcamlVM)
+             files
+         @ CCList.map
+             (fun (file, expected) -> Filename.basename file ^ ".interp" >:: run file expected Args.Interpreter)
+             files
 end
 
-(** Module to test pure unification functions *)
-module UnificationTest = struct
-  open Core.Typed
+module EvalGenericTest = struct
+  (* Generic functions called directly in the evaluated expression must be elaborated:
+     they either reuse a specialization the program created or instantiate a new one *)
+  let run file expression expected _context =
+    let fullfile = checkFile (in_test_directory ("interpreter/" ^ file)) in
+    let args =
+      Args.
+        { default_arguments with
+          files= [File fullfile]
+        ; eval= Some expression
+        ; eval_backend= Interpreter
+        ; includes= in_test_directory "interpreter" :: includes }
+    in
+    let results = Driver.Cli.driver args in
+    let got = ref None in
+    CCList.iter
+      (fun result ->
+        match result with
+        | Args.Errors errors ->
+            assert_failure (Error.reportErrors errors)
+        | Args.EvalResult v ->
+            got := Some v
+        | _ ->
+            () )
+      results ;
+    match !got with
+    | Some v ->
+        assert_equal ~printer:(fun s -> s) expected v
+    | None ->
+        assert_failure "The evaluation produced no result"
 
-  let loc = Util.Loc.default
-
-  (** Helper: check if unification succeeds *)
-  let unifies (t1 : type_) (t2 : type_) : bool = Option.is_some (Core.Inference.unify_pure t1 t2 empty_substitution)
-
-  (** Helper: convert type to string for assertions *)
-  let type_to_string (t : type_) : string = Pla.print (print_type_ t)
-
-  (* === Basic Unification Tests === *)
-
-  let test_int_unifies_with_int _ = assert_bool "int = int" (unifies (C.int ~loc) (C.int ~loc))
-
-  let test_int_fails_with_real _ = assert_bool "int ≠ real" (not (unifies (C.int ~loc) (C.real ~loc)))
-
-  let test_unbound_binds_to_concrete _ =
-    let tvar = C.unbound loc in
-    let concrete = C.int ~loc in
-    match Core.Inference.unify_pure tvar concrete empty_substitution with
-    | Some subs ->
-      let resolved = walk_star tvar subs in
-      let resolved_str = type_to_string resolved in
-      assert_bool ("should resolve to int, got: " ^ resolved_str) (String.equal resolved_str "int")
-    | None -> assert_failure "unbound should unify with int"
-
-
-  (* === TEOption Tests (Phase 8 Critical) === *)
-
-  let test_num_option_unifies_with_int _ =
-    let opt = C.num loc in
-    (* TEOption [real|int|int16|fix16] *)
-    assert_bool "num option should unify with int" (unifies opt (C.int ~loc))
-
-
-  let test_num_option_unifies_with_real _ =
-    let opt = C.num loc in
-    assert_bool "num option should unify with real" (unifies opt (C.real ~loc))
-
-
-  let test_option_resolution_after_unify _ =
-    (* KEY PHASE 8 BLOCKER TEST - expected to FAIL initially *)
-    let opt = C.num loc in
-    let target = C.int ~loc in
-    match Core.Inference.unify_pure opt target empty_substitution with
-    | Some subs ->
-      let resolved = walk_star opt subs in
-      let resolved_str = type_to_string resolved in
-      (* This test documents the Phase 8 blocker:
-         walk_star doesn't collapse TEOption to the unified type *)
-      assert_bool ("option should resolve to int, got: " ^ resolved_str) (String.equal resolved_str "int")
-    | None -> assert_failure "should unify"
-
-
-  (* === Walk/Substitution Tests === *)
-
-  let test_walk_star_resolves_nested _ =
-    let inner = C.unbound loc in
-    let outer = C.array inner in
-    match Core.Inference.unify_pure inner (C.real ~loc) empty_substitution with
-    | Some subs ->
-      let resolved = walk_star outer subs in
-      let resolved_str = type_to_string resolved in
-      assert_bool ("array element should be real, got: " ^ resolved_str) (CCString.mem ~sub:"real" resolved_str)
-    | None -> assert_failure "should unify"
-
-
-  let test_occurs_check_prevents_cycle _ =
-    let tvar = C.unbound loc in
-    (* Try to create cyclic type: tvar = array(tvar) *)
-    let cyclic = C.array tvar in
-    assert_bool "cyclic type should fail occurs check" (not (unifies tvar cyclic))
-
-
-  let suite =
-    "unification"
-    >::: [ "int_unifies_with_int" >:: test_int_unifies_with_int
-         ; "int_fails_with_real" >:: test_int_fails_with_real
-         ; "unbound_binds_to_concrete" >:: test_unbound_binds_to_concrete
-         ; "num_option_unifies_with_int" >:: test_num_option_unifies_with_int
-         ; "num_option_unifies_with_real" >:: test_num_option_unifies_with_real
-         ; "option_resolution_after_unify" >:: test_option_resolution_after_unify
-         ; "walk_star_resolves_nested" >:: test_walk_star_resolves_nested
-         ; "occurs_check_prevents_cycle" >:: test_occurs_check_prevents_cycle
-         ]
+  let get () =
+    "eval_generics"
+    >::: [ "reused_specialization" >:: run "type_intrinsics.vult" "Type_intrinsics.get_max(0)" "2147483647"
+         ; "new_specialization" >:: run "generics_comprehensive.vult" "Generics_comprehensive.change(true)" "true" ]
 end
 
 module RenderTest = struct
@@ -908,84 +1084,68 @@ fun main() : real {
     in
     let vult_file = in_tmp_dir "test_sine.vult" in
     (* Write test Vult file *)
-    FileIO.write vult_file vult_content |> ignore;
+    FileIO.write vult_file vult_content |> ignore ;
     (* Prepare render arguments *)
     let render_tag =
-      Printf.sprintf
-        "render(file=\"%s\", samplerate=%d, time=%f, exp=\"Test_sine.main()\")"
-        temp_file
-        sample_rate
+      Printf.sprintf "render(file=\"%s\", samplerate=%d, time=%f, exp=\"Test_sine.main()\")" temp_file sample_rate
         duration
     in
-    let args = Args.{ default_arguments with files = [ File vult_file ]; render = Some render_tag } in
+    let args = Args.{default_arguments with files= [File vult_file]; render= Some render_tag; eval_backend= CVM} in
     (* Execute rendering *)
     let results = Driver.Cli.driver args in
     (* Check for errors first *)
-    CCList.iter
-      (function
-        | Args.Errors errors -> assert_failure (Error.reportErrors errors)
-        | _ -> ())
-      results;
+    CCList.iter (function Args.Errors errors -> assert_failure (Error.reportErrors errors) | _ -> ()) results ;
     (* Verify audio file was created successfully *)
-    let audio_rendered =
-      CCList.exists
-        (function
-          | Args.AudioRendered _ -> true
-          | _ -> false)
-        results
-    in
-    assert_bool "Audio rendering should complete successfully" audio_rendered;
+    let audio_rendered = CCList.exists (function Args.AudioRendered _ -> true | _ -> false) results in
+    assert_bool "Audio rendering should complete successfully" audio_rendered ;
     (* Read back the generated WAV file *)
     match Util.WaveFile.read temp_file with
-    | Error msg -> assert_failure ("Failed to read generated WAV file: " ^ msg)
+    | Error msg ->
+        assert_failure ("Failed to read generated WAV file: " ^ msg)
     | Ok wave_data -> (
-      (* Verify basic properties *)
-      assert_equal ~msg:"Should have 1 channel" 1 wave_data.channels;
-      assert_equal ~msg:"Should have 1000 samples" 1000 wave_data.samples;
-      (* Get the audio data *)
-      let samples = wave_data.data.(0) in
-      (* Generate expected values for all 1000 samples *)
-      let expected_values =
-        List.init 1000 (fun i ->
-            (* Calculate expected sine value for each sample *)
-            let phase = float_of_int i /. 1000.0 in
-            0.5 *. sin (2.0 *. 3.14159265359 *. phase))
-        (* Scaled to match the generated wave *)
-      in
-      (* Verify all sample points *)
-      List.iteri
-        (fun i expected ->
-          let actual = samples.(i) in
-          let diff = abs_float (actual -. expected) in
-          if diff > tolerance then
-            assert_failure
-              (Printf.sprintf "Sample %d: expected %f, got %f (diff=%f > %f)" i expected actual diff tolerance))
-        expected_values;
-      (* Also verify key points with descriptive messages *)
-      let key_points =
-        [ 0, 0.0, "Start of sine wave"
-        ; 250, 0.5, "Peak of sine wave"
-        ; 500, 0.0, "Zero crossing"
-        ; 750, -0.5, "Trough of sine wave"
-        ; 999, 0.0, "End of period"
-        ]
-      in
-      CCList.iter
-        (fun (index, expected, description) ->
-          let actual = samples.(index) in
-          let diff = abs_float (actual -. expected) in
-          assert_bool
-            (Printf.sprintf "%s at sample %d: expected ~%f, got %f (diff=%f)" description index expected actual diff)
-            (diff <= tolerance))
-        key_points;
-      (* Clean up temporary files *)
-      (try Sys.remove temp_file with
-      | _ -> ());
-      try Sys.remove vult_file with
-      | _ -> ())
+        (* Verify basic properties *)
+        assert_equal ~msg:"Should have 1 channel" 1 wave_data.channels ;
+        assert_equal ~msg:"Should have 1000 samples" 1000 wave_data.samples ;
+        (* Get the audio data *)
+        let samples = wave_data.data.(0) in
+        (* Generate expected values for all 1000 samples *)
+        let expected_values =
+          List.init 1000 (fun i ->
+              (* Calculate expected sine value for each sample *)
+              let phase = float_of_int i /. 1000.0 in
+              0.5 *. sin (2.0 *. 3.14159265359 *. phase) )
+          (* Scaled to match the generated wave *)
+        in
+        (* Verify all sample points *)
+        List.iteri
+          (fun i expected ->
+            let actual = samples.(i) in
+            let diff = abs_float (actual -. expected) in
+            if diff > tolerance then
+              assert_failure
+                (Printf.sprintf "Sample %d: expected %f, got %f (diff=%f > %f)" i expected actual diff tolerance) )
+          expected_values ;
+        (* Also verify key points with descriptive messages *)
+        let key_points =
+          [ (0, 0.0, "Start of sine wave")
+          ; (250, 0.5, "Peak of sine wave")
+          ; (500, 0.0, "Zero crossing")
+          ; (750, -0.5, "Trough of sine wave")
+          ; (999, 0.0, "End of period") ]
+        in
+        CCList.iter
+          (fun (index, expected, description) ->
+            let actual = samples.(index) in
+            let diff = abs_float (actual -. expected) in
+            assert_bool
+              (Printf.sprintf "%s at sample %d: expected ~%f, got %f (diff=%f)" description index expected actual diff)
+              (diff <= tolerance) )
+          key_points ;
+        (* Clean up temporary files *)
+        ( try Sys.remove temp_file with _ -> () ) ;
+        try Sys.remove vult_file with _ -> () )
 
-
-  let get () = "render" >::: [ "sine_wave" >:: test_sine_wave_render ]
+  let get () = "render" >::: ["sine_wave" >:: test_sine_wave_render]
 end
 
 let suite =
@@ -995,29 +1155,34 @@ let suite =
        ; PassesTest.get passes_files
        ; Templates.get template_files "pd" "float"
        ; Templates.get template_files "pd" "fixed"
+       ; Templates.get template_files "browser" "js"
+       ; Templates.get template_files "webaudio" "js"
+       ; Templates.get template_files "worklet" "js"
+       ; Templates.get vcv_template_files "vcv-prototype" "lua"
          (*    ; Templates.get template_files "max" "float"
                ; Templates.get template_files "max" "fixed"
                ; Templates.get template_files "modelica" "float"
                ; Templates.get template_files "modelica" "fixed"
-               ; Templates.get template_files "teensy" "fixed"
-               ; Templates.get template_files "webaudio" "js"
-               ; Templates.get template_files "browser" "js"*)
+               ; Templates.get template_files "teensy" "fixed" *)
        ; CliTest.get all_files Native "float"
        ; CliTest.get all_files Native "fixed"
        ; CliTest.get all_files Native "lua"
        ; CliTest.get all_files Native "js"
        ; CliTest.get all_files Native "julia"
+       ; CliTest.get all_files Native "python"
+       ; CliTest.get all_files Native "java"
        ; CliTest.get all_files Node "float"
        ; CliTest.get all_files Node "fixed"
        ; CliTest.get all_files Node "lua"
        ; CliTest.get all_files Node "julia"
+       ; CliTest.get all_files Node "python"
        ; RandomCompileTest.get test_random_code
+       ; SplitCompileTest.get split_files
+       ; TableRegressionTest.get ()
        ; InterpretPerf.get perf_files
        ; Interpret.get interpreter
-       ; RenderTest.get ()
-       ; UnificationTest.suite
-       ]
-
+       ; EvalGenericTest.get ()
+       ; RenderTest.get () ]
 
 let () =
   let _ = run_test_tt_main suite in

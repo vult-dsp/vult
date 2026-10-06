@@ -1,0 +1,10 @@
+// A wrongly typed variable passed to a constant generic parameter must be
+// rejected: non-specialized calls check the declared type too.
+fun ignore_constant('n : int, x : int) : int {
+  return x;
+}
+
+fun main() : int {
+  val k = 1.5;
+  return ignore_constant(k, 7);
+}

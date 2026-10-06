@@ -1,0 +1,5 @@
+fun getValue() {
+  mem Error49_getValue_ret_0 : bool;
+  Error49_getValue_ret_0 = true;
+  return 1, 2.0;
+}

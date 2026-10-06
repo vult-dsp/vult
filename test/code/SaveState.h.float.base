@@ -3,6 +3,8 @@
 #define SAVESTATE_H
 
 #include "vultin.hpp"
+#include "vultin_string.hpp"
+#include "vultin_serialization.hpp"
 #include "SaveState.tables.h"
 
 typedef struct SaveState_counter_type {

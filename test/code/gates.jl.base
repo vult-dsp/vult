@@ -47,14 +47,14 @@ function Gates_gates_noteOn_type_alloc()
    _ctx.Gates_gates_state_ret_6 = Float32(0.0)
    _ctx.Gates_gates_state_ret_7 = Float32(0.0)
    i_0 = Int32(0)
-   temp = fill(Int32(0), Int32(8))
+   temp_1 = fill(Int32(0), Int32(8))
    while (i_0 < Int32(8))
       begin
-         @inbounds temp[i_0 + 1] = Int32(0)
+         @inbounds temp_1[i_0 + 1] = Int32(0)
          i_0 = (Int32(1) + i_0)
       end
    end
-   _ctx.vel = temp
+   _ctx.vel = temp_1
    return _ctx
 end
 

@@ -34,15 +34,14 @@ end
 module G (T : GESig) = struct
   (* main type of a graph *)
   type g =
-    { forward : (T.key, T.data list) Hashtbl.t
+    { forward: (T.key, T.data list) Hashtbl.t
     ; (* forward representation of the graph *)
-      backward : (T.key, T.data list) Hashtbl.t
+      backward: (T.key, T.data list) Hashtbl.t
     ; (* reversed repesentation of directed graph *)
-      vertex : (T.key, T.data) Hashtbl.t (* set with all the vertex in the graph *)
-    }
+      vertex: (T.key, T.data) Hashtbl.t (* set with all the vertex in the graph *) }
 
   (* returns an empty graph *)
-  let empty () : g = { forward = Hashtbl.create 8; backward = Hashtbl.create 8; vertex = Hashtbl.create 8 }
+  let empty () : g = {forward= Hashtbl.create 8; backward= Hashtbl.create 8; vertex= Hashtbl.create 8}
 
   (* adds a graph edge *)
   let addEdge (g : g) (from_v : T.data) (to_v : T.data) : unit =
@@ -51,36 +50,33 @@ module G (T : GESig) = struct
     let () =
       (* inserts edge from_v to to_v *)
       match Hashtbl.find g.forward from_key with
-      | deps -> Hashtbl.replace g.forward from_key (to_v :: deps)
-      | exception Not_found -> Hashtbl.add g.forward from_key [ to_v ]
+      | deps ->
+          Hashtbl.replace g.forward from_key (to_v :: deps)
+      | exception Not_found ->
+          Hashtbl.add g.forward from_key [to_v]
     in
     let () =
       (* inserts edge to_v to from_v *)
       match Hashtbl.find g.backward to_key with
-      | deps -> Hashtbl.replace g.backward to_key (from_v :: deps)
-      | exception Not_found -> Hashtbl.add g.backward to_key [ from_v ]
+      | deps ->
+          Hashtbl.replace g.backward to_key (from_v :: deps)
+      | exception Not_found ->
+          Hashtbl.add g.backward to_key [from_v]
     in
     (* adds both vertex to the set *)
     let () = Hashtbl.replace g.vertex from_key from_v in
     let () = Hashtbl.replace g.vertex to_key to_v in
     ()
 
-
   let addVertex (g : g) (v : T.data) : unit = Hashtbl.replace g.vertex (T.get v) v
 
   (* gets the all vertices pointed by a given vertex *)
   let getDependencies (g : g) (v : T.data) : T.data list =
-    match Hashtbl.find g.forward (T.get v) with
-    | deps -> deps
-    | exception Not_found -> []
-
+    match Hashtbl.find g.forward (T.get v) with deps -> deps | exception Not_found -> []
 
   (* gets the all vertices that point to a given vertex *)
   let getRevDependencies (g : g) (v : T.data) : T.data list =
-    match Hashtbl.find g.backward (T.get v) with
-    | deps -> deps
-    | exception Not_found -> []
-
+    match Hashtbl.find g.backward (T.get v) with deps -> deps | exception Not_found -> []
 
   (* returns a list with all vertices of the graph *)
   let getVertices (g : g) : T.data list = Hashtbl.fold (fun _ v acc -> v :: acc) g.vertex []
@@ -91,8 +87,8 @@ module G (T : GESig) = struct
     let () =
       CCList.iter
         (fun (v, deps) ->
-          addVertex g v;
-          CCList.iter (addEdge g v) deps)
+          addVertex g v ;
+          CCList.iter (addEdge g v) deps )
         e
     in
     g
@@ -115,11 +111,11 @@ module S = struct
   (* returns the first element of the stack *)
   let pop (s : 'a t) : 'a =
     match !s with
-    | [] -> failwith "Stack is empty"
+    | [] ->
+        failwith "Stack is empty"
     | h :: t ->
-      s := t;
-      h
-
+        s := t ;
+        h
 
   (* returns a list representation of the stack *)
   let toList (s : 'a t) : 'a list = !s
@@ -152,7 +148,6 @@ module Make (T : GESig) = struct
       let () = CCList.iter (pass1 g stack visited) children in
       S.push stack v
 
-
   let rec pass2_part g visited comp v =
     if not (V.contains visited v) then
       let deps = G.getRevDependencies g v in
@@ -160,18 +155,14 @@ module Make (T : GESig) = struct
       let () = S.push comp v in
       CCList.iter (pass2_part g visited comp) deps
 
-
   let rec pass2 g comps stack visited =
     if not (S.isEmpty stack) then (
       let v = S.pop stack in
-      if V.contains visited v then
-        pass2 g comps stack visited
+      if V.contains visited v then pass2 g comps stack visited
       else
         let comp = S.empty () in
         let () = S.push comps comp in
-        pass2_part g visited comp v;
-        pass2 g comps stack visited)
-
+        pass2_part g visited comp v ; pass2 g comps stack visited )
 
   (* calculates the strong components of a graph *)
   let calculate (graph : (T.data * T.data list) list) : T.data list list =
@@ -186,7 +177,7 @@ module Make (T : GESig) = struct
     (* creates a new set of visited vertex *)
     let visited = V.empty () in
     (* performs the second pass *)
-    pass2 g comps stack visited;
+    pass2 g comps stack visited ;
     (* returns the components as a list of lists *)
     comps |> S.toList |> CCList.map S.toList
 end

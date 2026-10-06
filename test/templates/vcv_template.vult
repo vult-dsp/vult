@@ -1,0 +1,10 @@
+fun process(in1:real, in2:real) {
+   mem sum = clip(in1 + in2, -1.0, 1.0);
+   mem sub = clip(in1 - in2, -1.0, 1.0);
+   return sum, sub, sum * sub;
+}
+and update() {
+   _ = display("test");
+   _ = setLight(1, 1.0, 0.0, 0.0);
+   _ = setSwitchLight(1, 0.0, 1.0, 0.0);
+}

@@ -1,0 +1,29 @@
+// Test file for list(T) functionality
+
+fun testListSize() : int {
+   mem items : list(int);
+   return list_size(items);
+}
+
+fun testListAppend() : int {
+   mem items : list(int);
+   list_append(items, 10);
+   list_append(items, 20);
+   list_append(items, 30);
+   return list_size(items);
+}
+
+fun testListAccess() : int {
+   mem items : list(int);
+   list_append(items, 100);
+   list_append(items, 200);
+   return items[1];
+}
+
+fun testListClear() : int {
+   mem items : list(int);
+   list_append(items, 1);
+   list_append(items, 2);
+   list_clear(items);
+   return list_size(items);
+}

@@ -1,0 +1,17 @@
+// Only a leading uppercase letter marks an enumeration value. Names starting with '_'
+// are ordinary identifiers and can be declared and read like any other.
+
+constant _limit = 3;
+
+fun tally(_step : int) : int {
+  mem _total : int;
+  val _amount = _step;
+  _total = _total + _amount;
+  return _total;
+}
+
+fun main() : int {
+  if (_limit <> 3) return -1;
+  if (tally(2) <> 2) return -2;
+  return 500;
+}

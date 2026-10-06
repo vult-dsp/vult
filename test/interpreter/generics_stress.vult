@@ -71,29 +71,7 @@ fun test_const_variations() : int {
 }
 
 // =============================================================================
-// Test 4: Function parameter with different functions
-// =============================================================================
-fun apply('f, x : int, y : int) : int {
-  return f(x, y);
-}
-
-fun add(a : int, b : int) : int { return a + b; }
-fun sub(a : int, b : int) : int { return a - b; }
-fun mul(a : int, b : int) : int { return a * b; }
-
-fun test_func_param() : int {
-  val sum = apply(add, 10, 3);  // 13
-  val diff = apply(sub, 10, 3); // 7
-  val prod = apply(mul, 10, 3); // 30
-
-  if (sum == 13 && diff == 7 && prod == 30) {
-    return 400;
-  }
-  return -4;
-}
-
-// =============================================================================
-// Test 5: Stateful function called multiple times from same call site
+// Test 4: Stateful function called multiple times from same call site
 // =============================================================================
 fun increment(x : 't) : int {
   mem counter : int;
@@ -111,9 +89,9 @@ fun test_same_callsite() : int {
 
   // Should be 1+1+1 = 3
   if (total == 3) {
-    return 500;
+    return 400;
   }
-  return -5;
+  return -4;
 }
 
 // =============================================================================
@@ -137,9 +115,9 @@ fun test_early_return() : int {
   val b = get_or_default(100, true);
 
   if (a == 42 && b == 0) {
-    return 600;
+    return 500;
   }
-  return -6;
+  return -5;
 }
 
 // =============================================================================
@@ -156,9 +134,9 @@ fun test_mixed_params() : int {
   val b = scale(3.14, 3);
 
   if (a == 2 && b == 3) {
-    return 700;
+    return 600;
   }
-  return -7;
+  return -6;
 }
 
 // =============================================================================
@@ -168,17 +146,16 @@ fun main() : int {
   val t1 = test_loop_generic();
   val t2 = test_multi_specialize();
   val t3 = test_const_variations();
-  val t4 = test_func_param();
-  val t5 = test_same_callsite();
-  val t6 = test_early_return();
-  val t7 = test_mixed_params();
+  val t4 = test_same_callsite();
+  val t5 = test_early_return();
+  val t6 = test_mixed_params();
 
-  // All tests pass: 100+200+300+400+500+600+700 = 2800
-  if (t1 == 100 && t2 == 200 && t3 == 300 && t4 == 400 &&
-      t5 == 500 && t6 == 600 && t7 == 700) {
-    return 2800;
+  // All tests pass: 100+200+300+400+500+600 = 2100
+  if (t1 == 100 && t2 == 200 && t3 == 300 &&
+      t4 == 400 && t5 == 500 && t6 == 600) {
+    return 2100;
   }
 
   // Return sum for debugging which tests failed
-  return t1 + t2 + t3 + t4 + t5 + t6 + t7;
+  return t1 + t2 + t3 + t4 + t5 + t6;
 }

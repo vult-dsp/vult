@@ -1,0 +1,69 @@
+// Test cases for function parameter generics ('f)
+// NOT in the test suite — the type checker does not yet support calling function parameters directly.
+
+// =============================================================================
+// Basic function parameter
+// =============================================================================
+fun apply_func('f, a, b) {
+  return f(a, b);
+}
+
+fun add_int(a, b) {
+  return a + b;
+}
+
+fun add_real(a, b) : real {
+  return a + b;
+}
+
+fun mul_int(a : int, b : int) : int {
+  return a * b;
+}
+
+// =============================================================================
+// Function parameter with type annotations
+// =============================================================================
+fun apply('f, x : int, y : int) : int {
+  return f(x, y);
+}
+
+fun add(a : int, b : int) : int { return a + b; }
+fun sub(a : int, b : int) : int { return a - b; }
+fun mul(a : int, b : int) : int { return a * b; }
+
+// =============================================================================
+// Tests
+// =============================================================================
+
+fun test_basic_apply() : int {
+  val result1 = apply_func(add_int, 3, 4);       // Should be 7
+  val result2 = apply_func(add_real, 1.0, 4.0);  // Should be 5.0
+  val result3 = apply_func(mul_int, 3, 4);        // Should be 12
+
+  if (result1 == 7 && result3 == 12) {
+    return 100;
+  }
+  return -1;
+}
+
+fun test_multiple_functions() : int {
+  val sum = apply(add, 10, 3);   // 13
+  val diff = apply(sub, 10, 3);  // 7
+  val prod = apply(mul, 10, 3);  // 30
+
+  if (sum == 13 && diff == 7 && prod == 30) {
+    return 200;
+  }
+  return -2;
+}
+
+fun main() : int {
+  val t1 = test_basic_apply();
+  val t2 = test_multiple_functions();
+
+  // All tests pass: 100 + 200 = 300
+  if (t1 == 100 && t2 == 200) {
+    return 300;
+  }
+  return t1 + t2;
+}

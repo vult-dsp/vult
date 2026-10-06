@@ -1,0 +1,294 @@
+// Tests for interleaved constant parameters with value-based specialization
+//
+// Key behaviors tested:
+// - Constant params at various positions (beginning, middle, end)
+// - Multiple interleaved constant params
+// - Complex interleaving patterns
+// - Specialization with interleaved params
+
+// =============================================================================
+// Test 1: Constant param at beginning (common case)
+// =============================================================================
+fun begin_const('a : int, x : int, y : int) : int {
+   return a * (x + y);
+}
+
+fun test_begin_const() : int {
+   // Specialized with a=2
+   val r1 = begin_const(2, 3, 4);  // 2 * (3 + 4) = 14
+   // Specialized with a=5
+   val r2 = begin_const(5, 1, 1);  // 5 * (1 + 1) = 10
+
+   if (r1 == 14 && r2 == 10) {
+      return 100;
+   }
+   return -1;
+}
+
+// =============================================================================
+// Test 2: Constant param at end
+// =============================================================================
+fun end_const(x : int, y : int, 'c : int) : int {
+   return (x + y) * c;
+}
+
+fun test_end_const() : int {
+   val r1 = end_const(3, 4, 2);  // (3 + 4) * 2 = 14
+   val r2 = end_const(1, 1, 5);  // (1 + 1) * 5 = 10
+
+   if (r1 == 14 && r2 == 10) {
+      return 200;
+   }
+   return -2;
+}
+
+// =============================================================================
+// Test 3: Constant param in middle
+// =============================================================================
+fun mid_const(x : int, 'b : int, y : int) : int {
+   return x + b * y;
+}
+
+fun test_mid_const() : int {
+   val r1 = mid_const(1, 2, 3);  // 1 + 2*3 = 7
+   val r2 = mid_const(10, 3, 2); // 10 + 3*2 = 16
+
+   if (r1 == 7 && r2 == 16) {
+      return 300;
+   }
+   return -3;
+}
+
+// =============================================================================
+// Test 4: Two constant params at beginning
+// =============================================================================
+fun two_begin('a : int, 'b : int, x : int) : int {
+   return a * x + b;
+}
+
+fun test_two_begin() : int {
+   val r1 = two_begin(2, 3, 4);  // 2*4 + 3 = 11
+   val r2 = two_begin(5, 1, 2);  // 5*2 + 1 = 11
+
+   if (r1 == 11 && r2 == 11) {
+      return 400;
+   }
+   return -4;
+}
+
+// =============================================================================
+// Test 5: Two constant params at end
+// =============================================================================
+fun two_end(x : int, 'a : int, 'b : int) : int {
+   return a * x + b;
+}
+
+fun test_two_end() : int {
+   val r1 = two_end(4, 2, 3);  // 2*4 + 3 = 11
+   val r2 = two_end(2, 5, 1);  // 5*2 + 1 = 11
+
+   if (r1 == 11 && r2 == 11) {
+      return 500;
+   }
+   return -5;
+}
+
+// =============================================================================
+// Test 6: Alternating pattern - const, arg, const, arg
+// =============================================================================
+fun alternate('a : int, x : int, 'b : int, y : int) : int {
+   return a * x + b * y;
+}
+
+fun test_alternate() : int {
+   val r1 = alternate(2, 3, 4, 5);  // 2*3 + 4*5 = 6 + 20 = 26
+   val r2 = alternate(1, 10, 1, 10); // 1*10 + 1*10 = 20
+
+   if (r1 == 26 && r2 == 20) {
+      return 600;
+   }
+   return -6;
+}
+
+// =============================================================================
+// Test 7: Alternating pattern - arg, const, arg, const
+// =============================================================================
+fun alternate2(x : int, 'a : int, y : int, 'b : int) : int {
+   return a * x + b * y;
+}
+
+fun test_alternate2() : int {
+   val r1 = alternate2(3, 2, 5, 4);  // 2*3 + 4*5 = 6 + 20 = 26
+   val r2 = alternate2(10, 1, 10, 1); // 1*10 + 1*10 = 20
+
+   if (r1 == 26 && r2 == 20) {
+      return 700;
+   }
+   return -7;
+}
+
+// =============================================================================
+// Test 8: Three constants, two args
+// =============================================================================
+fun three_consts('a : int, x : int, 'b : int, y : int, 'c : int) : int {
+   return a * x + b * y + c;
+}
+
+fun test_three_consts() : int {
+   val r1 = three_consts(2, 3, 4, 5, 6);  // 2*3 + 4*5 + 6 = 6 + 20 + 6 = 32
+   val r2 = three_consts(1, 1, 1, 1, 1);  // 1*1 + 1*1 + 1 = 3
+
+   if (r1 == 32 && r2 == 3) {
+      return 800;
+   }
+   return -8;
+}
+
+// =============================================================================
+// Test 9: Non-specialized with interleaved (variable in middle)
+// =============================================================================
+fun test_interleaved_nonspec() : int {
+   val b = 4;
+   // 'b is variable - non-specialized
+   val r = alternate(2, 3, b, 5);  // 2*3 + 4*5 = 26
+
+   if (r == 26) {
+      return 900;
+   }
+   return -9;
+}
+
+// =============================================================================
+// Test 10: Non-specialized with interleaved (first variable)
+// =============================================================================
+fun test_first_var() : int {
+   val a = 2;
+   // 'a is variable - non-specialized
+   val r = alternate(a, 3, 4, 5);  // 2*3 + 4*5 = 26
+
+   if (r == 26) {
+      return 1000;
+   }
+   return -10;
+}
+
+// =============================================================================
+// Test 11: Complex expression with interleaved constants
+// =============================================================================
+fun complex_interleaved('a : real, x : real, 'b : real, y : real, 'c : real, z : real) : real {
+   return a * x + b * y + c * z;
+}
+
+fun test_complex() : int {
+   val r = complex_interleaved(0.5, 2.0, 1.5, 4.0, 2.5, 2.0);
+   // 0.5*2 + 1.5*4 + 2.5*2 = 1 + 6 + 5 = 12
+
+   if (r == 12.0) {
+      return 1100;
+   }
+   return -11;
+}
+
+// =============================================================================
+// Test 12: Interleaved with memory
+// =============================================================================
+fun stateful_interleaved('scale : real, x : real, 'offset : real) : real {
+   mem sum : real;
+   sum = sum + scale * x + offset;
+   return sum;
+}
+
+fun test_stateful_interleaved() : int {
+   // Each call site has its own instance
+   val r1 = stateful_interleaved(2.0, 1.0, 0.5);  // 0 + 2*1 + 0.5 = 2.5
+   val r2 = stateful_interleaved(1.0, 3.0, 0.0);  // 0 + 1*3 + 0 = 3.0
+
+   if (r1 == 2.5 && r2 == 3.0) {
+      return 1200;
+   }
+   return -12;
+}
+
+// =============================================================================
+// Test 13: Multiple calls same specialization
+// =============================================================================
+fun test_multiple_same_spec() : int {
+   // All use same specialization (2, 3)
+   val r1 = alternate(2, 1, 3, 1);  // 2*1 + 3*1 = 5
+   val r2 = alternate(2, 2, 3, 2);  // 2*2 + 3*2 = 10
+   val r3 = alternate(2, 3, 3, 3);  // 2*3 + 3*3 = 15
+
+   if (r1 == 5 && r2 == 10 && r3 == 15) {
+      return 1300;
+   }
+   return -13;
+}
+
+// =============================================================================
+// Test 14: Interleaved with type generic
+// =============================================================================
+fun typed_interleaved('factor : int, x : 't, 'offset : int) : int {
+   mem stored : 't;
+   stored = x;
+   return factor + offset;  // Just use factor and offset to verify specialization
+}
+
+fun test_typed_interleaved() : int {
+   val r1 = typed_interleaved(2, 1.0, 3);   // real specialization, 2 + 3 = 5
+   val r2 = typed_interleaved(2, 1, 3);     // int specialization, 2 + 3 = 5
+   val r3 = typed_interleaved(5, true, 10); // bool specialization, 5 + 10 = 15
+
+   if (r1 == 5 && r2 == 5 && r3 == 15) {
+      return 1400;
+   }
+   return -14;
+}
+
+// =============================================================================
+// Test 15: Single arg surrounded by constants
+// =============================================================================
+fun surrounded('a : int, 'b : int, x : int, 'c : int, 'd : int) : int {
+   return a + b + x + c + d;
+}
+
+fun test_surrounded() : int {
+   val r1 = surrounded(1, 2, 10, 3, 4);  // 1+2+10+3+4 = 20
+   val r2 = surrounded(10, 20, 5, 30, 40); // 10+20+5+30+40 = 105
+
+   if (r1 == 20 && r2 == 105) {
+      return 1500;
+   }
+   return -15;
+}
+
+// =============================================================================
+// Main test runner
+// =============================================================================
+fun main() : int {
+   val t1 = test_begin_const();
+   val t2 = test_end_const();
+   val t3 = test_mid_const();
+   val t4 = test_two_begin();
+   val t5 = test_two_end();
+   val t6 = test_alternate();
+   val t7 = test_alternate2();
+   val t8 = test_three_consts();
+   val t9 = test_interleaved_nonspec();
+   val t10 = test_first_var();
+   val t11 = test_complex();
+   val t12 = test_stateful_interleaved();
+   val t13 = test_multiple_same_spec();
+   val t14 = test_typed_interleaved();
+   val t15 = test_surrounded();
+
+   // Sum of all passing tests: 100+200+...+1500 = 12000
+   val expected = 12000;
+   val actual = t1 + t2 + t3 + t4 + t5 + t6 + t7 + t8 + t9 + t10 + t11 + t12 + t13 + t14 + t15;
+
+   if (actual == expected) {
+      return expected;  // All tests passed
+   }
+
+   // Return sum to debug which tests failed
+   return actual;
+}

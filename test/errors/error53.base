@@ -1,0 +1,4 @@
+This expression has type 'real' but 'int' was expected
+  val k = 1.5;
+  return ignore_constant(k, 7);
+                         ^

@@ -22,4 +22,6 @@
    THE SOFTWARE.
 *)
 
-Driver.Cli.main ()
+let () =
+  let args = Util.Args.processArguments () in
+  if args.lsp then Vult_lsp_server.run () else Driver.Cli.run args

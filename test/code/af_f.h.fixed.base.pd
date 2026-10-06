@@ -8,9 +8,8 @@
 
  #include <stdint.h>
  #include <math.h>
+ #include <new>
  #include <m_pd.h>
-
-static inline float samplerate() { return sys_getsr(); }
 
  #if defined(_MSC_VER)
      //  Microsoft VC++
@@ -22,20 +21,56 @@ static inline float samplerate() { return sys_getsr(); }
 
  extern "C" {
  EXPORT void af_f_setup(void);
- }
+ EXPORT void process_tilde_setup(void);
+}
 
- extern "C" void Af_f_process_tilde_setup(void);
-typedef struct Af_f_process_type {
+ typedef struct Af_f_process_type {
    int32_t x;
 } Af_f_process_type;
+
+typedef struct Af_f_process_type Af_f_noteOn_type;
+
+typedef struct Af_f_process_type Af_f_noteOff_type;
+
+typedef struct Af_f_process_type Af_f_controlChange_type;
+
+typedef struct Af_f_process_type Af_f_default_type;
 
 static_inline void Af_f_process_type_init(Af_f_process_type& _ctx) {
    _ctx.x = 0;
 }
 
+static_inline void Af_f_noteOn_type_init(Af_f_noteOn_type& _ctx) {
+   Af_f_process_type_init(_ctx);
+}
+
+static_inline void Af_f_noteOff_type_init(Af_f_noteOff_type& _ctx) {
+   Af_f_process_type_init(_ctx);
+}
+
+static_inline void Af_f_controlChange_type_init(Af_f_controlChange_type& _ctx) {
+   Af_f_process_type_init(_ctx);
+}
+
+static_inline void Af_f_default_type_init(Af_f_default_type& _ctx) {
+   Af_f_process_type_init(_ctx);
+}
+
 static_inline fix16_t Af_f_process(Af_f_process_type& _ctx, fix16_t input) {
    _ctx.x = 1 + _ctx.x;
    return fix_mul(input, input);
+}
+
+static_inline void Af_f_noteOn(Af_f_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
+}
+
+static_inline void Af_f_noteOff(Af_f_process_type& _ctx, int32_t note, int32_t channel) {
+}
+
+static_inline void Af_f_controlChange(Af_f_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+}
+
+static_inline void Af_f_default(Af_f_process_type& _ctx) {
 }
 
 

@@ -1,0 +1,16 @@
+
+def Template_process(input):
+   return input
+
+def Template_noteOn(note, velocity, channel):
+   pass
+
+def Template_noteOff(note, channel):
+   pass
+
+def Template_controlChange(control, value, channel):
+   pass
+
+def Template_default():
+   pass
+

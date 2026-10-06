@@ -1,0 +1,5 @@
+// A mem variable that stores an array argument of unknown size.
+fun f(x : array(real)) {
+  mem a = x;
+  return a[0];
+}
