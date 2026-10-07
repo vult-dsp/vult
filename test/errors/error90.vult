@@ -1,0 +1,7 @@
+type point { val x : real; val y : real; }
+type ipoint { val x : int; val y : int; }
+
+// The members are used as booleans, which neither record has
+fun both(p) {
+   return p.x && p.y;
+}

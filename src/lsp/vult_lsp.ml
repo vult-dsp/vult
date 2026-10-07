@@ -771,6 +771,7 @@ module Hover = struct
         | Core.Typed.EId _
         | Core.Typed.EConst _
         | Core.Typed.ETypeIntrinsic _
+        | Core.Typed.EEnum _
         | Core.Typed.EGenCompanionCall _ ->
             None
       in

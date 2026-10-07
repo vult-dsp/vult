@@ -1,0 +1,129 @@
+
+package vult.com.record_inference;
+
+import java.util.Arrays;
+import java.util.Random;
+import vult.com.external.*;
+
+public class Record_inference {
+
+public static class Record_inference_point {
+   public float x;
+   public float y;
+
+   public Record_inference_point() {
+      this.x = 0.0f;
+      this.y = 0.0f;
+   }
+   public Record_inference_point(float x, float y) {
+      this.x = x;
+      this.y = y;
+   }}public static class Record_inference_point3 {
+   public float x;
+   public float y;
+   public float z;
+
+   public Record_inference_point3() {
+      this.x = 0.0f;
+      this.y = 0.0f;
+      this.z = 0.0f;
+   }
+   public Record_inference_point3(float x, float y, float z) {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+   }}public static class Record_inference_counter {
+   public int count;
+   public int step;
+
+   public Record_inference_counter() {
+      this.count = 0;
+      this.step = 0;
+   }
+   public Record_inference_counter(int count, int step) {
+      this.count = count;
+      this.step = step;
+   }}public static class Record_inference_icounter {
+   public int count;
+
+   public Record_inference_icounter() {
+      this.count = 0;
+   }
+   public Record_inference_icounter(int count) {
+      this.count = count;
+   }}public static class Record_inference_rcounter {
+   public float count;
+
+   public Record_inference_rcounter() {
+      this.count = 0.0f;
+   }
+   public Record_inference_rcounter(float count) {
+      this.count = count;
+   }}private Record_inference_point Record_inference_point_alloc() {
+   Record_inference_point _ctx = new Record_inference_point();
+   _ctx.x = 0.0f;
+   _ctx.y = 0.0f;
+   return _ctx;
+}
+
+private Record_inference_point3 Record_inference_point3_alloc() {
+   Record_inference_point3 _ctx = new Record_inference_point3();
+   _ctx.x = 0.0f;
+   _ctx.y = 0.0f;
+   _ctx.z = 0.0f;
+   return _ctx;
+}
+
+private Record_inference_counter Record_inference_counter_alloc() {
+   Record_inference_counter _ctx = new Record_inference_counter();
+   _ctx.count = 0;
+   _ctx.step = 0;
+   return _ctx;
+}
+
+private Record_inference_icounter Record_inference_icounter_alloc() {
+   Record_inference_icounter _ctx = new Record_inference_icounter();
+   _ctx.count = 0;
+   return _ctx;
+}
+
+private Record_inference_rcounter Record_inference_rcounter_alloc() {
+   Record_inference_rcounter _ctx = new Record_inference_rcounter();
+   _ctx.count = 0.0f;
+   return _ctx;
+}
+
+private float Record_inference_length3(Record_inference_point3 p) {
+   return (p.x + (p.y + p.z));
+}
+
+private float Record_inference_sum2(Record_inference_point p) {
+   return (p.x + p.y);
+}
+
+private float Record_inference_half(Record_inference_rcounter c) {
+   return (0.5f * c.count);
+}
+
+private int Record_inference_advance(Record_inference_counter c) {
+   c.count = (c.count + c.step);
+   return c.count;
+}
+
+private float Record_inference_first(Record_inference_point p) {
+   Record_inference_point q = p;
+   return q.x;
+}
+
+private int Record_inference_main() {
+   Record_inference_point3 a = new Record_inference_point3(1.0f, 2.0f, 3.0f);
+   Record_inference_point b = new Record_inference_point(10.0f, 20.0f);
+   Record_inference_rcounter c = new Record_inference_rcounter(9.0f);
+   Record_inference_counter d = new Record_inference_counter(1, 4);
+   float total = (Record_inference_first(b) + (Record_inference_half(c) + (Record_inference_length3(a) + Record_inference_sum2(b))));
+   int advanced = Record_inference_advance(d);
+   return (advanced + (100 * (int)(total)));
+}
+
+
+}

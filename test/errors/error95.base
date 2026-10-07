@@ -1,0 +1,4 @@
+No value was given for the member 'y'.
+fun main() {
+   val p = point { x = 1.0 };
+                 ^

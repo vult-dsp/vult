@@ -1,0 +1,34 @@
+this.Enum_inference_code = function (c) {
+   return c;
+};
+
+this.Enum_inference_isOn = function (l) {
+   return (l != (0|0));
+};
+
+this.Enum_inference_describe = function (c) {
+   if ((c == (1|0))) {
+      return (10|0);
+   } else {
+      if ((c == (0|0))) {
+         return (20|0);
+      }
+   }
+   return (0|0);
+};
+
+this.Enum_inference_main = function () {
+   var a = (1|0);
+   var b = (2|0);
+   var on = ((b == (2|0)) && this.Enum_inference_isOn(b));
+   var c = this.Enum_inference_code((1|0));
+   var d = this.Enum_inference_describe((1|0));
+   var e = (0|0);
+   if (on) {
+      e = (1|0);
+   } else {
+      e = (0|0);
+   }
+   return (d + (e + (((100|0) * c) + (((1000|0) * a) + ((10000|0) * b)))));
+};
+

@@ -1,0 +1,12 @@
+enum color { Green, Red }
+enum light { Off, Red }
+
+fun code(c : color) : int { return int(c); }
+fun isOn(l : light) : bool { return l <> Off; }
+
+// The value is used as a light and as a color
+fun main() {
+  val b = Red;
+  val on = isOn(b);
+  return code(b);
+}

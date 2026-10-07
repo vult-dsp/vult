@@ -50,7 +50,7 @@ type exp_d =
   | SETuple of exp list
   | SEMember of exp * string
   | SEGroup of exp
-  | SERecord of {path: path; elems: (path * exp) list}
+  | SERecord of {path: path option; elems: (path * exp) list} (* The type is inferred when there is no path *)
   | SETypeIntrinsic of string * string (* intrinsic_name, type_param_name e.g., ("typemax", "t") *)
 
 and exp = {e: exp_d; loc: Loc.t}
@@ -239,9 +239,9 @@ module Print = struct
           let v = exp v in
           {%pla|<#p#> = <#v#>|}
         in
-        let p = path p in
+        let p = match p with Some p -> Pla.append (path p) Pla.space | None -> Pla.unit in
         let elems = Pla.map_sep Pla.commaspace printElem elems in
-        {%pla|<#p#> { <#elems#> }|}
+        {%pla|<#p#>{ <#elems#> }|}
     | SETypeIntrinsic (intrinsic_name, type_param) ->
         {%pla|<#intrinsic_name#s>('<#type_param#s>)|}
 
@@ -792,7 +792,7 @@ module Mapper = struct
             let odata = if field_0 == field_0' then idata else SEGroup field_0' in
             (state, odata)
         | SERecord {path; elems} ->
-            let state, path' = map_path mapper context state path in
+            let state, path' = (mapper_opt map_path) mapper context state path in
             let state, elems' = mapper_list (mapper_tuple2 map_path map_exp) mapper context state elems in
             let odata = if elems == elems' && path == path' then idata else SERecord {elems= elems'; path= path'} in
             (state, odata)
@@ -1199,7 +1199,7 @@ module SExpr = struct
           "(SEGroup " ^ print_exp e ^ ")"
       | SERecord {path; elems} ->
           let elem_str = print_list (fun (p, e) -> "(" ^ print_path p ^ " " ^ print_exp e ^ ")") elems in
-          "(SERecord " ^ print_path path ^ " " ^ elem_str ^ ")"
+          "(SERecord " ^ print_option print_path path ^ " " ^ elem_str ^ ")"
       | SETypeIntrinsic (name, type_param) ->
           "(SETypeIntrinsic " ^ name ^ " " ^ type_param ^ ")"
     in

@@ -1,0 +1,7 @@
+type point { val x : real; val y : real; }
+
+// No record has exactly the members 'x' and 'w'
+fun main() {
+   val a = { x = 1.0, w = 2.0 };
+   return a.x;
+}

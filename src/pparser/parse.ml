@@ -571,6 +571,8 @@ and exp_nud (buffer : Stream.stream) (token : 'kind token) : exp =
       let _ = consumeInContext buffer ELSE "if-then-else expression" in
       let else_ = expression 0 buffer in
       {e= SEIf {cond; then_; else_}; loc}
+  | LBRACE, _ ->
+      anonymousRecord buffer token
   | LBRACK, _ -> (
     match Stream.peek buffer with
     | RBRACK ->
@@ -805,7 +807,20 @@ and record (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   let path = expToPath error left in
   let elems = recordValues buffer in
   let _ = consumeInContext buffer RBRACE "record constructor" in
-  {e= SERecord {path; elems}; loc= token.loc}
+  {e= SERecord {path= Some path; elems}; loc= token.loc}
+
+(* A record without the name of its type, which is inferred from its members *)
+and anonymousRecord (buffer : Stream.stream) (token : 'kind token) : exp =
+  match Stream.peek buffer with
+  | RBRACE ->
+      (* The brace is consumed so that the parser continues after the record *)
+      let _ = consumeInContext buffer RBRACE "record constructor" in
+      let message = Error.PointedError (token.loc, "A record needs at least one member") in
+      raise (ParserError message)
+  | _ ->
+      let elems = recordValues buffer in
+      let _ = consumeInContext buffer RBRACE "record constructor" in
+      {e= SERecord {path= None; elems}; loc= token.loc}
 
 and expressionList (buffer : Stream.stream) : exp list = commaSepList expression buffer
 

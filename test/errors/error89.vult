@@ -1,0 +1,5 @@
+type point { val x : real; val y : real; }
+
+fun depth(p) {
+   return p.z;
+}

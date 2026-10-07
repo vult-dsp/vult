@@ -1,0 +1,7 @@
+type point { val x : real; val y : real; }
+type sample { val x : real; }
+
+// Both records have 'x' and nothing decides between them
+fun get(p) {
+   return p.x;
+}

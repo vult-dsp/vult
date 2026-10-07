@@ -131,7 +131,8 @@ and exp_d (e : exp_d) : string =
       Printf.sprintf "(group %s)" (exp e)
   | SERecord {path= p; elems} ->
       let elems_str = String.concat " " (List.map (fun (p, e) -> Printf.sprintf "(%s %s)" (path p) (exp e)) elems) in
-      Printf.sprintf "(record %s %s)" (path p) elems_str
+      let p = match p with Some p -> path p | None -> "_" in
+      Printf.sprintf "(record %s %s)" p elems_str
   | SETypeIntrinsic (name, type_param) ->
       Printf.sprintf "(type_intrinsic %s '%s)" name type_param
 

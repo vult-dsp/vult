@@ -1,0 +1,4 @@
+No record type has a member named 'z'.
+fun depth(p) {
+   return p.z;
+            ^

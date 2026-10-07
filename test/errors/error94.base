@@ -1,0 +1,4 @@
+The member 'x' is given more than once.
+fun main() {
+   val a = { x = 1.0, x = 2.0 };
+                 ^^^

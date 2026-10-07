@@ -1,0 +1,44 @@
+// The types of records are inferred from the members used on them.
+
+type point { val x : real; val y : real; }
+type point3 { val x : real; val y : real; val z : real; }
+type counter { val count : int; val step : int; }
+type icounter { val count : int; }
+type rcounter { val count : real; }
+
+// Only 'point3' has the member 'z'
+fun length3(p) {
+   return p.x + p.y + p.z;
+}
+
+// 'x' and 'y' belong to 'point' and 'point3': the caller decides
+fun sum2(p) {
+   return p.x + p.y;
+}
+
+// The type of the member used decides between 'icounter' and 'rcounter'
+fun half(c) {
+   return c.count / 2.0;
+}
+
+// The members are written: the argument is changed in place
+fun advance(c) {
+   c.count = c.count + c.step;
+   return c.count;
+}
+
+// A guessed value assigned to an annotated variable
+fun first(p) {
+   val q : point = p;
+   return q.x;
+}
+
+fun main() : int {
+   val a = point3 { x = 1.0, y = 2.0, z = 3.0 };
+   val b = point { x = 10.0, y = 20.0 };
+   val c = rcounter { count = 9.0 };
+   val d = counter { count = 1, step = 4 };
+   val total = length3(a) + sum2(b) + half(c) + first(b);
+   val advanced = advance(d);
+   return int(total) * 100 + advanced;
+}

@@ -1,0 +1,93 @@
+
+class Record_inference_point:
+    __slots__ = ['x', 'y']
+    def __init__(self, x=0.0, y=0.0):
+        self.x = x
+        self.y = y
+
+class Record_inference_point3:
+    __slots__ = ['x', 'y', 'z']
+    def __init__(self, x=0.0, y=0.0, z=0.0):
+        self.x = x
+        self.y = y
+        self.z = z
+
+class Record_inference_counter:
+    __slots__ = ['count', 'step']
+    def __init__(self, count=0, step=0):
+        self.count = count
+        self.step = step
+
+class Record_inference_icounter:
+    __slots__ = ['count']
+    def __init__(self, count=0):
+        self.count = count
+
+class Record_inference_rcounter:
+    __slots__ = ['count']
+    def __init__(self, count=0.0):
+        self.count = count
+
+def Record_inference_point_alloc():
+   _ctx = Record_inference_point()
+   _ctx.x = 0.0
+   _ctx.y = 0.0
+   return _ctx
+
+
+def Record_inference_point3_alloc():
+   _ctx = Record_inference_point3()
+   _ctx.x = 0.0
+   _ctx.y = 0.0
+   _ctx.z = 0.0
+   return _ctx
+
+
+def Record_inference_counter_alloc():
+   _ctx = Record_inference_counter()
+   _ctx.count = 0
+   _ctx.step = 0
+   return _ctx
+
+
+def Record_inference_icounter_alloc():
+   _ctx = Record_inference_icounter()
+   _ctx.count = 0
+   return _ctx
+
+
+def Record_inference_rcounter_alloc():
+   _ctx = Record_inference_rcounter()
+   _ctx.count = 0.0
+   return _ctx
+
+
+def Record_inference_length3(p):
+   return (p.x + (p.y + p.z))
+
+def Record_inference_sum2(p):
+   return (p.x + p.y)
+
+def Record_inference_half(c):
+   return (0.5 * c.count)
+
+def Record_inference_advance(c):
+   c.count = (c.count + c.step)
+   return c.count
+
+
+def Record_inference_first(p):
+   q = p
+   return q.x
+
+
+def Record_inference_main():
+   a = Record_inference_point3(x=1.0, y=2.0, z=3.0)
+   b = Record_inference_point(x=10.0, y=20.0)
+   c = Record_inference_rcounter(count=9.0)
+   d = Record_inference_counter(count=1, step=4)
+   total = (Record_inference_first(b) + (Record_inference_half(c) + (Record_inference_length3(a) + Record_inference_sum2(b))))
+   advanced = Record_inference_advance(d)
+   return (advanced + (100 * int(total)))
+
+

@@ -1,0 +1,48 @@
+this.Record_literals_point_alloc = function () {
+   var _ctx = {};
+   _ctx.x = 0.0;
+   _ctx.y = 0.0;
+   return _ctx;
+};
+
+this.Record_literals_ipoint_alloc = function () {
+   var _ctx = {};
+   _ctx.x = (0|0);
+   _ctx.y = (0|0);
+   return _ctx;
+};
+
+this.Record_literals_point3_alloc = function () {
+   var _ctx = {};
+   _ctx.x = 0.0;
+   _ctx.y = 0.0;
+   _ctx.z = 0.0;
+   return _ctx;
+};
+
+this.Record_literals_pair_alloc = function () {
+   var _ctx = {};
+   _ctx.first = this.Record_literals_point_alloc();
+   _ctx.second = this.Record_literals_point_alloc();
+   return _ctx;
+};
+
+this.Record_literals_norm = function (p) {
+   return ((p.x * p.x) + (p.y * p.y));
+};
+
+this.Record_literals_make = function (a, b) {
+   var _record_0 = { x: a, y: b };
+   return _record_0;
+};
+
+this.Record_literals_main = function () {
+   var a = { x: 1.0, y: 2.0 };
+   var b = { x: (3|0), y: (4|0) };
+   var c = { x: 1.0, y: 2.0, z: 3.0 };
+   var d = { first: { x: 5.0, y: 0.0 }, second: a };
+   var e = this.Record_literals_make((10|0), (20|0));
+   var total = (this.Record_literals_norm(a) + (c.z + (d.first.x + d.second.y)));
+   return (((1000|0) * ((total)|0)) + (b.x + (b.y + (e.x + e.y))));
+};
+

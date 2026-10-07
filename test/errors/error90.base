@@ -1,0 +1,4 @@
+The type of this value cannot be determined: no record type has the members 'x', 'y' with the types they are used with.
+fun both(p) {
+   return p.x && p.y;
+          ^

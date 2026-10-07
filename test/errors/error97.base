@@ -1,0 +1,3 @@
+A member with the name 'Green' has already been declared at line 1, columns 13-18
+enum color { Green, Red, Green }
+                         ^^^^^

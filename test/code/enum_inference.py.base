@@ -1,0 +1,30 @@
+
+def Enum_inference_code(c):
+   return c
+
+def Enum_inference_isOn(l):
+   return (l != 0)
+
+def Enum_inference_describe(c):
+   if (c == 1):
+      return 10
+   else:
+      if (c == 0):
+         return 20
+   return 0
+
+
+def Enum_inference_main():
+   a = 1
+   b = 2
+   on = ((b == 2) and Enum_inference_isOn(b))
+   c = Enum_inference_code(1)
+   d = Enum_inference_describe(1)
+   e = 0
+   if on:
+      e = 1
+   else:
+      e = 0
+   return (d + (e + ((100 * c) + ((1000 * a) + (10000 * b)))))
+
+

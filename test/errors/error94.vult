@@ -1,0 +1,6 @@
+type point { val x : real; val y : real; }
+
+fun main() {
+   val a = { x = 1.0, x = 2.0 };
+   return a.x;
+}

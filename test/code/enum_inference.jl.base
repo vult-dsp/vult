@@ -1,0 +1,37 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+function Enum_inference_code(c)
+   return c
+end
+
+function Enum_inference_isOn(l)
+   return (l != Int32(0))
+end
+
+function Enum_inference_describe(c)
+   if (c == Int32(1))
+      return Int32(10)
+   else
+      if (c == Int32(0))
+         return Int32(20)
+      end
+   end
+   return Int32(0)
+end
+
+function Enum_inference_main()
+   a = Int32(1)
+   b = Int32(2)
+   on = ((b == Int32(2)) && Enum_inference_isOn(b))
+   c = Enum_inference_code(Int32(1))
+   d = Enum_inference_describe(Int32(1))
+   e = Int32(0)
+   if on
+      e = Int32(1)
+   else
+      e = Int32(0)
+   end
+   return (d + (e + ((Int32(100) * c) + ((Int32(1000) * a) + (Int32(10000) * b)))))
+end
+

@@ -1,0 +1,4 @@
+The field 'w' is not part of the type 'Error88_point'
+fun mix(p) {
+   return p.x + p.w;
+                  ^

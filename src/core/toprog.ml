@@ -223,6 +223,20 @@ let rec exp (env : env) (state : state) (e : Typed.exp) : state * Prog.exp =
       (state, {e= EBool v; t; loc})
   | EInt n ->
       (state, {e= EInt n; t; loc})
+  | EEnum {name; values} -> (
+      (* The type of the value is the enumeration it belongs to *)
+      let index =
+        match e.t.tx with
+        | TEId path ->
+            CCList.assoc_opt ~eq:(fun a b -> Pparser.Syntax.compare_path a b = 0) path values
+        | _ ->
+            None
+      in
+      match index with
+      | Some index ->
+          (state, {e= EInt index; t; loc})
+      | None ->
+          failwith ("Internal error: the enumeration of the value '" ^ name ^ "' was not decided") )
   | EReal n ->
       (state, {e= EReal n; t; loc})
   | EFixed n ->
@@ -265,7 +279,7 @@ let rec exp (env : env) (state : state) (e : Typed.exp) : state * Prog.exp =
   | EMember (e, m) ->
       let state, e = exp env state e in
       (state, {e= EMember (e, m); t; loc})
-  | ERecord {path= _; elems} ->
+  | ERecord {elems} ->
       let state, elems_rev =
         CCList.fold_left
           (fun (state, acc) (n, v) ->

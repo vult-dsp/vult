@@ -1,0 +1,4 @@
+This expression has type 'Error96.light' but 'Error96.color' was expected
+  val on = isOn(b);
+  return code(b);
+              ^

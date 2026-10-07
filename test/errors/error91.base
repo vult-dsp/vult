@@ -1,0 +1,4 @@
+No record type has exactly the members 'w', 'x'.
+fun main() {
+   val a = { x = 1.0, w = 2.0 };
+           ^

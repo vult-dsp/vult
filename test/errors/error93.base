@@ -1,0 +1,4 @@
+A record needs at least one member
+fun main() {
+   val a = {};
+           ^

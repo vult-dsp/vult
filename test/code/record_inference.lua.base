@@ -1,0 +1,71 @@
+
+
+-- Math functions
+local modf = math.modf
+
+function Record_inference_point_alloc()
+   local _ctx = {};
+   _ctx.x = 0.0
+   _ctx.y = 0.0
+   return _ctx
+end
+
+function Record_inference_point3_alloc()
+   local _ctx = {};
+   _ctx.x = 0.0
+   _ctx.y = 0.0
+   _ctx.z = 0.0
+   return _ctx
+end
+
+function Record_inference_counter_alloc()
+   local _ctx = {};
+   _ctx.count = 0
+   _ctx.step = 0
+   return _ctx
+end
+
+function Record_inference_icounter_alloc()
+   local _ctx = {};
+   _ctx.count = 0
+   return _ctx
+end
+
+function Record_inference_rcounter_alloc()
+   local _ctx = {};
+   _ctx.count = 0.0
+   return _ctx
+end
+
+function Record_inference_length3(p)
+   return (p.x + (p.y + p.z))
+end
+
+function Record_inference_sum2(p)
+   return (p.x + p.y)
+end
+
+function Record_inference_half(c)
+   return (0.5 * c.count)
+end
+
+function Record_inference_advance(c)
+   c.count = (c.count + c.step)
+   return c.count
+end
+
+function Record_inference_first(p)
+   local q = p
+   return q.x
+end
+
+function Record_inference_main()
+   local a = { x = 1.0, y = 2.0, z = 3.0 }
+   local b = { x = 10.0, y = 20.0 }
+   local c = { count = 9.0 }
+   local d = { count = 1, step = 4 }
+   local total = (Record_inference_first(b) + (Record_inference_half(c) + (Record_inference_length3(a) + Record_inference_sum2(b))))
+   local advanced = Record_inference_advance(d)
+   return (advanced + (100 * (modf(total))))
+end
+

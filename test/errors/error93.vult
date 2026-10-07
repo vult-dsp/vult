@@ -1,0 +1,4 @@
+fun main() {
+   val a = {};
+   return 0;
+}

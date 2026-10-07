@@ -78,7 +78,9 @@ type exp_d =
   | EIf of {cond: exp; then_: exp; else_: exp}
   | ETuple of exp list
   | EMember of exp * string
-  | ERecord of {path: path; elems: (string * exp) list}
+  | ERecord of {elems: (string * exp) list} (* The type of the expression is the record *)
+  | EEnum of {name: string; values: (path * int) list}
+  (* A value of an enumeration inferred from the type: the enumerations that have it and its index *)
   | EGenCall of
       { instance: string option (* Instance identifier if using inst:func() syntax *)
       ; generic_path: path (* Full path to the generic function for lookup *)
@@ -275,12 +277,14 @@ let rec print_exp (e : exp) =
   | EMember (e, m) ->
       let e = print_exp e in
       {%pla|<#e#>.<#m#s>|}
-  | ERecord {path; elems} ->
+  | EEnum {name; _} ->
+      Pla.string name
+  | ERecord {elems} ->
       let printElem (id, v) =
         let v = print_exp v in
         {%pla|<#id#s> = <#v#>|}
       in
-      let path = print_path path in
+      let path = match e.t.tx with TEId path -> print_path path | _ -> Pla.string "_" in
       let elems = Pla.map_sep Pla.commaspace printElem elems in
       {%pla|<#path#> { <#elems#> }|}
   | EGenCall {instance; generic_path; params} ->
@@ -861,16 +865,16 @@ let rec resolveTypeIntrinsicsInExp (type_substitution_map : (string * type_) lis
   | EMember (e1, m) ->
       let e1 = resolveTypeIntrinsicsInExp type_substitution_map e1 in
       {e with e= EMember (e1, m)}
-  | ERecord {path; elems} ->
+  | ERecord {elems} ->
       let elems = CCList.map (fun (n, v) -> (n, resolveTypeIntrinsicsInExp type_substitution_map v)) elems in
-      {e with e= ERecord {path; elems}}
+      {e with e= ERecord {elems}}
   | EGenCall {instance; generic_path; params} ->
       let params = mapCallValues (resolveTypeIntrinsicsInExp type_substitution_map) params in
       {e with e= EGenCall {instance; generic_path; params}}
   | EGenCompanionCall {instance; companion_name; parent_generic_path; args} ->
       let args = CCList.map (resolveTypeIntrinsicsInExp type_substitution_map) args in
       {e with e= EGenCompanionCall {instance; companion_name; parent_generic_path; args}}
-  | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ | EConst _ ->
+  | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ | EConst _ | EEnum _ ->
       e
 
 (** Resolves type intrinsics in a statement tree. *)
@@ -936,16 +940,16 @@ let rec substituteConstantsInExp (constant_map : (string * exp) list) (e : exp) 
   | EMember (e1, m) ->
       let e1 = substituteConstantsInExp constant_map e1 in
       {e with e= EMember (e1, m)}
-  | ERecord {path; elems} ->
+  | ERecord {elems} ->
       let elems = CCList.map (fun (n, v) -> (n, substituteConstantsInExp constant_map v)) elems in
-      {e with e= ERecord {path; elems}}
+      {e with e= ERecord {elems}}
   | EGenCall {instance; generic_path; params} ->
       let params = mapCallValues (substituteConstantsInExp constant_map) params in
       {e with e= EGenCall {instance; generic_path; params}}
   | EGenCompanionCall {instance; companion_name; parent_generic_path; args} ->
       let args = CCList.map (substituteConstantsInExp constant_map) args in
       {e with e= EGenCompanionCall {instance; companion_name; parent_generic_path; args}}
-  | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EConst _ | ETypeIntrinsic _ ->
+  | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EConst _ | ETypeIntrinsic _ | EEnum _ ->
       e
 
 (** Substitutes constant parameter references in a left-hand side expression. *)

@@ -1,0 +1,24 @@
+// Values with the same name in several enumerations: the enumeration is inferred from the use.
+enum color { Green, Red }
+enum light { Off, Dim, Red }   // Red is 2 here and 1 in color
+
+fun code(c : color) : int { return int(c); }
+fun isOn(l : light) : bool { return l <> Off; }
+
+fun describe(c : color) : int {
+   match (c) {
+      Red -> return 10;
+      Green -> return 20;
+   }
+   return 0;
+}
+
+fun main() : int {
+   val a : color = Red;          // annotation
+   val b = Red;                  // a light: it is passed to isOn below
+   val on = b == Red && isOn(b); // isOn takes a light
+   val c = code(Red);            // argument of a function
+   val d = describe(Red);
+   val e = if on then 1 else 0;
+   return int(b) * 10000 + int(a) * 1000 + c * 100 + d + e;
+}

@@ -109,6 +109,31 @@ let typeMismatchMessage (env : env) (expected : type_) (got : type_) : string =
   let got = printType env got in
   Pla.print {%pla|This expression has type '<#got#>' but '<#expected#>' was expected|}
 
+let quotedNames (names : string list) : string = String.concat ", " (CCList.map (fun n -> "'" ^ n ^ "'") names)
+
+let noRecordTypeMessage (members : string list) : string =
+  "The type of this value cannot be determined: no record type has the members " ^ quotedNames members
+  ^ " with the types they are used with."
+
+(* Uses the member [m] of a value whose type is not known yet. The type of the value is guessed
+   among the record types that have the member. Returns the type of the member. *)
+let useGuessedMember (env : env) ~(read : bool) (value : type_) (value_loc : Loc.t) (m : string) (loc : Loc.t) :
+    env * type_ =
+  (* The member of a value that is written shares its constness, like the members of known records *)
+  let t = if read then C.unbound loc else {(C.unbound loc) with const= value.const} in
+  let use : Subst.member_use = {name= m; t; owner= value; read} in
+  match Env.recordCandidates env (fun members -> Option.is_some (Env.Map.find m members)) with
+  | [] ->
+      Error.raiseError ("No record type has a member named '" ^ m ^ "'.") loc
+  | candidates -> (
+    match Subst.guessType env.subst value RecordGuess candidates [use] value_loc with
+    | Ok subst ->
+        ({env with subst}, t)
+    | Error (NoRecordType members) ->
+        Error.raiseError (noRecordTypeMessage members) loc
+    | Error (Mismatch | NoCommonAlternative _) ->
+        Error.raiseError (noRecordTypeMessage [m]) loc )
+
 (* Unifies [t1] (the expected type) with [t2] (the type found at [loc]), raising an error if they
    do not match. When [t2] belongs to a tuple literal, [elem_locs] holds the locations of its
    elements, which are used to point at the offending element. *)
@@ -118,6 +143,8 @@ let unifyRaise ?(bind = false) ?(elem_locs = []) (env : env) (loc : Loc.t) (t1 :
       {env with subst}
   | Error (NoCommonAlternative {message; loc}) ->
       Error.raiseError message loc
+  | Error (NoRecordType members) ->
+      Error.raiseError (noRecordTypeMessage members) loc
   | Error Mismatch -> (
     match diagnoseUnifyFailure ~bind env t1 t2 with
     | env, TypeMismatch ->
@@ -297,6 +324,25 @@ let pairGenericParams (generic_func : Typed.generic_function) (args : Syntax.exp
             got %d"
            generic_func.name (CCList.length generic_func.params) explicit_count function_count (CCList.length args) )
         loc
+
+(* A value of an enumeration. When several enumerations have a value with this name, the
+   enumeration is guessed from how the value is used. *)
+let enumValue (env : env) (name : string) ((first, others) : Env.enum_values) (loc : Loc.t) : env * exp =
+  match others with
+  | [] ->
+      (env, {e= EInt first.index; t= C.path_t first.value_loc first.enum_path; loc})
+  | _ :: _ -> (
+      let values = first :: others in
+      let t = C.unbound loc in
+      let candidates =
+        CCList.map (fun (v : Env.enum_value) : Subst.candidate -> {candidate_path= v.enum_path; members= []}) values
+      in
+      match Subst.guessType env.subst t EnumGuess candidates [] loc with
+      | Ok subst ->
+          let values = CCList.map (fun (v : Env.enum_value) -> (v.enum_path, v.index)) values in
+          ({env with subst}, {e= EEnum {name; values}; t; loc})
+      | Error _ ->
+          failwith "Internal error in enumValue: a new variable cannot fail to be guessed" )
 
 let rec addContextArg (env : env) instance (f : Env.f) args loc =
   match Env.activeContextArgument env f with
@@ -515,9 +561,8 @@ and exp ?(context = normal_context) (env : env) (e : Syntax.exp) : env * exp =
                 {e= EMember ({e= EId context_name; t= ctx_t; loc}, name); t; loc}
           in
           (env, e)
-      | ExprEnum (type_path, tloc, index) ->
-          let t = C.path_t tloc type_path in
-          (env, {e= EInt index; t; loc})
+      | ExprEnum values ->
+          enumValue env name values loc
       | ExprFunction f ->
           if context.in_generic_arg then
             (* In template argument context, allow function references *)
@@ -578,14 +623,16 @@ and exp ?(context = normal_context) (env : env) (e : Syntax.exp) : env * exp =
       match arg with
       | {e= EInt n; loc; _} ->
           (env, {e= EInt n; t= Typed.C.int ~loc; loc})
-      | {e= EId _; loc; t= {tx= TEId tpath; _}} -> (
-        match Env.lookType env tpath loc with
-        | {descr= Enum _; _} ->
-            (env, {e= ECall {instance= None; path; args= [arg]}; t= Typed.C.int ~loc; loc})
+      | {e= EEnum _; loc; _} ->
+          (* The enumeration is decided by the other uses of the value *)
+          (env, {e= ECall {instance= None; path; args= [arg]}; t= Typed.C.int ~loc; loc})
+      | {loc= arg_loc; t; _} -> (
+        (* A value whose type is an enumeration *)
+        match (resolve env t).tx with
+        | TEId tpath when Env.isEnum env tpath ->
+            (env, {e= ECall {instance= None; path; args= [arg]}; t= Typed.C.int ~loc:arg_loc; loc= arg_loc})
         | _ ->
-            call ~context env None path args loc e.loc )
-      | _ ->
-          call ~context env None path args loc e.loc )
+            call ~context env None path args loc e.loc ) )
   | {e= SECall {instance; path; args}; loc} ->
       call ~context env instance path args loc e.loc
   | {e= SEOp (op, e1, e2); loc} ->
@@ -642,9 +689,8 @@ and exp ?(context = normal_context) (env : env) (e : Syntax.exp) : env * exp =
                   loc
             | None -> (
               match Env.findEnum results with
-              | Some (type_path, tloc, index) ->
-                  let t = C.path_t tloc type_path in
-                  (env, {e= EInt index; t; loc})
+              | Some values ->
+                  enumValue env m values loc
               | None ->
                   Error.raiseError
                     ("Found '" ^ module_name ^ "." ^ m ^ "' but it's not a constant, function, or enum")
@@ -677,6 +723,9 @@ and exp ?(context = normal_context) (env : env) (e : Syntax.exp) : env * exp =
               Error.raiseError
                 ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.")
                 loc )
+        | TEUnbound _ when not context.in_constant ->
+            let env, t = useGuessedMember env ~read:true e1.t e1.loc m loc in
+            (env, {e= EMember (e1, m); t; loc})
         | _ ->
             let t = Pla.print (printType env e1.t) in
             let e = Pla.print (Typed.print_exp e1) in
@@ -686,9 +735,8 @@ and exp ?(context = normal_context) (env : env) (e : Syntax.exp) : env * exp =
       (* This case handles uppercase identifiers (enum constructors) *)
       let id_path : path = {id; n= None; loc} in
       match Env.lookupExpressionSymbol env id_path context with
-      | ExprEnum (type_path, tloc, index) ->
-          let t = C.path_t tloc type_path in
-          (env, {e= EInt index; t; loc})
+      | ExprEnum values ->
+          enumValue env id values loc
       | ExprNotFound ->
           Error.raiseError ("Undefined symbol '" ^ id ^ "'. Check spelling or ensure it's declared before use") loc
       (* Only names starting with an uppercase letter reach this point: they are read as
@@ -700,7 +748,9 @@ and exp ?(context = normal_context) (env : env) (e : Syntax.exp) : env * exp =
             ^ ", but a name that starts with an uppercase letter is read as an enumeration value. Rename it to '"
             ^ String.uncapitalize_ascii id ^ "' or use a module-qualified enumeration value like 'MyModule.Value'." )
             loc )
-  | {e= SERecord {path; elems}; loc} -> (
+  | {e= SERecord {path= None; elems}; loc} ->
+      anonymousRecord ~context env elems loc
+  | {e= SERecord {path= Some path; elems}; loc} -> (
       let t = Env.lookType env path loc in
       match t with
       | {descr= Record members; _} ->
@@ -724,7 +774,8 @@ and exp ?(context = normal_context) (env : env) (e : Syntax.exp) : env * exp =
               (env, []) elems
           in
           let elems = CCList.sort (fun (id1, _) (id2, _) -> String.compare id1 id2) elems_rev in
-          (env, {e= ERecord {path= t.path; elems}; t= Typed.C.path_t loc t.path; loc})
+          let () = checkRecordMembers (Env.Map.fold (fun name _ acc -> name :: acc) [] members) elems loc in
+          (env, {e= ERecord {elems}; t= Typed.C.path_t loc t.path; loc})
       | _ ->
           Error.raiseError ("The path '" ^ pathString path ^ "' is not a type.") loc )
   | {e= SETypeIntrinsic (intrinsic_name, _); loc} when context.in_constant ->
@@ -746,6 +797,60 @@ and exp ?(context = normal_context) (env : env) (e : Syntax.exp) : env * exp =
       (* Type is unbound - will be resolved during generic specialization *)
       let t = C.unbound loc in
       (env, {e= ETypeIntrinsic {intrinsic; type_param}; t; loc})
+
+(* Every member of a record value has to be given once. [elems] are sorted by name. *)
+and checkRecordMembers (members : string list) (elems : (string * exp) list) (loc : Loc.t) : unit =
+  let names = CCList.map fst elems in
+  let () =
+    match CCList.find_opt (fun (id, _) -> CCList.count (String.equal id) names > 1) elems with
+    | Some (id, (v : exp)) ->
+        Error.raiseError ("The member '" ^ id ^ "' is given more than once.") v.loc
+    | None ->
+        ()
+  in
+  match CCList.filter (fun member -> not (CCList.mem ~eq:String.equal member names)) members with
+  | [] ->
+      ()
+  | missing ->
+      let missing = CCList.sort String.compare missing in
+      let plural = match missing with [_] -> "member " | _ -> "members " in
+      Error.raiseError ("No value was given for the " ^ plural ^ quotedNames missing ^ ".") loc
+
+(* A record without the name of its type. The type is guessed among the records that have exactly
+   the given members. *)
+and anonymousRecord ~(context : Env.expr_context) (env : env) (elems : (Syntax.path * Syntax.exp) list) (loc : Loc.t) :
+    env * exp =
+  let env, elems =
+    CCList.fold_left_map
+      (fun env ((id : Syntax.path), v) ->
+        match id with
+        | {id; n= None; _} ->
+            let env, v = exp ~context env v in
+            (env, (id, v))
+        | {loc; _} ->
+            Error.raiseError ("The name '" ^ pathString id ^ "' is not a valid member of a data type.") loc )
+      env elems
+  in
+  let elems = CCList.sort (fun (id1, _) (id2, _) -> String.compare id1 id2) elems in
+  let names = CCList.map fst elems in
+  let () = checkRecordMembers names elems loc in
+  let hasExactly members =
+    Env.Map.fold (fun name _ acc -> name :: acc) [] members
+    |> CCList.sort String.compare |> CCList.equal String.equal names
+  in
+  let t = C.unbound loc in
+  let uses = CCList.map (fun (name, (v : exp)) : Subst.member_use -> {name; t= v.t; owner= t; read= false}) elems in
+  match Env.recordCandidates env hasExactly with
+  | [] ->
+      Error.raiseError ("No record type has exactly the members " ^ quotedNames names ^ ".") loc
+  | candidates -> (
+    match Subst.guessType env.subst t RecordGuess candidates uses loc with
+    | Ok subst ->
+        ({env with subst}, {e= ERecord {elems}; t; loc})
+    | Error (NoRecordType members) ->
+        Error.raiseError (noRecordTypeMessage members) loc
+    | Error (Mismatch | NoCommonAlternative _) ->
+        Error.raiseError (noRecordTypeMessage names) loc )
 
 and exp_list ?(context = normal_context) (env : env) (l : Syntax.exp list) : env * exp list =
   let env, rev_l =
@@ -817,6 +922,9 @@ and lexp ?(const = false) (env : env) (e : Syntax.lexp) : env * lexp =
             let e = Pla.print (Typed.print_lexp e) in
             Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc
         )
+      | TEUnbound _ ->
+          let env, t = useGuessedMember env ~read:false e.t e.loc m loc in
+          (env, {l= LMember (e, m); t; loc})
       | _ ->
           let t = Pla.print (printType env e.t) in
           let e = Pla.print (Typed.print_lexp e) in
@@ -930,7 +1038,7 @@ let makeIfOfMatch env e first_case other_cases =
         (* Handle enum constructor and constant patterns *)
         let id_path : path = {id; n= None; loc} in
         match Env.lookupExpressionSymbol env id_path normal_context with
-        | ExprEnum (_, _, _) ->
+        | ExprEnum _ ->
             (* Enum constructor: compare with the enum value itself *)
             makeEq e Syntax.{e= SEId id; loc}
         | ExprVariable var when var.kind = Const ->
@@ -942,7 +1050,7 @@ let makeIfOfMatch env e first_case other_cases =
         (* Handle qualified enum constructor patterns like Button.Push *)
         let id_path : path = {id= variant_name; n= Some module_name; loc} in
         match Env.lookupExpressionSymbol env id_path normal_context with
-        | ExprEnum (_, _, _) ->
+        | ExprEnum _ ->
             makeEq e Syntax.{e= SEMember (Syntax.{e= SEId module_name; loc}, variant_name); loc}
         | _ ->
             Error.raiseError ("Pattern '" ^ module_name ^ "." ^ variant_name ^ "' is not a valid enum constructor") loc
@@ -1658,6 +1766,33 @@ let removeExistingTypes set types =
   let f s = match s with {top= TopType {path; _}; _} when Set.mem path set -> false | _ -> true in
   CCList.filter f types
 
+let guessFailureError (failure : Subst.guess_failure) : Error.t =
+  match failure with
+  | AmbiguousType {kind= RecordGuess; candidates; loc} ->
+      let names = quotedNames (CCList.map Env.pathString candidates) in
+      Error.makeError
+        ( "The type of this value cannot be decided: it can be any of the record types " ^ names
+        ^ ". Add a type annotation." )
+        loc
+  | AmbiguousType {kind= EnumGuess; candidates; loc} ->
+      let names = quotedNames (CCList.map Env.pathString candidates) in
+      Error.makeError
+        ( "The enumeration of this value cannot be decided: it can belong to any of " ^ names
+        ^ ". Add a type annotation." )
+        loc
+  | UndeterminedRecord {members; loc} ->
+      Error.makeError (noRecordTypeMessage members) loc
+
+(* Decides the types of the values that were guessed from the members used on them. It is done once
+   the whole program is typechecked, since the uses that follow a function can decide the types of
+   its arguments. *)
+let resolveRecordGuesses (env : env) : env =
+  match Subst.resolveGuesses env.subst with
+  | subst, [] ->
+      {env with subst}
+  | _, failures ->
+      raise (Error.Errors (CCList.map guessFailureError failures))
+
 (* Instantiate the elaborator with the pieces of the typechecker it needs *)
 module Elab = Elaboration.Make (struct
   let unify env t1 t2 = unify env t1 t2
@@ -1681,6 +1816,7 @@ let typecheck_single (iargs : Args.args) (env : env) (h : Parse.parsed_file) : e
   let env = Env.enterModule env h.name in
   let env, stmt = top_stmt_list iargs env h.stmts in
   let env = Env.exitModule env in
+  let env = resolveRecordGuesses env in
   let env, stmt = Elab.elaborate ~reuse_existing:true iargs env [(h.name, stmt)] in
   let env = Env.zonk env in
   let stmt = Subst.zonkProgram env.subst stmt in
@@ -1715,7 +1851,7 @@ let typecheck (iargs : Args.args) (parsed : Parse.parsed_file list) : env * (str
       (Env.empty ~extensions (), [])
       parsed
   in
-  (env, CCList.rev module_stmts)
+  (resolveRecordGuesses env, CCList.rev module_stmts)
 
 (* Type checking with elaboration - for backwards compatibility.
    This is equivalent to calling typecheck followed by Elab.elaborate. *)

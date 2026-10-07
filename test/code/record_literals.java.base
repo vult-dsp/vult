@@ -1,0 +1,106 @@
+
+package vult.com.record_literals;
+
+import java.util.Arrays;
+import java.util.Random;
+import vult.com.external.*;
+
+public class Record_literals {
+
+public static class Record_literals_point {
+   public float x;
+   public float y;
+
+   public Record_literals_point() {
+      this.x = 0.0f;
+      this.y = 0.0f;
+   }
+   public Record_literals_point(float x, float y) {
+      this.x = x;
+      this.y = y;
+   }}public static class Record_literals_ipoint {
+   public int x;
+   public int y;
+
+   public Record_literals_ipoint() {
+      this.x = 0;
+      this.y = 0;
+   }
+   public Record_literals_ipoint(int x, int y) {
+      this.x = x;
+      this.y = y;
+   }}public static class Record_literals_point3 {
+   public float x;
+   public float y;
+   public float z;
+
+   public Record_literals_point3() {
+      this.x = 0.0f;
+      this.y = 0.0f;
+      this.z = 0.0f;
+   }
+   public Record_literals_point3(float x, float y, float z) {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+   }}public static class Record_literals_pair {
+   public Record_literals_point first;
+   public Record_literals_point second;
+
+   public Record_literals_pair() {
+      this.first = new Record_literals_point();
+      this.second = new Record_literals_point();
+   }
+   public Record_literals_pair(Record_literals_point first, Record_literals_point second) {
+      this.first = first;
+      this.second = second;
+   }}private Record_literals_point Record_literals_point_alloc() {
+   Record_literals_point _ctx = new Record_literals_point();
+   _ctx.x = 0.0f;
+   _ctx.y = 0.0f;
+   return _ctx;
+}
+
+private Record_literals_ipoint Record_literals_ipoint_alloc() {
+   Record_literals_ipoint _ctx = new Record_literals_ipoint();
+   _ctx.x = 0;
+   _ctx.y = 0;
+   return _ctx;
+}
+
+private Record_literals_point3 Record_literals_point3_alloc() {
+   Record_literals_point3 _ctx = new Record_literals_point3();
+   _ctx.x = 0.0f;
+   _ctx.y = 0.0f;
+   _ctx.z = 0.0f;
+   return _ctx;
+}
+
+private Record_literals_pair Record_literals_pair_alloc() {
+   Record_literals_pair _ctx = new Record_literals_pair();
+   _ctx.first = Record_literals_point_alloc();
+   _ctx.second = Record_literals_point_alloc();
+   return _ctx;
+}
+
+private float Record_literals_norm(Record_literals_point p) {
+   return ((p.x * p.x) + (p.y * p.y));
+}
+
+private Record_literals_ipoint Record_literals_make(int a, int b) {
+   Record_literals_ipoint _record_0 = new Record_literals_ipoint(a, b);
+   return _record_0;
+}
+
+private int Record_literals_main() {
+   Record_literals_point a = new Record_literals_point(1.0f, 2.0f);
+   Record_literals_ipoint b = new Record_literals_ipoint(3, 4);
+   Record_literals_point3 c = new Record_literals_point3(1.0f, 2.0f, 3.0f);
+   Record_literals_pair d = new Record_literals_pair(new Record_literals_point(5.0f, 0.0f), a);
+   Record_literals_ipoint e = Record_literals_make(10, 20);
+   float total = (Record_literals_norm(a) + (c.z + (d.first.x + d.second.y)));
+   return ((1000 * (int)(total)) + (b.x + (b.y + (e.x + e.y))));
+}
+
+
+}

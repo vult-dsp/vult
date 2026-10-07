@@ -1,0 +1,36 @@
+
+
+function Enum_inference_code(c)
+   return c
+end
+
+function Enum_inference_isOn(l)
+   return (l ~= 0)
+end
+
+function Enum_inference_describe(c)
+   if (c == 1) then
+      return 10
+   else
+      if (c == 0) then
+         return 20
+      end
+   end
+   return 0
+end
+
+function Enum_inference_main()
+   local a = 1
+   local b = 2
+   local on = ((b == 2) and Enum_inference_isOn(b))
+   local c = Enum_inference_code(1)
+   local d = Enum_inference_describe(1)
+   local e = 0
+   if on then
+      e = 1
+   else
+      e = 0
+   end
+   return (d + (e + ((100 * c) + ((1000 * a) + (10000 * b)))))
+end
+

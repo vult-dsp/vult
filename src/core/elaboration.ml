@@ -547,7 +547,7 @@ module Make (T : TYPECHECKER) = struct
         CCList.iter (fun (_, v) -> prescan_generic_calls_in_exp iargs env state v) elems
     | EGenCompanionCall {args; _} ->
         CCList.iter (prescan_generic_calls_in_exp iargs env state) args
-    | EId _ | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EConst _ | ETypeIntrinsic _ ->
+    | EId _ | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EConst _ | ETypeIntrinsic _ | EEnum _ ->
         ()
 
   (* ========== Expression and Statement Processing ========== *)
@@ -842,7 +842,7 @@ module Make (T : TYPECHECKER) = struct
     | EMember (e1, m) ->
         let env, e1 = process_exp_instantiation iargs env state e1 in
         (env, {e with e= EMember (e1, m)})
-    | ERecord {path; elems} ->
+    | ERecord {elems} ->
         let env, elems =
           CCList.fold_left_map
             (fun env (n, v) ->
@@ -850,7 +850,7 @@ module Make (T : TYPECHECKER) = struct
               (env, (n, v)) )
             env elems
         in
-        (env, {e with e= ERecord {path; elems}})
+        (env, {e with e= ERecord {elems}})
     | EGenCompanionCall {instance; companion_name; parent_generic_path; args} ->
         process_companion_call iargs env state e instance companion_name parent_generic_path args
     | ETypeIntrinsic {intrinsic; type_param} ->
@@ -861,7 +861,7 @@ module Make (T : TYPECHECKER) = struct
           (Printf.sprintf "Type intrinsic '%s('%s)' was not resolved - it must be used inside a generic function"
              intrinsic_name type_param )
           e.loc
-    | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ | EConst _ ->
+    | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ | EConst _ | EEnum _ ->
         (env, e)
 
   and process_companion_call (iargs : Args.args) (env : env) (state : instantiation_state) (e : Typed.exp)

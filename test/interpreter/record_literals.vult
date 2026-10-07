@@ -1,0 +1,28 @@
+// Records written without the name of their type, which is inferred from the members.
+
+type point { val x : real; val y : real; }
+type ipoint { val x : int; val y : int; }
+type point3 { val x : real; val y : real; val z : real; }
+type pair { val first : point; val second : point; }
+
+fun norm(p) {
+   return p.x * p.x + p.y * p.y;
+}
+
+// The type of the value returned is decided by the caller
+fun make(a, b) {
+   return { x = a, y = b };
+}
+
+fun main() : int {
+   // The types of the values decide between 'point' and 'ipoint'
+   val a = { x = 1.0, y = 2.0 };
+   val b = { x = 3, y = 4 };
+   // Only 'point3' has the three members
+   val c = { x = 1.0, y = 2.0, z = 3.0 };
+   // Nested records
+   val d = { first = { x = 5.0, y = 0.0 }, second = a };
+   val e : ipoint = make(10, 20);
+   val total = norm(a) + c.z + d.first.x + d.second.y;
+   return int(total) * 1000 + b.x + b.y + e.x + e.y;
+}

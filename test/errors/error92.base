@@ -1,0 +1,4 @@
+The type of this value cannot be decided: it can be any of the record types 'Error92.point', 'Error92.size'. Add a type annotation.
+fun main() {
+   val a = { x = 1.0, y = 2.0 };
+           ^

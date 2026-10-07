@@ -30,7 +30,11 @@
    There are two kinds of variables:
    - type variables (TEUnbound, TENoReturn and TEOption) bound to types
    - constness variables (CVar) that are constant unless they are made mutable or are linked to
-     another constness. *)
+     another constness.
+
+   An unbound variable can also have a record guess: when the members of a value are used before
+   its type is known, the variable keeps the record types that have those members. Every use and
+   every unification narrows the candidates, and the variable is bound once only one remains. *)
 
 open Util
 open Typed
@@ -38,11 +42,29 @@ module IntMap = Map.Make (Int)
 
 type const_binding = ConstLink of constness | ConstMut
 
-(* The bindings are indexed by the number of the variable. Persistent arrays keep extending and
-   reading the newest substitution in constant time. *)
-type t = {types: type_ Parray.t; consts: const_binding Parray.t}
+(* A member of a record type: its name, its type and whether it is a value type (a builtin type) *)
+type record_member = {member: string; member_t: type_; value_type: bool}
 
-let empty () : t = {types= Parray.empty (); consts= Parray.empty ()}
+(* A type that a guessed value can have: a record type with its members, or an enumeration *)
+type candidate = {candidate_path: path; members: record_member list}
+
+(* A member used on a value whose type is guessed: [t] is the type of the expression that uses it
+   and [owner] the type of the value. When the member is read, its constness follows the owner. *)
+type member_use = {name: string; t: type_; owner: type_; read: bool}
+
+(* Whether the candidates of a guess are records, whose members are used, or enumerations that share
+   the name of a value *)
+type guess_kind = RecordGuess | EnumGuess
+
+(* The types that the variable can be and the members used on it *)
+type type_guess = {kind: guess_kind; candidates: candidate list; uses: member_use list; guess_loc: Loc.t}
+
+(* The bindings are indexed by the number of the variable. Persistent arrays keep extending and
+   reading the newest substitution in constant time. [guessed] holds the variables that got a
+   record guess, to resolve them at the end of the inference. *)
+type t = {types: type_ Parray.t; consts: const_binding Parray.t; guesses: type_guess Parray.t; guessed: int list}
+
+let empty () : t = {types= Parray.empty (); consts= Parray.empty (); guesses= Parray.empty (); guessed= []}
 
 (* The binding of a variable, without following the bindings of the result *)
 let boundTo (s : t) (t : type_) : type_ option =
@@ -194,14 +216,6 @@ let rec occurs (s : t) (var : int) (t : type_) : bool =
   | TEId _ | TESize _ ->
       false
 
-(* Binds the variable [var] (whose number is [i]) to the type. A type without location takes the
-   location of the variable. *)
-let bindVar (s : t) (var : type_) (i : int) (t : type_) : t option =
-  if occurs s i t then None
-  else
-    let t = if t.loc == Loc.default then {t with loc= var.loc} else t in
-    Some {s with types= Parray.set s.types i (Some t)}
-
 let sameVar (t1 : type_) (t2 : type_) : bool =
   match (t1.tx, t2.tx) with
   | (TENoReturn i | TEUnbound i | TEOption (i, _)), (TENoReturn j | TEUnbound j | TEOption (j, _)) ->
@@ -210,13 +224,22 @@ let sameVar (t1 : type_) (t2 : type_) : bool =
       false
 
 (* Why two types do not unify *)
-type unify_error = Mismatch | NoCommonAlternative of {message: string; loc: Loc.t}
-(* Two options without alternatives in common. The message describes them. *)
+type unify_error =
+  | Mismatch
+  | NoCommonAlternative of {message: string; loc: Loc.t}
+    (* Two options without alternatives in common. The message describes them. *)
+  | NoRecordType of string list
+(* No record type has the used members with the types they are used with *)
 
 let ( let* ) = Result.bind
 
-let bindVarResult (s : t) (var : type_) (i : int) (t : type_) : (t, unify_error) result =
-  Option.to_result ~none:Mismatch (bindVar s var i t)
+let recordType (loc : Loc.t) (candidate : candidate) : type_ = C.path_t loc candidate.candidate_path
+
+let samePath (p1 : path) (p2 : path) : bool = Pparser.Syntax.compare_path p1 p2 = 0
+
+(* The member names used in the guess, without repetitions *)
+let usedMembers (guess : type_guess) : string list =
+  CCList.sort_uniq ~cmp:String.compare (CCList.map (fun (use : member_use) -> use.name) guess.uses)
 
 (* Unifies the types. Returns the extended substitution or why they do not unify. Unification never
    raises errors, so it can be used to try alternatives and backtrack. When [bind] is set, the types
@@ -247,17 +270,17 @@ and unifyTypes (s : t) (t1 : type_) (t2 : type_) : (t, unify_error) result =
     | TEComposed (n1, e1), TEComposed (n2, e2) when String.equal n1 n2 ->
         unifyList s e1 e2
     | TENoReturn i, _ ->
-        bindVarResult s t1 i t2
+        bindVar s t1 i t2
     | _, TENoReturn i ->
-        bindVarResult s t2 i t1
+        bindVar s t2 i t1
     | TEUnbound i, _ ->
-        bindVarResult s t1 i t2
+        bindVar s t1 i t2
     | _, TEUnbound i ->
-        bindVarResult s t2 i t1
+        bindVar s t2 i t1
     | TEOption (i1, l1), TEOption (i2, l2) ->
         let* t3, s = constrainOption s t2.loc l1 l2 in
-        let* s = bindVarResult s t2 i2 t3 in
-        bindVarResult s t1 i1 t3
+        let* s = bindVar s t2 i2 t3 in
+        bindVar s t1 i1 t3
     | TEOption (i, l), _ ->
         pickOption s t1 i l t2
     | _, TEOption (i, l) ->
@@ -319,7 +342,143 @@ and pickOption (s : t) (option : type_) (i : int) (alternatives : type_ list) (t
   | [] ->
       Error Mismatch
   | h :: rest -> (
-    match unifyTypes s h t with Ok s -> bindVarResult s option i t | Error _ -> pickOption s option i rest t )
+    match unifyTypes s h t with Ok s -> bindVar s option i t | Error _ -> pickOption s option i rest t )
+
+(* Binds the variable [var] (whose number is [i]) to the type. A type without location takes the
+   location of the variable. When the variable has a record guess, the type must be one of the
+   candidates, or the guess is passed to the variable it is bound to. *)
+and bindVar (s : t) (var : type_) (i : int) (t : type_) : (t, unify_error) result =
+  if occurs s i t then Error Mismatch
+  else
+    let t = if t.loc == Loc.default then {t with loc= var.loc} else t in
+    let bound = {s with types= Parray.set s.types i (Some t)} in
+    match Parray.get s.guesses i with
+    | None ->
+        Ok bound
+    | Some guess -> (
+        let bound = {bound with guesses= Parray.set bound.guesses i None} in
+        let t = walk bound t in
+        match t.tx with
+        | TEUnbound j ->
+            addGuess bound j guess
+        | TEId path -> (
+          match CCList.find_opt (fun candidate -> samePath candidate.candidate_path path) guess.candidates with
+          | Some candidate ->
+              useMembers bound candidate guess.uses
+          | None ->
+              Error Mismatch )
+        | TENoReturn _ | TESize _ | TEOption _ | TEComposed _ | TEFunction _ ->
+            Error Mismatch )
+
+(* Unifies the types of the members used with the ones of the record *)
+and useMembers (s : t) (candidate : candidate) (uses : member_use list) : (t, unify_error) result =
+  let useMember s (use : member_use) =
+    match CCList.find_opt (fun m -> String.equal m.member use.name) candidate.members with
+    | None ->
+        Error Mismatch
+    | Some m ->
+        let* s = unifyTypes s use.t (refreshConstness s m.member_t) in
+        if use.read && not m.value_type then Ok (unifyConstness s use.t use.owner) else Ok s
+  in
+  CCList.fold_left (fun s use -> Result.bind s (fun s -> useMember s use)) (Ok s) uses
+
+(* Adds the guess to the unbound variable number [i], combining it with the one it has *)
+and addGuess (s : t) (i : int) (guess : type_guess) : (t, unify_error) result =
+  let guess =
+    match Parray.get s.guesses i with
+    | None ->
+        guess
+    | Some previous ->
+        let candidates =
+          CCList.filter
+            (fun candidate ->
+              CCList.exists (fun c -> samePath c.candidate_path candidate.candidate_path) guess.candidates )
+            previous.candidates
+        in
+        {previous with candidates; uses= previous.uses @ guess.uses}
+  in
+  narrow s i guess
+
+(* Keeps the candidates that fit the members used. The variable is bound when only one remains. *)
+and narrow (s : t) (i : int) (guess : type_guess) : (t, unify_error) result =
+  (* The uses of the same member have the same type *)
+  let* s = unifySameMembers s guess.uses in
+  let fits candidate = Result.is_ok (useMembers s candidate guess.uses) in
+  match CCList.filter fits guess.candidates with
+  | [] -> (
+    match guess.kind with RecordGuess -> Error (NoRecordType (usedMembers guess)) | EnumGuess -> Error Mismatch )
+  | [candidate] ->
+      let s = {s with types= Parray.set s.types i (Some (recordType guess.guess_loc candidate))} in
+      let s = {s with guesses= Parray.set s.guesses i None} in
+      useMembers s candidate guess.uses
+  | candidates ->
+      Ok {s with guesses= Parray.set s.guesses i (Some {guess with candidates}); guessed= i :: s.guessed}
+
+and unifySameMembers (s : t) (uses : member_use list) : (t, unify_error) result =
+  match uses with
+  | [] ->
+      Ok s
+  | use :: rest ->
+      let same = CCList.filter (fun (other : member_use) -> String.equal other.name use.name) rest in
+      let unifyWith s (other : member_use) = Result.bind s (fun s -> unifyTypes s use.t other.t) in
+      let* s = CCList.fold_left unifyWith (Ok s) same in
+      unifySameMembers s rest
+
+(* Gives the unbound variable [var] the candidates as possible types and uses the members on it *)
+let guessType (s : t) (var : type_) (kind : guess_kind) (candidates : candidate list) (uses : member_use list)
+    (loc : Loc.t) : (t, unify_error) result =
+  match (walk s var).tx with
+  | TEUnbound i ->
+      addGuess s i {kind; candidates; uses; guess_loc= loc}
+  | TENoReturn _ | TEId _ | TESize _ | TEOption _ | TEComposed _ | TEFunction _ ->
+      Error Mismatch
+
+(* Why the type of a guessed record could not be decided *)
+type guess_failure =
+  | AmbiguousType of {kind: guess_kind; candidates: path list; loc: Loc.t}
+  | UndeterminedRecord of {members: string list; loc: Loc.t}
+
+(* Decides the remaining record guesses: the ones that fit only one record are bound to it. Binding
+   a variable can narrow other guesses, so it is repeated until nothing changes. *)
+let resolveGuesses (s : t) : t * guess_failure list =
+  let pending s =
+    CCList.sort_uniq ~cmp:compare s.guessed
+    |> CCList.filter_map (fun i ->
+        match (Parray.get s.types i, Parray.get s.guesses i) with
+        | None, Some guess ->
+            Some (i, guess)
+        | Some _, _ | None, None ->
+            None )
+  in
+  let rec loop s =
+    let before = pending s in
+    let s, failed =
+      CCList.fold_left
+        (fun (s, failed) (i, guess) ->
+          match narrow s i guess with Ok s -> (s, failed) | Error _ -> (s, (i, guess) :: failed) )
+        (s, []) before
+    in
+    let after = pending s in
+    if failed = [] && CCList.length after < CCList.length before then loop s
+    else
+      let undetermined =
+        CCList.rev_map (fun (_, guess) -> UndeterminedRecord {members= usedMembers guess; loc= guess.guess_loc}) failed
+      in
+      let ambiguous =
+        CCList.filter_map
+          (fun (i, guess) ->
+            if CCList.mem_assoc ~eq:Int.equal i failed then None
+            else
+              Some
+                (AmbiguousType
+                   { kind= guess.kind
+                   ; candidates= CCList.map (fun c -> c.candidate_path) guess.candidates
+                   ; loc= guess.guess_loc } ) )
+          after
+      in
+      (s, undetermined @ ambiguous)
+  in
+  loop {s with guessed= CCList.sort_uniq ~cmp:compare s.guessed}
 
 (* Unifies the types, returning None when they do not unify *)
 let unify ?(bind = false) (s : t) (t1 : type_) (t2 : type_) : t option = Result.to_option (unifyResult ~bind s t1 t2)
@@ -386,7 +545,7 @@ let rec zonkExp (s : t) (e : exp) : exp =
   let zexp = zonkExp s in
   let e_ =
     match e.e with
-    | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ | EConst _ | ETypeIntrinsic _ ->
+    | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ | EConst _ | ETypeIntrinsic _ | EEnum _ ->
         e.e
     | EIndex {e; index} ->
         EIndex {e= zexp e; index= zexp index}
@@ -404,8 +563,8 @@ let rec zonkExp (s : t) (e : exp) : exp =
         ETuple (CCList.map zexp elems)
     | EMember (e, m) ->
         EMember (zexp e, m)
-    | ERecord {path; elems} ->
-        ERecord {path; elems= CCList.map (fun (n, v) -> (n, zexp v)) elems}
+    | ERecord {elems} ->
+        ERecord {elems= CCList.map (fun (n, v) -> (n, zexp v)) elems}
     | EGenCall {instance; generic_path; params} ->
         EGenCall {instance; generic_path; params= CCList.map (zonkCallParam s) params}
     | EGenCompanionCall {instance; companion_name; parent_generic_path; args} ->

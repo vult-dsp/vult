@@ -5,3 +5,9 @@ enum x {
 enum y {
   A
 }
+
+// Both enumerations have the value 'A' and nothing decides which one it is
+fun main() {
+  val v = A;
+  return 0;
+}

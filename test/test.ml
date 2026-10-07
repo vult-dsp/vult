@@ -205,7 +205,18 @@ let errors_files =
   ; "error83.vult"
   ; "error84.vult"
   ; "error85.vult"
-  ; "error86.vult" ]
+  ; "error86.vult"
+  ; "error87.vult"
+  ; "error88.vult"
+  ; "error89.vult"
+  ; "error90.vult"
+  ; "error91.vult"
+  ; "error92.vult"
+  ; "error93.vult"
+  ; "error94.vult"
+  ; "error95.vult"
+  ; "error96.vult"
+  ; "error97.vult" ]
 
 let template_files =
   [ "sf_f.vult"
@@ -296,6 +307,9 @@ let interpreter =
   ; ("tuple_variables.vult", 4549)
   ; ("long_chains.vult", 42)
   ; ("companion_type_alias.vult", 3)
+  ; ("record_inference.vult", 5005)
+  ; ("record_literals.vult", 15037)
+  ; ("enum_inference.vult", 21111)
   ; ("unit_function.vult", 2) ]
 
 let passes_files =
@@ -376,7 +390,10 @@ let all_files =
   ; "../test/interpreter/companion_return_infer.vult"
   ; "../test/interpreter/spec_name_collision.vult"
   ; "../test/interpreter/tuple_variables.vult"
-  ; "../test/interpreter/companion_type_alias.vult" ]
+  ; "../test/interpreter/companion_type_alias.vult"
+  ; "../test/interpreter/record_inference.vult"
+  ; "../test/interpreter/record_literals.vult"
+  ; "../test/interpreter/enum_inference.vult" ]
 
 let includes =
   ["effects"; "env"; "filters"; "midi"; "osc"; "unit"; "util"]

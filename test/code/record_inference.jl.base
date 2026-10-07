@@ -1,0 +1,118 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+mutable struct Record_inference_point
+       x::Float32
+       y::Float32
+end
+
+# Default constructor for Record_inference_point
+function Record_inference_point()
+    return Record_inference_point(Float32(0.0), Float32(0.0))
+end
+
+mutable struct Record_inference_point3
+       x::Float32
+       y::Float32
+       z::Float32
+end
+
+# Default constructor for Record_inference_point3
+function Record_inference_point3()
+    return Record_inference_point3(Float32(0.0), Float32(0.0), Float32(0.0))
+end
+
+mutable struct Record_inference_counter
+       count::Int32
+       step::Int32
+end
+
+# Default constructor for Record_inference_counter
+function Record_inference_counter()
+    return Record_inference_counter(Int32(0), Int32(0))
+end
+
+mutable struct Record_inference_icounter
+       count::Int32
+end
+
+# Default constructor for Record_inference_icounter
+function Record_inference_icounter()
+    return Record_inference_icounter(Int32(0))
+end
+
+mutable struct Record_inference_rcounter
+       count::Float32
+end
+
+# Default constructor for Record_inference_rcounter
+function Record_inference_rcounter()
+    return Record_inference_rcounter(Float32(0.0))
+end
+
+function Record_inference_point_alloc()
+   _ctx = Record_inference_point()
+   _ctx.x = Float32(0.0)
+   _ctx.y = Float32(0.0)
+   return _ctx
+end
+
+function Record_inference_point3_alloc()
+   _ctx = Record_inference_point3()
+   _ctx.x = Float32(0.0)
+   _ctx.y = Float32(0.0)
+   _ctx.z = Float32(0.0)
+   return _ctx
+end
+
+function Record_inference_counter_alloc()
+   _ctx = Record_inference_counter()
+   _ctx.count = Int32(0)
+   _ctx.step = Int32(0)
+   return _ctx
+end
+
+function Record_inference_icounter_alloc()
+   _ctx = Record_inference_icounter()
+   _ctx.count = Int32(0)
+   return _ctx
+end
+
+function Record_inference_rcounter_alloc()
+   _ctx = Record_inference_rcounter()
+   _ctx.count = Float32(0.0)
+   return _ctx
+end
+
+function Record_inference_length3(p)
+   return (p.x + (p.y + p.z))
+end
+
+function Record_inference_sum2(p)
+   return (p.x + p.y)
+end
+
+function Record_inference_half(c)
+   return (Float32(0.5) * c.count)
+end
+
+function Record_inference_advance(c)
+   c.count = (c.count + c.step)
+   return c.count
+end
+
+function Record_inference_first(p)
+   q = p
+   return q.x
+end
+
+function Record_inference_main()
+   a = (; x = Float32(1.0), y = Float32(2.0), z = Float32(3.0) )
+   b = (; x = Float32(10.0), y = Float32(20.0) )
+   c = (; count = Float32(9.0) )
+   d = (; count = Int32(1), step = Int32(4) )
+   total = (Record_inference_first(b) + (Record_inference_half(c) + (Record_inference_length3(a) + Record_inference_sum2(b))))
+   advanced = Record_inference_advance(d)
+   return (advanced + (Int32(100) * trunc(Int32, total)))
+end
+

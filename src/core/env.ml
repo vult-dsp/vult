@@ -97,8 +97,14 @@ type m =
   ; generics: Typed.generic_function Map.t
   ; types: t Map.t
   ; init: (path * path) list
-  ; enums: t Map.t
+  ; enums: t list Map.t (* The enumerations that have each value name *)
   ; constants: var Map.t }
+
+(* A value of an enumeration: the enumeration, where the value is declared and its index *)
+type enum_value = {enum_path: path; value_loc: Loc.t; index: int}
+
+(* The values with the same name in the enumerations of a module. There is always at least one. *)
+type enum_values = enum_value * enum_value list
 
 (* Generic lookup result variant *)
 type lookup_result =
@@ -106,7 +112,7 @@ type lookup_result =
   | LookupFunction of f
   | LookupGeneric of Typed.generic_function
   | LookupType of t
-  | LookupEnum of (path * Loc.t * int) (* path, location, index *)
+  | LookupEnum of enum_values
   | LookupConstant of var
   | LookupBuiltinFunction of f
   | LookupNotFound
@@ -496,22 +502,6 @@ let lookVar (env : env) (name : string) (loc : Loc.t) : var =
 
 let reportModuleNotFound n loc = Error.raiseError ("The module named '" ^ n ^ "' could not be found") loc
 
-let lookEnum (env : env) (path : path) (loc : Loc.t) =
-  let error () = Error.raiseError ("An enumeration with the name '" ^ pathString path ^ "' could not be found") loc in
-  let findEnumInModule enums id =
-    match Map.find id enums with
-    | Some ({descr= Enum members; _} as t) -> (
-      match Map.find id members with Some (_, index, _) -> (t.path, t.loc, index) | None -> error () )
-    | _ ->
-        error ()
-  in
-  match path with
-  | {id; n= None; _} ->
-      let m = getCurrentModule env in
-      findEnumInModule m.enums id
-  | {id; n= Some n; loc} -> (
-    match Map.find n env.modules with Some m -> findEnumInModule m.enums id | None -> reportModuleNotFound n loc )
-
 let getType (env : env) (path : path) : t option =
   match path with
   | {id; n= Some n; loc} -> (
@@ -763,14 +753,28 @@ let addEnumMember members =
   in
   Enum members
 
+(* Several enumerations can have values with the same name: which one is used is inferred *)
 let addEnumToModule (m : m) members t : m =
-  let report loc name (found : t) _ =
-    Error.raiseError
-      ("A enum value with the name '" ^ name ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
-      loc
+  let add enums (name, _) =
+    let previous = Option.value ~default:[] (Map.find name enums) in
+    Map.add name (previous @ [t]) enums
   in
-  let enums = CCList.fold_left (fun enums (name, loc) -> Map.update (report loc name) name t enums) m.enums members in
-  {m with enums}
+  {m with enums= CCList.fold_left add m.enums members}
+
+(* The values named [id] in the enumerations of the module *)
+let enumValuesIn (m : m) (id : string) : enum_values option =
+  let value (t : t) =
+    match t.descr with
+    | Enum members ->
+        Option.map (fun (_, index, value_loc) -> {enum_path= t.path; value_loc; index}) (Map.find id members)
+    | Simple | Record _ | Alias _ ->
+        None
+  in
+  match CCList.filter_map value (Option.value ~default:[] (Map.find id m.enums)) with
+  | first :: others ->
+      Some (first, others)
+  | [] ->
+      None
 
 let addEnum (env : env) type_name members loc : env =
   let m = getCurrentModule env in
@@ -915,13 +919,7 @@ let consOpt (make : 'a -> lookup_result) (opt : 'a option) (results : lookup_res
 let lookupPath (env : env) (path : path) : lookup_result list =
   let lookupInModule (m : m) (id : string) : lookup_result list =
     (* Find enum member if applicable *)
-    let enumResult =
-      match Map.find id m.enums with
-      | Some ({descr= Enum members; _} as t) -> (
-        match Map.find id members with Some (_, index, loc) -> Some (LookupEnum (t.path, loc, index)) | None -> None )
-      | _ ->
-          None
-    in
+    let enumResult = Option.map (fun values -> LookupEnum values) (enumValuesIn m id) in
     []
     |> consOpt (fun f -> LookupFunction f) (Map.find id m.functions)
     |> consOpt (fun t -> LookupType t) (Map.find id m.types)
@@ -990,15 +988,8 @@ let findVar (results : lookup_result list) : var option =
   in
   find results
 
-let findEnum (results : lookup_result list) : (path * Loc.t * int) option =
-  let rec find = function
-    | [] ->
-        None
-    | LookupEnum (path, loc, index) :: _ ->
-        Some (path, loc, index)
-    | _ :: rest ->
-        find rest
-  in
+let findEnum (results : lookup_result list) : enum_values option =
+  let rec find = function [] -> None | LookupEnum values :: _ -> Some values | _ :: rest -> find rest in
   find results
 
 (* The following functions find one kind of meaning of a path, with the same priorities as the
@@ -1050,12 +1041,8 @@ let findTypeOf (env : env) (path : path) : t option =
   | None ->
       Option.bind (moduleOfPath env path) (fun m -> Map.find path.id m.types)
 
-let findEnumOf (env : env) (path : path) : (path * Loc.t * int) option =
-  match Option.bind (moduleOfPath env path) (fun m -> Map.find path.id m.enums) with
-  | Some ({descr= Enum members; _} as t) ->
-      Option.map (fun (_, index, loc) -> (t.path, loc, index)) (Map.find path.id members)
-  | Some {descr= Simple | Record _ | Alias _; _} | None ->
-      None
+let findEnumOf (env : env) (path : path) : enum_values option =
+  Option.bind (moduleOfPath env path) (fun m -> enumValuesIn m path.id)
 
 let findGenericOf (env : env) (path : path) : Typed.generic_function option =
   Option.bind (moduleOfPath env path) (fun m -> Map.find path.id m.generics)
@@ -1154,7 +1141,7 @@ type expression_symbol =
   | ExprVariable of var
   | ExprFunction of f
   | ExprType of t
-  | ExprEnum of (path * Loc.t * int)
+  | ExprEnum of enum_values
   | ExprNotFound
 
 let lookupExpressionSymbol (env : env) (path : path) (context : expr_context) : expression_symbol =
@@ -1175,6 +1162,34 @@ let lookupExpressionSymbol (env : env) (path : path) (context : expr_context) : 
     (* Otherwise: variables first, then functions (references in generic arguments, calls in regular
        contexts), then enums *)
     variable () |> orElse function_ |> orElse enum
+
+(* The record types declared in any module whose members are accepted by [accepts], to guess the type
+   of a value whose members are used before its type is known *)
+let recordCandidates (env : env) (accepts : var Map.t -> bool) : Subst.candidate list =
+  let candidate (t : t) : Subst.candidate option =
+    match t.descr with
+    | Record members when (not t.generated) && accepts members ->
+        let members =
+          Map.fold
+            (fun name (var : var) acc ->
+              ({member= name; member_t= var.t; value_type= isBuiltinType env var.t} : Subst.record_member) :: acc )
+            [] members
+        in
+        Some {candidate_path= t.path; members}
+    | Record _ | Simple | Enum _ | Alias _ ->
+        None
+  in
+  Map.fold
+    (fun _ (m : m) acc -> Map.fold (fun _ t acc -> Option.to_list (candidate t) @ acc) acc m.types)
+    [] env.modules
+  |> CCList.rev
+
+let isEnum (env : env) (path : path) : bool =
+  match findTypeOf env path with
+  | Some {descr= Enum _; _} ->
+      true
+  | Some {descr= Simple | Record _ | Alias _; _} | None ->
+      false
 
 (* Unified type lookup function using the new lookup system *)
 let lookType (env : env) (path : path) (loc : Loc.t) : t =

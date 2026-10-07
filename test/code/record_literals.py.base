@@ -1,0 +1,73 @@
+
+class Record_literals_point:
+    __slots__ = ['x', 'y']
+    def __init__(self, x=0.0, y=0.0):
+        self.x = x
+        self.y = y
+
+class Record_literals_ipoint:
+    __slots__ = ['x', 'y']
+    def __init__(self, x=0, y=0):
+        self.x = x
+        self.y = y
+
+class Record_literals_point3:
+    __slots__ = ['x', 'y', 'z']
+    def __init__(self, x=0.0, y=0.0, z=0.0):
+        self.x = x
+        self.y = y
+        self.z = z
+
+class Record_literals_pair:
+    __slots__ = ['first', 'second']
+    def __init__(self, first=Record_literals_point(), second=Record_literals_point()):
+        self.first = first
+        self.second = second
+
+def Record_literals_point_alloc():
+   _ctx = Record_literals_point()
+   _ctx.x = 0.0
+   _ctx.y = 0.0
+   return _ctx
+
+
+def Record_literals_ipoint_alloc():
+   _ctx = Record_literals_ipoint()
+   _ctx.x = 0
+   _ctx.y = 0
+   return _ctx
+
+
+def Record_literals_point3_alloc():
+   _ctx = Record_literals_point3()
+   _ctx.x = 0.0
+   _ctx.y = 0.0
+   _ctx.z = 0.0
+   return _ctx
+
+
+def Record_literals_pair_alloc():
+   _ctx = Record_literals_pair()
+   _ctx.first = Record_literals_point_alloc()
+   _ctx.second = Record_literals_point_alloc()
+   return _ctx
+
+
+def Record_literals_norm(p):
+   return ((p.x * p.x) + (p.y * p.y))
+
+def Record_literals_make(a, b):
+   _record_0 = Record_literals_ipoint(x=a, y=b)
+   return _record_0
+
+
+def Record_literals_main():
+   a = Record_literals_point(x=1.0, y=2.0)
+   b = Record_literals_ipoint(x=3, y=4)
+   c = Record_literals_point3(x=1.0, y=2.0, z=3.0)
+   d = Record_literals_pair(first=Record_literals_point(x=5.0, y=0.0), second=a)
+   e = Record_literals_make(10, 20)
+   total = (Record_literals_norm(a) + (c.z + (d.first.x + d.second.y)))
+   return ((1000 * int(total)) + (b.x + (b.y + (e.x + e.y))))
+
+

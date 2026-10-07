@@ -1,0 +1,7 @@
+type point { val x : real; val y : real; }
+type weight { val w : real; }
+
+// No record has both 'x' and 'w'
+fun mix(p) {
+   return p.x + p.w;
+}

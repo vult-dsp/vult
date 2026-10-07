@@ -1,0 +1,4 @@
+The type of this value cannot be decided: it can be any of the record types 'Error87.point', 'Error87.sample'. Add a type annotation.
+fun get(p) {
+   return p.x;
+          ^

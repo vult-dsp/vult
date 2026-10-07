@@ -1,0 +1,8 @@
+type point { val x : real; val y : real; }
+type size { val x : real; val y : real; }
+
+// Both records have exactly these members with these types
+fun main() {
+   val a = { x = 1.0, y = 2.0 };
+   return a.x;
+}
