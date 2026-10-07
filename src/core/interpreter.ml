@@ -40,7 +40,7 @@
        v
      compileExp / compileStmt / compileProgramFunction
        Converts Prog.exp/stmt directly into OCaml closures (compiled_result/compiled_stmt).
-       - Resolves variable names to stack-frame indices
+       - Resolves variable names to frame indices
        - Resolves struct member names to integer offsets
        - Specializes generic arithmetic by type at compile time
        - Inlines known builtin functions into optimized closures
@@ -51,19 +51,19 @@
        |
        v
      Execution
-       callCompiledFunctionByIdx invokes compiled closures on a runtime stack.
-       The stack is a flat dvalue array with a moving stack pointer; each function
-       call allocates a frame of cf_locals slots.
+       callCompiledFunctionByIdx invokes compiled closures; each function call
+       allocates a frame of cf_locals slots.
 
    Runtime Model
    -------------
-   - Stack-based: all local variables and function arguments live in a flat array
-     indexed by (frame_start + variable_index).
-   - No heap allocation for scalars: DInt, DReal, DBool are unboxed OCaml values
-     inside the dvalue variant.
+   - Frame-based: the local variables and arguments of a call live in a dvalue array
+     allocated for that call and indexed by variable index. Frames are short-lived,
+     so they stay in the minor heap and writing to them is cheap for the GC.
+   - DReal values are boxed floats, so real arithmetic allocates; DBool values are
+     shared (see dbool).
    - Mutable aggregates: DArray and DStruct contain OCaml arrays that are mutated
      in-place for assignments. DList wraps a mutable ref to an OCaml list.
-   - Call depth tracking: each call increments ctx.depth; exceeding max_depth
+   - Call depth tracking: each call increments runtime.depth; exceeding max_call_depth
      raises a runtime error (prevents stack overflow from infinite recursion).
 
    Entry Points
@@ -100,23 +100,27 @@ type dvalue =
   | DList of dvalue list ref (* Dynamic list with mutable reference *)
   | DStruct of dvalue array
 
+(* Booleans are shared so that comparisons do not allocate *)
+let dtrue = DBool true
+
+let dfalse = DBool false
+
+let dbool (b : bool) : dvalue = if b then dtrue else dfalse
+
 (* ---- Runtime Infrastructure ----
 
-   call_context carries per-call metadata: the call stack (for error messages),
-   current recursion depth, maximum allowed depth, and the sample rate (set via CLI).
-   It is passed through every closure but is lightweight — only depth is mutated
-   (via a new record on each call).
+   runtime holds the state of an evaluation that compiled code needs besides its frame: the
+   functions being called (for error messages) and the sample rate. There is one per program;
+   the closures that need it capture it when they are compiled, so it does not have to be passed
+   around. The entry points reset it. A runtime error leaves depth unchanged, so the call stack
+   at the point of the error can be reported by the entry point.
 *)
-type call_context =
-  { frames: string list (* Function names in call order, used only for error reporting *)
-  ; depth: int (* Current call depth, O(1) tracking *)
-  ; max_depth: int
-  ; sample_rate: float option (* Sample rate from CLI args *) }
+type runtime =
+  { mutable depth: int (* Number of active calls *)
+  ; call_names: string array (* call_names.(i) is the function running at depth i + 1 *)
+  ; mutable sample_rate: float option (* Sample rate from CLI args *) }
 
-(* The runtime stack is a flat dvalue array shared across all function calls.
-   Each function call allocates a frame of cf_locals slots starting at sp.
-   stack.sp tracks the current top; max_size prevents overflow. *)
-type runtime_stack = {stack: dvalue array; mutable sp: int (* Stack pointer *); max_size: int}
+let max_call_depth = 50
 
 (* Statement execution returns either Continue (fall through) or Return with a value.
    This replaces exception-based control flow for better performance. *)
@@ -125,22 +129,22 @@ type exec_result = Continue | Return of dvalue
 (* ---- Compiled Closure Types ----
 
    After compilation, every expression and statement is represented as an OCaml closure.
-   The closure signature is: call_context -> runtime_stack -> frame_start -> result
+   The closure signature is: frame -> result
 
    - compiled_exp: evaluates an expression, returns a dvalue
    - compiled_stmt: executes a statement, returns Continue or Return
    - compiled_func: bundles a compiled function body with its metadata
 *)
-type compiled_exp = call_context -> runtime_stack -> int -> dvalue
+type compiled_exp = dvalue array -> dvalue
 
-type compiled_stmt = call_context -> runtime_stack -> int -> exec_result
+type compiled_stmt = dvalue array -> exec_result
 
 (* compiled_result is the return type of compileExp. It classifies expressions
    into three categories to enable compile-time optimizations:
 
    - CConstant v: The expression always evaluates to v. No closure is allocated.
 
-   - CVar idx: The expression is a direct variable read from stack[frame_start + idx].
+   - CVar idx: The expression is a direct variable read from frame[idx].
      This is tracked separately from CDynamic because parent nodes can generate
      "fused" closures that inline the array access, eliminating one indirect call.
 
@@ -148,7 +152,7 @@ type compiled_stmt = call_context -> runtime_stack -> int -> exec_result
      runtime state in a way that can't be simplified further. *)
 type compiled_result = CConstant of dvalue | CVar of int | CDynamic of compiled_exp
 
-type compiled_func = {cf_name: string; cf_args: int list; cf_locals: int; cf_body: compiled_stmt}
+type compiled_func = {cf_name: string; cf_args: int array; cf_locals: int; cf_body: compiled_stmt}
 
 (* ---- Program State ----
 
@@ -166,7 +170,8 @@ type iprog =
   ; mutable struct_types: struct_descr Map.t (* Struct type definitions *)
   ; mutable constant_names: int Map.t (* Constant name -> index mapping *)
   ; mutable external_functions: Set.t (* External function names *)
-  ; mutable inlinable: (string list * exp) Map.t (* Function name -> (param_names, body_exp) for inlining *) }
+  ; mutable inlinable: (string list * exp) Map.t (* Function name -> (param_names, body_exp) for inlining *)
+  ; runtime: runtime }
 
 (* ---- Compilation Context ----
 
@@ -175,8 +180,8 @@ type iprog =
    are encountered. The other fields are immutable references into the iprog.
 *)
 type compile_ctx =
-  { mutable var_to_index: int Map.t (* Variable name -> stack frame index *)
-  ; mutable next_index: int (* Next available stack slot *)
+  { mutable var_to_index: int Map.t (* Variable name -> frame index *)
+  ; mutable next_index: int (* Next available frame slot *)
   ; struct_types: struct_descr Map.t (* Struct type definitions *)
   ; constant_names: int Map.t (* Constant name -> index *)
   ; function_names: int Map.t (* Function name -> index *)
@@ -186,23 +191,20 @@ type compile_ctx =
 (* Exceptions *)
 exception Runtime_error of string
 
-(* Enhanced error function that includes call stack information *)
-let error_with_context (ctx : call_context) (msg : string) : 'a =
-  let call_stack_info =
-    match ctx.frames with
-    | [] ->
-        ""
-    | frames ->
-        let stack_str =
-          frames |> CCList.mapi (fun i func_name -> Printf.sprintf "  %d. %s" (i + 1) func_name) |> String.concat "\n"
-        in
-        Printf.sprintf "\nCall stack:\n%s" stack_str
-  in
-  let enhanced_msg = msg ^ call_stack_info in
-  raise (Runtime_error enhanced_msg)
-
-(* Legacy error function for backwards compatibility *)
 let error (msg : string) : 'a = raise (Runtime_error msg)
+
+(* Describes the active calls, innermost first *)
+let callStackInfo (rt : runtime) : string =
+  if rt.depth = 0 then ""
+  else
+    let lines = CCList.init rt.depth (fun i -> Printf.sprintf "  %d. %s" (i + 1) rt.call_names.(rt.depth - 1 - i)) in
+    "\nCall stack:\n" ^ String.concat "\n" lines
+
+(* Runs an evaluation from its entry point, adding the call stack to runtime errors *)
+let runWithCallStack (rt : runtime) (sample_rate : float option) (f : unit -> 'a) : 'a =
+  rt.depth <- 0 ;
+  rt.sample_rate <- sample_rate ;
+  try f () with Runtime_error msg -> raise (Runtime_error (msg ^ callStackInfo rt))
 
 (* Creates an empty iprog for incremental building *)
 let createEmptyProgram () : iprog =
@@ -213,13 +215,14 @@ let createEmptyProgram () : iprog =
   ; struct_types= Map.empty
   ; constant_names= Map.empty
   ; external_functions= Set.empty
-  ; inlinable= Map.empty }
+  ; inlinable= Map.empty
+  ; runtime= {depth= 0; call_names= Array.make max_call_depth ""; sample_rate= None} }
 
 (* Adds a compiled function to the iprog, resizing the array as needed *)
 let addCompiledFunction (prog : iprog) (func_idx : int) (cfunc : compiled_func) : unit =
   if func_idx >= Array.length prog.compiled_functions then (
     let new_size = max (func_idx + 1) ((Array.length prog.compiled_functions * 2) + 16) in
-    let dummy = {cf_name= ""; cf_args= []; cf_locals= 0; cf_body= (fun _ctx _stack _fs -> Continue)} in
+    let dummy = {cf_name= ""; cf_args= [||]; cf_locals= 0; cf_body= (fun _fr -> Continue)} in
     let new_array = Array.make new_size dummy in
     Array.blit prog.compiled_functions 0 new_array 0 (Array.length prog.compiled_functions) ;
     new_array.(func_idx) <- cfunc ;
@@ -295,9 +298,6 @@ let isRealType (typ : type_) : bool = match typ.t with TReal | TFix16 -> true | 
 (* Determines if a type represents a 16-bit integer value *)
 let isInt16Type (typ : type_) : bool = match typ.t with TInt16 -> true | _ -> false
 
-(* Creates a new runtime stack with the specified size *)
-let createStack (size : int) : runtime_stack = {stack= Array.make size DVoid; sp= 0; max_size= size}
-
 (* Creates a default value for a given type *)
 let rec defaultValue (typ : type_) : dvalue =
   match typ.t with
@@ -329,12 +329,12 @@ let rec defaultValue (typ : type_) : dvalue =
       DList (ref [])
 
 (* Retrieves an element from an array using an index *)
-let getArrayElement (ctx : call_context) (arr : dvalue) (idx : dvalue) : dvalue =
+let getArrayElement (arr : dvalue) (idx : dvalue) : dvalue =
   match (arr, idx) with
   | DArray elems, DInt i when i >= 0 && i < Array.length elems ->
       elems.(i)
   | DArray elems, DInt i ->
-      error_with_context ctx
+      error
         ( "getArrayElement: Invalid array access. size = "
         ^ string_of_int (Array.length elems)
         ^ " index = " ^ string_of_int i )
@@ -343,20 +343,20 @@ let getArrayElement (ctx : call_context) (arr : dvalue) (idx : dvalue) : dvalue 
     | Some v ->
         v
     | None ->
-        error_with_context ctx
+        error
           ( "getArrayElement: List index out of bounds. size = "
           ^ string_of_int (CCList.length !list_ref)
           ^ " index = " ^ string_of_int i ) )
   | _ ->
-      error_with_context ctx "getArrayElement: Invalid array access. This is not an array or list"
+      error "getArrayElement: Invalid array access. This is not an array or list"
 
 (* Retrieves a member from a struct using a member index *)
-let getStructMember (ctx : call_context) (struct_val : dvalue) (member_idx : int) : dvalue =
+let getStructMember (struct_val : dvalue) (member_idx : int) : dvalue =
   match struct_val with
   | DStruct members when member_idx >= 0 && member_idx < Array.length members ->
       members.(member_idx)
   | _ ->
-      error_with_context ctx "Invalid struct member access"
+      error "Invalid struct member access"
 
 (* ---- Runtime Operations ----
 
@@ -365,7 +365,7 @@ let getStructMember (ctx : call_context) (struct_val : dvalue) (member_idx : int
 *)
 
 (* Evaluates a binary operation on two runtime values *)
-let evalBinop (ctx : call_context) (op : operator) (v1 : dvalue) (v2 : dvalue) : dvalue =
+let evalBinop (op : operator) (v1 : dvalue) (v2 : dvalue) : dvalue =
   match (op, v1, v2) with
   | OpAdd, DInt a, DInt b ->
       DInt (a + b)
@@ -414,53 +414,53 @@ let evalBinop (ctx : call_context) (op : operator) (v1 : dvalue) (v2 : dvalue) :
   | OpMod, DInt16 a, DInt16 b when b <> 0 ->
       DInt16 (max (-32768) (min 32767 (a mod b)))
   | OpEq, DInt a, DInt b ->
-      DBool (a = b)
+      dbool (a = b)
   | OpEq, DInt16 a, DInt16 b ->
-      DBool (a = b)
+      dbool (a = b)
   | OpEq, DReal a, DReal b ->
-      DBool (a = b)
+      dbool (a = b)
   | OpEq, DBool a, DBool b ->
-      DBool (a = b)
+      dbool (a = b)
   | OpEq, DString a, DString b ->
-      DBool (a = b)
+      dbool (a = b)
   | OpNe, DInt a, DInt b ->
-      DBool (a <> b)
+      dbool (a <> b)
   | OpNe, DInt16 a, DInt16 b ->
-      DBool (a <> b)
+      dbool (a <> b)
   | OpNe, DReal a, DReal b ->
-      DBool (a <> b)
+      dbool (a <> b)
   | OpNe, DBool a, DBool b ->
-      DBool (a <> b)
+      dbool (a <> b)
   | OpNe, DString a, DString b ->
-      DBool (a <> b)
+      dbool (a <> b)
   | OpLt, DInt a, DInt b ->
-      DBool (a < b)
+      dbool (a < b)
   | OpLt, DInt16 a, DInt16 b ->
-      DBool (a < b)
+      dbool (a < b)
   | OpLt, DReal a, DReal b ->
-      DBool (a < b)
+      dbool (a < b)
   | OpLe, DInt a, DInt b ->
-      DBool (a <= b)
+      dbool (a <= b)
   | OpLe, DInt16 a, DInt16 b ->
-      DBool (a <= b)
+      dbool (a <= b)
   | OpLe, DReal a, DReal b ->
-      DBool (a <= b)
+      dbool (a <= b)
   | OpGt, DInt a, DInt b ->
-      DBool (a > b)
+      dbool (a > b)
   | OpGt, DInt16 a, DInt16 b ->
-      DBool (a > b)
+      dbool (a > b)
   | OpGt, DReal a, DReal b ->
-      DBool (a > b)
+      dbool (a > b)
   | OpGe, DInt a, DInt b ->
-      DBool (a >= b)
+      dbool (a >= b)
   | OpGe, DInt16 a, DInt16 b ->
-      DBool (a >= b)
+      dbool (a >= b)
   | OpGe, DReal a, DReal b ->
-      DBool (a >= b)
+      dbool (a >= b)
   | OpLand, DBool a, DBool b ->
-      DBool (a && b)
+      dbool (a && b)
   | OpLor, DBool a, DBool b ->
-      DBool (a || b)
+      dbool (a || b)
   | OpBand, DInt a, DInt b ->
       DInt (a land b)
   | OpBand, DInt16 a, DInt16 b ->
@@ -487,10 +487,13 @@ let evalBinop (ctx : call_context) (op : operator) (v1 : dvalue) (v2 : dvalue) :
       let ops = Pla.print (Prog.Print.print_operator op) in
       let v1 = printDvalue v1 in
       let v2 = printDvalue v2 in
-      error_with_context ctx ("Unsupported operation: " ^ v1 ^ " " ^ ops ^ " " ^ v2)
+      error ("Unsupported operation: " ^ v1 ^ " " ^ ops ^ " " ^ v2)
+
+(* Equality used to select the case of a switch *)
+let valuesEqual (v1 : dvalue) (v2 : dvalue) : bool = match evalBinop OpEq v1 v2 with DBool b -> b | _ -> false
 
 (* Evaluates a unary operation on a runtime value *)
-let evalUnop (ctx : call_context) (op : uoperator) (v : dvalue) : dvalue =
+let evalUnop (op : uoperator) (v : dvalue) : dvalue =
   match (op, v) with
   | UOpNeg, DInt i ->
       DInt (-i)
@@ -499,13 +502,13 @@ let evalUnop (ctx : call_context) (op : uoperator) (v : dvalue) : dvalue =
   | UOpNeg, DReal f ->
       DReal (-.f)
   | UOpNot, DBool b ->
-      DBool (not b)
+      dbool (not b)
   | UOpNot, DInt i ->
-      DBool (i = 0)
+      dbool (i = 0)
   | UOpNot, DInt16 i ->
-      DBool (i = 0)
+      dbool (i = 0)
   | _ ->
-      error_with_context ctx "Unsupported unary operation"
+      error "Unsupported unary operation"
 
 (* ---- Closure Compilation Helpers ----
 
@@ -518,97 +521,86 @@ let evalUnop (ctx : call_context) (op : uoperator) (v : dvalue) : dvalue =
 
 (* Convert a compiled_result to a compiled_exp closure. *)
 let to_closure (r : compiled_result) : compiled_exp =
-  match r with
-  | CConstant v ->
-      fun _ctx _stack _fs -> v
-  | CVar idx ->
-      fun _ctx stack fs -> Array.unsafe_get stack.stack (fs + idx)
-  | CDynamic f ->
-      f
+  match r with CConstant v -> fun _fr -> v | CVar idx -> fun fr -> Array.unsafe_get fr idx | CDynamic f -> f
 
 (* Base closure-building helpers for binary and unary operations. *)
-let compile_binop_ii (f1 : compiled_exp) (f2 : compiled_exp) (op : int -> int -> dvalue) (err : string) : compiled_exp =
- fun ctx stack fs ->
-  match (f1 ctx stack fs, f2 ctx stack fs) with DInt a, DInt b -> op a b | _ -> error_with_context ctx err
+let[@inline always] compile_binop_ii (f1 : compiled_exp) (f2 : compiled_exp) (op : int -> int -> dvalue) (err : string)
+    : compiled_exp =
+ fun fr -> match (f1 fr, f2 fr) with DInt a, DInt b -> op a b | _ -> error err
 
-let compile_binop_i16 (f1 : compiled_exp) (f2 : compiled_exp) (op : int -> int -> int) (err : string) : compiled_exp =
- fun ctx stack fs ->
-  match (f1 ctx stack fs, f2 ctx stack fs) with
+let[@inline always] compile_binop_i16 (f1 : compiled_exp) (f2 : compiled_exp) (op : int -> int -> int) (err : string) :
+    compiled_exp =
+ fun fr ->
+  match (f1 fr, f2 fr) with
   | DInt16 a, DInt16 b ->
       let result = op a b in
       DInt16 (max (-32768) (min 32767 result))
   | _ ->
-      error_with_context ctx err
+      error err
 
-let compile_binop_rr (f1 : compiled_exp) (f2 : compiled_exp) (op : float -> float -> dvalue) (err : string) :
-    compiled_exp =
- fun ctx stack fs ->
-  match (f1 ctx stack fs, f2 ctx stack fs) with DReal a, DReal b -> op a b | _ -> error_with_context ctx err
+let[@inline always] compile_binop_rr (f1 : compiled_exp) (f2 : compiled_exp) (op : float -> float -> dvalue)
+    (err : string) : compiled_exp =
+ fun fr -> match (f1 fr, f2 fr) with DReal a, DReal b -> op a b | _ -> error err
 
-let compile_unary_r (f1 : compiled_exp) (op : float -> float) (err : string) : compiled_exp =
- fun ctx stack fs -> match f1 ctx stack fs with DReal f -> DReal (op f) | _ -> error_with_context ctx err
+let[@inline always] compile_unary_r (f1 : compiled_exp) (op : float -> float) (err : string) : compiled_exp =
+ fun fr -> match f1 fr with DReal f -> DReal (op f) | _ -> error err
 
 (* Constant-propagating and CVar-fusing helpers. *)
-let compile_binop_ii_cp (r1 : compiled_result) (r2 : compiled_result) (op : int -> int -> dvalue) (err : string) :
-    compiled_result =
+let[@inline always] compile_binop_ii_cp (r1 : compiled_result) (r2 : compiled_result) (op : int -> int -> dvalue)
+    (err : string) : compiled_result =
   match (r1, r2) with
   | CConstant (DInt a), CConstant (DInt b) -> (
     (* A failing operation (e.g. division by zero) is not folded: it must only raise if the
        code path actually runs *)
-    try CConstant (op a b) with Division_by_zero -> CDynamic (fun _ctx _stack _fs -> op a b) )
+    try CConstant (op a b) with Division_by_zero -> CDynamic (fun _fr -> op a b) )
   | CVar idx1, CVar idx2 ->
       CDynamic
-        (fun ctx stack fs ->
-          match (Array.unsafe_get stack.stack (fs + idx1), Array.unsafe_get stack.stack (fs + idx2)) with
-          | DInt a, DInt b ->
-              op a b
-          | _ ->
-              error_with_context ctx err )
+        (fun fr ->
+          match (Array.unsafe_get fr idx1, Array.unsafe_get fr idx2) with DInt a, DInt b -> op a b | _ -> error err )
   | CVar idx, CConstant (DInt b) ->
-      CDynamic
-        (fun ctx stack fs ->
-          match Array.unsafe_get stack.stack (fs + idx) with DInt a -> op a b | _ -> error_with_context ctx err )
+      CDynamic (fun fr -> match Array.unsafe_get fr idx with DInt a -> op a b | _ -> error err)
   | CConstant (DInt a), CVar idx ->
-      CDynamic
-        (fun ctx stack fs ->
-          match Array.unsafe_get stack.stack (fs + idx) with DInt b -> op a b | _ -> error_with_context ctx err )
+      CDynamic (fun fr -> match Array.unsafe_get fr idx with DInt b -> op a b | _ -> error err)
   | _ ->
       CDynamic (compile_binop_ii (to_closure r1) (to_closure r2) op err)
 
-let compile_binop_i16_cp (r1 : compiled_result) (r2 : compiled_result) (op : int -> int -> int) (err : string) :
-    compiled_result =
+let[@inline always] compile_binop_i16_cp (r1 : compiled_result) (r2 : compiled_result) (op : int -> int -> int)
+    (err : string) : compiled_result =
   match (r1, r2) with
   | CConstant (DInt16 a), CConstant (DInt16 b) -> (
     try
       let result = op a b in
       CConstant (DInt16 (max (-32768) (min 32767 result)))
-    with Division_by_zero -> CDynamic (fun _ctx _stack _fs -> DInt16 (max (-32768) (min 32767 (op a b)))) )
+    with Division_by_zero -> CDynamic (fun _fr -> DInt16 (max (-32768) (min 32767 (op a b)))) )
   | _ ->
       CDynamic (compile_binop_i16 (to_closure r1) (to_closure r2) op err)
 
-let compile_binop_rr_cp (r1 : compiled_result) (r2 : compiled_result) (op : float -> float -> dvalue) (err : string) :
-    compiled_result =
+let[@inline always] compile_binop_rr_cp (r1 : compiled_result) (r2 : compiled_result) (op : float -> float -> dvalue)
+    (err : string) : compiled_result =
   match (r1, r2) with
   | CConstant (DReal a), CConstant (DReal b) ->
       CConstant (op a b)
   | CVar idx1, CVar idx2 ->
       CDynamic
-        (fun ctx stack fs ->
-          match (Array.unsafe_get stack.stack (fs + idx1), Array.unsafe_get stack.stack (fs + idx2)) with
-          | DReal a, DReal b ->
-              op a b
-          | _ ->
-              error_with_context ctx err )
+        (fun fr ->
+          match (Array.unsafe_get fr idx1, Array.unsafe_get fr idx2) with DReal a, DReal b -> op a b | _ -> error err )
   | CVar idx, CConstant (DReal b) ->
-      CDynamic
-        (fun ctx stack fs ->
-          match Array.unsafe_get stack.stack (fs + idx) with DReal a -> op a b | _ -> error_with_context ctx err )
+      CDynamic (fun fr -> match Array.unsafe_get fr idx with DReal a -> op a b | _ -> error err)
   | CConstant (DReal a), CVar idx ->
-      CDynamic
-        (fun ctx stack fs ->
-          match Array.unsafe_get stack.stack (fs + idx) with DReal b -> op a b | _ -> error_with_context ctx err )
+      CDynamic (fun fr -> match Array.unsafe_get fr idx with DReal b -> op a b | _ -> error err)
   | _ ->
       CDynamic (compile_binop_rr (to_closure r1) (to_closure r2) op err)
+
+(* Both operands are always evaluated, matching evalBinop *)
+let[@inline always] compile_binop_bb_cp (r1 : compiled_result) (r2 : compiled_result) (op : bool -> bool -> bool)
+    (err : string) : compiled_result =
+  match (r1, r2) with
+  | CConstant (DBool a), CConstant (DBool b) ->
+      CConstant (dbool (op a b))
+  | _ ->
+      let f1 = to_closure r1 in
+      let f2 = to_closure r2 in
+      CDynamic (fun fr -> match (f1 fr, f2 fr) with DBool a, DBool b -> dbool (op a b) | _ -> error err)
 
 let compile_ternop_rr_cp (r1 : compiled_result) (r2 : compiled_result) (r3 : compiled_result) (err : string) :
     compiled_result =
@@ -617,27 +609,18 @@ let compile_ternop_rr_cp (r1 : compiled_result) (r2 : compiled_result) (r3 : com
       CConstant (DReal (a +. b +. c))
   | CVar idx1, CVar idx2, CVar idx3 ->
       CDynamic
-        (fun ctx stack fs ->
-          match
-            ( Array.unsafe_get stack.stack (fs + idx1)
-            , Array.unsafe_get stack.stack (fs + idx2)
-            , Array.unsafe_get stack.stack (fs + idx3) )
-          with
+        (fun fr ->
+          match (Array.unsafe_get fr idx1, Array.unsafe_get fr idx2, Array.unsafe_get fr idx3) with
           | DReal a, DReal b, DReal c ->
               DReal (a +. b +. c)
           | _ ->
-              error_with_context ctx err )
+              error err )
   | _ ->
       let f1 = to_closure r1 in
       let f2 = to_closure r2 in
       let f3 = to_closure r3 in
       CDynamic
-        (fun ctx stack fs ->
-          match (f1 ctx stack fs, f2 ctx stack fs, f3 ctx stack fs) with
-          | DReal a, DReal b, DReal c ->
-              DReal (a +. b +. c)
-          | _ ->
-              error_with_context ctx err )
+        (fun fr -> match (f1 fr, f2 fr, f3 fr) with DReal a, DReal b, DReal c -> DReal (a +. b +. c) | _ -> error err)
 
 let compile_quaternop_rr_cp (r1 : compiled_result) (r2 : compiled_result) (r3 : compiled_result) (r4 : compiled_result)
     (err : string) : compiled_result =
@@ -646,40 +629,74 @@ let compile_quaternop_rr_cp (r1 : compiled_result) (r2 : compiled_result) (r3 : 
       CConstant (DReal (a +. b +. c +. d))
   | CVar idx1, CVar idx2, CVar idx3, CVar idx4 ->
       CDynamic
-        (fun ctx stack fs ->
+        (fun fr ->
           match
-            ( Array.unsafe_get stack.stack (fs + idx1)
-            , Array.unsafe_get stack.stack (fs + idx2)
-            , Array.unsafe_get stack.stack (fs + idx3)
-            , Array.unsafe_get stack.stack (fs + idx4) )
+            (Array.unsafe_get fr idx1, Array.unsafe_get fr idx2, Array.unsafe_get fr idx3, Array.unsafe_get fr idx4)
           with
           | DReal a, DReal b, DReal c, DReal d ->
               DReal (a +. b +. c +. d)
           | _ ->
-              error_with_context ctx err )
+              error err )
   | _ ->
       let f1 = to_closure r1 in
       let f2 = to_closure r2 in
       let f3 = to_closure r3 in
       let f4 = to_closure r4 in
       CDynamic
-        (fun ctx stack fs ->
-          match (f1 ctx stack fs, f2 ctx stack fs, f3 ctx stack fs, f4 ctx stack fs) with
+        (fun fr ->
+          match (f1 fr, f2 fr, f3 fr, f4 fr) with
           | DReal a, DReal b, DReal c, DReal d ->
               DReal (a +. b +. c +. d)
           | _ ->
-              error_with_context ctx err )
+              error err )
 
-let compile_unary_r_cp (r1 : compiled_result) (op : float -> float) (err : string) : compiled_result =
+let[@inline always] compile_unary_r_cp (r1 : compiled_result) (op : float -> float) (err : string) : compiled_result =
   match r1 with
   | CConstant (DReal f) ->
       CConstant (DReal (op f))
   | CVar idx ->
-      CDynamic
-        (fun ctx stack fs ->
-          match Array.unsafe_get stack.stack (fs + idx) with DReal f -> DReal (op f) | _ -> error_with_context ctx err )
+      CDynamic (fun fr -> match Array.unsafe_get fr idx with DReal f -> DReal (op f) | _ -> error err)
   | _ ->
       CDynamic (compile_unary_r (to_closure r1) op err)
+
+(* ---- Function Frames ---- *)
+
+(* Creates the frame holding the locals and arguments of a call to the function *)
+let newFrame (cfunc : compiled_func) : dvalue array =
+  (* Literal arrays are allocated inline, while Array.make goes through a C call *)
+  match cfunc.cf_locals with
+  | 0 ->
+      [||]
+  | 1 ->
+      [|DVoid|]
+  | 2 ->
+      [|DVoid; DVoid|]
+  | 3 ->
+      [|DVoid; DVoid; DVoid|]
+  | 4 ->
+      [|DVoid; DVoid; DVoid; DVoid|]
+  | 5 ->
+      [|DVoid; DVoid; DVoid; DVoid; DVoid|]
+  | 6 ->
+      [|DVoid; DVoid; DVoid; DVoid; DVoid; DVoid|]
+  | 7 ->
+      [|DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid|]
+  | 8 ->
+      [|DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid|]
+  | 9 ->
+      [|DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid|]
+  | 10 ->
+      [|DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid|]
+  | 11 ->
+      [|DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid|]
+  | 12 ->
+      [|DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid; DVoid|]
+  | n ->
+      Array.make n DVoid
+
+(* Runs the body of the function in a frame created by newFrame *)
+let runFrame (cfunc : compiled_func) (fr : dvalue array) : dvalue =
+  match cfunc.cf_body fr with Continue -> DVoid | Return v -> v
 
 (* ---- Inlining Helpers at Prog.exp Level ---- *)
 
@@ -792,7 +809,7 @@ let rec compileExp (ctx : compile_ctx) (exp : exp) : compiled_result =
   | EUnit ->
       CConstant DVoid
   | EEmptyValue -> (
-    match exp.t.t with TList _ -> CDynamic (fun _ctx _stack _fs -> DList (ref [])) | _ -> CConstant DVoid )
+    match exp.t.t with TList _ -> CDynamic (fun _fr -> DList (ref [])) | _ -> CConstant DVoid )
   | EBool b ->
       CConstant (DBool b)
   | EInt i ->
@@ -869,56 +886,101 @@ let rec compileExp (ctx : compile_ctx) (exp : exp) : compiled_result =
       compileEqInt16 ctx e1 e2
   | EOp (OpEq, e1, e2) when isIntType e1.t && isIntType e2.t ->
       compile_binop_ii_cp (compileExp ctx e1) (compileExp ctx e2)
-        (fun a b -> DBool (a = b))
+        (fun a b -> dbool (a = b))
         "Type mismatch in integer equality"
   | EOp (OpEq, e1, e2) when isRealType e1.t || isRealType e2.t ->
       compile_binop_rr_cp (compileExp ctx e1) (compileExp ctx e2)
-        (fun a b -> DBool (Float.equal a b))
+        (fun a b -> dbool (Float.equal a b))
         "Type mismatch in real equality"
   | EOp (OpLt, e1, e2) when isInt16Type e1.t && isInt16Type e2.t ->
       compileLtInt16 ctx e1 e2
   | EOp (OpLt, e1, e2) when isIntType e1.t && isIntType e2.t ->
       compile_binop_ii_cp (compileExp ctx e1) (compileExp ctx e2)
-        (fun a b -> DBool (a < b))
+        (fun a b -> dbool (a < b))
         "Type mismatch in integer less than"
   | EOp (OpLt, e1, e2) when isRealType e1.t || isRealType e2.t ->
       compile_binop_rr_cp (compileExp ctx e1) (compileExp ctx e2)
-        (fun a b -> DBool (a < b))
+        (fun a b -> dbool (a < b))
         "Type mismatch in real less than"
   | EOp (OpGt, e1, e2) when isInt16Type e1.t && isInt16Type e2.t ->
       compileGtInt16 ctx e1 e2
   | EOp (OpGt, e1, e2) when isIntType e1.t && isIntType e2.t ->
       compile_binop_ii_cp (compileExp ctx e1) (compileExp ctx e2)
-        (fun a b -> DBool (a > b))
+        (fun a b -> dbool (a > b))
         "Type mismatch in integer greater than"
   | EOp (OpGt, e1, e2) when isRealType e1.t || isRealType e2.t ->
       compile_binop_rr_cp (compileExp ctx e1) (compileExp ctx e2)
-        (fun a b -> DBool (a > b))
+        (fun a b -> dbool (a > b))
         "Type mismatch in real greater than"
+  | EOp (OpLe, e1, e2) when isIntType e1.t && isIntType e2.t && not (isInt16Type e1.t) ->
+      compile_binop_ii_cp (compileExp ctx e1) (compileExp ctx e2)
+        (fun a b -> dbool (a <= b))
+        "Type mismatch in integer less or equal"
+  | EOp (OpLe, e1, e2) when isRealType e1.t && isRealType e2.t ->
+      compile_binop_rr_cp (compileExp ctx e1) (compileExp ctx e2)
+        (fun a b -> dbool (a <= b))
+        "Type mismatch in real less or equal"
+  | EOp (OpGe, e1, e2) when isIntType e1.t && isIntType e2.t && not (isInt16Type e1.t) ->
+      compile_binop_ii_cp (compileExp ctx e1) (compileExp ctx e2)
+        (fun a b -> dbool (a >= b))
+        "Type mismatch in integer greater or equal"
+  | EOp (OpGe, e1, e2) when isRealType e1.t && isRealType e2.t ->
+      compile_binop_rr_cp (compileExp ctx e1) (compileExp ctx e2)
+        (fun a b -> dbool (a >= b))
+        "Type mismatch in real greater or equal"
+  | EOp (OpNe, e1, e2) when isIntType e1.t && isIntType e2.t && not (isInt16Type e1.t) ->
+      compile_binop_ii_cp (compileExp ctx e1) (compileExp ctx e2)
+        (fun a b -> dbool (a <> b))
+        "Type mismatch in integer inequality"
+  | EOp (OpNe, e1, e2) when isRealType e1.t && isRealType e2.t ->
+      compile_binop_rr_cp (compileExp ctx e1) (compileExp ctx e2)
+        (fun a b -> dbool (a <> b))
+        "Type mismatch in real inequality"
+  | EOp (OpMod, e1, e2) when isIntType e1.t && isIntType e2.t && not (isInt16Type e1.t) ->
+      compile_binop_ii_cp (compileExp ctx e1) (compileExp ctx e2)
+        (fun a b -> DInt (a mod b))
+        "Type mismatch in integer modulo"
+  | EOp (OpMod, e1, e2) when isRealType e1.t && isRealType e2.t ->
+      compile_binop_rr_cp (compileExp ctx e1) (compileExp ctx e2)
+        (fun a b -> DReal (Stdlib.mod_float a b))
+        "Type mismatch in real modulo"
+  | EOp (OpBand, e1, e2) when isIntType e1.t && isIntType e2.t && not (isInt16Type e1.t) ->
+      compile_binop_ii_cp (compileExp ctx e1) (compileExp ctx e2)
+        (fun a b -> DInt (a land b))
+        "Type mismatch in bitwise and"
+  | EOp (OpBor, e1, e2) when isIntType e1.t && isIntType e2.t && not (isInt16Type e1.t) ->
+      compile_binop_ii_cp (compileExp ctx e1) (compileExp ctx e2)
+        (fun a b -> DInt (a lor b))
+        "Type mismatch in bitwise or"
+  | EOp (OpBxor, e1, e2) when isIntType e1.t && isIntType e2.t && not (isInt16Type e1.t) ->
+      compile_binop_ii_cp (compileExp ctx e1) (compileExp ctx e2)
+        (fun a b -> DInt (a lxor b))
+        "Type mismatch in bitwise xor"
+  | EOp (OpLand, e1, e2) ->
+      compile_binop_bb_cp (compileExp ctx e1) (compileExp ctx e2) ( && ) "Type mismatch in logical and"
+  | EOp (OpLor, e1, e2) ->
+      compile_binop_bb_cp (compileExp ctx e1) (compileExp ctx e2) ( || ) "Type mismatch in logical or"
   (* Generic fallback for remaining ops *)
   | EOp (op, e1, e2) -> (
       let r1 = compileExp ctx e1 in
       let r2 = compileExp ctx e2 in
       match (r1, r2) with
       | CConstant v1, CConstant v2 -> (
-          let dummy_ctx = {frames= []; depth= 0; max_depth= 0; sample_rate= None} in
-          (* An operation that fails on constants (e.g. division by zero) is not folded: it must
+        (* An operation that fails on constants (e.g. division by zero) is not folded: it must
              only raise if the code path actually runs *)
-          try CConstant (evalBinop dummy_ctx op v1 v2)
-          with Runtime_error _ -> CDynamic (fun ctx _stack _fs -> evalBinop ctx op v1 v2) )
+        try CConstant (evalBinop op v1 v2) with Runtime_error _ -> CDynamic (fun _fr -> evalBinop op v1 v2) )
       | _ ->
           let f1 = to_closure r1 in
           let f2 = to_closure r2 in
-          CDynamic (fun ctx stack fs -> evalBinop ctx op (f1 ctx stack fs) (f2 ctx stack fs)) )
+          CDynamic (fun fr -> evalBinop op (f1 fr) (f2 fr)) )
   | EUnOp (op, e1) -> (
       let r1 = compileExp ctx e1 in
       match r1 with
       | CConstant v ->
-          let dummy_ctx = {frames= []; depth= 0; max_depth= 0; sample_rate= None} in
-          CConstant (evalUnop dummy_ctx op v)
+          CConstant (evalUnop op v)
       | _ ->
           let f1 = to_closure r1 in
-          CDynamic (fun ctx stack fs -> evalUnop ctx op (f1 ctx stack fs)) )
+          CDynamic (fun fr -> evalUnop op (f1 fr)) )
   (* -- Builtin functions recognized by name -- *)
   | ECall {path= "sin"; args= [a]} ->
       compile_unary_r_cp (compileExp ctx a) sin "Type mismatch in sin"
@@ -977,18 +1039,18 @@ let rec compileExp (ctx : compile_ctx) (exp : exp) : compiled_result =
   | ECall {path= "eps"; args= []} ->
       CConstant (DReal 1e-18)
   | ECall {path= "samplerate"; args= []} ->
+      let rt = ctx.prog.runtime in
       CDynamic
-        (fun ctx _stack _fs ->
-          match ctx.sample_rate with
+        (fun _fr ->
+          match rt.sample_rate with
           | Some fs ->
               DReal fs
           | None ->
-              error_with_context ctx
-                "samplerate() requires the -samplerate flag. Use: vult file.vult -eval \"expr\" -samplerate 44100" )
+              error "samplerate() requires the -samplerate flag. Use: vult file.vult -eval \"expr\" -samplerate 44100" )
   | ECall {path= "random"; args= []} ->
-      CDynamic (fun _ctx _stack _fs -> DReal (Random.float 1.0))
+      CDynamic (fun _fr -> DReal (Random.float 1.0))
   | ECall {path= "irandom"; args= []} ->
-      CDynamic (fun _ctx _stack _fs -> DInt (Random.int Int.max_int))
+      CDynamic (fun _fr -> DInt (Random.int Int.max_int))
   (* Type conversion functions *)
   | ECall {path= "real"; args= [a]} ->
       compileRealConversion ctx a
@@ -1046,7 +1108,7 @@ let rec compileExp (ctx : compile_ctx) (exp : exp) : compiled_result =
           | "get_array_count"
           | "next_object" ) as name
       ; args= _ } ->
-      CDynamic (fun ctx _stack _fs -> error_with_context ctx ("External evaluations are not possible: " ^ name))
+      CDynamic (fun _fr -> error ("External evaluations are not possible: " ^ name))
   (* User function calls with inlining *)
   | ECall {path; args} ->
       compileCall ctx path args
@@ -1063,14 +1125,7 @@ let rec compileExp (ctx : compile_ctx) (exp : exp) : compiled_result =
           let ft = to_closure (compileExp ctx then_) in
           let ff = to_closure (compileExp ctx else_) in
           CDynamic
-            (fun ctx stack fs ->
-              match fc ctx stack fs with
-              | DBool true ->
-                  ft ctx stack fs
-              | DBool false ->
-                  ff ctx stack fs
-              | _ ->
-                  error_with_context ctx "Invalid condition" ) )
+            (fun fr -> match fc fr with DBool true -> ft fr | DBool false -> ff fr | _ -> error "Invalid condition") )
   (* -- Member access with var.field fusion -- *)
   | EMember (e, member_name) -> (
     match e.t.t with
@@ -1080,17 +1135,17 @@ let rec compileExp (ctx : compile_ctx) (exp : exp) : compiled_result =
         match re with
         | CVar var_idx ->
             CDynamic
-              (fun ctx stack fs ->
-                match Array.unsafe_get stack.stack (fs + var_idx) with
+              (fun fr ->
+                match Array.unsafe_get fr var_idx with
                 | DStruct members ->
                     Array.unsafe_get members member_idx
                 | _ ->
-                    error_with_context ctx "Invalid struct access" )
+                    error "Invalid struct access" )
         | CConstant (DStruct members) when member_idx >= 0 && member_idx < Array.length members ->
             CConstant members.(member_idx)
         | _ ->
             let fe = to_closure re in
-            CDynamic (fun ctx stack fs -> getStructMember ctx (fe ctx stack fs) member_idx) )
+            CDynamic (fun fr -> getStructMember (fe fr) member_idx) )
     | _ ->
         error "Member access on non-struct type" )
   | ETMember (e, idx) -> (
@@ -1098,21 +1153,21 @@ let rec compileExp (ctx : compile_ctx) (exp : exp) : compiled_result =
       match re with
       | CVar var_idx ->
           CDynamic
-            (fun ctx stack fs ->
-              match Array.unsafe_get stack.stack (fs + var_idx) with
+            (fun fr ->
+              match Array.unsafe_get fr var_idx with
               | DStruct members ->
                   Array.unsafe_get members idx
               | DArray arr ->
                   Array.unsafe_get arr idx
               | _ ->
-                  error_with_context ctx "Invalid tuple/struct member access" )
+                  error "Invalid tuple/struct member access" )
       | CConstant (DStruct members) when idx >= 0 && idx < Array.length members ->
           CConstant members.(idx)
       | CConstant (DArray arr) when idx >= 0 && idx < Array.length arr ->
           CConstant arr.(idx)
       | _ ->
           let fe = to_closure re in
-          CDynamic (fun ctx stack fs -> getStructMember ctx (fe ctx stack fs) idx) )
+          CDynamic (fun fr -> getStructMember (fe fr) idx) )
   (* -- Array indexing -- *)
   | EIndex {e; index} -> (
       let re = compileExp ctx e in
@@ -1123,7 +1178,7 @@ let rec compileExp (ctx : compile_ctx) (exp : exp) : compiled_result =
       | _ ->
           let fe = to_closure re in
           let fi = to_closure ri in
-          CDynamic (fun ctx stack fs -> getArrayElement ctx (fe ctx stack fs) (fi ctx stack fs)) )
+          CDynamic (fun fr -> getArrayElement (fe fr) (fi fr)) )
   (* -- Array literal -- *)
   | EArray elems ->
       let relems = CCList.map (compileExp ctx) elems in
@@ -1134,7 +1189,7 @@ let rec compileExp (ctx : compile_ctx) (exp : exp) : compiled_result =
                 (CCList.map (fun r -> match r with CConstant v -> v | CVar _ | CDynamic _ -> DVoid) relems) ) )
       else
         let felems = CCList.map to_closure relems in
-        CDynamic (fun ctx stack fs -> DArray (Array.of_list (CCList.map (fun f -> f ctx stack fs) felems)))
+        CDynamic (fun fr -> DArray (Array.of_list (CCList.map (fun f -> f fr) felems)))
   (* -- Tuple -- *)
   | ETuple elems ->
       let relems = CCList.map (compileExp ctx) elems in
@@ -1145,7 +1200,7 @@ let rec compileExp (ctx : compile_ctx) (exp : exp) : compiled_result =
                 (CCList.map (fun r -> match r with CConstant v -> v | CVar _ | CDynamic _ -> DVoid) relems) ) )
       else
         let felems = CCList.map to_closure relems in
-        CDynamic (fun ctx stack fs -> DArray (Array.of_list (CCList.map (fun f -> f ctx stack fs) felems)))
+        CDynamic (fun fr -> DArray (Array.of_list (CCList.map (fun f -> f fr) felems)))
   (* -- Record literal -- *)
   | ERecord {path; elems} -> (
     match Map.find_opt path ctx.struct_types with
@@ -1161,9 +1216,9 @@ let rec compileExp (ctx : compile_ctx) (exp : exp) : compiled_result =
         else
           let felems = CCList.map (fun (idx, r) -> (idx, to_closure r)) relems in
           CDynamic
-            (fun ctx stack fs ->
+            (fun fr ->
               let member_vals = Array.make n_members DVoid in
-              CCList.iter (fun (idx, f) -> member_vals.(idx) <- f ctx stack fs) felems ;
+              CCList.iter (fun (idx, f) -> member_vals.(idx) <- f fr) felems ;
               DStruct member_vals )
     | None ->
         error ("Unknown struct type: " ^ path) )
@@ -1174,51 +1229,47 @@ and compileEqInt16 (ctx : compile_ctx) (e1 : exp) (e2 : exp) : compiled_result =
   let r2 = compileExp ctx e2 in
   match (r1, r2) with
   | CConstant (DInt16 a), CConstant (DInt16 b) ->
-      CConstant (DBool (a = b))
+      CConstant (dbool (a = b))
   | _ ->
       let f1 = to_closure r1 in
       let f2 = to_closure r2 in
       CDynamic
-        (fun ctx stack fs ->
-          match (f1 ctx stack fs, f2 ctx stack fs) with
-          | DInt16 a, DInt16 b ->
-              DBool (a = b)
-          | _ ->
-              error_with_context ctx "Type mismatch in int16 equality" )
+        (fun fr ->
+          match (f1 fr, f2 fr) with DInt16 a, DInt16 b -> dbool (a = b) | _ -> error "Type mismatch in int16 equality" )
 
 and compileLtInt16 (ctx : compile_ctx) (e1 : exp) (e2 : exp) : compiled_result =
   let r1 = compileExp ctx e1 in
   let r2 = compileExp ctx e2 in
   match (r1, r2) with
   | CConstant (DInt16 a), CConstant (DInt16 b) ->
-      CConstant (DBool (a < b))
+      CConstant (dbool (a < b))
   | _ ->
       let f1 = to_closure r1 in
       let f2 = to_closure r2 in
       CDynamic
-        (fun ctx stack fs ->
-          match (f1 ctx stack fs, f2 ctx stack fs) with
+        (fun fr ->
+          match (f1 fr, f2 fr) with
           | DInt16 a, DInt16 b ->
-              DBool (a < b)
+              dbool (a < b)
           | _ ->
-              error_with_context ctx "Type mismatch in int16 less than" )
+              error "Type mismatch in int16 less than" )
 
 and compileGtInt16 (ctx : compile_ctx) (e1 : exp) (e2 : exp) : compiled_result =
   let r1 = compileExp ctx e1 in
   let r2 = compileExp ctx e2 in
   match (r1, r2) with
   | CConstant (DInt16 a), CConstant (DInt16 b) ->
-      CConstant (DBool (a > b))
+      CConstant (dbool (a > b))
   | _ ->
       let f1 = to_closure r1 in
       let f2 = to_closure r2 in
       CDynamic
-        (fun ctx stack fs ->
-          match (f1 ctx stack fs, f2 ctx stack fs) with
+        (fun fr ->
+          match (f1 fr, f2 fr) with
           | DInt16 a, DInt16 b ->
-              DBool (a > b)
+              dbool (a > b)
           | _ ->
-              error_with_context ctx "Type mismatch in int16 greater than" )
+              error "Type mismatch in int16 greater than" )
 
 (* abs() handles both int and real *)
 and compileAbs (ctx : compile_ctx) (a : exp) : compiled_result =
@@ -1230,25 +1281,19 @@ and compileAbs (ctx : compile_ctx) (a : exp) : compiled_result =
       CConstant (DInt (abs i))
   | CVar idx ->
       CDynamic
-        (fun ctx stack fs ->
-          match Array.unsafe_get stack.stack (fs + idx) with
+        (fun fr ->
+          match Array.unsafe_get fr idx with
           | DReal f ->
               DReal (abs_float f)
           | DInt i ->
               DInt (abs i)
           | _ ->
-              error_with_context ctx "Type mismatch in abs" )
+              error "Type mismatch in abs" )
   | _ ->
       let f1 = to_closure r1 in
       CDynamic
-        (fun ctx stack fs ->
-          match f1 ctx stack fs with
-          | DReal f ->
-              DReal (abs_float f)
-          | DInt i ->
-              DInt (abs i)
-          | _ ->
-              error_with_context ctx "Type mismatch in abs" )
+        (fun fr ->
+          match f1 fr with DReal f -> DReal (abs_float f) | DInt i -> DInt (abs i) | _ -> error "Type mismatch in abs" )
 
 and compileClipReal (ctx : compile_ctx) (x : exp) (min_v : exp) (max_v : exp) : compiled_result =
   let rx = compileExp ctx x in
@@ -1259,23 +1304,23 @@ and compileClipReal (ctx : compile_ctx) (x : exp) (min_v : exp) (max_v : exp) : 
       CConstant (DReal (Stdlib.min (Stdlib.max xv minv) maxv))
   | CVar idx, CConstant (DReal minv), CConstant (DReal maxv) ->
       CDynamic
-        (fun ctx stack fs ->
-          match Array.unsafe_get stack.stack (fs + idx) with
+        (fun fr ->
+          match Array.unsafe_get fr idx with
           | DReal xv ->
               DReal (Stdlib.min (Stdlib.max xv minv) maxv)
           | _ ->
-              error_with_context ctx "Type mismatch in clip_real" )
+              error "Type mismatch in clip_real" )
   | _ ->
       let fx = to_closure rx in
       let fmin = to_closure rmin in
       let fmax = to_closure rmax in
       CDynamic
-        (fun ctx stack fs ->
-          match (fx ctx stack fs, fmin ctx stack fs, fmax ctx stack fs) with
+        (fun fr ->
+          match (fx fr, fmin fr, fmax fr) with
           | DReal xv, DReal minv, DReal maxv ->
               DReal (Stdlib.min (Stdlib.max xv minv) maxv)
           | _ ->
-              error_with_context ctx "Type mismatch in clip_real" )
+              error "Type mismatch in clip_real" )
 
 and compileClipInt (ctx : compile_ctx) (x : exp) (min_v : exp) (max_v : exp) : compiled_result =
   let rx = compileExp ctx x in
@@ -1286,23 +1331,23 @@ and compileClipInt (ctx : compile_ctx) (x : exp) (min_v : exp) (max_v : exp) : c
       CConstant (DInt (Stdlib.min (Stdlib.max xv minv) maxv))
   | CVar idx, CConstant (DInt minv), CConstant (DInt maxv) ->
       CDynamic
-        (fun ctx stack fs ->
-          match Array.unsafe_get stack.stack (fs + idx) with
+        (fun fr ->
+          match Array.unsafe_get fr idx with
           | DInt xv ->
               DInt (Stdlib.min (Stdlib.max xv minv) maxv)
           | _ ->
-              error_with_context ctx "Type mismatch in clip_int" )
+              error "Type mismatch in clip_int" )
   | _ ->
       let fx = to_closure rx in
       let fmin = to_closure rmin in
       let fmax = to_closure rmax in
       CDynamic
-        (fun ctx stack fs ->
-          match (fx ctx stack fs, fmin ctx stack fs, fmax ctx stack fs) with
+        (fun fr ->
+          match (fx fr, fmin fr, fmax fr) with
           | DInt xv, DInt minv, DInt maxv ->
               DInt (Stdlib.min (Stdlib.max xv minv) maxv)
           | _ ->
-              error_with_context ctx "Type mismatch in clip_int" )
+              error "Type mismatch in clip_int" )
 
 and compileRealConversion (ctx : compile_ctx) (a : exp) : compiled_result =
   let r1 = compileExp ctx a in
@@ -1317,8 +1362,8 @@ and compileRealConversion (ctx : compile_ctx) (a : exp) : compiled_result =
       CConstant (DReal f)
   | CVar idx ->
       CDynamic
-        (fun ctx stack fs ->
-          match Array.unsafe_get stack.stack (fs + idx) with
+        (fun fr ->
+          match Array.unsafe_get fr idx with
           | DInt i ->
               DReal (float_of_int i)
           | DInt16 i ->
@@ -1328,12 +1373,12 @@ and compileRealConversion (ctx : compile_ctx) (a : exp) : compiled_result =
           | DReal f ->
               DReal f
           | _ ->
-              error_with_context ctx "Type mismatch in real conversion" )
+              error "Type mismatch in real conversion" )
   | _ ->
       let f1 = to_closure r1 in
       CDynamic
-        (fun ctx stack fs ->
-          match f1 ctx stack fs with
+        (fun fr ->
+          match f1 fr with
           | DInt i ->
               DReal (float_of_int i)
           | DInt16 i ->
@@ -1343,7 +1388,7 @@ and compileRealConversion (ctx : compile_ctx) (a : exp) : compiled_result =
           | DReal f ->
               DReal f
           | _ ->
-              error_with_context ctx "Type mismatch in real conversion" )
+              error "Type mismatch in real conversion" )
 
 and compileIntConversion (ctx : compile_ctx) (a : exp) : compiled_result =
   let r1 = compileExp ctx a in
@@ -1358,8 +1403,8 @@ and compileIntConversion (ctx : compile_ctx) (a : exp) : compiled_result =
       CConstant (DInt i)
   | CVar idx ->
       CDynamic
-        (fun ctx stack fs ->
-          match Array.unsafe_get stack.stack (fs + idx) with
+        (fun fr ->
+          match Array.unsafe_get fr idx with
           | DReal f ->
               DInt (int_of_float f)
           | DBool b ->
@@ -1369,12 +1414,12 @@ and compileIntConversion (ctx : compile_ctx) (a : exp) : compiled_result =
           | DInt16 i ->
               DInt i
           | _ ->
-              error_with_context ctx "Type mismatch in int conversion" )
+              error "Type mismatch in int conversion" )
   | _ ->
       let f1 = to_closure r1 in
       CDynamic
-        (fun ctx stack fs ->
-          match f1 ctx stack fs with
+        (fun fr ->
+          match f1 fr with
           | DReal f ->
               DInt (int_of_float f)
           | DBool b ->
@@ -1384,7 +1429,7 @@ and compileIntConversion (ctx : compile_ctx) (a : exp) : compiled_result =
           | DInt16 i ->
               DInt i
           | _ ->
-              error_with_context ctx "Type mismatch in int conversion" )
+              error "Type mismatch in int conversion" )
 
 and compileInt16Conversion (ctx : compile_ctx) (a : exp) : compiled_result =
   let r1 = compileExp ctx a in
@@ -1400,8 +1445,8 @@ and compileInt16Conversion (ctx : compile_ctx) (a : exp) : compiled_result =
   | _ ->
       let f1 = to_closure r1 in
       CDynamic
-        (fun ctx stack fs ->
-          match f1 ctx stack fs with
+        (fun fr ->
+          match f1 fr with
           | DReal f ->
               DInt16 (max (-32768) (min 32767 (int_of_float f)))
           | DBool b ->
@@ -1411,34 +1456,34 @@ and compileInt16Conversion (ctx : compile_ctx) (a : exp) : compiled_result =
           | DInt16 i ->
               DInt16 i
           | _ ->
-              error_with_context ctx "Type mismatch in int16 conversion" )
+              error "Type mismatch in int16 conversion" )
 
 and compileBoolConversion (ctx : compile_ctx) (a : exp) : compiled_result =
   let r1 = compileExp ctx a in
   match r1 with
   | CConstant (DInt i) ->
-      CConstant (DBool (i <> 0))
+      CConstant (dbool (i <> 0))
   | CConstant (DInt16 i) ->
-      CConstant (DBool (i <> 0))
+      CConstant (dbool (i <> 0))
   | CConstant (DReal f) ->
-      CConstant (DBool (f <> 0.0))
+      CConstant (dbool (f <> 0.0))
   | CConstant (DBool b) ->
       CConstant (DBool b)
   | _ ->
       let f1 = to_closure r1 in
       CDynamic
-        (fun ctx stack fs ->
-          match f1 ctx stack fs with
+        (fun fr ->
+          match f1 fr with
           | DInt i ->
-              DBool (i <> 0)
+              dbool (i <> 0)
           | DInt16 i ->
-              DBool (i <> 0)
+              dbool (i <> 0)
           | DReal f ->
-              DBool (f <> 0.0)
+              dbool (f <> 0.0)
           | DBool b ->
               DBool b
           | _ ->
-              error_with_context ctx "Type mismatch in bool conversion" )
+              error "Type mismatch in bool conversion" )
 
 and compileStringConversion (ctx : compile_ctx) (a : exp) : compiled_result =
   let r1 = compileExp ctx a in
@@ -1456,8 +1501,8 @@ and compileStringConversion (ctx : compile_ctx) (a : exp) : compiled_result =
   | _ ->
       let f1 = to_closure r1 in
       CDynamic
-        (fun ctx stack fs ->
-          match f1 ctx stack fs with
+        (fun fr ->
+          match f1 fr with
           | DInt i ->
               DString (string_of_int i)
           | DInt16 i ->
@@ -1469,7 +1514,7 @@ and compileStringConversion (ctx : compile_ctx) (a : exp) : compiled_result =
           | DString s ->
               DString s
           | _ ->
-              error_with_context ctx "Type mismatch in string conversion" )
+              error "Type mismatch in string conversion" )
 
 and compileFixedConversion (ctx : compile_ctx) (a : exp) : compiled_result =
   let r1 = compileExp ctx a in
@@ -1481,14 +1526,14 @@ and compileFixedConversion (ctx : compile_ctx) (a : exp) : compiled_result =
   | _ ->
       let f1 = to_closure r1 in
       CDynamic
-        (fun ctx stack fs ->
-          match f1 ctx stack fs with
+        (fun fr ->
+          match f1 fr with
           | DReal f ->
               DReal f
           | DInt i ->
               DReal (float_of_int i)
           | _ ->
-              error_with_context ctx "Type mismatch in fixed conversion" )
+              error "Type mismatch in fixed conversion" )
 
 and compileSizeBuiltin (ctx : compile_ctx) (a : exp) : compiled_result =
   let r1 = compileExp ctx a in
@@ -1497,13 +1542,7 @@ and compileSizeBuiltin (ctx : compile_ctx) (a : exp) : compiled_result =
       CConstant (DInt (Array.length arr))
   | _ ->
       let f1 = to_closure r1 in
-      CDynamic
-        (fun ctx stack fs ->
-          match f1 ctx stack fs with
-          | DArray arr ->
-              DInt (Array.length arr)
-          | _ ->
-              error_with_context ctx "Type mismatch in size" )
+      CDynamic (fun fr -> match f1 fr with DArray arr -> DInt (Array.length arr) | _ -> error "Type mismatch in size")
 
 and compileLengthBuiltin (ctx : compile_ctx) (a : exp) : compiled_result =
   let r1 = compileExp ctx a in
@@ -1512,110 +1551,100 @@ and compileLengthBuiltin (ctx : compile_ctx) (a : exp) : compiled_result =
       CConstant (DInt (String.length s))
   | _ ->
       let f1 = to_closure r1 in
-      CDynamic
-        (fun ctx stack fs ->
-          match f1 ctx stack fs with
-          | DString s ->
-              DInt (String.length s)
-          | _ ->
-              error_with_context ctx "Type mismatch in length" )
+      CDynamic (fun fr -> match f1 fr with DString s -> DInt (String.length s) | _ -> error "Type mismatch in length")
 
 and compileListSizeBuiltin (ctx : compile_ctx) (a : exp) : compiled_result =
   let f1 = to_closure (compileExp ctx a) in
   CDynamic
-    (fun ctx stack fs ->
-      match f1 ctx stack fs with
+    (fun fr ->
+      match f1 fr with
       | DArray arr ->
           DInt (Array.length arr)
       | DList list_ref ->
           DInt (CCList.length !list_ref)
       | _ ->
-          error_with_context ctx "Type mismatch in list_size" )
+          error "Type mismatch in list_size" )
 
 and compileListCapacityBuiltin (ctx : compile_ctx) (a : exp) : compiled_result =
   let f1 = to_closure (compileExp ctx a) in
   CDynamic
-    (fun ctx stack fs ->
-      match f1 ctx stack fs with
+    (fun fr ->
+      match f1 fr with
       | DArray arr ->
           DInt (Array.length arr)
       | DList list_ref ->
           DInt (CCList.length !list_ref)
       | _ ->
-          error_with_context ctx "Type mismatch in list_capacity" )
+          error "Type mismatch in list_capacity" )
 
 and compileListAppend (ctx : compile_ctx) (l : exp) (v : exp) : compiled_result =
   let fl = to_closure (compileExp ctx l) in
   let fv = to_closure (compileExp ctx v) in
   CDynamic
-    (fun ctx stack fs ->
-      match fl ctx stack fs with
+    (fun fr ->
+      match fl fr with
       | DList list_ref ->
-          list_ref := !list_ref @ [fv ctx stack fs] ;
+          list_ref := !list_ref @ [fv fr] ;
           DVoid
       | _ ->
-          error_with_context ctx "list_append requires list type" )
+          error "list_append requires list type" )
 
 and compileListInsert (ctx : compile_ctx) (l : exp) (i : exp) (v : exp) : compiled_result =
   let fl = to_closure (compileExp ctx l) in
   let fi = to_closure (compileExp ctx i) in
   let fv = to_closure (compileExp ctx v) in
   CDynamic
-    (fun ctx stack fs ->
-      match (fl ctx stack fs, fi ctx stack fs) with
+    (fun fr ->
+      match (fl fr, fi fr) with
       | DList list_ref, DInt index ->
           let before, after = CCList.take_drop index !list_ref in
-          list_ref := before @ [fv ctx stack fs] @ after ;
+          list_ref := before @ [fv fr] @ after ;
           DVoid
       | _ ->
-          error_with_context ctx "list_insert: invalid arguments" )
+          error "list_insert: invalid arguments" )
 
 and compileListRemove (ctx : compile_ctx) (l : exp) (i : exp) : compiled_result =
   let fl = to_closure (compileExp ctx l) in
   let fi = to_closure (compileExp ctx i) in
   CDynamic
-    (fun ctx stack fs ->
-      match (fl ctx stack fs, fi ctx stack fs) with
+    (fun fr ->
+      match (fl fr, fi fr) with
       | DList list_ref, DInt index ->
           let before, after = CCList.take_drop index !list_ref in
           list_ref := before @ CCList.drop 1 after ;
           DVoid
       | _ ->
-          error_with_context ctx "list_remove: invalid arguments" )
+          error "list_remove: invalid arguments" )
 
 and compileListClear (ctx : compile_ctx) (a : exp) : compiled_result =
   let fl = to_closure (compileExp ctx a) in
   CDynamic
-    (fun ctx stack fs ->
-      match fl ctx stack fs with
+    (fun fr ->
+      match fl fr with
       | DList list_ref ->
           list_ref := [] ;
           DVoid
       | _ ->
-          error_with_context ctx "list_clear requires list type" )
+          error "list_clear requires list type" )
 
 and compileListGet (ctx : compile_ctx) (l : exp) (i : exp) : compiled_result =
   let fl = to_closure (compileExp ctx l) in
   let fi = to_closure (compileExp ctx i) in
   CDynamic
-    (fun ctx stack fs ->
-      match (fl ctx stack fs, fi ctx stack fs) with
+    (fun fr ->
+      match (fl fr, fi fr) with
       | DList list_ref, DInt index -> (
-        match CCList.nth_opt !list_ref index with
-        | Some v ->
-            v
-        | None ->
-            error_with_context ctx "list_get: index out of bounds" )
+        match CCList.nth_opt !list_ref index with Some v -> v | None -> error "list_get: index out of bounds" )
       | _ ->
-          error_with_context ctx "list_get: invalid arguments" )
+          error "list_get: invalid arguments" )
 
 and compileListSet (ctx : compile_ctx) (l : exp) (i : exp) (v : exp) : compiled_result =
   let fl = to_closure (compileExp ctx l) in
   let fi = to_closure (compileExp ctx i) in
   let fv = to_closure (compileExp ctx v) in
   CDynamic
-    (fun ctx stack fs ->
-      match (fl ctx stack fs, fi ctx stack fs) with
+    (fun fr ->
+      match (fl fr, fi fr) with
       | DList list_ref, DInt index ->
           let old_list = !list_ref in
           let len = CCList.length old_list in
@@ -1623,13 +1652,13 @@ and compileListSet (ctx : compile_ctx) (l : exp) (i : exp) (v : exp) : compiled_
             let before, after = CCList.take_drop index old_list in
             match after with
             | _ :: rest ->
-                list_ref := before @ [fv ctx stack fs] @ rest ;
+                list_ref := before @ [fv fr] @ rest ;
                 DVoid
             | [] ->
-                error_with_context ctx "list_set: index out of bounds"
-          else error_with_context ctx "list_set: index out of bounds"
+                error "list_set: index out of bounds"
+          else error "list_set: index out of bounds"
       | _ ->
-          error_with_context ctx "list_set: invalid arguments" )
+          error "list_set: invalid arguments" )
 
 (* Function call compilation with inlining support *)
 and compileCall (ctx : compile_ctx) (path : string) (args : exp list) : compiled_result =
@@ -1644,24 +1673,31 @@ and compileCall (ctx : compile_ctx) (path : string) (args : exp list) : compiled
         let fargs = Array.of_list (CCList.map (fun a -> to_closure (compileExp ctx a)) args) in
         let n_args = Array.length fargs in
         let prog = ctx.prog in
+        let rt = prog.runtime in
         CDynamic
-          (fun ctx stack fs ->
-            let new_depth = ctx.depth + 1 in
-            if new_depth > ctx.max_depth then error_with_context ctx "Maximum call depth exceeded" ;
+          (fun fr ->
             let cfunc =
               if func_idx < Array.length prog.compiled_functions then Array.unsafe_get prog.compiled_functions func_idx
-              else error_with_context ctx ("Internal error: the function '" ^ path ^ "' has not been compiled")
+              else error ("Internal error: the function '" ^ path ^ "' has not been compiled")
             in
             let () =
               if String.length cfunc.cf_name = 0 then
-                error_with_context ctx ("Internal error: the function '" ^ path ^ "' has not been compiled")
+                error ("Internal error: the function '" ^ path ^ "' has not been compiled")
             in
-            let new_ctx = {ctx with frames= cfunc.cf_name :: ctx.frames; depth= new_depth} in
-            let arg_vals = List.init n_args (fun i -> (Array.unsafe_get fargs i) ctx stack fs) in
-            callCompiledFunction new_ctx stack cfunc arg_vals )
+            let callee_fr = newFrame cfunc in
+            for i = 0 to n_args - 1 do
+              let value = (Array.unsafe_get fargs i) fr in
+              Array.unsafe_set callee_fr cfunc.cf_args.(i) value
+            done ;
+            let depth = rt.depth in
+            if depth >= max_call_depth then error "Maximum call depth exceeded" ;
+            Array.unsafe_set rt.call_names depth cfunc.cf_name ;
+            rt.depth <- depth + 1 ;
+            let result = runFrame cfunc callee_fr in
+            rt.depth <- depth ;
+            result )
     | None ->
-        if Set.mem path ctx.external_functions then
-          CDynamic (fun ctx _stack _fs -> error_with_context ctx "External evaluations are not possible")
+        if Set.mem path ctx.external_functions then CDynamic (fun _fr -> error "External evaluations are not possible")
         else (
           Printf.eprintf "Function not found during compilation: %s\n" path ;
           Printf.eprintf "Available regular functions:\n" ;
@@ -1694,26 +1730,32 @@ and compileStmt (ctx : compile_ctx) (stmt : stmt) : compiled_stmt =
         match init_exp with
         | Some exp ->
             let fexp = to_closure (compileExp ctx exp) in
-            fun ctx stack fs ->
-              Array.unsafe_set stack.stack (fs + var_idx) (fexp ctx stack fs) ;
+            fun fr ->
+              Array.unsafe_set fr var_idx (fexp fr) ;
               Continue
-        | None ->
+        | None -> (
             let typ = dexp.t in
-            fun _ctx stack fs ->
-              Array.unsafe_set stack.stack (fs + var_idx) (defaultValue typ) ;
-              Continue ) )
+            match typ.t with
+            | TArray _ | TStruct _ | TTuple _ | TList _ ->
+                (* Mutable aggregates need a fresh value on every execution *)
+                fun fr ->
+                  Array.unsafe_set fr var_idx (defaultValue typ) ;
+                  Continue
+            | TVoid _ | TInt | TInt16 | TReal | TString | TBool | TFix16 | TEmptyType ->
+                let value = defaultValue typ in
+                fun fr -> Array.unsafe_set fr var_idx value ; Continue ) ) )
   | StmtBind (lexp, exp) ->
       compileBind ctx lexp exp
   | StmtReturn exp ->
       let fexp = to_closure (compileExp ctx exp) in
-      fun ctx stack fs -> Return (fexp ctx stack fs)
+      fun fr -> Return (fexp fr)
   | StmtBlock stmts ->
       let fstmts = Array.of_list (CCList.map (compileStmt ctx) stmts) in
       let n = Array.length fstmts in
-      fun ctx stack fs ->
+      fun fr ->
         let rec loop (i : int) : exec_result =
           if i >= n then Continue
-          else match (Array.unsafe_get fstmts i) ctx stack fs with Continue -> loop (i + 1) | Return v -> Return v
+          else match (Array.unsafe_get fstmts i) fr with Continue -> loop (i + 1) | Return v -> Return v
         in
         loop 0
   | StmtIf (cond, then_stmt, else_stmt) -> (
@@ -1722,31 +1764,25 @@ and compileStmt (ctx : compile_ctx) (stmt : stmt) : compiled_stmt =
       | CConstant (DBool true) ->
           compileStmt ctx then_stmt
       | CConstant (DBool false) -> (
-        match else_stmt with Some else_s -> compileStmt ctx else_s | None -> fun _ctx _stack _fs -> Continue )
+        match else_stmt with Some else_s -> compileStmt ctx else_s | None -> fun _fr -> Continue )
       | _ -> (
           let fcond = to_closure rcond in
           let fthen = compileStmt ctx then_stmt in
           match else_stmt with
           | Some else_s -> (
               let felse = compileStmt ctx else_s in
-              fun ctx stack fs ->
-                match fcond ctx stack fs with
-                | DBool true ->
-                    fthen ctx stack fs
-                | DBool false ->
-                    felse ctx stack fs
-                | _ ->
-                    error_with_context ctx "Invalid condition" )
+              fun fr ->
+                match fcond fr with DBool true -> fthen fr | DBool false -> felse fr | _ -> error "Invalid condition" )
           | None -> (
-              fun ctx stack fs -> match fcond ctx stack fs with DBool true -> fthen ctx stack fs | _ -> Continue ) ) )
+              fun fr -> match fcond fr with DBool true -> fthen fr | _ -> Continue ) ) )
   | StmtWhile (cond, body) ->
       let fcond = to_closure (compileExp ctx cond) in
       let fbody = compileStmt ctx body in
-      fun ctx stack fs ->
+      fun fr ->
         let rec loop () : exec_result =
-          match fcond ctx stack fs with
+          match fcond fr with
           | DBool true -> (
-            match fbody ctx stack fs with Continue -> loop () | Return v -> Return v )
+            match fbody fr with Continue -> loop () | Return v -> Return v )
           | _ ->
               Continue
         in
@@ -1761,14 +1797,14 @@ and compileStmt (ctx : compile_ctx) (stmt : stmt) : compiled_stmt =
       in
       let n_cases = Array.length fcases in
       let fdefault = Option.map (compileStmt ctx) default in
-      fun ctx stack fs ->
-        let exp_val = fexp ctx stack fs in
+      fun fr ->
+        let exp_val = fexp fr in
         let rec try_cases (i : int) : exec_result =
-          if i >= n_cases then match fdefault with Some fd -> fd ctx stack fs | None -> Continue
+          if i >= n_cases then match fdefault with Some fd -> fd fr | None -> Continue
           else
             let case_exp, case_stmt = Array.unsafe_get fcases i in
-            let case_val = case_exp ctx stack fs in
-            if evalBinop ctx OpEq exp_val case_val = DBool true then case_stmt ctx stack fs else try_cases (i + 1)
+            let case_val = case_exp fr in
+            if valuesEqual exp_val case_val then case_stmt fr else try_cases (i + 1)
         in
         try_cases 0
 
@@ -1778,15 +1814,15 @@ and compileBind (ctx : compile_ctx) (lexp : lexp) (rhs : exp) : compiled_stmt =
   match lexp.l with
   | LWild ->
       let fexp = to_closure (compileExp ctx rhs) in
-      fun ctx stack fs ->
-        let _ = fexp ctx stack fs in
+      fun fr ->
+        let _ = fexp fr in
         Continue
   | LId name -> (
     match Map.find_opt name ctx.var_to_index with
     | Some idx ->
         let fexp = to_closure (compileExp ctx rhs) in
-        fun ctx stack fs ->
-          Array.unsafe_set stack.stack (fs + idx) (fexp ctx stack fs) ;
+        fun fr ->
+          Array.unsafe_set fr idx (fexp fr) ;
           Continue
     | None ->
         error ("Variable not found: " ^ name) )
@@ -1798,13 +1834,13 @@ and compileBind (ctx : compile_ctx) (lexp : lexp) (rhs : exp) : compiled_stmt =
         match Map.find_opt var_name ctx.var_to_index with
         | Some var_idx ->
             let fexp = to_closure (compileExp ctx rhs) in
-            fun ctx stack fs ->
-              let val_ = fexp ctx stack fs in
-              ( match Array.unsafe_get stack.stack (fs + var_idx) with
+            fun fr ->
+              let val_ = fexp fr in
+              ( match Array.unsafe_get fr var_idx with
               | DStruct members ->
                   Array.unsafe_set members member_idx val_
               | _ ->
-                  error_with_context ctx "Invalid struct access in fused var-member assignment" ) ;
+                  error "Invalid struct access in fused var-member assignment" ) ;
               Continue
         | None ->
             error ("Variable not found: " ^ var_name) )
@@ -1817,13 +1853,13 @@ and compileBind (ctx : compile_ctx) (lexp : lexp) (rhs : exp) : compiled_stmt =
     | Some var_idx ->
         let fi = to_closure (compileExp ctx index_exp) in
         let fexp = to_closure (compileExp ctx rhs) in
-        fun ctx stack fs ->
-          let val_ = fexp ctx stack fs in
-          ( match (Array.unsafe_get stack.stack (fs + var_idx), fi ctx stack fs) with
+        fun fr ->
+          let val_ = fexp fr in
+          ( match (Array.unsafe_get fr var_idx, fi fr) with
           | DArray arr, DInt i when i >= 0 && i < Array.length arr ->
               arr.(i) <- val_
           | _ ->
-              error_with_context ctx "Invalid array assignment" ) ;
+              error "Invalid array assignment" ) ;
           Continue
     | None ->
         error ("Variable not found: " ^ var_name) )
@@ -1836,20 +1872,20 @@ and compileBind (ctx : compile_ctx) (lexp : lexp) (rhs : exp) : compiled_stmt =
         | Some var_idx ->
             let fi = to_closure (compileExp ctx index_exp) in
             let fexp = to_closure (compileExp ctx rhs) in
-            fun ctx stack fs ->
-              let val_ = fexp ctx stack fs in
+            fun fr ->
+              let val_ = fexp fr in
               let arr =
-                match Array.unsafe_get stack.stack (fs + var_idx) with
+                match Array.unsafe_get fr var_idx with
                 | DStruct members ->
                     Array.unsafe_get members member_idx
                 | _ ->
-                    error_with_context ctx "Invalid struct access"
+                    error "Invalid struct access"
               in
-              ( match (arr, fi ctx stack fs) with
+              ( match (arr, fi fr) with
               | DArray a, DInt i when i >= 0 && i < Array.length a ->
                   a.(i) <- val_
               | _ ->
-                  error_with_context ctx "Invalid array assignment" ) ;
+                  error "Invalid array assignment" ) ;
               Continue
         | None ->
             error ("Variable not found: " ^ var_name) )
@@ -1862,19 +1898,19 @@ and compileBind (ctx : compile_ctx) (lexp : lexp) (rhs : exp) : compiled_stmt =
 and compileBindGeneral (ctx : compile_ctx) (lexp : lexp) (rhs : exp) : compiled_stmt =
   let fexp = to_closure (compileExp ctx rhs) in
   let fassign = compileLexpAssign ctx lexp in
-  fun ctx stack fs ->
-    fassign ctx stack fs (fexp ctx stack fs) ;
+  fun fr ->
+    fassign fr (fexp fr) ;
     Continue
 
 (* Compile an lexp for rvalue reading *)
 and compileLexpAsRvalue (ctx : compile_ctx) (lexp : lexp) : compiled_exp =
   match lexp.l with
   | LWild ->
-      fun ctx _stack _fs -> error_with_context ctx "Cannot read wildcard"
+      fun _fr -> error "Cannot read wildcard"
   | LId name -> (
     match Map.find_opt name ctx.var_to_index with
     | Some idx ->
-        fun _ctx stack fs -> Array.unsafe_get stack.stack (fs + idx)
+        fun fr -> Array.unsafe_get fr idx
     | None ->
         error ("Variable not found: " ^ name) )
   | LMember (({t= var_type; _} as e), member_name) -> (
@@ -1882,35 +1918,35 @@ and compileLexpAsRvalue (ctx : compile_ctx) (lexp : lexp) : compiled_exp =
     | TStruct descr -> (
         let member_idx = getMemberIndex descr member_name in
         let fe = compileLexpAsRvalue ctx e in
-        fun ctx stack fs ->
-          match fe ctx stack fs with
+        fun fr ->
+          match fe fr with
           | DStruct members when member_idx >= 0 && member_idx < Array.length members ->
               members.(member_idx)
           | _ ->
-              error_with_context ctx "Invalid struct member access" )
+              error "Invalid struct member access" )
     | _ ->
         error "Member access on non-struct type" )
   | LIndex {e; index} -> (
       let fe = compileLexpAsRvalue ctx e in
       let fi = to_closure (compileExp ctx index) in
-      fun ctx stack fs ->
-        match (fe ctx stack fs, fi ctx stack fs) with
+      fun fr ->
+        match (fe fr, fi fr) with
         | DArray arr, DInt i when i >= 0 && i < Array.length arr ->
             arr.(i)
         | _ ->
-            error_with_context ctx "Invalid array access" )
+            error "Invalid array access" )
   | LTuple _ ->
-      fun ctx _stack _fs -> error_with_context ctx "Cannot read tuple lvalue"
+      fun _fr -> error "Cannot read tuple lvalue"
 
 (* Compile an assignment to an lvalue location *)
-and compileLexpAssign (ctx : compile_ctx) (lexp : lexp) : call_context -> runtime_stack -> int -> dvalue -> unit =
+and compileLexpAssign (ctx : compile_ctx) (lexp : lexp) : dvalue array -> dvalue -> unit =
   match lexp.l with
   | LWild ->
-      fun _ctx _stack _fs _val -> ()
+      fun _fr _val -> ()
   | LId name -> (
     match Map.find_opt name ctx.var_to_index with
     | Some idx ->
-        fun _ctx stack fs val_ -> Array.unsafe_set stack.stack (fs + idx) val_
+        fun fr val_ -> Array.unsafe_set fr idx val_
     | None ->
         error ("Variable not found: " ^ name) )
   | LMember (({t= var_type; _} as e), member_name) -> (
@@ -1918,19 +1954,19 @@ and compileLexpAssign (ctx : compile_ctx) (lexp : lexp) : call_context -> runtim
     | TStruct descr -> (
         let member_idx = getMemberIndex descr member_name in
         let fe = compileLexpAsRvalue ctx e in
-        fun ctx stack fs val_ ->
-          match fe ctx stack fs with
+        fun fr val_ ->
+          match fe fr with
           | DStruct members when member_idx >= 0 && member_idx < Array.length members ->
               members.(member_idx) <- val_
           | _ ->
-              error_with_context ctx "Invalid struct member assignment" )
+              error "Invalid struct member assignment" )
     | _ ->
         error "Member assignment on non-struct type" )
   | LIndex {e; index} -> (
       let fe = compileLexpAsRvalue ctx e in
       let fi = to_closure (compileExp ctx index) in
-      fun ctx stack fs val_ ->
-        match (fe ctx stack fs, fi ctx stack fs) with
+      fun fr val_ ->
+        match (fe fr, fi fr) with
         | DArray arr, DInt i when i >= 0 && i < Array.length arr ->
             arr.(i) <- val_
         | DList list_ref, DInt i ->
@@ -1942,43 +1978,29 @@ and compileLexpAssign (ctx : compile_ctx) (lexp : lexp) : call_context -> runtim
               | _ :: rest ->
                   list_ref := before @ [val_] @ rest
               | [] ->
-                  error_with_context ctx "List index out of bounds for assignment"
-            else error_with_context ctx "List index out of bounds"
+                  error "List index out of bounds for assignment"
+            else error "List index out of bounds"
         | _ ->
-            error_with_context ctx "Invalid array or list assignment" )
+            error "Invalid array or list assignment" )
   | LTuple lexps -> (
       let fassigns = CCList.mapi (fun i lv -> (i, compileLexpAssign ctx lv)) lexps in
-      fun ctx stack fs val_ ->
+      fun fr val_ ->
         match val_ with
         | DArray vals when Array.length vals = CCList.length fassigns ->
-            CCList.iter (fun (i, fassign) -> fassign ctx stack fs vals.(i)) fassigns
+            CCList.iter (fun (i, fassign) -> fassign fr vals.(i)) fassigns
         | _ ->
-            error_with_context ctx "Tuple assignment type mismatch" )
+            error "Tuple assignment type mismatch" )
 
-(* Execute a compiled function: allocate a stack frame, bind arguments, run the body. *)
-and callCompiledFunction (ctx : call_context) (stack : runtime_stack) (cfunc : compiled_func) (args : dvalue list) :
-    dvalue =
-  let frame_start = stack.sp in
-  if stack.sp + cfunc.cf_locals > stack.max_size then error ("Stack overflow in function " ^ cfunc.cf_name) ;
-  for i = 0 to cfunc.cf_locals - 1 do
-    Array.unsafe_set stack.stack (stack.sp + i) DVoid
-  done ;
-  CCList.iter2
-    (fun param_idx arg_val -> Array.unsafe_set stack.stack (frame_start + param_idx) arg_val)
-    cfunc.cf_args args ;
-  stack.sp <- stack.sp + cfunc.cf_locals ;
-  let result = cfunc.cf_body ctx stack frame_start in
-  stack.sp <- stack.sp - cfunc.cf_locals ;
-  match result with Continue -> DVoid | Return v -> v
-
-(* Calls a compiled function by index *)
-let callCompiledFunctionByIdx (prog : iprog) (ctx : call_context) (stack : runtime_stack) (func_idx : int)
-    (args : dvalue list) : dvalue =
+(* Calls a compiled function from an entry point, binding the arguments in a new frame *)
+let callCompiledFunctionByIdx (prog : iprog) (sample_rate : float option) (func_idx : int) (args : dvalue list) : dvalue
+    =
   if func_idx < 0 || func_idx >= Array.length prog.compiled_functions then
     error (Printf.sprintf "Internal error: function index %d has not been compiled" func_idx)
   else
     let cfunc = Array.get prog.compiled_functions func_idx in
-    callCompiledFunction ctx stack cfunc args
+    let fr = newFrame cfunc in
+    CCList.iteri (fun i arg_val -> fr.(cfunc.cf_args.(i)) <- arg_val) args ;
+    runWithCallStack prog.runtime sample_rate (fun () -> runFrame cfunc fr)
 
 (* ---- Program Processing ---- *)
 
@@ -1995,7 +2017,7 @@ let compileProgramFunction (prog : iprog) (def : function_def) (body : stmt) : c
   in
   let param_indices = CCList.map (fun (p : param) -> addVar ctx p.name) def.args in
   let compiled_body = compileStmt ctx body in
-  {cf_name= def.name; cf_args= param_indices; cf_locals= ctx.next_index; cf_body= compiled_body}
+  {cf_name= def.name; cf_args= Array.of_list param_indices; cf_locals= ctx.next_index; cf_body= compiled_body}
 
 (* Process a single top-level statement, compiling it into the iprog *)
 let processStatement (prog : iprog) (stmt : top_stmt) : unit =
@@ -2025,9 +2047,8 @@ let processStatement (prog : iprog) (stmt : top_stmt) : unit =
             v
         | _ ->
             let f = to_closure compiled in
-            let temp_ctx = {frames= []; depth= 0; max_depth= 50; sample_rate= None} in
-            let temp_stack = createStack 100 in
-            f temp_ctx temp_stack 0
+            let fr = Array.make ctx.next_index DVoid in
+            runWithCallStack prog.runtime None (fun () -> f fr)
       in
       addConstant prog value
   | TopFunction (def, body) -> (
@@ -2191,20 +2212,18 @@ let evaluateMainExpression args env iprog exp : dvalue =
   let main_func_name = "Main___main_" in
   match Map.find_opt main_func_name iprog.ifunction_names with
   | Some _ -> (
-      let initial_ctx = {frames= []; depth= 0; max_depth= 50; sample_rate= args.fs} in
-      let stack = createStack 1000 in
       let call_args =
         let alloc_func_name = main_func_name ^ "_type_alloc" in
         match Map.find_opt alloc_func_name iprog.ifunction_names with
         | Some alloc_idx ->
-            let state = callCompiledFunctionByIdx iprog initial_ctx stack alloc_idx [] in
+            let state = callCompiledFunctionByIdx iprog args.fs alloc_idx [] in
             [state]
         | None ->
             []
       in
       match Map.find_opt main_func_name iprog.ifunction_names with
       | Some func_idx ->
-          callCompiledFunctionByIdx iprog initial_ctx stack func_idx call_args
+          callCompiledFunctionByIdx iprog args.fs func_idx call_args
       | None ->
           error "Could not execute the expression" )
   | None ->
@@ -2297,21 +2316,19 @@ let renderAudioExpression (args : Util.Args.args) (env : Env.in_top) (iprog : ip
   processStatements iprog main ;
   (* Execute wrapper function *)
   let main_func_name = "Render___main" in
-  let initial_ctx = {frames= []; depth= 0; max_depth= 50; sample_rate= args.fs} in
-  let stack = createStack 10000 in
   (* Prepare call arguments *)
   let call_args =
     let alloc_func_name = main_func_name ^ "_type_alloc" in
     match Map.find_opt alloc_func_name iprog.ifunction_names with
     | Some alloc_idx ->
-        let state = callCompiledFunctionByIdx iprog initial_ctx stack alloc_idx [] in
+        let state = callCompiledFunctionByIdx iprog args.fs alloc_idx [] in
         [state]
     | None ->
         []
   in
   match Map.find_opt main_func_name iprog.ifunction_names with
   | Some func_idx ->
-      let result = callCompiledFunctionByIdx iprog initial_ctx stack func_idx call_args in
+      let result = callCompiledFunctionByIdx iprog args.fs func_idx call_args in
       writeResultToWav result params ;
       let end_time = Sys.time () in
       let duration = end_time -. start_time in
@@ -2320,6 +2337,5 @@ let renderAudioExpression (args : Util.Args.args) (env : Env.in_top) (iprog : ip
       error "Could not execute render function"
 
 (* External API: call a compiled function by index. *)
-let callFunctionEntry (prog : iprog) (stack : runtime_stack) (func_idx : int) (args : dvalue list) : dvalue =
-  let initial_ctx = {frames= []; depth= 0; max_depth= 50; sample_rate= None} in
-  callCompiledFunctionByIdx prog initial_ctx stack func_idx args
+let callFunctionEntry (prog : iprog) (func_idx : int) (args : dvalue list) : dvalue =
+  callCompiledFunctionByIdx prog None func_idx args

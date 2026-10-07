@@ -151,11 +151,10 @@ let displayName (def : function_def) = match def.info.original_name with Some na
 let calculateIntRealTables loc iprog ~display name min max precision =
   let size = max - min in
   let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
-  let stack = Core.Interpreter.createStack 256 in
   let data =
     CCList.init (size + 1) (fun i ->
         let x = min + i in
-        let y = getRealResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [DInt x]) in
+        let y = getRealResult (Core.Interpreter.callFunctionEntry iprog fun_index [DInt x]) in
         let () = checkFinite loc display (float_of_int x) y in
         y )
   in
@@ -164,7 +163,6 @@ let calculateIntRealTables loc iprog ~display name min max precision =
 let calculateIntIntTables loc iprog name (int_type : type_) min max =
   let size = max - min in
   let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
-  let stack = Core.Interpreter.createStack 256 in
   let makeInt i : Core.Interpreter.dvalue =
     match int_type with
     | {t= TInt; _} ->
@@ -177,7 +175,7 @@ let calculateIntIntTables loc iprog name (int_type : type_) min max =
   let data =
     CCList.init (size + 1) (fun i ->
         let x = min + i in
-        getIntResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [makeInt x]) )
+        getIntResult (Core.Interpreter.callFunctionEntry iprog fun_index [makeInt x]) )
   in
   [makeIntTableDecl loc name "table" int_type data]
 
@@ -185,11 +183,10 @@ let calculateTablesOrder1 loc iprog ~display name size min max precision =
   let map x x0 x1 y0 y1 = ((x -. x0) *. (y1 -. y0) /. (x1 -. x0)) +. y0 in
   let map_x x = map x 0. (float_of_int size) min max in
   let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
-  let stack = Core.Interpreter.createStack 256 in
   let data =
     Array.init (size + 1) (fun i ->
         let x = map_x (float_of_int i) in
-        let y = getRealResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [DReal x]) in
+        let y = getRealResult (Core.Interpreter.callFunctionEntry iprog fun_index [DReal x]) in
         let () = checkFinite loc display x y in
         (x, y) )
   in
@@ -204,11 +201,10 @@ let calculateTablesOrder1Fixed loc iprog ~display name size min max precision =
   let map x x0 x1 y0 y1 = ((x -. x0) *. (y1 -. y0) /. (x1 -. x0)) +. y0 in
   let map_x x = map x 0. (float_of_int size) min max in
   let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
-  let stack = Core.Interpreter.createStack 256 in
   let data =
     CCList.init (size + 1) (fun i ->
         let x = map_x (float_of_int i) in
-        let y = getRealResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [DReal x]) in
+        let y = getRealResult (Core.Interpreter.callFunctionEntry iprog fun_index [DReal x]) in
         let () = checkFinite loc display x y in
         (x, y) )
   in
@@ -223,13 +219,12 @@ let calculateTablesOrder2 loc iprog ~display name size min max precision =
   let map x x0 x1 y0 y1 = ((x -. x0) *. (y1 -. y0) /. (x1 -. x0)) +. y0 in
   let map_x x = map x 0. (float_of_int size) min max in
   let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
-  let stack = Core.Interpreter.createStack 256 in
   let data =
     Array.init
       ((size * 2) + 2)
       (fun i ->
         let x = map_x (float_of_int i /. 2.0) in
-        let y = getRealResult (Core.Interpreter.callFunctionEntry iprog stack fun_index [DReal x]) in
+        let y = getRealResult (Core.Interpreter.callFunctionEntry iprog fun_index [DReal x]) in
         let () = checkFinite loc display x y in
         (x, y) )
   in
