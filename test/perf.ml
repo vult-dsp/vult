@@ -228,10 +228,9 @@ let runZig vultfile =
     let output = Filename.chop_extension (Filename.basename vultfile) in
     Sys.chdir tmp_dir ;
     generateZig vultfile output ;
-    (* The Zig backend is intentionally minimal: modules that require memory allocation (delay lines,
-       dynamic lists, etc.) are not supported yet, so compilation failures are reported as a warning
-       and skipped instead of aborting the whole benchmark run. *)
-    let compile = Printf.sprintf "zig build-exe -O ReleaseFast %s.zig 2> /dev/null" output in
+    (* Compilation failures are reported as a warning and skipped instead of aborting the whole
+       benchmark run. *)
+    let compile = Printf.sprintf "zig build-exe -O ReleaseFast %s.zig" output in
     if Sys.command compile <> 0 then Printf.eprintf "Warning: Zig compilation failed for %s\n%!" output
     else ignore (Sys.command ("./" ^ output)) ;
     Sys.chdir init_dir

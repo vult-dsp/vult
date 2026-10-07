@@ -192,16 +192,19 @@ inline fn bool_to_int16(a: bool) i16 {
     return if (a) 1 else 0;
 }
 
+// Linux uses raw syscalls so it needs no libc; other systems (e.g. macOS) always link libc.
+const sys = if (@import("builtin").os.tag == .linux) std.os.linux else std.c;
+
 fn now_ns() i128 {
-    var ts: std.os.linux.timespec = undefined;
-    _ = std.os.linux.clock_gettime(.MONOTONIC, &ts);
+    var ts: sys.timespec = undefined;
+    _ = sys.clock_gettime(.MONOTONIC, &ts);
     return @as(i128, ts.sec) * 1_000_000_000 + @as(i128, ts.nsec);
 }
 
 fn printResult(name: []const u8, ms: f64) void {
     var buf: [256]u8 = undefined;
     const s = std.fmt.bufPrint(&buf, "{s}\tZig\t{d:.2} ms/s\n", .{ name, ms }) catch return;
-    _ = std.os.linux.write(1, s.ptr, s.len);
+    _ = sys.write(1, s.ptr, s.len);
 }
 
 |}
