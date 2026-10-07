@@ -40,8 +40,6 @@ type output =
 
 type code = NoCode | CppCode | JSCode | LuaCode | JavaCode | JuliaCode | PythonCode | ZigCode
 
-type eval_backend = Interpreter | OcamlVM | CVM
-
 type real_format = Float | Fixed
 
 (** Stores the options passed to the command line *)
@@ -50,7 +48,6 @@ type args =
   ; mutable dparse: bool
   ; mutable dtyped: bool
   ; mutable dlocs: bool
-  ; mutable dbytecode: bool
   ; mutable dprog: bool
   ; mutable dcode: bool
   ; mutable eval: string option
@@ -80,7 +77,6 @@ type args =
   ; mutable render: string option
   ; mutable java_bin_tables: bool
   ; mutable java_prefix: string option
-  ; mutable eval_backend: eval_backend
   ; mutable extensions: string list
   ; mutable lsp: bool }
 
@@ -89,7 +85,6 @@ let default_arguments : args =
   ; dparse= false
   ; dtyped= false
   ; dlocs= false
-  ; dbytecode= false
   ; dprog= false
   ; dcode= false
   ; code= NoCode
@@ -119,7 +114,6 @@ let default_arguments : args =
   ; render= None
   ; java_bin_tables= false
   ; java_prefix= None
-  ; eval_backend= Interpreter
   ; extensions= []
   ; lsp= false }
 
@@ -222,9 +216,6 @@ let flags result =
   ; { flag= "-dump-parsed"
     ; action= Arg.Unit (fun () -> result.dparse <- true)
     ; comment= " Dumps the parse tree (default: off)" }
-  ; { flag= "-dump-bytecode"
-    ; action= Arg.Unit (fun () -> result.dbytecode <- true)
-    ; comment= " Dumps the bytecode (default: off)" }
   ; { flag= "-dump-prog"
     ; action= Arg.Unit (fun () -> result.dprog <- true)
     ; comment= " Dumps the processed program (default: off)" }
@@ -247,25 +238,6 @@ let flags result =
   ; { flag= "-java-bin-tables"
     ; action= Arg.Unit (fun () -> result.java_bin_tables <- true)
     ; comment= " Write large array constants as binary .table files for Java (default: off)" }
-  ; { flag= "-backend"
-    ; action=
-        Arg.String
-          (fun s ->
-            result.eval_backend <-
-              ( match s with
-              | "interpreter" ->
-                  Interpreter
-              | "ocaml-vm" ->
-                  OcamlVM
-              | "c-vm" ->
-                  CVM
-              | _ ->
-                  print_endline ("Unknown backend '" ^ s ^ "'. The valid options are: interpreter, ocaml-vm, c-vm") ;
-                  exit (-1) ) )
-    ; comment= "name Select evaluation backend: interpreter, ocaml-vm, c-vm (default: interpreter)" }
-  ; { flag= "-use-bytecode"
-    ; action= Arg.Unit (fun () -> result.eval_backend <- CVM)
-    ; comment= " (deprecated) Alias for -backend c-vm" }
   ; { flag= "-java-prefix"
     ; action= Arg.String (fun prefix -> result.java_prefix <- Some prefix)
     ; comment= "prefix Sets the Java package prefix and adds an external import (e.g., vult.com)" }

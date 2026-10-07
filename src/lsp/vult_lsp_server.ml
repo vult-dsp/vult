@@ -22,484 +22,398 @@
    THE SOFTWARE.
 *)
 
-(* Vult Language Server - Direct JSON/LSP implementation *)
-(* Handles LSP protocol directly with yojson, no complex GADT dependencies *)
+(* Vult Language Server - JSON-RPC transport and dispatch of the LSP messages.
+
+   The server state is immutable: every handler returns the new state together with its reply.
+   Diagnostics are published for the changed document and for every open document importing it.
+
+   Diagnostic messages are written to stderr only when VULT_LSP_VERBOSE is set; errors always are. *)
 
 open Yojson.Safe.Util
-open Util
+module L = Vult_lsp
+module Map = Util.Maps.Map
 
-(** Parsed file cache entry *)
-type parsed_cache_entry =
-  { content_hash: string
-  ; parsed_files: Pparser.Parse.parsed_file list
-  ; typed_stmts: Core.Typed.top_stmt list option (* Typed AST after inference *)
-  ; parse_time: float }
+let verbose = Option.is_some (Sys.getenv_opt "VULT_LSP_VERBOSE")
 
-(** Enhanced server state with workspace support and parse caching *)
+let log fmt = Printf.ksprintf (fun msg -> if verbose then prerr_endline msg) fmt
+
+let log_error fmt = Printf.ksprintf prerr_endline fmt
+
+(** Lifecycle of the server as defined by the protocol *)
+type phase = AwaitingInitialize | Running | ShutdownRequested
+
 module State = struct
   type t =
-    { workspace: Vult_lsp.Workspace.t
-    ; initialized: bool
-    ; parsed_cache: (string, parsed_cache_entry) Hashtbl.t (* uri -> cached parse result *) }
+    { phase: phase
+    ; workspace: L.Workspace.t
+    ; analyses: L.Analysis.t Map.t (* path of an open document -> its last analysis *) }
 
-  let create ?root_uri () =
-    {workspace= Vult_lsp.Workspace.create ?root_uri (); initialized= false; parsed_cache= Hashtbl.create 16}
+  let empty : t = {phase= AwaitingInitialize; workspace= L.Workspace.create (); analyses= Map.empty}
 
-  let set_document state uri content =
-    let new_workspace = Vult_lsp.Workspace.add_document state.workspace uri content in
-    (* Don't clear cache here - let get_parsed_files handle cache update safely *)
-    {state with workspace= new_workspace}
+  (** Analysis of an open document, redone when any of the files it read has changed *)
+  let analysis (state : t) (path : string) : t * L.Analysis.t option =
+    match (L.Workspace.find_document state.workspace path, Map.find_opt path state.analyses) with
+    | None, _ ->
+        (state, None)
+    | Some _, Some analysis when L.Analysis.is_current state.workspace analysis ->
+        (state, Some analysis)
+    | Some _, previous ->
+        let analysis = L.Analysis.analyze ?previous state.workspace path in
+        ({state with analyses= Map.add path analysis state.analyses}, Some analysis)
 
-  let get_document state uri = Vult_lsp.Workspace.get_document state.workspace uri
+  (** Open documents affected by a change to [path]: the document itself and those that read it *)
+  let affected_documents (state : t) (path : string) : string list =
+    let is_affected document =
+      String.equal document path
+      ||
+      match Map.find_opt document state.analyses with
+      | Some analysis ->
+          L.Analysis.depends_on state.workspace analysis path
+      | None ->
+          false
+    in
+    CCList.filter is_affected (L.Workspace.open_paths state.workspace)
+end
 
-  let remove_document state uri =
-    let new_workspace = Vult_lsp.Workspace.remove_document state.workspace uri in
-    (* Remove cache for this URI since document is closed *)
-    Hashtbl.remove state.parsed_cache uri ; {state with workspace= new_workspace}
+(** JSON-RPC messages *)
+module Message = struct
+  type t =
+    | Request of {id: Yojson.Safe.t; method_: string; params: Yojson.Safe.t}
+    | Notification of {method_: string; params: Yojson.Safe.t}
+    | Response (* a reply to a request from the server; the server sends none, so they are ignored *)
 
-  let set_initialized state = {state with initialized= true}
+  let classify (json : Yojson.Safe.t) : t option =
+    match json with
+    | `Assoc _ -> (
+        let params = member "params" json in
+        match (member "id" json, member "method" json) with
+        | `Null, `String method_ ->
+            Some (Notification {method_; params})
+        | id, `String method_ ->
+            Some (Request {id; method_; params})
+        | `Null, _ ->
+            None
+        | _, _ ->
+            Some Response )
+    | _ ->
+        None
 
-  let set_include_paths state paths =
-    let new_workspace = Vult_lsp.Workspace.set_include_paths state.workspace paths in
-    (* Clear all caches since include paths affect parsing *)
-    Hashtbl.clear state.parsed_cache ; {state with workspace= new_workspace}
+  type error_code =
+    | ParseError
+    | InvalidRequest
+    | MethodNotFound
+    | InvalidParams
+    | InternalError
+    | ServerNotInitialized
 
-  (** Update workspace config paths based on file location *)
-  let update_config_for_file (state : t) (file_path : string) : t =
-    let config_paths = Vult_lsp.Config.get_include_paths_for_file file_path in
-    if CCList.length config_paths > 0 then (
-      Printf.eprintf "   📁 Loaded config include paths: %s\n" (String.concat ", " config_paths) ;
-      flush stderr )
-    else () ;
-    let new_workspace = Vult_lsp.Workspace.set_config_paths state.workspace config_paths in
-    (* Clear caches if config paths changed *)
-    if not (CCList.equal String.equal config_paths state.workspace.config_paths) then Hashtbl.clear state.parsed_cache
-    else () ;
-    {state with workspace= new_workspace}
+  let error_code_to_int (code : error_code) : int =
+    match code with
+    | ParseError ->
+        -32700
+    | InvalidRequest ->
+        -32600
+    | MethodNotFound ->
+        -32601
+    | InvalidParams ->
+        -32602
+    | InternalError ->
+        -32603
+    | ServerNotInitialized ->
+        -32002
 
-  (** Get cached parsed files or parse if needed *)
-  let get_parsed_files state uri content filename =
-    let content_hash = Digest.string content in
-    let cache_key = uri in
-    match Hashtbl.find_opt state.parsed_cache cache_key with
-    | Some cached when cached.content_hash = content_hash ->
-        Printf.eprintf "   📋 Using cached parse result for %s\n" filename ;
-        flush stderr ;
-        cached.parsed_files
-    | Some cached -> (
-        Printf.eprintf "   🔄 Parsing %s (content changed)\n" filename ;
-        flush stderr ;
-        (* Content changed - try to parse new content *)
-        try
-          let includes = Vult_lsp.Workspace.get_effective_include_paths state.workspace in
-          let args = {Args.default_arguments with files= [Args.Code (filename, content)]; includes; check= false} in
-          let parsed_files, _ = Driver.Loader.loadFiles args args.files in
-          (* Parsing succeeded - update cache with new result *)
-          let cache_entry =
-            { content_hash
-            ; parsed_files
-            ; typed_stmts= None (* Will be computed on demand *)
-            ; parse_time= (try Unix.time () with _ -> 0.0) }
-          in
-          Hashtbl.replace state.parsed_cache cache_key cache_entry ;
-          Printf.eprintf "   ✅ Parse successful, cache updated for %s\n" filename ;
-          flush stderr ;
-          parsed_files
-        with exn ->
-          Printf.eprintf "   ❌ Parse error for %s: %s - keeping previous cached result\n" filename
-            (Printexc.to_string exn) ;
-          flush stderr ;
-          (* Parsing failed - keep using the old cached result *)
-          cached.parsed_files )
-    | None -> (
-        Printf.eprintf "   🔄 Parsing %s (cache miss)\n" filename ;
-        flush stderr ;
-        (* No cache entry - try to parse *)
-        try
-          let includes = Vult_lsp.Workspace.get_effective_include_paths state.workspace in
-          let args = {Args.default_arguments with files= [Args.Code (filename, content)]; includes; check= false} in
-          let parsed_files, _ = Driver.Loader.loadFiles args args.files in
-          (* Parsing succeeded - create cache entry *)
-          let cache_entry =
-            { content_hash
-            ; parsed_files
-            ; typed_stmts= None (* Will be computed on demand *)
-            ; parse_time= (try Unix.time () with _ -> 0.0) }
-          in
-          Hashtbl.replace state.parsed_cache cache_key cache_entry ;
-          Printf.eprintf "   ✅ Parse successful, cache created for %s\n" filename ;
-          flush stderr ;
-          parsed_files
-        with exn ->
-          Printf.eprintf "   ❌ Initial parse error for %s: %s\n" filename (Printexc.to_string exn) ;
-          flush stderr ;
-          (* No previous cache and parsing failed - return empty *)
-          [] )
+  let response (id : Yojson.Safe.t) (result : Yojson.Safe.t) : Yojson.Safe.t =
+    `Assoc [("jsonrpc", `String "2.0"); ("id", id); ("result", result)]
 
-  (** Get all statements from cached parse result *)
-  let get_parsed_statements state uri content filename =
-    let parsed_files = get_parsed_files state uri content filename in
-    CCList.flatten @@ CCList.map (fun (p : Pparser.Parse.parsed_file) -> p.stmts) parsed_files
+  let error (id : Yojson.Safe.t) (code : error_code) (message : string) : Yojson.Safe.t =
+    `Assoc
+      [ ("jsonrpc", `String "2.0")
+      ; ("id", id)
+      ; ("error", `Assoc [("code", `Int (error_code_to_int code)); ("message", `String message)]) ]
 
-  (** Get typed statements (runs inference if needed) *)
-  let get_typed_statements (state : t) (uri : string) (content : string) (filename : string) :
-      Core.Typed.top_stmt list option =
-    let content_hash = Digest.string content in
-    let cache_key = uri in
-    (* First ensure we have parsed files *)
-    let _parsed_files = get_parsed_files state uri content filename in
-    (* Check cache for typed statements *)
-    match Hashtbl.find_opt state.parsed_cache cache_key with
-    | Some cached when cached.content_hash = content_hash -> (
-      match cached.typed_stmts with
-      | Some typed ->
-          Some typed
-      | None -> (
-          (* Need to run type inference *)
-          Printf.eprintf "   🔍 Running type inference for %s\n" filename ;
-          flush stderr ;
-          try
-            let includes = Vult_lsp.Workspace.get_effective_include_paths state.workspace in
-            let args = {Args.default_arguments with files= [Args.Code (filename, content)]; includes; check= false} in
-            let _env, typed_stmts = Core.Typechecking.typecheck_and_elaborate args cached.parsed_files in
-            (* Update cache with typed statements *)
-            let updated_cache = {cached with typed_stmts= Some typed_stmts} in
-            Hashtbl.replace state.parsed_cache cache_key updated_cache ;
-            Printf.eprintf "   ✅ Type inference successful for %s\n" filename ;
-            flush stderr ;
-            Some typed_stmts
-          with exn ->
-            Printf.eprintf "   ❌ Type inference error for %s: %s\n" filename (Printexc.to_string exn) ;
-            flush stderr ;
-            None ) )
+  let notification (method_ : string) (params : Yojson.Safe.t) : Yojson.Safe.t =
+    `Assoc [("jsonrpc", `String "2.0"); ("method", `String method_); ("params", params)]
+end
+
+(** Server capabilities JSON *)
+let server_capabilities_json : Yojson.Safe.t =
+  `Assoc
+    [ ("textDocumentSync", `Int 1 (* full document on every change *))
+    ; ("completionProvider", `Assoc [("triggerCharacters", `List [`String "."])])
+    ; ("hoverProvider", `Bool true)
+    ; ( "semanticTokensProvider"
+      , `Assoc
+          [ ( "legend"
+            , `Assoc
+                [ ("tokenTypes", `List (CCList.map (fun name -> `String name) L.SemanticTokens.legend))
+                ; ("tokenModifiers", `List []) ] )
+          ; ("full", `Bool true) ] )
+    ; ("documentSymbolProvider", `Bool true)
+    ; ("definitionProvider", `Bool true) ]
+
+(** Reading the parameters of requests and notifications *)
+module Params = struct
+  let uri (params : Yojson.Safe.t) : string = params |> member "textDocument" |> member "uri" |> to_string
+
+  let path (params : Yojson.Safe.t) : string = L.Workspace.path_of_uri (uri params)
+
+  (** The 0-based line and UTF-16 column of a position *)
+  let position (params : Yojson.Safe.t) : int * int =
+    let position = member "position" params in
+    (position |> member "line" |> to_int, position |> member "character" |> to_int)
+
+  let content (state : State.t) (path : string) : string =
+    match L.Workspace.find_document state.workspace path with Some document -> document.content | None -> ""
+
+  (** The document content and the 0-based line and byte column of the position *)
+  let content_and_position (state : State.t) (params : Yojson.Safe.t) : string * int * int =
+    let content = content state (path params) in
+    let line, character = position params in
+    (content, line, L.Text.byte_of_utf16 (L.Text.of_string content) line character)
+
+  (** Workspace folder given in the initialize request *)
+  let root (params : Yojson.Safe.t) : string option =
+    match (member "rootUri" params, member "workspaceFolders" params) with
+    | `String uri, _ ->
+        Some (L.Workspace.path_of_uri uri)
+    | _, `List (folder :: _) -> (
+      match member "uri" folder with `String uri -> Some (L.Workspace.path_of_uri uri) | _ -> None )
     | _ ->
         None
 end
 
-(** LSP Protocol Constants *)
-module Protocol = struct
-  (** Server capabilities JSON *)
-  let server_capabilities_json =
-    `Assoc
-      [ ("textDocumentSync", `Int 1)
-      ; (* Full synchronization *)
-        ("completionProvider", `Assoc [("triggerCharacters", `List [`String "."])])
-      ; ("hoverProvider", `Bool true)
-      ; ( "semanticTokensProvider"
-        , `Assoc
-            [ ( "legend"
-              , `Assoc
-                  [ ( "tokenTypes"
-                    , `List
-                        [ `String "variable"
-                        ; (* 0 - VIdentifier *)
-                          `String "comment"
-                        ; (* 1 - VComment *)
-                          `String "keyword"
-                        ; (* 2 - VKeyword *)
-                          `String "type"
-                        ; (* 3 - VType *)
-                          `String "number"
-                        ; (* 4 - VNumber *)
-                          `String "string"
-                        ; (* 5 - VString *)
-                          `String "operator"
-                        ; (* 6 - VOperator *)
-                          `String "punctuation"
-                        ; (* 7 - VPunctuation *)
-                          `String "function" (* 8 - VFunction *) ] )
-                  ; ("tokenModifiers", `List []) ] )
-            ; ("full", `Bool true) ] )
-      ; ("documentSymbolProvider", `Bool true)
-      ; ("definitionProvider", `Bool true) ]
-end
-
-(** Request Handlers Module *)
+(** Request handlers return the new state and the result of the request *)
 module RequestHandlers = struct
-  (** Handle initialize request *)
-  let handle_initialize id params =
-    (* Extract workspace root from initialize params *)
-    let root_uri =
-      try Some (params |> member "rootUri" |> to_string)
-      with _ -> (
-        try Some (params |> member "workspaceFolders" |> to_list |> CCList.hd |> member "uri" |> to_string)
-        with _ -> None )
-    in
-    Printf.eprintf "✅ Initialize request handled\n" ;
-    ( match root_uri with
-    | Some uri ->
-        Printf.eprintf "   Workspace root: %s\n" uri
-    | None ->
-        Printf.eprintf "   No workspace root specified\n" ) ;
-    flush stderr ;
-    `Assoc
-      [("jsonrpc", `String "2.0"); ("id", id); ("result", `Assoc [("capabilities", Protocol.server_capabilities_json)])]
+  let initialize (state : State.t) (params : Yojson.Safe.t) : State.t * Yojson.Safe.t =
+    let root = Params.root params in
+    log "Initialize, workspace root: %s" (Option.value root ~default:"none") ;
+    let state = {state with phase= Running; workspace= L.Workspace.create ?root ()} in
+    (state, `Assoc [("capabilities", server_capabilities_json)])
 
-  (** Handle completion request *)
-  let handle_completion state id params =
-    Printf.eprintf "✅ Completion request handled\n" ;
-    flush stderr ;
-    let text_document = params |> member "textDocument" in
-    let uri = text_document |> member "uri" |> to_string in
-    let position = params |> member "position" in
-    let line = position |> member "line" |> to_int in
-    let character = position |> member "character" |> to_int in
-    let filename = Vult_lsp.Workspace.uri_to_path uri in
-    (* Get content from document store *)
-    let content =
-      match State.get_document state uri with
-      | Some doc_content ->
-          doc_content
-      | None ->
-          Printf.eprintf "   Warning: Document not found in store for completion\n" ;
-          flush stderr ;
-          ""
-    in
-    (* Get intelligent completions based on symbols in the workspace using cached parsing *)
-    let parsed_stmts = State.get_parsed_statements state uri content filename in
-    let completions = Vult_lsp.Completion.get_completions parsed_stmts in
-    (* Extract prefix for debugging *)
-    let prefix = Vult_lsp.Common.get_word_at_position content line character in
-    Printf.eprintf "   Generated %d completions (editor will filter by prefix '%s')\n" (CCList.length completions)
-      prefix ;
-    flush stderr ;
-    (* Convert completion_item list to LSP JSON format *)
-    let completion_items =
-      CCList.map
-        (fun (completion : Vult_lsp.Completion.completion_item) ->
-          let detail_str = match completion.detail with Some d -> d | None -> "" in
-          let doc_str = match completion.documentation with Some d -> d | None -> "" in
-          `Assoc
-            [ ("label", `String completion.label)
-            ; ("kind", `Int completion.kind)
-            ; ("detail", `String detail_str)
-            ; ("documentation", `String doc_str) ] )
-        completions
-    in
-    `Assoc
-      [ ("jsonrpc", `String "2.0")
-      ; ("id", id)
-      ; ("result", `Assoc [("isIncomplete", `Bool false); ("items", `List completion_items)]) ]
-
-  (** Handle hover request *)
-  let handle_hover state id params =
-    Printf.eprintf "✅ Hover request handled\n" ;
-    flush stderr ;
-    let uri = params |> member "textDocument" |> member "uri" |> to_string in
-    let position = params |> member "position" in
-    let line = position |> member "line" |> to_int in
-    let character = position |> member "character" |> to_int in
-    let filename = Vult_lsp.Workspace.uri_to_path uri in
-    let content = match State.get_document state uri with Some doc_content -> doc_content | None -> "" in
-    (* LSP uses 0-based lines, Vult uses 1-based *)
-    let vult_line = line + 1 in
-    match State.get_typed_statements state uri content filename with
-    | Some typed_stmts -> (
-      match Vult_lsp.Hover.get_hover_info typed_stmts vult_line character with
-      | Some text ->
-          let hover_text = Printf.sprintf "```vult\n%s\n```" text in
-          `Assoc
-            [ ("jsonrpc", `String "2.0")
-            ; ("id", id)
-            ; ("result", `Assoc [("contents", `Assoc [("kind", `String "markdown"); ("value", `String hover_text)])]) ]
-      | None ->
-          (* No hover info found - return null result *)
-          `Assoc [("jsonrpc", `String "2.0"); ("id", id); ("result", `Null)] )
-    | None ->
-        (* Fallback to position info if type inference fails *)
-        let hover_text = Printf.sprintf "Vult position: line %d, character %d" line character in
-        `Assoc
-          [ ("jsonrpc", `String "2.0")
-          ; ("id", id)
-          ; ("result", `Assoc [("contents", `Assoc [("kind", `String "markdown"); ("value", `String hover_text)])]) ]
-
-  (** Handle shutdown request *)
-  let handle_shutdown id =
-    Printf.eprintf "✅ Shutdown request handled\n" ;
-    flush stderr ;
-    `Assoc [("jsonrpc", `String "2.0"); ("id", id); ("result", `Null)]
-
-  (** Handle semantic tokens request *)
-  let handle_semantic_tokens state id params =
-    Printf.eprintf "✅ Semantic tokens request handled\n" ;
-    flush stderr ;
-    let text_document = params |> member "textDocument" in
-    let uri = text_document |> member "uri" |> to_string in
-    (* Get content from document store, or use fallback *)
-    let content =
-      match State.get_document state uri with
-      | Some doc_content ->
-          doc_content
-      | None ->
-          Printf.eprintf "   Warning: Document not found in store, using fallback\n" ;
-          flush stderr ;
-          "fun test(x: real) : real {\n  return sin(x * 2.0);\n}"
-    in
-    (* Get semantic tokens from Vult lexer *)
-    let tokens = Vult_lsp.SemanticTokens.get_semantic_tokens content in
-    Printf.eprintf "   Generated %d semantic token values\n" (CCList.length tokens) ;
-    flush stderr ;
-    `Assoc
-      [ ("jsonrpc", `String "2.0")
-      ; ("id", id)
-      ; ("result", `Assoc [("data", `List (CCList.map (fun i -> `Int i) tokens))]) ]
-
-  (** Handle textDocument/documentSymbol request *)
-  let handle_document_symbol state id params =
-    Printf.eprintf "📋 Document symbol request handled\n" ;
-    flush stderr ;
-    let text_document = params |> member "textDocument" in
-    let uri = text_document |> member "uri" |> to_string in
-    let filename = Vult_lsp.Workspace.uri_to_path uri in
-    (* Get content from document store *)
-    let content =
-      match State.get_document state uri with
-      | Some doc_content ->
-          doc_content
-      | None ->
-          Printf.eprintf "   Warning: Document not found in store for symbols\n" ;
-          flush stderr ;
-          ""
-    in
-    (* Extract symbols from parsed AST using cached parsing *)
-    let parsed_stmts = State.get_parsed_statements state uri content filename in
-    let symbols = Vult_lsp.DocumentSymbols.get_document_symbols parsed_stmts in
-    Printf.eprintf "   Found %d symbols\n" (CCList.length symbols) ;
-    flush stderr ;
-    (* Symbols are already JSON objects *)
-    `Assoc [("jsonrpc", `String "2.0"); ("id", id); ("result", `List symbols)]
-
-  (** Handle textDocument/definition request *)
-  let handle_definition state id params =
-    Printf.eprintf "🎯 Definition request handled\n" ;
-    flush stderr ;
-    let text_document = params |> member "textDocument" in
-    let uri = text_document |> member "uri" |> to_string in
-    let position = params |> member "position" in
-    let line = position |> member "line" |> to_int in
-    let character = position |> member "character" |> to_int in
-    let _filename = Vult_lsp.Workspace.uri_to_path uri in
-    (* Get content from document store *)
-    let content =
-      match State.get_document state uri with
-      | Some doc_content ->
-          doc_content
-      | None ->
-          Printf.eprintf "   Warning: Document not found in store for definition\n" ;
-          flush stderr ;
-          ""
-    in
-    (* Find function definition location using workspace-wide search with caching *)
-    match
-      Vult_lsp.GoToDefinition.get_definition_location_workspace_cached (State.get_parsed_statements state)
-        state.workspace content line character
-    with
-    | Some location ->
-        let def_line = max 0 (Loc.line location - 1) in
-        (* LSP uses 0-based line numbers *)
-        let def_char = max 0 (Loc.startColumn location) in
-        let def_filename = Loc.file location in
-        let def_uri =
-          if String.starts_with ~prefix:"/" def_filename then "file://" ^ def_filename
-          else "file://" ^ try Filename.concat (Sys.getcwd ()) def_filename with _ -> def_filename
-        in
-        Printf.eprintf "   Found definition at %s line %d, character %d\n" def_filename def_line def_char ;
-        flush stderr ;
-        let location_json =
-          `Assoc
-            [ ("uri", `String def_uri)
-            ; ( "range"
-              , `Assoc
-                  [ ("start", `Assoc [("line", `Int def_line); ("character", `Int def_char)])
-                  ; ("end", `Assoc [("line", `Int def_line); ("character", `Int (max 0 (Loc.endColumn location)))]) ] )
-            ]
-        in
-        `Assoc [("jsonrpc", `String "2.0"); ("id", id); ("result", location_json)]
-    | None ->
-        Printf.eprintf "   No definition found\n" ;
-        flush stderr ;
-        `Assoc [("jsonrpc", `String "2.0"); ("id", id); ("result", `Null)]
-end
-
-(** Notification Handlers Module *)
-module NotificationHandlers = struct
-  (** Handle textDocument/didOpen notification *)
-  let handle_did_open state params =
-    let text_document = params |> member "textDocument" in
-    let uri = text_document |> member "uri" |> to_string in
-    let content = text_document |> member "text" |> to_string in
-    let filename = Vult_lsp.Workspace.uri_to_path uri in
-    (* Update config paths based on the file's location *)
-    let state_with_config = State.update_config_for_file state filename in
-    let new_state = State.set_document state_with_config uri content in
-    Printf.eprintf "✅ Document opened: %s\n" uri ;
-    flush stderr ;
-    (* Generate diagnostics using workspace context *)
-    let diagnostics = Vult_lsp.Diagnostics.get_diagnostics_with_workspace new_state.workspace content filename in
-    Printf.eprintf "   Generated %d diagnostics\n" (CCList.length diagnostics) ;
-    flush stderr ;
-    (* Diagnostics are already in JSON format *)
-    let diagnostics_json = diagnostics in
-    let notification =
+  let completion (state : State.t) (params : Yojson.Safe.t) : State.t * Yojson.Safe.t =
+    let state, analysis = State.analysis state (Params.path params) in
+    let files = match analysis with Some analysis -> analysis.files | None -> [] in
+    let stmts = CCList.flat_map (fun (file : Pparser.Parse.parsed_file) -> file.stmts) files in
+    let item (completion : L.Completion.completion_item) =
+      let optional name value = Option.to_list (Option.map (fun v -> (name, `String v)) value) in
       `Assoc
-        [ ("jsonrpc", `String "2.0")
-        ; ("method", `String "textDocument/publishDiagnostics")
-        ; ("params", `Assoc [("uri", `String uri); ("diagnostics", `List diagnostics_json)]) ]
+        ( [("label", `String completion.label); ("kind", `Int completion.kind)]
+        @ optional "detail" completion.detail
+        @ optional "documentation" completion.documentation )
     in
-    (new_state, [notification])
+    let items = CCList.map item (L.Completion.get_completions stmts) in
+    (state, `Assoc [("isIncomplete", `Bool false); ("items", `List items)])
 
-  (** Handle textDocument/didChange notification *)
-  let handle_did_change state params =
-    let text_document = params |> member "textDocument" in
-    let uri = text_document |> member "uri" |> to_string in
-    let content_changes = params |> member "contentChanges" |> to_list in
-    match content_changes with
-    | [] ->
-        (state, [])
-    | change :: _ ->
-        let content = change |> member "text" |> to_string in
-        let new_state = State.set_document state uri content in
-        Printf.eprintf "✅ Document changed: %s\n" uri ;
-        flush stderr ;
-        (* Generate updated diagnostics using workspace context *)
-        let filename = Vult_lsp.Workspace.uri_to_path uri in
-        let diagnostics = Vult_lsp.Diagnostics.get_diagnostics_with_workspace new_state.workspace content filename in
-        Printf.eprintf "   Generated %d diagnostics\n" (CCList.length diagnostics) ;
-        flush stderr ;
-        (* Diagnostics are already in JSON format *)
-        let diagnostics_json = diagnostics in
-        let notification =
-          `Assoc
-            [ ("jsonrpc", `String "2.0")
-            ; ("method", `String "textDocument/publishDiagnostics")
-            ; ("params", `Assoc [("uri", `String uri); ("diagnostics", `List diagnostics_json)]) ]
+  let hover (state : State.t) (params : Yojson.Safe.t) : State.t * Yojson.Safe.t =
+    let _, line, column = Params.content_and_position state params in
+    let state, analysis = State.analysis state (Params.path params) in
+    let stmts = match analysis with Some analysis -> L.Analysis.own_typed_statements analysis | None -> [] in
+    (* Vult lines are 1-based *)
+    match L.Hover.get_hover_info stmts (line + 1) column with
+    | Some text ->
+        let value = Printf.sprintf "```vult\n%s\n```" text in
+        (state, `Assoc [("contents", `Assoc [("kind", `String "markdown"); ("value", `String value)])])
+    | None ->
+        (state, `Null)
+
+  let semantic_tokens (state : State.t) (params : Yojson.Safe.t) : State.t * Yojson.Safe.t =
+    let tokens = L.SemanticTokens.get_semantic_tokens (Params.content state (Params.path params)) in
+    (state, `Assoc [("data", `List (CCList.map (fun i -> `Int i) tokens))])
+
+  let document_symbol (state : State.t) (params : Yojson.Safe.t) : State.t * Yojson.Safe.t =
+    let path = Params.path params in
+    let state, analysis = State.analysis state path in
+    let own_files = match analysis with Some analysis -> L.Analysis.own_files analysis | None -> [] in
+    let stmts = CCList.flat_map (fun (file : Pparser.Parse.parsed_file) -> file.stmts) own_files in
+    let text = L.Text.of_string (Params.content state path) in
+    (state, `List (L.DocumentSymbols.get_document_symbols text stmts))
+
+  let definition (state : State.t) (params : Yojson.Safe.t) : State.t * Yojson.Safe.t =
+    let content, line, column = Params.content_and_position state params in
+    let state, analysis = State.analysis state (Params.path params) in
+    let target =
+      match (analysis, L.Common.identifier_at content line column) with
+      | Some analysis, Some id ->
+          L.GoToDefinition.find analysis id
+      | _ ->
+          None
+    in
+    match target with
+    | Some (file, loc) ->
+        let text = L.Text.of_string (Option.value (L.Workspace.read_source state.workspace file) ~default:"") in
+        let range = L.Range.of_loc text loc in
+        let uri =
+          match L.Workspace.find_document state.workspace (L.Workspace.resolve_path state.workspace file) with
+          | Some document ->
+              document.uri
+          | None ->
+              L.Uri.of_path file
         in
-        (new_state, [notification])
+        (state, `Assoc [("uri", `String uri); ("range", L.Range.to_json range)])
+    | None ->
+        (state, `Null)
 
-  (** Handle textDocument/didClose notification *)
-  let handle_did_close state params =
-    let text_document = params |> member "textDocument" in
-    let uri = text_document |> member "uri" |> to_string in
-    let new_state = State.remove_document state uri in
-    Printf.eprintf "✅ Document closed: %s\n" uri ;
-    flush stderr ;
-    (new_state, [])
+  let find (method_ : string) : (State.t -> Yojson.Safe.t -> State.t * Yojson.Safe.t) option =
+    match method_ with
+    | "textDocument/completion" ->
+        Some completion
+    | "textDocument/hover" ->
+        Some hover
+    | "textDocument/semanticTokens/full" ->
+        Some semantic_tokens
+    | "textDocument/documentSymbol" ->
+        Some document_symbol
+    | "textDocument/definition" ->
+        Some definition
+    | _ ->
+        None
 end
+
+(** Notification handlers return the new state and the notifications to send *)
+module NotificationHandlers = struct
+  (** Publishes the diagnostics of the given open documents *)
+  let publish_diagnostics (state : State.t) (paths : string list) : State.t * Yojson.Safe.t list =
+    let publish (state, notifications) path =
+      match (L.Workspace.find_document state.State.workspace path, State.analysis state path) with
+      | Some document, (state, Some analysis) ->
+          let diagnostics = L.Diagnostics.of_analysis analysis document.content in
+          log "%d diagnostics for %s" (CCList.length diagnostics) path ;
+          let params = `Assoc [("uri", `String document.uri); ("diagnostics", `List diagnostics)] in
+          (state, Message.notification "textDocument/publishDiagnostics" params :: notifications)
+      | _, (state, _) ->
+          (state, notifications)
+    in
+    let state, notifications = CCList.fold_left publish (state, []) paths in
+    (state, CCList.rev notifications)
+
+  (** Updates the content of a document and publishes the diagnostics of the documents it affects *)
+  let set_document (state : State.t) (uri : string) (content : string) : State.t * Yojson.Safe.t list =
+    let path = L.Workspace.path_of_uri uri in
+    let state = {state with workspace= L.Workspace.open_document state.workspace uri content} in
+    publish_diagnostics state (State.affected_documents state path)
+
+  let did_open (state : State.t) (params : Yojson.Safe.t) : State.t * Yojson.Safe.t list =
+    let document = member "textDocument" params in
+    set_document state (document |> member "uri" |> to_string) (document |> member "text" |> to_string)
+
+  (** With full synchronization the last change holds the whole document *)
+  let did_change (state : State.t) (params : Yojson.Safe.t) : State.t * Yojson.Safe.t list =
+    match CCList.last_opt (params |> member "contentChanges" |> to_list) with
+    | Some change ->
+        set_document state (Params.uri params) (change |> member "text" |> to_string)
+    | None ->
+        (state, [])
+
+  (** Clears the diagnostics of the closed document. The documents importing it now read it from disk. *)
+  let did_close (state : State.t) (params : Yojson.Safe.t) : State.t * Yojson.Safe.t list =
+    let uri = Params.uri params in
+    let path = L.Workspace.path_of_uri uri in
+    let dependents = CCList.filter (fun p -> not (String.equal p path)) (State.affected_documents state path) in
+    let state =
+      {state with workspace= L.Workspace.close_document state.workspace uri; analyses= Map.remove path state.analyses}
+    in
+    let state, notifications = publish_diagnostics state dependents in
+    let cleared =
+      Message.notification "textDocument/publishDiagnostics" (`Assoc [("uri", `String uri); ("diagnostics", `List [])])
+    in
+    (state, cleared :: notifications)
+
+  let find (method_ : string) : (State.t -> Yojson.Safe.t -> State.t * Yojson.Safe.t list) option =
+    match method_ with
+    | "textDocument/didOpen" ->
+        Some did_open
+    | "textDocument/didChange" ->
+        Some did_change
+    | "textDocument/didClose" ->
+        Some did_close
+    | _ ->
+        None
+end
+
+(** What the server does after handling a message *)
+type outcome = Continue of State.t * Yojson.Safe.t list | Exit of int
+
+(** The protocol asks for exit code 0 only when the exit was preceded by a shutdown request *)
+let exit_code (phase : phase) : int = match phase with ShutdownRequested -> 0 | AwaitingInitialize | Running -> 1
+
+(** Runs a request handler. A failing handler is answered with an error instead of leaving the request unanswered. *)
+let run_request handler (state : State.t) (id : Yojson.Safe.t) (params : Yojson.Safe.t) : State.t * Yojson.Safe.t =
+  match handler state params with
+  | state, result ->
+      (state, Message.response id result)
+  | exception Type_error (msg, _) ->
+      (state, Message.error id InvalidParams msg)
+  | exception exn ->
+      let msg = Printexc.to_string exn in
+      log_error "Request failed: %s" msg ;
+      (state, Message.error id InternalError msg)
+
+let handle_request (state : State.t) (id : Yojson.Safe.t) (method_ : string) (params : Yojson.Safe.t) :
+    State.t * Yojson.Safe.t =
+  log "Request: %s" method_ ;
+  match (state.phase, method_) with
+  | AwaitingInitialize, "initialize" ->
+      run_request RequestHandlers.initialize state id params
+  | AwaitingInitialize, _ ->
+      (state, Message.error id ServerNotInitialized "The server has not been initialized")
+  | ShutdownRequested, _ ->
+      (state, Message.error id InvalidRequest "The server is shutting down")
+  | Running, "initialize" ->
+      (state, Message.error id InvalidRequest "The server is already initialized")
+  | Running, "shutdown" ->
+      ({state with phase= ShutdownRequested}, Message.response id `Null)
+  | Running, _ -> (
+    match RequestHandlers.find method_ with
+    | Some handler ->
+        run_request handler state id params
+    | None ->
+        (state, Message.error id MethodNotFound ("Method not found: " ^ method_)) )
+
+let handle_notification (state : State.t) (method_ : string) (params : Yojson.Safe.t) : outcome =
+  log "Notification: %s" method_ ;
+  match (state.phase, method_) with
+  | _, "exit" ->
+      Exit (exit_code state.phase)
+  | Running, _ -> (
+    match NotificationHandlers.find method_ with
+    | Some handler -> (
+      match handler state params with
+      | state, notifications ->
+          Continue (state, notifications)
+      | exception exn ->
+          log_error "Notification %s failed: %s" method_ (Printexc.to_string exn) ;
+          Continue (state, []) )
+    | None ->
+        Continue (state, []) )
+  | (AwaitingInitialize | ShutdownRequested), _ ->
+      Continue (state, [])
+
+let handle_message (state : State.t) (content : string) : outcome =
+  match Yojson.Safe.from_string content with
+  | exception Yojson.Json_error msg ->
+      Continue (state, [Message.error `Null ParseError msg])
+  | json -> (
+    match Message.classify json with
+    | Some (Request {id; method_; params}) ->
+        let state, reply = handle_request state id method_ params in
+        Continue (state, [reply])
+    | Some (Notification {method_; params}) ->
+        handle_notification state method_ params
+    | Some Response ->
+        Continue (state, [])
+    | None ->
+        Continue (state, [Message.error `Null InvalidRequest "Invalid JSON-RPC message"]) )
 
 (** LSP Communication Module *)
 module Communication = struct
   (** Read LSP header and content. A message without a valid Content-Length cannot be read. *)
   let read_lsp_message ic : (string, string) result =
     let rec read_headers acc =
-      let line = input_line ic in
-      let line = String.trim line in
+      let line = String.trim (input_line ic) in
       if line = "" then acc
       else
         match String.split_on_char ':' line with
         | [key; value] ->
-            let key = String.trim key in
-            let value = String.trim value in
-            read_headers ((key, value) :: acc)
+            read_headers ((String.trim key, String.trim value) :: acc)
         | _ ->
             read_headers acc
     in
@@ -510,124 +424,33 @@ module Communication = struct
     | Some len -> (
       match int_of_string_opt len with
       | Some content_length when content_length >= 0 ->
-          let buffer = Bytes.create content_length in
-          really_input ic buffer 0 content_length ;
-          Ok (Bytes.to_string buffer)
+          Ok (really_input_string ic content_length)
       | _ ->
           Error ("Invalid Content-Length header: " ^ len) )
 
   (** Write LSP response *)
   let write_lsp_response oc json =
     let content = Yojson.Safe.to_string json in
-    let content_length = String.length content in
-    Printf.fprintf oc "Content-Length: %d\r\n\r\n%s" content_length content ;
+    Printf.fprintf oc "Content-Length: %d\r\n\r\n%s" (String.length content) content ;
     flush oc
 end
 
 (** Main server loop *)
 let run () =
-  let ic = stdin in
-  let oc = stdout in
-  Printf.eprintf "🚀 Vult Language Server starting...\n" ;
-  Printf.eprintf "📡 Using direct JSON/LSP implementation\n" ;
-  Printf.eprintf "⚡ Diagnostics engine ready\n" ;
-  flush stderr ;
-  let state = ref (State.create ()) in
-  let handle_message message_content =
-    Printf.eprintf "📥 Received message: %s\n" (String.sub message_content 0 (min 100 (String.length message_content))) ;
-    flush stderr ;
-    (* Parse JSON *)
-    let json = Yojson.Safe.from_string message_content in
-    (* Check if it's a request or notification *)
-    if json |> member "id" <> `Null then (
-      (* It's a request *)
-      let id = json |> member "id" in
-      let method_name = json |> member "method" |> to_string in
-      let params = json |> member "params" in
-      Printf.eprintf "📥 Request: %s\n" method_name ;
-      flush stderr ;
-      let response =
-        match method_name with
-        | "initialize" ->
-            RequestHandlers.handle_initialize id params
-        | "textDocument/completion" ->
-            RequestHandlers.handle_completion !state id params
-        | "textDocument/hover" ->
-            RequestHandlers.handle_hover !state id params
-        | "textDocument/semanticTokens/full" ->
-            RequestHandlers.handle_semantic_tokens !state id params
-        | "textDocument/documentSymbol" ->
-            RequestHandlers.handle_document_symbol !state id params
-        | "textDocument/definition" ->
-            RequestHandlers.handle_definition !state id params
-        | "shutdown" ->
-            RequestHandlers.handle_shutdown id
-        | _ ->
-            Printf.eprintf "❓ Unhandled request: %s\n" method_name ;
-            flush stderr ;
-            `Assoc
-              [ ("jsonrpc", `String "2.0")
-              ; ("id", id)
-              ; ( "error"
-                , `Assoc
-                    [ ("code", `Int (-32601))
-                    ; (* Method not found *)
-                      ("message", `String ("Method not found: " ^ method_name)) ] ) ]
-      in
-      Communication.write_lsp_response oc response ;
-      (* Handle state updates after initialize request *)
-      if method_name = "initialize" then
-        let root_uri =
-          try Some (params |> member "rootUri" |> to_string)
-          with _ -> (
-            try Some (params |> member "workspaceFolders" |> to_list |> CCList.hd |> member "uri" |> to_string)
-            with _ -> None )
-        in
-        state := State.create ?root_uri () |> State.set_initialized )
-    else
-      (* It's a notification *)
-      let method_name = json |> member "method" |> to_string in
-      let params = json |> member "params" in
-      Printf.eprintf "📥 Notification: %s\n" method_name ;
-      flush stderr ;
-      let new_state, notifications =
-        match method_name with
-        | "textDocument/didOpen" ->
-            NotificationHandlers.handle_did_open !state params
-        | "textDocument/didChange" ->
-            NotificationHandlers.handle_did_change !state params
-        | "textDocument/didClose" ->
-            NotificationHandlers.handle_did_close !state params
-        | "exit" ->
-            Printf.eprintf "👋 Exit notification received\n" ;
-            flush stderr ;
-            exit 0
-        | _ ->
-            Printf.eprintf "❓ Unhandled notification: %s\n" method_name ;
-            flush stderr ;
-            (!state, [])
-      in
-      state := new_state ;
-      (* Send any resulting notifications *)
-      CCList.iter (Communication.write_lsp_response oc) notifications
+  log "Vult Language Server starting" ;
+  let rec loop (state : State.t) =
+    match Communication.read_lsp_message stdin with
+    | exception End_of_file ->
+        log "Client disconnected" ;
+        exit (exit_code state.phase)
+    | Error msg ->
+        log_error "Invalid message: %s" msg ; loop state
+    | Ok content -> (
+      match handle_message state content with
+      | Exit code ->
+          exit code
+      | Continue (state, messages) ->
+          CCList.iter (Communication.write_lsp_response stdout) messages ;
+          loop state )
   in
-  let rec loop () =
-    try
-      ( match Communication.read_lsp_message ic with
-      | Error msg ->
-          Printf.eprintf "❌ Invalid message: %s\n" msg ;
-          flush stderr
-      | Ok message_content ->
-          handle_message message_content ) ;
-      loop ()
-    with
-    | End_of_file ->
-        Printf.eprintf "👋 Client disconnected\n" ;
-        flush stderr ;
-        exit 0
-    | exn ->
-        Printf.eprintf "❌ Message loop error: %s\n" (Printexc.to_string exn) ;
-        flush stderr ;
-        loop ()
-  in
-  loop ()
+  loop State.empty

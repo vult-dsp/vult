@@ -429,7 +429,7 @@ let optimizeSize (n : int) =
   let l = Float.log2 (float_of_int n) in
   if l = floor l then n + 1 else n
 
-let makeTable vm (def : function_def) =
+let makeTable iprog (def : function_def) =
   let params =
     Tags.[("size", TypeInt); ("min", TypeReal); ("max", TypeReal); ("order", TypeInt); ("bound_check", TypeBool)]
   in
@@ -452,7 +452,7 @@ let makeTable vm (def : function_def) =
       | (None | Some (Int 1)), {t= TFix16; _}, {t= TFix16; _} ->
           let size = optimizeSize size in
           let points = size + 1 in
-          let result = calculateTablesOrder1Fixed loc vm ~display def.name size min max out_precision in
+          let result = calculateTablesOrder1Fixed loc iprog ~display def.name size min max out_precision in
           let new_body =
             makeNewBody1Fixed bound_check def.name ~locals ~cells:size ~points in_precision out_precision min max var
           in
@@ -460,7 +460,7 @@ let makeTable vm (def : function_def) =
           result @ raw @ [{top= TopFunction (def, new_body); loc}]
       | Some (Int 1), _, _ ->
           let points = size + 1 in
-          let result = calculateTablesOrder1 loc vm ~display def.name size min max out_precision in
+          let result = calculateTablesOrder1 loc iprog ~display def.name size min max out_precision in
           let new_body =
             makeNewBody1 bound_check def.name ~locals ~cells:size ~points in_precision out_precision min max var
           in
@@ -468,7 +468,7 @@ let makeTable vm (def : function_def) =
           result @ raw @ [{top= TopFunction (def, new_body); loc}]
       | _ ->
           let points = size + 1 in
-          let result = calculateTablesOrder2 loc vm ~display def.name size min max out_precision in
+          let result = calculateTablesOrder2 loc iprog ~display def.name size min max out_precision in
           let new_body =
             makeNewBody2 bound_check def.name ~locals ~cells:size ~points in_precision out_precision min max var
           in
@@ -481,13 +481,13 @@ let makeTable vm (def : function_def) =
       in
       Util.Error.raiseError msg def.loc
 
-let makeIntTable vm (def : function_def) =
+let makeIntTable iprog (def : function_def) =
   let params = Tags.[("min", TypeInt); ("max", TypeInt)] in
   let loc = def.loc in
   match (Tags.getParameterList def.tags "table" params, def.t) with
   | Tags.[Some (Int min); Some (Int max)], (_, ({t= TReal | TFix16; _} as out_precision)) ->
       let var = checkInputVariables def.loc def.args in
-      let result = calculateIntRealTables loc vm ~display:(displayName def) def.name min max out_precision in
+      let result = calculateIntRealTables loc iprog ~display:(displayName def) def.name min max out_precision in
       let new_body = makeIntAccessBody def.name out_precision min max var in
       result @ [{top= TopFunction (def, new_body); loc}]
   | Tags.[Some (Int min); Some (Int max)], ([({t= TInt | TInt16; _} as arg_type)], ({t= TInt | TInt16; _} as int_type))
@@ -499,7 +499,7 @@ let makeIntTable vm (def : function_def) =
           Util.Error.raiseError msg def.loc
       in
       let var = checkInputVariables def.loc def.args in
-      let result = calculateIntIntTables loc vm def.name int_type min max in
+      let result = calculateIntIntTables loc iprog def.name int_type min max in
       let new_body = makeIntAccessBody def.name int_type min max var in
       result @ [{top= TopFunction (def, new_body); loc}]
   | _ ->
@@ -569,7 +569,7 @@ let makeSizeFunction (def : function_def) (size : int) : top_stmt =
   let info = {original_name= None; is_root= false} in
   {top= TopFunction ({name= size_name; args= []; t= ([], C.int_t); tags= []; loc= def.loc; info}, body); loc= def.loc}
 
-let makeWave (args : Args.args) _vm (def : function_def) =
+let makeWave (args : Args.args) _iprog (def : function_def) =
   let params = Tags.[("channels", TypeInt); ("file", TypeString)] in
   match Tags.getParameterList def.tags "wave" params with
   | [Some (Int channels); Some (String file)] ->
@@ -608,7 +608,7 @@ let makeWavetableOrder2 loc name size precision data =
   let acc0, acc1, acc2 = fitWavetableData data size [] [] [] in
   [makeCoefficientTableDecl loc name precision [acc0; acc1; acc2]]
 
-let makeWavetable (args : Args.args) _vm (def : function_def) =
+let makeWavetable (args : Args.args) _iprog (def : function_def) =
   let params = Tags.[("file", TypeString); ("bound_check", TypeBool)] in
   match Tags.getParameterList def.tags "wavetable" params with
   | [Some (String file); bound_check] ->
@@ -641,17 +641,17 @@ let makeWavetable (args : Args.args) _vm (def : function_def) =
       let msg = "This attribute can only be applied to functions returning 'real'" in
       Util.Error.raiseError msg def.loc
 
-let replaceFunction (args : Args.args) vm stmt =
+let replaceFunction (args : Args.args) iprog stmt =
   match stmt.top with
   | TopFunction (({t= [{t= TInt | TInt16; _}], _; _} as def), _) when Tags.has def.tags "table" ->
-      makeIntTable vm def
+      makeIntTable iprog def
   | TopFunction (def, _) when Tags.has def.tags "table" ->
-      makeTable vm def
+      makeTable iprog def
   | TopExternal (def, _) when Tags.has def.tags "wave" ->
-      makeWave args vm def
+      makeWave args iprog def
   | TopExternal (def, _) when Tags.has def.tags "wavetable" ->
-      makeWavetable args vm def
+      makeWavetable args iprog def
   | _ ->
       [stmt]
 
-let create (args : Args.args) vm stmts = CCList.flat_map (replaceFunction args vm) stmts
+let create (args : Args.args) iprog stmts = CCList.flat_map (replaceFunction args iprog) stmts

@@ -18,5 +18,6 @@
   },
   "ocaml.sandbox": {
     "kind": "global"
-  }
+  },
+  "cmake.sourceDirectory": "/Users/leonardo/Development/vult/examples"
 }

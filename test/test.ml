@@ -545,8 +545,8 @@ module RandomCompileTest = struct
     write filename code ;
     let parser_results = Pparser.Parse.parseString (Some filename) code in
     let env, stmts = Core.Typechecking.typecheck_and_elaborate args [parser_results] in
-    let stmts, vm, _ = Driver.Cli.compileCode args env stmts in
-    let gen = Driver.Cli.generateCode args (stmts, vm, []) in
+    let stmts, iprog, _ = Driver.Cli.compileCode args env stmts in
+    let gen = Driver.Cli.generateCode args (stmts, iprog, []) in
     writeFiles args gen
 
   let run (file : string) _ =
@@ -985,7 +985,6 @@ module InterpretPerf = struct
         { default_arguments with
           files= [Code ("intepret.vult", code)]
         ; eval= Some "Intepret.run()"
-        ; eval_backend= CVM
         ; includes= in_test_directory "perf" :: includes }
     in
     let results = Driver.Cli.driver args in
@@ -997,7 +996,7 @@ module InterpretPerf = struct
 end
 
 module Interpret = struct
-  let run file expected backend _context =
+  let run file expected _context =
     let fullfile = checkFile (in_test_directory ("interpreter/" ^ file)) in
     let moduleName file = Filename.basename file |> Filename.chop_extension |> String.capitalize_ascii in
     let args =
@@ -1005,7 +1004,6 @@ module Interpret = struct
         { default_arguments with
           files= [File fullfile]
         ; eval= Some (moduleName fullfile ^ ".main()")
-        ; eval_backend= backend
         ; includes= in_test_directory "interpreter" :: includes }
     in
     let results = Driver.Cli.driver args in
@@ -1025,16 +1023,7 @@ module Interpret = struct
       results ;
     if not !got_result then assert_failure "The evaluation produced no result"
 
-  (* Every file is evaluated with all three backends so their semantics cannot diverge *)
-  let get files =
-    "run"
-    >::: CCList.map (fun (file, expected) -> Filename.basename file ^ ".cvm" >:: run file expected Args.CVM) files
-         @ CCList.map
-             (fun (file, expected) -> Filename.basename file ^ ".ocamlvm" >:: run file expected Args.OcamlVM)
-             files
-         @ CCList.map
-             (fun (file, expected) -> Filename.basename file ^ ".interp" >:: run file expected Args.Interpreter)
-             files
+  let get files = "run" >::: CCList.map (fun (file, expected) -> Filename.basename file >:: run file expected) files
 end
 
 module EvalGenericTest = struct
@@ -1047,7 +1036,6 @@ module EvalGenericTest = struct
         { default_arguments with
           files= [File fullfile]
         ; eval= Some expression
-        ; eval_backend= Interpreter
         ; includes= in_test_directory "interpreter" :: includes }
     in
     let results = Driver.Cli.driver args in
@@ -1221,7 +1209,7 @@ fun main() : real {
       Printf.sprintf "render(file=\"%s\", samplerate=%d, time=%f, exp=\"Test_sine.main()\")" temp_file sample_rate
         duration
     in
-    let args = Args.{default_arguments with files= [File vult_file]; render= Some render_tag; eval_backend= CVM} in
+    let args = Args.{default_arguments with files= [File vult_file]; render= Some render_tag} in
     (* Execute rendering *)
     let results = Driver.Cli.driver args in
     (* Check for errors first *)
@@ -1279,6 +1267,45 @@ fun main() : real {
   let get () = "render" >::: ["sine_wave" >:: test_sine_wave_render]
 end
 
+(* Helpers of the language server that convert between editor and compiler conventions *)
+module LspTest = struct
+  module L = Vult_lsp
+
+  let test_uri _ =
+    let path = "/home/me/my dir/a#b.vult" in
+    let uri = L.Uri.of_path path in
+    assert_equal ~printer:(fun s -> s) "file:///home/me/my%20dir/a%23b.vult" uri ;
+    assert_equal ~printer:(fun s -> s) path (L.Uri.to_path uri) ;
+    assert_equal
+      ~printer:(fun s -> s)
+      "C:/dir/a.vult"
+      (L.Uri.to_path "file:///c%3A/dir/a.vult" |> String.capitalize_ascii)
+
+  let test_normalize _ =
+    let check expected path = assert_equal ~printer:(fun s -> s) expected (L.Path.normalize path) in
+    check "/a/c.vult" "/a/b/../c.vult" ;
+    check "/a/b.vult" "/a/./b.vult" ;
+    check "../b.vult" "../b.vult" ;
+    check "/b.vult" "/../b.vult"
+
+  let test_utf16 _ =
+    (* "ñ" uses 2 bytes and 1 UTF-16 unit, the emoji 4 bytes and 2 units *)
+    let text = L.Text.of_string "x\n\xc3\xb1\xf0\x9f\x98\x80y" in
+    assert_equal ~printer:string_of_int 3 (L.Text.utf16_of_byte text 1 6) ;
+    assert_equal ~printer:string_of_int 6 (L.Text.byte_of_utf16 text 1 3) ;
+    assert_equal ~printer:string_of_int 1 (L.Text.utf16_of_byte text 0 1)
+
+  let test_identifier _ =
+    let content = "fun f() { return Util.clip(x); }" in
+    let id = L.Common.identifier_at content 0 23 in
+    assert_equal (Some {L.Common.qualifier= Some "Util"; name= "clip"}) id ;
+    assert_equal (Some {L.Common.qualifier= None; name= "Util"}) (L.Common.identifier_at content 0 18)
+
+  let get () =
+    "lsp"
+    >::: ["uri" >:: test_uri; "normalize" >:: test_normalize; "utf16" >:: test_utf16; "identifier" >:: test_identifier]
+end
+
 let suite =
   "vult"
   >::: [ ErrorTest.get errors_files
@@ -1314,7 +1341,8 @@ let suite =
        ; InterpretPerf.get perf_files
        ; Interpret.get interpreter
        ; EvalGenericTest.get ()
-       ; RenderTest.get () ]
+       ; RenderTest.get ()
+       ; LspTest.get () ]
 
 let () =
   let _ = run_test_tt_main suite in

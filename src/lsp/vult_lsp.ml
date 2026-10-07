@@ -22,343 +22,423 @@
    THE SOFTWARE.
 *)
 
-(* Vult Language Server - Modular LSP implementation for Vult DSP language *)
+(* Vult Language Server - editor features for the Vult language, independent of the LSP transport.
+
+   Documents are analyzed together with the modules they import. The contents of open documents
+   take precedence over the files on disk, and every analysis records the digests of the files it
+   read so that it can be reused until one of them changes.
+
+   The compiler measures columns in bytes, while LSP measures them in UTF-16 code units; [Text]
+   converts between both. *)
 
 open Util
 
-(** Workspace management for LSP server *)
-module Workspace = struct
-  type t =
-    { root_uri: string option
-    ; include_paths: string list
-    ; config_paths: string list (* paths from vultconfig.json *)
-    ; documents: (string, string) Hashtbl.t (* uri -> content *) }
+(** File URIs as sent by the editor *)
+module Uri = struct
+  let hex_value (c : char) : int option =
+    match c with
+    | '0' .. '9' ->
+        Some (Char.code c - Char.code '0')
+    | 'a' .. 'f' ->
+        Some (Char.code c - Char.code 'a' + 10)
+    | 'A' .. 'F' ->
+        Some (Char.code c - Char.code 'A' + 10)
+    | _ ->
+        None
 
-  let create ?root_uri () = {root_uri; include_paths= []; config_paths= []; documents= Hashtbl.create 16}
-
-  let set_include_paths (workspace : t) (paths : string list) : t = {workspace with include_paths= paths}
-
-  let set_config_paths (workspace : t) (paths : string list) : t = {workspace with config_paths= paths}
-
-  let add_document workspace uri content =
-    Hashtbl.replace workspace.documents uri content ;
-    workspace
-
-  let get_document workspace uri = Hashtbl.find_opt workspace.documents uri
-
-  let remove_document workspace uri = Hashtbl.remove workspace.documents uri ; workspace
-
-  let get_all_documents workspace = Hashtbl.fold (fun uri content acc -> (uri, content) :: acc) workspace.documents []
-
-  (** Convert file:// URI to local path *)
-  let uri_to_path uri =
-    if String.starts_with ~prefix:"file://" uri then String.sub uri 7 (String.length uri - 7) else uri
-
-  (** Get include paths, adding workspace root and config paths if available *)
-  let get_effective_include_paths (workspace : t) : string list =
-    let base_paths =
-      match workspace.root_uri with
-      | Some root ->
-          let root_path = uri_to_path root in
-          root_path :: workspace.include_paths
-      | None ->
-          workspace.include_paths
+  (** Decodes the %XX escapes. Malformed escapes are kept as they are. *)
+  let percent_decode (s : string) : string =
+    let n = String.length s in
+    let buffer = Buffer.create n in
+    let rec loop i =
+      if i < n then
+        let escaped = if s.[i] = '%' && i + 2 < n then (hex_value s.[i + 1], hex_value s.[i + 2]) else (None, None) in
+        match escaped with
+        | Some high, Some low ->
+            Buffer.add_char buffer (Char.chr ((high * 16) + low)) ;
+            loop (i + 3)
+        | _ ->
+            Buffer.add_char buffer s.[i] ;
+            loop (i + 1)
     in
-    (* Append config paths, avoiding duplicates *)
-    let all_paths = base_paths @ workspace.config_paths in
-    CCList.uniq ~eq:String.equal all_paths
+    loop 0 ; Buffer.contents buffer
+
+  let is_unreserved (c : char) : bool =
+    match c with 'A' .. 'Z' | 'a' .. 'z' | '0' .. '9' | '-' | '.' | '_' | '~' | '/' -> true | _ -> false
+
+  let percent_encode (s : string) : string =
+    let buffer = Buffer.create (String.length s) in
+    String.iter
+      (fun c ->
+        if is_unreserved c then Buffer.add_char buffer c
+        else Buffer.add_string buffer (Printf.sprintf "%%%02X" (Char.code c)) )
+      s ;
+    Buffer.contents buffer
+
+  (** True for paths like "C:/dir" *)
+  let starts_with_drive (path : string) : bool =
+    String.length path >= 2 && path.[1] = ':' && match path.[0] with 'A' .. 'Z' | 'a' .. 'z' -> true | _ -> false
+
+  (** Converts a file URI to a path. Other URIs are returned unchanged. *)
+  let to_path (uri : string) : string =
+    match CCString.chop_prefix ~pre:"file://" uri with
+    | None ->
+        uri
+    | Some encoded ->
+        let path = percent_decode encoded in
+        (* "file:///C:/dir" denotes the Windows path "C:/dir" *)
+        let without_slash = CCString.drop 1 path in
+        if CCString.prefix ~pre:"/" path && starts_with_drive without_slash then without_slash else path
+
+  (** Converts a path to a file URI. Relative paths are resolved against the current directory. *)
+  let of_path (path : string) : string =
+    let path = if Filename.is_relative path then Filename.concat (FileIO.cwd ()) path else path in
+    let path = if Sys.win32 then String.map (fun c -> if c = '\\' then '/' else c) path else path in
+    let path = if starts_with_drive path then "/" ^ path else path in
+    "file://" ^ percent_encode path
+end
+
+(** File paths *)
+module Path = struct
+  (** Resolves the "." and ".." segments, so that a file is always named the same way *)
+  let normalize (path : string) : string =
+    let absolute = CCString.prefix ~pre:"/" path in
+    let step (acc : string list) (segment : string) =
+      match (segment, acc) with
+      | ("" | "."), _ ->
+          acc
+      | "..", previous :: rest when not (String.equal previous "..") ->
+          rest
+      | "..", [] when absolute ->
+          acc
+      | _ ->
+          segment :: acc
+    in
+    let segments = CCList.rev (CCList.fold_left step [] (String.split_on_char '/' path)) in
+    let joined = String.concat "/" segments in
+    if absolute then "/" ^ joined else joined
+end
+
+(** Text of a document, split in lines, used to convert byte columns into UTF-16 columns *)
+module Text = struct
+  type t = string array
+
+  let of_string (content : string) : t = Array.of_list (String.split_on_char '\n' content)
+
+  let line (text : t) (n : int) : string = if n >= 0 && n < Array.length text then text.(n) else ""
+
+  (** UTF-16 code units of the character starting at byte [i] and the number of bytes it uses *)
+  let decode (s : string) (i : int) : int * int =
+    let decoded = String.get_utf_8_uchar s i in
+    let units =
+      if Uchar.utf_decode_is_valid decoded then Uchar.utf_16_byte_length (Uchar.utf_decode_uchar decoded) / 2 else 1
+    in
+    (units, Uchar.utf_decode_length decoded)
+
+  (** Converts a byte column into a UTF-16 column. Columns past the end of the line are kept past the end. *)
+  let utf16_of_byte (text : t) (line_number : int) (byte_column : int) : int =
+    let s = line text line_number in
+    let limit = min byte_column (String.length s) in
+    let rec loop i units =
+      if i >= limit then units + (byte_column - i)
+      else
+        let char_units, bytes = decode s i in
+        loop (i + bytes) (units + char_units)
+    in
+    loop 0 0
+
+  (** Converts a UTF-16 column into a byte column *)
+  let byte_of_utf16 (text : t) (line_number : int) (utf16_column : int) : int =
+    let s = line text line_number in
+    let rec loop i units =
+      if units >= utf16_column || i >= String.length s then i + max 0 (utf16_column - units)
+      else
+        let char_units, bytes = decode s i in
+        loop (i + bytes) (units + char_units)
+    in
+    loop 0 0
+end
+
+(** LSP ranges: 0-based lines and UTF-16 columns *)
+module Range = struct
+  type position = {line: int; character: int}
+
+  type t = {start: position; end_: position}
+
+  let origin : t = {start= {line= 0; character= 0}; end_= {line= 0; character= 0}}
+
+  let of_lexing_position (text : Text.t) (p : Lexing.position) : position =
+    let line = max 0 (p.pos_lnum - 1) in
+    let byte_column = max 0 (p.pos_cnum - p.pos_bol) in
+    {line; character= Text.utf16_of_byte text line byte_column}
+
+  (** Range of a location, given the text of the file the location belongs to *)
+  let of_loc (text : Text.t) (loc : Loc.t) : t =
+    {start= of_lexing_position text loc.start_pos; end_= of_lexing_position text loc.end_pos}
+
+  let position_to_json (p : position) : Yojson.Safe.t = `Assoc [("line", `Int p.line); ("character", `Int p.character)]
+
+  let to_json (range : t) : Yojson.Safe.t =
+    `Assoc [("start", position_to_json range.start); ("end", position_to_json range.end_)]
+end
+
+(** Tokens of a document *)
+module Common = struct
+  type vult_token = Pparser.Tokens.token_enum Pparser.Tokens.token
+
+  (** Tokens of the content, comments included. A lexer error ends the list, so that a document being
+      edited is still partially tokenized. *)
+  let tokenize (content : string) : vult_token list =
+    let lexbuf = Lexing.from_string content in
+    let rec loop acc =
+      match Pparser.Lexer.next_token_config (Loc.File "") Pparser.Tokens.comment_config lexbuf with
+      | {kind= Pparser.Tokens.EOF; _} ->
+          CCList.rev acc
+      | token ->
+          loop (token :: acc)
+      | exception _ ->
+          CCList.rev acc
+    in
+    loop []
+
+  (** True if the token covers the given 0-based line and byte column *)
+  let token_contains (token : vult_token) (line : int) (column : int) : bool =
+    let start_pos = token.loc.start_pos in
+    let end_pos = token.loc.end_pos in
+    start_pos.pos_lnum = line + 1
+    && end_pos.pos_lnum = line + 1
+    && column >= start_pos.pos_cnum - start_pos.pos_bol
+    && column < end_pos.pos_cnum - end_pos.pos_bol
+
+  (** An identifier, with the module that qualifies it as in [Module.name] *)
+  type identifier = {qualifier: string option; name: string}
+
+  (** Finds the identifier at the given 0-based line and byte column *)
+  let identifier_at (content : string) (line : int) (column : int) : identifier option =
+    let rec find (tokens : vult_token list) =
+      match tokens with
+      | [] ->
+          None
+      | ({kind= ID; _} as qualifier) :: {kind= DOT; _} :: ({kind= ID; _} as id) :: _ when token_contains id line column
+        ->
+          Some {qualifier= Some qualifier.value; name= id.value}
+      | ({kind= ID; _} as id) :: _ when token_contains id line column ->
+          Some {qualifier= None; name= id.value}
+      | _ :: rest ->
+          find rest
+    in
+    find (tokenize content)
+end
+
+(** Documents open in the editor *)
+module Workspace = struct
+  type document = {uri: string; content: string}
+
+  type t =
+    { root: string option (* path of the workspace folder, used as include path *)
+    ; documents: document Maps.Map.t (* normalized path -> document *) }
+
+  let create ?root () : t = {root; documents= Maps.Map.empty}
+
+  let path_of_uri (uri : string) : string = Path.normalize (Uri.to_path uri)
+
+  let open_document (workspace : t) (uri : string) (content : string) : t =
+    {workspace with documents= Maps.Map.add (path_of_uri uri) {uri; content} workspace.documents}
+
+  let close_document (workspace : t) (uri : string) : t =
+    {workspace with documents= Maps.Map.remove (path_of_uri uri) workspace.documents}
+
+  let find_document (workspace : t) (path : string) : document option = Maps.Map.find_opt path workspace.documents
+
+  (** Path of a file, using the name of the open document when it differs only in case: the loader looks for
+      lowercase file names first, which on case-insensitive file systems also finds capitalized files. *)
+  let resolve_path (workspace : t) (path : string) : string =
+    let path = Path.normalize path in
+    let same_ignoring_case other = String.equal (String.lowercase_ascii other) (String.lowercase_ascii path) in
+    if Maps.Map.mem path workspace.documents then path
+    else
+      match CCList.find_opt same_ignoring_case (CCList.map fst (Maps.Map.bindings workspace.documents)) with
+      | Some document_path ->
+          document_path
+      | None ->
+          path
+
+  let open_paths (workspace : t) : string list = CCList.map fst (Maps.Map.bindings workspace.documents)
+
+  (** Contents of a file, taken from the editor when the file is open *)
+  let read_source (workspace : t) (path : string) : string option =
+    match find_document workspace (resolve_path workspace path) with
+    | Some document ->
+        Some document.content
+    | None ->
+        FileIO.read path
 end
 
 (** Configuration file support for vultconfig.json *)
 module Config = struct
-  type t = {include_paths: string list}
+  type t =
+    { file: string option (* the vultconfig.json that applies, if any *)
+    ; include_paths: string list (* absolute include paths *) }
 
-  let empty : t = {include_paths= []}
-
-  (** Check if a path is absolute *)
-  let is_absolute (path : string) : bool = String.length path > 0 && path.[0] = '/'
+  let file_name = "vultconfig.json"
 
   (** Find vultconfig.json by searching upward from start_dir *)
-  let find_config_file ~(start_dir : string) : string option =
-    let config_name = "vultconfig.json" in
-    let rec search (dir : string) : string option =
-      let config_path = Filename.concat dir config_name in
-      if FileIO.exists config_path then Some config_path
-      else
-        let parent = Filename.dirname dir in
-        (* Stop if we've reached the root *)
-        if String.equal parent dir then None else search parent
-    in
-    search start_dir
+  let rec find_file (dir : string) : string option =
+    let candidate = Filename.concat dir file_name in
+    if FileIO.exists candidate then Some candidate
+    else
+      let parent = Filename.dirname dir in
+      if String.equal parent dir then None else find_file parent
 
-  (** Load and parse vultconfig.json *)
-  let load ~(config_path : string) : t option =
-    match FileIO.read config_path with
-    | None ->
-        None
-    | Some content -> (
-      try
-        let json = Yojson.Safe.from_string content in
-        let include_paths =
-          try
-            json |> Yojson.Safe.Util.member "include" |> Yojson.Safe.Util.to_list
-            |> CCList.filter_map (fun v -> try Some (Yojson.Safe.Util.to_string v) with _ -> None)
-          with _ -> []
-        in
-        Some {include_paths}
-      with _ -> None )
-
-  (** Resolve relative paths to absolute using config file's directory *)
-  let resolve_paths ~(config_dir : string) (config : t) : string list =
-    CCList.map (fun path -> if is_absolute path then path else Filename.concat config_dir path) config.include_paths
-
-  (** Load config for a file and return resolved include paths *)
-  let get_include_paths_for_file (file_path : string) : string list =
-    let dir = Filename.dirname file_path in
-    match find_config_file ~start_dir:dir with
-    | None ->
+  (** Reads the "include" list of the configuration. Entries that are not strings are ignored. *)
+  let parse_includes (content : string) : string list =
+    match Yojson.Safe.from_string content with
+    | `Assoc fields -> (
+      match CCList.assoc_opt ~eq:String.equal "include" fields with
+      | Some (`List entries) ->
+          CCList.filter_map (function `String path -> Some path | _ -> None) entries
+      | _ ->
+          [] )
+    | _ ->
         []
-    | Some config_path -> (
-      match load ~config_path with
-      | None ->
-          []
-      | Some config ->
-          let config_dir = Filename.dirname config_path in
-          resolve_paths ~config_dir config )
+    | exception Yojson.Json_error _ ->
+        []
+
+  (** Configuration for a file. Relative include paths are resolved against the configuration's directory. *)
+  let for_file (read : string -> string option) (file_path : string) : t =
+    match find_file (Filename.dirname file_path) with
+    | None ->
+        {file= None; include_paths= []}
+    | Some config_file ->
+        let config_dir = Filename.dirname config_file in
+        let resolve path = if Filename.is_relative path then Filename.concat config_dir path else path in
+        let includes = Option.fold ~none:[] ~some:parse_includes (read config_file) in
+        {file= Some config_file; include_paths= CCList.map resolve includes}
 end
 
-(** Common types and utilities *)
-module Common = struct
-  (** Type alias for Vult tokens *)
-  type vult_token = Pparser.Tokens.token_enum Pparser.Tokens.token
+(** Loads a document with the modules it imports and typechecks them *)
+module Analysis = struct
+  (** A file read by the analysis and the digest of its contents ([None] if it could not be read) *)
+  type source = {path: string; digest: Digest.t option}
 
-  (** Default source for LSP tokenization *)
-  let lsp_source = Loc.File ""
+  type t =
+    { path: string (* the analyzed document *)
+    ; sources: source list
+    ; files: Pparser.Parse.parsed_file list
+          (* the document and its imports. When parsing fails, the files of the previous analysis are kept *)
+    ; errors: Error.t list
+    ; typed: Core.Typed.top_stmt list option Lazy.t (* elaborated program, [None] if it has errors *) }
 
-  (** Find identifier at a specific position using the tokenizer *)
-  let find_identifier_at_position (content : string) (line : int) (character : int) : string option =
-    try
-      let target_line = line + 1 in
-      (* Lexer uses 1-based line numbers *)
-      let lexbuf = Lexing.from_string content in
-      let rec loop () =
-        let token = Pparser.Lexer.next_token_config lsp_source Pparser.Tokens.comment_config lexbuf in
-        match token.kind with
-        | Pparser.Tokens.EOF ->
-            None
-        | _ ->
-            let start_pos = lexbuf.lex_start_p in
-            let end_pos = lexbuf.lex_curr_p in
-            let token_line = start_pos.Lexing.pos_lnum in
-            let token_start_char = start_pos.Lexing.pos_cnum - start_pos.Lexing.pos_bol in
-            let token_end_char = end_pos.Lexing.pos_cnum - start_pos.Lexing.pos_bol in
-            (* Check if the cursor position is within this token *)
-            if token_line = target_line && character >= token_start_char && character < token_end_char then
-              (* Extract identifier from ID tokens *)
-              match token.kind with
-              | Pparser.Tokens.ID ->
-                  Some token.value
-              | _ ->
-                  None
-            else loop ()
-      in
-      loop ()
-    with _ -> None
+  let digest (content : string option) : Digest.t option = Option.map Digest.string content
 
-  (** Extract the word being typed at cursor position using tokenizer with fallback *)
-  let get_word_at_position (content : string) (line : int) (character : int) : string =
-    try
-      (* First try to find a complete identifier at cursor position using tokenizer *)
-      match find_identifier_at_position content line character with
-      | Some id ->
-          id
-      | None ->
-          (* No complete token found, fall back to string processing for partial words *)
-          (* This handles cases like typing "SA" when "SAMPLE_RATE" exists *)
-          let lines = String.split_on_char '\n' content in
-          if line >= 0 && line < CCList.length lines then
-            let line_text = CCList.nth lines line in
-            let line_length = String.length line_text in
-            if character >= 0 && character <= line_length then
-              (* Find start of current word (go backwards from cursor) *)
-              let rec find_word_start pos =
-                if pos <= 0 then 0
-                else if pos >= line_length then line_length
-                else
-                  let c = line_text.[pos - 1] in
-                  if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c = '_' then
-                    find_word_start (pos - 1)
-                  else pos
-              in
-              let word_start = find_word_start character in
-              let word_length = character - word_start in
-              if word_length > 0 then String.sub line_text word_start word_length else ""
-            else ""
-          else ""
-    with _ -> ""
+  let read_source (workspace : Workspace.t) (path : string) : source =
+    {path= Workspace.resolve_path workspace path; digest= digest (Workspace.read_source workspace path)}
 
-  (** Find function call at a specific position using the tokenizer *)
-  let find_function_call_at_position (content : string) (line : int) (character : int) : string option =
-    try
-      let target_line = line + 1 in
-      (* Lexer uses 1-based line numbers *)
-      let lexbuf = Lexing.from_string content in
-      (* Collect all tokens with their positions *)
-      let tokens : (vult_token * Lexing.position * Lexing.position) list ref = ref [] in
-      let rec collect_tokens () =
-        let token = Pparser.Lexer.next_token_config lsp_source Pparser.Tokens.comment_config lexbuf in
-        match token.kind with
-        | Pparser.Tokens.EOF ->
-            CCList.rev !tokens
-        | _ ->
-            let start_pos = lexbuf.lex_start_p in
-            let end_pos = lexbuf.lex_curr_p in
-            tokens := (token, start_pos, end_pos) :: !tokens ;
-            collect_tokens ()
-      in
-      let all_tokens = collect_tokens () in
-      (* Find the identifier token at the cursor position *)
-      let rec find_target_identifier = function
-        | [] ->
-            None
-        | (token, start_pos, end_pos) :: rest ->
-            let token_line = start_pos.Lexing.pos_lnum in
-            let token_start_char = start_pos.Lexing.pos_cnum - start_pos.Lexing.pos_bol in
-            let token_end_char = end_pos.Lexing.pos_cnum - start_pos.Lexing.pos_bol in
-            if token_line = target_line && character >= token_start_char && character < token_end_char then
-              match token.Pparser.Tokens.kind with
-              | Pparser.Tokens.ID ->
-                  Some (token.Pparser.Tokens.value, end_pos, rest)
-              | _ ->
-                  None
-            else find_target_identifier rest
-      in
-      match find_target_identifier all_tokens with
-      | Some (identifier, id_end_pos, remaining_tokens) -> (
-          (* Look for the next non-whitespace token to see if it's LPAREN *)
-          let rec find_next_significant_token = function
-            | [] ->
-                None
-            | (token, start_pos, _) :: rest ->
-                (* Only consider tokens that come after the identifier *)
-                if start_pos.Lexing.pos_cnum > id_end_pos.Lexing.pos_cnum then
-                  match token.Pparser.Tokens.kind with
-                  | Pparser.Tokens.LPAREN ->
-                      Some true
-                  | Pparser.Tokens.ID | Pparser.Tokens.REAL | Pparser.Tokens.INT ->
-                      Some false
-                  | _ ->
-                      find_next_significant_token rest
-                else find_next_significant_token rest
-          in
-          match find_next_significant_token remaining_tokens with Some true -> Some identifier | _ -> None )
-      | None ->
-          None
-    with _ ->
-      (* Fallback to identifier detection without function call verification *)
-      find_identifier_at_position content line character
+  (** True if none of the files read by the analysis has changed *)
+  let is_current (workspace : Workspace.t) (analysis : t) : bool =
+    CCList.for_all
+      (fun (source : source) -> Option.equal Digest.equal (read_source workspace source.path).digest source.digest)
+      analysis.sources
+
+  (** True if the analysis read the file at [path], which may have been opened since *)
+  let depends_on (workspace : Workspace.t) (analysis : t) (path : string) : bool =
+    CCList.exists
+      (fun (source : source) -> String.equal (Workspace.resolve_path workspace source.path) path)
+      analysis.sources
+
+  let internal_error (exn : exn) : Error.t = Error.SimpleError ("Internal compiler error: " ^ Printexc.to_string exn)
+
+  let typecheck_errors (args : Args.args) (files : Pparser.Parse.parsed_file list) : Error.t list =
+    match Core.Typechecking.typecheck args files with
+    | _ ->
+        []
+    | exception Error.Errors errors ->
+        errors
+    | exception exn ->
+        [internal_error exn]
+
+  let elaborate (args : Args.args) (files : Pparser.Parse.parsed_file list) : Core.Typed.top_stmt list option =
+    match Core.Typechecking.typecheck_and_elaborate args files with _, stmts -> Some stmts | exception _ -> None
+
+  (** Analyzes the document at [path]. [previous] provides the files to keep when parsing fails. *)
+  let analyze ?(previous : t option) (workspace : Workspace.t) (path : string) : t =
+    let config = Config.for_file (Workspace.read_source workspace) path in
+    let includes = CCList.uniq ~eq:String.equal (Option.to_list workspace.root @ config.include_paths) in
+    let args = {Args.default_arguments with files= [Args.File path]; includes} in
+    (* records the files read by the loader *)
+    let reads = ref [] in
+    let read file =
+      let content = Workspace.read_source workspace file in
+      reads := {path= Workspace.resolve_path workspace file; digest= digest content} :: !reads ;
+      content
+    in
+    let loaded =
+      match Driver.Loader.loadFiles ~read args args.files with
+      | files, _ ->
+          Ok files
+      | exception Error.Errors errors ->
+          Error errors
+      | exception exn ->
+          Error [internal_error exn]
+    in
+    let config_sources = CCList.map (read_source workspace) (Option.to_list config.file) in
+    let sources = config_sources @ CCList.rev !reads in
+    match loaded with
+    | Ok files ->
+        {path; sources; files; errors= typecheck_errors args files; typed= lazy (elaborate args files)}
+    | Error errors ->
+        let files = match previous with Some analysis -> analysis.files | None -> [] in
+        {path; sources; files; errors; typed= lazy None}
+
+  (** The parsed file of the analyzed document *)
+  let own_files (analysis : t) : Pparser.Parse.parsed_file list =
+    CCList.filter
+      (fun (file : Pparser.Parse.parsed_file) -> String.equal (Path.normalize file.file) analysis.path)
+      analysis.files
+
+  (** The elaborated statements that belong to the analyzed document *)
+  let own_typed_statements (analysis : t) : Core.Typed.top_stmt list =
+    match Lazy.force analysis.typed with
+    | None ->
+        []
+    | Some stmts ->
+        CCList.filter
+          (fun (stmt : Core.Typed.top_stmt) -> String.equal (Path.normalize (Loc.file stmt.loc)) analysis.path)
+          stmts
 end
 
 (** Diagnostics module *)
 module Diagnostics = struct
-  (** LSP Diagnostic severity constants *)
-  let diagnostic_severity_error = 1
+  let severity_error = 1
 
-  let diagnostic_severity_warning = 2
+  let make (range : Range.t) (message : string) : Yojson.Safe.t =
+    `Assoc [("range", Range.to_json range); ("severity", `Int severity_error); ("message", `String message)]
 
-  let diagnostic_severity_information = 3
+  (** Locations without a file name belong to the document being checked *)
+  let belongs_to (path : string) (loc : Loc.t) : bool =
+    let file = Loc.file loc in
+    String.equal file "" || String.equal (Path.normalize file) path
 
-  let diagnostic_severity_hint = 4
-
-  (** Convert Vult Error.t to LSP Diagnostic JSON *)
-  let error_to_diagnostic_json (error : Error.t) : Yojson.Safe.t =
+  (** Converts an error into a diagnostic of the document at [path]. Errors in imported files are
+      reported at the start of the document, since the import statement has no location. *)
+  let of_error (path : string) (text : Text.t) (error : Error.t) : Yojson.Safe.t =
     match error with
-    | Error.PointedError (location, msg) ->
-        let line = max 0 (Loc.line location - 1) in
-        (* LSP uses 0-based line numbers *)
-        let start_char = max 0 (Loc.startColumn location) in
-        let end_char = max 0 (Loc.endColumn location) in
-        `Assoc
-          [ ( "range"
-            , `Assoc
-                [ ("start", `Assoc [("line", `Int line); ("character", `Int start_char)])
-                ; ("end", `Assoc [("line", `Int line); ("character", `Int end_char)]) ] )
-          ; ("severity", `Int diagnostic_severity_error)
-          ; ("message", `String msg) ]
+    | Error.PointedError (loc, msg) when belongs_to path loc ->
+        make (Range.of_loc text loc) msg
+    | Error.PointedError (loc, msg) ->
+        make Range.origin (Printf.sprintf "Error in imported file %s:%d: %s" (Loc.file loc) (Loc.line loc) msg)
     | Error.SimpleError msg ->
-        `Assoc
-          [ ( "range"
-            , `Assoc
-                [ ("start", `Assoc [("line", `Int 0); ("character", `Int 0)])
-                ; ("end", `Assoc [("line", `Int 0); ("character", `Int 0)]) ] )
-          ; ("severity", `Int diagnostic_severity_error)
-          ; ("message", `String msg) ]
+        make Range.origin msg
 
-  (** Run Vult compiler diagnostics on file content.
-      Only performs type checking (not elaboration) since diagnostics don't need
-      generic function instantiation. *)
-  let get_diagnostics ?(includes = []) (content : string) (filename : string) : Yojson.Safe.t list =
-    try
-      (* Use Args.Code to pass content directly without temp files *)
-      let args = {Args.default_arguments with files= [Args.Code (filename, content)]; includes; check= true} in
-      let result =
-        try
-          let parsed, _ = Driver.Loader.loadFiles args args.files in
-          (* Use typecheck only - no elaboration needed for diagnostics *)
-          let _ = Core.Typechecking.typecheck args parsed in
-          []
-        with
-        | Error.Errors errors ->
-            CCList.map error_to_diagnostic_json errors
-        | _ ->
-            []
-      in
-      result
-    with _ -> []
+  let of_analysis (analysis : Analysis.t) (content : string) : Yojson.Safe.t list =
+    let text = Text.of_string content in
+    CCList.map (of_error analysis.path text) analysis.errors
 
-  (** Enhanced diagnostics using workspace context.
-      Only performs type checking (not elaboration) since diagnostics don't need
-      generic function instantiation. *)
-  let get_diagnostics_with_workspace (workspace : Workspace.t) (content : string) (filename : string) :
-      Yojson.Safe.t list =
-    let includes = Workspace.get_effective_include_paths workspace in
-    let all_files =
-      (* Add the current file *)
-      let current_file = Args.Code (filename, content) in
-      (* Add all other open documents as potential dependencies *)
-      let other_files =
-        Workspace.get_all_documents workspace
-        |> CCList.filter_map (fun (uri, doc_content) ->
-            let path = Workspace.uri_to_path uri in
-            if path <> filename then Some (Args.Code (path, doc_content)) else None )
-      in
-      current_file :: other_files
-    in
-    try
-      let args = {Args.default_arguments with files= all_files; includes; check= true} in
-      let result =
-        try
-          let parsed, _ = Driver.Loader.loadFiles args args.files in
-          (* Use typecheck only - no elaboration needed for diagnostics *)
-          let _ = Core.Typechecking.typecheck args parsed in
-          []
-        with
-        | Error.Errors errors ->
-            (* Filter errors to only those from the target file *)
-            CCList.filter_map
-              (fun error ->
-                match error with
-                | Error.PointedError (location, _) ->
-                    if Loc.file location = filename then Some (error_to_diagnostic_json error) else None
-                | Error.SimpleError _ ->
-                    (* Simple errors don't have location info, include them *)
-                    Some (error_to_diagnostic_json error) )
-              errors
-        | _ ->
-            []
-      in
-      result
-    with _ -> []
+  (** Diagnostics of a document that is not part of a workspace *)
+  let get_diagnostics (content : string) (filename : string) : Yojson.Safe.t list =
+    let workspace = Workspace.open_document (Workspace.create ()) filename content in
+    let path = Workspace.path_of_uri filename in
+    of_analysis (Analysis.analyze workspace path) content
 end
 
 (** Completion module *)
@@ -508,154 +588,96 @@ module DocumentSymbols = struct
 
   let symbol_kind_struct = 23
 
-  (** Convert Loc.t to LSP Range JSON *)
-  let loc_to_range_json (loc : Loc.t) =
-    let line = max 0 (Loc.line loc - 1) in
-    (* LSP uses 0-based line numbers *)
-    let start_char = max 0 (Loc.startColumn loc) in
-    let end_char = max 0 (Loc.endColumn loc) in
-    `Assoc
-      [ ("start", `Assoc [("line", `Int line); ("character", `Int start_char)])
-      ; ("end", `Assoc [("line", `Int line); ("character", `Int end_char)]) ]
-
-  (** Create a document symbol JSON *)
-  let create_symbol_json name kind loc =
-    let range_json = loc_to_range_json loc in
+  (** [loc] covers the whole definition and [name_loc] the name, which must be inside [loc] *)
+  let create_symbol_json (text : Text.t) (name : string) (kind : int) ~(loc : Loc.t) ~(name_loc : Loc.t) =
     `Assoc
       [ ("name", `String name)
       ; ("kind", `Int kind)
-      ; ("range", range_json)
-      ; ("selectionRange", range_json (* Use same range for selection *)) ]
+      ; ("range", Range.to_json (Range.of_loc text loc))
+      ; ("selectionRange", Range.to_json (Range.of_loc text name_loc)) ]
 
   (** Extract symbols from parsed Vult AST - returns JSON objects *)
-  let extract_symbols_from_ast (parsed_stmts : Pparser.Syntax.top_stmt list) =
-    let rec extract_function_symbols (func_def : Pparser.Syntax.function_def) =
-      let current_symbol = create_symbol_json func_def.name symbol_kind_function func_def.loc in
-      match func_def.next with
-      | Some next_func ->
-          current_symbol :: extract_function_symbols next_func
-      | None ->
-          [current_symbol]
-    in
-    let extract_external_symbol (ext_def : Pparser.Syntax.ext_def) =
-      create_symbol_json ext_def.name symbol_kind_function ext_def.loc
-    in
-    let extract_type_symbol name _members_list loc = create_symbol_json name symbol_kind_struct loc in
-    let extract_enum_symbol name members_list loc =
-      (* Create symbol for the enum type itself *)
-      let enum_type_symbol = create_symbol_json name symbol_kind_enum loc in
-      (* Create symbols for each enum member *)
-      let member_symbols =
-        CCList.map
-          (fun (member_name, member_loc) -> create_symbol_json member_name symbol_kind_enum_member member_loc)
-          members_list
-      in
-      enum_type_symbol :: member_symbols
-    in
-    let extract_constant_symbol (dexp : Pparser.Syntax.dexp) loc =
-      match dexp.d with
-      | SDId (id, _) ->
-          [create_symbol_json id symbol_kind_constant loc]
-      | _ ->
-          [] (* Skip constants without simple identifiers *)
+  let get_document_symbols (text : Text.t) (parsed_stmts : Pparser.Syntax.top_stmt list) : Yojson.Safe.t list =
+    let symbol name kind ~loc ~name_loc = create_symbol_json text name kind ~loc ~name_loc in
+    let rec function_symbols (def : Pparser.Syntax.function_def) =
+      let current = symbol def.name symbol_kind_function ~loc:(Loc.merge def.loc def.body.loc) ~name_loc:def.loc in
+      match def.next with Some next -> current :: function_symbols next | None -> [current]
     in
     let extract_from_stmt (stmt : Pparser.Syntax.top_stmt) =
       match stmt.top with
-      | STopFunction func_def ->
-          extract_function_symbols func_def
-      | STopExternal (ext_def, _) ->
-          [extract_external_symbol ext_def]
+      | STopFunction def ->
+          function_symbols def
+      | STopExternal (def, _) ->
+          [symbol def.name symbol_kind_function ~loc:def.loc ~name_loc:def.loc]
       | STopType {name; members} ->
-          [extract_type_symbol name members stmt.loc]
+          let loc = Loc.mergeList stmt.loc (stmt.loc :: CCList.map (fun (_, _, _, loc) -> loc) members) in
+          [symbol name symbol_kind_struct ~loc ~name_loc:stmt.loc]
       | STopEnum {name; members} ->
-          extract_enum_symbol name members stmt.loc
-      | STopConstant (dexp, _) ->
-          extract_constant_symbol dexp stmt.loc
-      | STopError ->
+          let loc = Loc.mergeList stmt.loc (stmt.loc :: CCList.map snd members) in
+          let member_symbol (member, member_loc) =
+            symbol member symbol_kind_enum_member ~loc:member_loc ~name_loc:member_loc
+          in
+          symbol name symbol_kind_enum ~loc ~name_loc:stmt.loc :: CCList.map member_symbol members
+      | STopConstant ({d= SDId (id, _); _}, value) ->
+          [symbol id symbol_kind_constant ~loc:(Loc.merge stmt.loc value.loc) ~name_loc:stmt.loc]
+      | STopConstant _ | STopError ->
           []
     in
     CCList.flat_map extract_from_stmt parsed_stmts
-
-  (** Get document symbols from pre-parsed statements *)
-  let get_document_symbols (parsed_stmts : Pparser.Syntax.top_stmt list) = extract_symbols_from_ast parsed_stmts
 end
 
 (** Go-to-Definition module *)
 module GoToDefinition = struct
-  (** Definition information for go-to-definition *)
-  type definition = {name: string; location: Loc.t}
-
-  (** Extract all definitions (functions, enum values, and constants) from parsed AST in a single pass *)
-  let extract_all_definitions (parsed_stmts : Pparser.Syntax.top_stmt list) : definition list =
-    let rec extract_function_defs (func_def : Pparser.Syntax.function_def) : definition list =
-      let current_def = {name= func_def.name; location= func_def.loc} in
-      match func_def.next with Some next_func -> current_def :: extract_function_defs next_func | None -> [current_def]
+  (** Location of a top-level definition with the given name *)
+  let find_in_file (name : string) (file : Pparser.Parse.parsed_file) : Loc.t option =
+    let rec in_function (def : Pparser.Syntax.function_def) =
+      if String.equal def.name name then Some def.loc else Option.bind def.next in_function
     in
-    let extract_from_stmt (stmt : Pparser.Syntax.top_stmt) : definition list =
+    let in_stmt (stmt : Pparser.Syntax.top_stmt) =
       match stmt.top with
-      | STopFunction func_def ->
-          extract_function_defs func_def
-      | STopExternal (ext_def, _) ->
-          [{name= ext_def.name; location= ext_def.loc}]
-      | STopEnum {name= _; members} ->
-          CCList.map (fun (member_name, member_loc) -> {name= member_name; location= member_loc}) members
-      | STopConstant (dexp, _) -> (
-        (* Extract the constant name from the dexp *)
-        match dexp.d with
-        | SDId (id, _) ->
-            [{name= id; location= stmt.loc}]
-        | _ ->
-            [] (* Skip constants without simple identifiers *) )
-      | STopType {name; _} ->
-          [{name; location= stmt.loc}]
-      | STopError ->
-          []
-    in
-    CCList.flat_map extract_from_stmt parsed_stmts
-
-  (** Find definition by name from a list of definitions *)
-  let find_definition_by_name (name : string) (definitions : definition list) : Loc.t option =
-    try
-      let def = CCList.find (fun def -> def.name = name) definitions in
-      Some def.location
-    with Not_found -> None
-
-  (** Get definition location from workspace using cached parsing - supports both functions and enum values *)
-  let get_definition_location_workspace_cached
-      (get_parsed_statements_fn : string -> string -> string -> Pparser.Syntax.top_stmt list) (workspace : Workspace.t)
-      (content : string) (line : int) (character : int) : Loc.t option =
-    try
-      (* First try to find a function call at the cursor position *)
-      let identifier =
-        match Common.find_function_call_at_position content line character with
-        | Some name ->
-            Some name
-        | None ->
-            Common.find_identifier_at_position content line character
-      in
-      match identifier with
-      | Some name ->
-          (* Search through all documents in the workspace using cached parsing *)
-          let all_documents = Workspace.get_all_documents workspace in
-          let rec search_files = function
-            | [] ->
-                None
-            | (uri, doc_content) :: rest -> (
-                let filename = Workspace.uri_to_path uri in
-                try
-                  let parsed_stmts = get_parsed_statements_fn uri doc_content filename in
-                  let all_definitions = extract_all_definitions parsed_stmts in
-                  match find_definition_by_name name all_definitions with
-                  | Some location ->
-                      Some location
-                  | None ->
-                      search_files rest
-                with _ -> search_files rest )
-          in
-          search_files all_documents
-      | None ->
+      | STopFunction def ->
+          in_function def
+      | STopExternal (def, _) when String.equal def.name name ->
+          Some def.loc
+      | STopEnum {members; _} ->
+          CCList.assoc_opt ~eq:String.equal name members
+      | STopConstant ({d= SDId (id, _); _}, _) when String.equal id name ->
+          Some stmt.loc
+      | STopType {name= type_name; _} when String.equal type_name name ->
+          Some stmt.loc
+      | STopExternal _ | STopConstant _ | STopType _ | STopError ->
           None
-    with _ -> None
+    in
+    CCList.find_map in_stmt file.stmts
+
+  (** Location of the start of a file *)
+  let file_start (file : Pparser.Parse.parsed_file) : Loc.t =
+    let position = {Lexing.pos_fname= file.file; pos_lnum= 1; pos_bol= 0; pos_cnum= 0} in
+    {Loc.start_pos= position; end_pos= position; source= Loc.File file.file}
+
+  (** Finds where an identifier is defined, searching the document first and then its imports.
+      A qualified identifier is searched only in its module, and a module name leads to its file.
+      Returns the path of the file and the location. *)
+  let find (analysis : Analysis.t) (id : Common.identifier) : (string * Loc.t) option =
+    let in_files files =
+      CCList.find_map
+        (fun (file : Pparser.Parse.parsed_file) -> Option.map (fun loc -> (file.file, loc)) (find_in_file id.name file))
+        files
+    in
+    let module_file name =
+      CCList.find_opt (fun (file : Pparser.Parse.parsed_file) -> String.equal file.name name) analysis.files
+    in
+    match id.qualifier with
+    | Some qualifier ->
+        in_files (Option.to_list (module_file qualifier))
+    | None -> (
+        let own = Analysis.own_files analysis in
+        let imported = CCList.filter (fun file -> not (CCList.memq file own)) analysis.files in
+        match in_files (own @ imported) with
+        | Some _ as found ->
+            found
+        | None ->
+            Option.map (fun (file : Pparser.Parse.parsed_file) -> (file.file, file_start file)) (module_file id.name) )
 end
 
 (** Hover module - provides type information on hover *)
@@ -926,47 +948,36 @@ end
 
 (** Semantic Tokens module *)
 module SemanticTokens = struct
-  (** Basic syntax highlighting using Vult lexer *)
-  type vult_token_type =
-    | VKeyword
-    | VNumber
-    | VString
-    | VComment
-    | VIdentifier
-    | VFunction
-    | VOperator
-    | VPunctuation
-    | VType
+  type token_type = Variable | Comment | Keyword | Number | String | Operator | Punctuation | Function
 
-  (** Convert token type to LSP semantic token type number *)
-  let token_type_to_lsp_number = function
-    | VIdentifier ->
-        0 (* variable *)
-    | VComment ->
-        1 (* comment *)
-    | VKeyword ->
-        2 (* keyword *)
-    | VType ->
-        3 (* type *)
-    | VNumber ->
-        4 (* number *)
-    | VString ->
-        5 (* string *)
-    | VOperator ->
-        6 (* operator *)
-    | VPunctuation ->
-        7 (* punctuation *)
-    | VFunction ->
-        8 (* function *)
+  (** Index of the token type in [legend] *)
+  let index (t : token_type) : int =
+    match t with
+    | Variable ->
+        0
+    | Comment ->
+        1
+    | Keyword ->
+        2
+    | Number ->
+        3
+    | String ->
+        4
+    | Operator ->
+        5
+    | Punctuation ->
+        6
+    | Function ->
+        7
 
-  (** Classify tokens based on their content *)
-  let classify_token _token_text (t : Pparser.Tokens.token_enum) =
+  (** LSP names of the token types, in the order given by [index] *)
+  let legend = ["variable"; "comment"; "keyword"; "number"; "string"; "operator"; "punctuation"; "function"]
+
+  let classify_token (t : Pparser.Tokens.token_enum) : token_type =
     let open Pparser.Tokens in
     match t with
-    | BLOCK_COMMENT ->
-        VComment
-    | LINE_COMMENT ->
-        VComment
+    | BLOCK_COMMENT | LINE_COMMENT ->
+        Comment
     | TYPE
     | FUN
     | VAL
@@ -984,15 +995,15 @@ module SemanticTokens = struct
     | TRUE
     | FALSE
     | AND ->
-        VKeyword
+        Keyword
     | INT | REAL | FIXED | XINT ->
-        VNumber
+        Number
     | STRING ->
-        VString
+        String
     | ID | QUOTED_ID ->
-        VIdentifier
+        Variable
     | OP ->
-        VOperator
+        Operator
     | LPAREN
     | RPAREN
     | LBRACE
@@ -1013,94 +1024,68 @@ module SemanticTokens = struct
     | LT
     | GT
     | EOF ->
-        VPunctuation
+        Punctuation
 
   (** Check if an identifier is followed by '(' indicating a function call *)
-  let is_function_call (lines : string array) (line : int) (end_char : int) : bool =
-    if line >= 0 && line < Array.length lines then
-      let line_text = lines.(line) in
-      let rec skip_whitespace pos =
-        if pos < String.length line_text && (line_text.[pos] = ' ' || line_text.[pos] = '\t') then
-          skip_whitespace (pos + 1)
-        else pos
-      in
-      let pos_after_whitespace = skip_whitespace end_char in
-      pos_after_whitespace < String.length line_text && line_text.[pos_after_whitespace] = '('
-    else false
+  let is_function_call (text : Text.t) (line : int) (end_byte : int) : bool =
+    let line_text = Text.line text line in
+    let rec skip_whitespace pos =
+      if pos < String.length line_text && (line_text.[pos] = ' ' || line_text.[pos] = '\t') then
+        skip_whitespace (pos + 1)
+      else pos
+    in
+    let pos = skip_whitespace end_byte in
+    pos < String.length line_text && line_text.[pos] = '('
+
+  (** A token on a single line: type, line, UTF-16 start column and UTF-16 length *)
+  type line_token = token_type * int * int * int
 
   (** Split a token that spans several lines into one token per line. Tokens covering no characters (for example the
       empty remainder of a line comment that ends with a newline) are dropped. *)
-  let split_by_lines (lines : string array) (token_type : vult_token_type) (start_line : int) (start_char : int)
-      (end_line : int) (end_char : int) : (vult_token_type * int * int * int) list =
-    let line_length line = if line >= 0 && line < Array.length lines then String.length lines.(line) else 0 in
+  let split_by_lines (text : Text.t) (token_type : token_type) (start_line : int) (start_byte : int) (end_line : int)
+      (end_byte : int) : line_token list =
     let rec collect line acc =
       if line > end_line then CCList.rev acc
       else
-        let first = if line = start_line then start_char else 0 in
-        let last = if line = end_line then end_char else line_length line in
-        let acc = if last > first then (token_type, line, first, last - first) :: acc else acc in
+        let first = if line = start_line then start_byte else 0 in
+        let last = if line = end_line then end_byte else String.length (Text.line text line) in
+        let first_utf16 = Text.utf16_of_byte text line first in
+        let length = Text.utf16_of_byte text line last - first_utf16 in
+        let acc = if length > 0 then (token_type, line, first_utf16, length) :: acc else acc in
         collect (line + 1) acc
     in
     collect start_line []
 
-  (** Tokenize Vult code for syntax highlighting. The positions are taken from the token location and not from the
-      lexbuf, since tokens built by a sub-lexer (comments and strings) leave the lexbuf pointing at their last matched
-      fragment. *)
-  let tokenize_vult_code (content : string) : (vult_token_type * int * int * int) list =
-    let lines = Array.of_list (String.split_on_char '\n' content) in
-    let lexbuf = Lexing.from_string content in
-    let lsp_source = Loc.File "" in
-    let tokens = ref [] in
-    (* Use iterative loop instead of recursive to avoid stack overflow in JavaScript *)
-    let continue = ref true in
-    (* On a lexer error keep the tokens collected so far so the file is still partially highlighted *)
-    ( try
-        while !continue do
-          let token = Pparser.Lexer.next_token_config lsp_source Pparser.Tokens.comment_config lexbuf in
-          match token.kind with
-          | Pparser.Tokens.EOF ->
-              continue := false
-          | _ ->
-              let start_pos = token.loc.Loc.start_pos in
-              let end_pos = token.loc.Loc.end_pos in
-              (* LSP uses 0-based line numbers *)
-              let start_line = start_pos.Lexing.pos_lnum - 1 in
-              let end_line = end_pos.Lexing.pos_lnum - 1 in
-              let start_char = start_pos.Lexing.pos_cnum - start_pos.Lexing.pos_bol in
-              let end_char = end_pos.Lexing.pos_cnum - end_pos.Lexing.pos_bol in
-              let token_type = classify_token token.value token.kind in
-              (* Enhance classification for function calls *)
-              let token_type =
-                match token_type with
-                | VIdentifier when start_line = end_line && is_function_call lines start_line end_char ->
-                    VFunction
-                | _ ->
-                    token_type
-              in
-              let line_tokens = split_by_lines lines token_type start_line start_char end_line end_char in
-              tokens := CCList.rev_append line_tokens !tokens
-        done
-      with _ -> () ) ;
-    CCList.rev !tokens
+  (** Tokens of the content for syntax highlighting, one per line *)
+  let tokenize_vult_code (content : string) : line_token list =
+    let text = Text.of_string content in
+    let line_tokens (token : Common.vult_token) =
+      let start_pos = token.loc.start_pos in
+      let end_pos = token.loc.end_pos in
+      (* LSP uses 0-based line numbers *)
+      let start_line = start_pos.pos_lnum - 1 in
+      let end_line = end_pos.pos_lnum - 1 in
+      let start_byte = start_pos.pos_cnum - start_pos.pos_bol in
+      let end_byte = end_pos.pos_cnum - end_pos.pos_bol in
+      let token_type =
+        match classify_token token.kind with
+        | Variable when start_line = end_line && is_function_call text start_line end_byte ->
+            Function
+        | token_type ->
+            token_type
+      in
+      split_by_lines text token_type start_line start_byte end_line end_byte
+    in
+    CCList.flat_map line_tokens (Common.tokenize content)
 
-  (** Generate LSP semantic tokens from Vult code *)
+  (** Generate LSP semantic tokens from Vult code: [deltaLine, deltaStartChar, length, tokenType, tokenModifiers] for
+      every token *)
   let get_semantic_tokens (content : string) : int list =
-    let tokens = tokenize_vult_code content in
-    (* Use iterative encoding instead of recursive to avoid stack overflow in JavaScript *)
-    let result = ref [] in
-    let prev_line = ref 0 in
-    let prev_char = ref 0 in
-    CCList.iter
-      (fun (token_type, line, char, length) ->
-        let delta_line = line - !prev_line in
-        let delta_char = if delta_line = 0 then char - !prev_char else char in
-        let token_type_num = token_type_to_lsp_number token_type in
-        let token_modifiers = 0 in
-        (* No modifiers for now *)
-        (* LSP format: [deltaLine, deltaStartChar, length, tokenType, tokenModifiers] *)
-        result := token_modifiers :: token_type_num :: length :: delta_char :: delta_line :: !result ;
-        prev_line := line ;
-        prev_char := char )
-      tokens ;
-    CCList.rev !result
+    let encode (prev_line, prev_char, acc) (token_type, line, char, length) =
+      let delta_line = line - prev_line in
+      let delta_char = if delta_line = 0 then char - prev_char else char in
+      (line, char, 0 :: index token_type :: length :: delta_char :: delta_line :: acc)
+    in
+    let _, _, encoded = CCList.fold_left encode (0, 0, []) (tokenize_vult_code content) in
+    CCList.rev encoded
 end

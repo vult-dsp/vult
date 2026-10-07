@@ -175,7 +175,7 @@ type iprog =
    are encountered. The other fields are immutable references into the iprog.
 *)
 type compile_ctx =
-  { var_to_index: (string, int) Hashtbl.t (* Variable name -> stack frame index *)
+  { mutable var_to_index: int Map.t (* Variable name -> stack frame index *)
   ; mutable next_index: int (* Next available stack slot *)
   ; struct_types: struct_descr Map.t (* Struct type definitions *)
   ; constant_names: int Map.t (* Constant name -> index *)
@@ -241,12 +241,14 @@ let addConstant (prog : iprog) (value : dvalue) : unit =
 
 (* Adds a variable to the compilation context and returns its assigned index *)
 let addVar (ctx : compile_ctx) (name : string) : int =
-  if Hashtbl.mem ctx.var_to_index name then Hashtbl.find ctx.var_to_index name
-  else
-    let idx = ctx.next_index in
-    Hashtbl.add ctx.var_to_index name idx ;
-    ctx.next_index <- ctx.next_index + 1 ;
-    idx
+  match Map.find_opt name ctx.var_to_index with
+  | Some idx ->
+      idx
+  | None ->
+      let idx = ctx.next_index in
+      ctx.var_to_index <- Map.add name idx ctx.var_to_index ;
+      ctx.next_index <- ctx.next_index + 1 ;
+      idx
 
 (* Finds the index of a struct member by name within a struct descriptor *)
 let getMemberIndex (struct_descr : struct_descr) (member_name : string) : int =
@@ -802,7 +804,7 @@ let rec compileExp (ctx : compile_ctx) (exp : exp) : compiled_result =
   | EString s ->
       CConstant (DString s)
   | EId name -> (
-    match Hashtbl.find_opt ctx.var_to_index name with
+    match Map.find_opt name ctx.var_to_index with
     | Some idx ->
         CVar idx
     | None -> (
@@ -1780,7 +1782,7 @@ and compileBind (ctx : compile_ctx) (lexp : lexp) (rhs : exp) : compiled_stmt =
         let _ = fexp ctx stack fs in
         Continue
   | LId name -> (
-    match Hashtbl.find_opt ctx.var_to_index name with
+    match Map.find_opt name ctx.var_to_index with
     | Some idx ->
         let fexp = to_closure (compileExp ctx rhs) in
         fun ctx stack fs ->
@@ -1793,7 +1795,7 @@ and compileBind (ctx : compile_ctx) (lexp : lexp) (rhs : exp) : compiled_stmt =
     match var_type.t with
     | TStruct descr -> (
         let member_idx = getMemberIndex descr member_name in
-        match Hashtbl.find_opt ctx.var_to_index var_name with
+        match Map.find_opt var_name ctx.var_to_index with
         | Some var_idx ->
             let fexp = to_closure (compileExp ctx rhs) in
             fun ctx stack fs ->
@@ -1811,7 +1813,7 @@ and compileBind (ctx : compile_ctx) (lexp : lexp) (rhs : exp) : compiled_stmt =
         compileBindGeneral ctx lexp rhs )
   (* Fused var[index] assignment *)
   | LIndex {e= {l= LId var_name; _}; index= index_exp} -> (
-    match Hashtbl.find_opt ctx.var_to_index var_name with
+    match Map.find_opt var_name ctx.var_to_index with
     | Some var_idx ->
         let fi = to_closure (compileExp ctx index_exp) in
         let fexp = to_closure (compileExp ctx rhs) in
@@ -1830,7 +1832,7 @@ and compileBind (ctx : compile_ctx) (lexp : lexp) (rhs : exp) : compiled_stmt =
     match var_type.t with
     | TStruct descr -> (
         let member_idx = getMemberIndex descr member_name in
-        match Hashtbl.find_opt ctx.var_to_index var_name with
+        match Map.find_opt var_name ctx.var_to_index with
         | Some var_idx ->
             let fi = to_closure (compileExp ctx index_exp) in
             let fexp = to_closure (compileExp ctx rhs) in
@@ -1870,7 +1872,7 @@ and compileLexpAsRvalue (ctx : compile_ctx) (lexp : lexp) : compiled_exp =
   | LWild ->
       fun ctx _stack _fs -> error_with_context ctx "Cannot read wildcard"
   | LId name -> (
-    match Hashtbl.find_opt ctx.var_to_index name with
+    match Map.find_opt name ctx.var_to_index with
     | Some idx ->
         fun _ctx stack fs -> Array.unsafe_get stack.stack (fs + idx)
     | None ->
@@ -1906,7 +1908,7 @@ and compileLexpAssign (ctx : compile_ctx) (lexp : lexp) : call_context -> runtim
   | LWild ->
       fun _ctx _stack _fs _val -> ()
   | LId name -> (
-    match Hashtbl.find_opt ctx.var_to_index name with
+    match Map.find_opt name ctx.var_to_index with
     | Some idx ->
         fun _ctx stack fs val_ -> Array.unsafe_set stack.stack (fs + idx) val_
     | None ->
@@ -1983,7 +1985,7 @@ let callCompiledFunctionByIdx (prog : iprog) (ctx : call_context) (stack : runti
 (* Compile a single function definition from Prog into a compiled_func *)
 let compileProgramFunction (prog : iprog) (def : function_def) (body : stmt) : compiled_func =
   let ctx =
-    { var_to_index= Hashtbl.create 32
+    { var_to_index= Map.empty
     ; next_index= 0
     ; struct_types= prog.struct_types
     ; constant_names= prog.constant_names
@@ -2008,7 +2010,7 @@ let processStatement (prog : iprog) (stmt : top_stmt) : unit =
       let const_idx = prog.iconstants_count in
       prog.constant_names <- Map.add name const_idx prog.constant_names ;
       let ctx =
-        { var_to_index= Hashtbl.create 4
+        { var_to_index= Map.empty
         ; next_index= 0
         ; struct_types= prog.struct_types
         ; constant_names= prog.constant_names
@@ -2116,32 +2118,33 @@ let rec callsInStmt (acc : string list) (s : stmt) : string list =
    but constant initializers may call functions, so the functions a constant needs are
    compiled on demand (transitively) before the constant is evaluated. *)
 let processStatements (prog : iprog) (stmts : top_stmt list) : unit =
-  let pending : (string, function_def * stmt) Hashtbl.t = Hashtbl.create 16 in
-  CCList.iter
-    (fun (stmt : top_stmt) ->
-      match stmt.top with TopFunction (def, body) -> Hashtbl.replace pending def.name (def, body) | _ -> () )
-    stmts ;
-  let rec ensureCompiled (name : string) : unit =
-    match Hashtbl.find_opt pending name with
+  let addPending pending (stmt : top_stmt) =
+    match stmt.top with TopFunction (def, body) -> Map.add def.name (def, body) pending | _ -> pending
+  in
+  (* Returns the functions that are still pending after compiling [name] and its callees *)
+  let rec ensureCompiled (pending : (function_def * stmt) Map.t) (name : string) : (function_def * stmt) Map.t =
+    match Map.find_opt name pending with
     | None ->
-        ()
+        pending
     | Some (def, body) ->
         (* Remove before recursing so recursive functions terminate *)
-        Hashtbl.remove pending name ;
-        CCList.iter ensureCompiled (callsInStmt [] body) ;
-        processStatement prog {top= TopFunction (def, body); loc= def.loc}
+        let pending = CCList.fold_left ensureCompiled (Map.remove name pending) (callsInStmt [] body) in
+        processStatement prog {top= TopFunction (def, body); loc= def.loc} ;
+        pending
   in
-  CCList.iter
-    (fun (stmt : top_stmt) ->
-      match stmt.top with
-      | TopConstant (_, _, _, exp, _) ->
-          CCList.iter ensureCompiled (callsInExp [] exp) ;
-          processStatement prog stmt
-      | TopFunction (def, _) ->
-          ensureCompiled def.name
-      | _ ->
-          processStatement prog stmt )
-    stmts
+  let processInOrder pending (stmt : top_stmt) =
+    match stmt.top with
+    | TopConstant (_, _, _, exp, _) ->
+        let pending = CCList.fold_left ensureCompiled pending (callsInExp [] exp) in
+        processStatement prog stmt ; pending
+    | TopFunction (def, _) ->
+        ensureCompiled pending def.name
+    | _ ->
+        processStatement prog stmt ; pending
+  in
+  let pending = CCList.fold_left addPending Map.empty stmts in
+  let _ : (function_def * stmt) Map.t = CCList.fold_left processInOrder pending stmts in
+  ()
 
 (* Full pipeline from Prog AST to compiled iprog.
    Two-pass: first register all function names, then process everything. *)

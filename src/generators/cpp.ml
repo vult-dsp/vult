@@ -28,7 +28,7 @@ type target = Header | Tables | Implementation
 
 let threshold = 4
 
-type state = {args: Util.Args.args; prefixed: (string, string) Hashtbl.t}
+type state = {args: Util.Args.args; prefixed: string Util.Maps.Map.t (* name -> prefixed name *)}
 
 let isSmall stmts =
   let rec loop size stmts =
@@ -81,37 +81,33 @@ let rec isBuiltinType (t : type_) =
   | _ ->
       true
 
-let registerPrefix state name =
-  match state.args.output_prefix with
-  | None ->
-      name
-  | Some prefix ->
-      let prefixed_name = prefix ^ name in
-      let () = Hashtbl.add state.prefixed name prefixed_name in
-      prefixed_name
+let addPrefix state id = match Util.Maps.Map.find_opt id state.prefixed with None -> id | Some prefixed -> prefixed
 
-let addPrefix state id = match Hashtbl.find_opt state.prefixed id with None -> id | Some prefix -> prefix
+(* Names defined by a top statement that receive the output prefix *)
+let prefixableNames (t : top_stmt) : string list =
+  match t.top with
+  | TopType {path; _} | TopAlias {path; _} ->
+      [path]
+  | TopFunction (def, _) | TopExternal (def, None) ->
+      [def.name]
+  | TopExternal (_, Some _) ->
+      (* externals with a link name are called by that name, unprefixed *)
+      []
+  | TopConstant (name, _, _, _, _) ->
+      [name]
 
-(* Every definition must be registered before printing: with -split-files a
+(* Every definition must be prefixed before printing: with -split-files a
    module can be printed before the one defining the names it uses. *)
-let registerAllDefinitions state (stmts : top_stmt list) =
-  match state.args.output_prefix with
-  | None ->
-      ()
-  | Some _ ->
-      CCList.iter
-        (fun (t : top_stmt) ->
-          match t.top with
-          | TopType {path; _} | TopAlias {path; _} ->
-              ignore (registerPrefix state path)
-          | TopFunction (def, _) | TopExternal (def, None) ->
-              ignore (registerPrefix state def.name)
-          | TopExternal (_, Some _) ->
-              (* externals with a link name are called by that name, unprefixed *)
-              ()
-          | TopConstant (name, _, _, _, _) ->
-              ignore (registerPrefix state name) )
-        stmts
+let makeState (args : Util.Args.args) (stmts : top_stmt list) : state =
+  let prefixed =
+    match args.output_prefix with
+    | None ->
+        Util.Maps.Map.empty
+    | Some prefix ->
+        let names = CCList.flat_map prefixableNames stmts in
+        CCList.fold_left (fun map name -> Util.Maps.Map.add name (prefix ^ name) map) Util.Maps.Map.empty names
+  in
+  {args; prefixed}
 
 let rec print_type_ state (t : type_) =
   match t.t with
@@ -219,8 +215,8 @@ let rec print_exp state (prec : operator option) (e : exp) =
       {%pla|<#n#s>|}
   | EString s ->
       Pla.string_quoted s
-  | EId id -> (
-    match Hashtbl.find_opt state.prefixed id with None -> Pla.string id | Some id -> Pla.string id )
+  | EId id ->
+      Pla.string (addPrefix state id)
   | EIndex {e; index} ->
       let e = print_exp state prec e in
       let index = print_exp state prec index in
@@ -518,7 +514,7 @@ let isTemplate (args : param list) =
   CCList.exists (fun (a : param) -> match a.t with {t= TArray (None, _); _} -> true | _ -> false) args
 
 let print_function_def state (def : function_def) =
-  let name = Pla.string (registerPrefix state def.name) in
+  let name = Pla.string (addPrefix state def.name) in
   let args = CCList.mapi (print_arg state) def.args |> Pla.join_sep Pla.commaspace in
   let template_args =
     def.args
@@ -565,11 +561,11 @@ let print_top_stmt state ~allow_inline (target : target) t =
   | TopExternal _, _ ->
       Pla.unit
   | TopType {path; members}, Header ->
-      let path = registerPrefix state path in
+      let path = addPrefix state path in
       let members = Pla.map_sep {%pla|<#>|} (print_member state) members in
       {%pla|typedef struct <#path#s> {<#members#+><#>} <#path#s>;<#><#>|}
   | TopAlias {path; alias_of}, Header ->
-      let path = registerPrefix state path in
+      let path = addPrefix state path in
       let alias_of = addPrefix state alias_of in
       {%pla|typedef struct <#alias_of#s> <#path#s>;<#><#>|}
   | TopType _, _ ->
@@ -577,17 +573,16 @@ let print_top_stmt state ~allow_inline (target : target) t =
   | TopAlias _, _ ->
       Pla.unit
   | TopConstant (name, _, t, rhs, _), Tables when isBuiltinType t ->
-      let prefixed_name = registerPrefix state name in
+      let prefixed_name = addPrefix state name in
       let t = print_type_ state t in
       let rhs = print_exp state None rhs in
       {%pla|static const <#t#> <#prefixed_name#s> = <#rhs#+>;<#><#>|}
   | TopConstant (name, _, t, rhs, _), Header when not (isBuiltinType t) ->
-      let prefixed_name = registerPrefix state name in
+      let prefixed_name = addPrefix state name in
       let t = print_type_ state t in
       let rhs = print_exp state None rhs in
       {%pla|static const <#t#> <#prefixed_name#s> = <#rhs#+>;<#><#>|}
-  | TopConstant (name, _, _, _, _), _ ->
-      let _ = registerPrefix state name in
+  | TopConstant _, _ ->
       Pla.unit
 
 let print_prog args ~allow_inline target t = Pla.map_join (print_top_stmt args ~allow_inline target) t
@@ -653,8 +648,7 @@ let vultinFiles (args : Util.Args.args) =
 
 let generateSplit (args : Util.Args.args) template (stmts : top_stmt list) =
   let legend = getLegend args in
-  let state = {args; prefixed= Hashtbl.create 16} in
-  let () = registerAllDefinitions state stmts in
+  let state = makeState args stmts in
   let dir = CCOption.map_or ~default:"" (fun file -> Filename.dirname file) args.output in
   let main_header_file = Common.setExt ".h" args.output in
   let impl_file = Common.setExt ".cpp" args.output in
@@ -722,8 +716,7 @@ let generateSplit (args : Util.Args.args) template (stmts : top_stmt list) =
 
 let generateSingle (args : Util.Args.args) template (stmts : top_stmt list) =
   let legend = getLegend args in
-  let state = {args; prefixed= Hashtbl.create 16} in
-  let () = registerAllDefinitions state stmts in
+  let state = makeState args stmts in
   let allow_inline = true in
   let header = print_prog state ~allow_inline Header stmts in
   let impl = print_prog state ~allow_inline Implementation stmts in

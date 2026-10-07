@@ -1398,15 +1398,18 @@ let parseBuffer (file : string) (buffer : Stream.stream) =
   | Error.Errors _ as e ->
       raise e
 
-(** Parses a file containing a list of statements and returns the results *)
-let parseFile (filename : string) =
-  match FileIO.read filename with
+(** Parses a file whose contents are obtained with [read] *)
+let parseFileWith (read : string -> string option) (filename : string) =
+  match read filename with
   | Some contents ->
       let buffer = Stream.fromString ~file:filename contents in
       let result = parseBuffer filename buffer in
       result
   | None ->
       Error.raiseErrorMsg ("Cannot read file '" ^ filename ^ "'. Check if the file exists and you have read permissions")
+
+(** Parses a file containing a list of statements and returns the results *)
+let parseFile (filename : string) = parseFileWith FileIO.read filename
 
 (** Parses a string containing a list of statements and returns the results *)
 let parseString (file : string option) (text : string) =

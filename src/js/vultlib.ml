@@ -463,7 +463,7 @@ let getCompletions (code_string : Js.js_string Js.t) : Js.Unsafe.any Js.js_array
 let getDocumentSymbols (code_string : Js.js_string Js.t) : Js.Unsafe.any Js.js_array Js.t =
   let code = Js.to_string code_string in
   let stmts = parseCode code in
-  let symbols = Vult_lsp.DocumentSymbols.get_document_symbols stmts in
+  let symbols = Vult_lsp.DocumentSymbols.get_document_symbols (Vult_lsp.Text.of_string code) stmts in
   let convert_symbol (s : Yojson.Safe.t) : Js.Unsafe.any =
     let open Yojson.Safe.Util in
     let range = s |> member "range" in
