@@ -12,6 +12,7 @@
   Loc
   Args
   Maps
+  Parray
   Names
   Fitting
   WaveFile

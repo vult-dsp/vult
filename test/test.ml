@@ -1057,6 +1057,120 @@ module EvalGenericTest = struct
          ; "new_specialization" >:: run "generics_comprehensive.vult" "Generics_comprehensive.change(true)" "true" ]
 end
 
+(* Unit tests of the unification used by the type inference *)
+module SubstTest = struct
+  open Core.Typed
+  module Subst = Core.Subst
+
+  let loc = Util.Loc.default
+
+  let unify (t1 : type_) (t2 : type_) : Subst.t option = Subst.unify (Subst.empty ()) t1 t2
+
+  let printed (s : Subst.t) (t : type_) : string = Pla.print (Subst.printType s t)
+
+  let assertResolvesTo (expected : string) (t1 : type_) (t2 : type_) (t : type_) =
+    match unify t1 t2 with
+    | Some s ->
+        assert_equal ~printer:(fun s -> s) expected (printed s t)
+    | None ->
+        assert_failure "The types should unify"
+
+  let test_same_type _ = assert_bool "int = int" (Option.is_some (unify (C.int ~loc) (C.int ~loc)))
+
+  let test_different_types _ = assert_bool "int <> real" (Option.is_none (unify (C.int ~loc) (C.real ~loc)))
+
+  let test_unbound_binds _ =
+    let v = C.unbound loc in
+    assertResolvesTo "int" v (C.int ~loc) v
+
+  let test_option_picks_alternative _ =
+    let opt = C.num loc in
+    assertResolvesTo "real" opt (C.real ~loc) opt
+
+  let test_option_rejects_type _ = assert_bool "num <> bool" (Option.is_none (unify (C.num loc) (C.bool ~loc)))
+
+  let test_options_intersect _ =
+    let num = C.num loc in
+    let freal = C.freal_type ~loc () in
+    assertResolvesTo "(real|fix16)" num freal num
+
+  let test_nested_variable _ =
+    let v = C.unbound loc in
+    let arr = C.array ~size:(C.size 3) v in
+    assertResolvesTo "array(real, 3)" arr (C.array ~size:(C.size 3) (C.real ~loc)) arr
+
+  let test_occurs_check _ =
+    let v = C.unbound loc in
+    assert_bool "a = array(a) fails" (Option.is_none (unify v (C.array v)))
+
+  (* A failed unification leaves the substitution as it was *)
+  let test_failure_does_not_bind _ =
+    let v = C.unbound loc in
+    let t1 = C.tuple [v; C.int ~loc] in
+    let t2 = C.tuple [C.real ~loc; C.bool ~loc] in
+    assert_bool "the tuples do not unify" (Option.is_none (unify t1 t2)) ;
+    assert_equal ~printer:(fun s -> s) "_" (printed (Subst.empty ()) v)
+
+  let test_constness _ =
+    let a = C.real ~loc in
+    let b = C.real ~loc in
+    let s = Subst.setMut (Subst.empty ()) a in
+    match Subst.unify ~bind:true s b a with
+    | Some s ->
+        assert_bool "b is mutable after binding it to a" (not (Subst.isConst s b))
+    | None ->
+        assert_failure "The types should unify"
+
+  (* Versions extended from the same substitution are independent of each other *)
+  let test_branches_are_independent _ =
+    let v = C.unbound loc in
+    let base = Subst.empty () in
+    match (unify v (C.int ~loc), Subst.unify base v (C.real ~loc)) with
+    | Some with_int, Some with_real ->
+        (* Reading them alternately moves the persistent arrays back and forth *)
+        for _ = 1 to 3 do
+          assert_equal ~printer:(fun s -> s) "int" (printed with_int v) ;
+          assert_equal ~printer:(fun s -> s) "real" (printed with_real v) ;
+          assert_equal ~printer:(fun s -> s) "_" (printed base v)
+        done
+    | _ ->
+        assert_failure "The types should unify"
+
+  (* Typechecking returns an environment that can be extended in different ways: a guess can be tried
+     and discarded by continuing with the original environment *)
+  let test_environment_backtracking _ =
+    let parsed = Pparser.Parse.parseString (Some "Guess.vult") "fun id(x) { return x; }" in
+    let env, _ = Core.Typechecking.typecheck Util.Args.default_arguments [parsed] in
+    let f = Core.Env.lookFunctionCall (Core.Env.enterModule env "Guess") {id= "id"; n= None; loc} loc in
+    let arg_t = CCList.hd (fst f.t) in
+    let guess t = Subst.unify env.subst arg_t t in
+    match (guess (C.int ~loc), guess (C.real ~loc)) with
+    | Some as_int, Some as_real ->
+        assert_equal ~printer:(fun s -> s) "int" (printed as_int arg_t) ;
+        assert_equal ~printer:(fun s -> s) "real" (printed as_real arg_t) ;
+        assert_equal ~printer:(fun s -> s) "_" (printed env.subst arg_t) ;
+        (* A failed guess leaves the environment usable as it was *)
+        assert_bool "int <> real after guessing int" (Option.is_none (Subst.unify as_int arg_t (C.real ~loc))) ;
+        assert_equal ~printer:(fun s -> s) "_" (printed env.subst arg_t)
+    | _ ->
+        assert_failure "Both guesses should unify"
+
+  let get () =
+    "subst"
+    >::: [ "branches_are_independent" >:: test_branches_are_independent
+         ; "environment_backtracking" >:: test_environment_backtracking
+         ; "same_type" >:: test_same_type
+         ; "different_types" >:: test_different_types
+         ; "unbound_binds" >:: test_unbound_binds
+         ; "option_picks_alternative" >:: test_option_picks_alternative
+         ; "option_rejects_type" >:: test_option_rejects_type
+         ; "options_intersect" >:: test_options_intersect
+         ; "nested_variable" >:: test_nested_variable
+         ; "occurs_check" >:: test_occurs_check
+         ; "failure_does_not_bind" >:: test_failure_does_not_bind
+         ; "constness" >:: test_constness ]
+end
+
 module RenderTest = struct
   let test_sine_wave_render _context =
     (* Test parameters *)
@@ -1151,6 +1265,7 @@ end
 let suite =
   "vult"
   >::: [ ErrorTest.get errors_files
+       ; SubstTest.get ()
        ; ParserTest.get parser_files
        ; PassesTest.get passes_files
        ; Templates.get template_files "pd" "float"

@@ -51,134 +51,22 @@ let rec syntax_has_return (stmt : Syntax.stmt) : bool =
   | SStmtError | SStmtVal _ | SStmtMem _ | SStmtBind _ ->
       false
 
-let pickLoc (t1 : type_) (t2 : type_) : unit =
-  if t1.loc == Loc.default then t1.loc <- t2.loc else if t2.loc == Loc.default then t2.loc <- t1.loc
+(* The type with the bindings of its variables followed *)
+let resolve (env : env) (t : type_) : type_ = Subst.walk env.subst t
 
-let linkType ~from ~into =
-  into.tx <- TELink from ;
-  pickLoc from into ;
-  true
+let printType (env : env) (t : type_) : Pla.t = Subst.printType env.subst t
 
-let unlink = Typed.unlink
+let isConst (env : env) (t : type_) : bool = Subst.isConst env.subst t
+
+let setTypeMut (env : env) (t : type_) : env = {env with subst= Subst.setMut env.subst t}
+
+let unifyConstness (env : env) (t1 : type_) (t2 : type_) : env = {env with subst= Subst.unifyConstness env.subst t1 t2}
+
+(* Unifies the types, returning None when they do not unify *)
+let unify ?(bind = false) (env : env) (t1 : type_) (t2 : type_) : env option =
+  Option.map (fun subst -> {env with subst}) (Subst.unify ~bind env.subst t1 t2)
 
 let pathString = Typed.pathString
-
-(* Tries to unity the given type with all the elements of the set, if they can be unified we increase the counter *)
-let rec pushTypeToSet (set : (type_ * int) list) (elem : type_) =
-  match (set, elem) with
-  | [], _ ->
-      [(elem, 1)]
-  | (({tx= TEComposed (n1, e1); _} as h), count) :: t, {tx= TEComposed (n2, e2); _}
-    when n2 = n1 && CCList.length e1 = CCList.length e2 ->
-      if unify h elem then (h, count + 1) :: t else (h, count) :: pushTypeToSet t elem
-  (* Don't try to unify composed types with different arguments *)
-  | (({tx= TEComposed (n1, _); _} as h), count) :: t, {tx= TEComposed (n2, _); _} when n2 = n1 ->
-      (h, count) :: pushTypeToSet t elem
-  | (h, count) :: t, _ ->
-      if unify h elem then (h, count + 1) :: t else (h, count) :: pushTypeToSet t elem
-
-and constrainOption loc l1 l2 =
-  let set = CCList.fold_left pushTypeToSet (CCList.map (fun e -> (e, 1)) l1) l2 in
-  let final_set = CCList.filter_map (fun (e, n) -> if n > 1 then Some e else None) set in
-  match final_set with
-  | [] ->
-      let t1 = Pla.map_sep Pla.commaspace Typed.print_type_ l1 in
-      let t2 = Pla.map_sep Pla.commaspace Typed.print_type_ l2 in
-      let msg =
-        Pla.print {%pla|None of the following types: <#t1#>, matches with any of the following types <#t2#>. |}
-      in
-      Error.raiseError msg loc
-  | [t] ->
-      t
-  | l ->
-      {tx= TEOption l; loc= Loc.default; const= C.const ()}
-
-and pickOption original l tt =
-  let rec loop l =
-    match l with [] -> false | h :: t -> if unify h tt then linkType ~from:tt ~into:original else loop t
-  in
-  loop l
-
-and unifyConstnessValue (t1 : constness) (t2 : constness) =
-  if t1 == t2 then ()
-  else
-    match (t1.c, t2.c) with
-    | TECLink tl, _ ->
-        unifyConstnessValue tl t2
-    | _, TECLink tl ->
-        unifyConstnessValue t1 tl
-    | TEConst _, _ ->
-        t1.c <- TECLink t2
-    | _, TEConst _ ->
-        t2.c <- TECLink t1
-    | TEMut _, TEMut _ ->
-        ()
-
-and unifyConstness (t1 : type_) (t2 : type_) =
-  unifyConstnessValue t1.const t2.const ;
-  match (t1.tx, t2.tx) with
-  | TELink tlink, _ ->
-      unifyConstness tlink t2
-  | _, TELink tlink ->
-      unifyConstness t1 tlink
-  | _ ->
-      ()
-
-and unify ?(bind = false) (t1 : type_) (t2 : type_) =
-  if t1 == t2 then true
-  else (
-    (* transfer memory use to determine constness *)
-    if bind then unifyConstnessValue t1.const t2.const ;
-    match (t1.tx, t2.tx) with
-    | TEId t1, TEId t2 ->
-        Pparser.Syntax.compare_path t1 t2 = 0
-    | TESize t1, TESize t2 ->
-        t1 = t2
-    | TEFunction (arg1, ret1), TEFunction (arg2, ret2) ->
-        CCList.for_all2 unify arg1 arg2 && unify ret1 ret2
-    | TEFunction _, _ ->
-        false
-    | _, TEFunction _ ->
-        false
-    (* special case for arrays without dimensions *)
-    | TEComposed ("array", [e1; _]), TEComposed ("array", [e2])
-    | TEComposed ("array", [e1]), TEComposed ("array", [e2; _]) ->
-        unify e1 e2
-    | TEComposed (n1, e1), TEComposed (n2, e2) when n1 = n2 && CCList.length e1 = CCList.length e2 ->
-        CCList.for_all2 unify e1 e2
-    (* follow the links *)
-    | TELink tlink, _ ->
-        unify tlink t2
-    | _, TELink tlink ->
-        unify t1 tlink
-    | TENoReturn, _ ->
-        linkType ~from:t2 ~into:t1
-    | _, TENoReturn ->
-        linkType ~from:t1 ~into:t2
-    (* replace any unbound *)
-    | TEUnbound None, TEUnbound _ ->
-        linkType ~from:t1 ~into:t2
-    | TEUnbound _, TEUnbound None ->
-        linkType ~from:t2 ~into:t1
-    | TEUnbound _, _ ->
-        linkType ~from:t2 ~into:t1
-    | _, TEUnbound _ ->
-        linkType ~from:t1 ~into:t2
-    (* types with alternatives *)
-    | TEOption l1, TEOption l2 ->
-        let t3 = constrainOption t2.loc l1 l2 in
-        let _ = linkType ~from:t3 ~into:t2 in
-        linkType ~from:t3 ~into:t1
-    | TEOption l, _ ->
-        pickOption t1 l t2
-    | _, TEOption l ->
-        pickOption t2 l t1
-    | TEId _, _ ->
-        false
-    | TESize _, _ ->
-        false
-    | TEComposed _, _ ->
-        false )
 
 (* Why two types failed to unify. Tuples are diagnosed element by element so that the error can
    name the offending element instead of printing both tuples in full. *)
@@ -187,70 +75,81 @@ type unify_failure =
   | TupleSizeMismatch of {expected: int; got: int}
   | TupleElementMismatch of {index: int; expected: type_; got: type_}
 
-(* Returns the index and types of the first pair of elements that do not unify. *)
-let findTupleElementMismatch ~bind (expected : type_ list) (got : type_ list) : unify_failure =
-  let rec loop index expected got =
+(* Returns the index and types of the first pair of elements that do not unify, unifying the
+   elements before it. *)
+let findTupleElementMismatch ~bind (env : env) (expected : type_ list) (got : type_ list) : env * unify_failure =
+  let rec loop env index expected got =
     match (expected, got) with
-    | e :: expected, g :: got ->
-        if unify ~bind e g then loop (index + 1) expected got else TupleElementMismatch {index; expected= e; got= g}
+    | e :: expected, g :: got -> (
+      match unify ~bind env e g with
+      | Some env ->
+          loop env (index + 1) expected got
+      | None ->
+          (env, TupleElementMismatch {index; expected= e; got= g}) )
     | [], _ | _, [] ->
-        TypeMismatch
+        (env, TypeMismatch)
   in
-  loop 0 expected got
+  loop env 0 expected got
 
-(* Called after [unify] failed. The partial unification has already happened, so re-unifying the
-   elements only fails again at the element that caused the original failure. *)
-let diagnoseUnifyFailure ~bind (expected : type_) (got : type_) : unify_failure =
-  match ((unlink expected).tx, (unlink got).tx) with
+(* Called after [unify] failed. Re-unifying the elements only fails at the element that caused the
+   original failure. Returns the environment where the elements before it are unified, which is
+   used to print the types. *)
+let diagnoseUnifyFailure ~bind (env : env) (expected : type_) (got : type_) : env * unify_failure =
+  match ((resolve env expected).tx, (resolve env got).tx) with
   | TEComposed ("tuple", e1), TEComposed ("tuple", e2) ->
       let expected_n = CCList.length e1 in
       let got_n = CCList.length e2 in
-      if expected_n <> got_n then TupleSizeMismatch {expected= expected_n; got= got_n}
-      else findTupleElementMismatch ~bind e1 e2
+      if expected_n <> got_n then (env, TupleSizeMismatch {expected= expected_n; got= got_n})
+      else findTupleElementMismatch ~bind env e1 e2
   | _ ->
-      TypeMismatch
+      (env, TypeMismatch)
 
-let typeMismatchMessage (expected : type_) (got : type_) : string =
-  let expected = print_type_ expected in
-  let got = print_type_ got in
+let typeMismatchMessage (env : env) (expected : type_) (got : type_) : string =
+  let expected = printType env expected in
+  let got = printType env got in
   Pla.print {%pla|This expression has type '<#got#>' but '<#expected#>' was expected|}
 
 (* Unifies [t1] (the expected type) with [t2] (the type found at [loc]), raising an error if they
    do not match. When [t2] belongs to a tuple literal, [elem_locs] holds the locations of its
    elements, which are used to point at the offending element. *)
-let unifyRaise ?(bind = false) ?(elem_locs = []) (loc : Loc.t) (t1 : type_) (t2 : type_) : unit =
-  if not (unify ~bind t1 t2) then
-    match diagnoseUnifyFailure ~bind t1 t2 with
-    | TypeMismatch ->
-        Error.raiseError (typeMismatchMessage t1 t2) loc
-    | TupleSizeMismatch {expected; got} ->
+let unifyRaise ?(bind = false) ?(elem_locs = []) (env : env) (loc : Loc.t) (t1 : type_) (t2 : type_) : env =
+  match Subst.unifyResult ~bind env.subst t1 t2 with
+  | Ok subst ->
+      {env with subst}
+  | Error (NoCommonAlternative {message; loc}) ->
+      Error.raiseError message loc
+  | Error Mismatch -> (
+    match diagnoseUnifyFailure ~bind env t1 t2 with
+    | env, TypeMismatch ->
+        Error.raiseError (typeMismatchMessage env t1 t2) loc
+    | _, TupleSizeMismatch {expected; got} ->
         let msg = Pla.print {%pla|This expression has <#got#i> elements but <#expected#i> were expected|} in
         Error.raiseError msg loc
-    | TupleElementMismatch {index; expected; got} -> (
+    | env, TupleElementMismatch {index; expected; got} -> (
         let position = index + 1 in
         let element_msg =
-          let expected = print_type_ expected in
-          let got = print_type_ got in
+          let expected = printType env expected in
+          let got = printType env got in
           Pla.print {%pla|Element <#position#i> of this tuple has type '<#got#>' but '<#expected#>' was expected|}
         in
         match CCList.nth_opt elem_locs index with
         | Some elem_loc ->
             Error.raiseError element_msg elem_loc
         | None ->
-            let tuple_msg = typeMismatchMessage t1 t2 in
-            Error.raiseError (element_msg ^ ". " ^ tuple_msg) loc )
+            let tuple_msg = typeMismatchMessage env t1 t2 in
+            Error.raiseError (element_msg ^ ". " ^ tuple_msg) loc ) )
 
 (* Like [unifyRaise] but takes the expression itself, so that tuple literals can report the
    location of the element that does not match. *)
-let unifyExpRaise ?(bind = false) (expected : type_) (e : exp) : unit =
+let unifyExpRaise ?(bind = false) (env : env) (expected : type_) (e : exp) : env =
   let elem_locs = match e.e with ETuple elems -> CCList.map (fun (e : exp) -> e.loc) elems | _ -> [] in
-  unifyRaise ~bind ~elem_locs e.loc expected e.t
+  unifyRaise ~bind ~elem_locs env e.loc expected e.t
 
 (* Convert a type with a mapping from generic parameter names to their unbound types *)
 let rec type_in_m_with_generic_mapping (env : env) (generic_type_map : (string * type_) list) (t : Syntax.type_) =
   match t with
   | {t= STUnbound; loc} ->
-      {tx= TEUnbound None; loc; const= C.const ()}
+      C.unbound loc
   | {t= STGenericType id; loc} -> (
     (* Explicit generic type parameter - look up in the mapping *)
     match CCList.assoc_opt ~eq:String.equal id generic_type_map with
@@ -286,7 +185,7 @@ let rec type_in_m_with_generic_mapping (env : env) (generic_type_map : (string *
 
 (* Helper to create a mapping from generic parameter names to unbound types *)
 let createGenericTypeMapping (generic_params : string list) (loc : Loc.t) : (string * type_) list =
-  CCList.map (fun name -> (name, {tx= TEUnbound None; loc; const= C.const ()})) generic_params
+  CCList.map (fun name -> (name, C.unbound loc)) generic_params
 
 (* Legacy wrapper for backwards compatibility - creates fresh mapping each time *)
 let type_in_m_with_generics (env : env) (generic_params : string list) (t : Syntax.type_) =
@@ -295,15 +194,11 @@ let type_in_m_with_generics (env : env) (generic_params : string list) (t : Synt
 
 let type_in_m (env : env) (t : Syntax.type_) = type_in_m_with_generics env [] t
 
-let rec checkArrayDimensions (t : type_) =
-  match t.tx with
+let checkArrayDimensions (env : env) (t : type_) =
+  match (resolve env t).tx with
   | TEComposed ("array", [_]) ->
       Error.raiseError "Array type declaration missing size. Use 'array(type, size)' format (e.g., 'array(real, 10)')"
         t.loc
-  | TEComposed ("array", [_; _]) ->
-      ()
-  | TELink t ->
-      checkArrayDimensions t
   | _ ->
       ()
 
@@ -314,8 +209,8 @@ let type_in_f (env : env) (t : Syntax.type_) = type_in_c (Env.exitFunction env) 
 (* The ordering operators are typed as 'a -> 'a -> bool so that they accept every numeric type,
    which also lets strings through. No backend agrees on what ordering two strings means, so they
    are rejected here. Equality and inequality stay available. *)
-let checkOrderedOperands (op : string) (e1 : exp) (e2 : exp) (loc : Loc.t) : unit =
-  let isString (e : exp) = match (unlink e.t).tx with TEId {id= "string"; n= None; _} -> true | _ -> false in
+let checkOrderedOperands (env : env) (op : string) (e1 : exp) (e2 : exp) (loc : Loc.t) : unit =
+  let isString (e : exp) = match (resolve env e.t).tx with TEId {id= "string"; n= None; _} -> true | _ -> false in
   match op with
   | ("<" | ">" | "<=" | ">=") when isString e1 || isString e2 ->
       Error.raiseError
@@ -324,8 +219,8 @@ let checkOrderedOperands (op : string) (e1 : exp) (e2 : exp) (loc : Loc.t) : uni
   | _ ->
       ()
 
-let applyFunction loc (args_t_in : type_ list) (ret : type_) (args_in : exp list) =
-  let rec loop (args_t : type_ list) args =
+let applyFunction (env : env) loc (args_t_in : type_ list) (ret : type_) (args_in : exp list) : env * type_ =
+  let rec loop env (args_t : type_ list) args =
     match (args_t, args) with
     | [], _ :: _ ->
         let required_n = CCList.length args_t_in in
@@ -340,38 +235,38 @@ let applyFunction loc (args_t_in : type_ list) (ret : type_) (args_in : exp list
         let msg = Pla.print {%pla|Missing arguments in function call. Expecting <#required_n#i> but got <#got_n#i>.|} in
         Error.raiseError msg loc
     | [], [] ->
-        ret
+        (env, ret)
     | h :: args_t, (ht : exp) :: args ->
-        unifyRaise ht.loc h ht.t ; loop args_t args
+        let env = unifyRaise env ht.loc h ht.t in
+        loop env args_t args
   in
-  loop args_t_in args_in
+  loop env args_t_in args_in
 
-let rec markExpMutable env exp loc =
+let rec markExpMutable (env : env) (exp : exp) loc : env =
   match exp.e with
   | EId name when String.equal name context_name -> (
-    match Env.contextArgument (Env.getCurrentFunction env) with Some {arg_t; _} -> Typed.setTypeMut arg_t | None -> () )
+    match Env.contextArgument (Env.getCurrentFunction env) with Some {arg_t; _} -> setTypeMut env arg_t | None -> env )
   | EId name -> (
-    match Env.lookVar env name loc with var -> Typed.setTypeMut var.t | exception Error.Errors _ -> () )
+    match Env.lookVar env name loc with var -> setTypeMut env var.t | exception Error.Errors _ -> env )
   | EMember (e, _) ->
       markExpMutable env e loc
   | EIndex {e; _} ->
       markExpMutable env e loc
   | _ ->
-      ()
+      env
 
-let propagateVariability env loc (args : Typed.arg list option) (exp_args : exp list) =
+let propagateVariability (env : env) loc (args : Typed.arg list option) (exp_args : exp list) : env =
   match args with
   | None ->
-      ()
+      env
   | Some args ->
       (* Only propagate if the lists have the same length to avoid iter2 failures.
        Length mismatches can happen with external functions or context arguments. *)
       if CCList.length args = CCList.length exp_args then
-        CCList.iter2
-          (fun (arg : arg) (exp : exp) -> if isTypeConst arg.t = false then markExpMutable env exp loc)
-          args exp_args
-
-let typeToMangledName = Typed.typeToMangledName
+        CCList.fold_left2
+          (fun env (arg : arg) (exp : exp) -> if isConst env arg.t then env else markExpMutable env exp loc)
+          env args exp_args
+      else env
 
 (* A parameter of a generic call whose argument is typechecked in a second pass *)
 type pending_generic_param = PendingArg of arg * Syntax.exp | ReadyParam of Typed.call_param
@@ -404,7 +299,7 @@ let pairGenericParams (generic_func : Typed.generic_function) (args : Syntax.exp
         loc
 
 let rec addContextArg (env : env) instance (f : Env.f) args loc =
-  match Env.activeContextArgument f with
+  match Env.activeContextArgument env f with
   | None ->
       (env, args)
   | Some callee -> (
@@ -413,11 +308,11 @@ let rec addContextArg (env : env) instance (f : Env.f) args loc =
       let fpath = callee.context_path in
       let ctx_t = caller.arg_t in
       let fctx_t = callee.arg_t in
-      let is_ctx_mutable = isTypeConst fctx_t = false in
+      let is_ctx_mutable = not (isConst env fctx_t) in
       match (Syntax.compare_path cpath fpath, instance) with
       | 0, None ->
           let e = {e= EId context_name; t= fctx_t; loc} in
-          let () = if is_ctx_mutable then markExpMutable env e loc in
+          let env = if is_ctx_mutable then markExpMutable env e loc else env in
           (env, e :: args)
       | 0, Some _ ->
           let msg =
@@ -432,31 +327,31 @@ let rec addContextArg (env : env) instance (f : Env.f) args loc =
               (0xFF land Hashtbl.hash (pathString fpath))
               (0xFF land Hashtbl.hash (pathString cpath))
           in
-          let rec generateName () =
-            let n = Env.nextFunctionTick env in
+          let rec generateName env =
+            let env, n = Env.nextFunctionTick env in
             let name = "inst_" ^ string_of_int n ^ number in
-            if checkMemExists env name || Env.checkConstantExists env name then generateName () else name
+            if checkMemExists env name || Env.checkConstantExists env name then generateName env else (env, name)
           in
-          let name = generateName () in
-          let env = Env.addVar env unify name fctx_t Env.LocalInst loc in
+          let env, name = generateName env in
+          let env = Env.addVar env name fctx_t Env.LocalInst loc in
           let e = {e= EMember ({e= EId context_name; t= ctx_t; loc}, name); loc; t= fctx_t} in
-          let () = if is_ctx_mutable then markExpMutable env e loc in
+          let env = if is_ctx_mutable then markExpMutable env e loc else env in
           (env, e :: args)
       (* intance without subscripts *)
       | _, Some (name, None) ->
-          let env = Env.addVar env unify name fctx_t Env.LocalInst loc in
+          let env = Env.addVar env name fctx_t Env.LocalInst loc in
           let e = {e= EMember ({e= EId context_name; t= ctx_t; loc}, name); loc; t= fctx_t} in
-          let () = if is_ctx_mutable then markExpMutable env e loc in
+          let env = if is_ctx_mutable then markExpMutable env e loc else env in
           (env, e :: args)
       (* array of instances *)
       | _, Some (name, Some index) ->
           let env, index = exp ~context:normal_context env index in
-          unifyRaise index.loc (C.int ~loc:Loc.default) index.t ;
+          let env = unifyRaise env index.loc (C.int ~loc:Loc.default) index.t in
           let t = C.array ~loc fctx_t in
-          let env = Env.addVar env unify name t Env.LocalInst loc in
+          let env = Env.addVar env name t Env.LocalInst loc in
           let e = {e= EMember ({e= EId context_name; t= ctx_t; loc}, name); loc; t= fctx_t} in
           let e = {e= EIndex {e; index}; loc; t= fctx_t} in
-          let () = if is_ctx_mutable then markExpMutable env e loc in
+          let env = if is_ctx_mutable then markExpMutable env e loc else env in
           (env, e :: args) )
 
 and call ~(context : Env.expr_context) (env : env) instance path args loc eloc =
@@ -471,14 +366,14 @@ and call ~(context : Env.expr_context) (env : env) instance path args loc eloc =
   | None -> (
     (* Try regular function lookup first *)
     match Env.tryLookFunctionCall env path with
-    | Some f when context.in_constant && Env.isFunctionActive f ->
+    | Some f when context.in_constant && Env.isFunctionActive env f ->
         Error.raiseError "Functions with memory variables cannot be called in constant expressions" loc
     | Some f ->
         (* Regular function call *)
         let env, args = exp_list ~context env args in
         let args_t, ret = f.t in
-        let t = applyFunction eloc args_t ret args in
-        let () = propagateVariability env loc f.args args in
+        let env, t = applyFunction env eloc args_t ret args in
+        let env = propagateVariability env loc f.args args in
         let env, args = addContextArg env instance f args loc in
         (env, {e= ECall {instance= None; path= f.path; args}; t; loc})
     | None -> (
@@ -525,17 +420,18 @@ and generic_call (env : env) (instance : (string * Syntax.exp option) option) (g
   (* Check each constant generic argument against its declared parameter type. This applies to
      literal (specialized) and variable (non-specialized) arguments alike. A fresh copy of the
      declared type is unified so the generic definition itself is never mutated. *)
-  let () =
-    CCList.iter
-      (function
+  let env =
+    CCList.fold_left
+      (fun env pending_param ->
+        match pending_param with
         | ReadyParam (Typed.CallGeneric {param= Typed.GParamConstant (_, param_type); value}) ->
-            let fresh_param_type = (Typed.make_type_copier ()).copy param_type in
-            unifyRaise value.loc fresh_param_type value.t
+            let _, fresh_param_type = Subst.copyType env.subst Subst.emptyCopyMapping param_type in
+            unifyRaise env value.loc fresh_param_type value.t
         | ReadyParam (Typed.CallGeneric {param= Typed.GParamType _ | Typed.GParamFunction _; _})
         | ReadyParam (Typed.CallArg _)
         | PendingArg _ ->
-            () )
-      pending
+            env )
+      env pending
   in
   (* Process regular function arguments with normal context *)
   let env, params =
@@ -552,19 +448,20 @@ and generic_call (env : env) (instance : (string * Syntax.exp option) option) (g
   let processed_function_args = Typed.callArgs params in
   (* Create fresh copies of the generic function's argument types for unification. This allows
      the types to be constrained by unification without polluting the original. *)
-  let copier = Typed.make_type_copier () in
-  let fresh_args =
-    CCList.filter_map
-      (function Typed.CallArg {arg; value} -> Some (copier.copy arg.t, value) | Typed.CallGeneric _ -> None)
-      params
+  let generic_args =
+    CCList.filter_map (function Typed.CallArg {arg; _} -> Some arg.t | Typed.CallGeneric _ -> None) params
   in
-  let fresh_ret_type = copier.copy (snd generic_func.t) in
+  let mapping, fresh_arg_types = Subst.copyTypes env.subst Subst.emptyCopyMapping generic_args in
+  let _, fresh_ret_type = Subst.copyType env.subst mapping (snd generic_func.t) in
   (* Unify argument types to constrain the fresh types *)
-  let () = CCList.iter (fun (fresh_t, (value : exp)) -> ignore (unify fresh_t value.t)) fresh_args in
-  let fresh_arg_types = CCList.map fst fresh_args in
+  let env =
+    CCList.fold_left2
+      (fun env fresh_t (value : exp) -> match unify env fresh_t value.t with Some env -> env | None -> env)
+      env fresh_arg_types processed_function_args
+  in
   (* Return type is now constrained through unification (may still be unbound if type depends on *)
   (* context not yet available - that's fine, it will be resolved by further unification) *)
-  let t = applyFunction eloc fresh_arg_types fresh_ret_type processed_function_args in
+  let env, t = applyFunction env eloc fresh_arg_types fresh_ret_type processed_function_args in
   (* Note: We don't propagate variability here because generic_func.args types haven't been
      marked mutable yet at this point. The mutability is determined LATER during instantiation
      when the body is processed (e.g., m[...] = value marks m mutable). Variability propagation
@@ -642,10 +539,10 @@ and exp ?(context = normal_context) (env : env) (e : Syntax.exp) : env * exp =
       let env, index = exp ~context env index in
       let t = C.unbound Loc.default in
       (* Allow indexing on arrays and lists *)
-      unifyRaise e.loc (C.indexable t) e.t ;
-      unifyRaise index.loc (C.int ~loc:Loc.default) index.t ;
+      let env = unifyRaise env e.loc (C.indexable t) e.t in
+      let env = unifyRaise env index.loc (C.int ~loc:Loc.default) index.t in
       (* if the type is a builtin (a value) do not unify the constness *)
-      let () = if (not context.in_constant) && not (Env.isBuiltinType t) then unifyConstness t e.t in
+      let env = if (not context.in_constant) && not (Env.isBuiltinType env t) then unifyConstness env t e.t else env in
       (env, {e= EIndex {e; index}; t; loc})
   | {e= SEArray []; loc} ->
       Error.raiseError "Empty array literal '[]' is not supported. Specify array elements or use array type declaration"
@@ -656,7 +553,7 @@ and exp ?(context = normal_context) (env : env) (e : Syntax.exp) : env * exp =
         CCList.fold_left
           (fun (env, acc, size) e ->
             let env, e = exp ~context env e in
-            unifyRaise e.loc h.t e.t ;
+            let env = unifyRaise env e.loc h.t e.t in
             (env, e :: acc, size + 1) )
           (env, [], 1) t
       in
@@ -671,8 +568,8 @@ and exp ?(context = normal_context) (env : env) (e : Syntax.exp) : env * exp =
       let env, then_ = exp ~context env then_ in
       let env, else_ = exp ~context env else_ in
       let t = then_.t in
-      unifyRaise cond.loc (C.bool ~loc) cond.t ;
-      unifyExpRaise then_.t else_ ;
+      let env = unifyRaise env cond.loc (C.bool ~loc) cond.t in
+      let env = unifyExpRaise env then_.t else_ in
       (env, {e= EIf {cond; then_; else_}; t; loc})
   (* we need to add a special case for int() in order to support conversion of enumerations *)
   | {e= SECall {instance= None; path= {id= "int"; n= None; _} as path; args= [arg] as args}; loc}
@@ -694,10 +591,10 @@ and exp ?(context = normal_context) (env : env) (e : Syntax.exp) : env * exp =
   | {e= SEOp (op, e1, e2); loc} ->
       let env, e1 = exp ~context env e1 in
       let env, e2 = exp ~context env e2 in
-      let () = checkOrderedOperands op e1 e2 loc in
+      let () = checkOrderedOperands env op e1 e2 loc in
       let f = if context.in_constant then Env.lookOperatorInModule env op else Env.lookOperator env op in
       let args_t, ret = f.t in
-      let t = applyFunction e.loc args_t ret [e1; e2] in
+      let env, t = applyFunction env e.loc args_t ret [e1; e2] in
       (env, {e= EOp (op, e1, e2); t; loc})
   | {e= SEUnOp (op, e); loc} ->
       let env, e = exp ~context env e in
@@ -705,7 +602,7 @@ and exp ?(context = normal_context) (env : env) (e : Syntax.exp) : env * exp =
         if context.in_constant then Env.lookOperatorInModule env ("u" ^ op) else Env.lookOperator env ("u" ^ op)
       in
       let args_t, ret = f.t in
-      let t = applyFunction e.loc args_t ret [e] in
+      let env, t = applyFunction env e.loc args_t ret [e] in
       (env, {e= EUnOp (op, e); t; loc})
   | {e= SEMember (e1, m); loc} -> (
     (* First, try to interpret this as an enum reference if e1 is an SEId or SEEnum *)
@@ -760,7 +657,7 @@ and exp ?(context = normal_context) (env : env) (e : Syntax.exp) : env * exp =
     | _ -> (
         (* For non-SEId expressions, use normal member access *)
         let env, e1 = exp ~context env e1 in
-        match (unlink e1.t).tx with
+        match (resolve env e1.t).tx with
         | TEId path -> (
           match Env.lookType env path loc with
           | {path; descr= Record members; _} -> (
@@ -768,18 +665,20 @@ and exp ?(context = normal_context) (env : env) (e : Syntax.exp) : env * exp =
             | None ->
                 Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
             | Some {t; _} ->
-                let t = refreshConstness t in
+                let t = Subst.refreshConstness env.subst t in
                 (* if the type is a builtin (a value) do not unify the constness *)
-                let () = if (not context.in_constant) && not (Env.isBuiltinType t) then unifyConstness t e1.t in
+                let env =
+                  if (not context.in_constant) && not (Env.isBuiltinType env t) then unifyConstness env t e1.t else env
+                in
                 (env, {e= EMember (e1, m); t; loc}) )
           | _ ->
-              let t = Pla.print (Typed.print_type_ e1.t) in
+              let t = Pla.print (printType env e1.t) in
               let e = Pla.print (Typed.print_exp e1) in
               Error.raiseError
                 ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.")
                 loc )
         | _ ->
-            let t = Pla.print (Typed.print_type_ e1.t) in
+            let t = Pla.print (printType env e1.t) in
             let e = Pla.print (Typed.print_exp e1) in
             Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc
         ) )
@@ -820,7 +719,7 @@ and exp ?(context = normal_context) (env : env) (e : Syntax.exp) : env * exp =
                 | None ->
                     Error.raiseError ("The name '" ^ id ^ "' does not belong to type '" ^ pathString path ^ "'.") id_loc
                 | Some var ->
-                    unifyRaise v.loc var.t v.t ;
+                    let env = unifyRaise env v.loc var.t v.t in
                     (env, (id, v) :: acc) )
               (env, []) elems
           in
@@ -866,7 +765,7 @@ and lexp ?(const = false) (env : env) (e : Syntax.lexp) : env * lexp =
   | {l= SLId name; loc} ->
       let var = Env.lookVar env name loc in
       let t = var.t in
-      if not const then setTypeMut t ;
+      let env = if const then env else setTypeMut env t in
       let e =
         match var.kind with
         | Val ->
@@ -896,12 +795,12 @@ and lexp ?(const = false) (env : env) (e : Syntax.lexp) : env * lexp =
       let env, e = lexp ~const env e in
       let env, index = exp env index in
       let t = C.unbound loc in
-      unifyRaise index.loc (C.int ~loc) index.t ;
-      unifyRaise e.loc (C.array ~fixed:false ~loc t) e.t ;
+      let env = unifyRaise env index.loc (C.int ~loc) index.t in
+      let env = unifyRaise env e.loc (C.array ~fixed:false ~loc t) e.t in
       (env, {l= LIndex {e; index}; t; loc})
   | {l= SLMember (e, m); loc} -> (
       let env, e = lexp ~const env e in
-      match (unlink e.t).tx with
+      match (resolve env e.t).tx with
       | TEId path -> (
         match Env.lookType env path loc with
         | {path; descr= Record members; _} -> (
@@ -909,17 +808,17 @@ and lexp ?(const = false) (env : env) (e : Syntax.lexp) : env * lexp =
           | None ->
               Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
           | Some {t; _} ->
-              let t = refreshConstness t in
+              let t = Subst.refreshConstness env.subst t in
               (* if the type is a builtin (a value) do not unify the constness *)
-              let t = if not (Env.isBuiltinType t) then {t with const= e.t.const} else t in
+              let t = if not (Env.isBuiltinType env t) then {t with const= e.t.const} else t in
               (env, {l= LMember (e, m); t; loc}) )
         | _ ->
-            let t = Pla.print (Typed.print_type_ e.t) in
+            let t = Pla.print (printType env e.t) in
             let e = Pla.print (Typed.print_lexp e) in
             Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc
         )
       | _ ->
-          let t = Pla.print (Typed.print_type_ e.t) in
+          let t = Pla.print (printType env e.t) in
           let e = Pla.print (Typed.print_lexp e) in
           Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc )
 
@@ -943,12 +842,14 @@ and dexp (env : env) (e : Syntax.dexp) (kind : Env.local_kind) : env * dexp =
   | {d= SDTyped (e, t); _} ->
       let env, e = dexp env e kind in
       let t = type_in_f env t in
-      checkArrayDimensions t ; unifyRaise ~bind:true e.loc t e.t ; (env, e)
+      checkArrayDimensions env t ;
+      let env = unifyRaise ~bind:true env e.loc t e.t in
+      (env, e)
   | {d= SDId (name, dims); loc} ->
       let t =
         match dims with Some size -> C.array ~loc ~size:(C.size ~loc size) (C.unbound loc) | None -> C.unbound loc
       in
-      let env = Env.addVar env unify name t kind loc in
+      let env = Env.addVar env name t kind loc in
       (env, {d= DId (name, dims); t; loc})
 
 let rec dexp_to_lexp (d : Syntax.dexp) : Syntax.lexp =
@@ -968,8 +869,8 @@ let rec dexp_to_lexp (d : Syntax.dexp) : Syntax.lexp =
 
 let stmt_block (stmts : stmt list) = match stmts with [s] -> s | _ -> {s= StmtBlock stmts; loc= Loc.default}
 
-let makeIterWhile (env : env) name id_loc value body loc =
-  let tick = Env.nextFunctionTick env in
+let makeIterWhile (env : env) name id_loc value body loc : env * Syntax.stmt =
+  let env, tick = Env.nextFunctionTick env in
   let itname = name ^ "__" ^ string_of_int tick in
   let open Syntax in
   let int_type = {t= STId {id= "int"; n= None; loc= id_loc}; loc} in
@@ -981,7 +882,7 @@ let makeIterWhile (env : env) name id_loc value body loc =
   let new_body = Syntax.ReaplaceId.inStmt [(name, itname)] {s= SStmtBlock [body; incr]; loc} in
   let cond = {e= SEOp ("<", rhs, value); loc} in
   let while_s = {s= SStmtWhile (cond, new_body); loc} in
-  {s= SStmtBlock [decl; while_s]; loc}
+  (env, {s= SStmtBlock [decl; while_s]; loc})
 
 let makeIfOfMatch env e first_case other_cases =
   let rec makeComparison (e : Syntax.exp) (p : Syntax.pattern) =
@@ -1087,12 +988,14 @@ let rec stmt_with_type_substitution (env : env) (type_substitution_map : (string
     | {Syntax.d= Syntax.SDTyped (e, t); _} ->
         let env, e = dexp_with_substitution env e kind in
         let t = type_in_m_with_substitution env type_substitution_map t in
-        checkArrayDimensions t ; unifyRaise ~bind:true e.loc t e.t ; (env, e)
+        checkArrayDimensions env t ;
+        let env = unifyRaise ~bind:true env e.loc t e.t in
+        (env, e)
     | {Syntax.d= Syntax.SDId (name, dims); loc} ->
         let t =
           match dims with Some size -> C.array ~loc ~size:(C.size ~loc size) (C.unbound loc) | None -> C.unbound loc
         in
-        let env = Env.addVar env unify name t kind loc in
+        let env = Env.addVar env name t kind loc in
         (env, {d= DId (name, dims); t; loc})
     | {Syntax.d= Syntax.SDWild; loc} ->
         let t = C.noreturn loc in
@@ -1101,13 +1004,14 @@ let rec stmt_with_type_substitution (env : env) (type_substitution_map : (string
   (* Use the same stmt function but with our type-substituting dexp *)
   let env, stmts = stmt_generic env dexp_with_substitution return s in
   (* Resolve any type intrinsics in the resulting statements *)
-  let stmts = CCList.map (resolveTypeIntrinsicsInStmt type_substitution_map) stmts in
+  let resolved_map = CCList.map (fun (name, t) -> (name, Subst.zonk env.subst t)) type_substitution_map in
+  let stmts = CCList.map (resolveTypeIntrinsicsInStmt resolved_map) stmts in
   (env, stmts)
 
 and type_in_m_with_substitution (env : env) (type_substitution_map : (string * type_) list) (t : Syntax.type_) =
   match t with
   | {t= STUnbound; loc} ->
-      {tx= TEUnbound None; loc; const= C.const ()}
+      C.unbound loc
   | {t= STGenericType id; loc} -> (
     (* Generic type parameter - substitute with concrete type *)
     try
@@ -1161,12 +1065,14 @@ and stmt_with_generics (env : env) (generic_params : string list) (return : type
     | {Syntax.d= Syntax.SDTyped (e, t); _} ->
         let env, e = dexp_generic env e kind in
         let t = type_in_m_with_generics env generic_params t in
-        checkArrayDimensions t ; unifyRaise ~bind:true e.loc t e.t ; (env, e)
+        checkArrayDimensions env t ;
+        let env = unifyRaise ~bind:true env e.loc t e.t in
+        (env, e)
     | {Syntax.d= Syntax.SDId (name, dims); loc} ->
         let t =
           match dims with Some size -> C.array ~loc ~size:(C.size ~loc size) (C.unbound loc) | None -> C.unbound loc
         in
-        let env = Env.addVar env unify name t kind loc in
+        let env = Env.addVar env name t kind loc in
         (env, {d= DId (name, dims); t; loc})
     | {Syntax.d= Syntax.SDWild; loc} ->
         let t = C.noreturn loc in
@@ -1190,8 +1096,8 @@ and stmt_generic (env : env) (dexp_func : env -> Syntax.dexp -> Env.local_kind -
       let env, dlhs = dexp_func env lhs LocalVal in
       let env, lhs = lexp env (dexp_to_lexp lhs) in
       let env, rhs = exp env rhs in
-      unifyRaise ~bind:true lhs.loc dlhs.t lhs.t ;
-      unifyExpRaise ~bind:true dlhs.t rhs ;
+      let env = unifyRaise ~bind:true env lhs.loc dlhs.t lhs.t in
+      let env = unifyExpRaise ~bind:true env dlhs.t rhs in
       (env, [{s= StmtVal dlhs; loc}; {s= StmtBind (lhs, rhs); loc}])
   | {s= SStmtMem (lhs, None, tags); loc} ->
       let env, lhs = dexp_func env lhs (LocalMem tags) in
@@ -1200,7 +1106,7 @@ and stmt_generic (env : env) (dexp_func : env -> Syntax.dexp -> Env.local_kind -
       let env, dlhs = dexp_func env lhs (LocalMem tags) in
       let env, lhs = lexp env (dexp_to_lexp lhs) in
       let env, rhs = exp env rhs in
-      unifyExpRaise ~bind:true lhs.t rhs ;
+      let env = unifyExpRaise ~bind:true env lhs.t rhs in
       (env, [{s= StmtMem (dlhs, tags); loc}; {s= StmtBind (lhs, rhs); loc}])
   (* The remaining statements have no declaration of their own, so they are handled exactly like
      in [stmt], recursing through [stmt_generic] so that any nested declaration keeps using the
@@ -1208,15 +1114,15 @@ and stmt_generic (env : env) (dexp_func : env -> Syntax.dexp -> Env.local_kind -
   | {s= SStmtBind (lhs, rhs); loc} ->
       let env, lhs = lexp env lhs in
       let env, rhs = exp env rhs in
-      unifyExpRaise ~bind:true lhs.t rhs ;
+      let env = unifyExpRaise ~bind:true env lhs.t rhs in
       (env, [{s= StmtBind (lhs, rhs); loc}])
   | {s= SStmtReturn e; loc} ->
       let env, e = exp env e in
-      unifyExpRaise return e ;
+      let env = unifyExpRaise env return e in
       (env, [{s= StmtReturn e; loc}])
   | {s= SStmtIf (cond, then_, else_); loc} ->
       let env, cond = exp env cond in
-      unifyRaise cond.loc (C.bool ~loc) cond.t ;
+      let env = unifyRaise env cond.loc (C.bool ~loc) cond.t in
       let env, then_ = stmt_generic env dexp_func return then_ in
       let env, else_ =
         match else_ with
@@ -1229,11 +1135,11 @@ and stmt_generic (env : env) (dexp_func : env -> Syntax.dexp -> Env.local_kind -
       (env, [{s= StmtIf (cond, stmt_block then_, else_); loc}])
   | {s= SStmtWhile (cond, body); loc} ->
       let env, cond = exp env cond in
-      unifyRaise cond.loc (C.bool ~loc) cond.t ;
+      let env = unifyRaise env cond.loc (C.bool ~loc) cond.t in
       let env, body = stmt_generic env dexp_func return body in
       (env, [{s= StmtWhile (cond, stmt_block body); loc}])
   | {s= SStmtIter {id= name, id_loc; value; body}; loc} ->
-      let while_s = makeIterWhile env name id_loc value body loc in
+      let env, while_s = makeIterWhile env name id_loc value body loc in
       stmt_generic env dexp_func return while_s
   | {s= SStmtMatch {e; first_case; other_cases}; _} ->
       let if_stmt = makeIfOfMatch env e first_case other_cases in
@@ -1258,8 +1164,8 @@ let rec stmt (env : env) (return : type_) (s : Syntax.stmt) : env * stmt list =
       let env, dlhs = dexp env lhs LocalVal in
       let env, lhs = lexp ~const:true env (dexp_to_lexp lhs) in
       let env, rhs = exp env rhs in
-      unifyRaise ~bind:true lhs.loc dlhs.t lhs.t ;
-      unifyExpRaise ~bind:true dlhs.t rhs ;
+      let env = unifyRaise ~bind:true env lhs.loc dlhs.t lhs.t in
+      let env = unifyExpRaise ~bind:true env dlhs.t rhs in
       (env, [{s= StmtVal dlhs; loc}; {s= StmtBind (lhs, rhs); loc}])
   | {s= SStmtMem (lhs, None, tags); loc} ->
       let env, lhs = dexp env lhs (LocalMem tags) in
@@ -1268,30 +1174,30 @@ let rec stmt (env : env) (return : type_) (s : Syntax.stmt) : env * stmt list =
       let env, dlhs = dexp env lhs (LocalMem tags) in
       let env, lhs = lexp env (dexp_to_lexp lhs) in
       let env, rhs = exp env rhs in
-      unifyExpRaise ~bind:true lhs.t rhs ;
+      let env = unifyExpRaise ~bind:true env lhs.t rhs in
       (env, [{s= StmtMem (dlhs, tags); loc}; {s= StmtBind (lhs, rhs); loc}])
   | {s= SStmtBind (lhs, rhs); loc} ->
       let env, lhs = lexp env lhs in
       let env, rhs = exp env rhs in
-      unifyExpRaise ~bind:true lhs.t rhs ;
+      let env = unifyExpRaise ~bind:true env lhs.t rhs in
       (env, [{s= StmtBind (lhs, rhs); loc}])
   | {s= SStmtReturn e; loc} ->
       let env, e = exp env e in
-      unifyExpRaise return e ;
+      let env = unifyExpRaise env return e in
       (env, [{s= StmtReturn e; loc}])
   | {s= SStmtIf (cond, then_, else_); loc} ->
       let env, cond = exp env cond in
-      unifyRaise cond.loc (C.bool ~loc) cond.t ;
+      let env = unifyRaise env cond.loc (C.bool ~loc) cond.t in
       let env, then_ = stmt env return then_ in
       let env, else_ = stmt_opt env return else_ in
       (env, [{s= StmtIf (cond, stmt_block then_, else_); loc}])
   | {s= SStmtWhile (cond, s); loc} ->
       let env, cond = exp env cond in
-      unifyRaise cond.loc (C.bool ~loc) cond.t ;
+      let env = unifyRaise env cond.loc (C.bool ~loc) cond.t in
       let env, s = stmt env return s in
       (env, [{s= StmtWhile (cond, stmt_block s); loc}])
   | {s= SStmtIter {id= name, id_loc; value; body}; loc} ->
-      let while_s = makeIterWhile env name id_loc value body loc in
+      let env, while_s = makeIterWhile env name id_loc value body loc in
       stmt env return while_s
   | {s= SStmtMatch {e; first_case; other_cases}; _} ->
       let if_stmt = makeIfOfMatch env e first_case other_cases in
@@ -1355,7 +1261,7 @@ let convertArgumentsWithGenerics env (generic_params : string list) (args : Synt
 
 let registerMultiReturnMem (env : env) name t loc =
   let _, ret = t in
-  match unlink ret with
+  match resolve env ret with
   | {tx= TEComposed ("tuple", elems); _} ->
       let names = CCList.mapi (fun i t -> (pathString name ^ "_ret_" ^ string_of_int i, t)) elems in
       CCList.fold_left (fun env (name, t) -> Env.addReturnVar env name t loc) env names
@@ -1382,20 +1288,23 @@ let customInitializer (env : env) tags name = if Ptags.has tags "init" then Env.
 let bodyReturnType (specified_ret : type_ option) (loc : Loc.t) : type_ =
   match specified_ret with Some t -> t | None -> C.noreturn loc
 
-let reportReturnTypeMismatch is_placeholder loc (specified_ret : type_ option) (body : Syntax.stmt) (ret : type_) =
-  match (specified_ret, ret) with
-  | None, {tx= Typed.TENoReturn; _} ->
-      (* A function without return statements returns unit. Fixing it here prevents the first
-         caller from turning it into a function of any type. *)
-      unifyRaise loc (C.unit ~loc) ret
-  | None, _ ->
-      ()
+let reportReturnTypeMismatch (env : env) is_placeholder loc (specified_ret : type_ option) (body : Syntax.stmt)
+    (ret : type_) : env =
+  match (specified_ret, Subst.boundTo env.subst ret) with
+  | None, None ->
+      (* The return type is only bound by the return statements: a function without them returns
+         unit. Fixing it here prevents the first caller from turning it into a function of any
+         type. *)
+      unifyRaise env loc (C.unit ~loc) ret
+  | None, Some _ ->
+      env
   | Some t, _ ->
       (* A placeholder function has no body to return from, and a unit function has nothing to return *)
-      let returns_unit = match (unlink t).tx with TEId {id= "unit"; n= None; _} -> true | _ -> false in
+      let returns_unit = match (resolve env t).tx with TEId {id= "unit"; n= None; _} -> true | _ -> false in
       if (not is_placeholder) && (not returns_unit) && not (syntax_has_return body) then
-        let t = Pla.print (print_type_ t) in
+        let t = Pla.print (printType env t) in
         Error.raiseError ("This function is expected to have type '" ^ t ^ "' but nothing was returned.") loc
+      else env
 
 let rec function_def (iargs : Args.args) (env : env) (def : Syntax.function_def) : env * (function_def * stmt) =
   let specified_ret = getReturnType env def.t in
@@ -1410,7 +1319,7 @@ let rec function_def (iargs : Args.args) (env : env) (def : Syntax.function_def)
   let env = customInitializer env def.tags path in
   let is_root = isRoot iargs path || isPdRoot iargs def.tags in
   let is_placeholder = Ptags.has def.tags "placeholder" in
-  let () = reportReturnTypeMismatch is_placeholder def.loc specified_ret def.body ret in
+  let env = reportReturnTypeMismatch env is_placeholder def.loc specified_ret def.body ret in
   (env, ({name= path; args; t; loc= def.loc; tags= def.tags; next; is_root}, stmt_block body))
 
 and function_def_opt (iargs : Args.args) (env : env) def_opt =
@@ -1422,35 +1331,36 @@ and function_def_opt (iargs : Args.args) (env : env) def_opt =
       let env, def_body = function_def iargs env def in
       (env, Some def_body)
 
-let applyMutableTag (args : Typed.arg list) (tags : Typed.tag list) =
+(* Marks the arguments listed in the tag @[mutable] as mutable or constant *)
+let applyMutableTag (env : env) (args : Typed.arg list) (tags : Typed.tag list) : env =
   match Ptags.getArguments tags "mutable" with
   | None ->
-      args
+      env
   | Some [] ->
-      args
+      env
   | Some vars ->
-      CCList.map
-        (fun (arg : arg) ->
+      CCList.fold_left
+        (fun env (arg : arg) ->
           match CCList.find_opt (fun (n, _, _) -> String.compare n arg.name = 0) vars with
           | Some (_, {g= TagBool mut; _}, _) ->
-              setTypeConstness arg.t (not mut) ; arg
+              {env with subst= Subst.setConst env.subst arg.t (not mut)}
           | _ ->
-              arg )
-        args
+              env )
+        env args
 
 let ext_function (iargs : Args.args) (env : env) (def : Syntax.ext_def) : env * function_def =
   let ret = getOptType env def.loc def.t in
   let args = convertArguments env def.args in
-  let args = applyMutableTag args def.tags in
+  let env = applyMutableTag env args def.tags in
   let env, path, t = Env.enterFunction env def.name args ret def.loc in
   let env = Env.exitFunction env in
   let next = addGeneratedFunctions def.tags def.name None in
   let env, next = function_def_opt iargs env next in
   (env, {name= path; args; t; loc= def.loc; tags= def.tags; next; is_root= false})
 
-let getContextArgument (env : env) (path : path) loc : arg option =
+let getContextArgument (env : env) (path : path) loc : env * arg option =
   match Env.getCurrentContext env with
-  | Some context when not (Map.is_empty context.members) -> (
+  | Some context when not (Map.is_empty (Env.contextMembers env context)) -> (
       let m = Env.getCurrentModule env in
       let f =
         match Map.find path.id m.functions with
@@ -1461,22 +1371,23 @@ let getContextArgument (env : env) (path : path) loc : arg option =
       in
       match Env.contextArgument f with
       | Some {arg_t; _} ->
-          let () = Env.Map.fold (fun _ (var : var) () -> unifyConstness arg_t var.t) () context.members in
-          Some {name= context_name; t= arg_t; loc}
+          let members = Env.contextMembers env context in
+          let env = Env.Map.fold (fun _ (var : var) env -> unifyConstness env arg_t var.t) env members in
+          (env, Some {name= context_name; t= arg_t; loc})
       | None ->
-          None )
+          (env, None) )
   | Some _ | None ->
-      None
+      (env, None)
 
-let insertContextArgument (env : env) (def : function_def) : function_def =
+let insertContextArgument (env : env) (def : function_def) : env * function_def =
   (* Check if the function already has a _ctx argument *)
   let already_has_ctx = match def.args with {name; _} :: _ when String.equal name context_name -> true | _ -> false in
-  if already_has_ctx then def
+  if already_has_ctx then (env, def)
   else
     match getContextArgument env def.name def.loc with
-    | None ->
-        def
-    | Some arg ->
+    | env, None ->
+        (env, def)
+    | env, Some arg ->
         let rec loop (next : (function_def * stmt) option) : (function_def * stmt) option =
           match next with
           | Some (def, body) ->
@@ -1486,7 +1397,7 @@ let insertContextArgument (env : env) (def : function_def) : function_def =
               None
         in
         let next = loop def.next in
-        {def with args= arg :: def.args; next}
+        (env, {def with args= arg :: def.args; next})
 
 (* A constant declaration only names one value, so the parenthesized and annotated forms are
    unwrapped to reach the identifier that gives the constant its name and dimensions. *)
@@ -1505,14 +1416,16 @@ let rec top_dexp (env : env) (d : Syntax.dexp) =
       let t =
         match dims with Some size -> C.array ~loc ~size:(C.size ~loc size) (C.unbound loc) | None -> C.unbound loc
       in
-      (*let env = Env.addVar env unify name t kind loc in*)
+      (*let env = Env.addVar env name t kind loc in*)
       (env, {d= DId (name, dims); t; loc})
   | {d= SDGroup e; _} ->
       top_dexp env e
   | {d= SDTyped (e, t); _} ->
       let env, e = top_dexp env e in
       let t = type_in_m env t in
-      checkArrayDimensions t ; unifyRaise ~bind:true e.loc t e.t ; (env, e)
+      checkArrayDimensions env t ;
+      let env = unifyRaise ~bind:true env e.loc t e.t in
+      (env, e)
   | {d= SDWild; loc} ->
       Error.raiseError "A constant needs a name." loc
   | {d= SDTuple _; loc} ->
@@ -1530,13 +1443,13 @@ let convert_generic_param (env : env) (param : Syntax.generic_param) : Typed.gen
           (fun t ->
             let t' = type_in_m env t in
             (* Validate that the constraint type is actually a function type *)
-            ( match (unlink t').tx with
+            ( match (resolve env t').tx with
             | TEFunction (_, _) ->
                 ()
             | _ ->
                 Error.raiseError
                   (Printf.sprintf "Generic function parameter '%s' type constraint must be a function type, got %s" name
-                     (Pla.print (Typed.print_type_ t')) )
+                     (Pla.print (printType env t')) )
                   Loc.default ) ;
             t' (* Store the constraint type, but actual function type determined at instantiation *) )
           type_opt
@@ -1551,7 +1464,7 @@ let convert_generic_param (env : env) (param : Syntax.generic_param) : Typed.gen
       if String.length name = 0 then Error.raiseError "Generic constant parameter name cannot be empty" Loc.default ;
       let converted_type = type_in_m env type_expr in
       (* Validate that the type is a valid constant type (allow unbound for inference) *)
-      ( match (unlink converted_type).tx with
+      ( match (resolve env converted_type).tx with
       | TEId {id= "int" | "real" | "bool" | "string"; _} ->
           ()
       | TEUnbound _ ->
@@ -1559,11 +1472,11 @@ let convert_generic_param (env : env) (param : Syntax.generic_param) : Typed.gen
       | _ ->
           Error.raiseError
             (Printf.sprintf "Generic constant parameter '%s' must have type int, real, bool, or string, got %s" name
-               (Pla.print (Typed.print_type_ converted_type)) )
+               (Pla.print (printType env converted_type)) )
             Loc.default ) ;
       Typed.GParamConstant (name, converted_type)
 
-let create_generic_function (env : env) (def : Syntax.function_def) : Typed.generic_function =
+let create_generic_function (env : env) (def : Syntax.function_def) : env * Typed.generic_function =
   (* Validate generic function has generic parameters *)
   if CCList.length def.generic_params = 0 then
     Error.raiseError (Printf.sprintf "Function '%s' marked as template but has no generic parameters" def.name) def.loc ;
@@ -1612,17 +1525,18 @@ let create_generic_function (env : env) (def : Syntax.function_def) : Typed.gene
   (* Create function type from regular arguments only (exclude template params) *)
   let arg_types = CCList.map (fun (arg : Typed.arg) -> arg.t) args in
   (* Capture the type index at definition time - this ensures specialized types appear near the generic's position *)
-  let type_index = Env.getGlobalTick () in
-  { name= def.name
-  ; args
-  ; params
-  ; t= (arg_types, inferred_ret)
-  ; type_param_map= generic_type_map
-  ; body= def.body
-  ; next= def.next
-  ; loc= def.loc
-  ; tags= def.tags
-  ; type_index }
+  let env, type_index = Env.nextTypeIndex env in
+  ( env
+  , { name= def.name
+    ; args
+    ; params
+    ; t= (arg_types, inferred_ret)
+    ; type_param_map= generic_type_map
+    ; body= def.body
+    ; next= def.next
+    ; loc= def.loc
+    ; tags= def.tags
+    ; type_index } )
 
 let has_generic_params (def : Syntax.function_def) : bool = not (CCList.is_empty def.generic_params)
 
@@ -1632,13 +1546,13 @@ let rec top_stmt (iargs : Args.args) (env : env) (s : Syntax.top_stmt) : env * t
       failwith "Parser error"
   | {top= STopFunction def; loc} when has_generic_params def ->
       (* Store generic function and emit placeholder to mark where specializations go *)
-      let generic_func = create_generic_function env def in
+      let env, generic_func = create_generic_function env def in
       let env = Env.addGeneric env generic_func in
       (env, [{top= TopGenericPlaceholder def.name; loc}])
   | {top= STopFunction def; _} ->
       let env = Env.createContextForFunction env def.name def.loc in
       let env, (def, body) = function_def iargs env def in
-      let def = insertContextArgument env def in
+      let env, def = insertContextArgument env def in
       let env = Env.exitContext env in
       (* Generic function instantiation is now handled in toprog.ml when processing EGenCall *)
       (env, [{top= TopFunction (def, body); loc= def.loc}])
@@ -1667,10 +1581,10 @@ let rec top_stmt (iargs : Args.args) (env : env) (s : Syntax.top_stmt) : env * t
     | Some (name, dim) ->
         let env, d = top_dexp env d in
         let env, e = exp ~context:constant_context env e in
-        unifyRaise e.loc d.t e.t ;
+        let env = unifyRaise env e.loc d.t e.t in
         let m = Env.getCurrentModule env in
         let path = Env.getPath m name loc in
-        let env = Env.addConstant env unify name d.t loc in
+        let env = Env.addConstant env name d.t loc in
         (env, [{top= TopConstant (path, dim, d.t, e, None); loc}]) )
 
 and top_stmt_list (iargs : Args.args) (env : env) (s : Syntax.top_stmt list) : env * top_stmt list =
@@ -1746,9 +1660,9 @@ let removeExistingTypes set types =
 
 (* Instantiate the elaborator with the pieces of the typechecker it needs *)
 module Elab = Elaboration.Make (struct
-  let unify t1 t2 = unify t1 t2
+  let unify env t1 t2 = unify env t1 t2
 
-  let unifyRaise ?bind loc t1 t2 = unifyRaise ?bind loc t1 t2
+  let unifyRaise ?bind env loc t1 t2 = unifyRaise ?bind env loc t1 t2
 
   let function_def_opt = function_def_opt
 
@@ -1767,7 +1681,9 @@ let typecheck_single (iargs : Args.args) (env : env) (h : Parse.parsed_file) : e
   let env = Env.enterModule env h.name in
   let env, stmt = top_stmt_list iargs env h.stmts in
   let env = Env.exitModule env in
-  let stmt = Elab.elaborate ~reuse_existing:true iargs env [(h.name, stmt)] in
+  let env, stmt = Elab.elaborate ~reuse_existing:true iargs env [(h.name, stmt)] in
+  let env = Env.zonk env in
+  let stmt = Subst.zonkProgram env.subst stmt in
   let types = removeExistingTypes set (createTypes env) in
   (env, stmt @ types)
 
@@ -1804,7 +1720,11 @@ let typecheck (iargs : Args.args) (parsed : Parse.parsed_file list) : env * (str
 (* Type checking with elaboration - for backwards compatibility.
    This is equivalent to calling typecheck followed by Elab.elaborate. *)
 let typecheck_and_elaborate (iargs : Args.args) (parsed : Parse.parsed_file list) : env * top_stmt list =
-  let env, module_stmts = typecheck iargs parsed in
-  let elaborated = Elab.elaborate iargs env module_stmts in
+  let env, module_stmts = Util.Profile.time "Typechecking: infer" (fun () -> typecheck iargs parsed) in
+  let env, elaborated = Util.Profile.time "Typechecking: elaborate" (fun () -> Elab.elaborate iargs env module_stmts) in
+  let env = Util.Profile.time "Typechecking: resolve env" (fun () -> Env.zonk env) in
+  let elaborated =
+    Util.Profile.time "Typechecking: resolve program" (fun () -> Subst.zonkProgram env.subst elaborated)
+  in
   let types = createTypes env in
   (env, types @ elaborated)

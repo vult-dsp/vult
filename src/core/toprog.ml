@@ -61,10 +61,8 @@ let list mapper (env : env) (state : state) (l : 'a list) =
   in
   (state, CCList.rev rev)
 
-let rec getDim (t : Typed.type_) =
+let getDim (t : Typed.type_) =
   match t.tx with
-  | T.TELink t ->
-      getDim t
   | T.TESize dim ->
       dim
   | _ ->
@@ -87,7 +85,7 @@ let rec type_ ?(const = false) (env : env) (state : state) (t : Typed.type_) =
   let const = const || Typed.isTypeConst t in
   let loc = t.loc in
   match t.tx with
-  | T.TENoReturn ->
+  | T.TENoReturn _ ->
       (state, {t= TVoid None; const; loc})
   | T.TEUnbound _ ->
       Error.raiseError "The type could not be infered. Please add a type annotation." t.loc
@@ -118,7 +116,7 @@ let rec type_ ?(const = false) (env : env) (state : state) (t : Typed.type_) =
             failwith "unknown type"
         | Some {descr= Enum _; _} ->
             (state, {t= TInt; const; loc})
-        | Some {descr= Record members; _} when Maps.Map.is_empty !members ->
+        | Some {descr= Record members; _} when Env.Map.is_empty members ->
             (state, {t= TEmptyType; const; loc})
         | Some {descr= Record _; _} when CCList.mem ~eq:String.equal full state.converting ->
             Error.raiseError ("The type '" ^ p.id ^ "' cannot contain itself.") loc
@@ -137,8 +135,6 @@ let rec type_ ?(const = false) (env : env) (state : state) (t : Typed.type_) =
         | Some {descr= Alias (_, alias_of); _} ->
             (* The companion functions share the context of the function they belong to *)
             type_ ~const env state {t with tx= T.TEId alias_of} ) )
-  | T.TELink t ->
-      type_ ~const env state t
   | T.TEComposed ("array", [t; dim]) ->
       let state, t = type_ ~const env state t in
       let dim = getDim dim in

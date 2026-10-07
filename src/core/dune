@@ -4,6 +4,7 @@
  (modules
   Builtin
   Typed
+  Subst
   Analysis
   Local_optimization
   Prog
