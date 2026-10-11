@@ -773,7 +773,7 @@ let print_type_alias alias_name base_name =
     public <#alias_name#s>() { super(); }
 }|}
 
-let print_top_stmt (args : Util.Args.args) root_context_types t =
+let print_top_stmt (args : Util.Args.args) root_context_types (aliases : (string * string) list) t =
   match t.top with
   | TopFunction (func_def, body) ->
       let is_performance = args.template = Some "performance" in
@@ -794,25 +794,22 @@ let print_top_stmt (args : Util.Args.args) root_context_types t =
       let force_public = is_performance || is_root_adjacent || is_root_alloc in
       let def = print_function_def ~force_public ~is_performance func_def in
       let name = func_def.name in
-      (* Check if this is a type alias allocation function *)
-      if String.contains name '_' && CCString.suffix ~suf:"_type_alloc" name && List.length func_def.args > 0 then
-        let parts = String.split_on_char '_' name in
-        let len = List.length parts in
-        if len >= 4 then
-          (* This is a type alias allocation function - override body to create correct type *)
-          let name_len = String.length name in
-          let alias_type = String.sub name 0 (name_len - 6) in
-          (* Remove "_alloc" *)
+      (* The allocation function of an alias returns its base type, but in Java the alias is a
+         subclass that has to be created itself. *)
+      let alias_type = CCString.chop_suffix ~suf:"_alloc" name in
+      let is_alias_alloc =
+        match alias_type with Some alias -> List.mem_assoc alias aliases && func_def.args <> [] | None -> false
+      in
+      begin match (is_alias_alloc, alias_type) with
+      | true, Some alias_type ->
           let body = {%pla|
    return new <#alias_type#s>();
 }|} in
           {%pla|<#def#><#body#><#><#>|}
-        else
+      | _ ->
           let body = print_body body in
           {%pla|<#def#><#body#><#><#>|}
-      else
-        let body = print_body body in
-        {%pla|<#def#><#body#><#><#>|}
+      end
   | TopExternal _ ->
       Pla.unit
   | TopType descr ->
@@ -835,58 +832,11 @@ public void set_<#name#s>(<#buffer_type#s> buffer) {
         let rhs = print_exp rhs in
         {%pla|public static final <#t#> <#name#s> = <#rhs#>;<#>|} )
 
-(* Extract the base type from a function call in the return statement *)
-let extract_base_type_from_call = function
-  | {e= ECall {path; _}; _} when CCString.suffix ~suf:"_type_alloc" path ->
-      let len = String.length path in
-      Some (String.sub path 0 (len - 6))
-      (* Remove "_alloc" *)
-  | _ ->
-      None
-
-(* Collect type aliases needed based on function signatures and bodies *)
+(* The type aliases as (alias, base) pairs, printed as subclasses of their base *)
 let collect_type_aliases stmts =
-  let aliases = ref [] in
-  let collect_from_stmt stmt =
-    match stmt.top with
-    | TopFunction (def, body) ->
-        let name = def.name in
-        (* Look for pattern: *_function_type_alloc that takes arguments (indicating it's a type alias) *)
-        if String.contains name '_' && CCString.suffix ~suf:"_type_alloc" name && List.length def.args > 0 then
-          let name_len = String.length name in
-          let alias_type = String.sub name 0 (name_len - 6) in
-          (* Remove "_alloc" *)
-          (* Try to extract the base type from the function body *)
-          let base_type =
-            match body.s with
-            | StmtReturn exp -> (
-              match extract_base_type_from_call exp with
-              | Some base ->
-                  base
-              | None ->
-                  (* Fallback to old logic if we can't parse the body *)
-                  let parts = String.split_on_char '_' name in
-                  let len = List.length parts in
-                  if len >= 4 then
-                    let module_parts = CCList.take (len - 3) parts in
-                    let module_name = String.concat "_" module_parts in
-                    module_name ^ "_process_type"
-                  else alias_type ^ "_base_type" )
-            | _ ->
-                (* Fallback if no return statement found *)
-                let parts = String.split_on_char '_' name in
-                let len = List.length parts in
-                if len >= 4 then
-                  let module_parts = CCList.take (len - 3) parts in
-                  let module_name = String.concat "_" module_parts in
-                  module_name ^ "_process_type"
-                else alias_type ^ "_base_type"
-          in
-          aliases := (alias_type, base_type) :: !aliases
-    | _ ->
-        ()
-  in
-  List.iter collect_from_stmt stmts ; !aliases
+  List.fold_left
+    (fun acc stmt -> match stmt.top with TopAlias {path; alias_of} -> (path, alias_of) :: acc | _ -> acc)
+    [] stmts
 
 let binarizeElement (e : exp) : string =
   match e.e with
@@ -1055,7 +1005,7 @@ let print_prog args t =
   let aliases = collect_type_aliases t in
   let tuple_types = collectTupleTypes t in
   let tuple_code = Pla.map_sep_all Pla.newline print_tuple_class tuple_types in
-  let main_code = Pla.map_join (print_top_stmt args root_context_types) t in
+  let main_code = Pla.map_join (print_top_stmt args root_context_types aliases) t in
   let alias_code = Pla.map_sep_all Pla.newline (fun (alias, base) -> print_type_alias alias base) aliases in
   let code = match tuple_types with [] -> main_code | _ -> {%pla|<#tuple_code#><#main_code#>|} in
   if aliases = [] then code else {%pla|<#code#><#alias_code#+>|}

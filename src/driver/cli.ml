@@ -69,6 +69,7 @@ let generateCode args (stmts, iprog, acc) =
   let stmts = Util.Profile.time "Generate Tables" (fun () -> Tables.create args iprog stmts) in
   if args.code <> NoCode || args.dcode then
     let stmts = Util.Profile.time "Convert" (fun () -> Tocode.prog args stmts) in
+    let stmts = if args.shorten then Shorten.run stmts else stmts in
     let prog_out = if args.dcode then [Prog (Pla.print (Prog.Print.print_prog stmts))] else [] in
     let code =
       match args.code with

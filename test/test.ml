@@ -722,6 +722,60 @@ module SplitCompileTest = struct
            files
 end
 
+(** Generates code with -shorten: the internal functions, types and members get generated names
+    while the roots, the root context and its members keep theirs, and the result must still
+    compile. Without roots the flag is an
+    error, since every function would be renamed. *)
+module ShortenTest = struct
+  let generate ~(roots : string list) (outdir : string) : Args.output list =
+    let fullfile = checkFile (in_test_directory "../examples/filters/ladder.vult") in
+    let args =
+      Args.
+        { default_arguments with
+          files= [File fullfile]
+        ; code= CppCode
+        ; shorten= true
+        ; roots
+        ; force_write= true
+        ; includes
+        ; output= Some (Filename.concat outdir "ladder") }
+    in
+    let results = Driver.Cli.driver args in
+    CCList.iter
+      (fun result -> match result with Args.Errors _ -> () | result -> Driver.Cli.showResult args result)
+      results ;
+    results
+
+  let failsWithoutRoots _context =
+    let results = generate ~roots:[] (in_tmp_dir "shorten_no_roots") in
+    let is_error result = match result with Args.Errors _ -> true | _ -> false in
+    assert_bool "-shorten without roots must be an error" (CCList.exists is_error results)
+
+  let renamesInternalNames _context =
+    skip_if (not has_cpp) "no C++ compiler available" ;
+    Sys.chdir initial_dir ;
+    let outdir = in_tmp_dir "shorten" in
+    let () = if Sys.command ("mkdir -p " ^ outdir) <> 0 then assert_failure ("failed to create " ^ outdir) in
+    let results = generate ~roots:["Ladder.process"] outdir in
+    CCList.iter
+      (fun result -> match result with Args.Errors errors -> assert_failure (Error.reportErrors errors) | _ -> ())
+      results ;
+    let header = CCIO.with_in (Filename.concat outdir "ladder.h") CCIO.read_all in
+    let contains sub = CCString.mem ~sub header in
+    assert_bool "the root was renamed" (contains "Ladder_process(") ;
+    assert_bool "the root companions were renamed" (contains "Ladder_noteOn(" && contains "Ladder_process_type_init(") ;
+    assert_bool "an internal function kept its name" (not (contains "Ladder_heun(")) ;
+    assert_bool "no generated function name" (contains "f0(") ;
+    assert_bool "an internal member kept its name" (not (contains "pre_x")) ;
+    assert_bool "no generated member name" (contains "_ctx.m0") ;
+    assert_bool "a member of the root context was renamed" (contains "t2 inst_") ;
+    assert_bool "an internal type kept its name" (not (contains "Ladder_heun_type")) ;
+    assert_bool "no generated type companion" (contains "t0_init(") ;
+    callCompilerIn outdir "ladder.cpp"
+
+  let get () = "shorten" >::: ["renames_internal_names" >:: renamesInternalNames; "requires_roots" >:: failsWithoutRoots]
+end
+
 module CliTest = struct
   let checkJsFile (dir : string) (file : string) : unit =
     let output = Filename.chop_extension (Filename.basename file) in
@@ -1337,6 +1391,7 @@ let suite =
        ; CliTest.get all_files Node "python"
        ; RandomCompileTest.get test_random_code
        ; SplitCompileTest.get split_files
+       ; ShortenTest.get ()
        ; TableRegressionTest.get ()
        ; InterpretPerf.get perf_files
        ; Interpret.get interpreter
