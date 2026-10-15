@@ -23,7 +23,7 @@ this.Companion_return_infer_main_type_alloc = function () {
    return _ctx;
 };
 
-this.Companion_return_infer_current_int_type_alloc = function (_ctx) {
+this.Companion_return_infer_current_int_type_alloc = function () {
    return this.Companion_return_infer_accum_int_type_alloc();
 };
 

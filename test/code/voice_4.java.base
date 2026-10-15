@@ -490,19 +490,19 @@ private Tricore_process_type Tricore_process_type_alloc() {
    return _ctx;
 }
 
-private Tricore_noteOn_type Tricore_noteOn_type_alloc(Tricore_noteOn_type _ctx) {
+private Tricore_noteOn_type Tricore_noteOn_type_alloc() {
    return new Tricore_noteOn_type();
 }
 
-private Tricore_noteOff_type Tricore_noteOff_type_alloc(Tricore_noteOff_type _ctx) {
+private Tricore_noteOff_type Tricore_noteOff_type_alloc() {
    return new Tricore_noteOff_type();
 }
 
-private Tricore_controlChange_type Tricore_controlChange_type_alloc(Tricore_controlChange_type _ctx) {
+private Tricore_controlChange_type Tricore_controlChange_type_alloc() {
    return new Tricore_controlChange_type();
 }
 
-private Tricore_default_type Tricore_default_type_alloc(Tricore_default_type _ctx) {
+private Tricore_default_type Tricore_default_type_alloc() {
    return new Tricore_default_type();
 }
 
@@ -546,19 +546,19 @@ private Svf_process_type Svf_process_type_alloc() {
    return _ctx;
 }
 
-private Svf_noteOn_type Svf_noteOn_type_alloc(Svf_noteOn_type _ctx) {
+private Svf_noteOn_type Svf_noteOn_type_alloc() {
    return new Svf_noteOn_type();
 }
 
-private Svf_noteOff_type Svf_noteOff_type_alloc(Svf_noteOff_type _ctx) {
+private Svf_noteOff_type Svf_noteOff_type_alloc() {
    return new Svf_noteOff_type();
 }
 
-private Svf_controlChange_type Svf_controlChange_type_alloc(Svf_controlChange_type _ctx) {
+private Svf_controlChange_type Svf_controlChange_type_alloc() {
    return new Svf_controlChange_type();
 }
 
-private Svf_default_type Svf_default_type_alloc(Svf_default_type _ctx) {
+private Svf_default_type Svf_default_type_alloc() {
    return new Svf_default_type();
 }
 
@@ -580,19 +580,19 @@ private Lfo_process_type Lfo_process_type_alloc() {
    return _ctx;
 }
 
-private Lfo_noteOn_type Lfo_noteOn_type_alloc(Lfo_noteOn_type _ctx) {
+private Lfo_noteOn_type Lfo_noteOn_type_alloc() {
    return new Lfo_noteOn_type();
 }
 
-private Lfo_noteOff_type Lfo_noteOff_type_alloc(Lfo_noteOff_type _ctx) {
+private Lfo_noteOff_type Lfo_noteOff_type_alloc() {
    return new Lfo_noteOff_type();
 }
 
-private Lfo_controlChange_type Lfo_controlChange_type_alloc(Lfo_controlChange_type _ctx) {
+private Lfo_controlChange_type Lfo_controlChange_type_alloc() {
    return new Lfo_controlChange_type();
 }
 
-private Lfo_default_type Lfo_default_type_alloc(Lfo_default_type _ctx) {
+private Lfo_default_type Lfo_default_type_alloc() {
    return new Lfo_default_type();
 }
 
@@ -610,19 +610,19 @@ private Phase_process_type Phase_process_type_alloc() {
    return _ctx;
 }
 
-private Phase_noteOn_type Phase_noteOn_type_alloc(Phase_noteOn_type _ctx) {
+private Phase_noteOn_type Phase_noteOn_type_alloc() {
    return new Phase_noteOn_type();
 }
 
-private Phase_noteOff_type Phase_noteOff_type_alloc(Phase_noteOff_type _ctx) {
+private Phase_noteOff_type Phase_noteOff_type_alloc() {
    return new Phase_noteOff_type();
 }
 
-private Phase_controlChange_type Phase_controlChange_type_alloc(Phase_controlChange_type _ctx) {
+private Phase_controlChange_type Phase_controlChange_type_alloc() {
    return new Phase_controlChange_type();
 }
 
-private Phase_default_type Phase_default_type_alloc(Phase_default_type _ctx) {
+private Phase_default_type Phase_default_type_alloc() {
    return new Phase_default_type();
 }
 
@@ -662,7 +662,7 @@ private Blit_pulse_train_type Blit_pulse_train_type_alloc() {
    return _ctx;
 }
 
-private Blit_pulse_start_type Blit_pulse_start_type_alloc(Blit_pulse_start_type _ctx) {
+private Blit_pulse_start_type Blit_pulse_start_type_alloc() {
    return new Blit_pulse_start_type();
 }
 
@@ -727,7 +727,7 @@ private Blit_osc_blit_type Blit_osc_blit_type_alloc() {
    return _ctx;
 }
 
-private Blit_init_type Blit_init_type_alloc(Blit_init_type _ctx) {
+private Blit_init_type Blit_init_type_alloc() {
    return new Blit_init_type();
 }
 
@@ -737,19 +737,19 @@ private Blit_process_type Blit_process_type_alloc() {
    return _ctx;
 }
 
-private Blit_noteOn_type Blit_noteOn_type_alloc(Blit_noteOn_type _ctx) {
+private Blit_noteOn_type Blit_noteOn_type_alloc() {
    return new Blit_noteOn_type();
 }
 
-private Blit_noteOff_type Blit_noteOff_type_alloc(Blit_noteOff_type _ctx) {
+private Blit_noteOff_type Blit_noteOff_type_alloc() {
    return new Blit_noteOff_type();
 }
 
-private Blit_controlChange_type Blit_controlChange_type_alloc(Blit_controlChange_type _ctx) {
+private Blit_controlChange_type Blit_controlChange_type_alloc() {
    return new Blit_controlChange_type();
 }
 
-private Blit_default_type Blit_default_type_alloc(Blit_default_type _ctx) {
+private Blit_default_type Blit_default_type_alloc() {
    return new Blit_default_type();
 }
 
@@ -775,19 +775,19 @@ private Adsr_process_type Adsr_process_type_alloc() {
    return _ctx;
 }
 
-private Adsr_noteOn_type Adsr_noteOn_type_alloc(Adsr_noteOn_type _ctx) {
+private Adsr_noteOn_type Adsr_noteOn_type_alloc() {
    return new Adsr_noteOn_type();
 }
 
-private Adsr_noteOff_type Adsr_noteOff_type_alloc(Adsr_noteOff_type _ctx) {
+private Adsr_noteOff_type Adsr_noteOff_type_alloc() {
    return new Adsr_noteOff_type();
 }
 
-private Adsr_controlChange_type Adsr_controlChange_type_alloc(Adsr_controlChange_type _ctx) {
+private Adsr_controlChange_type Adsr_controlChange_type_alloc() {
    return new Adsr_controlChange_type();
 }
 
-private Adsr_default_type Adsr_default_type_alloc(Adsr_default_type _ctx) {
+private Adsr_default_type Adsr_default_type_alloc() {
    return new Adsr_default_type();
 }
 
@@ -824,19 +824,19 @@ private Voice_4_process_type Voice_4_process_type_alloc() {
    return _ctx;
 }
 
-private Voice_4_noteOn_type Voice_4_noteOn_type_alloc(Voice_4_noteOn_type _ctx) {
+private Voice_4_noteOn_type Voice_4_noteOn_type_alloc() {
    return new Voice_4_noteOn_type();
 }
 
-private Voice_4_noteOff_type Voice_4_noteOff_type_alloc(Voice_4_noteOff_type _ctx) {
+private Voice_4_noteOff_type Voice_4_noteOff_type_alloc() {
    return new Voice_4_noteOff_type();
 }
 
-private Voice_4_controlChange_type Voice_4_controlChange_type_alloc(Voice_4_controlChange_type _ctx) {
+private Voice_4_controlChange_type Voice_4_controlChange_type_alloc() {
    return new Voice_4_controlChange_type();
 }
 
-private Voice_4_default_type Voice_4_default_type_alloc(Voice_4_default_type _ctx) {
+private Voice_4_default_type Voice_4_default_type_alloc() {
    return new Voice_4_default_type();
 }
 

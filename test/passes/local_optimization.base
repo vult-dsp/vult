@@ -1,3 +1,4 @@
+
 struct Local_optimization_effects_type {
    state : real;
 }

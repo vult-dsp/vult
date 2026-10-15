@@ -187,19 +187,19 @@ private Adsr_process_type Adsr_process_type_alloc() {
    return _ctx;
 }
 
-private Adsr_noteOn_type Adsr_noteOn_type_alloc(Adsr_noteOn_type _ctx) {
+private Adsr_noteOn_type Adsr_noteOn_type_alloc() {
    return new Adsr_noteOn_type();
 }
 
-private Adsr_noteOff_type Adsr_noteOff_type_alloc(Adsr_noteOff_type _ctx) {
+private Adsr_noteOff_type Adsr_noteOff_type_alloc() {
    return new Adsr_noteOff_type();
 }
 
-private Adsr_controlChange_type Adsr_controlChange_type_alloc(Adsr_controlChange_type _ctx) {
+private Adsr_controlChange_type Adsr_controlChange_type_alloc() {
    return new Adsr_controlChange_type();
 }
 
-private Adsr_default_type Adsr_default_type_alloc(Adsr_default_type _ctx) {
+private Adsr_default_type Adsr_default_type_alloc() {
    return new Adsr_default_type();
 }
 

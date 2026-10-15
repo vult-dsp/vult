@@ -148,19 +148,26 @@ let checkFinite loc display x y =
 
 let displayName (def : function_def) = match def.info.original_name with Some name -> name | None -> def.name
 
+(* Evaluates the table function at one point. A runtime error (e.g. samplerate() without the
+   -samplerate flag) is reported at the table function. *)
+let callTable loc display iprog fun_index (arg : Core.Interpreter.dvalue) =
+  try Core.Interpreter.callFunctionEntry iprog fun_index [arg]
+  with Core.Interpreter.Runtime_error msg ->
+    Error.raiseError (Printf.sprintf "The table function '%s' cannot be evaluated: %s" display msg) loc
+
 let calculateIntRealTables loc iprog ~display name min max precision =
   let size = max - min in
   let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
   let data =
     CCList.init (size + 1) (fun i ->
         let x = min + i in
-        let y = getRealResult (Core.Interpreter.callFunctionEntry iprog fun_index [DInt x]) in
+        let y = getRealResult (callTable loc display iprog fun_index (DInt x)) in
         let () = checkFinite loc display (float_of_int x) y in
         y )
   in
   [makeRealTableDecl loc name "table" precision data]
 
-let calculateIntIntTables loc iprog name (int_type : type_) min max =
+let calculateIntIntTables loc iprog ~display name (int_type : type_) min max =
   let size = max - min in
   let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
   let makeInt i : Core.Interpreter.dvalue =
@@ -175,7 +182,7 @@ let calculateIntIntTables loc iprog name (int_type : type_) min max =
   let data =
     CCList.init (size + 1) (fun i ->
         let x = min + i in
-        getIntResult (Core.Interpreter.callFunctionEntry iprog fun_index [makeInt x]) )
+        getIntResult (callTable loc display iprog fun_index (makeInt x)) )
   in
   [makeIntTableDecl loc name "table" int_type data]
 
@@ -186,7 +193,7 @@ let calculateTablesOrder1 loc iprog ~display name size min max precision =
   let data =
     Array.init (size + 1) (fun i ->
         let x = map_x (float_of_int i) in
-        let y = getRealResult (Core.Interpreter.callFunctionEntry iprog fun_index [DReal x]) in
+        let y = getRealResult (callTable loc display iprog fun_index (DReal x)) in
         let () = checkFinite loc display x y in
         (x, y) )
   in
@@ -204,7 +211,7 @@ let calculateTablesOrder1Fixed loc iprog ~display name size min max precision =
   let data =
     CCList.init (size + 1) (fun i ->
         let x = map_x (float_of_int i) in
-        let y = getRealResult (Core.Interpreter.callFunctionEntry iprog fun_index [DReal x]) in
+        let y = getRealResult (callTable loc display iprog fun_index (DReal x)) in
         let () = checkFinite loc display x y in
         (x, y) )
   in
@@ -224,7 +231,7 @@ let calculateTablesOrder2 loc iprog ~display name size min max precision =
       ((size * 2) + 2)
       (fun i ->
         let x = map_x (float_of_int i /. 2.0) in
-        let y = getRealResult (Core.Interpreter.callFunctionEntry iprog fun_index [DReal x]) in
+        let y = getRealResult (callTable loc display iprog fun_index (DReal x)) in
         let () = checkFinite loc display x y in
         (x, y) )
   in
@@ -433,6 +440,7 @@ let makeTable iprog (def : function_def) =
   | Tags.[Some (Int size); Some (Real min); Some (Real max); order; bound_check] -> (
       let bound_check = getBoundCheckValue loc bound_check in
       let () = checkOrderValue loc order in
+      let () = if size < 0 then Error.raiseError "The size of the table cannot be negative" loc in
       let out_precision = snd def.t in
       let display = displayName def in
       let param = checkInputParam def.loc def.args in
@@ -479,6 +487,13 @@ let makeTable iprog (def : function_def) =
 let makeIntTable iprog (def : function_def) =
   let params = Tags.[("min", TypeInt); ("max", TypeInt)] in
   let loc = def.loc in
+  let () =
+    match Tags.getParameterList def.tags "table" params with
+    | Tags.[Some (Int min); Some (Int max)] when max < min ->
+        Error.raiseError "The range of the table is empty: 'max' is smaller than 'min'" loc
+    | _ ->
+        ()
+  in
   match (Tags.getParameterList def.tags "table" params, def.t) with
   | Tags.[Some (Int min); Some (Int max)], (_, ({t= TReal | TFix16; _} as out_precision)) ->
       let var = checkInputVariables def.loc def.args in
@@ -494,7 +509,7 @@ let makeIntTable iprog (def : function_def) =
           Util.Error.raiseError msg def.loc
       in
       let var = checkInputVariables def.loc def.args in
-      let result = calculateIntIntTables loc iprog def.name int_type min max in
+      let result = calculateIntIntTables loc iprog ~display:(displayName def) def.name int_type min max in
       let new_body = makeIntAccessBody def.name int_type min max var in
       result @ [{top= TopFunction (def, new_body); loc}]
   | _ ->

@@ -193,10 +193,10 @@ def Synth2_mono_noteOn_type_alloc():
    return _ctx
 
 
-def Synth2_mono_noteOff_type_alloc(_ctx):
+def Synth2_mono_noteOff_type_alloc():
    return Synth2_mono_noteOn_type_alloc()
 
-def Synth2_mono_isGateOn_type_alloc(_ctx):
+def Synth2_mono_isGateOn_type_alloc():
    return Synth2_mono_noteOn_type_alloc()
 
 def Synth2_default(_ctx):
@@ -230,16 +230,16 @@ def Synth2_process_type_alloc():
    return _ctx
 
 
-def Synth2_noteOn_type_alloc(_ctx):
+def Synth2_noteOn_type_alloc():
    return Synth2_process_type_alloc()
 
-def Synth2_noteOff_type_alloc(_ctx):
+def Synth2_noteOff_type_alloc():
    return Synth2_process_type_alloc()
 
-def Synth2_controlChange_type_alloc(_ctx):
+def Synth2_controlChange_type_alloc():
    return Synth2_process_type_alloc()
 
-def Synth2_default_type_alloc(_ctx):
+def Synth2_default_type_alloc():
    return Synth2_process_type_alloc()
 
 def Synth2_minFixed():

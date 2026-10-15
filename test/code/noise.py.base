@@ -25,16 +25,16 @@ def Noise_process_type_alloc():
    return _ctx
 
 
-def Noise_noteOn_type_alloc(_ctx):
+def Noise_noteOn_type_alloc():
    return Noise_process_type_alloc()
 
-def Noise_noteOff_type_alloc(_ctx):
+def Noise_noteOff_type_alloc():
    return Noise_process_type_alloc()
 
-def Noise_controlChange_type_alloc(_ctx):
+def Noise_controlChange_type_alloc():
    return Noise_process_type_alloc()
 
-def Noise_default_type_alloc(_ctx):
+def Noise_default_type_alloc():
    return Noise_process_type_alloc()
 
 def Noise_pinker(_ctx, x):

@@ -58,19 +58,19 @@ function Defined_types_process_type_alloc()
    return _ctx
 end
 
-function Defined_types_noteOn_type_alloc(_ctx)
+function Defined_types_noteOn_type_alloc()
    return Defined_types_process_type_alloc()
 end
 
-function Defined_types_noteOff_type_alloc(_ctx)
+function Defined_types_noteOff_type_alloc()
    return Defined_types_process_type_alloc()
 end
 
-function Defined_types_controlChange_type_alloc(_ctx)
+function Defined_types_controlChange_type_alloc()
    return Defined_types_process_type_alloc()
 end
 
-function Defined_types_default_type_alloc(_ctx)
+function Defined_types_default_type_alloc()
    return Defined_types_process_type_alloc()
 end
 

@@ -64,19 +64,19 @@ private Defined_types_process_type Defined_types_process_type_alloc() {
    return _ctx;
 }
 
-private Defined_types_noteOn_type Defined_types_noteOn_type_alloc(Defined_types_noteOn_type _ctx) {
+private Defined_types_noteOn_type Defined_types_noteOn_type_alloc() {
    return new Defined_types_noteOn_type();
 }
 
-private Defined_types_noteOff_type Defined_types_noteOff_type_alloc(Defined_types_noteOff_type _ctx) {
+private Defined_types_noteOff_type Defined_types_noteOff_type_alloc() {
    return new Defined_types_noteOff_type();
 }
 
-private Defined_types_controlChange_type Defined_types_controlChange_type_alloc(Defined_types_controlChange_type _ctx) {
+private Defined_types_controlChange_type Defined_types_controlChange_type_alloc() {
    return new Defined_types_controlChange_type();
 }
 
-private Defined_types_default_type Defined_types_default_type_alloc(Defined_types_default_type _ctx) {
+private Defined_types_default_type Defined_types_default_type_alloc() {
    return new Defined_types_default_type();
 }
 

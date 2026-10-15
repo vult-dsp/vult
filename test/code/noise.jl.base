@@ -35,19 +35,19 @@ function Noise_process_type_alloc()
    return _ctx
 end
 
-function Noise_noteOn_type_alloc(_ctx)
+function Noise_noteOn_type_alloc()
    return Noise_process_type_alloc()
 end
 
-function Noise_noteOff_type_alloc(_ctx)
+function Noise_noteOff_type_alloc()
    return Noise_process_type_alloc()
 end
 
-function Noise_controlChange_type_alloc(_ctx)
+function Noise_controlChange_type_alloc()
    return Noise_process_type_alloc()
 end
 
-function Noise_default_type_alloc(_ctx)
+function Noise_default_type_alloc()
    return Noise_process_type_alloc()
 end
 

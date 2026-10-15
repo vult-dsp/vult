@@ -204,19 +204,19 @@ private Saw_r_process_type Saw_r_process_type_alloc() {
    return _ctx;
 }
 
-private Saw_r_noteOn_type Saw_r_noteOn_type_alloc(Saw_r_noteOn_type _ctx) {
+private Saw_r_noteOn_type Saw_r_noteOn_type_alloc() {
    return new Saw_r_noteOn_type();
 }
 
-private Saw_r_noteOff_type Saw_r_noteOff_type_alloc(Saw_r_noteOff_type _ctx) {
+private Saw_r_noteOff_type Saw_r_noteOff_type_alloc() {
    return new Saw_r_noteOff_type();
 }
 
-private Saw_r_controlChange_type Saw_r_controlChange_type_alloc(Saw_r_controlChange_type _ctx) {
+private Saw_r_controlChange_type Saw_r_controlChange_type_alloc() {
    return new Saw_r_controlChange_type();
 }
 
-private Saw_r_default_type Saw_r_default_type_alloc(Saw_r_default_type _ctx) {
+private Saw_r_default_type Saw_r_default_type_alloc() {
    return new Saw_r_default_type();
 }
 

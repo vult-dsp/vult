@@ -130,16 +130,16 @@ def Tricore_process_type_alloc():
    return _ctx
 
 
-def Tricore_noteOn_type_alloc(_ctx):
+def Tricore_noteOn_type_alloc():
    return Tricore_process_type_alloc()
 
-def Tricore_noteOff_type_alloc(_ctx):
+def Tricore_noteOff_type_alloc():
    return Tricore_process_type_alloc()
 
-def Tricore_controlChange_type_alloc(_ctx):
+def Tricore_controlChange_type_alloc():
    return Tricore_process_type_alloc()
 
-def Tricore_default_type_alloc(_ctx):
+def Tricore_default_type_alloc():
    return Tricore_process_type_alloc()
 
 def Util_edge(_ctx, x):

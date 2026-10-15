@@ -310,19 +310,19 @@ function Tricore_process_type_alloc()
    return _ctx
 end
 
-function Tricore_noteOn_type_alloc(_ctx)
+function Tricore_noteOn_type_alloc()
    return Tricore_process_type_alloc()
 end
 
-function Tricore_noteOff_type_alloc(_ctx)
+function Tricore_noteOff_type_alloc()
    return Tricore_process_type_alloc()
 end
 
-function Tricore_controlChange_type_alloc(_ctx)
+function Tricore_controlChange_type_alloc()
    return Tricore_process_type_alloc()
 end
 
-function Tricore_default_type_alloc(_ctx)
+function Tricore_default_type_alloc()
    return Tricore_process_type_alloc()
 end
 
@@ -366,19 +366,19 @@ function Svf_process_type_alloc()
    return _ctx
 end
 
-function Svf_noteOn_type_alloc(_ctx)
+function Svf_noteOn_type_alloc()
    return Svf_process_type_alloc()
 end
 
-function Svf_noteOff_type_alloc(_ctx)
+function Svf_noteOff_type_alloc()
    return Svf_process_type_alloc()
 end
 
-function Svf_controlChange_type_alloc(_ctx)
+function Svf_controlChange_type_alloc()
    return Svf_process_type_alloc()
 end
 
-function Svf_default_type_alloc(_ctx)
+function Svf_default_type_alloc()
    return Svf_process_type_alloc()
 end
 
@@ -400,19 +400,19 @@ function Lfo_process_type_alloc()
    return _ctx
 end
 
-function Lfo_noteOn_type_alloc(_ctx)
+function Lfo_noteOn_type_alloc()
    return Lfo_process_type_alloc()
 end
 
-function Lfo_noteOff_type_alloc(_ctx)
+function Lfo_noteOff_type_alloc()
    return Lfo_process_type_alloc()
 end
 
-function Lfo_controlChange_type_alloc(_ctx)
+function Lfo_controlChange_type_alloc()
    return Lfo_process_type_alloc()
 end
 
-function Lfo_default_type_alloc(_ctx)
+function Lfo_default_type_alloc()
    return Lfo_process_type_alloc()
 end
 
@@ -430,19 +430,19 @@ function Phase_process_type_alloc()
    return _ctx
 end
 
-function Phase_noteOn_type_alloc(_ctx)
+function Phase_noteOn_type_alloc()
    return Phase_process_type_alloc()
 end
 
-function Phase_noteOff_type_alloc(_ctx)
+function Phase_noteOff_type_alloc()
    return Phase_process_type_alloc()
 end
 
-function Phase_controlChange_type_alloc(_ctx)
+function Phase_controlChange_type_alloc()
    return Phase_process_type_alloc()
 end
 
-function Phase_default_type_alloc(_ctx)
+function Phase_default_type_alloc()
    return Phase_process_type_alloc()
 end
 
@@ -482,7 +482,7 @@ function Blit_pulse_train_type_alloc()
    return _ctx
 end
 
-function Blit_pulse_start_type_alloc(_ctx)
+function Blit_pulse_start_type_alloc()
    return Blit_pulse_train_type_alloc()
 end
 
@@ -547,7 +547,7 @@ function Blit_osc_blit_type_alloc()
    return _ctx
 end
 
-function Blit_init_type_alloc(_ctx)
+function Blit_init_type_alloc()
    return Blit_osc_blit_type_alloc()
 end
 
@@ -557,19 +557,19 @@ function Blit_process_type_alloc()
    return _ctx
 end
 
-function Blit_noteOn_type_alloc(_ctx)
+function Blit_noteOn_type_alloc()
    return Blit_process_type_alloc()
 end
 
-function Blit_noteOff_type_alloc(_ctx)
+function Blit_noteOff_type_alloc()
    return Blit_process_type_alloc()
 end
 
-function Blit_controlChange_type_alloc(_ctx)
+function Blit_controlChange_type_alloc()
    return Blit_process_type_alloc()
 end
 
-function Blit_default_type_alloc(_ctx)
+function Blit_default_type_alloc()
    return Blit_process_type_alloc()
 end
 
@@ -595,19 +595,19 @@ function Adsr_process_type_alloc()
    return _ctx
 end
 
-function Adsr_noteOn_type_alloc(_ctx)
+function Adsr_noteOn_type_alloc()
    return Adsr_process_type_alloc()
 end
 
-function Adsr_noteOff_type_alloc(_ctx)
+function Adsr_noteOff_type_alloc()
    return Adsr_process_type_alloc()
 end
 
-function Adsr_controlChange_type_alloc(_ctx)
+function Adsr_controlChange_type_alloc()
    return Adsr_process_type_alloc()
 end
 
-function Adsr_default_type_alloc(_ctx)
+function Adsr_default_type_alloc()
    return Adsr_process_type_alloc()
 end
 
@@ -644,19 +644,19 @@ function Voice_4_process_type_alloc()
    return _ctx
 end
 
-function Voice_4_noteOn_type_alloc(_ctx)
+function Voice_4_noteOn_type_alloc()
    return Voice_4_process_type_alloc()
 end
 
-function Voice_4_noteOff_type_alloc(_ctx)
+function Voice_4_noteOff_type_alloc()
    return Voice_4_process_type_alloc()
 end
 
-function Voice_4_controlChange_type_alloc(_ctx)
+function Voice_4_controlChange_type_alloc()
    return Voice_4_process_type_alloc()
 end
 
-function Voice_4_default_type_alloc(_ctx)
+function Voice_4_default_type_alloc()
    return Voice_4_process_type_alloc()
 end
 

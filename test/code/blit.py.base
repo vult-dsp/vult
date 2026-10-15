@@ -147,16 +147,16 @@ def Phase_process_type_alloc():
    return _ctx
 
 
-def Phase_noteOn_type_alloc(_ctx):
+def Phase_noteOn_type_alloc():
    return Phase_process_type_alloc()
 
-def Phase_noteOff_type_alloc(_ctx):
+def Phase_noteOff_type_alloc():
    return Phase_process_type_alloc()
 
-def Phase_controlChange_type_alloc(_ctx):
+def Phase_controlChange_type_alloc():
    return Phase_process_type_alloc()
 
-def Phase_default_type_alloc(_ctx):
+def Phase_default_type_alloc():
    return Phase_process_type_alloc()
 
 Util_cvToperiod_c = {}
@@ -192,7 +192,7 @@ def Blit_pulse_train_type_alloc():
    return _ctx
 
 
-def Blit_pulse_start_type_alloc(_ctx):
+def Blit_pulse_start_type_alloc():
    return Blit_pulse_train_type_alloc()
 
 Util_pitchToRate_c = {}
@@ -249,7 +249,7 @@ def Blit_osc_blit_type_alloc():
    return _ctx
 
 
-def Blit_init_type_alloc(_ctx):
+def Blit_init_type_alloc():
    return Blit_osc_blit_type_alloc()
 
 def Blit_process_type_alloc():
@@ -258,16 +258,16 @@ def Blit_process_type_alloc():
    return _ctx
 
 
-def Blit_noteOn_type_alloc(_ctx):
+def Blit_noteOn_type_alloc():
    return Blit_process_type_alloc()
 
-def Blit_noteOff_type_alloc(_ctx):
+def Blit_noteOff_type_alloc():
    return Blit_process_type_alloc()
 
-def Blit_controlChange_type_alloc(_ctx):
+def Blit_controlChange_type_alloc():
    return Blit_process_type_alloc()
 
-def Blit_default_type_alloc(_ctx):
+def Blit_default_type_alloc():
    return Blit_process_type_alloc()
 
 def Util_edge(_ctx, x):

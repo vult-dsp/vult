@@ -114,16 +114,16 @@ def Rescomb_process_type_alloc():
    return _ctx
 
 
-def Rescomb_noteOn_type_alloc(_ctx):
+def Rescomb_noteOn_type_alloc():
    return Rescomb_process_type_alloc()
 
-def Rescomb_noteOff_type_alloc(_ctx):
+def Rescomb_noteOff_type_alloc():
    return Rescomb_process_type_alloc()
 
-def Rescomb_controlChange_type_alloc(_ctx):
+def Rescomb_controlChange_type_alloc():
    return Rescomb_process_type_alloc()
 
-def Rescomb_default_type_alloc(_ctx):
+def Rescomb_default_type_alloc():
    return Rescomb_process_type_alloc()
 
 Saturate_soft_tanh_table_c = {}

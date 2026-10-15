@@ -148,19 +148,19 @@ function Saw_ptr1_process_type_alloc()
    return _ctx
 end
 
-function Saw_ptr1_noteOn_type_alloc(_ctx)
+function Saw_ptr1_noteOn_type_alloc()
    return Saw_ptr1_process_type_alloc()
 end
 
-function Saw_ptr1_noteOff_type_alloc(_ctx)
+function Saw_ptr1_noteOff_type_alloc()
    return Saw_ptr1_process_type_alloc()
 end
 
-function Saw_ptr1_controlChange_type_alloc(_ctx)
+function Saw_ptr1_controlChange_type_alloc()
    return Saw_ptr1_process_type_alloc()
 end
 
-function Saw_ptr1_default_type_alloc(_ctx)
+function Saw_ptr1_default_type_alloc()
    return Saw_ptr1_process_type_alloc()
 end
 

@@ -1,0 +1,7 @@
+// A runtime error while evaluating a constant is reported
+constant zero = 0;
+constant k = 10 / zero;
+
+fun process() : int {
+   return k;
+}

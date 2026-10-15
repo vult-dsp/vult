@@ -204,7 +204,12 @@ let callStackInfo (rt : runtime) : string =
 let runWithCallStack (rt : runtime) (sample_rate : float option) (f : unit -> 'a) : 'a =
   rt.depth <- 0 ;
   rt.sample_rate <- sample_rate ;
-  try f () with Runtime_error msg -> raise (Runtime_error (msg ^ callStackInfo rt))
+  try f () with
+  | Runtime_error msg ->
+      raise (Runtime_error (msg ^ callStackInfo rt))
+  (* The specialized integer operations divide directly *)
+  | Division_by_zero ->
+      raise (Runtime_error ("Integer division by zero" ^ callStackInfo rt))
 
 (* Creates an empty iprog for incremental building *)
 let createEmptyProgram () : iprog =
@@ -1050,7 +1055,8 @@ let rec compileExp (ctx : compile_ctx) (exp : exp) : compiled_result =
   | ECall {path= "random"; args= []} ->
       CDynamic (fun _fr -> DReal (Random.float 1.0))
   | ECall {path= "irandom"; args= []} ->
-      CDynamic (fun _fr -> DInt (Random.int Int.max_int))
+      (* A non-negative integer, like the rand() of the C++ runtime *)
+      CDynamic (fun _fr -> DInt (Random.bits ()))
   (* Type conversion functions *)
   | ECall {path= "real"; args= [a]} ->
       compileRealConversion ctx a

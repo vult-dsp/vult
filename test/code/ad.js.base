@@ -51,19 +51,19 @@ this.Ad_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Ad_noteOn_type_alloc = function (_ctx) {
+this.Ad_noteOn_type_alloc = function () {
    return this.Ad_process_type_alloc();
 };
 
-this.Ad_noteOff_type_alloc = function (_ctx) {
+this.Ad_noteOff_type_alloc = function () {
    return this.Ad_process_type_alloc();
 };
 
-this.Ad_controlChange_type_alloc = function (_ctx) {
+this.Ad_controlChange_type_alloc = function () {
    return this.Ad_process_type_alloc();
 };
 
-this.Ad_default_type_alloc = function (_ctx) {
+this.Ad_default_type_alloc = function () {
    return this.Ad_process_type_alloc();
 };
 

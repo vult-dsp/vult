@@ -4,7 +4,7 @@ this.Companion_type_alias_foo_type_alloc = function () {
    return _ctx;
 };
 
-this.Companion_type_alias_bar_type_alloc = function (_ctx) {
+this.Companion_type_alias_bar_type_alloc = function () {
    return this.Companion_type_alias_foo_type_alloc();
 };
 

@@ -79,19 +79,19 @@ function Phasedist_process_type_alloc()
    return _ctx
 end
 
-function Phasedist_noteOn_type_alloc(_ctx)
+function Phasedist_noteOn_type_alloc()
    return Phasedist_process_type_alloc()
 end
 
-function Phasedist_noteOff_type_alloc(_ctx)
+function Phasedist_noteOff_type_alloc()
    return Phasedist_process_type_alloc()
 end
 
-function Phasedist_controlChange_type_alloc(_ctx)
+function Phasedist_controlChange_type_alloc()
    return Phasedist_process_type_alloc()
 end
 
-function Phasedist_default_type_alloc(_ctx)
+function Phasedist_default_type_alloc()
    return Phasedist_process_type_alloc()
 end
 

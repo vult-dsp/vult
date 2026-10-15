@@ -111,7 +111,7 @@ function Record_inference_main()
    b = (; x = Float32(10.0), y = Float32(20.0) )
    c = (; count = Float32(9.0) )
    d = (; count = Int32(1), step = Int32(4) )
-   total = (Record_inference_first(b) + (Record_inference_half(c) + (Record_inference_length3(a) + Record_inference_sum2(b))))
+   total = (Record_inference_length3(a) + (Record_inference_sum2(b) + (Record_inference_half(c) + Record_inference_first(b))))
    advanced = Record_inference_advance(d)
    return (advanced + (Int32(100) * trunc(Int32, total)))
 end

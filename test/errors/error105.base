@@ -1,0 +1,4 @@
+The range of the table is empty: 'max' is smaller than 'min'
+// An integer table needs max >= min
+fun f(x : int) : int @[table(min = 3, max = 1)] {
+    ^

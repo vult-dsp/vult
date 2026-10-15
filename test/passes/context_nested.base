@@ -1,3 +1,4 @@
+
 struct Context_nested_change_a_type {
    pre : real;
 }

@@ -196,19 +196,19 @@ private Phase_process_type Phase_process_type_alloc() {
    return _ctx;
 }
 
-private Phase_noteOn_type Phase_noteOn_type_alloc(Phase_noteOn_type _ctx) {
+private Phase_noteOn_type Phase_noteOn_type_alloc() {
    return new Phase_noteOn_type();
 }
 
-private Phase_noteOff_type Phase_noteOff_type_alloc(Phase_noteOff_type _ctx) {
+private Phase_noteOff_type Phase_noteOff_type_alloc() {
    return new Phase_noteOff_type();
 }
 
-private Phase_controlChange_type Phase_controlChange_type_alloc(Phase_controlChange_type _ctx) {
+private Phase_controlChange_type Phase_controlChange_type_alloc() {
    return new Phase_controlChange_type();
 }
 
-private Phase_default_type Phase_default_type_alloc(Phase_default_type _ctx) {
+private Phase_default_type Phase_default_type_alloc() {
    return new Phase_default_type();
 }
 

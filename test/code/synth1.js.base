@@ -60,19 +60,19 @@ this.Synth1_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Synth1_noteOn_type_alloc = function (_ctx) {
+this.Synth1_noteOn_type_alloc = function () {
    return this.Synth1_process_type_alloc();
 };
 
-this.Synth1_noteOff_type_alloc = function (_ctx) {
+this.Synth1_noteOff_type_alloc = function () {
    return this.Synth1_process_type_alloc();
 };
 
-this.Synth1_controlChange_type_alloc = function (_ctx) {
+this.Synth1_controlChange_type_alloc = function () {
    return this.Synth1_process_type_alloc();
 };
 
-this.Synth1_default_type_alloc = function (_ctx) {
+this.Synth1_default_type_alloc = function () {
    return this.Synth1_process_type_alloc();
 };
 

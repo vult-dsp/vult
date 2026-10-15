@@ -82,11 +82,11 @@ function Monocv_mono_noteOn_type_alloc()
    return _ctx
 end
 
-function Monocv_mono_noteOff_type_alloc(_ctx)
+function Monocv_mono_noteOff_type_alloc()
    return Monocv_mono_noteOn_type_alloc()
 end
 
-function Monocv_mono_isGateOn_type_alloc(_ctx)
+function Monocv_mono_isGateOn_type_alloc()
    return Monocv_mono_noteOn_type_alloc()
 end
 
@@ -105,19 +105,19 @@ function Monocv_process_type_alloc()
    return _ctx
 end
 
-function Monocv_noteOn_type_alloc(_ctx)
+function Monocv_noteOn_type_alloc()
    return Monocv_process_type_alloc()
 end
 
-function Monocv_noteOff_type_alloc(_ctx)
+function Monocv_noteOff_type_alloc()
    return Monocv_process_type_alloc()
 end
 
-function Monocv_controlChange_type_alloc(_ctx)
+function Monocv_controlChange_type_alloc()
    return Monocv_process_type_alloc()
 end
 
-function Monocv_default_type_alloc(_ctx)
+function Monocv_default_type_alloc()
    return Monocv_process_type_alloc()
 end
 

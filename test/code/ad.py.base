@@ -98,16 +98,16 @@ def Ad_process_type_alloc():
    return _ctx
 
 
-def Ad_noteOn_type_alloc(_ctx):
+def Ad_noteOn_type_alloc():
    return Ad_process_type_alloc()
 
-def Ad_noteOff_type_alloc(_ctx):
+def Ad_noteOff_type_alloc():
    return Ad_process_type_alloc()
 
-def Ad_controlChange_type_alloc(_ctx):
+def Ad_controlChange_type_alloc():
    return Ad_process_type_alloc()
 
-def Ad_default_type_alloc(_ctx):
+def Ad_default_type_alloc():
    return Ad_process_type_alloc()
 
 def Util_edge(_ctx, x):

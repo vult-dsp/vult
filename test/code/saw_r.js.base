@@ -91,19 +91,19 @@ this.Saw_r_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Saw_r_noteOn_type_alloc = function (_ctx) {
+this.Saw_r_noteOn_type_alloc = function () {
    return this.Saw_r_process_type_alloc();
 };
 
-this.Saw_r_noteOff_type_alloc = function (_ctx) {
+this.Saw_r_noteOff_type_alloc = function () {
    return this.Saw_r_process_type_alloc();
 };
 
-this.Saw_r_controlChange_type_alloc = function (_ctx) {
+this.Saw_r_controlChange_type_alloc = function () {
    return this.Saw_r_process_type_alloc();
 };
 
-this.Saw_r_default_type_alloc = function (_ctx) {
+this.Saw_r_default_type_alloc = function () {
    return this.Saw_r_process_type_alloc();
 };
 

@@ -5,11 +5,11 @@ this.EmptyTypes_foo_type_alloc = function () {
    return _ctx;
 };
 
-this.EmptyTypes_setSettings_type_alloc = function (_ctx) {
+this.EmptyTypes_setSettings_type_alloc = function () {
    return this.EmptyTypes_foo_type_alloc();
 };
 
-this.EmptyTypes_setScreen_type_alloc = function (_ctx) {
+this.EmptyTypes_setScreen_type_alloc = function () {
    return this.EmptyTypes_foo_type_alloc();
 };
 

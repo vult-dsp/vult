@@ -113,16 +113,16 @@ def Svf_process_type_alloc():
    return _ctx
 
 
-def Svf_noteOn_type_alloc(_ctx):
+def Svf_noteOn_type_alloc():
    return Svf_process_type_alloc()
 
-def Svf_noteOff_type_alloc(_ctx):
+def Svf_noteOff_type_alloc():
    return Svf_process_type_alloc()
 
-def Svf_controlChange_type_alloc(_ctx):
+def Svf_controlChange_type_alloc():
    return Svf_process_type_alloc()
 
-def Svf_default_type_alloc(_ctx):
+def Svf_default_type_alloc():
    return Svf_process_type_alloc()
 
 def Util_edge(_ctx, x):

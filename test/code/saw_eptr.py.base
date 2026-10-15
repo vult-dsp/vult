@@ -120,16 +120,16 @@ def Saw_eptr_process_type_alloc():
    return _ctx
 
 
-def Saw_eptr_noteOn_type_alloc(_ctx):
+def Saw_eptr_noteOn_type_alloc():
    return Saw_eptr_process_type_alloc()
 
-def Saw_eptr_noteOff_type_alloc(_ctx):
+def Saw_eptr_noteOff_type_alloc():
    return Saw_eptr_process_type_alloc()
 
-def Saw_eptr_controlChange_type_alloc(_ctx):
+def Saw_eptr_controlChange_type_alloc():
    return Saw_eptr_process_type_alloc()
 
-def Saw_eptr_default_type_alloc(_ctx):
+def Saw_eptr_default_type_alloc():
    return Saw_eptr_process_type_alloc()
 
 def Util_edge(_ctx, x):

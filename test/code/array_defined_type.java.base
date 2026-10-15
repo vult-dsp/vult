@@ -61,19 +61,19 @@ private Array_defined_type_process_type Array_defined_type_process_type_alloc() 
    return _ctx;
 }
 
-private Array_defined_type_noteOn_type Array_defined_type_noteOn_type_alloc(Array_defined_type_noteOn_type _ctx) {
+private Array_defined_type_noteOn_type Array_defined_type_noteOn_type_alloc() {
    return new Array_defined_type_noteOn_type();
 }
 
-private Array_defined_type_noteOff_type Array_defined_type_noteOff_type_alloc(Array_defined_type_noteOff_type _ctx) {
+private Array_defined_type_noteOff_type Array_defined_type_noteOff_type_alloc() {
    return new Array_defined_type_noteOff_type();
 }
 
-private Array_defined_type_controlChange_type Array_defined_type_controlChange_type_alloc(Array_defined_type_controlChange_type _ctx) {
+private Array_defined_type_controlChange_type Array_defined_type_controlChange_type_alloc() {
    return new Array_defined_type_controlChange_type();
 }
 
-private Array_defined_type_default_type Array_defined_type_default_type_alloc(Array_defined_type_default_type _ctx) {
+private Array_defined_type_default_type Array_defined_type_default_type_alloc() {
    return new Array_defined_type_default_type();
 }
 

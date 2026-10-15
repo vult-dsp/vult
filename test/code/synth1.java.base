@@ -193,19 +193,19 @@ private Synth1_process_type Synth1_process_type_alloc() {
    return _ctx;
 }
 
-private Synth1_noteOn_type Synth1_noteOn_type_alloc(Synth1_noteOn_type _ctx) {
+private Synth1_noteOn_type Synth1_noteOn_type_alloc() {
    return new Synth1_noteOn_type();
 }
 
-private Synth1_noteOff_type Synth1_noteOff_type_alloc(Synth1_noteOff_type _ctx) {
+private Synth1_noteOff_type Synth1_noteOff_type_alloc() {
    return new Synth1_noteOff_type();
 }
 
-private Synth1_controlChange_type Synth1_controlChange_type_alloc(Synth1_controlChange_type _ctx) {
+private Synth1_controlChange_type Synth1_controlChange_type_alloc() {
    return new Synth1_controlChange_type();
 }
 
-private Synth1_default_type Synth1_default_type_alloc(Synth1_default_type _ctx) {
+private Synth1_default_type Synth1_default_type_alloc() {
    return new Synth1_default_type();
 }
 

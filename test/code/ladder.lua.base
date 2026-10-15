@@ -77,19 +77,19 @@ function Ladder_process_type_alloc()
    return _ctx
 end
 
-function Ladder_noteOn_type_alloc(_ctx)
+function Ladder_noteOn_type_alloc()
    return Ladder_process_type_alloc()
 end
 
-function Ladder_noteOff_type_alloc(_ctx)
+function Ladder_noteOff_type_alloc()
    return Ladder_process_type_alloc()
 end
 
-function Ladder_controlChange_type_alloc(_ctx)
+function Ladder_controlChange_type_alloc()
    return Ladder_process_type_alloc()
 end
 
-function Ladder_default_type_alloc(_ctx)
+function Ladder_default_type_alloc()
    return Ladder_process_type_alloc()
 end
 

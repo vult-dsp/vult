@@ -50,9 +50,11 @@ type args =
   ; mutable dtyped: bool
   ; mutable dlocs: bool
   ; mutable dprog: bool
+  ; mutable dtoprog: bool (* Dumps the program right after the conversion to Prog, before the passes *)
+  ; mutable stop_after: string option (* Stops the optimization passes after the given stage *)
+  ; mutable dtables: bool (* Dumps the program after the generation of the tables *)
   ; mutable dcode: bool
   ; mutable eval: string option
-  ; mutable show_output: bool
   ; mutable check: bool
   ; mutable code: code
   ; mutable output: string option
@@ -68,7 +70,6 @@ type args =
   ; mutable roots: string list
   ; mutable shorten: bool
   ; mutable force_write: bool
-  ; mutable prefix: string option
   ; mutable output_prefix: string option
   ; mutable debug: bool
   ; mutable profile: bool
@@ -87,10 +88,12 @@ let default_arguments : args =
   ; dtyped= false
   ; dlocs= false
   ; dprog= false
+  ; dtoprog= false
+  ; stop_after= None
+  ; dtables= false
   ; dcode= false
   ; code= NoCode
   ; eval= None
-  ; show_output= false
   ; check= false
   ; output= None
   ; real= Float
@@ -105,7 +108,6 @@ let default_arguments : args =
   ; roots= []
   ; shorten= false
   ; force_write= false
-  ; prefix= None
   ; output_prefix= None
   ; debug= false
   ; profile= false
@@ -146,9 +148,6 @@ let flags result =
                     ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js, julia, python, zig") ;
                   exit (-1) ) )
     ; comment= "language Generate code for the specified language (cpp, lua, java, js, julia, python, zig)" }
-  ; { flag= "-prefix"
-    ; action= Arg.String (fun prefix -> result.prefix <- Some prefix)
-    ; comment= "name Used to pass additional information to the code generator." }
   ; { flag= "-check"
     ; action= Arg.Unit (fun () -> result.check <- true)
     ; comment= " Checks the code without generating any code (default: off)" }
@@ -169,9 +168,9 @@ let flags result =
               | "fixed" ->
                   Fixed
               | _ ->
-                  print_endline ("Unknown numeric formmat: " ^ real) ;
+                  print_endline ("Unknown numeric format '" ^ real ^ "'. The valid options are: float, fixed") ;
                   exit (-1) ) )
-    ; comment= " Defines the numeric type for the generated code: double, fixed" }
+    ; comment= "type Defines the numeric type for the generated code: float, fixed" }
   ; { flag= "-samplerate"
     ; action= Arg.Float (fun fs -> result.fs <- Some fs)
     ; comment= "number When set, the function samplerate() is evaluated" }
@@ -188,10 +187,9 @@ let flags result =
   ; { flag= "-render"
     ; action= Arg.String (fun s -> result.render <- Some s)
     ; comment= " Renders audio from expression to WAV file" }
-  ; { flag= "-show-output"
-    ; action= Arg.Bool (fun s -> result.show_output <- s)
-    ; comment= " Shows the values of constants when running the interpreter (default: off)" }
-  ; {flag= "-tables"; action= Arg.Bool (fun b -> result.tables <- b); comment= " Create lookup tables (default: on)"}
+  ; { flag= "-tables"
+    ; action= Arg.Bool (fun b -> result.tables <- b)
+    ; comment= "bool Creates the lookup tables of the functions tagged @[table] (default: true)" }
   ; { flag= "-shorten"
     ; action= Arg.Unit (fun () -> result.shorten <- true)
     ; comment= " Creates short function names (default: off)" }
@@ -220,6 +218,15 @@ let flags result =
   ; { flag= "-dump-prog"
     ; action= Arg.Unit (fun () -> result.dprog <- true)
     ; comment= " Dumps the processed program (default: off)" }
+  ; { flag= "-dump-toprog"
+    ; action= Arg.Unit (fun () -> result.dtoprog <- true)
+    ; comment= " Dumps the program converted to Prog, before the optimization passes (default: off)" }
+  ; { flag= "-stop-after"
+    ; action= Arg.String (fun s -> result.stop_after <- Some s)
+    ; comment= "stage Stops the optimization passes after a stage: apply1, floor, local, apply2, sort, dce" }
+  ; { flag= "-dump-tables"
+    ; action= Arg.Unit (fun () -> result.dtables <- true)
+    ; comment= " Dumps the program after the generation of the tables (default: off)" }
   ; { flag= "-dump-code"
     ; action= Arg.Unit (fun () -> result.dcode <- true)
     ; comment= " Dumps the processed program just before generating code (default: off)" }

@@ -12,19 +12,19 @@ this.Noise_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Noise_noteOn_type_alloc = function (_ctx) {
+this.Noise_noteOn_type_alloc = function () {
    return this.Noise_process_type_alloc();
 };
 
-this.Noise_noteOff_type_alloc = function (_ctx) {
+this.Noise_noteOff_type_alloc = function () {
    return this.Noise_process_type_alloc();
 };
 
-this.Noise_controlChange_type_alloc = function (_ctx) {
+this.Noise_controlChange_type_alloc = function () {
    return this.Noise_process_type_alloc();
 };
 
-this.Noise_default_type_alloc = function (_ctx) {
+this.Noise_default_type_alloc = function () {
    return this.Noise_process_type_alloc();
 };
 

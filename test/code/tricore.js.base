@@ -96,19 +96,19 @@ this.Tricore_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Tricore_noteOn_type_alloc = function (_ctx) {
+this.Tricore_noteOn_type_alloc = function () {
    return this.Tricore_process_type_alloc();
 };
 
-this.Tricore_noteOff_type_alloc = function (_ctx) {
+this.Tricore_noteOff_type_alloc = function () {
    return this.Tricore_process_type_alloc();
 };
 
-this.Tricore_controlChange_type_alloc = function (_ctx) {
+this.Tricore_controlChange_type_alloc = function () {
    return this.Tricore_process_type_alloc();
 };
 
-this.Tricore_default_type_alloc = function (_ctx) {
+this.Tricore_default_type_alloc = function () {
    return this.Tricore_process_type_alloc();
 };
 

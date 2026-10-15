@@ -187,19 +187,19 @@ function Phase_process_type_alloc()
    return _ctx
 end
 
-function Phase_noteOn_type_alloc(_ctx)
+function Phase_noteOn_type_alloc()
    return Phase_process_type_alloc()
 end
 
-function Phase_noteOff_type_alloc(_ctx)
+function Phase_noteOff_type_alloc()
    return Phase_process_type_alloc()
 end
 
-function Phase_controlChange_type_alloc(_ctx)
+function Phase_controlChange_type_alloc()
    return Phase_process_type_alloc()
 end
 
-function Phase_default_type_alloc(_ctx)
+function Phase_default_type_alloc()
    return Phase_process_type_alloc()
 end
 
@@ -239,7 +239,7 @@ function Blit_pulse_train_type_alloc()
    return _ctx
 end
 
-function Blit_pulse_start_type_alloc(_ctx)
+function Blit_pulse_start_type_alloc()
    return Blit_pulse_train_type_alloc()
 end
 
@@ -304,7 +304,7 @@ function Blit_osc_blit_type_alloc()
    return _ctx
 end
 
-function Blit_init_type_alloc(_ctx)
+function Blit_init_type_alloc()
    return Blit_osc_blit_type_alloc()
 end
 
@@ -314,19 +314,19 @@ function Blit_process_type_alloc()
    return _ctx
 end
 
-function Blit_noteOn_type_alloc(_ctx)
+function Blit_noteOn_type_alloc()
    return Blit_process_type_alloc()
 end
 
-function Blit_noteOff_type_alloc(_ctx)
+function Blit_noteOff_type_alloc()
    return Blit_process_type_alloc()
 end
 
-function Blit_controlChange_type_alloc(_ctx)
+function Blit_controlChange_type_alloc()
    return Blit_process_type_alloc()
 end
 
-function Blit_default_type_alloc(_ctx)
+function Blit_default_type_alloc()
    return Blit_process_type_alloc()
 end
 

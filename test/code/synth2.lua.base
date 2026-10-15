@@ -134,11 +134,11 @@ function Synth2_mono_noteOn_type_alloc()
    return _ctx
 end
 
-function Synth2_mono_noteOff_type_alloc(_ctx)
+function Synth2_mono_noteOff_type_alloc()
    return Synth2_mono_noteOn_type_alloc()
 end
 
-function Synth2_mono_isGateOn_type_alloc(_ctx)
+function Synth2_mono_isGateOn_type_alloc()
    return Synth2_mono_noteOn_type_alloc()
 end
 
@@ -173,19 +173,19 @@ function Synth2_process_type_alloc()
    return _ctx
 end
 
-function Synth2_noteOn_type_alloc(_ctx)
+function Synth2_noteOn_type_alloc()
    return Synth2_process_type_alloc()
 end
 
-function Synth2_noteOff_type_alloc(_ctx)
+function Synth2_noteOff_type_alloc()
    return Synth2_process_type_alloc()
 end
 
-function Synth2_controlChange_type_alloc(_ctx)
+function Synth2_controlChange_type_alloc()
    return Synth2_process_type_alloc()
 end
 
-function Synth2_default_type_alloc(_ctx)
+function Synth2_default_type_alloc()
    return Synth2_process_type_alloc()
 end
 

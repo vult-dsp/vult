@@ -1,0 +1,5 @@
+// An expression that is not a call cannot be used as a statement
+fun f() : int {
+   1 + 2;
+   return 0;
+}

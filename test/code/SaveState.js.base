@@ -4,7 +4,7 @@ this.SaveState_counter_type_alloc = function () {
    return _ctx;
 };
 
-this.SaveState_reset_type_alloc = function (_ctx) {
+this.SaveState_reset_type_alloc = function () {
    return this.SaveState_counter_type_alloc();
 };
 

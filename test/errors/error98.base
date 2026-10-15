@@ -1,0 +1,9 @@
+Unexpected token in expression. Expected a value, variable, or operator
+   x =
+
+ ^ 
+
+Expecting a '}' but the file ended in statement block
+fun foo() {
+   x =
+       ^ 

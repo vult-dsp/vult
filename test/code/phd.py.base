@@ -130,16 +130,16 @@ def Phase_process_type_alloc():
    return _ctx
 
 
-def Phase_noteOn_type_alloc(_ctx):
+def Phase_noteOn_type_alloc():
    return Phase_process_type_alloc()
 
-def Phase_noteOff_type_alloc(_ctx):
+def Phase_noteOff_type_alloc():
    return Phase_process_type_alloc()
 
-def Phase_controlChange_type_alloc(_ctx):
+def Phase_controlChange_type_alloc():
    return Phase_process_type_alloc()
 
-def Phase_default_type_alloc(_ctx):
+def Phase_default_type_alloc():
    return Phase_process_type_alloc()
 
 def Phd_process_type_alloc():
@@ -151,16 +151,16 @@ def Phd_process_type_alloc():
    return _ctx
 
 
-def Phd_noteOn_type_alloc(_ctx):
+def Phd_noteOn_type_alloc():
    return Phd_process_type_alloc()
 
-def Phd_noteOff_type_alloc(_ctx):
+def Phd_noteOff_type_alloc():
    return Phd_process_type_alloc()
 
-def Phd_controlChange_type_alloc(_ctx):
+def Phd_controlChange_type_alloc():
    return Phd_process_type_alloc()
 
-def Phd_default_type_alloc(_ctx):
+def Phd_default_type_alloc():
    return Phd_process_type_alloc()
 
 def Util_edge(_ctx, x):

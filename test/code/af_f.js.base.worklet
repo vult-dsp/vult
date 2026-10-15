@@ -8,19 +8,19 @@ this.Af_f_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Af_f_noteOn_type_alloc = function (_ctx) {
+this.Af_f_noteOn_type_alloc = function () {
    return this.Af_f_process_type_alloc();
 };
 
-this.Af_f_noteOff_type_alloc = function (_ctx) {
+this.Af_f_noteOff_type_alloc = function () {
    return this.Af_f_process_type_alloc();
 };
 
-this.Af_f_controlChange_type_alloc = function (_ctx) {
+this.Af_f_controlChange_type_alloc = function () {
    return this.Af_f_process_type_alloc();
 };
 
-this.Af_f_default_type_alloc = function (_ctx) {
+this.Af_f_default_type_alloc = function () {
    return this.Af_f_process_type_alloc();
 };
 

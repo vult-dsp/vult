@@ -12,10 +12,10 @@ def EmptyTypes_foo_type_alloc():
    return _ctx
 
 
-def EmptyTypes_setSettings_type_alloc(_ctx):
+def EmptyTypes_setSettings_type_alloc():
    return EmptyTypes_foo_type_alloc()
 
-def EmptyTypes_setScreen_type_alloc(_ctx):
+def EmptyTypes_setScreen_type_alloc():
    return EmptyTypes_foo_type_alloc()
 
 def EmptyTypes_foo(_ctx):

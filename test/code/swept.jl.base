@@ -95,19 +95,19 @@ function Swept_process_type_alloc()
    return _ctx
 end
 
-function Swept_noteOn_type_alloc(_ctx)
+function Swept_noteOn_type_alloc()
    return Swept_process_type_alloc()
 end
 
-function Swept_noteOff_type_alloc(_ctx)
+function Swept_noteOff_type_alloc()
    return Swept_process_type_alloc()
 end
 
-function Swept_controlChange_type_alloc(_ctx)
+function Swept_controlChange_type_alloc()
    return Swept_process_type_alloc()
 end
 
-function Swept_default_type_alloc(_ctx)
+function Swept_default_type_alloc()
    return Swept_process_type_alloc()
 end
 

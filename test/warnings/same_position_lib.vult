@@ -1,0 +1,2 @@
+// Both modules have an unused argument at the same position: both warnings are reported
+fun f(a : int) : int { return 1; }

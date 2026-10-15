@@ -193,19 +193,19 @@ private Svf_process_type Svf_process_type_alloc() {
    return _ctx;
 }
 
-private Svf_noteOn_type Svf_noteOn_type_alloc(Svf_noteOn_type _ctx) {
+private Svf_noteOn_type Svf_noteOn_type_alloc() {
    return new Svf_noteOn_type();
 }
 
-private Svf_noteOff_type Svf_noteOff_type_alloc(Svf_noteOff_type _ctx) {
+private Svf_noteOff_type Svf_noteOff_type_alloc() {
    return new Svf_noteOff_type();
 }
 
-private Svf_controlChange_type Svf_controlChange_type_alloc(Svf_controlChange_type _ctx) {
+private Svf_controlChange_type Svf_controlChange_type_alloc() {
    return new Svf_controlChange_type();
 }
 
-private Svf_default_type Svf_default_type_alloc(Svf_default_type _ctx) {
+private Svf_default_type Svf_default_type_alloc() {
    return new Svf_default_type();
 }
 

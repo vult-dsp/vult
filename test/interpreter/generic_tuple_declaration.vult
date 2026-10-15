@@ -1,0 +1,9 @@
+// A tuple declaration in a generic function keeps the order of its elements
+fun pair(x : 't) : int {
+   val a, b = x, 2;
+   return int(a) * 100 + b;
+}
+
+fun main() : int {
+   return pair(3.0) + pair(4);
+}

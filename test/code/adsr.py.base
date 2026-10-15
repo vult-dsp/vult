@@ -104,16 +104,16 @@ def Adsr_process_type_alloc():
    return _ctx
 
 
-def Adsr_noteOn_type_alloc(_ctx):
+def Adsr_noteOn_type_alloc():
    return Adsr_process_type_alloc()
 
-def Adsr_noteOff_type_alloc(_ctx):
+def Adsr_noteOff_type_alloc():
    return Adsr_process_type_alloc()
 
-def Adsr_controlChange_type_alloc(_ctx):
+def Adsr_controlChange_type_alloc():
    return Adsr_process_type_alloc()
 
-def Adsr_default_type_alloc(_ctx):
+def Adsr_default_type_alloc():
    return Adsr_process_type_alloc()
 
 def Util_edge(_ctx, x):

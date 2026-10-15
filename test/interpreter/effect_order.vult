@@ -1,0 +1,20 @@
+// The optimizations keep the order and the number of the calls to functions with state
+fun c() : int {
+   mem n : int;
+   n = n + 1;
+   return n;
+}
+
+// Evaluated left to right: 1 - 10 * 2
+fun minus() : int {
+   return a:c() - 10 * a:c();
+}
+
+// Two calls, not one cached value: 1 * 100 + 2
+fun twice() : real {
+   return real(b:c()) * 100.0 + real(b:c());
+}
+
+fun main() : int {
+   return minus() * 1000 + int(twice());
+}

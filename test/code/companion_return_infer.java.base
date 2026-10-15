@@ -67,7 +67,7 @@ private Companion_return_infer_main_type Companion_return_infer_main_type_alloc(
    return _ctx;
 }
 
-private Companion_return_infer_current_int_type Companion_return_infer_current_int_type_alloc(Companion_return_infer_current_int_type _ctx) {
+private Companion_return_infer_current_int_type Companion_return_infer_current_int_type_alloc() {
    return new Companion_return_infer_current_int_type();
 }
 

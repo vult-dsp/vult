@@ -207,7 +207,7 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) (init_value : exp op
       let int_t = C.int_t in
       let index = {e= EId i; t= int_t; loc} in
       let one = {e= EInt 1; t= int_t; loc} in
-      let cond = {e= EOp (OpLt, index, {e= EInt size; t= int_t; loc}); t; loc} in
+      let cond = {e= EOp (OpLt, index, {e= EInt size; t= int_t; loc}); t= C.bool_t; loc} in
       let bind =
         let lhs = {l= LIndex {e= lhs; index}; t= subt; loc} in
         let rhs = {e= EIndex {e= rhs; index}; t= subt; loc} in
@@ -225,7 +225,7 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) (init_value : exp op
       let int_t = C.int_t in
       let index = {e= EId i; t= int_t; loc} in
       let one = {e= EInt 1; t= int_t; loc} in
-      let cond = {e= EOp (OpLt, index, {e= EInt size; t= int_t; loc}); t; loc} in
+      let cond = {e= EOp (OpLt, index, {e= EInt size; t= int_t; loc}); t= C.bool_t; loc} in
       let temp = "temp_" ^ string_of_int (getTick ()) in
       let rhs_temp = {e= EId temp; t; loc} in
       let lhs_temp = {l= LId temp; t; loc} in
@@ -339,10 +339,9 @@ let createInitFunction custom_initializers (iargs : Args.args) stmt =
   | {top= TopAlias {path; alias_of}; loc} ->
       let name = path ^ "_alloc" in
       let this_type = {t= TStruct {path; members= []}; loc= Loc.default; const= true} in
-      let void_type = C.void_t in
-      let call = {e= ECall {path= alias_of ^ "_alloc"; args= []}; loc; t= void_type} in
+      let call = {e= ECall {path= alias_of ^ "_alloc"; args= []}; loc; t= this_type} in
       let body = {s= StmtReturn call; loc} in
-      let args, t = ([{name= "_ctx"; t= this_type; const= false; loc}], ([], this_type)) in
+      let args, t = ([], ([], this_type)) in
       {top= TopFunction ({name; args; t; loc; tags= []; info= default_info}, body); loc}
   | _ ->
       print_endline (Pla.print (Prog.Print.print_top_stmt stmt)) ;

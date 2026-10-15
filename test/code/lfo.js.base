@@ -50,19 +50,19 @@ this.Lfo_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Lfo_noteOn_type_alloc = function (_ctx) {
+this.Lfo_noteOn_type_alloc = function () {
    return this.Lfo_process_type_alloc();
 };
 
-this.Lfo_noteOff_type_alloc = function (_ctx) {
+this.Lfo_noteOff_type_alloc = function () {
    return this.Lfo_process_type_alloc();
 };
 
-this.Lfo_controlChange_type_alloc = function (_ctx) {
+this.Lfo_controlChange_type_alloc = function () {
    return this.Lfo_process_type_alloc();
 };
 
-this.Lfo_default_type_alloc = function (_ctx) {
+this.Lfo_default_type_alloc = function () {
    return this.Lfo_process_type_alloc();
 };
 

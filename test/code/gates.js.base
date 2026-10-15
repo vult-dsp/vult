@@ -23,11 +23,11 @@ this.Gates_gates_noteOn_type_alloc = function () {
    return _ctx;
 };
 
-this.Gates_gates_noteOff_type_alloc = function (_ctx) {
+this.Gates_gates_noteOff_type_alloc = function () {
    return this.Gates_gates_noteOn_type_alloc();
 };
 
-this.Gates_gates_state_type_alloc = function (_ctx) {
+this.Gates_gates_state_type_alloc = function () {
    return this.Gates_gates_noteOn_type_alloc();
 };
 
@@ -46,19 +46,19 @@ this.Gates_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Gates_noteOn_type_alloc = function (_ctx) {
+this.Gates_noteOn_type_alloc = function () {
    return this.Gates_process_type_alloc();
 };
 
-this.Gates_noteOff_type_alloc = function (_ctx) {
+this.Gates_noteOff_type_alloc = function () {
    return this.Gates_process_type_alloc();
 };
 
-this.Gates_controlChange_type_alloc = function (_ctx) {
+this.Gates_controlChange_type_alloc = function () {
    return this.Gates_process_type_alloc();
 };
 
-this.Gates_default_type_alloc = function (_ctx) {
+this.Gates_default_type_alloc = function () {
    return this.Gates_process_type_alloc();
 };
 

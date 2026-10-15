@@ -64,19 +64,19 @@ this.Rescomb_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Rescomb_noteOn_type_alloc = function (_ctx) {
+this.Rescomb_noteOn_type_alloc = function () {
    return this.Rescomb_process_type_alloc();
 };
 
-this.Rescomb_noteOff_type_alloc = function (_ctx) {
+this.Rescomb_noteOff_type_alloc = function () {
    return this.Rescomb_process_type_alloc();
 };
 
-this.Rescomb_controlChange_type_alloc = function (_ctx) {
+this.Rescomb_controlChange_type_alloc = function () {
    return this.Rescomb_process_type_alloc();
 };
 
-this.Rescomb_default_type_alloc = function (_ctx) {
+this.Rescomb_default_type_alloc = function () {
    return this.Rescomb_process_type_alloc();
 };
 

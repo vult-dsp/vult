@@ -103,19 +103,19 @@ function Tricore_process_type_alloc()
    return _ctx
 end
 
-function Tricore_noteOn_type_alloc(_ctx)
+function Tricore_noteOn_type_alloc()
    return Tricore_process_type_alloc()
 end
 
-function Tricore_noteOff_type_alloc(_ctx)
+function Tricore_noteOff_type_alloc()
    return Tricore_process_type_alloc()
 end
 
-function Tricore_controlChange_type_alloc(_ctx)
+function Tricore_controlChange_type_alloc()
    return Tricore_process_type_alloc()
 end
 
-function Tricore_default_type_alloc(_ctx)
+function Tricore_default_type_alloc()
    return Tricore_process_type_alloc()
 end
 

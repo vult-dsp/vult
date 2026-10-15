@@ -57,19 +57,19 @@ this.Ahr_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Ahr_noteOn_type_alloc = function (_ctx) {
+this.Ahr_noteOn_type_alloc = function () {
    return this.Ahr_process_type_alloc();
 };
 
-this.Ahr_noteOff_type_alloc = function (_ctx) {
+this.Ahr_noteOff_type_alloc = function () {
    return this.Ahr_process_type_alloc();
 };
 
-this.Ahr_controlChange_type_alloc = function (_ctx) {
+this.Ahr_controlChange_type_alloc = function () {
    return this.Ahr_process_type_alloc();
 };
 
-this.Ahr_default_type_alloc = function (_ctx) {
+this.Ahr_default_type_alloc = function () {
    return this.Ahr_process_type_alloc();
 };
 

@@ -51,7 +51,7 @@ function SaveState_counter_type_alloc()
    return _ctx
 end
 
-function SaveState_reset_type_alloc(_ctx)
+function SaveState_reset_type_alloc()
    return SaveState_counter_type_alloc()
 end
 

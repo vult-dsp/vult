@@ -134,19 +134,19 @@ function Ahr_process_type_alloc()
    return _ctx
 end
 
-function Ahr_noteOn_type_alloc(_ctx)
+function Ahr_noteOn_type_alloc()
    return Ahr_process_type_alloc()
 end
 
-function Ahr_noteOff_type_alloc(_ctx)
+function Ahr_noteOff_type_alloc()
    return Ahr_process_type_alloc()
 end
 
-function Ahr_controlChange_type_alloc(_ctx)
+function Ahr_controlChange_type_alloc()
    return Ahr_process_type_alloc()
 end
 
-function Ahr_default_type_alloc(_ctx)
+function Ahr_default_type_alloc()
    return Ahr_process_type_alloc()
 end
 

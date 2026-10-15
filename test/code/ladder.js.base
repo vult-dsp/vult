@@ -72,19 +72,19 @@ this.Ladder_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Ladder_noteOn_type_alloc = function (_ctx) {
+this.Ladder_noteOn_type_alloc = function () {
    return this.Ladder_process_type_alloc();
 };
 
-this.Ladder_noteOff_type_alloc = function (_ctx) {
+this.Ladder_noteOff_type_alloc = function () {
    return this.Ladder_process_type_alloc();
 };
 
-this.Ladder_controlChange_type_alloc = function (_ctx) {
+this.Ladder_controlChange_type_alloc = function () {
    return this.Ladder_process_type_alloc();
 };
 
-this.Ladder_default_type_alloc = function (_ctx) {
+this.Ladder_default_type_alloc = function () {
    return this.Ladder_process_type_alloc();
 };
 

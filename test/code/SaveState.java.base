@@ -69,7 +69,7 @@ public static class SaveState_counter_type {
    return _ctx;
 }
 
-private SaveState_reset_type SaveState_reset_type_alloc(SaveState_reset_type _ctx) {
+private SaveState_reset_type SaveState_reset_type_alloc() {
    return new SaveState_reset_type();
 }
 

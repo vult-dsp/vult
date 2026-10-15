@@ -23,16 +23,16 @@ def Volume_process_type_alloc():
    return _ctx
 
 
-def Volume_noteOn_type_alloc(_ctx):
+def Volume_noteOn_type_alloc():
    return Volume_process_type_alloc()
 
-def Volume_noteOff_type_alloc(_ctx):
+def Volume_noteOff_type_alloc():
    return Volume_process_type_alloc()
 
-def Volume_controlChange_type_alloc(_ctx):
+def Volume_controlChange_type_alloc():
    return Volume_process_type_alloc()
 
-def Volume_default_type_alloc(_ctx):
+def Volume_default_type_alloc():
    return Volume_process_type_alloc()
 
 def Volume_smooth(_ctx, input):

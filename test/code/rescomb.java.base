@@ -211,19 +211,19 @@ private Rescomb_process_type Rescomb_process_type_alloc() {
    return _ctx;
 }
 
-private Rescomb_noteOn_type Rescomb_noteOn_type_alloc(Rescomb_noteOn_type _ctx) {
+private Rescomb_noteOn_type Rescomb_noteOn_type_alloc() {
    return new Rescomb_noteOn_type();
 }
 
-private Rescomb_noteOff_type Rescomb_noteOff_type_alloc(Rescomb_noteOff_type _ctx) {
+private Rescomb_noteOff_type Rescomb_noteOff_type_alloc() {
    return new Rescomb_noteOff_type();
 }
 
-private Rescomb_controlChange_type Rescomb_controlChange_type_alloc(Rescomb_controlChange_type _ctx) {
+private Rescomb_controlChange_type Rescomb_controlChange_type_alloc() {
    return new Rescomb_controlChange_type();
 }
 
-private Rescomb_default_type Rescomb_default_type_alloc(Rescomb_default_type _ctx) {
+private Rescomb_default_type Rescomb_default_type_alloc() {
    return new Rescomb_default_type();
 }
 

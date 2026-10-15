@@ -120,16 +120,16 @@ def Saw_ptr2_process_type_alloc():
    return _ctx
 
 
-def Saw_ptr2_noteOn_type_alloc(_ctx):
+def Saw_ptr2_noteOn_type_alloc():
    return Saw_ptr2_process_type_alloc()
 
-def Saw_ptr2_noteOff_type_alloc(_ctx):
+def Saw_ptr2_noteOff_type_alloc():
    return Saw_ptr2_process_type_alloc()
 
-def Saw_ptr2_controlChange_type_alloc(_ctx):
+def Saw_ptr2_controlChange_type_alloc():
    return Saw_ptr2_process_type_alloc()
 
-def Saw_ptr2_default_type_alloc(_ctx):
+def Saw_ptr2_default_type_alloc():
    return Saw_ptr2_process_type_alloc()
 
 def Util_edge(_ctx, x):

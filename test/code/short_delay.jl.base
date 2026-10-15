@@ -62,19 +62,19 @@ function Short_delay_process_type_alloc()
    return _ctx
 end
 
-function Short_delay_noteOn_type_alloc(_ctx)
+function Short_delay_noteOn_type_alloc()
    return Short_delay_process_type_alloc()
 end
 
-function Short_delay_noteOff_type_alloc(_ctx)
+function Short_delay_noteOff_type_alloc()
    return Short_delay_process_type_alloc()
 end
 
-function Short_delay_controlChange_type_alloc(_ctx)
+function Short_delay_controlChange_type_alloc()
    return Short_delay_process_type_alloc()
 end
 
-function Short_delay_default_type_alloc(_ctx)
+function Short_delay_default_type_alloc()
    return Short_delay_process_type_alloc()
 end
 

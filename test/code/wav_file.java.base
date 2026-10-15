@@ -79,19 +79,19 @@ private Wav_file_process_type Wav_file_process_type_alloc() {
    return _ctx;
 }
 
-private Wav_file_noteOn_type Wav_file_noteOn_type_alloc(Wav_file_noteOn_type _ctx) {
+private Wav_file_noteOn_type Wav_file_noteOn_type_alloc() {
    return new Wav_file_noteOn_type();
 }
 
-private Wav_file_noteOff_type Wav_file_noteOff_type_alloc(Wav_file_noteOff_type _ctx) {
+private Wav_file_noteOff_type Wav_file_noteOff_type_alloc() {
    return new Wav_file_noteOff_type();
 }
 
-private Wav_file_controlChange_type Wav_file_controlChange_type_alloc(Wav_file_controlChange_type _ctx) {
+private Wav_file_controlChange_type Wav_file_controlChange_type_alloc() {
    return new Wav_file_controlChange_type();
 }
 
-private Wav_file_default_type Wav_file_default_type_alloc(Wav_file_default_type _ctx) {
+private Wav_file_default_type Wav_file_default_type_alloc() {
    return new Wav_file_default_type();
 }
 

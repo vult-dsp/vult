@@ -39,19 +39,19 @@ private Volume_process_type Volume_process_type_alloc() {
    return _ctx;
 }
 
-private Volume_noteOn_type Volume_noteOn_type_alloc(Volume_noteOn_type _ctx) {
+private Volume_noteOn_type Volume_noteOn_type_alloc() {
    return new Volume_noteOn_type();
 }
 
-private Volume_noteOff_type Volume_noteOff_type_alloc(Volume_noteOff_type _ctx) {
+private Volume_noteOff_type Volume_noteOff_type_alloc() {
    return new Volume_noteOff_type();
 }
 
-private Volume_controlChange_type Volume_controlChange_type_alloc(Volume_controlChange_type _ctx) {
+private Volume_controlChange_type Volume_controlChange_type_alloc() {
    return new Volume_controlChange_type();
 }
 
-private Volume_default_type Volume_default_type_alloc(Volume_default_type _ctx) {
+private Volume_default_type Volume_default_type_alloc() {
    return new Volume_default_type();
 }
 

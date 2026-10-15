@@ -1,0 +1,7 @@
+// A table function that cannot be evaluated is reported at the function
+fun coef(x : real) : real @[table(min = 0.0, max = 1.0, size = 16)] {
+   return x / samplerate();
+}
+fun process(x : real) : real {
+   return coef(x);
+}

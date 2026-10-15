@@ -1,0 +1,7 @@
+// An integer table needs max >= min
+fun f(x : int) : int @[table(min = 3, max = 1)] {
+   return x;
+}
+fun process(a : int) : int {
+   return f(a);
+}

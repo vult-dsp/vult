@@ -35,7 +35,7 @@ public static class Companion_type_alias_foo_type {
    return _ctx;
 }
 
-private Companion_type_alias_bar_type Companion_type_alias_bar_type_alloc(Companion_type_alias_bar_type _ctx) {
+private Companion_type_alias_bar_type Companion_type_alias_bar_type_alloc() {
    return new Companion_type_alias_bar_type();
 }
 

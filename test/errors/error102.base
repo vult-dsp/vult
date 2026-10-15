@@ -1,0 +1,4 @@
+The result of this expression must be explicitly discarded e.g. val _ = 1;
+fun f() : int {
+   1 + 2;
+   ^^^^^

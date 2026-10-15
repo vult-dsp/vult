@@ -199,19 +199,19 @@ private Ahr_process_type Ahr_process_type_alloc() {
    return _ctx;
 }
 
-private Ahr_noteOn_type Ahr_noteOn_type_alloc(Ahr_noteOn_type _ctx) {
+private Ahr_noteOn_type Ahr_noteOn_type_alloc() {
    return new Ahr_noteOn_type();
 }
 
-private Ahr_noteOff_type Ahr_noteOff_type_alloc(Ahr_noteOff_type _ctx) {
+private Ahr_noteOff_type Ahr_noteOff_type_alloc() {
    return new Ahr_noteOff_type();
 }
 
-private Ahr_controlChange_type Ahr_controlChange_type_alloc(Ahr_controlChange_type _ctx) {
+private Ahr_controlChange_type Ahr_controlChange_type_alloc() {
    return new Ahr_controlChange_type();
 }
 
-private Ahr_default_type Ahr_default_type_alloc(Ahr_default_type _ctx) {
+private Ahr_default_type Ahr_default_type_alloc() {
    return new Ahr_default_type();
 }
 

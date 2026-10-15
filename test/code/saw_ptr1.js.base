@@ -91,19 +91,19 @@ this.Saw_ptr1_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Saw_ptr1_noteOn_type_alloc = function (_ctx) {
+this.Saw_ptr1_noteOn_type_alloc = function () {
    return this.Saw_ptr1_process_type_alloc();
 };
 
-this.Saw_ptr1_noteOff_type_alloc = function (_ctx) {
+this.Saw_ptr1_noteOff_type_alloc = function () {
    return this.Saw_ptr1_process_type_alloc();
 };
 
-this.Saw_ptr1_controlChange_type_alloc = function (_ctx) {
+this.Saw_ptr1_controlChange_type_alloc = function () {
    return this.Saw_ptr1_process_type_alloc();
 };
 
-this.Saw_ptr1_default_type_alloc = function (_ctx) {
+this.Saw_ptr1_default_type_alloc = function () {
    return this.Saw_ptr1_process_type_alloc();
 };
 

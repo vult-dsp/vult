@@ -229,19 +229,19 @@ private Ladder_process_type Ladder_process_type_alloc() {
    return _ctx;
 }
 
-private Ladder_noteOn_type Ladder_noteOn_type_alloc(Ladder_noteOn_type _ctx) {
+private Ladder_noteOn_type Ladder_noteOn_type_alloc() {
    return new Ladder_noteOn_type();
 }
 
-private Ladder_noteOff_type Ladder_noteOff_type_alloc(Ladder_noteOff_type _ctx) {
+private Ladder_noteOff_type Ladder_noteOff_type_alloc() {
    return new Ladder_noteOff_type();
 }
 
-private Ladder_controlChange_type Ladder_controlChange_type_alloc(Ladder_controlChange_type _ctx) {
+private Ladder_controlChange_type Ladder_controlChange_type_alloc() {
    return new Ladder_controlChange_type();
 }
 
-private Ladder_default_type Ladder_default_type_alloc(Ladder_default_type _ctx) {
+private Ladder_default_type Ladder_default_type_alloc() {
    return new Ladder_default_type();
 }
 

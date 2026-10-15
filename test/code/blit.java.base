@@ -254,19 +254,19 @@ private Phase_process_type Phase_process_type_alloc() {
    return _ctx;
 }
 
-private Phase_noteOn_type Phase_noteOn_type_alloc(Phase_noteOn_type _ctx) {
+private Phase_noteOn_type Phase_noteOn_type_alloc() {
    return new Phase_noteOn_type();
 }
 
-private Phase_noteOff_type Phase_noteOff_type_alloc(Phase_noteOff_type _ctx) {
+private Phase_noteOff_type Phase_noteOff_type_alloc() {
    return new Phase_noteOff_type();
 }
 
-private Phase_controlChange_type Phase_controlChange_type_alloc(Phase_controlChange_type _ctx) {
+private Phase_controlChange_type Phase_controlChange_type_alloc() {
    return new Phase_controlChange_type();
 }
 
-private Phase_default_type Phase_default_type_alloc(Phase_default_type _ctx) {
+private Phase_default_type Phase_default_type_alloc() {
    return new Phase_default_type();
 }
 
@@ -306,7 +306,7 @@ private Blit_pulse_train_type Blit_pulse_train_type_alloc() {
    return _ctx;
 }
 
-private Blit_pulse_start_type Blit_pulse_start_type_alloc(Blit_pulse_start_type _ctx) {
+private Blit_pulse_start_type Blit_pulse_start_type_alloc() {
    return new Blit_pulse_start_type();
 }
 
@@ -371,7 +371,7 @@ private Blit_osc_blit_type Blit_osc_blit_type_alloc() {
    return _ctx;
 }
 
-private Blit_init_type Blit_init_type_alloc(Blit_init_type _ctx) {
+private Blit_init_type Blit_init_type_alloc() {
    return new Blit_init_type();
 }
 
@@ -381,19 +381,19 @@ private Blit_process_type Blit_process_type_alloc() {
    return _ctx;
 }
 
-private Blit_noteOn_type Blit_noteOn_type_alloc(Blit_noteOn_type _ctx) {
+private Blit_noteOn_type Blit_noteOn_type_alloc() {
    return new Blit_noteOn_type();
 }
 
-private Blit_noteOff_type Blit_noteOff_type_alloc(Blit_noteOff_type _ctx) {
+private Blit_noteOff_type Blit_noteOff_type_alloc() {
    return new Blit_noteOff_type();
 }
 
-private Blit_controlChange_type Blit_controlChange_type_alloc(Blit_controlChange_type _ctx) {
+private Blit_controlChange_type Blit_controlChange_type_alloc() {
    return new Blit_controlChange_type();
 }
 
-private Blit_default_type Blit_default_type_alloc(Blit_default_type _ctx) {
+private Blit_default_type Blit_default_type_alloc() {
    return new Blit_default_type();
 }
 

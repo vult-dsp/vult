@@ -117,16 +117,16 @@ def Synth1_process_type_alloc():
    return _ctx
 
 
-def Synth1_noteOn_type_alloc(_ctx):
+def Synth1_noteOn_type_alloc():
    return Synth1_process_type_alloc()
 
-def Synth1_noteOff_type_alloc(_ctx):
+def Synth1_noteOff_type_alloc():
    return Synth1_process_type_alloc()
 
-def Synth1_controlChange_type_alloc(_ctx):
+def Synth1_controlChange_type_alloc():
    return Synth1_process_type_alloc()
 
-def Synth1_default_type_alloc(_ctx):
+def Synth1_default_type_alloc():
    return Synth1_process_type_alloc()
 
 def Synth1_smooth(_ctx, input):

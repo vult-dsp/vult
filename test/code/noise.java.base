@@ -43,19 +43,19 @@ private Noise_process_type Noise_process_type_alloc() {
    return _ctx;
 }
 
-private Noise_noteOn_type Noise_noteOn_type_alloc(Noise_noteOn_type _ctx) {
+private Noise_noteOn_type Noise_noteOn_type_alloc() {
    return new Noise_noteOn_type();
 }
 
-private Noise_noteOff_type Noise_noteOff_type_alloc(Noise_noteOff_type _ctx) {
+private Noise_noteOff_type Noise_noteOff_type_alloc() {
    return new Noise_noteOff_type();
 }
 
-private Noise_controlChange_type Noise_controlChange_type_alloc(Noise_controlChange_type _ctx) {
+private Noise_controlChange_type Noise_controlChange_type_alloc() {
    return new Noise_controlChange_type();
 }
 
-private Noise_default_type Noise_default_type_alloc(Noise_default_type _ctx) {
+private Noise_default_type Noise_default_type_alloc() {
    return new Noise_default_type();
 }
 

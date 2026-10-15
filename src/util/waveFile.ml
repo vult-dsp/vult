@@ -155,7 +155,11 @@ let checkFormat (buffer : buffer) =
 type wave = {channels: int; samples: int; data: float array array}
 
 (** Reads a wav file and returns an array containing the channels *)
-let read (file : string) : (wave, string) result =
+let rec read (file : string) : (wave, string) result =
+  (* [get] raises Invalid_argument past the end of the data, e.g. in a file cut inside its header *)
+  try readData file with Invalid_argument _ -> Error "Not a valid file"
+
+and readData (file : string) : (wave, string) result =
   match FileIO.read_bytes file with
   | None ->
       Error "failed to open the file"
@@ -177,10 +181,12 @@ let read (file : string) : (wave, string) result =
               if not (searchData buffer) then Error "the file does not contain data"
               else
                 let size = read4 buffer |> Int32.to_int in
-                let no_samples = size / channels / (Int32.to_int bits_per_sample / 8) in
-                let data = Array.init channels (fun _ -> Array.make no_samples 0.0) in
-                let samples = readSamples buffer channels no_samples data sample_fn in
-                Ok {channels; samples; data} ) )
+                if channels <= 0 then Error "the file has no channels"
+                else
+                  let no_samples = max 0 (size / channels / (Int32.to_int bits_per_sample / 8)) in
+                  let data = Array.init channels (fun _ -> Array.make no_samples 0.0) in
+                  let samples = readSamples buffer channels no_samples data sample_fn in
+                  Ok {channels; samples; data} ) )
 
 (** Writing WAV files *)
 

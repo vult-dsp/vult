@@ -10,19 +10,19 @@ this.Pd_msg_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Pd_msg_noteOn_type_alloc = function (_ctx) {
+this.Pd_msg_noteOn_type_alloc = function () {
    return this.Pd_msg_process_type_alloc();
 };
 
-this.Pd_msg_setLevel_type_alloc = function (_ctx) {
+this.Pd_msg_setLevel_type_alloc = function () {
    return this.Pd_msg_process_type_alloc();
 };
 
-this.Pd_msg_mute_type_alloc = function (_ctx) {
+this.Pd_msg_mute_type_alloc = function () {
    return this.Pd_msg_process_type_alloc();
 };
 
-this.Pd_msg_setLabel_type_alloc = function (_ctx) {
+this.Pd_msg_setLabel_type_alloc = function () {
    return this.Pd_msg_process_type_alloc();
 };
 

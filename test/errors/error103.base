@@ -1,0 +1,4 @@
+The table function 'Error103.coef' cannot be evaluated: samplerate() requires the -samplerate flag. Use: vult file.vult -eval "expr" -samplerate 44100
+// A table function that cannot be evaluated is reported at the function
+fun coef(x : real) : real @[table(min = 0.0, max = 1.0, size = 16)] {
+    ^^^^

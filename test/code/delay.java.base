@@ -292,11 +292,11 @@ private Delay_mono_noteOn_type Delay_mono_noteOn_type_alloc() {
    return _ctx;
 }
 
-private Delay_mono_noteOff_type Delay_mono_noteOff_type_alloc(Delay_mono_noteOff_type _ctx) {
+private Delay_mono_noteOff_type Delay_mono_noteOff_type_alloc() {
    return new Delay_mono_noteOff_type();
 }
 
-private Delay_mono_isGateOn_type Delay_mono_isGateOn_type_alloc(Delay_mono_isGateOn_type _ctx) {
+private Delay_mono_isGateOn_type Delay_mono_isGateOn_type_alloc() {
    return new Delay_mono_isGateOn_type();
 }
 
@@ -319,19 +319,19 @@ private Delay_process_type Delay_process_type_alloc() {
    return _ctx;
 }
 
-private Delay_noteOn_type Delay_noteOn_type_alloc(Delay_noteOn_type _ctx) {
+private Delay_noteOn_type Delay_noteOn_type_alloc() {
    return new Delay_noteOn_type();
 }
 
-private Delay_noteOff_type Delay_noteOff_type_alloc(Delay_noteOff_type _ctx) {
+private Delay_noteOff_type Delay_noteOff_type_alloc() {
    return new Delay_noteOff_type();
 }
 
-private Delay_controlChange_type Delay_controlChange_type_alloc(Delay_controlChange_type _ctx) {
+private Delay_controlChange_type Delay_controlChange_type_alloc() {
    return new Delay_controlChange_type();
 }
 
-private Delay_default_type Delay_default_type_alloc(Delay_default_type _ctx) {
+private Delay_default_type Delay_default_type_alloc() {
    return new Delay_default_type();
 }
 

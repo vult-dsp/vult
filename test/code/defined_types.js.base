@@ -17,19 +17,19 @@ this.Defined_types_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Defined_types_noteOn_type_alloc = function (_ctx) {
+this.Defined_types_noteOn_type_alloc = function () {
    return this.Defined_types_process_type_alloc();
 };
 
-this.Defined_types_noteOff_type_alloc = function (_ctx) {
+this.Defined_types_noteOff_type_alloc = function () {
    return this.Defined_types_process_type_alloc();
 };
 
-this.Defined_types_controlChange_type_alloc = function (_ctx) {
+this.Defined_types_controlChange_type_alloc = function () {
    return this.Defined_types_process_type_alloc();
 };
 
-this.Defined_types_default_type_alloc = function (_ctx) {
+this.Defined_types_default_type_alloc = function () {
    return this.Defined_types_process_type_alloc();
 };
 

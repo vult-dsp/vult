@@ -100,10 +100,10 @@ def Monocv_mono_noteOn_type_alloc():
    return _ctx
 
 
-def Monocv_mono_noteOff_type_alloc(_ctx):
+def Monocv_mono_noteOff_type_alloc():
    return Monocv_mono_noteOn_type_alloc()
 
-def Monocv_mono_isGateOn_type_alloc(_ctx):
+def Monocv_mono_isGateOn_type_alloc():
    return Monocv_mono_noteOn_type_alloc()
 
 def Monocv_process_type_alloc():
@@ -121,16 +121,16 @@ def Monocv_process_type_alloc():
    return _ctx
 
 
-def Monocv_noteOn_type_alloc(_ctx):
+def Monocv_noteOn_type_alloc():
    return Monocv_process_type_alloc()
 
-def Monocv_noteOff_type_alloc(_ctx):
+def Monocv_noteOff_type_alloc():
    return Monocv_process_type_alloc()
 
-def Monocv_controlChange_type_alloc(_ctx):
+def Monocv_controlChange_type_alloc():
    return Monocv_process_type_alloc()
 
-def Monocv_default_type_alloc(_ctx):
+def Monocv_default_type_alloc():
    return Monocv_process_type_alloc()
 
 def Util_edge(_ctx, x):

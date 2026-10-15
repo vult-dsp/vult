@@ -7,11 +7,11 @@ function EmptyTypes_foo_type_alloc()
    return _ctx
 end
 
-function EmptyTypes_setSettings_type_alloc(_ctx)
+function EmptyTypes_setSettings_type_alloc()
    return EmptyTypes_foo_type_alloc()
 end
 
-function EmptyTypes_setScreen_type_alloc(_ctx)
+function EmptyTypes_setScreen_type_alloc()
    return EmptyTypes_foo_type_alloc()
 end
 

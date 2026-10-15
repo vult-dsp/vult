@@ -27,19 +27,19 @@ function Array_defined_type_process_type_alloc()
    return _ctx
 end
 
-function Array_defined_type_noteOn_type_alloc(_ctx)
+function Array_defined_type_noteOn_type_alloc()
    return Array_defined_type_process_type_alloc()
 end
 
-function Array_defined_type_noteOff_type_alloc(_ctx)
+function Array_defined_type_noteOff_type_alloc()
    return Array_defined_type_process_type_alloc()
 end
 
-function Array_defined_type_controlChange_type_alloc(_ctx)
+function Array_defined_type_controlChange_type_alloc()
    return Array_defined_type_process_type_alloc()
 end
 
-function Array_defined_type_default_type_alloc(_ctx)
+function Array_defined_type_default_type_alloc()
    return Array_defined_type_process_type_alloc()
 end
 

@@ -58,14 +58,17 @@ let getErrorLines (location : Loc.t) : string =
     | Loc.Text code ->
         CCString.lines code
   in
+  (* The location can point past the text: the lexer counts the empty line after a final newline,
+     and a file read from disk can be shorter than the text that was parsed *)
+  let line n = Option.value ~default:"" (CCList.nth_opt lines n) in
   let result =
     match (Loc.line location, lines) with
     | _, [] ->
         ""
     | (0 | 1), _ ->
-        CCList.nth lines 0
+        line 0
     | n, _ ->
-        CCList.nth lines (n - 2) ^ "\n" ^ CCList.nth lines (n - 1)
+        line (n - 2) ^ "\n" ^ line (n - 1)
   in
   CCString.replace ~sub:"\t" ~by:" " result
 

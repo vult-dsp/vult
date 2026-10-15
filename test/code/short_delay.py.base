@@ -55,16 +55,16 @@ def Short_delay_process_type_alloc():
    return _ctx
 
 
-def Short_delay_noteOn_type_alloc(_ctx):
+def Short_delay_noteOn_type_alloc():
    return Short_delay_process_type_alloc()
 
-def Short_delay_noteOff_type_alloc(_ctx):
+def Short_delay_noteOff_type_alloc():
    return Short_delay_process_type_alloc()
 
-def Short_delay_controlChange_type_alloc(_ctx):
+def Short_delay_controlChange_type_alloc():
    return Short_delay_process_type_alloc()
 
-def Short_delay_default_type_alloc(_ctx):
+def Short_delay_default_type_alloc():
    return Short_delay_process_type_alloc()
 
 Saturate_tanh_table_c = {}

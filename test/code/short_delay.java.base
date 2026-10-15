@@ -129,19 +129,19 @@ private Short_delay_process_type Short_delay_process_type_alloc() {
    return _ctx;
 }
 
-private Short_delay_noteOn_type Short_delay_noteOn_type_alloc(Short_delay_noteOn_type _ctx) {
+private Short_delay_noteOn_type Short_delay_noteOn_type_alloc() {
    return new Short_delay_noteOn_type();
 }
 
-private Short_delay_noteOff_type Short_delay_noteOff_type_alloc(Short_delay_noteOff_type _ctx) {
+private Short_delay_noteOff_type Short_delay_noteOff_type_alloc() {
    return new Short_delay_noteOff_type();
 }
 
-private Short_delay_controlChange_type Short_delay_controlChange_type_alloc(Short_delay_controlChange_type _ctx) {
+private Short_delay_controlChange_type Short_delay_controlChange_type_alloc() {
    return new Short_delay_controlChange_type();
 }
 
-private Short_delay_default_type Short_delay_default_type_alloc(Short_delay_default_type _ctx) {
+private Short_delay_default_type Short_delay_default_type_alloc() {
    return new Short_delay_default_type();
 }
 

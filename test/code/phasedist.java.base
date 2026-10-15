@@ -107,19 +107,19 @@ private Phasedist_process_type Phasedist_process_type_alloc() {
    return _ctx;
 }
 
-private Phasedist_noteOn_type Phasedist_noteOn_type_alloc(Phasedist_noteOn_type _ctx) {
+private Phasedist_noteOn_type Phasedist_noteOn_type_alloc() {
    return new Phasedist_noteOn_type();
 }
 
-private Phasedist_noteOff_type Phasedist_noteOff_type_alloc(Phasedist_noteOff_type _ctx) {
+private Phasedist_noteOff_type Phasedist_noteOff_type_alloc() {
    return new Phasedist_noteOff_type();
 }
 
-private Phasedist_controlChange_type Phasedist_controlChange_type_alloc(Phasedist_controlChange_type _ctx) {
+private Phasedist_controlChange_type Phasedist_controlChange_type_alloc() {
    return new Phasedist_controlChange_type();
 }
 
-private Phasedist_default_type Phasedist_default_type_alloc(Phasedist_default_type _ctx) {
+private Phasedist_default_type Phasedist_default_type_alloc() {
    return new Phasedist_default_type();
 }
 

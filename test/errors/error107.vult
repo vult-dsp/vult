@@ -1,0 +1,5 @@
+// A wav file that ends inside its header is reported
+external w(channel : int, index : int) : real @[wave(channels = 1, file = "truncated.wav")];
+fun process() : real {
+   return w(0, 1);
+}

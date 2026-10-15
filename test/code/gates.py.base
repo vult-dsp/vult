@@ -51,10 +51,10 @@ def Gates_gates_noteOn_type_alloc():
    return _ctx
 
 
-def Gates_gates_noteOff_type_alloc(_ctx):
+def Gates_gates_noteOff_type_alloc():
    return Gates_gates_noteOn_type_alloc()
 
-def Gates_gates_state_type_alloc(_ctx):
+def Gates_gates_state_type_alloc():
    return Gates_gates_noteOn_type_alloc()
 
 def Gates_process_type_alloc():
@@ -72,16 +72,16 @@ def Gates_process_type_alloc():
    return _ctx
 
 
-def Gates_noteOn_type_alloc(_ctx):
+def Gates_noteOn_type_alloc():
    return Gates_process_type_alloc()
 
-def Gates_noteOff_type_alloc(_ctx):
+def Gates_noteOff_type_alloc():
    return Gates_process_type_alloc()
 
-def Gates_controlChange_type_alloc(_ctx):
+def Gates_controlChange_type_alloc():
    return Gates_process_type_alloc()
 
-def Gates_default_type_alloc(_ctx):
+def Gates_default_type_alloc():
    return Gates_process_type_alloc()
 
 def Gates_velToCV(vel):

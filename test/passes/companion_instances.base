@@ -34,16 +34,16 @@ fun Companion_instances_process_type_alloc() : struct Companion_instances_proces
    return (_ctx : struct Companion_instances_process_type);
 }
 
-fun Companion_instances_setA_type_alloc(_ctx : struct Companion_instances_setA_type) : struct Companion_instances_setA_type {
-   return (Companion_instances_process_type_alloc() : void);
+fun Companion_instances_setA_type_alloc() : struct Companion_instances_setA_type {
+   return (Companion_instances_process_type_alloc() : struct Companion_instances_setA_type);
 }
 
-fun Companion_instances_setB_type_alloc(_ctx : struct Companion_instances_setB_type) : struct Companion_instances_setB_type {
-   return (Companion_instances_process_type_alloc() : void);
+fun Companion_instances_setB_type_alloc() : struct Companion_instances_setB_type {
+   return (Companion_instances_process_type_alloc() : struct Companion_instances_setB_type);
 }
 
-fun Companion_instances_setC_type_alloc(_ctx : struct Companion_instances_setC_type) : struct Companion_instances_setC_type {
-   return (Companion_instances_process_type_alloc() : void);
+fun Companion_instances_setC_type_alloc() : struct Companion_instances_setC_type {
+   return (Companion_instances_process_type_alloc() : struct Companion_instances_setC_type);
 }
 
 fun Companion_instances_change_real(_ctx : struct Companion_instances_change_real_type, x : real) : bool {

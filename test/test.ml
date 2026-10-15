@@ -123,7 +123,7 @@ let parser_files =
   ; "new_type_spec.vult"
   ; "unbound.vult" ]
 
-let warnings_files = ["unused.vult"]
+let warnings_files = ["unused.vult"; "same_position.vult"]
 
 let errors_files =
   [ "error1.vult"
@@ -218,7 +218,17 @@ let errors_files =
   ; "error94.vult"
   ; "error95.vult"
   ; "error96.vult"
-  ; "error97.vult" ]
+  ; "error97.vult"
+  ; "error98.vult"
+  ; "error99.vult"
+  ; "error100.vult"
+  ; "error101.vult"
+  ; "error102.vult"
+  ; "error103.vult"
+  ; "error104.vult"
+  ; "error105.vult"
+  ; "error106.vult"
+  ; "error107.vult" ]
 
 let template_files =
   [ "sf_f.vult"
@@ -312,7 +322,10 @@ let interpreter =
   ; ("record_inference.vult", 5005)
   ; ("record_literals.vult", 15037)
   ; ("enum_inference.vult", 21111)
-  ; ("unit_function.vult", 2) ]
+  ; ("unit_function.vult", 2)
+  ; ("generic_tuple_declaration.vult", 704)
+  ; ("effect_order.vult", -18898)
+  ; ("irandom_range.vult", 1) ]
 
 let passes_files =
   [ "split_mem.vult"
@@ -482,7 +495,9 @@ end
 module ErrorTest = struct
   let process (fullfile : string) =
     let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
-    let args = Args.{default_arguments with includes; check= true} in
+    (* The whole pipeline, without generating code, so that the errors of the table evaluation
+       are reported too *)
+    let args = Args.{default_arguments with includes} in
     let args = {args with output= Some basefile; files= [File fullfile]} in
     let results = Driver.Cli.driver args in
     CCList.fold_left

@@ -157,11 +157,11 @@ function Polycv_poly_noteOn_type_alloc()
    return _ctx
 end
 
-function Polycv_poly_noteOff_type_alloc(_ctx)
+function Polycv_poly_noteOff_type_alloc()
    return Polycv_poly_noteOn_type_alloc()
 end
 
-function Polycv_polyState_type_alloc(_ctx)
+function Polycv_polyState_type_alloc()
    return Polycv_poly_noteOn_type_alloc()
 end
 
@@ -184,19 +184,19 @@ function Polycv_process_type_alloc()
    return _ctx
 end
 
-function Polycv_noteOn_type_alloc(_ctx)
+function Polycv_noteOn_type_alloc()
    return Polycv_process_type_alloc()
 end
 
-function Polycv_noteOff_type_alloc(_ctx)
+function Polycv_noteOff_type_alloc()
    return Polycv_process_type_alloc()
 end
 
-function Polycv_controlChange_type_alloc(_ctx)
+function Polycv_controlChange_type_alloc()
    return Polycv_process_type_alloc()
 end
 
-function Polycv_default_type_alloc(_ctx)
+function Polycv_default_type_alloc()
    return Polycv_process_type_alloc()
 end
 

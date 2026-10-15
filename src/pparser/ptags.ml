@@ -165,7 +165,7 @@ let setArgument tags tag_name arg_name arg_value =
             CCList.fold_left
               (fun (found, acc) (name, value, loc) ->
                 let value = if name = arg_name then arg_value else value in
-                (found, (name, value, loc) :: acc) )
+                (found || name = arg_name, (name, value, loc) :: acc) )
               (false, []) args
           in
           let args = if found then CCList.rev args_rev else CCList.rev ((arg_name, arg_value, t.loc) :: args_rev) in

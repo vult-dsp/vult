@@ -27,9 +27,10 @@ rule read =
   parse
   | white    { read lexbuf }
   | newline  { read lexbuf }
-  | int      { Int (Int64.of_string (Lexing.lexeme lexbuf)) }
+  (* Numbers that do not fit are compared as text *)
+  | int      { let s = Lexing.lexeme lexbuf in match Int64.of_string_opt s with Some i -> Int i | None -> Other s }
   | float    { Float (float_of_string (Lexing.lexeme lexbuf)) }
   | id       { Id (Lexing.lexeme lexbuf) }
-  | hex      { Hex (int_of_string (Lexing.lexeme lexbuf)) }
+  | hex      { let s = Lexing.lexeme lexbuf in match int_of_string_opt s with Some i -> Hex i | None -> Other s }
   | _        { Other (Lexing.lexeme lexbuf) }
   | eof      { EOF }

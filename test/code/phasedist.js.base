@@ -31,19 +31,19 @@ this.Phasedist_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Phasedist_noteOn_type_alloc = function (_ctx) {
+this.Phasedist_noteOn_type_alloc = function () {
    return this.Phasedist_process_type_alloc();
 };
 
-this.Phasedist_noteOff_type_alloc = function (_ctx) {
+this.Phasedist_noteOff_type_alloc = function () {
    return this.Phasedist_process_type_alloc();
 };
 
-this.Phasedist_controlChange_type_alloc = function (_ctx) {
+this.Phasedist_controlChange_type_alloc = function () {
    return this.Phasedist_process_type_alloc();
 };
 
-this.Phasedist_default_type_alloc = function (_ctx) {
+this.Phasedist_default_type_alloc = function () {
    return this.Phasedist_process_type_alloc();
 };
 

@@ -76,19 +76,19 @@ this.Svf_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Svf_noteOn_type_alloc = function (_ctx) {
+this.Svf_noteOn_type_alloc = function () {
    return this.Svf_process_type_alloc();
 };
 
-this.Svf_noteOff_type_alloc = function (_ctx) {
+this.Svf_noteOff_type_alloc = function () {
    return this.Svf_process_type_alloc();
 };
 
-this.Svf_controlChange_type_alloc = function (_ctx) {
+this.Svf_controlChange_type_alloc = function () {
    return this.Svf_process_type_alloc();
 };
 
-this.Svf_default_type_alloc = function (_ctx) {
+this.Svf_default_type_alloc = function () {
    return this.Svf_process_type_alloc();
 };
 

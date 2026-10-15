@@ -434,8 +434,9 @@ and string source buffer = parse
   | '\\' 'r'  { Buffer.add_char buffer '\r'; string source buffer lexbuf }
   | '\\' 't'  { Buffer.add_char buffer '\t'; string source buffer lexbuf }
   | '\\' '"'  { Buffer.add_char buffer '"'; string source buffer lexbuf }
-  (* Unknown escape sequences are kept as-is *)
-  | '\\' (_ as c)
+  (* Unknown escape sequences are kept as-is. A backslash before a newline is handled below, so
+     that the line is counted. *)
+  | '\\' ([^ '\r' '\n'] as c)
       {
         let () = Buffer.add_char buffer '\\' in
         let () = Buffer.add_char buffer c in

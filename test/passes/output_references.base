@@ -1,3 +1,4 @@
+
 struct Output_references_foo_type {
    Output_references_foo_ret_0 : real;
    Output_references_foo_ret_1 : real;

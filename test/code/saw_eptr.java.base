@@ -192,19 +192,19 @@ private Saw_eptr_process_type Saw_eptr_process_type_alloc() {
    return _ctx;
 }
 
-private Saw_eptr_noteOn_type Saw_eptr_noteOn_type_alloc(Saw_eptr_noteOn_type _ctx) {
+private Saw_eptr_noteOn_type Saw_eptr_noteOn_type_alloc() {
    return new Saw_eptr_noteOn_type();
 }
 
-private Saw_eptr_noteOff_type Saw_eptr_noteOff_type_alloc(Saw_eptr_noteOff_type _ctx) {
+private Saw_eptr_noteOff_type Saw_eptr_noteOff_type_alloc() {
    return new Saw_eptr_noteOff_type();
 }
 
-private Saw_eptr_controlChange_type Saw_eptr_controlChange_type_alloc(Saw_eptr_controlChange_type _ctx) {
+private Saw_eptr_controlChange_type Saw_eptr_controlChange_type_alloc() {
    return new Saw_eptr_controlChange_type();
 }
 
-private Saw_eptr_default_type Saw_eptr_default_type_alloc(Saw_eptr_default_type _ctx) {
+private Saw_eptr_default_type Saw_eptr_default_type_alloc() {
    return new Saw_eptr_default_type();
 }
 

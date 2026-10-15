@@ -141,16 +141,16 @@ def Sawcore_process_type_alloc():
    return _ctx
 
 
-def Sawcore_noteOn_type_alloc(_ctx):
+def Sawcore_noteOn_type_alloc():
    return Sawcore_process_type_alloc()
 
-def Sawcore_noteOff_type_alloc(_ctx):
+def Sawcore_noteOff_type_alloc():
    return Sawcore_process_type_alloc()
 
-def Sawcore_controlChange_type_alloc(_ctx):
+def Sawcore_controlChange_type_alloc():
    return Sawcore_process_type_alloc()
 
-def Sawcore_default_type_alloc(_ctx):
+def Sawcore_default_type_alloc():
    return Sawcore_process_type_alloc()
 
 def Util_edge(_ctx, x):

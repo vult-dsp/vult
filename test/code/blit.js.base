@@ -92,19 +92,19 @@ this.Phase_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Phase_noteOn_type_alloc = function (_ctx) {
+this.Phase_noteOn_type_alloc = function () {
    return this.Phase_process_type_alloc();
 };
 
-this.Phase_noteOff_type_alloc = function (_ctx) {
+this.Phase_noteOff_type_alloc = function () {
    return this.Phase_process_type_alloc();
 };
 
-this.Phase_controlChange_type_alloc = function (_ctx) {
+this.Phase_controlChange_type_alloc = function () {
    return this.Phase_process_type_alloc();
 };
 
-this.Phase_default_type_alloc = function (_ctx) {
+this.Phase_default_type_alloc = function () {
    return this.Phase_process_type_alloc();
 };
 
@@ -144,7 +144,7 @@ this.Blit_pulse_train_type_alloc = function () {
    return _ctx;
 };
 
-this.Blit_pulse_start_type_alloc = function (_ctx) {
+this.Blit_pulse_start_type_alloc = function () {
    return this.Blit_pulse_train_type_alloc();
 };
 
@@ -209,7 +209,7 @@ this.Blit_osc_blit_type_alloc = function () {
    return _ctx;
 };
 
-this.Blit_init_type_alloc = function (_ctx) {
+this.Blit_init_type_alloc = function () {
    return this.Blit_osc_blit_type_alloc();
 };
 
@@ -219,19 +219,19 @@ this.Blit_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Blit_noteOn_type_alloc = function (_ctx) {
+this.Blit_noteOn_type_alloc = function () {
    return this.Blit_process_type_alloc();
 };
 
-this.Blit_noteOff_type_alloc = function (_ctx) {
+this.Blit_noteOff_type_alloc = function () {
    return this.Blit_process_type_alloc();
 };
 
-this.Blit_controlChange_type_alloc = function (_ctx) {
+this.Blit_controlChange_type_alloc = function () {
    return this.Blit_process_type_alloc();
 };
 
-this.Blit_default_type_alloc = function (_ctx) {
+this.Blit_default_type_alloc = function () {
    return this.Blit_process_type_alloc();
 };
 

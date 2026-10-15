@@ -236,11 +236,19 @@ let id_name (buffer : Stream.stream) : string * Loc.t =
   let () = Stream.skip buffer in
   (token.value, token.loc)
 
+(* The value of an integer token. A literal that does not fit in an int is reported. *)
+let intOfToken (token : _ token) : int =
+  match int_of_string_opt token.value with
+  | Some n ->
+      n
+  | None ->
+      Error.raiseError ("The integer '" ^ token.value ^ "' is out of range") token.loc
+
 let int_value (buffer : Stream.stream) : int * Loc.t =
   let () = expectInContext buffer INT "integer value" in
   let token = Stream.current buffer in
   let () = Stream.skip buffer in
-  (int_of_string token.value, token.loc)
+  (intOfToken token, token.loc)
 
 (** Parses tag expressions *)
 let rec tag (rbp : int) (buffer : Stream.stream) : Ptags.tag = prattParser rbp buffer getExpLbp tag_nud tag_led
@@ -277,9 +285,9 @@ and tag_nud (buffer : Stream.stream) (token : 'kind token) : Ptags.tag =
   | OP, "-" ->
       tag_unary_op buffer token
   | INT, _ ->
-      {g= TagInt (int_of_string token.value); loc}
+      {g= TagInt (intOfToken token); loc}
   | XINT, _ ->
-      {g= TagInt (int_of_string token.value); loc}
+      {g= TagInt (intOfToken token); loc}
   | TRUE, _ ->
       {g= TagBool true; loc}
   | FALSE, _ ->
@@ -346,10 +354,10 @@ and type_nud (_ : Stream.stream) (token : 'kind token) : type_ =
       {t= STGenericType id; loc}
   | INT, _ ->
       let loc = token.loc in
-      {t= STSize (int_of_string token.value); loc}
+      {t= STSize (intOfToken token); loc}
   | XINT, _ ->
       let loc = token.loc in
-      {t= STSize (int_of_string token.value); loc}
+      {t= STSize (intOfToken token); loc}
   | _ ->
       let message =
         Error.PointedError
@@ -1269,18 +1277,22 @@ and stmt (buffer : Stream.stream) : stmt =
         try stmtBind buffer with
         | ParserError _ as exn -> (
             Stream.restore ~buffer ~backup ;
-            try
-              let e = expression 0 buffer in
-              let _ = consumeInContext buffer SEMI "expression statement" in
-              match e with
-              | {e= SECall _; _} ->
-                  {s= SStmtBind ({l= SLWild; loc= e.loc}, e); loc= e.loc}
-              | _ ->
-                  let message =
-                    Printf.sprintf "The result of this expression must be explicitly discarded e.g. val _ = 1;"
-                  in
-                  raise (ParserError (Stream.makeError buffer message))
-            with _ -> raise exn )
+            (* When it is not an expression either, the assignment error is the one reported *)
+            let parsed =
+              try
+                let e = expression 0 buffer in
+                let _ = consumeInContext buffer SEMI "expression statement" in
+                Some e
+              with _ -> None
+            in
+            match parsed with
+            | None ->
+                raise exn
+            | Some ({e= SECall _; _} as e) ->
+                {s= SStmtBind ({l= SLWild; loc= e.loc}, e); loc= e.loc}
+            | Some e ->
+                let message = "The result of this expression must be explicitly discarded e.g. val _ = 1;" in
+                raise (ParserError (Error.makeError message e.loc)) )
         | exn ->
             raise exn )
   with ParserError error ->

@@ -7,7 +7,7 @@ int32_t Record_inference_main() {
    const Record_inference_point b = { 10.0f, 20.0f };
    const Record_inference_rcounter c = { 9.0f };
    Record_inference_counter d = { 1, 4 };
-   float total = Record_inference_first(b) + Record_inference_half(c) + Record_inference_length3(a) + Record_inference_sum2(b);
+   float total = Record_inference_length3(a) + Record_inference_sum2(b) + Record_inference_half(c) + Record_inference_first(b);
    int32_t advanced = Record_inference_advance(d);
    return advanced + 100 * float_to_int(total);
 }

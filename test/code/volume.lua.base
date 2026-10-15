@@ -13,19 +13,19 @@ function Volume_process_type_alloc()
    return _ctx
 end
 
-function Volume_noteOn_type_alloc(_ctx)
+function Volume_noteOn_type_alloc()
    return Volume_process_type_alloc()
 end
 
-function Volume_noteOff_type_alloc(_ctx)
+function Volume_noteOff_type_alloc()
    return Volume_process_type_alloc()
 end
 
-function Volume_controlChange_type_alloc(_ctx)
+function Volume_controlChange_type_alloc()
    return Volume_process_type_alloc()
 end
 
-function Volume_default_type_alloc(_ctx)
+function Volume_default_type_alloc()
    return Volume_process_type_alloc()
 end
 

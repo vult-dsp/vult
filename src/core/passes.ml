@@ -771,6 +771,27 @@ module Fix16ToReal = struct
 end
 
 module Canonize = struct
+  (* Whether evaluating the expression calls a function that can have effects. Two such operands
+     are never swapped, since that changes the order of the effects. *)
+  let rec hasEffects (e : exp) =
+    match e.e with
+    | ECall {path; args} ->
+        (not (Builtin.is_pure_name path)) || CCList.exists hasEffects args
+    | EUnit | EEmptyValue | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ ->
+        false
+    | EUnOp (_, e) | EMember (e, _) | ETMember (e, _) ->
+        hasEffects e
+    | EOp (_, e1, e2) | EIndex {e= e1; index= e2} ->
+        hasEffects e1 || hasEffects e2
+    | EArray l | ETuple l ->
+        CCList.exists hasEffects l
+    | EIf {cond; then_; else_} ->
+        hasEffects cond || hasEffects then_ || hasEffects else_
+    | ERecord {elems; _} ->
+        CCList.exists (fun (_, e) -> hasEffects e) elems
+
+  let canSwap e1 e2 = not (hasEffects e1 && hasEffects e2)
+
   let compare_exp e1 e2 =
     match (e1.e, e2.e) with
     | EInt n1, EInt n2 ->
@@ -804,12 +825,12 @@ module Canonize = struct
         (reapply state, n1)
     (* (e2 op (e1 op n3)) -> (e1 op (e2 op n3)) *)
     | {e= EOp (op1, e2, ({e= EOp (op2, e1, e3); _} as n2)); _} when (op1 = OpAdd || op1 = OpMul) && op1 = op2 ->
-        if compare_exp e2 e1 > 0 then
+        if compare_exp e2 e1 > 0 && canSwap e2 e1 then
           let n2 = {n2 with e= EOp (op2, e2, e3)} in
           (reapply state, {e with e= EOp (op1, e1, n2)})
         else (state, e)
     | {e= EOp (op, e1, e2); _} when op = OpAdd || op = OpMul ->
-        if compare_exp e1 e2 > 0 then (reapply state, {e with e= EOp (op, e2, e1)}) else (state, e)
+        if compare_exp e1 e2 > 0 && canSwap e1 e2 then (reapply state, {e with e= EOp (op, e2, e1)}) else (state, e)
     (* e1 - e2 -> e1 + (-e2) *)
     | {e= EOp (OpSub, e1, e2); _} ->
         (reapply state, {e with e= EOp (OpAdd, e1, {e2 with e= EUnOp (UOpNeg, e2)})})
@@ -1859,11 +1880,25 @@ let rec apply env state prog n limit =
 
 let fix16ToReal (prog : prog) : prog = Fix16ToReal.run prog
 
-let run args (prog : prog) : prog =
-  let _, prog = apply (default_env args) (Mapper.defaultState (default_data ())) prog 0 (repeatLimit prog) in
-  let prog = NonnegativeFloor.run prog in
-  let prog = Local_optimization.run prog in
-  let _, prog = apply (default_env args) (Mapper.defaultState (default_data ())) prog 0 (repeatLimit prog) in
-  let prog = Sort.run args prog in
-  let prog = DeadCodeElimination.run args prog in
-  prog
+let applyPasses args (prog : prog) : prog =
+  snd (apply (default_env args) (Mapper.defaultState (default_data ())) prog 0 (repeatLimit prog))
+
+(* The stages of the optimization, in order. The flag -stop-after names the last one to run. *)
+let stages (args : Util.Args.args) : (string * (prog -> prog)) list =
+  [ ("apply1", applyPasses args)
+  ; ("floor", NonnegativeFloor.run)
+  ; ("local", Local_optimization.run)
+  ; ("apply2", applyPasses args)
+  ; ("sort", Sort.run args)
+  ; ("dce", DeadCodeElimination.run args) ]
+
+let run (args : Util.Args.args) (prog : prog) : prog =
+  let rec loop prog stages =
+    match stages with
+    | [] ->
+        prog
+    | (name, stage) :: rest ->
+        let prog = stage prog in
+        if Option.equal String.equal args.stop_after (Some name) then prog else loop prog rest
+  in
+  loop prog (stages args)

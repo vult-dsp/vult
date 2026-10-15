@@ -116,16 +116,16 @@ def Noise_process_type_alloc():
    return _ctx
 
 
-def Noise_noteOn_type_alloc(_ctx):
+def Noise_noteOn_type_alloc():
    return Noise_process_type_alloc()
 
-def Noise_noteOff_type_alloc(_ctx):
+def Noise_noteOff_type_alloc():
    return Noise_process_type_alloc()
 
-def Noise_controlChange_type_alloc(_ctx):
+def Noise_controlChange_type_alloc():
    return Noise_process_type_alloc()
 
-def Noise_default_type_alloc(_ctx):
+def Noise_default_type_alloc():
    return Noise_process_type_alloc()
 
 def Util_edge_type_alloc():
@@ -215,16 +215,16 @@ def Tricore_process_type_alloc():
    return _ctx
 
 
-def Tricore_noteOn_type_alloc(_ctx):
+def Tricore_noteOn_type_alloc():
    return Tricore_process_type_alloc()
 
-def Tricore_noteOff_type_alloc(_ctx):
+def Tricore_noteOff_type_alloc():
    return Tricore_process_type_alloc()
 
-def Tricore_controlChange_type_alloc(_ctx):
+def Tricore_controlChange_type_alloc():
    return Tricore_process_type_alloc()
 
-def Tricore_default_type_alloc(_ctx):
+def Tricore_default_type_alloc():
    return Tricore_process_type_alloc()
 
 def Swept_process_type_alloc():
@@ -234,16 +234,16 @@ def Swept_process_type_alloc():
    return _ctx
 
 
-def Swept_noteOn_type_alloc(_ctx):
+def Swept_noteOn_type_alloc():
    return Swept_process_type_alloc()
 
-def Swept_noteOff_type_alloc(_ctx):
+def Swept_noteOff_type_alloc():
    return Swept_process_type_alloc()
 
-def Swept_controlChange_type_alloc(_ctx):
+def Swept_controlChange_type_alloc():
    return Swept_process_type_alloc()
 
-def Swept_default_type_alloc(_ctx):
+def Swept_default_type_alloc():
    return Swept_process_type_alloc()
 
 def Ahr_do_type_alloc():
@@ -271,16 +271,16 @@ def Ahr_process_type_alloc():
    return _ctx
 
 
-def Ahr_noteOn_type_alloc(_ctx):
+def Ahr_noteOn_type_alloc():
    return Ahr_process_type_alloc()
 
-def Ahr_noteOff_type_alloc(_ctx):
+def Ahr_noteOff_type_alloc():
    return Ahr_process_type_alloc()
 
-def Ahr_controlChange_type_alloc(_ctx):
+def Ahr_controlChange_type_alloc():
    return Ahr_process_type_alloc()
 
-def Ahr_default_type_alloc(_ctx):
+def Ahr_default_type_alloc():
    return Ahr_process_type_alloc()
 
 def Kick_do_type_alloc():
@@ -303,16 +303,16 @@ def Kick_process_type_alloc():
    return _ctx
 
 
-def Kick_noteOn_type_alloc(_ctx):
+def Kick_noteOn_type_alloc():
    return Kick_process_type_alloc()
 
-def Kick_noteOff_type_alloc(_ctx):
+def Kick_noteOff_type_alloc():
    return Kick_process_type_alloc()
 
-def Kick_controlChange_type_alloc(_ctx):
+def Kick_controlChange_type_alloc():
    return Kick_process_type_alloc()
 
-def Kick_default_type_alloc(_ctx):
+def Kick_default_type_alloc():
    return Kick_process_type_alloc()
 
 def Noise_pinker(_ctx, x):

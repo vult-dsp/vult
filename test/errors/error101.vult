@@ -1,0 +1,6 @@
+// The newline after a backslash in a string is counted, so the error is located on line 5
+fun f() : int {
+   val s = "a\
+b";
+   return x;
+}

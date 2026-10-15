@@ -173,19 +173,19 @@ function Sawcore_process_type_alloc()
    return _ctx
 end
 
-function Sawcore_noteOn_type_alloc(_ctx)
+function Sawcore_noteOn_type_alloc()
    return Sawcore_process_type_alloc()
 end
 
-function Sawcore_noteOff_type_alloc(_ctx)
+function Sawcore_noteOff_type_alloc()
    return Sawcore_process_type_alloc()
 end
 
-function Sawcore_controlChange_type_alloc(_ctx)
+function Sawcore_controlChange_type_alloc()
    return Sawcore_process_type_alloc()
 end
 
-function Sawcore_default_type_alloc(_ctx)
+function Sawcore_default_type_alloc()
    return Sawcore_process_type_alloc()
 end
 

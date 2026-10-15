@@ -266,11 +266,11 @@ private Polycv_poly_noteOn_type Polycv_poly_noteOn_type_alloc() {
    return _ctx;
 }
 
-private Polycv_poly_noteOff_type Polycv_poly_noteOff_type_alloc(Polycv_poly_noteOff_type _ctx) {
+private Polycv_poly_noteOff_type Polycv_poly_noteOff_type_alloc() {
    return new Polycv_poly_noteOff_type();
 }
 
-private Polycv_polyState_type Polycv_polyState_type_alloc(Polycv_polyState_type _ctx) {
+private Polycv_polyState_type Polycv_polyState_type_alloc() {
    return new Polycv_polyState_type();
 }
 
@@ -293,19 +293,19 @@ private Polycv_process_type Polycv_process_type_alloc() {
    return _ctx;
 }
 
-private Polycv_noteOn_type Polycv_noteOn_type_alloc(Polycv_noteOn_type _ctx) {
+private Polycv_noteOn_type Polycv_noteOn_type_alloc() {
    return new Polycv_noteOn_type();
 }
 
-private Polycv_noteOff_type Polycv_noteOff_type_alloc(Polycv_noteOff_type _ctx) {
+private Polycv_noteOff_type Polycv_noteOff_type_alloc() {
    return new Polycv_noteOff_type();
 }
 
-private Polycv_controlChange_type Polycv_controlChange_type_alloc(Polycv_controlChange_type _ctx) {
+private Polycv_controlChange_type Polycv_controlChange_type_alloc() {
    return new Polycv_controlChange_type();
 }
 
-private Polycv_default_type Polycv_default_type_alloc(Polycv_default_type _ctx) {
+private Polycv_default_type Polycv_default_type_alloc() {
    return new Polycv_default_type();
 }
 

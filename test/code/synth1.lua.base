@@ -66,19 +66,19 @@ function Synth1_process_type_alloc()
    return _ctx
 end
 
-function Synth1_noteOn_type_alloc(_ctx)
+function Synth1_noteOn_type_alloc()
    return Synth1_process_type_alloc()
 end
 
-function Synth1_noteOff_type_alloc(_ctx)
+function Synth1_noteOff_type_alloc()
    return Synth1_process_type_alloc()
 end
 
-function Synth1_controlChange_type_alloc(_ctx)
+function Synth1_controlChange_type_alloc()
    return Synth1_process_type_alloc()
 end
 
-function Synth1_default_type_alloc(_ctx)
+function Synth1_default_type_alloc()
    return Synth1_process_type_alloc()
 end
 

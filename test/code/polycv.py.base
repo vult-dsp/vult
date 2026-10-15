@@ -132,10 +132,10 @@ def Polycv_poly_noteOn_type_alloc():
    return _ctx
 
 
-def Polycv_poly_noteOff_type_alloc(_ctx):
+def Polycv_poly_noteOff_type_alloc():
    return Polycv_poly_noteOn_type_alloc()
 
-def Polycv_polyState_type_alloc(_ctx):
+def Polycv_polyState_type_alloc():
    return Polycv_poly_noteOn_type_alloc()
 
 def Polycv_process_type_alloc():
@@ -157,16 +157,16 @@ def Polycv_process_type_alloc():
    return _ctx
 
 
-def Polycv_noteOn_type_alloc(_ctx):
+def Polycv_noteOn_type_alloc():
    return Polycv_process_type_alloc()
 
-def Polycv_noteOff_type_alloc(_ctx):
+def Polycv_noteOff_type_alloc():
    return Polycv_process_type_alloc()
 
-def Polycv_controlChange_type_alloc(_ctx):
+def Polycv_controlChange_type_alloc():
    return Polycv_process_type_alloc()
 
-def Polycv_default_type_alloc(_ctx):
+def Polycv_default_type_alloc():
    return Polycv_process_type_alloc()
 
 def Util_edge(_ctx, x):

@@ -122,19 +122,19 @@ function Ad_process_type_alloc()
    return _ctx
 end
 
-function Ad_noteOn_type_alloc(_ctx)
+function Ad_noteOn_type_alloc()
    return Ad_process_type_alloc()
 end
 
-function Ad_noteOff_type_alloc(_ctx)
+function Ad_noteOff_type_alloc()
    return Ad_process_type_alloc()
 end
 
-function Ad_controlChange_type_alloc(_ctx)
+function Ad_controlChange_type_alloc()
    return Ad_process_type_alloc()
 end
 
-function Ad_default_type_alloc(_ctx)
+function Ad_default_type_alloc()
    return Ad_process_type_alloc()
 end
 

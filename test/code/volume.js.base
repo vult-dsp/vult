@@ -11,19 +11,19 @@ this.Volume_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Volume_noteOn_type_alloc = function (_ctx) {
+this.Volume_noteOn_type_alloc = function () {
    return this.Volume_process_type_alloc();
 };
 
-this.Volume_noteOff_type_alloc = function (_ctx) {
+this.Volume_noteOff_type_alloc = function () {
    return this.Volume_process_type_alloc();
 };
 
-this.Volume_controlChange_type_alloc = function (_ctx) {
+this.Volume_controlChange_type_alloc = function () {
    return this.Volume_process_type_alloc();
 };
 
-this.Volume_default_type_alloc = function (_ctx) {
+this.Volume_default_type_alloc = function () {
    return this.Volume_process_type_alloc();
 };
 

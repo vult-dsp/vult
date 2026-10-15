@@ -110,16 +110,16 @@ def Ahr_process_type_alloc():
    return _ctx
 
 
-def Ahr_noteOn_type_alloc(_ctx):
+def Ahr_noteOn_type_alloc():
    return Ahr_process_type_alloc()
 
-def Ahr_noteOff_type_alloc(_ctx):
+def Ahr_noteOff_type_alloc():
    return Ahr_process_type_alloc()
 
-def Ahr_controlChange_type_alloc(_ctx):
+def Ahr_controlChange_type_alloc():
    return Ahr_process_type_alloc()
 
-def Ahr_default_type_alloc(_ctx):
+def Ahr_default_type_alloc():
    return Ahr_process_type_alloc()
 
 def Util_edge(_ctx, x):

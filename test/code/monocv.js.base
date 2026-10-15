@@ -49,11 +49,11 @@ this.Monocv_mono_noteOn_type_alloc = function () {
    return _ctx;
 };
 
-this.Monocv_mono_noteOff_type_alloc = function (_ctx) {
+this.Monocv_mono_noteOff_type_alloc = function () {
    return this.Monocv_mono_noteOn_type_alloc();
 };
 
-this.Monocv_mono_isGateOn_type_alloc = function (_ctx) {
+this.Monocv_mono_isGateOn_type_alloc = function () {
    return this.Monocv_mono_noteOn_type_alloc();
 };
 
@@ -72,19 +72,19 @@ this.Monocv_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Monocv_noteOn_type_alloc = function (_ctx) {
+this.Monocv_noteOn_type_alloc = function () {
    return this.Monocv_process_type_alloc();
 };
 
-this.Monocv_noteOff_type_alloc = function (_ctx) {
+this.Monocv_noteOff_type_alloc = function () {
    return this.Monocv_process_type_alloc();
 };
 
-this.Monocv_controlChange_type_alloc = function (_ctx) {
+this.Monocv_controlChange_type_alloc = function () {
    return this.Monocv_process_type_alloc();
 };
 
-this.Monocv_default_type_alloc = function (_ctx) {
+this.Monocv_default_type_alloc = function () {
    return this.Monocv_process_type_alloc();
 };
 

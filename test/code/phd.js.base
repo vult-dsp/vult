@@ -92,19 +92,19 @@ this.Phase_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Phase_noteOn_type_alloc = function (_ctx) {
+this.Phase_noteOn_type_alloc = function () {
    return this.Phase_process_type_alloc();
 };
 
-this.Phase_noteOff_type_alloc = function (_ctx) {
+this.Phase_noteOff_type_alloc = function () {
    return this.Phase_process_type_alloc();
 };
 
-this.Phase_controlChange_type_alloc = function (_ctx) {
+this.Phase_controlChange_type_alloc = function () {
    return this.Phase_process_type_alloc();
 };
 
-this.Phase_default_type_alloc = function (_ctx) {
+this.Phase_default_type_alloc = function () {
    return this.Phase_process_type_alloc();
 };
 
@@ -117,19 +117,19 @@ this.Phd_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Phd_noteOn_type_alloc = function (_ctx) {
+this.Phd_noteOn_type_alloc = function () {
    return this.Phd_process_type_alloc();
 };
 
-this.Phd_noteOff_type_alloc = function (_ctx) {
+this.Phd_noteOff_type_alloc = function () {
    return this.Phd_process_type_alloc();
 };
 
-this.Phd_controlChange_type_alloc = function (_ctx) {
+this.Phd_controlChange_type_alloc = function () {
    return this.Phd_process_type_alloc();
 };
 
-this.Phd_default_type_alloc = function (_ctx) {
+this.Phd_default_type_alloc = function () {
    return this.Phd_process_type_alloc();
 };
 

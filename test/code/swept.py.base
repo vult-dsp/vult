@@ -75,16 +75,16 @@ def Swept_process_type_alloc():
    return _ctx
 
 
-def Swept_noteOn_type_alloc(_ctx):
+def Swept_noteOn_type_alloc():
    return Swept_process_type_alloc()
 
-def Swept_noteOff_type_alloc(_ctx):
+def Swept_noteOff_type_alloc():
    return Swept_process_type_alloc()
 
-def Swept_controlChange_type_alloc(_ctx):
+def Swept_controlChange_type_alloc():
    return Swept_process_type_alloc()
 
-def Swept_default_type_alloc(_ctx):
+def Swept_default_type_alloc():
    return Swept_process_type_alloc()
 
 def Util_edge(_ctx, x):

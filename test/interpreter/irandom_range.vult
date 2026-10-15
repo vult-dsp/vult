@@ -1,0 +1,11 @@
+// irandom() returns a non-negative integer, like the rand() of the C++ runtime
+fun main() : int {
+   val ok = 1;
+   val i = 0;
+   while (i < 100) {
+      val r = irandom();
+      if (r < 0) ok = 0;
+      i = i + 1;
+   }
+   return ok;
+}

@@ -59,19 +59,19 @@ function Adsr_process_type_alloc()
    return _ctx
 end
 
-function Adsr_noteOn_type_alloc(_ctx)
+function Adsr_noteOn_type_alloc()
    return Adsr_process_type_alloc()
 end
 
-function Adsr_noteOff_type_alloc(_ctx)
+function Adsr_noteOff_type_alloc()
    return Adsr_process_type_alloc()
 end
 
-function Adsr_controlChange_type_alloc(_ctx)
+function Adsr_controlChange_type_alloc()
    return Adsr_process_type_alloc()
 end
 
-function Adsr_default_type_alloc(_ctx)
+function Adsr_default_type_alloc()
    return Adsr_process_type_alloc()
 end
 

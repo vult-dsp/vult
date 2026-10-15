@@ -28,19 +28,19 @@ this.Wav_file_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Wav_file_noteOn_type_alloc = function (_ctx) {
+this.Wav_file_noteOn_type_alloc = function () {
    return this.Wav_file_process_type_alloc();
 };
 
-this.Wav_file_noteOff_type_alloc = function (_ctx) {
+this.Wav_file_noteOff_type_alloc = function () {
    return this.Wav_file_process_type_alloc();
 };
 
-this.Wav_file_controlChange_type_alloc = function (_ctx) {
+this.Wav_file_controlChange_type_alloc = function () {
    return this.Wav_file_process_type_alloc();
 };
 
-this.Wav_file_default_type_alloc = function (_ctx) {
+this.Wav_file_default_type_alloc = function () {
    return this.Wav_file_process_type_alloc();
 };
 

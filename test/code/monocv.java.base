@@ -202,11 +202,11 @@ private Monocv_mono_noteOn_type Monocv_mono_noteOn_type_alloc() {
    return _ctx;
 }
 
-private Monocv_mono_noteOff_type Monocv_mono_noteOff_type_alloc(Monocv_mono_noteOff_type _ctx) {
+private Monocv_mono_noteOff_type Monocv_mono_noteOff_type_alloc() {
    return new Monocv_mono_noteOff_type();
 }
 
-private Monocv_mono_isGateOn_type Monocv_mono_isGateOn_type_alloc(Monocv_mono_isGateOn_type _ctx) {
+private Monocv_mono_isGateOn_type Monocv_mono_isGateOn_type_alloc() {
    return new Monocv_mono_isGateOn_type();
 }
 
@@ -225,19 +225,19 @@ private Monocv_process_type Monocv_process_type_alloc() {
    return _ctx;
 }
 
-private Monocv_noteOn_type Monocv_noteOn_type_alloc(Monocv_noteOn_type _ctx) {
+private Monocv_noteOn_type Monocv_noteOn_type_alloc() {
    return new Monocv_noteOn_type();
 }
 
-private Monocv_noteOff_type Monocv_noteOff_type_alloc(Monocv_noteOff_type _ctx) {
+private Monocv_noteOff_type Monocv_noteOff_type_alloc() {
    return new Monocv_noteOff_type();
 }
 
-private Monocv_controlChange_type Monocv_controlChange_type_alloc(Monocv_controlChange_type _ctx) {
+private Monocv_controlChange_type Monocv_controlChange_type_alloc() {
    return new Monocv_controlChange_type();
 }
 
-private Monocv_default_type Monocv_default_type_alloc(Monocv_default_type _ctx) {
+private Monocv_default_type Monocv_default_type_alloc() {
    return new Monocv_default_type();
 }
 

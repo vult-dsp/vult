@@ -267,19 +267,19 @@ private Noise_process_type Noise_process_type_alloc() {
    return _ctx;
 }
 
-private Noise_noteOn_type Noise_noteOn_type_alloc(Noise_noteOn_type _ctx) {
+private Noise_noteOn_type Noise_noteOn_type_alloc() {
    return new Noise_noteOn_type();
 }
 
-private Noise_noteOff_type Noise_noteOff_type_alloc(Noise_noteOff_type _ctx) {
+private Noise_noteOff_type Noise_noteOff_type_alloc() {
    return new Noise_noteOff_type();
 }
 
-private Noise_controlChange_type Noise_controlChange_type_alloc(Noise_controlChange_type _ctx) {
+private Noise_controlChange_type Noise_controlChange_type_alloc() {
    return new Noise_controlChange_type();
 }
 
-private Noise_default_type Noise_default_type_alloc(Noise_default_type _ctx) {
+private Noise_default_type Noise_default_type_alloc() {
    return new Noise_default_type();
 }
 
@@ -378,19 +378,19 @@ private Tricore_process_type Tricore_process_type_alloc() {
    return _ctx;
 }
 
-private Tricore_noteOn_type Tricore_noteOn_type_alloc(Tricore_noteOn_type _ctx) {
+private Tricore_noteOn_type Tricore_noteOn_type_alloc() {
    return new Tricore_noteOn_type();
 }
 
-private Tricore_noteOff_type Tricore_noteOff_type_alloc(Tricore_noteOff_type _ctx) {
+private Tricore_noteOff_type Tricore_noteOff_type_alloc() {
    return new Tricore_noteOff_type();
 }
 
-private Tricore_controlChange_type Tricore_controlChange_type_alloc(Tricore_controlChange_type _ctx) {
+private Tricore_controlChange_type Tricore_controlChange_type_alloc() {
    return new Tricore_controlChange_type();
 }
 
-private Tricore_default_type Tricore_default_type_alloc(Tricore_default_type _ctx) {
+private Tricore_default_type Tricore_default_type_alloc() {
    return new Tricore_default_type();
 }
 
@@ -401,19 +401,19 @@ private Swept_process_type Swept_process_type_alloc() {
    return _ctx;
 }
 
-private Swept_noteOn_type Swept_noteOn_type_alloc(Swept_noteOn_type _ctx) {
+private Swept_noteOn_type Swept_noteOn_type_alloc() {
    return new Swept_noteOn_type();
 }
 
-private Swept_noteOff_type Swept_noteOff_type_alloc(Swept_noteOff_type _ctx) {
+private Swept_noteOff_type Swept_noteOff_type_alloc() {
    return new Swept_noteOff_type();
 }
 
-private Swept_controlChange_type Swept_controlChange_type_alloc(Swept_controlChange_type _ctx) {
+private Swept_controlChange_type Swept_controlChange_type_alloc() {
    return new Swept_controlChange_type();
 }
 
-private Swept_default_type Swept_default_type_alloc(Swept_default_type _ctx) {
+private Swept_default_type Swept_default_type_alloc() {
    return new Swept_default_type();
 }
 
@@ -442,19 +442,19 @@ private Ahr_process_type Ahr_process_type_alloc() {
    return _ctx;
 }
 
-private Ahr_noteOn_type Ahr_noteOn_type_alloc(Ahr_noteOn_type _ctx) {
+private Ahr_noteOn_type Ahr_noteOn_type_alloc() {
    return new Ahr_noteOn_type();
 }
 
-private Ahr_noteOff_type Ahr_noteOff_type_alloc(Ahr_noteOff_type _ctx) {
+private Ahr_noteOff_type Ahr_noteOff_type_alloc() {
    return new Ahr_noteOff_type();
 }
 
-private Ahr_controlChange_type Ahr_controlChange_type_alloc(Ahr_controlChange_type _ctx) {
+private Ahr_controlChange_type Ahr_controlChange_type_alloc() {
    return new Ahr_controlChange_type();
 }
 
-private Ahr_default_type Ahr_default_type_alloc(Ahr_default_type _ctx) {
+private Ahr_default_type Ahr_default_type_alloc() {
    return new Ahr_default_type();
 }
 
@@ -478,19 +478,19 @@ private Kick_process_type Kick_process_type_alloc() {
    return _ctx;
 }
 
-private Kick_noteOn_type Kick_noteOn_type_alloc(Kick_noteOn_type _ctx) {
+private Kick_noteOn_type Kick_noteOn_type_alloc() {
    return new Kick_noteOn_type();
 }
 
-private Kick_noteOff_type Kick_noteOff_type_alloc(Kick_noteOff_type _ctx) {
+private Kick_noteOff_type Kick_noteOff_type_alloc() {
    return new Kick_noteOff_type();
 }
 
-private Kick_controlChange_type Kick_controlChange_type_alloc(Kick_controlChange_type _ctx) {
+private Kick_controlChange_type Kick_controlChange_type_alloc() {
    return new Kick_controlChange_type();
 }
 
-private Kick_default_type Kick_default_type_alloc(Kick_default_type _ctx) {
+private Kick_default_type Kick_default_type_alloc() {
    return new Kick_default_type();
 }
 

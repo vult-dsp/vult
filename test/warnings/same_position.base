@@ -1,0 +1,9 @@
+2:6: The argument 'a' is never used. If this is intended, rename it to '_a'.
+// Both modules have an unused argument at the same position: both warnings are reported
+fun f(a : int) : int { return Same_position_lib.f(1); }
+      ^
+
+2:6: The argument 'a' is never used. If this is intended, rename it to '_a'.
+// Both modules have an unused argument at the same position: both warnings are reported
+fun f(a : int) : int { return 1; }
+      ^

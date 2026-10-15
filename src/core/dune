@@ -17,7 +17,8 @@
   Version
   Initializer
   Serializer
-  Interpreter)
+  Interpreter
+  Tablecheck)
  (libraries util pparser pla)
  (flags
   (:standard -w -30))

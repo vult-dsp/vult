@@ -141,19 +141,19 @@ function Rescomb_process_type_alloc()
    return _ctx
 end
 
-function Rescomb_noteOn_type_alloc(_ctx)
+function Rescomb_noteOn_type_alloc()
    return Rescomb_process_type_alloc()
 end
 
-function Rescomb_noteOff_type_alloc(_ctx)
+function Rescomb_noteOff_type_alloc()
    return Rescomb_process_type_alloc()
 end
 
-function Rescomb_controlChange_type_alloc(_ctx)
+function Rescomb_controlChange_type_alloc()
    return Rescomb_process_type_alloc()
 end
 
-function Rescomb_default_type_alloc(_ctx)
+function Rescomb_default_type_alloc()
    return Rescomb_process_type_alloc()
 end
 

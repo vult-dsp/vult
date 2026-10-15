@@ -59,7 +59,7 @@ this.Record_inference_main = function () {
    var b = { x: 10.0, y: 20.0 };
    var c = { count: 9.0 };
    var d = { count: (1|0), step: (4|0) };
-   var total = (this.Record_inference_first(b) + (this.Record_inference_half(c) + (this.Record_inference_length3(a) + this.Record_inference_sum2(b))));
+   var total = (this.Record_inference_length3(a) + (this.Record_inference_sum2(b) + (this.Record_inference_half(c) + this.Record_inference_first(b))));
    var advanced = this.Record_inference_advance(d);
    return (advanced + ((100|0) * ((total)|0)));
 };

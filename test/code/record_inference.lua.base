@@ -64,7 +64,7 @@ function Record_inference_main()
    local b = { x = 10.0, y = 20.0 }
    local c = { count = 9.0 }
    local d = { count = 1, step = 4 }
-   local total = (Record_inference_first(b) + (Record_inference_half(c) + (Record_inference_length3(a) + Record_inference_sum2(b))))
+   local total = (Record_inference_length3(a) + (Record_inference_sum2(b) + (Record_inference_half(c) + Record_inference_first(b))))
    local advanced = Record_inference_advance(d)
    return (advanced + (100 * (modf(total))))
 end

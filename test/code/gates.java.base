@@ -114,11 +114,11 @@ public static class Gates_gates_noteOn_type {
    return _ctx;
 }
 
-private Gates_gates_noteOff_type Gates_gates_noteOff_type_alloc(Gates_gates_noteOff_type _ctx) {
+private Gates_gates_noteOff_type Gates_gates_noteOff_type_alloc() {
    return new Gates_gates_noteOff_type();
 }
 
-private Gates_gates_state_type Gates_gates_state_type_alloc(Gates_gates_state_type _ctx) {
+private Gates_gates_state_type Gates_gates_state_type_alloc() {
    return new Gates_gates_state_type();
 }
 
@@ -137,19 +137,19 @@ private Gates_process_type Gates_process_type_alloc() {
    return _ctx;
 }
 
-private Gates_noteOn_type Gates_noteOn_type_alloc(Gates_noteOn_type _ctx) {
+private Gates_noteOn_type Gates_noteOn_type_alloc() {
    return new Gates_noteOn_type();
 }
 
-private Gates_noteOff_type Gates_noteOff_type_alloc(Gates_noteOff_type _ctx) {
+private Gates_noteOff_type Gates_noteOff_type_alloc() {
    return new Gates_noteOff_type();
 }
 
-private Gates_controlChange_type Gates_controlChange_type_alloc(Gates_controlChange_type _ctx) {
+private Gates_controlChange_type Gates_controlChange_type_alloc() {
    return new Gates_controlChange_type();
 }
 
-private Gates_default_type Gates_default_type_alloc(Gates_default_type _ctx) {
+private Gates_default_type Gates_default_type_alloc() {
    return new Gates_default_type();
 }
 

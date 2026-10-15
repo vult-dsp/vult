@@ -97,19 +97,19 @@ function Phase_process_type_alloc()
    return _ctx
 end
 
-function Phase_noteOn_type_alloc(_ctx)
+function Phase_noteOn_type_alloc()
    return Phase_process_type_alloc()
 end
 
-function Phase_noteOff_type_alloc(_ctx)
+function Phase_noteOff_type_alloc()
    return Phase_process_type_alloc()
 end
 
-function Phase_controlChange_type_alloc(_ctx)
+function Phase_controlChange_type_alloc()
    return Phase_process_type_alloc()
 end
 
-function Phase_default_type_alloc(_ctx)
+function Phase_default_type_alloc()
    return Phase_process_type_alloc()
 end
 

@@ -91,19 +91,19 @@ this.Saw_eptr_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Saw_eptr_noteOn_type_alloc = function (_ctx) {
+this.Saw_eptr_noteOn_type_alloc = function () {
    return this.Saw_eptr_process_type_alloc();
 };
 
-this.Saw_eptr_noteOff_type_alloc = function (_ctx) {
+this.Saw_eptr_noteOff_type_alloc = function () {
    return this.Saw_eptr_process_type_alloc();
 };
 
-this.Saw_eptr_controlChange_type_alloc = function (_ctx) {
+this.Saw_eptr_controlChange_type_alloc = function () {
    return this.Saw_eptr_process_type_alloc();
 };
 
-this.Saw_eptr_default_type_alloc = function (_ctx) {
+this.Saw_eptr_default_type_alloc = function () {
    return this.Saw_eptr_process_type_alloc();
 };
 

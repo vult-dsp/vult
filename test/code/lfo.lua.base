@@ -56,19 +56,19 @@ function Lfo_process_type_alloc()
    return _ctx
 end
 
-function Lfo_noteOn_type_alloc(_ctx)
+function Lfo_noteOn_type_alloc()
    return Lfo_process_type_alloc()
 end
 
-function Lfo_noteOff_type_alloc(_ctx)
+function Lfo_noteOff_type_alloc()
    return Lfo_process_type_alloc()
 end
 
-function Lfo_controlChange_type_alloc(_ctx)
+function Lfo_controlChange_type_alloc()
    return Lfo_process_type_alloc()
 end
 
-function Lfo_default_type_alloc(_ctx)
+function Lfo_default_type_alloc()
    return Lfo_process_type_alloc()
 end
 

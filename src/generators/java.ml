@@ -450,6 +450,11 @@ let uoperator (op : uoperator) = match op with UOpNeg -> Pla.string "-" | UOpNot
    through a FloatBuffer or an IntBuffer. The other constant arrays are written inline. *)
 let isBinaryTableElement (t : type_) = match t.t with TReal | TInt | TFix16 -> true | _ -> false
 
+(* Only arrays of literals are written to binary files; the others stay inline *)
+let isBinaryTable (elem_t : type_) (elems : exp list) =
+  isBinaryTableElement elem_t
+  && CCList.for_all (fun (e : exp) -> match e.e with EReal _ | EFixed _ | EInt _ -> true | _ -> false) elems
+
 let rec print_type_ (t : type_) =
   match t.t with
   | TEmptyType ->
@@ -797,9 +802,7 @@ let print_top_stmt (args : Util.Args.args) root_context_types (aliases : (string
       (* The allocation function of an alias returns its base type, but in Java the alias is a
          subclass that has to be created itself. *)
       let alias_type = CCString.chop_suffix ~suf:"_alloc" name in
-      let is_alias_alloc =
-        match alias_type with Some alias -> List.mem_assoc alias aliases && func_def.args <> [] | None -> false
-      in
+      let is_alias_alloc = match alias_type with Some alias -> List.mem_assoc alias aliases | None -> false in
       begin match (is_alias_alloc, alias_type) with
       | true, Some alias_type ->
           let body = {%pla|
@@ -818,7 +821,7 @@ let print_top_stmt (args : Util.Args.args) root_context_types (aliases : (string
       Pla.unit
   | TopConstant (name, _, t, rhs, _) -> (
     match (rhs.e, t.t, args.java_bin_tables) with
-    | EArray elems, TArray (_, elem_t), true when isBinaryTableElement elem_t ->
+    | EArray elems, TArray (_, elem_t), true when isBinaryTable elem_t elems ->
         let size = List.length elems in
         let elem_type = print_type_ elem_t in
         let buffer_type = match elem_t.t with TReal -> "java.nio.FloatBuffer" | _ -> "java.nio.IntBuffer" in
@@ -862,7 +865,7 @@ let generateTableData (args : Util.Args.args) (stmts : top_stmt list) : (Pla.t *
     CCList.filter_map
       (fun (stmt : top_stmt) ->
         match stmt.top with
-        | TopConstant (name, _, {t= TArray (_, elem_t); _}, {e= EArray elems; _}, _) when isBinaryTableElement elem_t ->
+        | TopConstant (name, _, {t= TArray (_, elem_t); _}, {e= EArray elems; _}, _) when isBinaryTable elem_t elems ->
             let table_name = base ^ "_" ^ name ^ ".table" in
             let binary = String.concat "" (CCList.map binarizeElement elems) in
             Some (Pla.string binary, table_name)

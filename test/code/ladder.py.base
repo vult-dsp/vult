@@ -137,16 +137,16 @@ def Ladder_process_type_alloc():
    return _ctx
 
 
-def Ladder_noteOn_type_alloc(_ctx):
+def Ladder_noteOn_type_alloc():
    return Ladder_process_type_alloc()
 
-def Ladder_noteOff_type_alloc(_ctx):
+def Ladder_noteOff_type_alloc():
    return Ladder_process_type_alloc()
 
-def Ladder_controlChange_type_alloc(_ctx):
+def Ladder_controlChange_type_alloc():
    return Ladder_process_type_alloc()
 
-def Ladder_default_type_alloc(_ctx):
+def Ladder_default_type_alloc():
    return Ladder_process_type_alloc()
 
 def Util_edge(_ctx, x):

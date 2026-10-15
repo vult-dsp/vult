@@ -30,19 +30,19 @@ function Wav_file_process_type_alloc()
    return _ctx
 end
 
-function Wav_file_noteOn_type_alloc(_ctx)
+function Wav_file_noteOn_type_alloc()
    return Wav_file_process_type_alloc()
 end
 
-function Wav_file_noteOff_type_alloc(_ctx)
+function Wav_file_noteOff_type_alloc()
    return Wav_file_process_type_alloc()
 end
 
-function Wav_file_controlChange_type_alloc(_ctx)
+function Wav_file_controlChange_type_alloc()
    return Wav_file_process_type_alloc()
 end
 
-function Wav_file_default_type_alloc(_ctx)
+function Wav_file_default_type_alloc()
    return Wav_file_process_type_alloc()
 end
 

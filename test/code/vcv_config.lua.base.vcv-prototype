@@ -59,7 +59,7 @@ function Vcv_config_process_type_alloc()
    return _ctx
 end
 
-function Vcv_config_update_type_alloc(_ctx)
+function Vcv_config_update_type_alloc()
    return Vcv_config_process_type_alloc()
 end
 

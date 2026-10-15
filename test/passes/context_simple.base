@@ -1,3 +1,4 @@
+
 struct Context_simple_change_type {
    pre : real;
 }
@@ -18,12 +19,12 @@ fun Context_simple_change_type_alloc() : struct Context_simple_change_type {
    return (_ctx : struct Context_simple_change_type);
 }
 
-fun Context_simple_reset_type_alloc(_ctx : struct Context_simple_reset_type) : struct Context_simple_reset_type {
-   return (Context_simple_change_type_alloc() : void);
+fun Context_simple_reset_type_alloc() : struct Context_simple_reset_type {
+   return (Context_simple_change_type_alloc() : struct Context_simple_reset_type);
 }
 
-fun Context_simple_set_type_alloc(_ctx : struct Context_simple_set_type) : struct Context_simple_set_type {
-   return (Context_simple_change_type_alloc() : void);
+fun Context_simple_set_type_alloc() : struct Context_simple_set_type {
+   return (Context_simple_change_type_alloc() : struct Context_simple_set_type);
 }
 
 fun Context_simple_foo_type_alloc() : struct Context_simple_foo_type {

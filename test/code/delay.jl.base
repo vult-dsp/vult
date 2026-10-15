@@ -192,11 +192,11 @@ function Delay_mono_noteOn_type_alloc()
    return _ctx
 end
 
-function Delay_mono_noteOff_type_alloc(_ctx)
+function Delay_mono_noteOff_type_alloc()
    return Delay_mono_noteOn_type_alloc()
 end
 
-function Delay_mono_isGateOn_type_alloc(_ctx)
+function Delay_mono_isGateOn_type_alloc()
    return Delay_mono_noteOn_type_alloc()
 end
 
@@ -219,19 +219,19 @@ function Delay_process_type_alloc()
    return _ctx
 end
 
-function Delay_noteOn_type_alloc(_ctx)
+function Delay_noteOn_type_alloc()
    return Delay_process_type_alloc()
 end
 
-function Delay_noteOff_type_alloc(_ctx)
+function Delay_noteOff_type_alloc()
    return Delay_process_type_alloc()
 end
 
-function Delay_controlChange_type_alloc(_ctx)
+function Delay_controlChange_type_alloc()
    return Delay_process_type_alloc()
 end
 
-function Delay_default_type_alloc(_ctx)
+function Delay_default_type_alloc()
    return Delay_process_type_alloc()
 end
 

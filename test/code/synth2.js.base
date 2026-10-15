@@ -97,11 +97,11 @@ this.Synth2_mono_noteOn_type_alloc = function () {
    return _ctx;
 };
 
-this.Synth2_mono_noteOff_type_alloc = function (_ctx) {
+this.Synth2_mono_noteOff_type_alloc = function () {
    return this.Synth2_mono_noteOn_type_alloc();
 };
 
-this.Synth2_mono_isGateOn_type_alloc = function (_ctx) {
+this.Synth2_mono_isGateOn_type_alloc = function () {
    return this.Synth2_mono_noteOn_type_alloc();
 };
 
@@ -136,19 +136,19 @@ this.Synth2_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Synth2_noteOn_type_alloc = function (_ctx) {
+this.Synth2_noteOn_type_alloc = function () {
    return this.Synth2_process_type_alloc();
 };
 
-this.Synth2_noteOff_type_alloc = function (_ctx) {
+this.Synth2_noteOff_type_alloc = function () {
    return this.Synth2_process_type_alloc();
 };
 
-this.Synth2_controlChange_type_alloc = function (_ctx) {
+this.Synth2_controlChange_type_alloc = function () {
    return this.Synth2_process_type_alloc();
 };
 
-this.Synth2_default_type_alloc = function (_ctx) {
+this.Synth2_default_type_alloc = function () {
    return this.Synth2_process_type_alloc();
 };
 

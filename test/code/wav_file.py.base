@@ -42,16 +42,16 @@ def Wav_file_process_type_alloc():
    return _ctx
 
 
-def Wav_file_noteOn_type_alloc(_ctx):
+def Wav_file_noteOn_type_alloc():
    return Wav_file_process_type_alloc()
 
-def Wav_file_noteOff_type_alloc(_ctx):
+def Wav_file_noteOff_type_alloc():
    return Wav_file_process_type_alloc()
 
-def Wav_file_controlChange_type_alloc(_ctx):
+def Wav_file_controlChange_type_alloc():
    return Wav_file_process_type_alloc()
 
-def Wav_file_default_type_alloc(_ctx):
+def Wav_file_default_type_alloc():
    return Wav_file_process_type_alloc()
 
 def Wav_file_index(_ctx):

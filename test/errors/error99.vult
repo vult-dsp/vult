@@ -1,0 +1,4 @@
+// An integer literal that does not fit in an int is an error
+fun f() : int {
+   return 99999999999999999999;
+}

@@ -765,7 +765,9 @@ let reportUnusedArguments (env : env) : env =
 (* The warnings found so far, in source order. The body of a generic function is checked once for
    each specialization, so the repeated warnings are removed. *)
 let getWarnings (env : env) : Error.warning list =
-  let same (w1 : Error.warning) (w2 : Error.warning) = Loc.isSameLoc w1.loc w2.loc && String.equal w1.msg w2.msg in
+  let same (w1 : Error.warning) (w2 : Error.warning) =
+    String.equal (Loc.file w1.loc) (Loc.file w2.loc) && Loc.isSameLoc w1.loc w2.loc && String.equal w1.msg w2.msg
+  in
   let compare (w1 : Error.warning) (w2 : Error.warning) =
     match String.compare (Loc.file w1.loc) (Loc.file w2.loc) with 0 -> Loc.compareLoc w1.loc w2.loc | c -> c
   in

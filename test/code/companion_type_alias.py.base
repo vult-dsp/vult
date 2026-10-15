@@ -17,7 +17,7 @@ def Companion_type_alias_foo_type_alloc():
    return _ctx
 
 
-def Companion_type_alias_bar_type_alloc(_ctx):
+def Companion_type_alias_bar_type_alloc():
    return Companion_type_alias_foo_type_alloc()
 
 def Companion_type_alias_main_type_alloc():

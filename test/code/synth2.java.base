@@ -348,11 +348,11 @@ private Synth2_mono_noteOn_type Synth2_mono_noteOn_type_alloc() {
    return _ctx;
 }
 
-private Synth2_mono_noteOff_type Synth2_mono_noteOff_type_alloc(Synth2_mono_noteOff_type _ctx) {
+private Synth2_mono_noteOff_type Synth2_mono_noteOff_type_alloc() {
    return new Synth2_mono_noteOff_type();
 }
 
-private Synth2_mono_isGateOn_type Synth2_mono_isGateOn_type_alloc(Synth2_mono_isGateOn_type _ctx) {
+private Synth2_mono_isGateOn_type Synth2_mono_isGateOn_type_alloc() {
    return new Synth2_mono_isGateOn_type();
 }
 
@@ -387,19 +387,19 @@ private Synth2_process_type Synth2_process_type_alloc() {
    return _ctx;
 }
 
-private Synth2_noteOn_type Synth2_noteOn_type_alloc(Synth2_noteOn_type _ctx) {
+private Synth2_noteOn_type Synth2_noteOn_type_alloc() {
    return new Synth2_noteOn_type();
 }
 
-private Synth2_noteOff_type Synth2_noteOff_type_alloc(Synth2_noteOff_type _ctx) {
+private Synth2_noteOff_type Synth2_noteOff_type_alloc() {
    return new Synth2_noteOff_type();
 }
 
-private Synth2_controlChange_type Synth2_controlChange_type_alloc(Synth2_controlChange_type _ctx) {
+private Synth2_controlChange_type Synth2_controlChange_type_alloc() {
    return new Synth2_controlChange_type();
 }
 
-private Synth2_default_type Synth2_default_type_alloc(Synth2_default_type _ctx) {
+private Synth2_default_type Synth2_default_type_alloc() {
    return new Synth2_default_type();
 }
 

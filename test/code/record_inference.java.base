@@ -120,7 +120,7 @@ private int Record_inference_main() {
    Record_inference_point b = new Record_inference_point(10.0f, 20.0f);
    Record_inference_rcounter c = new Record_inference_rcounter(9.0f);
    Record_inference_counter d = new Record_inference_counter(1, 4);
-   float total = (Record_inference_first(b) + (Record_inference_half(c) + (Record_inference_length3(a) + Record_inference_sum2(b))));
+   float total = (Record_inference_length3(a) + (Record_inference_sum2(b) + (Record_inference_half(c) + Record_inference_first(b))));
    int advanced = Record_inference_advance(d);
    return (advanced + (100 * (int)(total)));
 }

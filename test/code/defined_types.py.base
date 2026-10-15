@@ -40,16 +40,16 @@ def Defined_types_process_type_alloc():
    return _ctx
 
 
-def Defined_types_noteOn_type_alloc(_ctx):
+def Defined_types_noteOn_type_alloc():
    return Defined_types_process_type_alloc()
 
-def Defined_types_noteOff_type_alloc(_ctx):
+def Defined_types_noteOff_type_alloc():
    return Defined_types_process_type_alloc()
 
-def Defined_types_controlChange_type_alloc(_ctx):
+def Defined_types_controlChange_type_alloc():
    return Defined_types_process_type_alloc()
 
-def Defined_types_default_type_alloc(_ctx):
+def Defined_types_default_type_alloc():
    return Defined_types_process_type_alloc()
 
 def Defined_types_micro_alloc():

@@ -32,19 +32,19 @@ this.Short_delay_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Short_delay_noteOn_type_alloc = function (_ctx) {
+this.Short_delay_noteOn_type_alloc = function () {
    return this.Short_delay_process_type_alloc();
 };
 
-this.Short_delay_noteOff_type_alloc = function (_ctx) {
+this.Short_delay_noteOff_type_alloc = function () {
    return this.Short_delay_process_type_alloc();
 };
 
-this.Short_delay_controlChange_type_alloc = function (_ctx) {
+this.Short_delay_controlChange_type_alloc = function () {
    return this.Short_delay_process_type_alloc();
 };
 
-this.Short_delay_default_type_alloc = function (_ctx) {
+this.Short_delay_default_type_alloc = function () {
    return this.Short_delay_process_type_alloc();
 };
 

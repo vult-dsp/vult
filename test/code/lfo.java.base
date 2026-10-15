@@ -179,19 +179,19 @@ private Lfo_process_type Lfo_process_type_alloc() {
    return _ctx;
 }
 
-private Lfo_noteOn_type Lfo_noteOn_type_alloc(Lfo_noteOn_type _ctx) {
+private Lfo_noteOn_type Lfo_noteOn_type_alloc() {
    return new Lfo_noteOn_type();
 }
 
-private Lfo_noteOff_type Lfo_noteOff_type_alloc(Lfo_noteOff_type _ctx) {
+private Lfo_noteOff_type Lfo_noteOff_type_alloc() {
    return new Lfo_noteOff_type();
 }
 
-private Lfo_controlChange_type Lfo_controlChange_type_alloc(Lfo_controlChange_type _ctx) {
+private Lfo_controlChange_type Lfo_controlChange_type_alloc() {
    return new Lfo_controlChange_type();
 }
 
-private Lfo_default_type Lfo_default_type_alloc(Lfo_default_type _ctx) {
+private Lfo_default_type Lfo_default_type_alloc() {
    return new Lfo_default_type();
 }
 

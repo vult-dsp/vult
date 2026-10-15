@@ -62,16 +62,16 @@ def Phasedist_process_type_alloc():
    return _ctx
 
 
-def Phasedist_noteOn_type_alloc(_ctx):
+def Phasedist_noteOn_type_alloc():
    return Phasedist_process_type_alloc()
 
-def Phasedist_noteOff_type_alloc(_ctx):
+def Phasedist_noteOff_type_alloc():
    return Phasedist_process_type_alloc()
 
-def Phasedist_controlChange_type_alloc(_ctx):
+def Phasedist_controlChange_type_alloc():
    return Phasedist_process_type_alloc()
 
-def Phasedist_default_type_alloc(_ctx):
+def Phasedist_default_type_alloc():
    return Phasedist_process_type_alloc()
 
 def Phasedist_smooth(_ctx, input):

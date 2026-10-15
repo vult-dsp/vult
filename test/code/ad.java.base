@@ -175,19 +175,19 @@ private Ad_process_type Ad_process_type_alloc() {
    return _ctx;
 }
 
-private Ad_noteOn_type Ad_noteOn_type_alloc(Ad_noteOn_type _ctx) {
+private Ad_noteOn_type Ad_noteOn_type_alloc() {
    return new Ad_noteOn_type();
 }
 
-private Ad_noteOff_type Ad_noteOff_type_alloc(Ad_noteOff_type _ctx) {
+private Ad_noteOff_type Ad_noteOff_type_alloc() {
    return new Ad_noteOff_type();
 }
 
-private Ad_controlChange_type Ad_controlChange_type_alloc(Ad_controlChange_type _ctx) {
+private Ad_controlChange_type Ad_controlChange_type_alloc() {
    return new Ad_controlChange_type();
 }
 
-private Ad_default_type Ad_default_type_alloc(Ad_default_type _ctx) {
+private Ad_default_type Ad_default_type_alloc() {
    return new Ad_default_type();
 }
 

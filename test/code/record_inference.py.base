@@ -86,7 +86,7 @@ def Record_inference_main():
    b = Record_inference_point(x=10.0, y=20.0)
    c = Record_inference_rcounter(count=9.0)
    d = Record_inference_counter(count=1, step=4)
-   total = (Record_inference_first(b) + (Record_inference_half(c) + (Record_inference_length3(a) + Record_inference_sum2(b))))
+   total = (Record_inference_length3(a) + (Record_inference_sum2(b) + (Record_inference_half(c) + Record_inference_first(b))))
    advanced = Record_inference_advance(d)
    return (advanced + (100 * int(total)))
 

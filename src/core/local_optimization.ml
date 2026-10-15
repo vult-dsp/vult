@@ -162,8 +162,9 @@ let rec pure_exp pure_functions (e : exp) =
   | EUnit | EEmptyValue | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ ->
       true
 
-let cacheable_call pure_functions (e : exp) =
-  match e.e with ECall {path; _} -> pure_builtin path || Set.mem path pure_functions | _ -> false
+(* A call that can be computed once: the function and its arguments are pure. A pure builtin
+   applied to a call with state, e.g. real(c()), is not. *)
+let cacheable_call pure_functions (e : exp) = match e.e with ECall _ -> pure_exp pure_functions e | _ -> false
 
 let add_count counts e =
   let count = Option.value ~default:0 (ExpMap.find_opt e counts) in

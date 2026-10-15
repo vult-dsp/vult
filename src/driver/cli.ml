@@ -68,8 +68,15 @@ let showResult (args : args) (output : output) =
 let generateCode args (stmts, iprog, acc) =
   (* Before the tables are generated, so their lookups are built in the target's precision. *)
   let stmts = if args.code = JavaCode then Passes.fix16ToReal stmts else stmts in
-  let stmts = Util.Profile.time "Generate Tables" (fun () -> Tables.create args iprog stmts) in
-  if args.code <> NoCode || args.dcode then
+  (* The tables were checked after type checking; -check skips their (slow) evaluation *)
+  let stmts =
+    if args.tables && not args.check then Util.Profile.time "Generate Tables" (fun () -> Tables.create args iprog stmts)
+    else stmts
+  in
+  let acc = if args.dtables then acc @ [Prog (Pla.print (Prog.Print.print_prog stmts))] else acc in
+  (* -check runs every stage that can report an error, but does not generate code *)
+  if args.check then acc @ [CheckOk]
+  else if args.code <> NoCode || args.dcode then
     let stmts = Util.Profile.time "Convert" (fun () -> Tocode.prog args stmts) in
     let stmts = if args.shorten then Shorten.run stmts else stmts in
     let prog_out = if args.dcode then [Prog (Pla.print (Prog.Print.print_prog stmts))] else [] in
@@ -99,15 +106,28 @@ let generateCode args (stmts, iprog, acc) =
     (GeneratedCode code :: prog_out) @ acc
   else acc
 
+(* Reports the runtime errors of an evaluation (constants, -eval, -render) as errors *)
+let reportRuntimeErrors (f : unit -> 'a) : 'a =
+  try f () with
+  | Interpreter.Runtime_error msg ->
+      Error.raiseErrorMsg ("Runtime error: " ^ msg)
+  | Division_by_zero ->
+      Error.raiseErrorMsg "Runtime error: Integer division by zero"
+
 let compileCode (args : args) env stmts : Prog.top_stmt list * Interpreter.iprog * output list =
   let env, stmts = Toprog.convert args env stmts in
   let prog = Util.Profile.time "Passes" (fun () -> Passes.run args stmts) in
-  let iprog = Util.Profile.time "Compile" (fun () -> Interpreter.transformProgram prog) in
+  let iprog =
+    Util.Profile.time "Compile" (fun () -> reportRuntimeErrors (fun () -> Interpreter.transformProgram prog))
+  in
   let prog_out = if args.dprog then [Prog (Pla.print (Prog.Print.print_prog prog))] else [] in
   let eval_out =
     match args.eval with
     | Some fn ->
-        let result = Util.Profile.time "Eval" (fun () -> Interpreter.evaluateMainExpression args env iprog fn) in
+        let result =
+          Util.Profile.time "Eval" (fun () ->
+              reportRuntimeErrors (fun () -> Interpreter.evaluateMainExpression args env iprog fn) )
+        in
         [EvalResult (Interpreter.printDvalue result)]
     | None ->
         []
@@ -116,7 +136,8 @@ let compileCode (args : args) env stmts : Prog.top_stmt list * Interpreter.iprog
     match args.render with
     | Some tag ->
         let filename, duration =
-          Util.Profile.time "Render" (fun () -> Interpreter.renderAudioExpression args env iprog tag)
+          Util.Profile.time "Render" (fun () ->
+              reportRuntimeErrors (fun () -> Interpreter.renderAudioExpression args env iprog tag) )
         in
         [AudioRendered (Printf.sprintf "Audio rendered to: %s (%.3fs)" filename duration)]
     | None ->
@@ -155,6 +176,9 @@ let driver (args : args) : output list =
             if args.dtyped then
               let () = Typed.print_exp_locs := args.dlocs in
               warnings @ [Typed (Pla.print (Typed.print_prog stmts))]
+            else if args.dtoprog then
+              let _, prog = Toprog.convert args env stmts in
+              warnings @ [Prog (Pla.print (Prog.Print.print_prog prog))]
             else warnings @ (compileCode args env stmts |> generateCode args)
   with Error.Errors errors when args.debug = false -> [Errors errors]
 

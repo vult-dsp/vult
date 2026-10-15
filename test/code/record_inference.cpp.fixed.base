@@ -7,7 +7,7 @@ int32_t Record_inference_main() {
    const Record_inference_point b = { 0xa0000 /* 10.000000 */, 0x140000 /* 20.000000 */ };
    const Record_inference_rcounter c = { 0x90000 /* 9.000000 */ };
    Record_inference_counter d = { 1, 4 };
-   fix16_t total = Record_inference_first(b) + Record_inference_half(c) + Record_inference_length3(a) + Record_inference_sum2(b);
+   fix16_t total = Record_inference_length3(a) + Record_inference_sum2(b) + Record_inference_half(c) + Record_inference_first(b);
    int32_t advanced = Record_inference_advance(d);
    return advanced + 100 * fix_to_int(total);
 }

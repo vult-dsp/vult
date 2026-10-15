@@ -96,16 +96,16 @@ def Lfo_process_type_alloc():
    return _ctx
 
 
-def Lfo_noteOn_type_alloc(_ctx):
+def Lfo_noteOn_type_alloc():
    return Lfo_process_type_alloc()
 
-def Lfo_noteOff_type_alloc(_ctx):
+def Lfo_noteOff_type_alloc():
    return Lfo_process_type_alloc()
 
-def Lfo_controlChange_type_alloc(_ctx):
+def Lfo_controlChange_type_alloc():
    return Lfo_process_type_alloc()
 
-def Lfo_default_type_alloc(_ctx):
+def Lfo_default_type_alloc():
    return Lfo_process_type_alloc()
 
 def Util_edge(_ctx, x):

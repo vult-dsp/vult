@@ -7,19 +7,19 @@
    return _ctx;
 };
 
-this.Aff_f_noteOn_type_alloc = function (_ctx) {
+this.Aff_f_noteOn_type_alloc = function () {
    return this.Aff_f_process_type_alloc();
 };
 
-this.Aff_f_noteOff_type_alloc = function (_ctx) {
+this.Aff_f_noteOff_type_alloc = function () {
    return this.Aff_f_process_type_alloc();
 };
 
-this.Aff_f_controlChange_type_alloc = function (_ctx) {
+this.Aff_f_controlChange_type_alloc = function () {
    return this.Aff_f_process_type_alloc();
 };
 
-this.Aff_f_default_type_alloc = function (_ctx) {
+this.Aff_f_default_type_alloc = function () {
    return this.Aff_f_process_type_alloc();
 };
 

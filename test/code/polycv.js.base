@@ -68,11 +68,11 @@ this.Polycv_poly_noteOn_type_alloc = function () {
    return _ctx;
 };
 
-this.Polycv_poly_noteOff_type_alloc = function (_ctx) {
+this.Polycv_poly_noteOff_type_alloc = function () {
    return this.Polycv_poly_noteOn_type_alloc();
 };
 
-this.Polycv_polyState_type_alloc = function (_ctx) {
+this.Polycv_polyState_type_alloc = function () {
    return this.Polycv_poly_noteOn_type_alloc();
 };
 
@@ -95,19 +95,19 @@ this.Polycv_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Polycv_noteOn_type_alloc = function (_ctx) {
+this.Polycv_noteOn_type_alloc = function () {
    return this.Polycv_process_type_alloc();
 };
 
-this.Polycv_noteOff_type_alloc = function (_ctx) {
+this.Polycv_noteOff_type_alloc = function () {
    return this.Polycv_process_type_alloc();
 };
 
-this.Polycv_controlChange_type_alloc = function (_ctx) {
+this.Polycv_controlChange_type_alloc = function () {
    return this.Polycv_process_type_alloc();
 };
 
-this.Polycv_default_type_alloc = function (_ctx) {
+this.Polycv_default_type_alloc = function () {
    return this.Polycv_process_type_alloc();
 };
 

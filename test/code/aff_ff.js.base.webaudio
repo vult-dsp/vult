@@ -9,19 +9,19 @@
    return _ctx;
 };
 
-this.Aff_ff_noteOn_type_alloc = function (_ctx) {
+this.Aff_ff_noteOn_type_alloc = function () {
    return this.Aff_ff_process_type_alloc();
 };
 
-this.Aff_ff_noteOff_type_alloc = function (_ctx) {
+this.Aff_ff_noteOff_type_alloc = function () {
    return this.Aff_ff_process_type_alloc();
 };
 
-this.Aff_ff_controlChange_type_alloc = function (_ctx) {
+this.Aff_ff_controlChange_type_alloc = function () {
    return this.Aff_ff_process_type_alloc();
 };
 
-this.Aff_ff_default_type_alloc = function (_ctx) {
+this.Aff_ff_default_type_alloc = function () {
    return this.Aff_ff_process_type_alloc();
 };
 

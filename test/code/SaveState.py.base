@@ -33,7 +33,7 @@ def SaveState_counter_type_alloc():
    return _ctx
 
 
-def SaveState_reset_type_alloc(_ctx):
+def SaveState_reset_type_alloc():
    return SaveState_counter_type_alloc()
 
 def SaveState_nosave_type_alloc():

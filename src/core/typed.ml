@@ -241,7 +241,7 @@ let rec print_exp (e : exp) =
   | EReal n ->
       Pla.float n
   | EFixed n ->
-      {%pla|<#n#f>x]|}
+      {%pla|<#n#f>x|}
   | EString s ->
       Pla.string_quoted s
   | EId id ->

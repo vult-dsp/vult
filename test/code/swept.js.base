@@ -39,19 +39,19 @@ this.Swept_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Swept_noteOn_type_alloc = function (_ctx) {
+this.Swept_noteOn_type_alloc = function () {
    return this.Swept_process_type_alloc();
 };
 
-this.Swept_noteOff_type_alloc = function (_ctx) {
+this.Swept_noteOff_type_alloc = function () {
    return this.Swept_process_type_alloc();
 };
 
-this.Swept_controlChange_type_alloc = function (_ctx) {
+this.Swept_controlChange_type_alloc = function () {
    return this.Swept_process_type_alloc();
 };
 
-this.Swept_default_type_alloc = function (_ctx) {
+this.Swept_default_type_alloc = function () {
    return this.Swept_process_type_alloc();
 };
 

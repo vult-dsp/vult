@@ -129,16 +129,16 @@ def Phase_process_type_alloc():
    return _ctx
 
 
-def Phase_noteOn_type_alloc(_ctx):
+def Phase_noteOn_type_alloc():
    return Phase_process_type_alloc()
 
-def Phase_noteOff_type_alloc(_ctx):
+def Phase_noteOff_type_alloc():
    return Phase_process_type_alloc()
 
-def Phase_controlChange_type_alloc(_ctx):
+def Phase_controlChange_type_alloc():
    return Phase_process_type_alloc()
 
-def Phase_default_type_alloc(_ctx):
+def Phase_default_type_alloc():
    return Phase_process_type_alloc()
 
 def Sine_process_type_alloc():
@@ -149,16 +149,16 @@ def Sine_process_type_alloc():
    return _ctx
 
 
-def Sine_noteOn_type_alloc(_ctx):
+def Sine_noteOn_type_alloc():
    return Sine_process_type_alloc()
 
-def Sine_noteOff_type_alloc(_ctx):
+def Sine_noteOff_type_alloc():
    return Sine_process_type_alloc()
 
-def Sine_controlChange_type_alloc(_ctx):
+def Sine_controlChange_type_alloc():
    return Sine_process_type_alloc()
 
-def Sine_default_type_alloc(_ctx):
+def Sine_default_type_alloc():
    return Sine_process_type_alloc()
 
 def Util_edge(_ctx, x):

@@ -226,19 +226,19 @@ private Sawcore_process_type Sawcore_process_type_alloc() {
    return _ctx;
 }
 
-private Sawcore_noteOn_type Sawcore_noteOn_type_alloc(Sawcore_noteOn_type _ctx) {
+private Sawcore_noteOn_type Sawcore_noteOn_type_alloc() {
    return new Sawcore_noteOn_type();
 }
 
-private Sawcore_noteOff_type Sawcore_noteOff_type_alloc(Sawcore_noteOff_type _ctx) {
+private Sawcore_noteOff_type Sawcore_noteOff_type_alloc() {
    return new Sawcore_noteOff_type();
 }
 
-private Sawcore_controlChange_type Sawcore_controlChange_type_alloc(Sawcore_controlChange_type _ctx) {
+private Sawcore_controlChange_type Sawcore_controlChange_type_alloc() {
    return new Sawcore_controlChange_type();
 }
 
-private Sawcore_default_type Sawcore_default_type_alloc(Sawcore_default_type _ctx) {
+private Sawcore_default_type Sawcore_default_type_alloc() {
    return new Sawcore_default_type();
 }
 

@@ -54,19 +54,19 @@ this.Adsr_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Adsr_noteOn_type_alloc = function (_ctx) {
+this.Adsr_noteOn_type_alloc = function () {
    return this.Adsr_process_type_alloc();
 };
 
-this.Adsr_noteOff_type_alloc = function (_ctx) {
+this.Adsr_noteOff_type_alloc = function () {
    return this.Adsr_process_type_alloc();
 };
 
-this.Adsr_controlChange_type_alloc = function (_ctx) {
+this.Adsr_controlChange_type_alloc = function () {
    return this.Adsr_process_type_alloc();
 };
 
-this.Adsr_default_type_alloc = function (_ctx) {
+this.Adsr_default_type_alloc = function () {
    return this.Adsr_process_type_alloc();
 };
 

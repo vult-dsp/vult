@@ -120,16 +120,16 @@ def Saw_r_process_type_alloc():
    return _ctx
 
 
-def Saw_r_noteOn_type_alloc(_ctx):
+def Saw_r_noteOn_type_alloc():
    return Saw_r_process_type_alloc()
 
-def Saw_r_noteOff_type_alloc(_ctx):
+def Saw_r_noteOff_type_alloc():
    return Saw_r_process_type_alloc()
 
-def Saw_r_controlChange_type_alloc(_ctx):
+def Saw_r_controlChange_type_alloc():
    return Saw_r_process_type_alloc()
 
-def Saw_r_default_type_alloc(_ctx):
+def Saw_r_default_type_alloc():
    return Saw_r_process_type_alloc()
 
 def Util_edge(_ctx, x):

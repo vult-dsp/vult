@@ -137,19 +137,19 @@ private Swept_process_type Swept_process_type_alloc() {
    return _ctx;
 }
 
-private Swept_noteOn_type Swept_noteOn_type_alloc(Swept_noteOn_type _ctx) {
+private Swept_noteOn_type Swept_noteOn_type_alloc() {
    return new Swept_noteOn_type();
 }
 
-private Swept_noteOff_type Swept_noteOff_type_alloc(Swept_noteOff_type _ctx) {
+private Swept_noteOff_type Swept_noteOff_type_alloc() {
    return new Swept_noteOff_type();
 }
 
-private Swept_controlChange_type Swept_controlChange_type_alloc(Swept_controlChange_type _ctx) {
+private Swept_controlChange_type Swept_controlChange_type_alloc() {
    return new Swept_controlChange_type();
 }
 
-private Swept_default_type Swept_default_type_alloc(Swept_default_type _ctx) {
+private Swept_default_type Swept_default_type_alloc() {
    return new Swept_default_type();
 }
 

@@ -242,16 +242,16 @@ def Tricore_process_type_alloc():
    return _ctx
 
 
-def Tricore_noteOn_type_alloc(_ctx):
+def Tricore_noteOn_type_alloc():
    return Tricore_process_type_alloc()
 
-def Tricore_noteOff_type_alloc(_ctx):
+def Tricore_noteOff_type_alloc():
    return Tricore_process_type_alloc()
 
-def Tricore_controlChange_type_alloc(_ctx):
+def Tricore_controlChange_type_alloc():
    return Tricore_process_type_alloc()
 
-def Tricore_default_type_alloc(_ctx):
+def Tricore_default_type_alloc():
    return Tricore_process_type_alloc()
 
 Svf_calc_g_c = {}
@@ -291,16 +291,16 @@ def Svf_process_type_alloc():
    return _ctx
 
 
-def Svf_noteOn_type_alloc(_ctx):
+def Svf_noteOn_type_alloc():
    return Svf_process_type_alloc()
 
-def Svf_noteOff_type_alloc(_ctx):
+def Svf_noteOff_type_alloc():
    return Svf_process_type_alloc()
 
-def Svf_controlChange_type_alloc(_ctx):
+def Svf_controlChange_type_alloc():
    return Svf_process_type_alloc()
 
-def Svf_default_type_alloc(_ctx):
+def Svf_default_type_alloc():
    return Svf_process_type_alloc()
 
 def Lfo_soft_type_alloc():
@@ -321,16 +321,16 @@ def Lfo_process_type_alloc():
    return _ctx
 
 
-def Lfo_noteOn_type_alloc(_ctx):
+def Lfo_noteOn_type_alloc():
    return Lfo_process_type_alloc()
 
-def Lfo_noteOff_type_alloc(_ctx):
+def Lfo_noteOff_type_alloc():
    return Lfo_process_type_alloc()
 
-def Lfo_controlChange_type_alloc(_ctx):
+def Lfo_controlChange_type_alloc():
    return Lfo_process_type_alloc()
 
-def Lfo_default_type_alloc(_ctx):
+def Lfo_default_type_alloc():
    return Lfo_process_type_alloc()
 
 def Phase_default(_ctx):
@@ -346,16 +346,16 @@ def Phase_process_type_alloc():
    return _ctx
 
 
-def Phase_noteOn_type_alloc(_ctx):
+def Phase_noteOn_type_alloc():
    return Phase_process_type_alloc()
 
-def Phase_noteOff_type_alloc(_ctx):
+def Phase_noteOff_type_alloc():
    return Phase_process_type_alloc()
 
-def Phase_controlChange_type_alloc(_ctx):
+def Phase_controlChange_type_alloc():
    return Phase_process_type_alloc()
 
-def Phase_default_type_alloc(_ctx):
+def Phase_default_type_alloc():
    return Phase_process_type_alloc()
 
 Util_cvToperiod_c = {}
@@ -391,7 +391,7 @@ def Blit_pulse_train_type_alloc():
    return _ctx
 
 
-def Blit_pulse_start_type_alloc(_ctx):
+def Blit_pulse_start_type_alloc():
    return Blit_pulse_train_type_alloc()
 
 Util_pitchToRate_c = {}
@@ -448,7 +448,7 @@ def Blit_osc_blit_type_alloc():
    return _ctx
 
 
-def Blit_init_type_alloc(_ctx):
+def Blit_init_type_alloc():
    return Blit_osc_blit_type_alloc()
 
 def Blit_process_type_alloc():
@@ -457,16 +457,16 @@ def Blit_process_type_alloc():
    return _ctx
 
 
-def Blit_noteOn_type_alloc(_ctx):
+def Blit_noteOn_type_alloc():
    return Blit_process_type_alloc()
 
-def Blit_noteOff_type_alloc(_ctx):
+def Blit_noteOff_type_alloc():
    return Blit_process_type_alloc()
 
-def Blit_controlChange_type_alloc(_ctx):
+def Blit_controlChange_type_alloc():
    return Blit_process_type_alloc()
 
-def Blit_default_type_alloc(_ctx):
+def Blit_default_type_alloc():
    return Blit_process_type_alloc()
 
 def Adsr_do_type_alloc():
@@ -491,16 +491,16 @@ def Adsr_process_type_alloc():
    return _ctx
 
 
-def Adsr_noteOn_type_alloc(_ctx):
+def Adsr_noteOn_type_alloc():
    return Adsr_process_type_alloc()
 
-def Adsr_noteOff_type_alloc(_ctx):
+def Adsr_noteOff_type_alloc():
    return Adsr_process_type_alloc()
 
-def Adsr_controlChange_type_alloc(_ctx):
+def Adsr_controlChange_type_alloc():
    return Adsr_process_type_alloc()
 
-def Adsr_default_type_alloc(_ctx):
+def Adsr_default_type_alloc():
    return Adsr_process_type_alloc()
 
 def Voice_4_process_type_alloc():
@@ -536,16 +536,16 @@ def Voice_4_process_type_alloc():
    return _ctx
 
 
-def Voice_4_noteOn_type_alloc(_ctx):
+def Voice_4_noteOn_type_alloc():
    return Voice_4_process_type_alloc()
 
-def Voice_4_noteOff_type_alloc(_ctx):
+def Voice_4_noteOff_type_alloc():
    return Voice_4_process_type_alloc()
 
-def Voice_4_controlChange_type_alloc(_ctx):
+def Voice_4_controlChange_type_alloc():
    return Voice_4_process_type_alloc()
 
-def Voice_4_default_type_alloc(_ctx):
+def Voice_4_default_type_alloc():
    return Voice_4_process_type_alloc()
 
 def Util_edge(_ctx, x):

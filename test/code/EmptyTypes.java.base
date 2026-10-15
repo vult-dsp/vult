@@ -25,11 +25,11 @@ public static class EmptyTypes_foo_type {
    return _ctx;
 }
 
-private EmptyTypes_setSettings_type EmptyTypes_setSettings_type_alloc(EmptyTypes_setSettings_type _ctx) {
+private EmptyTypes_setSettings_type EmptyTypes_setSettings_type_alloc() {
    return new EmptyTypes_setSettings_type();
 }
 
-private EmptyTypes_setScreen_type EmptyTypes_setScreen_type_alloc(EmptyTypes_setScreen_type _ctx) {
+private EmptyTypes_setScreen_type EmptyTypes_setScreen_type_alloc() {
    return new EmptyTypes_setScreen_type();
 }
 

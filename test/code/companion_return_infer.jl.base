@@ -63,7 +63,7 @@ function Companion_return_infer_main_type_alloc()
    return _ctx
 end
 
-function Companion_return_infer_current_int_type_alloc(_ctx)
+function Companion_return_infer_current_int_type_alloc()
    return Companion_return_infer_accum_int_type_alloc()
 end
 

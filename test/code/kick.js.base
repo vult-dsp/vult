@@ -15,19 +15,19 @@ this.Noise_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Noise_noteOn_type_alloc = function (_ctx) {
+this.Noise_noteOn_type_alloc = function () {
    return this.Noise_process_type_alloc();
 };
 
-this.Noise_noteOff_type_alloc = function (_ctx) {
+this.Noise_noteOff_type_alloc = function () {
    return this.Noise_process_type_alloc();
 };
 
-this.Noise_controlChange_type_alloc = function (_ctx) {
+this.Noise_controlChange_type_alloc = function () {
    return this.Noise_process_type_alloc();
 };
 
-this.Noise_default_type_alloc = function (_ctx) {
+this.Noise_default_type_alloc = function () {
    return this.Noise_process_type_alloc();
 };
 
@@ -126,19 +126,19 @@ this.Tricore_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Tricore_noteOn_type_alloc = function (_ctx) {
+this.Tricore_noteOn_type_alloc = function () {
    return this.Tricore_process_type_alloc();
 };
 
-this.Tricore_noteOff_type_alloc = function (_ctx) {
+this.Tricore_noteOff_type_alloc = function () {
    return this.Tricore_process_type_alloc();
 };
 
-this.Tricore_controlChange_type_alloc = function (_ctx) {
+this.Tricore_controlChange_type_alloc = function () {
    return this.Tricore_process_type_alloc();
 };
 
-this.Tricore_default_type_alloc = function (_ctx) {
+this.Tricore_default_type_alloc = function () {
    return this.Tricore_process_type_alloc();
 };
 
@@ -149,19 +149,19 @@ this.Swept_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Swept_noteOn_type_alloc = function (_ctx) {
+this.Swept_noteOn_type_alloc = function () {
    return this.Swept_process_type_alloc();
 };
 
-this.Swept_noteOff_type_alloc = function (_ctx) {
+this.Swept_noteOff_type_alloc = function () {
    return this.Swept_process_type_alloc();
 };
 
-this.Swept_controlChange_type_alloc = function (_ctx) {
+this.Swept_controlChange_type_alloc = function () {
    return this.Swept_process_type_alloc();
 };
 
-this.Swept_default_type_alloc = function (_ctx) {
+this.Swept_default_type_alloc = function () {
    return this.Swept_process_type_alloc();
 };
 
@@ -190,19 +190,19 @@ this.Ahr_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Ahr_noteOn_type_alloc = function (_ctx) {
+this.Ahr_noteOn_type_alloc = function () {
    return this.Ahr_process_type_alloc();
 };
 
-this.Ahr_noteOff_type_alloc = function (_ctx) {
+this.Ahr_noteOff_type_alloc = function () {
    return this.Ahr_process_type_alloc();
 };
 
-this.Ahr_controlChange_type_alloc = function (_ctx) {
+this.Ahr_controlChange_type_alloc = function () {
    return this.Ahr_process_type_alloc();
 };
 
-this.Ahr_default_type_alloc = function (_ctx) {
+this.Ahr_default_type_alloc = function () {
    return this.Ahr_process_type_alloc();
 };
 
@@ -226,19 +226,19 @@ this.Kick_process_type_alloc = function () {
    return _ctx;
 };
 
-this.Kick_noteOn_type_alloc = function (_ctx) {
+this.Kick_noteOn_type_alloc = function () {
    return this.Kick_process_type_alloc();
 };
 
-this.Kick_noteOff_type_alloc = function (_ctx) {
+this.Kick_noteOff_type_alloc = function () {
    return this.Kick_process_type_alloc();
 };
 
-this.Kick_controlChange_type_alloc = function (_ctx) {
+this.Kick_controlChange_type_alloc = function () {
    return this.Kick_process_type_alloc();
 };
 
-this.Kick_default_type_alloc = function (_ctx) {
+this.Kick_default_type_alloc = function () {
    return this.Kick_process_type_alloc();
 };
 

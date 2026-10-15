@@ -152,10 +152,10 @@ def Delay_mono_noteOn_type_alloc():
    return _ctx
 
 
-def Delay_mono_noteOff_type_alloc(_ctx):
+def Delay_mono_noteOff_type_alloc():
    return Delay_mono_noteOn_type_alloc()
 
-def Delay_mono_isGateOn_type_alloc(_ctx):
+def Delay_mono_isGateOn_type_alloc():
    return Delay_mono_noteOn_type_alloc()
 
 def Delay_process_type_alloc():
@@ -177,16 +177,16 @@ def Delay_process_type_alloc():
    return _ctx
 
 
-def Delay_noteOn_type_alloc(_ctx):
+def Delay_noteOn_type_alloc():
    return Delay_process_type_alloc()
 
-def Delay_noteOff_type_alloc(_ctx):
+def Delay_noteOff_type_alloc():
    return Delay_process_type_alloc()
 
-def Delay_controlChange_type_alloc(_ctx):
+def Delay_controlChange_type_alloc():
    return Delay_process_type_alloc()
 
-def Delay_default_type_alloc(_ctx):
+def Delay_default_type_alloc():
    return Delay_process_type_alloc()
 
 def Delay_smooth(_ctx, input):

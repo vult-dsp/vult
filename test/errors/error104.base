@@ -1,0 +1,4 @@
+The size of the table cannot be negative
+// The size of a table cannot be negative
+fun f(x : real) : real @[table(size = -3, min = 0.0, max = 1.0)] {
+    ^

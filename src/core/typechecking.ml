@@ -530,7 +530,14 @@ and exp ?(context = normal_context) (env : env) (e : Syntax.exp) : env * exp =
       (env, {e= EBool value; t; loc})
   | {e= SEInt value; loc} ->
       let t = C.int ~loc in
-      (env, {e= EInt (int_of_string value); t; loc})
+      let value =
+        match int_of_string_opt value with
+        | Some n ->
+            n
+        | None ->
+            Error.raiseError ("The integer '" ^ value ^ "' is out of range") loc
+      in
+      (env, {e= EInt value; t; loc})
   | {e= SEReal value; loc} ->
       let t = C.real ~loc in
       (env, {e= EReal (float_of_string value); t; loc})
@@ -1095,13 +1102,15 @@ let rec stmt_with_type_substitution (env : env) (type_substitution_map : (string
   let rec dexp_with_substitution env dexp kind =
     match dexp with
     | {Syntax.d= Syntax.SDTuple l; loc} ->
-        let env, l =
+        (* Processed from the last element, like [dexp], but kept in source order *)
+        let env, l_rev =
           CCList.fold_left_map
             (fun env e ->
               let env, e = dexp_with_substitution env e kind in
               (env, e) )
             env (CCList.rev l)
         in
+        let l = CCList.rev l_rev in
         let t = C.tuple ~loc (CCList.map (fun (e : dexp) -> e.t) l) in
         (env, {d= DTuple l; t; loc})
     | {Syntax.d= Syntax.SDGroup e; _} ->
@@ -1172,13 +1181,15 @@ and stmt_with_generics (env : env) (generic_params : string list) (return : type
   let rec dexp_generic env dexp kind =
     match dexp with
     | {Syntax.d= Syntax.SDTuple l; loc} ->
-        let env, l =
+        (* Processed from the last element, like [dexp], but kept in source order *)
+        let env, l_rev =
           CCList.fold_left_map
             (fun env e ->
               let env, e = dexp_generic env e kind in
               (env, e) )
             env (CCList.rev l)
         in
+        let l = CCList.rev l_rev in
         let t = C.tuple ~loc (CCList.map (fun (e : dexp) -> e.t) l) in
         (env, {d= DTuple l; t; loc})
     | {Syntax.d= Syntax.SDGroup e; _} ->
@@ -1215,7 +1226,7 @@ and stmt_generic (env : env) (dexp_func : env -> Syntax.dexp -> Env.local_kind -
       (env, [{s= StmtVal lhs; loc}])
   | {s= SStmtVal (lhs, Some rhs); loc} ->
       let env, dlhs = dexp_func env lhs LocalVal in
-      let env, lhs = lexp env (dexp_to_lexp lhs) in
+      let env, lhs = lexp ~const:true env (dexp_to_lexp lhs) in
       let env, rhs = exp env rhs in
       let env = unifyRaise ~bind:true env lhs.loc dlhs.t lhs.t in
       let env = unifyExpRaise ~bind:true env dlhs.t rhs in
@@ -1271,58 +1282,9 @@ and stmt_list_generic (env : env) (dexp_func : env -> Syntax.dexp -> Env.local_k
   CCList.fold_left_map (fun env s -> stmt_generic env dexp_func return s) env stmts
   |> fun (env, nested_lists) -> (env, CCList.flatten nested_lists)
 
-let rec stmt (env : env) (return : type_) (s : Syntax.stmt) : env * stmt list =
-  match s with
-  | {s= SStmtError; _} ->
-      (env, [])
-  | {s= SStmtBlock stmts; loc} ->
-      let env, stmts = Env.withScope env (fun env -> stmt_list env return stmts) in
-      (env, [{s= StmtBlock stmts; loc}])
-  | {s= SStmtVal (lhs, None); loc} ->
-      let env, lhs = dexp env lhs LocalVal in
-      (env, [{s= StmtVal lhs; loc}])
-  | {s= SStmtVal (lhs, Some rhs); loc} ->
-      let env, dlhs = dexp env lhs LocalVal in
-      let env, lhs = lexp ~const:true env (dexp_to_lexp lhs) in
-      let env, rhs = exp env rhs in
-      let env = unifyRaise ~bind:true env lhs.loc dlhs.t lhs.t in
-      let env = unifyExpRaise ~bind:true env dlhs.t rhs in
-      (env, [{s= StmtVal dlhs; loc}; {s= StmtBind (lhs, rhs); loc}])
-  | {s= SStmtMem (lhs, None, tags); loc} ->
-      let env, lhs = dexp env lhs (LocalMem tags) in
-      (env, [{s= StmtMem (lhs, tags); loc}])
-  | {s= SStmtMem (lhs, Some rhs, tags); loc} ->
-      let env, dlhs = dexp env lhs (LocalMem tags) in
-      let env, lhs = lexp env (dexp_to_lexp lhs) in
-      let env, rhs = exp env rhs in
-      let env = unifyExpRaise ~bind:true env lhs.t rhs in
-      (env, [{s= StmtMem (dlhs, tags); loc}; {s= StmtBind (lhs, rhs); loc}])
-  | {s= SStmtBind (lhs, rhs); loc} ->
-      let env, lhs = lexp env lhs in
-      let env, rhs = exp env rhs in
-      let env = unifyExpRaise ~bind:true env lhs.t rhs in
-      (env, [{s= StmtBind (lhs, rhs); loc}])
-  | {s= SStmtReturn e; loc} ->
-      let env, e = exp env e in
-      let env = unifyExpRaise env return e in
-      (env, [{s= StmtReturn e; loc}])
-  | {s= SStmtIf (cond, then_, else_); loc} ->
-      let env, cond = exp env cond in
-      let env = unifyRaise env cond.loc (C.bool ~loc) cond.t in
-      let env, then_ = stmt env return then_ in
-      let env, else_ = stmt_opt env return else_ in
-      (env, [{s= StmtIf (cond, stmt_block then_, else_); loc}])
-  | {s= SStmtWhile (cond, s); loc} ->
-      let env, cond = exp env cond in
-      let env = unifyRaise env cond.loc (C.bool ~loc) cond.t in
-      let env, s = stmt env return s in
-      (env, [{s= StmtWhile (cond, stmt_block s); loc}])
-  | {s= SStmtIter {id= name, id_loc; value; body}; loc} ->
-      let env, while_s = makeIterWhile env name id_loc value body loc in
-      stmt env return while_s
-  | {s= SStmtMatch {e; first_case; other_cases}; _} ->
-      let if_stmt = makeIfOfMatch env e first_case other_cases in
-      stmt env return if_stmt
+(* The statements of regular functions are checked like the generic bodies, with the regular
+   declarations *)
+let rec stmt (env : env) (return : type_) (s : Syntax.stmt) : env * stmt list = stmt_generic env dexp return s
 
 and stmt_opt env return s =
   match s with
@@ -1869,7 +1831,10 @@ let typecheck (iargs : Args.args) (parsed : Parse.parsed_file list) : env * (str
       (Env.empty ~extensions (), [])
       parsed
   in
-  (resolveRecordGuesses env, CCList.rev module_stmts)
+  let env = resolveRecordGuesses env in
+  let module_stmts = CCList.rev module_stmts in
+  Tablecheck.check env.subst iargs.includes module_stmts ;
+  (env, module_stmts)
 
 (* Type checking with elaboration - for backwards compatibility.
    This is equivalent to calling typecheck followed by Elab.elaborate. *)
