@@ -156,6 +156,22 @@ let convertOutputError (error : Error.t) : error Js.t =
 let convertOutputErrors (errors : Error.t list) : error Js.t Js.js_array Js.t =
   errors |> CCList.map convertOutputError |> Array.of_list |> Js.array
 
+(** Converts a list of warnings into a JS array with the same shape as the errors. *)
+let convertOutputWarnings (warnings : Error.warning list) : error Js.t Js.js_array Js.t =
+  let convert warning =
+    let msg, file, line, col = Error.reportWarningStringNoLoc warning in
+    object%js
+      val msg = Js.string msg
+
+      val file = Js.string file
+
+      val line = line
+
+      val col = col
+    end
+  in
+  warnings |> CCList.map convert |> Array.of_list |> Js.array
+
 (** Converts a generated code file [(Pla.t, filename)] into a JS [{file, code}] object. *)
 let convertOutputFile ((code, filename) : Pla.t * string) : js_file_code Js.t =
   object%js
@@ -254,6 +270,13 @@ let showResult (result : Args.output) : Js.Unsafe.any =
            val _type = Js.string "errors"
 
            val value = convertOutputErrors errors
+        end )
+  | Warnings warnings ->
+      Js.Unsafe.inject
+        (object%js
+           val _type = Js.string "warnings"
+
+           val value = convertOutputWarnings warnings
         end )
 
 (** Converts a list of compiler outputs into a JS array of result objects. *)

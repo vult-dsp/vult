@@ -28,11 +28,16 @@ type t = PointedError of Loc.t * string | SimpleError of string
 
 exception Errors of t list
 
-(** Takes a location and returns a string in the format "Error in file: file: line l col:c1-c2" *)
-let errorLocationMessage (location : Loc.t) : string =
+(** A problem in the code that does not stop the compilation *)
+type warning = {loc: Loc.t; msg: string}
+
+(** Takes a location and returns a string in the format "<label>: file:line:c1-c2: " *)
+let locationMessage (label : string) (location : Loc.t) : string =
   let col_start = Loc.startColumn location in
   let col_end = Loc.endColumn location in
-  Printf.sprintf "Error: %s:%i:%i-%i: " (Loc.file location) (Loc.line location) col_start col_end
+  Printf.sprintf "%s: %s:%i:%i-%i: " label (Loc.file location) (Loc.line location) col_start col_end
+
+let errorLocationMessage (location : Loc.t) : string = locationMessage "Error" location
 
 (** Takes the current line and a location returns a string pointing to the
     location *)
@@ -77,6 +82,14 @@ let reportErrorString (error : t) : string =
 
 let reportErrors (errors : t list) : string = CCList.map reportErrorString errors |> String.concat "\n"
 
+let reportWarningString (warning : warning) : string =
+  let loc = locationMessage "Warning" warning.loc in
+  let line = getErrorLines warning.loc in
+  let indicator = errorLocationIndicator line warning.loc in
+  loc ^ warning.msg ^ "\n" ^ indicator
+
+let reportWarnings (warnings : warning list) : string = CCList.map reportWarningString warnings |> String.concat "\n"
+
 (** Returns a tuple with the error an all its information *)
 let reportErrorStringNoLoc (error : t) : string * string * int * int =
   match error with
@@ -88,6 +101,10 @@ let reportErrorStringNoLoc (error : t) : string * string * int * int =
       (full_msg, Loc.file location, Loc.line location, col_start)
   | SimpleError msg ->
       (msg, "-", 0, 0)
+
+(** Returns a tuple with the warning an all its information *)
+let reportWarningStringNoLoc (warning : warning) : string * string * int * int =
+  reportErrorStringNoLoc (PointedError (warning.loc, warning.msg))
 
 (** Joins two errors *)
 let joinErrors : t list -> t list -> t list = CCList.append

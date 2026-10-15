@@ -1,0 +1,44 @@
+3:22: The argument 'b' is never used. If this is intended, rename it to '_b'.
+
+fun reported(a : int, b : int, _c : int) : int {
+                      ^
+
+7:7: The variable 'assigned' is never used. If this is intended, rename it to '_assigned'.
+   val _z = 3;
+   val assigned = 0;
+       ^^^^^^^^
+
+9:10: The variable 'q' is never used. If this is intended, rename it to '_q'.
+   assigned = 4;
+   val p, q = 1, 2;
+          ^
+
+10:20: The variable 't' is never used. If this is intended, rename it to '_t'.
+   val p, q = 1, 2;
+   if (a > 0) { val t = 1; } else { val t = 2; return t; }
+                    ^
+
+11:9: The variable 'i' is never used. If this is intended, rename it to '_i'.
+   if (a > 0) { val t = 1; } else { val t = 2; return t; }
+   iter (i, 4) { a = a + 1; }
+         ^
+
+13:7: The variable 'local' is never used. If this is intended, rename it to '_local'.
+   iter (_j, 4) { a = a + 1; }
+   val local : array(int, 4);
+       ^^^^^
+
+26:7: The variable 'unused' is never used. If this is intended, rename it to '_unused'.
+   mem state;
+   val unused = 0.0;
+       ^^^^^^
+
+31:18: The argument 'control' is never used. If this is intended, rename it to '_control'.
+and noteOn(note : int, velocity : int, channel : int) { }
+and controlChange(control : int, value : int, channel : int) {
+                  ^^^^^^^
+
+31:46: The argument 'channel' is never used. If this is intended, rename it to '_channel'.
+and noteOn(note : int, velocity : int, channel : int) { }
+and controlChange(control : int, value : int, channel : int) {
+                                              ^^^^^^^

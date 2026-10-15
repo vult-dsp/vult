@@ -284,7 +284,7 @@ let substituteConstantsInStmt = Typed.substituteConstantsInStmt
 let constant_param_pairs (params : Typed.call_param list) : ((string * Typed.type_) * Typed.exp) list =
   CCList.filter_map
     (function
-      | Typed.CallGeneric {param= Typed.GParamConstant (name, param_type); value} ->
+      | Typed.CallGeneric {param= Typed.GParamConstant (name, param_type, _); value} ->
           Some ((name, param_type), value)
       | Typed.CallGeneric {param= Typed.GParamType _ | Typed.GParamFunction _; _} | Typed.CallArg _ ->
           None )
@@ -357,13 +357,13 @@ module Make (T : TYPECHECKER) = struct
           let mapping, fresh_t = Subst.copyType env.subst mapping arg.t in
           let env = match unify env fresh_t value.t with Some env -> env | None -> env in
           ((env, mapping), RegularParam {arg with t= fresh_t})
-      | Typed.CallGeneric {param= Typed.GParamConstant (name, param_type); value} ->
+      | Typed.CallGeneric {param= Typed.GParamConstant (name, param_type, param_loc); value} ->
           (* Defensive check: the typechecker already validated the argument against the
              declared type. A fresh copy is unified so the generic definition itself is never
              constrained. *)
           let _, fresh_param_type = Subst.copyType env.subst Subst.emptyCopyMapping param_type in
           let env = unifyRaise env value.loc fresh_param_type value.t in
-          ((env, mapping), ConstantParam ({name; t= value.t; loc} : Typed.arg))
+          ((env, mapping), ConstantParam ({name; t= value.t; loc= param_loc} : Typed.arg))
       | Typed.CallGeneric {param= Typed.GParamType _ | Typed.GParamFunction _; _} ->
           ((env, mapping), ResolvedParam)
     in
@@ -435,6 +435,7 @@ module Make (T : TYPECHECKER) = struct
     let () = prescan_generic_calls_in_stmt iargs env state combined_body in
     let env, processed_body = process_stmt_instantiation iargs env state combined_body in
     Hashtbl.remove state.in_progress signature ;
+    let env = Env.reportUnusedArguments env in
     let env = Env.exitFunction env in
     (* Companion functions are instantiated once per specialization with unique names so each
        one is bound to the context of its own specialization *)

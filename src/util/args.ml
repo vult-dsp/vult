@@ -37,6 +37,7 @@ type output =
   | CheckOk
   | AudioRendered of string
   | Errors of Error.t list
+  | Warnings of Error.warning list
 
 type code = NoCode | CppCode | JSCode | LuaCode | JavaCode | JuliaCode | PythonCode | ZigCode
 

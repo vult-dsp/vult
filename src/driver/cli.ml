@@ -62,6 +62,8 @@ let showResult (args : args) (output : output) =
   | Errors errors ->
       let error_strings = Error.reportErrors errors in
       prerr_endline error_strings ; exit 1
+  | Warnings warnings ->
+      prerr_endline (Error.reportWarnings warnings)
 
 let generateCode args (stmts, iprog, acc) =
   (* Before the tables are generated, so their lookups are built in the target's precision. *)
@@ -124,6 +126,9 @@ let compileCode (args : args) env stmts : Prog.top_stmt list * Interpreter.iprog
 
 let version = Version.version
 
+let warningsOutput (env : Env.env) : output list =
+  match Env.getWarnings env with [] -> [] | warnings -> [Warnings warnings]
+
 let driver (args : args) : output list =
   try
     if args.show_version then [Version version]
@@ -146,10 +151,11 @@ let driver (args : args) : output list =
             let env, stmts =
               Util.Profile.time "Typechecking" (fun () -> Typechecking.typecheck_and_elaborate args parsed)
             in
+            let warnings = warningsOutput env in
             if args.dtyped then
               let () = Typed.print_exp_locs := args.dlocs in
-              [Typed (Pla.print (Typed.print_prog stmts))]
-            else compileCode args env stmts |> generateCode args
+              warnings @ [Typed (Pla.print (Typed.print_prog stmts))]
+            else warnings @ (compileCode args env stmts |> generateCode args)
   with Error.Errors errors when args.debug = false -> [Errors errors]
 
 let run (args : args) : unit =

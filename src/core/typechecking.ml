@@ -470,7 +470,7 @@ and generic_call (env : env) (instance : (string * Syntax.exp option) option) (g
     CCList.fold_left
       (fun env pending_param ->
         match pending_param with
-        | ReadyParam (Typed.CallGeneric {param= Typed.GParamConstant (_, param_type); value}) ->
+        | ReadyParam (Typed.CallGeneric {param= Typed.GParamConstant (_, param_type, _); value}) ->
             let _, fresh_param_type = Subst.copyType env.subst Subst.emptyCopyMapping param_type in
             unifyRaise env value.loc fresh_param_type value.t
         | ReadyParam (Typed.CallGeneric {param= Typed.GParamType _ | Typed.GParamFunction _; _})
@@ -548,17 +548,17 @@ and exp ?(context = normal_context) (env : env) (e : Syntax.exp) : env * exp =
       match Env.lookupExpressionSymbol env name_path context with
       | ExprVariable var ->
           let t = var.t in
-          let e =
+          let env, e =
             match var.kind with
             | Val ->
-                {e= EId name; t; loc}
+                (Env.countRead env name, {e= EId name; t; loc})
             | Const ->
                 let m = Env.getCurrentModule env in
-                {e= EConst {id= name; n= Some m.name; loc}; t; loc}
+                (env, {e= EConst {id= name; n= Some m.name; loc}; t; loc})
             | Mem _ | Inst ->
                 let ctx = Env.getContext env in
                 let ctx_t = C.path_t loc ctx in
-                {e= EMember ({e= EId context_name; t= ctx_t; loc}, name); t; loc}
+                (env, {e= EMember ({e= EId context_name; t= ctx_t; loc}, name); t; loc})
           in
           (env, e)
       | ExprEnum values ->
@@ -897,6 +897,7 @@ and lexp ?(const = false) (env : env) (e : Syntax.lexp) : env * lexp =
       let t = C.tuple ~loc t_elems in
       (env, {l= LTuple elems; t; loc})
   | {l= SLIndex {e; index}; loc} ->
+      let env = countPartialWrite env e in
       let env, e = lexp ~const env e in
       let env, index = exp env index in
       let t = C.unbound loc in
@@ -904,6 +905,7 @@ and lexp ?(const = false) (env : env) (e : Syntax.lexp) : env * lexp =
       let env = unifyRaise env e.loc (C.array ~fixed:false ~loc t) e.t in
       (env, {l= LIndex {e; index}; t; loc})
   | {l= SLMember (e, m); loc} -> (
+      let env = countPartialWrite env e in
       let env, e = lexp ~const env e in
       match (resolve env e.t).tx with
       | TEId path -> (
@@ -929,6 +931,16 @@ and lexp ?(const = false) (env : env) (e : Syntax.lexp) : env * lexp =
           let t = Pla.print (printType env e.t) in
           let e = Pla.print (Typed.print_lexp e) in
           Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc )
+
+(* Counts the write of an element or member of a variable, which only matters for arguments *)
+and countPartialWrite (env : env) (e : Syntax.lexp) : env =
+  match e.l with
+  | SLId name ->
+      Env.countPartialWrite env name
+  | SLGroup e ->
+      countPartialWrite env e
+  | SLWild | SLMember _ | SLIndex _ | SLTuple _ ->
+      env
 
 and dexp (env : env) (e : Syntax.dexp) (kind : Env.local_kind) : env * dexp =
   match e with
@@ -980,6 +992,7 @@ let stmt_block (stmts : stmt list) = match stmts with [s] -> s | _ -> {s= StmtBl
 let makeIterWhile (env : env) name id_loc value body loc : env * Syntax.stmt =
   let env, tick = Env.nextFunctionTick env in
   let itname = name ^ "__" ^ string_of_int tick in
+  let env = Env.addLoopCounter env ~counter:itname ~written:name in
   let open Syntax in
   let int_type = {t= STId {id= "int"; n= None; loc= id_loc}; loc} in
   let dlhs = {d= SDTyped ({d= SDId (itname, None); loc= id_loc}, int_type); loc= id_loc} in
@@ -1414,12 +1427,17 @@ let reportReturnTypeMismatch (env : env) is_placeholder loc (specified_ret : typ
         Error.raiseError ("This function is expected to have type '" ^ t ^ "' but nothing was returned.") loc
       else env
 
+(* The arguments of a function with an empty body are dictated by its callers, like the 'noteOn'
+   handler required by the templates, so they are not reported when unused *)
+let isStub (body : Syntax.stmt) : bool = match body.s with SStmtBlock [] -> true | _ -> false
+
 let rec function_def (iargs : Args.args) (env : env) (def : Syntax.function_def) : env * (function_def * stmt) =
   let specified_ret = getReturnType env def.t in
   let ret = bodyReturnType specified_ret def.loc in
   let args = convertArguments env def.args in
   let env, path, t = Env.enterFunction env def.name args ret def.loc in
   let env, body = stmt env ret def.body in
+  let env = if isStub def.body then env else Env.reportUnusedArguments env in
   let env = Env.exitFunction env in
   let next = addGeneratedFunctions def.tags def.name def.next in
   let env, next = function_def_opt iargs env next in
@@ -1567,7 +1585,7 @@ let convert_generic_param (env : env) (param : Syntax.generic_param) : Typed.gen
       (* Validate type parameter name *)
       if String.length name = 0 then Error.raiseError "Template type parameter name cannot be empty" Loc.default ;
       Typed.GParamType name
-  | Syntax.GParamConstant (name, type_expr) ->
+  | Syntax.GParamConstant (name, type_expr, loc) ->
       (* Validate constant parameter name *)
       if String.length name = 0 then Error.raiseError "Generic constant parameter name cannot be empty" Loc.default ;
       let converted_type = type_in_m env type_expr in
@@ -1581,8 +1599,8 @@ let convert_generic_param (env : env) (param : Syntax.generic_param) : Typed.gen
           Error.raiseError
             (Printf.sprintf "Generic constant parameter '%s' must have type int, real, bool, or string, got %s" name
                (Pla.print (printType env converted_type)) )
-            Loc.default ) ;
-      Typed.GParamConstant (name, converted_type)
+            loc ) ;
+      Typed.GParamConstant (name, converted_type, loc)
 
 let create_generic_function (env : env) (def : Syntax.function_def) : env * Typed.generic_function =
   (* Validate generic function has generic parameters *)
@@ -1596,7 +1614,7 @@ let create_generic_function (env : env) (def : Syntax.function_def) : env * Type
             name
         | Syntax.GParamType name ->
             name
-        | Syntax.GParamConstant (name, _) ->
+        | Syntax.GParamConstant (name, _, _) ->
             name )
       def.generic_params
   in

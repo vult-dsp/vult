@@ -65,9 +65,10 @@ let startLine (location : t) : int = location.start_pos.pos_lnum
 
 let endLine (location : t) : int = location.end_pos.pos_lnum
 
+(* Orders the locations by line and column. [compare] cannot be used here because it is redefined above. *)
 let compareLoc (loc1 : t) (loc2 : t) =
-  let o = compare (line loc1) (line loc2) in
-  if o = 0 then compare (startColumn loc1) (startColumn loc2) else o
+  let o = Int.compare (line loc1) (line loc2) in
+  if o = 0 then Int.compare (startColumn loc1) (startColumn loc2) else o
 
 (** Returns a simple string representation of the location *)
 let to_string (location : t) : string =

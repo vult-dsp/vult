@@ -971,14 +971,14 @@ and parseGenericParam (buffer : Stream.stream) : generic_param =
       | STComposed ("fun", _) ->
           GParamFunction (param_name, Some type_expr)
       | _ ->
-          GParamConstant (param_name, type_expr) )
+          GParamConstant (param_name, type_expr, token.loc) )
   | _ ->
       (* No type annotation - use naming convention to determine type *)
       (* If parameter name starts with 'f' or ends with 'fn'/'func', assume it's a function *)
       if String.length param_name > 0 && param_name.[0] = 'f' then GParamFunction (param_name, None)
       else
         (* Default to constant parameter with unbound type (will be inferred) *)
-        GParamConstant (param_name, {t= STUnbound; loc= token.loc})
+        GParamConstant (param_name, {t= STUnbound; loc= token.loc}, token.loc)
 
 and argList arg_parser (buffer : Stream.stream) =
   match Stream.peek buffer with
@@ -996,7 +996,7 @@ and argList arg_parser (buffer : Stream.stream) =
 and parseGenericsAndArguments (buffer : Stream.stream) : generic_param list * arg list * param_slot list =
   (* Helper to extract name from generic_param *)
   let getGenericName (param : generic_param) : string =
-    match param with GParamFunction (name, _) -> name | GParamType name -> name | GParamConstant (name, _) -> name
+    match param with GParamFunction (name, _) -> name | GParamType name -> name | GParamConstant (name, _, _) -> name
   in
   let rec loop generic_params generic_names args arg_names params =
     match Stream.peek buffer with

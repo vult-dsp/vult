@@ -538,8 +538,8 @@ let zonkGenericParam (s : t) (param : generic_param) : generic_param =
       GParamFunction (name, Option.map (zonk s) t)
   | GParamType _ ->
       param
-  | GParamConstant (name, t) ->
-      GParamConstant (name, zonk s t)
+  | GParamConstant (name, t, loc) ->
+      GParamConstant (name, zonk s t, loc)
 
 let rec zonkExp (s : t) (e : exp) : exp =
   let zexp = zonkExp s in

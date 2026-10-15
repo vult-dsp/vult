@@ -111,7 +111,7 @@ and call_param =
 and generic_param =
   | GParamFunction of string * type_ option (* Function type using TEFunction *)
   | GParamType of string
-  | GParamConstant of string * type_
+  | GParamConstant of string * type_ * Loc.t
 
 and arg = {name: string; t: type_; loc: Loc.t}
 

@@ -244,7 +244,7 @@ and generic_param (p : generic_param) : string =
       Printf.sprintf "(gparam_func %s %s)" name (type_ t)
   | GParamType name ->
       Printf.sprintf "(gparam_type %s)" name
-  | GParamConstant (name, t) ->
+  | GParamConstant (name, t, _) ->
       Printf.sprintf "(gparam_const %s %s)" name (type_ t)
 
 and function_def (f : function_def) : string =

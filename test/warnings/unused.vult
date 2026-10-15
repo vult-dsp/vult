@@ -1,0 +1,33 @@
+// Unused arguments and variables are reported unless their names start with '_'
+
+fun reported(a : int, b : int, _c : int) : int {
+   val x = 1;
+   val y = 2;
+   val _z = 3;
+   val assigned = 0;
+   assigned = 4;
+   val p, q = 1, 2;
+   if (a > 0) { val t = 1; } else { val t = 2; return t; }
+   iter (i, 4) { a = a + 1; }
+   iter (_j, 4) { a = a + 1; }
+   val local : array(int, 4);
+   local[x] = 1;
+   return a + y + p;
+}
+
+// Writing into an element or a member of an argument changes the value of the caller
+fun output(out : array(real, 4), index : int) {
+   out[index] = 1.0;
+}
+
+// The arguments of an empty function only fill a signature
+fun process(input : real) : real {
+   mem state;
+   val unused = 0.0;
+   state = state + input;
+   return state;
+}
+and noteOn(note : int, velocity : int, channel : int) { }
+and controlChange(control : int, value : int, channel : int) {
+   state = real(value);
+}

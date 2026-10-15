@@ -327,6 +327,7 @@ module Analysis = struct
     ; files: Pparser.Parse.parsed_file list
           (* the document and its imports. When parsing fails, the files of the previous analysis are kept *)
     ; errors: Error.t list
+    ; warnings: Error.warning list
     ; typed: Core.Typed.top_stmt list option Lazy.t (* elaborated program, [None] if it has errors *) }
 
   let digest (content : string option) : Digest.t option = Option.map Digest.string content
@@ -348,14 +349,16 @@ module Analysis = struct
 
   let internal_error (exn : exn) : Error.t = Error.SimpleError ("Internal compiler error: " ^ Printexc.to_string exn)
 
-  let typecheck_errors (args : Args.args) (files : Pparser.Parse.parsed_file list) : Error.t list =
+  (** The errors and the warnings of the type inference. The bodies of generic functions are checked
+      when they are specialized, so their warnings are only reported by the compiler. *)
+  let typecheck (args : Args.args) (files : Pparser.Parse.parsed_file list) : Error.t list * Error.warning list =
     match Core.Typechecking.typecheck args files with
-    | _ ->
-        []
+    | env, _ ->
+        ([], Core.Env.getWarnings env)
     | exception Error.Errors errors ->
-        errors
+        (errors, [])
     | exception exn ->
-        [internal_error exn]
+        ([internal_error exn], [])
 
   let elaborate (args : Args.args) (files : Pparser.Parse.parsed_file list) : Core.Typed.top_stmt list option =
     match Core.Typechecking.typecheck_and_elaborate args files with _, stmts -> Some stmts | exception _ -> None
@@ -385,10 +388,11 @@ module Analysis = struct
     let sources = config_sources @ CCList.rev !reads in
     match loaded with
     | Ok files ->
-        {path; sources; files; errors= typecheck_errors args files; typed= lazy (elaborate args files)}
+        let errors, warnings = typecheck args files in
+        {path; sources; files; errors; warnings; typed= lazy (elaborate args files)}
     | Error errors ->
         let files = match previous with Some analysis -> analysis.files | None -> [] in
-        {path; sources; files; errors; typed= lazy None}
+        {path; sources; files; errors; warnings= []; typed= lazy None}
 
   (** The parsed file of the analyzed document *)
   let own_files (analysis : t) : Pparser.Parse.parsed_file list =
@@ -411,6 +415,11 @@ end
 module Diagnostics = struct
   let severity_error = 1
 
+  let severity_warning = 2
+
+  (* Editors render the code with this tag faded out *)
+  let tag_unnecessary = 1
+
   let make (range : Range.t) (message : string) : Yojson.Safe.t =
     `Assoc [("range", Range.to_json range); ("severity", `Int severity_error); ("message", `String message)]
 
@@ -430,9 +439,20 @@ module Diagnostics = struct
     | Error.SimpleError msg ->
         make Range.origin msg
 
+  (** Converts the warnings of the document at [path]. Warnings in imported files are not shown. *)
+  let of_warnings (path : string) (text : Text.t) (warnings : Error.warning list) : Yojson.Safe.t list =
+    let of_warning (warning : Error.warning) =
+      `Assoc
+        [ ("range", Range.to_json (Range.of_loc text warning.loc))
+        ; ("severity", `Int severity_warning)
+        ; ("tags", `List [`Int tag_unnecessary])
+        ; ("message", `String warning.msg) ]
+    in
+    warnings |> CCList.filter (fun (warning : Error.warning) -> belongs_to path warning.loc) |> CCList.map of_warning
+
   let of_analysis (analysis : Analysis.t) (content : string) : Yojson.Safe.t list =
     let text = Text.of_string content in
-    CCList.map (of_error analysis.path text) analysis.errors
+    CCList.map (of_error analysis.path text) analysis.errors @ of_warnings analysis.path text analysis.warnings
 
   (** Diagnostics of a document that is not part of a workspace *)
   let get_diagnostics (content : string) (filename : string) : Yojson.Safe.t list =

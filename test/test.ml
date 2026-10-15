@@ -123,6 +123,8 @@ let parser_files =
   ; "new_type_spec.vult"
   ; "unbound.vult" ]
 
+let warnings_files = ["unused.vult"]
+
 let errors_files =
   [ "error1.vult"
   ; "error2.vult"
@@ -395,6 +397,10 @@ let all_files =
   ; "../test/interpreter/record_literals.vult"
   ; "../test/interpreter/enum_inference.vult" ]
 
+(* Writes the outputs of the compiler. The warnings are tested separately, so they are not printed. *)
+let showResult (args : Args.args) (result : Args.output) : unit =
+  match result with Args.Warnings _ -> () | result -> Driver.Cli.showResult args result
+
 let includes =
   ["effects"; "env"; "filters"; "midi"; "osc"; "unit"; "util"]
   |> CCList.map (fun dir -> in_test_directory ("../examples/" ^ dir))
@@ -506,6 +512,31 @@ module ErrorTest = struct
   let get files = "errors" >::: CCList.map (fun file -> Filename.basename file >:: run file) files
 end
 
+module WarningTest = struct
+  let process (fullfile : string) =
+    let args = Args.{default_arguments with includes; check= true; files= [File fullfile]} in
+    let warnings =
+      Driver.Cli.driver args |> CCList.concat_map (function Args.Warnings warnings -> warnings | _ -> [])
+    in
+    let show warning =
+      let msg, _, line, col = Error.reportWarningStringNoLoc warning in
+      Printf.sprintf "%i:%i: %s" line col msg
+    in
+    CCList.map show warnings |> String.concat "\n"
+
+  let run (file : string) context =
+    let folder = "warnings" in
+    let fullfile = checkFile (in_test_directory (folder ^ "/" ^ file)) in
+    let current = process fullfile in
+    let reference = readReference (update_test context) "base" current fullfile (in_test_directory folder) in
+    assert_equal ~cmp:Diff.compare
+      ~msg:("Warning mismatch in file " ^ fullfile)
+      ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff file a b))
+      reference current
+
+  let get files = "warnings" >::: CCList.map (fun file -> Filename.basename file >:: run file) files
+end
+
 (** Module to perform transformation tests *)
 module PassesTest = struct
   let show o = match o with Args.Prog s -> s | _ -> ""
@@ -588,7 +619,7 @@ module TableRegressionTest = struct
           | Args.Errors errors ->
               assert_failure (Error.reportErrors errors)
           | result ->
-              Driver.Cli.showResult args result )
+              showResult args result )
         results
     in
     let main_file = in_test_directory "tables/tables_regression_main.cpp" in
@@ -694,7 +725,7 @@ module SplitCompileTest = struct
           | Args.Errors errors ->
               assert_failure (Error.reportErrors errors)
           | result ->
-              Driver.Cli.showResult args result )
+              showResult args result )
         results
     in
     let cpp_files = Sys.readdir outdir |> Array.to_list |> CCList.filter (fun f -> Filename.check_suffix f ".cpp") in
@@ -741,9 +772,7 @@ module ShortenTest = struct
         ; output= Some (Filename.concat outdir "ladder") }
     in
     let results = Driver.Cli.driver args in
-    CCList.iter
-      (fun result -> match result with Args.Errors _ -> () | result -> Driver.Cli.showResult args result)
-      results ;
+    CCList.iter (fun result -> match result with Args.Errors _ -> () | result -> showResult args result) results ;
     results
 
   let failsWithoutRoots _context =
@@ -902,7 +931,7 @@ module CliTest = struct
     in
     let args = {args with output= Some basefile; files= [File fullfile]} in
     let results = Driver.Cli.driver args in
-    let () = CCList.iter (Driver.Cli.showResult args) results in
+    let () = CCList.iter (showResult args) results in
     let generated_files = CCList.map (fun e -> (basefile ^ fst e, basefile ^ snd e)) ext in
     generated_files
 
@@ -984,7 +1013,7 @@ module Templates = struct
     in
     let args = {args with output= Some output; files= [File fullfile]} in
     let results = Driver.Cli.driver args in
-    let () = CCList.iter (Driver.Cli.showResult args) results in
+    let () = CCList.iter (showResult args) results in
     let generated_files = CCList.map (fun e -> (output ^ fst e, output ^ snd e)) ext in
     let () = tryCompile args generated_files in
     generated_files
@@ -1355,14 +1384,26 @@ module LspTest = struct
     assert_equal (Some {L.Common.qualifier= Some "Util"; name= "clip"}) id ;
     assert_equal (Some {L.Common.qualifier= None; name= "Util"}) (L.Common.identifier_at content 0 18)
 
+  let test_unused_warning _ =
+    let diagnostics = L.Diagnostics.get_diagnostics "fun f(a : int) : int { return 1; }" "unused.vult" in
+    let severity d = Yojson.Safe.Util.(d |> member "severity" |> to_int) in
+    assert_equal
+      ~printer:(fun l -> String.concat ", " (CCList.map string_of_int l))
+      [L.Diagnostics.severity_warning] (CCList.map severity diagnostics)
+
   let get () =
     "lsp"
-    >::: ["uri" >:: test_uri; "normalize" >:: test_normalize; "utf16" >:: test_utf16; "identifier" >:: test_identifier]
+    >::: [ "uri" >:: test_uri
+         ; "normalize" >:: test_normalize
+         ; "utf16" >:: test_utf16
+         ; "identifier" >:: test_identifier
+         ; "unused_warning" >:: test_unused_warning ]
 end
 
 let suite =
   "vult"
   >::: [ ErrorTest.get errors_files
+       ; WarningTest.get warnings_files
        ; SubstTest.get ()
        ; ParserTest.get parser_files
        ; PassesTest.get passes_files

@@ -80,8 +80,14 @@ type function_context = NoContext | Context of {context: context; arg_t: Typed.t
 (* The context argument of a function: the path of its context and the type of '_ctx' *)
 type context_argument = {context_path: path; arg_t: Typed.type_}
 
+(* How a local variable was declared. A loop counter keeps the name written in the 'iter'. *)
+type declaration = Argument | Variable | LoopCounter of string
+
+(* A local variable of a function and the number of times its value has been read *)
+type local = {var: var; declaration: declaration; reads: int}
+
 (* The local variables of a function: the innermost scope and the scopes that enclose it *)
-type scopes = {current: var Map.t; enclosing: var Map.t list}
+type scopes = {current: local Map.t; enclosing: local Map.t list}
 
 type f =
   { path: path
@@ -139,7 +145,9 @@ type env =
   ; builtin_types: t Map.t
   ; location: location
   ; type_index: int (* Gives each declared type its position in the generated code *)
-  ; subst: Subst.t }
+  ; subst: Subst.t
+  ; loop_counters: string Map.t (* The renamed counters of the 'iter' loops and the names written by the user *)
+  ; warnings: Error.warning list }
 
 (* Legacy type aliases for backward compatibility during transition *)
 type in_top = env
@@ -442,10 +450,10 @@ let currentContextMembers (env : env) : var Map.t option = Option.map (contextMe
 
 (* Private helper functions for internal use only *)
 (* The scopes from the innermost to the outermost *)
-let allScopes (scopes : scopes) : var Map.t list = scopes.current :: scopes.enclosing
+let allScopes (scopes : scopes) : local Map.t list = scopes.current :: scopes.enclosing
 
 let lookVarInScopes (scopes : scopes) name : var option =
-  CCList.find_map (fun scope -> Map.find name scope) (allScopes scopes)
+  CCList.find_map (fun scope -> Option.map (fun (local : local) -> local.var) (Map.find name scope)) (allScopes scopes)
 
 let lookVarInContext (env : env) (context : context option) name : var option =
   match context with Some context -> Map.find name (contextMembers env context) | None -> None
@@ -468,8 +476,8 @@ let checkBindingName (kind : string) (name : string) (loc : Loc.t) : unit =
       ^ String.uncapitalize_ascii name ^ "'." )
       loc
 
-let registerArguments (args : Typed.arg list) : var Map.t * Typed.type_ list =
-  let report loc (found : var) _ =
+let registerArguments (args : Typed.arg list) : local Map.t * Typed.type_ list =
+  let report loc ({var= found; _} : local) _ =
     Error.raiseError
       ("A variable with the name '" ^ found.name ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
       loc
@@ -478,7 +486,8 @@ let registerArguments (args : Typed.arg list) : var Map.t * Typed.type_ list =
     CCList.fold_left
       (fun locals ({name; t; loc} : Typed.arg) ->
         let () = checkBindingName "argument" name loc in
-        Map.update (report loc) name {name; t; kind= Val; tags= []; loc} locals )
+        let var = {name; t; kind= Val; tags= []; loc} in
+        Map.update (report loc) name {var; declaration= Argument; reads= 0} locals )
       Map.empty args
   in
   (locals, CCList.map (fun (arg : Typed.arg) -> arg.t) args)
@@ -533,11 +542,11 @@ let checkDuplicatedMem (env : env) (context : context option) (name : string) (l
 (* Helper: Check if a val variable with the same name already exists in any scope *)
 let checkDuplicatedVal (scopes : scopes) (name : string) (loc : Loc.t) : unit =
   CCList.iter
-    (fun (scope : var Map.t) ->
+    (fun (scope : local Map.t) ->
       match Map.find name scope with
       | None ->
           ()
-      | Some found ->
+      | Some {var= found; _} ->
           Error.raiseError
             ( "A variable with the name '" ^ found.name ^ "' has already been declared at "
             ^ Loc.to_string_readable found.loc )
@@ -619,7 +628,7 @@ let addMemOrInst (f : f) (context : context) (name : string) (t : Typed.type_) (
 
 (* Helper: Add a val variable to the current local scope *)
 let addValVar (f : f) (context : context option) (name : string) (t : Typed.type_) (loc : Loc.t) (env : env) : env =
-  let report (found : var) _ =
+  let report ({var= found; _} : local) _ =
     Error.raiseError
       ("A variable with the name '" ^ found.name ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
       loc
@@ -627,7 +636,11 @@ let addValVar (f : f) (context : context option) (name : string) (t : Typed.type
   let () = checkBindingName "variable" name loc in
   let () = checkDuplicatedMem env context name loc in
   let () = checkDuplicatedConstant env name loc in
-  let current = Map.update report name {name; t; kind= Val; tags= []; loc} f.scopes.current in
+  let declaration =
+    match Map.find name env.loop_counters with Some written -> LoopCounter written | None -> Variable
+  in
+  let local = {var= {name; t; kind= Val; tags= []; loc}; declaration; reads= 0} in
+  let current = Map.update report name local f.scopes.current in
   setCurrentScopes env {f.scopes with current}
 
 let addVar (env : env) (name : string) (t : Typed.type_) (kind : local_kind) loc : env =
@@ -666,13 +679,97 @@ let addReturnVar (env : env) (name : string) (t : Typed.type_) loc : env =
   | None ->
       Error.raiseError "Only functions can return multiple values." loc
 
-(* Runs [body] with a new innermost scope for the local variables of the current function *)
+(* Registers the renamed counter of an 'iter' loop, declared later as a regular variable *)
+let addLoopCounter (env : env) ~(counter : string) ~(written : string) : env =
+  {env with loop_counters= Map.add counter written env.loop_counters}
+
+(* Changes the innermost local variable with the given name *)
+let updateLocal (env : env) (name : string) (update : local -> local) : env =
+  let f = getCurrentFunction env in
+  let rec updateIn scopes =
+    match scopes with
+    | [] ->
+        None
+    | scope :: rest -> (
+      match Map.find name scope with
+      | Some local ->
+          Some (Map.add name (update local) scope :: rest)
+      | None ->
+          Option.map (fun rest -> scope :: rest) (updateIn rest) )
+  in
+  match updateIn (allScopes f.scopes) with
+  | Some (current :: enclosing) ->
+      setCurrentScopes env {current; enclosing}
+  | Some [] | None ->
+      env
+
+(* Counts a read of a local variable. Names that are not local variables are ignored. *)
+let countRead (env : env) (name : string) : env =
+  updateLocal env name (fun local -> {local with reads= local.reads + 1})
+
+(* Writing into an element or member of an argument changes the value of the caller, so it is
+   counted as a read of the argument *)
+let countPartialWrite (env : env) (name : string) : env =
+  updateLocal env name (fun local ->
+      match local.declaration with Argument -> {local with reads= local.reads + 1} | Variable | LoopCounter _ -> local )
+
+(* The condition and the increment generated for an 'iter' loop read its counter twice *)
+let loop_counter_generated_reads = 2
+
+let isUnused (local : local) : bool =
+  match local.declaration with
+  | Argument | Variable ->
+      local.reads = 0
+  | LoopCounter _ ->
+      local.reads <= loop_counter_generated_reads
+
+let unusedWarning (local : local) : Error.warning option =
+  let report what name =
+    if isUnused local && not (String.starts_with ~prefix:"_" name) then
+      let msg = Printf.sprintf "The %s '%s' is never used. If this is intended, rename it to '_%s'." what name name in
+      Some {Error.loc= local.var.loc; msg}
+    else None
+  in
+  match local.declaration with
+  | Argument ->
+      report "argument" local.var.name
+  | Variable ->
+      report "variable" local.var.name
+  | LoopCounter written ->
+      report "variable" written
+
+let addUnusedWarnings (env : env) (scope : local Map.t) : env =
+  let warnings = Map.fold (fun _ local acc -> Option.to_list (unusedWarning local) @ acc) [] scope in
+  {env with warnings= warnings @ env.warnings}
+
+(* Runs [body] with a new innermost scope for the local variables of the current function. The
+   scope is removed afterwards, which keeps the reads counted in the enclosing scopes. *)
 let withScope (env : env) (body : env -> env * 'a) : env * 'a =
   let f = getCurrentFunction env in
   let outer = f.scopes in
   let env = setCurrentScopes env {current= Map.empty; enclosing= outer.current :: outer.enclosing} in
   let env, result = body env in
-  (setCurrentScopes env outer, result)
+  let inner = (getCurrentFunction env).scopes in
+  match inner.enclosing with
+  | current :: enclosing ->
+      let env = addUnusedWarnings env inner.current in
+      (setCurrentScopes env {current; enclosing}, result)
+  | [] ->
+      failwith "Internal error in withScope: the scope was removed by its body"
+
+(* Reports the arguments of the current function that have not been read *)
+let reportUnusedArguments (env : env) : env =
+  let f = getCurrentFunction env in
+  CCList.fold_left addUnusedWarnings env (allScopes f.scopes)
+
+(* The warnings found so far, in source order. The body of a generic function is checked once for
+   each specialization, so the repeated warnings are removed. *)
+let getWarnings (env : env) : Error.warning list =
+  let same (w1 : Error.warning) (w2 : Error.warning) = Loc.isSameLoc w1.loc w2.loc && String.equal w1.msg w2.msg in
+  let compare (w1 : Error.warning) (w2 : Error.warning) =
+    match String.compare (Loc.file w1.loc) (Loc.file w2.loc) with 0 -> Loc.compareLoc w1.loc w2.loc | c -> c
+  in
+  env.warnings |> CCList.uniq ~eq:same |> CCList.stable_sort compare
 
 let getPath (m : m) name loc : path = {id= name; n= Some m.name; loc}
 
@@ -1210,7 +1307,9 @@ let empty ?(extensions : extension list = []) () : env =
   ; builtin_types
   ; location= Top
   ; type_index= 0
-  ; subst= Subst.empty () }
+  ; subst= Subst.empty ()
+  ; loop_counters= Map.empty
+  ; warnings= [] }
 
 (* Replaces the variables in the types stored in the environment by their bindings *)
 let zonk (env : env) : env =
@@ -1219,8 +1318,9 @@ let zonk (env : env) : env =
   let zonkContext (context : function_context) =
     match context with NoContext -> NoContext | Context {context; arg_t} -> Context {context; arg_t= zonk arg_t}
   in
+  let zonkLocal (local : local) = {local with var= zonkVar local.var} in
   let zonkScopes (scopes : scopes) =
-    {current= Map.map zonkVar scopes.current; enclosing= CCList.map (Map.map zonkVar) scopes.enclosing}
+    {current= Map.map zonkLocal scopes.current; enclosing= CCList.map (Map.map zonkLocal) scopes.enclosing}
   in
   let zonkFunction (f : f) =
     { f with

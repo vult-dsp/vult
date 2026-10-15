@@ -92,7 +92,7 @@ and dexp = {d: dexp_d; loc: Loc.t}
 type generic_param =
   | GParamFunction of string * type_ option (* 'f : (int,int) -> int *)
   | GParamType of string (* 't *)
-  | GParamConstant of string * type_ (* 'a : int *)
+  | GParamConstant of string * type_ * Loc.t (* 'a : int *)
 
 type arg = string * type_ option * Loc.t
 
@@ -1303,7 +1303,7 @@ module SExpr = struct
         "(GParamFunction " ^ name ^ " " ^ print_option print_type type_opt ^ ")"
     | GParamType name ->
         "(GParamType " ^ name ^ ")"
-    | GParamConstant (name, t) ->
+    | GParamConstant (name, t, _) ->
         "(GParamConstant " ^ name ^ " " ^ print_type t ^ ")"
 
   let rec print_function_def (def : function_def) : string =
