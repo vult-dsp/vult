@@ -479,25 +479,45 @@ let print_top_stmt t =
 
 let print_prog prog = Pla.map_sep_all Pla.newline print_top_stmt prog
 
+(* The numbers of the next type and constness variables. The substitution of the inference carries
+   it (see Subst), so the variables of a compilation do not depend on the previous ones. *)
+type supply = {next_var: int; next_const: int}
+
+let initial_supply : supply = {next_var= 1; next_const= 1}
+
+(* A value that needs fresh variables. Running it returns the supply that follows them. *)
+type 'a fresh = supply -> supply * 'a
+
 module C = struct
-  (* The variables are numbered from global counters so that every one created is distinct *)
-  let tick = ref 0
+  let fresh (s : supply) : supply * int = ({s with next_var= s.next_var + 1}, s.next_var)
 
-  let ctick = ref 0
+  let const (s : supply) : supply * constness = ({s with next_const= s.next_const + 1}, CVar s.next_const)
 
-  let fresh () = incr tick ; !tick
+  (* Runs the makers in order and collects their results *)
+  let all (makers : 'a fresh list) (s : supply) : supply * 'a list =
+    CCList.fold_left_map (fun s make -> make s) s makers
 
-  let const () = incr ctick ; CVar !ctick
+  let withConst (loc : Loc.t) (tx : type_d_) (s : supply) : supply * type_ =
+    let s, const = const s in
+    (s, {tx; loc; const})
 
-  let makeId loc id = {tx= TEId {id; n= None; loc}; loc; const= const ()}
+  let withVar (loc : Loc.t) (tx : int -> type_d_) (s : supply) : supply * type_ =
+    let s, n = fresh s in
+    withConst loc (tx n) s
 
-  let path_t loc path = {tx= TEId path; loc; const= const ()}
+  let makeId loc id = withConst loc (TEId {id; n= None; loc})
 
-  let unbound loc = {tx= TEUnbound (fresh ()); loc; const= const ()}
+  let path_t loc path = withConst loc (TEId path)
 
-  let noreturn loc = {tx= TENoReturn (fresh ()); loc; const= const ()}
+  let unbound loc = withVar loc (fun n -> TEUnbound n)
 
-  let option loc (alternatives : type_ list) = {tx= TEOption (fresh (), alternatives); loc; const= const ()}
+  let noreturn loc = withVar loc (fun n -> TENoReturn n)
+
+  let option loc (alternatives : type_ list) = withVar loc (fun n -> TEOption (n, alternatives))
+
+  let optionOf loc (makers : type_ fresh list) (s : supply) : supply * type_ =
+    let s, alternatives = all makers s in
+    option loc alternatives s
 
   let unit ~loc = makeId loc "unit"
 
@@ -513,227 +533,151 @@ module C = struct
 
   let fix16 ~loc = makeId loc "fix16"
 
-  let num loc = option loc [real ~loc; int ~loc; int16 ~loc; fix16 ~loc]
+  let num loc = optionOf loc [real ~loc; int ~loc; int16 ~loc; fix16 ~loc]
 
-  let numstr loc = option loc [real ~loc; int ~loc; int16 ~loc; fix16 ~loc; string ~loc]
+  let numstr loc = optionOf loc [real ~loc; int ~loc; int16 ~loc; fix16 ~loc; string ~loc]
 
-  let num_bool loc = option loc [real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc]
+  let num_bool loc = optionOf loc [real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc]
 
-  let size ?(loc = Loc.default) n = {tx= TESize n; loc; const= const ()}
+  let size ?(loc = Loc.default) n = withConst loc (TESize n)
 
-  let array ?(fixed = true) ?(loc = Loc.default) ?(size = unbound loc) t =
-    let a_dim = {tx= TEComposed ("array", [t; size]); loc; const= const ()} in
-    if fixed then a_dim
+  (* An array whose size is unknown when [size] is not given. When it is not [fixed], it can also
+     be an array without a size. *)
+  let array ?(fixed = true) ?(loc = Loc.default) ?size (t : type_) (s : supply) : supply * type_ =
+    let s, size = match size with Some size -> (s, size) | None -> unbound loc s in
+    let s, a_dim = withConst loc (TEComposed ("array", [t; size])) s in
+    if fixed then (s, a_dim)
     else
-      let a = {tx= TEComposed ("array", [t]); loc; const= const ()} in
-      option loc [a; a_dim]
+      let s, a = withConst loc (TEComposed ("array", [t])) s in
+      option loc [a; a_dim] s
 
-  let tuple ?(loc = Loc.default) l = {tx= TEComposed ("tuple", l); loc; const= const ()}
+  let tuple ?(loc = Loc.default) l = withConst loc (TEComposed ("tuple", l))
 
-  let list ?(loc = Loc.default) t = {tx= TEComposed ("list", [t]); loc; const= const ()}
+  let list ?(loc = Loc.default) t = withConst loc (TEComposed ("list", [t]))
 
   (* Type for indexable collections: arrays and lists *)
-  let indexable ?(loc = Loc.default) t =
-    let a = {tx= TEComposed ("array", [t]); loc; const= const ()} in
-    let a_dim = {tx= TEComposed ("array", [t; unbound loc]); loc; const= const ()} in
-    let l = {tx= TEComposed ("list", [t]); loc; const= const ()} in
-    option loc [a; a_dim; l]
+  let indexable ?(loc = Loc.default) t (s : supply) : supply * type_ =
+    let s, size = unbound loc s in
+    optionOf loc
+      [ withConst loc (TEComposed ("array", [t]))
+      ; withConst loc (TEComposed ("array", [t; size]))
+      ; withConst loc (TEComposed ("list", [t])) ]
+      s
 
-  let freal_type ?(loc = Loc.default) () = option loc [real ~loc; fix16 ~loc]
+  let freal_type ?(loc = Loc.default) () = optionOf loc [real ~loc; fix16 ~loc]
 
-  let array_size () : fun_type =
-    let loc = Loc.default in
-    let a = unbound loc in
-    let a_array = array ~fixed:false a in
-    ([a_array], int ~loc)
+  (* The type of a builtin function with arguments and a return of the same type *)
+  let same (n_args : int) (make : type_ fresh) (s : supply) : supply * fun_type =
+    let s, t = make s in
+    (s, (CCList.init n_args (fun _ -> t), t))
+
+  (* The type of a builtin function given the makers of its arguments and its return *)
+  let signature (args : type_ fresh list) (ret : type_ fresh) (s : supply) : supply * fun_type =
+    let s, args = all args s in
+    let s, ret = ret s in
+    (s, (args, ret))
+
+  (* A type that is already created *)
+  let known (t : type_) : type_ fresh = fun s -> (s, t)
+
+  (* The location of the types of the builtin functions *)
+  let loc = Loc.default
+
+  (* A builtin function on a list whose elements have any type, given its other arguments and return *)
+  let listFunction (args : type_ -> type_ fresh list) (ret : type_ -> type_ fresh) (s : supply) : supply * fun_type =
+    let s, a = unbound loc s in
+    let s, a_list = list a s in
+    signature (known a_list :: args a) (ret a) s
+
+  let array_size (s : supply) : supply * fun_type =
+    let s, a = unbound loc s in
+    let s, a_array = array ~fixed:false a s in
+    signature [known a_array] (int ~loc) s
 
   (* List functions *)
-  let list_size () : fun_type =
-    let loc = Loc.default in
-    let a = unbound loc in
-    let a_list = list a in
-    ([a_list], int ~loc)
+  let list_size = listFunction (fun _ -> []) (fun _ -> int ~loc)
 
-  let list_append () : fun_type =
-    let loc = Loc.default in
-    let a = unbound loc in
-    let a_list = list a in
-    ([a_list; a], unit ~loc)
+  let list_append = listFunction (fun a -> [known a]) (fun _ -> unit ~loc)
 
-  let list_insert () : fun_type =
-    let loc = Loc.default in
-    let a = unbound loc in
-    let a_list = list a in
-    ([a_list; int ~loc; a], unit ~loc)
+  let list_insert = listFunction (fun a -> [int ~loc; known a]) (fun _ -> unit ~loc)
 
-  let list_remove () : fun_type =
-    let loc = Loc.default in
-    let a = unbound loc in
-    let a_list = list a in
-    ([a_list; int ~loc], unit ~loc)
+  let list_remove = listFunction (fun _ -> [int ~loc]) (fun _ -> unit ~loc)
 
-  let list_clear () : fun_type =
-    let loc = Loc.default in
-    let a = unbound loc in
-    let a_list = list a in
-    ([a_list], unit ~loc)
+  let list_clear = listFunction (fun _ -> []) (fun _ -> unit ~loc)
 
-  let list_reserve () : fun_type =
-    let loc = Loc.default in
-    let a = unbound loc in
-    let a_list = list a in
-    ([a_list; int ~loc], unit ~loc)
+  let list_reserve = listFunction (fun _ -> [int ~loc]) (fun _ -> unit ~loc)
 
-  let list_capacity () : fun_type =
-    let loc = Loc.default in
-    let a = unbound loc in
-    let a_list = list a in
-    ([a_list], int ~loc)
+  let list_capacity = listFunction (fun _ -> []) (fun _ -> int ~loc)
 
-  let list_get () : fun_type =
-    let loc = Loc.default in
-    let a = unbound loc in
-    let a_list = list a in
-    ([a_list; int ~loc], a)
+  let list_get = listFunction (fun _ -> [int ~loc]) known
 
-  let list_set () : fun_type =
-    let loc = Loc.default in
-    let a = unbound loc in
-    let a_list = list a in
-    ([a_list; int ~loc; a], unit ~loc)
+  let list_set = listFunction (fun a -> [int ~loc; known a]) (fun _ -> unit ~loc)
 
-  let str_length () : fun_type =
-    let loc = Loc.default in
-    ([string ~loc], int ~loc)
+  let str_length = signature [string ~loc] (int ~loc)
 
-  let array_make () : fun_type =
-    let loc = Loc.default in
-    let a = unbound loc in
-    let a_array = array a in
-    ([int ~loc; a], a_array)
+  let array_make (s : supply) : supply * fun_type =
+    let s, a = unbound loc s in
+    let s, a_array = array a s in
+    let s, n = int ~loc s in
+    (s, ([n; a], a_array))
 
-  let wrap_array () : fun_type =
-    let loc = Loc.default in
-    let a = unbound loc in
-    let array_type = array a in
-    ([array_type], array_type)
+  let wrap_array (s : supply) : supply * fun_type =
+    let s, a = unbound loc s in
+    let s, array_type = array a s in
+    (s, ([array_type], array_type))
 
-  let freal_freal () : fun_type =
-    let t = freal_type () in
-    ([t], t)
+  let freal_freal = same 1 (freal_type ())
 
-  let real_real_real () : fun_type =
-    let loc = Loc.default in
-    let t = real ~loc in
-    ([t; t], t)
+  let real_real_real = same 2 (real ~loc)
 
-  let clip () : fun_type =
-    let loc = Loc.default in
-    let t = unbound loc in
-    ([t; t; t], t)
+  let clip = same 3 (unbound loc)
 
-  let valid_int () : fun_type =
-    let loc = Loc.default in
-    ([option loc [real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc]], int ~loc)
+  let valid ret = signature [num_bool loc] ret
 
-  let valid_real () : fun_type =
-    let loc = Loc.default in
-    ([option loc [real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc]], real ~loc)
+  let valid_int = valid (int ~loc)
 
-  let valid_fix16 () : fun_type =
-    let loc = Loc.default in
-    ([option loc [real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc]], fix16 ~loc)
+  let valid_real = valid (real ~loc)
 
-  let valid_int16 () : fun_type =
-    let loc = Loc.default in
-    ([option loc [real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc]], int16 ~loc)
+  let valid_fix16 = valid (fix16 ~loc)
 
-  let valid_bool () : fun_type =
-    let loc = Loc.default in
-    ([option loc [real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc]], bool ~loc)
+  let valid_int16 = valid (int16 ~loc)
 
-  let valid_string () : fun_type =
-    let loc = Loc.default in
-    ([option loc [real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc; string ~loc]], string ~loc)
+  let valid_bool = valid (bool ~loc)
 
-  let num_num () : fun_type =
-    let loc = Loc.default in
-    let t = num loc in
-    ([t], t)
+  let valid_string =
+    signature [optionOf loc [real ~loc; int ~loc; int16 ~loc; fix16 ~loc; bool ~loc; string ~loc]] (string ~loc)
 
-  let num_num_num () : fun_type =
-    let loc = Loc.default in
-    let t = num loc in
-    ([t; t], t)
+  let num_num = same 1 (num loc)
 
-  let numstr_numstr_numstr () : fun_type =
-    let loc = Loc.default in
-    let t = numstr loc in
-    ([t; t], t)
+  let num_num_num = same 2 (num loc)
 
-  let int_int_int () : fun_type =
-    let loc = Loc.default in
-    let t = int ~loc in
-    ([t; t], t)
+  let numstr_numstr_numstr = same 2 (numstr loc)
 
-  let num_num_bool () : fun_type =
-    let loc = Loc.default in
-    let t = num loc in
-    ([t; t], bool ~loc)
+  let int_int_int = same 2 (int ~loc)
 
-  let a_a_bool () : fun_type =
-    let loc = Loc.default in
-    let t = unbound loc in
-    ([t; t], bool ~loc)
+  let a_a_bool (s : supply) : supply * fun_type =
+    let s, t = unbound loc s in
+    let s, b = bool ~loc s in
+    (s, ([t; t], b))
 
-  let bool_bool () : fun_type =
-    let loc = Loc.default in
-    let t = bool ~loc in
-    ([t], t)
+  let bool_bool = same 1 (bool ~loc)
 
-  let bool_bool_bool () : fun_type =
-    let loc = Loc.default in
-    let t = bool ~loc in
-    ([t; t], t)
+  let bool_bool_bool = same 2 (bool ~loc)
 
-  let unit_int () : fun_type =
-    let loc = Loc.default in
-    ([], int ~loc)
+  let unit_int = signature [] (int ~loc)
 
-  let unit_real () : fun_type =
-    let loc = Loc.default in
-    ([], real ~loc)
-
-  let unit_freal () : fun_type =
-    let loc = Loc.default in
-    ([], freal_type ~loc ())
-
-  let string_string () : fun_type =
-    let loc = Loc.default in
-    let t = string ~loc in
-    ([t; t], t)
+  let unit_real = signature [] (real ~loc)
 
   (* VCV Prototype builtins *)
-  let int_real () : fun_type =
-    let loc = Loc.default in
-    ([int ~loc], real ~loc)
+  let int_real = signature [int ~loc] (real ~loc)
 
-  let int_bool () : fun_type =
-    let loc = Loc.default in
-    ([int ~loc], bool ~loc)
+  let int_bool = signature [int ~loc] (bool ~loc)
 
-  let string_unit () : fun_type =
-    let loc = Loc.default in
-    ([string ~loc], unit ~loc)
+  let string_unit = signature [string ~loc] (unit ~loc)
 
-  let string_string_string () : fun_type =
-    let loc = Loc.default in
-    let t = string ~loc in
-    ([t; t], t)
+  let string_string_string = same 2 (string ~loc)
 
-  let int_real_real_real_unit () : fun_type =
-    let loc = Loc.default in
-    ([int ~loc; real ~loc; real ~loc; real ~loc], unit ~loc)
+  let int_real_real_real_unit = signature [int ~loc; real ~loc; real ~loc; real ~loc] (unit ~loc)
 end
 
 (* Whether a resolved type is constant. A constness that was never resolved is constant. *)

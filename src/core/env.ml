@@ -145,7 +145,7 @@ type location =
    substitution of the type inference. *)
 type env =
   { modules: m Map.t
-  ; builtin_functions: (unit -> Typed.fun_type) Map.t
+  ; builtin_functions: Typed.fun_type Typed.fresh Map.t
   ; builtin_types: t Map.t
   ; location: location
   ; type_index: int (* Gives each declared type its position in the generated code *)
@@ -164,7 +164,7 @@ type in_func = env
 
 type extension = VCVPrototype
 
-let vcv_prototype_builtins : (string * (unit -> Typed.fun_type)) list =
+let vcv_prototype_builtins : (string * Typed.fun_type Typed.fresh) list =
   Typed.
     [ ("sampletime", C.unit_real)
     ; ("display", C.string_unit)
@@ -174,7 +174,7 @@ let vcv_prototype_builtins : (string * (unit -> Typed.fun_type)) list =
     ; ("setLight", C.int_real_real_real_unit)
     ; ("setSwitchLight", C.int_real_real_real_unit) ]
 
-let builtins_for_extension (ext : extension) : (string * (unit -> Typed.fun_type)) list =
+let builtins_for_extension (ext : extension) : (string * Typed.fun_type Typed.fresh) list =
   match ext with VCVPrototype -> vcv_prototype_builtins
 
 (* The type of each builtin. Adding a constructor to [Builtin.t] fails here
@@ -319,6 +319,35 @@ let makeFunctionForBuiltin name t : f =
   ; scopes= {current= Map.empty; enclosing= []}
   ; tick= 0
   ; args= None }
+
+(* Creates a value with fresh type variables *)
+let fresh (env : env) (make : 'a Typed.fresh) : env * 'a =
+  let subst, value = Subst.fresh env.subst make in
+  ({env with subst}, value)
+
+(* A copy of the type with fresh variables. The mapping relates the copied variables to their
+   copies, so the variables shared by several types are copied once. *)
+let copyType ((env, mapping) : env * Subst.copy_mapping) (t : Typed.type_) : (env * Subst.copy_mapping) * Typed.type_ =
+  let (subst, mapping), copy = Subst.copyType (env.subst, mapping) t in
+  (({env with subst}, mapping), copy)
+
+let copyTypes (state : env * Subst.copy_mapping) (types : Typed.type_ list) :
+    (env * Subst.copy_mapping) * Typed.type_ list =
+  CCList.fold_left_map copyType state types
+
+(* A copy of the type that does not share the constness of the original *)
+let refreshConstness (env : env) (t : Typed.type_) : env * Typed.type_ =
+  let subst, t = Subst.refreshConstness env.subst t in
+  ({env with subst}, t)
+
+(* A fresh copy of the type of a builtin function *)
+let instantiateBuiltin (env : env) (name : string) : env * f option =
+  match Map.find name env.builtin_functions with
+  | Some make ->
+      let env, t = fresh env make in
+      (env, Some (makeFunctionForBuiltin name t))
+  | None ->
+      (env, None)
 
 (* The index of the next declared type *)
 let nextTypeIndex (env : env) : env * int = ({env with type_index= env.type_index + 1}, env.type_index)
@@ -965,8 +994,13 @@ let enterFunction (env : env) (name : string) (args : Typed.arg list) (ret : Typ
   in
   let path = getPath m name loc in
   let locals, args_t = registerArguments args in
-  let context =
-    match context with Some context -> Context {context; arg_t= Typed.C.path_t loc context.path} | None -> NoContext
+  let env, context =
+    match context with
+    | Some context ->
+        let env, arg_t = fresh env (Typed.C.path_t loc context.path) in
+        (env, Context {context; arg_t})
+    | None ->
+        (env, NoContext)
   in
   let t = (args_t, ret) in
   let f : f = {path; t; context; scopes= {current= locals; enclosing= []}; tick= 0; args= Some args} in
@@ -1033,7 +1067,7 @@ let restoreLocation (outer : env) (inner : env) : env =
 let consOpt (make : 'a -> lookup_result) (opt : 'a option) (results : lookup_result list) : lookup_result list =
   match opt with Some x -> make x :: results | None -> results
 
-let lookupPath (env : env) (path : path) : lookup_result list =
+let lookupPath (env : env) (path : path) : env * lookup_result list =
   let lookupInModule (m : m) (id : string) : lookup_result list =
     (* Find enum member if applicable *)
     let enumResult = Option.map (fun values -> LookupEnum values) (enumValuesIn m id) in
@@ -1052,9 +1086,9 @@ let lookupPath (env : env) (path : path) : lookup_result list =
     (* Module-qualified path: Module.name *)
     match Map.find module_name env.modules with
     | Some m ->
-        lookupInModule m id
+        (env, lookupInModule m id)
     | None ->
-        [] )
+        (env, []) )
   | {id; n= None; _} ->
       (* Local path: name - collect all possible meanings *)
       let results = [] in
@@ -1075,9 +1109,13 @@ let lookupPath (env : env) (path : path) : lookup_result list =
             results
       in
       (* Add builtin functions and types *)
-      results
-      |> consOpt (fun f -> LookupBuiltinFunction (makeFunctionForBuiltin id (f ()))) (Map.find id env.builtin_functions)
-      |> consOpt (fun t -> LookupType t) (Map.find id env.builtin_types)
+      let env, builtin = instantiateBuiltin env id in
+      let results =
+        results
+        |> consOpt (fun f -> LookupBuiltinFunction f) builtin
+        |> consOpt (fun t -> LookupType t) (Map.find id env.builtin_types)
+      in
+      (env, results)
 
 (* Helper functions to find specific lookup result types from a list *)
 let findFunction (results : lookup_result list) : f option =
@@ -1138,16 +1176,12 @@ let findVarOf (env : env) (path : path) : var option =
       None
 
 (* The functions of the module have priority over the builtin functions *)
-let findFunctionOf (env : env) (path : path) : f option =
+let findFunctionOf (env : env) (path : path) : env * f option =
   match Option.bind (moduleOfPath env path) (fun m -> Map.find path.id m.functions) with
   | Some f ->
-      Some f
+      (env, Some f)
   | None -> (
-    match path.n with
-    | Some _ ->
-        None
-    | None ->
-        Option.map (fun t -> makeFunctionForBuiltin path.id (t ())) (Map.find path.id env.builtin_functions) )
+    match path.n with Some _ -> (env, None) | None -> instantiateBuiltin env path.id )
 
 (* The builtin types have priority over the types of the module *)
 let findTypeOf (env : env) (path : path) : t option =
@@ -1165,27 +1199,27 @@ let findGenericOf (env : env) (path : path) : Typed.generic_function option =
   Option.bind (moduleOfPath env path) (fun m -> Map.find path.id m.generics)
 
 (* Function lookup using the new generic lookup system *)
-let lookFunctionCall (env : env) (path : path) (loc : Loc.t) : f =
+let lookFunctionCall (env : env) (path : path) (loc : Loc.t) : env * f =
   match findFunctionOf env path with
-  | Some f ->
-      f
-  | None ->
+  | env, Some f ->
+      (env, f)
+  | _, None ->
       Error.raiseError ("A function with the name '" ^ pathString path ^ "' could not be found") loc
 
 (** Try to find a function without raising an error *)
-let tryLookFunctionCall (env : env) (path : path) : f option = findFunctionOf env path
+let tryLookFunctionCall (env : env) (path : path) : env * f option = findFunctionOf env path
 
 (* Operator lookup using the new generic lookup system *)
-let lookOperator (env : env) (op : string) : f =
+let lookOperator (env : env) (op : string) : env * f =
   let op_path : path = {id= op; n= None; loc= Loc.default} in
   match findFunctionOf env op_path with
-  | Some f ->
-      f
-  | None ->
+  | env, Some f ->
+      (env, f)
+  | _, None ->
       failwith ("Internal error in lookOperator: builtin operator '" ^ op ^ "' not found")
 
 (* Since operators are only builtins, this behaves the same as lookOperator *)
-let lookOperatorInModule (env : env) (op : string) : f = lookOperator env op
+let lookOperatorInModule (env : env) (op : string) : env * f = lookOperator env op
 
 (* Generic management functions *)
 let addGeneric (env : env) (generic : Typed.generic_function) : env =
@@ -1261,17 +1295,26 @@ type expression_symbol =
   | ExprEnum of enum_values
   | ExprNotFound
 
-let lookupExpressionSymbol (env : env) (path : path) (context : expr_context) : expression_symbol =
-  let orElse (next : unit -> expression_symbol) (found : expression_symbol) =
-    match found with ExprNotFound -> next () | ExprVariable _ | ExprFunction _ | ExprType _ | ExprEnum _ -> found
+let lookupExpressionSymbol (env : env) (path : path) (context : expr_context) : env * expression_symbol =
+  let orElse (next : unit -> env * expression_symbol) ((env, found) : env * expression_symbol) =
+    match found with
+    | ExprNotFound ->
+        next ()
+    | ExprVariable _ | ExprFunction _ | ExprType _ | ExprEnum _ ->
+        (env, found)
   in
-  let variable () = match findVarOf env path with Some var -> ExprVariable var | None -> ExprNotFound in
+  let variable () = (env, match findVarOf env path with Some var -> ExprVariable var | None -> ExprNotFound) in
   let constant () =
-    match findVarOf env path with Some var when var.kind = Const -> ExprVariable var | Some _ | None -> ExprNotFound
+    ( env
+    , match findVarOf env path with Some var when var.kind = Const -> ExprVariable var | Some _ | None -> ExprNotFound
+    )
   in
-  let function_ () = match findFunctionOf env path with Some f -> ExprFunction f | None -> ExprNotFound in
-  let enum () = match findEnumOf env path with Some enum_data -> ExprEnum enum_data | None -> ExprNotFound in
-  let type_ () = match findTypeOf env path with Some t -> ExprType t | None -> ExprNotFound in
+  (* Instantiating a builtin function creates fresh variables *)
+  let function_ () =
+    match findFunctionOf env path with env, Some f -> (env, ExprFunction f) | env, None -> (env, ExprNotFound)
+  in
+  let enum () = (env, match findEnumOf env path with Some enum_data -> ExprEnum enum_data | None -> ExprNotFound) in
+  let type_ () = (env, match findTypeOf env path with Some t -> ExprType t | None -> ExprNotFound) in
   if context.in_constant then
     (* In constant context: constants first, then enums, then types *)
     constant () |> orElse enum |> orElse type_
@@ -1316,7 +1359,7 @@ let lookType (env : env) (path : path) (loc : Loc.t) : t =
   | None ->
       Error.raiseError ("A type with the name '" ^ pathString path ^ "' could not be found") loc
 
-let builtin_functions_with_extensions (extensions : extension list) : (unit -> Typed.fun_type) Map.t =
+let builtin_functions_with_extensions (extensions : extension list) : Typed.fun_type Typed.fresh Map.t =
   CCList.fold_left
     (fun m ext -> CCList.fold_left (fun m (name, t) -> Map.add name t m) m (builtins_for_extension ext))
     builtin_functions extensions

@@ -354,14 +354,14 @@ module Make (T : TYPECHECKER) = struct
     let specialize_param (env, mapping) (param : Typed.call_param) =
       match param with
       | Typed.CallArg {arg; value} ->
-          let mapping, fresh_t = Subst.copyType env.subst mapping arg.t in
+          let (env, mapping), fresh_t = Env.copyType (env, mapping) arg.t in
           let env = match unify env fresh_t value.t with Some env -> env | None -> env in
           ((env, mapping), RegularParam {arg with t= fresh_t})
       | Typed.CallGeneric {param= Typed.GParamConstant (name, param_type, param_loc); value} ->
           (* Defensive check: the typechecker already validated the argument against the
              declared type. A fresh copy is unified so the generic definition itself is never
              constrained. *)
-          let _, fresh_param_type = Subst.copyType env.subst Subst.emptyCopyMapping param_type in
+          let (env, _), fresh_param_type = Env.copyType (env, Subst.emptyCopyMapping) param_type in
           let env = unifyRaise env value.loc fresh_param_type value.t in
           ((env, mapping), ConstantParam ({name; t= value.t; loc= param_loc} : Typed.arg))
       | Typed.CallGeneric {param= Typed.GParamType _ | Typed.GParamFunction _; _} ->
@@ -371,7 +371,7 @@ module Make (T : TYPECHECKER) = struct
     let (env, mapping), specialized_params =
       CCList.fold_left_map specialize_param (env, Subst.emptyCopyMapping) params
     in
-    let mapping, fresh_ret_type = Subst.copyType env.subst mapping (snd generic_func.t) in
+    let (env, mapping), fresh_ret_type = Env.copyType (env, mapping) (snd generic_func.t) in
     (* Resolve each type parameter to its concrete type using the unified fresh types *)
     let type_substitution_map =
       CCList.map
@@ -403,7 +403,7 @@ module Make (T : TYPECHECKER) = struct
       else all_args_for_body
     in
     let env = Env.createContextForFunctionWithIndex env specialized_name loc generic_func.type_index in
-    let inferred_ret = C.noreturn loc in
+    let env, inferred_ret = Env.fresh env (C.noreturn loc) in
     let env, path, _t = Env.enterFunction env specialized_name all_args_for_body inferred_ret loc in
     (* Pre-register a provisional definition so recursive calls resolve to this specialization
        instead of instantiating it again *)
@@ -611,11 +611,13 @@ module Make (T : TYPECHECKER) = struct
         let env_for_instantiation =
           match generic_module with Some module_name -> Env.enterModule env module_name | None -> env
         in
-        let existing =
+        let env_for_instantiation, existing =
           if state.reuse_env_specializations then
             Env.tryLookFunctionCall env_for_instantiation {id= base_name; n= None; loc}
-          else None
+          else (env_for_instantiation, None)
         in
+        (* The lookup can create fresh variables, so the environment continues from it *)
+        let env = Env.restoreLocation env env_for_instantiation in
         (* A function found in the environment must be verified structurally: mangled
            names are not injective, so it could be a different specialization that
            happens to share the name. In that case the name is marked as taken and a
@@ -793,7 +795,7 @@ module Make (T : TYPECHECKER) = struct
         let env, processed_args = process_exp_list iargs env state args in
         let env =
           match Env.tryLookFunctionCall env path with
-          | Some f ->
+          | env, Some f ->
               let func_non_ctx_args =
                 match f.args with
                 | Some ({name; _} :: rest) when String.equal name context_name ->
@@ -802,7 +804,7 @@ module Make (T : TYPECHECKER) = struct
                     args
               in
               propagateVariability env loc func_non_ctx_args processed_args
-          | None ->
+          | env, None ->
               env
         in
         let func_path_str = pathString path in

@@ -61,10 +61,21 @@ type type_guess = {kind: guess_kind; candidates: candidate list; uses: member_us
 
 (* The bindings are indexed by the number of the variable. Persistent arrays keep extending and
    reading the newest substitution in constant time. [guessed] holds the variables that got a
-   record guess, to resolve them at the end of the inference. *)
-type t = {types: type_ Parray.t; consts: const_binding Parray.t; guesses: type_guess Parray.t; guessed: int list}
+   record guess, to resolve them at the end of the inference. [supply] numbers the new variables. *)
+type t =
+  { types: type_ Parray.t
+  ; consts: const_binding Parray.t
+  ; guesses: type_guess Parray.t
+  ; guessed: int list
+  ; supply: supply }
 
-let empty () : t = {types= Parray.empty (); consts= Parray.empty (); guesses= Parray.empty (); guessed= []}
+let empty () : t =
+  {types= Parray.empty (); consts= Parray.empty (); guesses= Parray.empty (); guessed= []; supply= initial_supply}
+
+(* Creates a value with fresh variables *)
+let fresh (s : t) (make : 'a fresh) : t * 'a =
+  let supply, value = make s.supply in
+  ({s with supply}, value)
 
 (* The binding of a variable, without following the bindings of the result *)
 let boundTo (s : t) (t : type_) : type_ option =
@@ -139,18 +150,22 @@ let rec unifyConstness (s : t) (t1 : type_) (t2 : type_) : t =
       s
 
 (* A copy of the type that does not share the constness of the original *)
-let rec refreshConstness (s : t) (t : type_) : type_ =
+let rec refreshConstness (s : t) (t : type_) : t * type_ =
   let t = walk s t in
-  let tx =
+  let s, tx =
     match t.tx with
     | TEOption (_, options) ->
-        TEOption (C.fresh (), CCList.map (refreshConstness s) options)
+        let s, options = CCList.fold_left_map refreshConstness s options in
+        let s, n = fresh s C.fresh in
+        (s, TEOption (n, options))
     | TEComposed (name, subs) ->
-        TEComposed (name, CCList.map (refreshConstness s) subs)
+        let s, subs = CCList.fold_left_map refreshConstness s subs in
+        (s, TEComposed (name, subs))
     | (TENoReturn _ | TEUnbound _ | TEId _ | TESize _ | TEFunction _) as tx ->
-        tx
+        (s, tx)
   in
-  {t with tx; const= C.const ()}
+  let s, const = fresh s C.const in
+  (s, {t with tx; const})
 
 (* ========== Resolution ========== *)
 
@@ -233,7 +248,8 @@ type unify_error =
 
 let ( let* ) = Result.bind
 
-let recordType (loc : Loc.t) (candidate : candidate) : type_ = C.path_t loc candidate.candidate_path
+let recordType (s : t) (loc : Loc.t) (candidate : candidate) : t * type_ =
+  fresh s (C.path_t loc candidate.candidate_path)
 
 let samePath (p1 : path) (p2 : path) : bool = Pparser.Syntax.compare_path p1 p2 = 0
 
@@ -333,7 +349,8 @@ and constrainOption (s : t) (loc : Loc.t) (l1 : type_ list) (l2 : type_ list) : 
   | [t] ->
       Ok (t, constrained)
   | l ->
-      Ok (C.option Loc.default l, constrained)
+      let constrained, t = fresh constrained (C.option Loc.default l) in
+      Ok (t, constrained)
 
 (* Binds the option [option] (whose number is [i]) to the type if it unifies with one of the
    alternatives *)
@@ -377,7 +394,8 @@ and useMembers (s : t) (candidate : candidate) (uses : member_use list) : (t, un
     | None ->
         Error Mismatch
     | Some m ->
-        let* s = unifyTypes s use.t (refreshConstness s m.member_t) in
+        let s, member_t = refreshConstness s m.member_t in
+        let* s = unifyTypes s use.t member_t in
         if use.read && not m.value_type then Ok (unifyConstness s use.t use.owner) else Ok s
   in
   CCList.fold_left (fun s use -> Result.bind s (fun s -> useMember s use)) (Ok s) uses
@@ -408,7 +426,8 @@ and narrow (s : t) (i : int) (guess : type_guess) : (t, unify_error) result =
   | [] -> (
     match guess.kind with RecordGuess -> Error (NoRecordType (usedMembers guess)) | EnumGuess -> Error Mismatch )
   | [candidate] ->
-      let s = {s with types= Parray.set s.types i (Some (recordType guess.guess_loc candidate))} in
+      let s, record_t = recordType s guess.guess_loc candidate in
+      let s = {s with types= Parray.set s.types i (Some record_t)} in
       let s = {s with guesses= Parray.set s.guesses i None} in
       useMembers s candidate guess.uses
   | candidates ->
@@ -493,36 +512,43 @@ type copy_mapping = type_ IntMap.t
 
 let emptyCopyMapping : copy_mapping = IntMap.empty
 
-let rec copyType (s : t) (mapping : copy_mapping) (t : type_) : copy_mapping * type_ =
+let rec copyType ((s, mapping) : t * copy_mapping) (t : type_) : (t * copy_mapping) * type_ =
   let t = walk s t in
-  let fresh tx = {tx; const= C.const (); loc= t.loc} in
+  (* A copy that does not depend on the copies of the inner types *)
+  let copy make =
+    let s, copy = fresh s make in
+    ((s, mapping), copy)
+  in
   match t.tx with
   | TEUnbound i -> (
     match IntMap.find_opt i mapping with
     | Some copy ->
-        (mapping, copy)
+        ((s, mapping), copy)
     | None ->
-        let copy = C.unbound t.loc in
-        (IntMap.add i copy mapping, copy) )
+        let s, copy = fresh s (C.unbound t.loc) in
+        ((s, IntMap.add i copy mapping), copy) )
   | TENoReturn _ ->
-      (mapping, C.noreturn t.loc)
+      copy (C.noreturn t.loc)
   | TEId path ->
-      (mapping, fresh (TEId path))
+      copy (C.withConst t.loc (TEId path))
   | TESize n ->
-      (mapping, fresh (TESize n))
+      copy (C.withConst t.loc (TESize n))
   | TEOption (_, options) ->
-      let mapping, options = copyTypes s mapping options in
-      (mapping, C.option t.loc options)
+      let (s, mapping), options = copyTypes (s, mapping) options in
+      let s, copy = fresh s (C.option t.loc options) in
+      ((s, mapping), copy)
   | TEComposed (name, elems) ->
-      let mapping, elems = copyTypes s mapping elems in
-      (mapping, fresh (TEComposed (name, elems)))
+      let (s, mapping), elems = copyTypes (s, mapping) elems in
+      let s, copy = fresh s (C.withConst t.loc (TEComposed (name, elems))) in
+      ((s, mapping), copy)
   | TEFunction (args, ret) ->
-      let mapping, args = copyTypes s mapping args in
-      let mapping, ret = copyType s mapping ret in
-      (mapping, fresh (TEFunction (args, ret)))
+      let state, args = copyTypes (s, mapping) args in
+      let (s, mapping), ret = copyType state ret in
+      let s, copy = fresh s (C.withConst t.loc (TEFunction (args, ret))) in
+      ((s, mapping), copy)
 
-and copyTypes (s : t) (mapping : copy_mapping) (types : type_ list) : copy_mapping * type_ list =
-  CCList.fold_left_map (copyType s) mapping types
+and copyTypes (state : t * copy_mapping) (types : type_ list) : (t * copy_mapping) * type_ list =
+  CCList.fold_left_map copyType state types
 
 (* The copy of the type in the mapping, when the type is an unbound variable that was copied *)
 let copyOf (s : t) (mapping : copy_mapping) (t : type_) : type_ option =
