@@ -28,7 +28,7 @@ fun phasor(pitch,reset){
 }
 
 // Main processing function
-fun process(input:real){
+fun process(_input:real){
    mem volume,detune; // values set in 'controlChange'
    mem pitch;
    mem pre_phase1;

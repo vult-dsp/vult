@@ -4,5 +4,5 @@ type point {
 }
 
 fun foo() {
-  val p1 = point { y = 0.0, x = 0.0 }.x;
+  val _p1 = point { y = 0.0, x = 0.0 }.x;
 }

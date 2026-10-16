@@ -282,7 +282,7 @@ static_inline void Ad_noteOn(Ad_process_type& _ctx, int32_t note, int32_t veloci
 static_inline void Ad_noteOff(Ad_process_type& _ctx, int32_t note, int32_t channel) {
 }
 
-static_inline void Ad_controlChange(Ad_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+static_inline void Ad_controlChange(Ad_process_type& _ctx, int32_t control, int32_t value, int32_t _channel) {
    if (control == 1) {
       _ctx.knob1 = 0.007874f * int_to_float(value);
    }

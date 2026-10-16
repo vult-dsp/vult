@@ -153,7 +153,7 @@ private float Phasedist_phasor(Phasedist_phasor_type _ctx, float pitch, boolean 
    return _ctx.phase;
 }
 
-private float Phasedist_process(Phasedist_process_type _ctx, float input) {
+private float Phasedist_process(Phasedist_process_type _ctx, float _input) {
    float phase1 = Phasedist_phasor(_ctx.inst_117e9, _ctx.pitch, false);
    float comp = (1.0f + (-phase1));
    boolean reset = (((-phase1) + _ctx.pre_phase1) > 0.5f);

@@ -286,7 +286,7 @@ this.Ad_noteOn = function (_ctx, note, velocity, channel) {
 this.Ad_noteOff = function (_ctx, note, channel) {
 };
 
-this.Ad_controlChange = function (_ctx, control, value, channel) {
+this.Ad_controlChange = function (_ctx, control, value, _channel) {
    if ((control == (1|0))) {
       _ctx.knob1 = (0.007874 * (value));
    }

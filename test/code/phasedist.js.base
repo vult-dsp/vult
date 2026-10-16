@@ -77,7 +77,7 @@ this.Phasedist_phasor = function (_ctx, pitch, reset) {
    return _ctx.phase;
 };
 
-this.Phasedist_process = function (_ctx, input) {
+this.Phasedist_process = function (_ctx, _input) {
    var phase1 = this.Phasedist_phasor(_ctx.inst_117e9, _ctx.pitch, false);
    var comp = (1.0 + (-phase1));
    var reset = (((-phase1) + _ctx.pre_phase1) > 0.5);

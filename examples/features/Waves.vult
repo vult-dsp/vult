@@ -28,5 +28,5 @@ external sineTable2(position:real) : real @[wavetable(file = "sine.wav")];
 fun test2() {
   // The wave table must be accessed with a real number on the range of 0.0 to 1.0.
   // If the input is outside that range, the input is clamped.
-  val result = sineTable2(0.5);
+  val _result = sineTable2(0.5);
 }

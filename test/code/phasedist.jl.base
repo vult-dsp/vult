@@ -125,7 +125,7 @@ function Phasedist_phasor(_ctx, pitch, reset)
    return _ctx.phase
 end
 
-function Phasedist_process(_ctx, input)
+function Phasedist_process(_ctx, _input)
    phase1 = Phasedist_phasor(_ctx.inst_117e9, _ctx.pitch, false)
    comp = (Float32(1.0) + (-phase1))
    reset = (((-phase1) + _ctx.pre_phase1) > Float32(0.5))

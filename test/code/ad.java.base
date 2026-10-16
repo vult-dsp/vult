@@ -410,7 +410,7 @@ private void Ad_noteOn(Ad_process_type _ctx, int note, int velocity, int channel
 private void Ad_noteOff(Ad_process_type _ctx, int note, int channel) {
 }
 
-private void Ad_controlChange(Ad_process_type _ctx, int control, int value, int channel) {
+private void Ad_controlChange(Ad_process_type _ctx, int control, int value, int _channel) {
    if ((control == 1)) {
       _ctx.knob1 = (0.007874f * (float)(value));
    }

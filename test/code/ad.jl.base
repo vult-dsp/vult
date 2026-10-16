@@ -357,7 +357,7 @@ end
 function Ad_noteOff(_ctx, note, channel)
 end
 
-function Ad_controlChange(_ctx, control, value, channel)
+function Ad_controlChange(_ctx, control, value, _channel)
    if (control == Int32(1))
       _ctx.knob1 = (Float32(0.007874) * Float32(value))
    end
