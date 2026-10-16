@@ -939,7 +939,17 @@ and lexp ?(const = false) (env : env) (e : Syntax.lexp) : env * lexp =
           let e = Pla.print (Typed.print_lexp e) in
           Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc )
 
-(* Counts the write of an element or member of a variable, which only matters for arguments *)
+and markInitialized (env : env) (e : dexp) : env =
+  match e.d with
+  | DId (name, _) ->
+      Env.markInitialized env name
+  | DTuple elems ->
+      CCList.fold_left markInitialized env elems
+  | DWild ->
+      env
+
+(* Counts the write of an element or member of a variable, which only matters for the ones that
+   refer to another value *)
 and countPartialWrite (env : env) (e : Syntax.lexp) : env =
   match e.l with
   | SLId name ->
@@ -1226,6 +1236,7 @@ and stmt_generic (env : env) (dexp_func : env -> Syntax.dexp -> Env.local_kind -
       (env, [{s= StmtVal lhs; loc}])
   | {s= SStmtVal (lhs, Some rhs); loc} ->
       let env, dlhs = dexp_func env lhs LocalVal in
+      let env = markInitialized env dlhs in
       let env, lhs = lexp ~const:true env (dexp_to_lexp lhs) in
       let env, rhs = exp env rhs in
       let env = unifyRaise ~bind:true env lhs.loc dlhs.t lhs.t in

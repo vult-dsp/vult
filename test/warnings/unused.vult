@@ -31,3 +31,12 @@ and noteOn(note : int, velocity : int, channel : int) { }
 and controlChange(control : int, value : int, channel : int) {
    state = real(value);
 }
+
+// A struct taken from an array refers to the element, so writing its members changes the array
+type point { val x : real; }
+fun reset(points : array(point, 4), index : int) {
+   val p = points[index];
+   p.x = 0.0;
+   val fresh : point;
+   fresh.x = 1.0;
+}

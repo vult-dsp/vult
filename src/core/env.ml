@@ -80,8 +80,12 @@ type function_context = NoContext | Context of {context: context; arg_t: Typed.t
 (* The context argument of a function: the path of its context and the type of '_ctx' *)
 type context_argument = {context_path: path; arg_t: Typed.type_}
 
+(* Whether a variable was given a value where it was declared. An initialized struct or array
+   variable is a reference to its initial value, e.g. the element in 'val x = a[i]'. *)
+type initialization = Uninitialized | Initialized
+
 (* How a local variable was declared. A loop counter keeps the name written in the 'iter'. *)
-type declaration = Argument | Variable | LoopCounter of string
+type declaration = Argument | Variable of initialization | LoopCounter of string
 
 (* A local variable of a function and the number of times its value has been read *)
 type local = {var: var; declaration: declaration; reads: int}
@@ -637,7 +641,7 @@ let addValVar (f : f) (context : context option) (name : string) (t : Typed.type
   let () = checkDuplicatedMem env context name loc in
   let () = checkDuplicatedConstant env name loc in
   let declaration =
-    match Map.find name env.loop_counters with Some written -> LoopCounter written | None -> Variable
+    match Map.find name env.loop_counters with Some written -> LoopCounter written | None -> Variable Uninitialized
   in
   let local = {var= {name; t; kind= Val; tags= []; loc}; declaration; reads= 0} in
   let current = Map.update report name local f.scopes.current in
@@ -707,18 +711,32 @@ let updateLocal (env : env) (name : string) (update : local -> local) : env =
 let countRead (env : env) (name : string) : env =
   updateLocal env name (fun local -> {local with reads= local.reads + 1})
 
-(* Writing into an element or member of an argument changes the value of the caller, so it is
-   counted as a read of the argument *)
+(* Marks a variable declared with an initial value. Names that are not variables are ignored. *)
+let markInitialized (env : env) (name : string) : env =
+  updateLocal env name (fun local ->
+      match local.declaration with
+      | Variable Uninitialized ->
+          {local with declaration= Variable Initialized}
+      | Variable Initialized | Argument | LoopCounter _ ->
+          local )
+
+(* Writing into an element or member of an argument changes the value of the caller, and writing
+   into one of an initialized variable changes the value it refers to, so both are counted as
+   reads *)
 let countPartialWrite (env : env) (name : string) : env =
   updateLocal env name (fun local ->
-      match local.declaration with Argument -> {local with reads= local.reads + 1} | Variable | LoopCounter _ -> local )
+      match local.declaration with
+      | Argument | Variable Initialized ->
+          {local with reads= local.reads + 1}
+      | Variable Uninitialized | LoopCounter _ ->
+          local )
 
 (* The condition and the increment generated for an 'iter' loop read its counter twice *)
 let loop_counter_generated_reads = 2
 
 let isUnused (local : local) : bool =
   match local.declaration with
-  | Argument | Variable ->
+  | Argument | Variable _ ->
       local.reads = 0
   | LoopCounter _ ->
       local.reads <= loop_counter_generated_reads
@@ -733,7 +751,7 @@ let unusedWarning (local : local) : Error.warning option =
   match local.declaration with
   | Argument ->
       report "argument" local.var.name
-  | Variable ->
+  | Variable _ ->
       report "variable" local.var.name
   | LoopCounter written ->
       report "variable" written

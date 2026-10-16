@@ -42,3 +42,8 @@ and controlChange(control : int, value : int, channel : int) {
 and noteOn(note : int, velocity : int, channel : int) { }
 and controlChange(control : int, value : int, channel : int) {
                                               ^^^^^^^
+
+40:7: The variable 'fresh' is never used. If this is intended, rename it to '_fresh'.
+   p.x = 0.0;
+   val fresh : point;
+       ^^^^^
