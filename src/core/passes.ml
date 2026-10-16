@@ -28,7 +28,7 @@ open Analysis
 
 type data =
   { repeat: bool
-  ; ticks: (string, int) Hashtbl.t
+  ; ticks: int Map.t (* The number of the next temporary variable of each function *)
   ; function_deps: Set.t Map.t
   ; type_deps: Set.t Map.t
   ; constants: exp Map.t }
@@ -45,7 +45,7 @@ type env =
   ; args: Util.Args.args }
 
 let default_data () : data =
-  {repeat= false; ticks= Hashtbl.create 16; function_deps= Map.empty; type_deps= Map.empty; constants= Map.empty}
+  {repeat= false; ticks= Map.empty; function_deps= Map.empty; type_deps= Map.empty; constants= Map.empty}
 
 let default_env args : env =
   { args
@@ -106,15 +106,12 @@ module ConstantPropagation = struct
   let mapper = {Mapper.identity with exp; top_stmt}
 end
 
-let getTick (env : env) (state : data Mapper.state) =
+(* The number of the next temporary variable of the current function *)
+let getTick (env : env) (state : data Mapper.state) : data Mapper.state * int =
   let name = match env.current_function with None -> "" | Some def -> def.name in
   let data = Mapper.getData state in
-  match Hashtbl.find_opt data.ticks name with
-  | None ->
-      Hashtbl.add data.ticks name 1 ; 0
-  | Some n ->
-      Hashtbl.replace data.ticks name (n + 1) ;
-      n
+  let n = Option.value ~default:0 (Map.find_opt name data.ticks) in
+  (Mapper.setData state {data with ticks= Map.add name (n + 1) data.ticks}, n)
 
 module CollectDependencies = struct
   let initializeDeps map name =
@@ -279,7 +276,7 @@ module IfExpressions = struct
         (state, e)
     (* Bind if-expressions to a variable in function context *)
     | {e= EIf _; t; loc} when (not env.in_if_exp) && (not env.bound_if) && env.in_function ->
-        let tick = getTick env state in
+        let state, tick = getTick env state in
         let temp = "_if_temp_" ^ string_of_int tick in
         let temp_e = {e= EId temp; t; loc} in
         let decl_stmt = {s= StmtDecl ({d= DId (temp, None); t; loc}, None); loc} in
@@ -309,7 +306,7 @@ module LiteralRecords = struct
     match e with
     (* Bind records to a variable in the context of functions *)
     | {e= ERecord _; t; loc} when (not env.in_if_exp) && (not env.bound_record) && env.in_function ->
-        let tick = getTick env state in
+        let state, tick = getTick env state in
         let temp = "_record_" ^ string_of_int tick in
         let temp_e = {e= EId temp; t; loc} in
         let decl_stmt = {s= StmtDecl ({d= DId (temp, None); t; loc}, None); loc} in
@@ -317,7 +314,7 @@ module LiteralRecords = struct
         let state = Mapper.pushStmts state [decl_stmt; bind_stmt] in
         (reapply state, temp_e)
     | {e= ERecord _; t; loc} when (not env.in_if_exp) && not env.bound_record ->
-        let tick = getTick env state in
+        let state, tick = getTick env state in
         let temp = "_record_" ^ string_of_int tick in
         let temp_e = {e= EId temp; t; loc} in
         let constant_decl = {top= TopConstant (temp, None, t, e, None); loc} in
@@ -354,7 +351,7 @@ module LiteralArrays = struct
     match e with
     (* Bind arrays to a variable *)
     | {e= EArray _; t; loc} when (not env.in_if_exp) && (not env.bound_array) && env.in_function ->
-        let tick = getTick env state in
+        let state, tick = getTick env state in
         let temp = "_array_" ^ string_of_int tick in
         let temp_e = {e= EId temp; t; loc} in
         let decl_stmt = {s= StmtDecl ({d= DId (temp, None); t; loc}, None); loc} in
@@ -373,7 +370,11 @@ module Tuples = struct
   let simple_parallel_source (e : exp) = literal_source e || Option.is_some (Path.of_exp e)
 
   let make_parallel_temps env state loc copies =
-    let temp_list = CCList.map (fun ((l : lexp), _) -> ("_t_temp_" ^ string_of_int (getTick env state), l.t)) copies in
+    let temp state ((l : lexp), _) =
+      let state, tick = getTick env state in
+      (state, ("_t_temp_" ^ string_of_int tick, l.t))
+    in
+    let state, temp_list = CCList.fold_left_map temp state copies in
     let decl = CCList.map (fun (n, t) -> {s= StmtDecl ({d= DId (n, None); loc; t}, None); loc}) temp_list in
     let bindings1 =
       CCList.map2 (fun (l, _) (_, (r : exp)) -> {s= StmtBind ({l= LId l; t= r.t; loc= r.loc}, r); loc}) temp_list copies
@@ -383,7 +384,7 @@ module Tuples = struct
         (fun ((l : lexp), _) (r, _) -> {s= StmtBind (l, {e= EId r; t= l.t; loc= l.loc}); loc})
         copies temp_list
     in
-    decl @ bindings1 @ bindings2
+    (state, decl @ bindings1 @ bindings2)
 
   (* Emits a copy once its destination cannot overlap any value still to be
      read. Only a remaining cycle, such as [x,y = y,x], is spilled to temps. *)
@@ -410,7 +411,10 @@ module Tuples = struct
       match (Path.of_lexp lhs, Path.of_exp rhs) with Some lhs, Some rhs -> Path.equal lhs rhs | _ -> false
     in
     let scheduled, cyclic = loop [] (CCList.filter (fun copy -> not (is_self_copy copy)) copies) in
-    scheduled @ if cyclic = [] then [] else make_parallel_temps env state loc cyclic
+    if cyclic = [] then (state, scheduled)
+    else
+      let state, temps = make_parallel_temps env state loc cyclic in
+      (state, scheduled @ temps)
 
   let stmt_env =
     Mapper.makeEnv
@@ -428,13 +432,11 @@ module Tuples = struct
     match e with
     (* bind multi-return function calls *)
     | {e= ECall _; t= {t= TTuple elems; _} as t; loc} when (not env.bound_call) && not env.in_if_exp ->
-        let temp =
-          CCList.map
-            (fun (t : type_) ->
-              let tick = getTick env state in
-              ("_call_temp_" ^ string_of_int tick, t) )
-            elems
+        let temp state (t : type_) =
+          let state, tick = getTick env state in
+          (state, ("_call_temp_" ^ string_of_int tick, t))
         in
+        let state, temp = CCList.fold_left_map temp state elems in
         let decl_stmt = CCList.map (fun (name, t) -> {s= StmtDecl ({d= DId (name, None); t; loc}, None); loc}) temp in
         let temp_l = CCList.map (fun (name, t) -> {l= LId name; t; loc}) temp in
         let bind_stmt = {s= StmtBind ({l= LTuple temp_l; t; loc}, e); loc} in
@@ -461,8 +463,11 @@ module Tuples = struct
           && CCList.for_all simple_parallel_source r_elems
         then
           let copies = CCList.combine l_elems r_elems in
-          (reapply state, schedule_parallel_copies env state loc copies)
-        else (reapply state, make_parallel_temps env state loc (CCList.combine l_elems r_elems))
+          let state, stmts = schedule_parallel_copies env state loc copies in
+          (reapply state, stmts)
+        else
+          let state, stmts = make_parallel_temps env state loc (CCList.combine l_elems r_elems) in
+          (reapply state, stmts)
     (* bind multi return calls to the context *)
     | {s= StmtBind (({l= LTuple elems; _} as lhs), ({e= ECall {path; args= ctx :: _}; loc= rloc; _} as rhs)); loc} ->
         let bindings =
@@ -1230,15 +1235,16 @@ module CircularBuffers = struct
   let lower_index env state loc index =
     match increment_modulo index with
     | None ->
-        None
+        (state, None)
     | Some (increment, _, modulus, modulus_exp) ->
-        let name = "_wrap_temp_" ^ string_of_int (getTick env state) in
+        let state, tick = getTick env state in
+        let name = "_wrap_temp_" ^ string_of_int tick in
         let temp_lhs = {l= LId name; t= index.t; loc} in
         let temp_value = {e= EId name; t= index.t; loc} in
         let decl = {s= StmtDecl ({d= DId (name, None); t= index.t; loc}, None); loc} in
         let initialize = {s= StmtBind (temp_lhs, increment); loc} in
         let guard = range_guard loc temp_lhs temp_value modulus modulus_exp in
-        Some ([decl; initialize; guard], temp_value)
+        (state, Some ([decl; initialize; guard], temp_value))
 
   let stmt =
     Mapper.makeExpander
@@ -1254,23 +1260,23 @@ module CircularBuffers = struct
         match rhs.e with
         | EIndex {e; index} -> (
           match lower_index env state s.loc index with
-          | Some (prefix, index) ->
+          | state, Some (prefix, index) ->
               (reapply state, prefix @ [{s with s= StmtBind (lhs, {rhs with e= EIndex {e; index}})}])
-          | None ->
+          | state, None ->
               (state, [s]) )
         | _ ->
             (state, [s]) ) )
     | StmtDecl (decl, Some ({e= EIndex {e; index}; _} as rhs)) -> (
       match lower_index env state s.loc index with
-      | Some (prefix, index) ->
+      | state, Some (prefix, index) ->
           (reapply state, prefix @ [{s with s= StmtDecl (decl, Some {rhs with e= EIndex {e; index}})}])
-      | None ->
+      | state, None ->
           (state, [s]) )
     | StmtReturn ({e= EIndex {e; index}; _} as rhs) -> (
       match lower_index env state s.loc index with
-      | Some (prefix, index) ->
+      | state, Some (prefix, index) ->
           (reapply state, prefix @ [{s with s= StmtReturn {rhs with e= EIndex {e; index}}}])
-      | None ->
+      | state, None ->
           (state, [s]) )
     | _ ->
         (state, [s])
