@@ -178,104 +178,8 @@ let float =
 
 let fixed = float 'x'
 
-(* Original entry point - backward compatible, skips comments and whitespace *)
-rule next_token source = parse
-  | newline
-    { let _ = updateLocation lexbuf 1 0 in (* Increases the line *)
-      next_token source lexbuf
-    }
-  | blank +     { let _ = lexeme lexbuf in next_token source lexbuf }
-  | '.'         { makeToken source DOT lexbuf }
-  | "@["        { makeToken source TAG lexbuf }
-  | '@'         { makeToken source AT lexbuf }
-  | '_'         { makeToken source WILD lexbuf }
-  | '('         { makeToken source LPAREN lexbuf }
-  | ')'         { makeToken source RPAREN lexbuf }
-  | '{'         { makeToken source LBRACE lexbuf }
-  | '['         { makeToken source LBRACK lexbuf }
-  | '}'         { makeToken source RBRACE lexbuf }
-  | ']'         { makeToken source RBRACK lexbuf }
-  | ':'         { makeToken source COLON lexbuf }
-  | ';'         { makeToken source SEMI lexbuf }
-  | ','         { makeToken source COMMA lexbuf }
-  | '='         { makeToken source EQUAL lexbuf }
-  | "->"        { makeToken source ARROW lexbuf }
-  | "||"        { makeToken source OP lexbuf }
-  | "!"         { makeToken source OP lexbuf }
-  | "&&"        { makeToken source OP lexbuf }
-  | "=="        { makeToken source OP lexbuf }
-  | "<>"        { makeToken source OP lexbuf }
-  | "<="        { makeToken source OP lexbuf }
-  | ">="        { makeToken source OP lexbuf }
-  | ">>"        { makeToken source OP lexbuf }
-  | "<<"        { makeToken source OP lexbuf }
-  | '|'         { makeToken source OP lexbuf }
-  | '&'         { makeToken source OP lexbuf }
-  | '^'         { makeToken source OP lexbuf }
-  | [ '+' '-' ] { makeToken source OP lexbuf }
-  | [ '*' '/' '%' ] { makeToken source OP lexbuf }
-  | '<'         { makeToken source LT lexbuf }
-  | '>'         { makeToken source GT lexbuf }
-  | int         { makeToken source INT lexbuf }
-  | xint        { makeToken source XINT lexbuf }
-  | float       { makeToken source REAL lexbuf }
-  | fixed       { makeToken source FIXED lexbuf }
-  | '\'' startid idchar *
-                { makeQuotedIdToken source lexbuf }
-  | startid idchar *
-                { makeIdToken source lexbuf }
-  |  '"'        {
-                  let start_loc = Loc.getLocation source lexbuf in
-                  let buffer    = Buffer.create 0 in
-                  let ()        = string source buffer lexbuf in
-                  let end_loc   = Loc.getLocation source lexbuf in
-                  let str       = Buffer.contents buffer in
-                  let loc       = Loc.merge start_loc end_loc in
-                  { kind = STRING; value = str; loc = loc; }
-
-                }
-  | "//"        { line_comment source lexbuf}
-  | "/*"        { comment source 0 lexbuf }
-  | eof         { makeToken source EOF lexbuf }
-  | _ as c      {
-                  let loc = Loc.getLocation source lexbuf in
-                  let message = Error.PointedError(loc, Printf.sprintf "Invalid character '%c' " c) in
-                  raise (Error.Errors([message]))
-                }
-
-(* Line comment that skips content - used by next_token *)
-and line_comment source = parse
-   newline
-     {
-      let _ = updateLocation lexbuf 1 0 in (* Increases the line *)
-      next_token source lexbuf
-     }
-  | eof { makeToken source EOF lexbuf }
-  | _   { line_comment source lexbuf }
-
-(* Block comment that skips content - used by next_token *)
-and comment source level = parse
-  newline
-     {
-      let _ = updateLocation lexbuf 1 0 in (* Increases the line *)
-      comment source level lexbuf
-     }
-  | "/*"
-    {
-      comment source (level+1) lexbuf
-    }
-  | "*/"
-    {
-      if level = 0 then
-        next_token source lexbuf
-      else
-        comment source (level-1) lexbuf
-    }
-  | _ { comment source level lexbuf }
-  | eof { makeToken source EOF lexbuf }
-
-(* Configurable entry point - can emit comments and whitespace *)
-and next_token_config source config = parse
+(* Entry point of the lexer. The configuration selects whether comments and whitespace are emitted *)
+rule next_token_config source config = parse
   | newline
     { let _ = updateLocation lexbuf 1 0 in (* Increases the line *)
       if config.emit_whitespace then
@@ -354,7 +258,7 @@ and next_token_config source config = parse
                   raise (Error.Errors([message]))
                 }
 
-(* Line comment that captures content - used by next_token_config *)
+(* Line comment that captures content *)
 and line_comment_capture source config buffer start_loc = parse
    newline
      {
@@ -381,7 +285,7 @@ and line_comment_capture source config buffer start_loc = parse
       line_comment_capture source config buffer start_loc lexbuf
     }
 
-(* Block comment that captures content - used by next_token_config *)
+(* Block comment that captures content *)
 and block_comment_capture source config buffer start_loc level = parse
   newline as s
      {

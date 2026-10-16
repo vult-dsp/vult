@@ -24,8 +24,6 @@
 
 open Util
 
-type lexed_lines = {current_line: Buffer.t; mutable all_lines: string list}
-
 (** Tokens *)
 type token_enum =
   | EOF
@@ -89,12 +87,3 @@ let comment_config : tokenizer_config = {emit_comments= true; emit_whitespace= f
 let full_config : tokenizer_config = {emit_comments= true; emit_whitespace= true}
 
 type 'kind token = {kind: 'kind; value: string; loc: Loc.t}
-
-(** Type containing the stream of tokens *)
-type 'kind stream =
-  { lexbuf: Lexing.lexbuf
-  ; mutable has_errors: bool
-  ; mutable errors: Error.t list
-  ; mutable peeked: 'kind token
-  ; mutable prev: 'kind token
-  ; lines: lexed_lines }

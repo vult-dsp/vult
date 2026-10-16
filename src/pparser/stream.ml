@@ -22,155 +22,91 @@
    THE SOFTWARE.
 *)
 
+(* Immutable token stream consumed by the parser. The whole input is tokenized up front and the
+   comments are dropped, so advancing returns a new stream and the old one stays valid: the parser
+   backtracks by reusing a previous stream. The stream also carries the errors recovered so far. *)
+
 open Tokens
 open Util
 
-exception ParserError of Error.t
+type token = token_enum Tokens.token
 
-module type TokenKindSig = sig
-  type kind
+(* [rest] never contains comments and its last token is EOF. Once it runs out, the stream stays at
+   EOF so that the parser reports the unexpected end of the file. *)
+type t = {current: token; prev: token; rest: token list; errors: Error.t list}
 
-  val next : Loc.source -> Lexing.lexbuf -> kind token
+(* A parse failure together with the stream where it happened, which is where the error recovery
+   continues from *)
+exception ParserError of Error.t * t
 
-  val kindStr : kind -> string
+let fail (s : t) (error : Error.t) : 'a = raise (ParserError (error, s))
 
-  val tokenStr : kind token -> string
+let isComment (token : token) : bool = match token.kind with LINE_COMMENT | BLOCK_COMMENT -> true | _ -> false
 
-  val isEOF : kind -> bool
+(* Tokenizes the whole input. The comments are emitted by the lexer and dropped here. *)
+let fromLexbuf (source : Loc.source) (lexbuf : Lexing.lexbuf) : t =
+  let rec loop acc =
+    let token = Lexer.next_token_config source comment_config lexbuf in
+    match token.kind with
+    | EOF -> (
+      match CCList.rev acc with
+      | [] ->
+          {current= token; prev= token; rest= []; errors= []}
+      | first :: rest ->
+          {current= first; prev= first; rest= rest @ [token]; errors= []} )
+    | _ when isComment token ->
+        loop acc
+    | _ ->
+        loop (token :: acc)
+  in
+  loop []
 
-  val getEOF : kind
-end
+(** Creates a token stream given a string *)
+let fromString ?file (str : string) : t =
+  let lexbuf = Lexing.from_string str in
+  let () = Option.iter (Lexing.set_filename lexbuf) file in
+  let source = match file with Some f -> Loc.File f | None -> Loc.Text str in
+  fromLexbuf source lexbuf
 
-module TokenStream (S : TokenKindSig) = struct
-  type stream =
-    { mutable tokens: S.kind token list
-    ; mutable has_errors: bool
-    ; mutable errors: Error.t list
-    ; mutable peeked: S.kind token
-    ; mutable prev: S.kind token
-    ; source: Loc.source }
+(** Returns the stream advanced by one token *)
+let skip (s : t) : t =
+  match s.rest with [] -> {s with prev= s.current} | next :: rest -> {s with current= next; prev= s.current; rest}
 
-  let backup (s : stream) : stream =
-    {tokens= s.tokens; has_errors= s.has_errors; errors= s.errors; peeked= s.peeked; prev= s.prev; source= s.source}
+(** Returns the current token and the stream after it *)
+let take (s : t) : token * t = (s.current, skip s)
 
-  let restore ~buffer ~backup =
-    buffer.tokens <- backup.tokens ;
-    buffer.has_errors <- backup.has_errors ;
-    buffer.errors <- backup.errors ;
-    buffer.peeked <- backup.peeked ;
-    buffer.prev <- backup.prev
+(** Returns the current token in the stream *)
+let current (s : t) : token = s.current
 
-  (* The last token is always EOF, so once the tokens run out the stream stays at EOF and the
-     parser reports the unexpected end of the file. *)
-  let next (stream : stream) =
-    match stream.tokens with
-    | [] ->
-        stream.prev <- stream.peeked ;
-        stream.peeked
-    | h :: r ->
-        stream.prev <- stream.peeked ;
-        stream.peeked <- h ;
-        stream.tokens <- r ;
-        h
+(** Returns the current location of the stream *)
+let location (s : t) : Loc.t = s.current.loc
 
-  (** Skips one token *)
-  let skip (stream : stream) : unit = next stream |> ignore
+(** Returns the kind of the current token *)
+let peek (s : t) : token_enum = s.current.kind
 
-  (** Returns the current token in the buffer *)
-  let current (buffer : stream) : S.kind token = buffer.peeked
+(** Make an error at the current location *)
+let makeError (s : t) (message : string) : Error.t = Error.PointedError (Loc.getNext s.prev.loc, message)
 
-  (** Returns the current location of the buffer *)
-  let location (buffer : stream) : Loc.t = buffer.peeked.loc
+(** Returns the recovered errors in the order they were found *)
+let errors (s : t) : Error.t list = CCList.rev s.errors
 
-  (** Returns the kind of the current token *)
-  let peek (buffer : stream) : S.kind = (current buffer).kind
+let appendError (s : t) (error : Error.t) : t = {s with errors= error :: s.errors}
 
-  (** Make an error at the current location *)
-  let makeError (buffer : stream) (message : string) : Error.t =
-    Error.PointedError (Loc.getNext buffer.prev.loc, message)
+let unexpected (s : t) (kind : token_enum) (got : string) : 'a =
+  let expected = Lexer.kindToString kind in
+  let message =
+    match s.current.kind with
+    | EOF ->
+        Printf.sprintf "Expecting a %s but the file ended" expected
+    | _ ->
+        Printf.sprintf "Expecting a %s but got %s" expected got
+  in
+  fail s (makeError s message)
 
-  let setErrors (buffer : stream) (value : bool) : unit = buffer.has_errors <- value
+(** Checks that the current token matches the given kind *)
+let expect (s : t) (kind : token_enum) : unit =
+  if s.current.kind <> kind then unexpected s kind (Lexer.kindToString s.current.kind)
 
-  let hasErrors (buffer : stream) : bool = buffer.has_errors
-
-  let getErrors (buffer : stream) : Error.t list = buffer.errors
-
-  let notExpectedError (token : S.kind token) : Error.t =
-    let message = Printf.sprintf "Not expecting to find %s" (S.kindStr token.kind) in
-    Error.PointedError (Loc.getNext token.loc, message)
-
-  let appendError (buffer : stream) (error : Error.t) = buffer.errors <- error :: buffer.errors
-
-  (** Checks that the next token matches the given kind and skip it *)
-  let consume (buffer : stream) (kind : S.kind) : unit =
-    match buffer.peeked with
-    | t when t.kind = kind ->
-        skip buffer
-    | t when S.isEOF t.kind ->
-        let expected = S.kindStr kind in
-        let message = Printf.sprintf "Expecting a %s but the file ended" expected in
-        raise (ParserError (makeError buffer message))
-    | got_token ->
-        let expected = S.kindStr kind in
-        let got = S.tokenStr got_token in
-        let message = Printf.sprintf "Expecting a %s but got %s" expected got in
-        raise (ParserError (makeError buffer message))
-
-  (** Checks that the next token matches *)
-  let expect (buffer : stream) (kind : S.kind) : unit =
-    match buffer.peeked with
-    | t when t.kind = kind ->
-        ()
-    | t when S.isEOF t.kind ->
-        let expected = S.kindStr kind in
-        let message = Printf.sprintf "Expecting a %s but the file ended" expected in
-        raise (ParserError (makeError buffer message))
-    | got_token ->
-        let expected = S.kindStr kind in
-        let got = S.kindStr got_token.kind in
-        let message = Printf.sprintf "Expecting a %s but got %s" expected got in
-        raise (ParserError (makeError buffer message))
-
-  let rec consumeLexbuf source lexbuf tokens =
-    let token = S.next source lexbuf in
-    if S.isEOF token.kind then CCList.rev (token :: tokens) else consumeLexbuf source lexbuf (token :: tokens)
-
-  (** Optionally consumes the given token *)
-  let optConsume (buffer : stream) (kind : S.kind) : unit =
-    match buffer.peeked with t when t.kind = kind -> skip buffer | _ -> ()
-
-  (** Returns an empty 'lexed_lines' type *)
-  let emptyLexedLines () = {current_line= Buffer.create 100; all_lines= []}
-
-  (** Creates a token stream given a string *)
-  let fromString ?file (str : string) : stream =
-    let lexbuf = Lexing.from_string str in
-    let source =
-      match file with
-      | Some f ->
-          let lex_start_p = Lexing.{lexbuf.lex_start_p with pos_fname= f} in
-          let lex_curr_p = Lexing.{lexbuf.lex_curr_p with pos_fname= f} in
-          lexbuf.Lexing.lex_start_p <- lex_start_p ;
-          lexbuf.Lexing.lex_curr_p <- lex_curr_p ;
-          Loc.File f
-      | None ->
-          Loc.Text str
-    in
-    let tokens = consumeLexbuf source lexbuf [] in
-    match tokens with
-    | [] ->
-        failwith "empty file"
-    | peeked :: tokens ->
-        {tokens; peeked; has_errors= false; source; errors= []; prev= peeked}
-
-  let fromChannel (chan : in_channel) (file : string) : stream =
-    let lexbuf = Lexing.from_channel chan in
-    lexbuf.Lexing.lex_curr_p <- {lexbuf.Lexing.lex_curr_p with Lexing.pos_fname= file} ;
-    let source = Loc.File file in
-    let tokens = consumeLexbuf source lexbuf [] in
-    match tokens with
-    | [] ->
-        failwith "empty file"
-    | peeked :: tokens ->
-        {tokens; peeked; has_errors= false; source; errors= []; prev= peeked}
-end
+(** Checks that the current token matches the given kind and skips it *)
+let consume (s : t) (kind : token_enum) : t =
+  if s.current.kind <> kind then unexpected s kind (Lexer.tokenToString s.current) else skip s
