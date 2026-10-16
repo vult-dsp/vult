@@ -28,8 +28,6 @@ type path = Syntax.path
 
 let print_exp_types = false
 
-let print_exp_locs = ref false
-
 let print_path (p : path) = Syntax.print_path p
 
 (** Print location in format [line:col-line:col] *)
@@ -218,7 +216,7 @@ let rec print_type_ ?(detailed = false) (t : type_) : Pla.t =
       let ret = print_type_ ~detailed ret in
       prefix {%pla|<#args#> -> <#ret#>|}
 
-let rec print_exp (e : exp) =
+let rec print_exp ?(locs = false) (e : exp) =
   (fun es ->
     let with_type =
       if print_exp_types then
@@ -226,7 +224,7 @@ let rec print_exp (e : exp) =
         {%pla|(<#es#> : <#t#>)|}
       else es
     in
-    if !print_exp_locs then
+    if locs then
       let loc = print_loc e.loc in
       {%pla|<#with_type#><#loc#>|}
     else with_type )
@@ -249,51 +247,51 @@ let rec print_exp (e : exp) =
   | EConst p ->
       print_path p
   | EIndex {e; index} ->
-      let e = print_exp e in
-      let index = print_exp index in
+      let e = (print_exp ~locs) e in
+      let index = (print_exp ~locs) index in
       {%pla|<#e#>[<#index#>]|}
   | EArray l ->
-      Pla.wrap (Pla.string "[ ") (Pla.string " ]") (Pla.map_sep Pla.commaspace print_exp l)
+      Pla.wrap (Pla.string "[ ") (Pla.string " ]") (Pla.map_sep Pla.commaspace (print_exp ~locs) l)
   | ECall {instance; path; args} ->
       let instance = Option.value (Option.map (fun s -> {%pla|<#s#s>:|}) instance) ~default:Pla.unit in
       let path = print_path path in
-      let args = Pla.map_sep Pla.commaspace print_exp args in
+      let args = Pla.map_sep Pla.commaspace (print_exp ~locs) args in
       {%pla|<#instance#><#path#>(<#args#>)|}
   | EUnOp (op, e) ->
-      let e = print_exp e in
+      let e = (print_exp ~locs) e in
       {%pla|(<#op#s><#e#>)|}
   | EOp (op, e1, e2) ->
-      let e1 = print_exp e1 in
-      let e2 = print_exp e2 in
+      let e1 = (print_exp ~locs) e1 in
+      let e2 = (print_exp ~locs) e2 in
       {%pla|(<#e1#> <#op#s> <#e2#>)|}
   | EIf {cond; then_; else_} ->
-      let cond = print_exp cond in
-      let then_ = print_exp then_ in
-      let else_ = print_exp else_ in
+      let cond = (print_exp ~locs) cond in
+      let then_ = (print_exp ~locs) then_ in
+      let else_ = (print_exp ~locs) else_ in
       {%pla|(if <#cond#> then <#then_#> else <#else_#>)|}
   | ETuple l ->
-      let l = Pla.map_sep Pla.commaspace print_exp l in
+      let l = Pla.map_sep Pla.commaspace (print_exp ~locs) l in
       {%pla|(<#l#>)|}
   | EMember (e, m) ->
-      let e = print_exp e in
+      let e = (print_exp ~locs) e in
       {%pla|<#e#>.<#m#s>|}
   | EEnum {name; _} ->
       Pla.string name
   | ERecord {elems} ->
       let printElem (id, v) =
-        let v = print_exp v in
+        let v = (print_exp ~locs) v in
         {%pla|<#id#s> = <#v#>|}
       in
       let path = match e.t.tx with TEId path -> print_path path | _ -> Pla.string "_" in
       let elems = Pla.map_sep Pla.commaspace printElem elems in
       {%pla|<#path#> { <#elems#> }|}
   | EGenCall {instance; generic_path; params} ->
-      let args = Pla.map_sep Pla.commaspace print_exp (callValues params) in
+      let args = Pla.map_sep Pla.commaspace (print_exp ~locs) (callValues params) in
       let path = print_path generic_path in
       let inst = match instance with None -> Pla.unit | Some i -> Pla.string (i ^ ":") in
       {%pla|<#inst#><#path#>@generic(<#args#>)|}
   | EGenCompanionCall {instance; companion_name; parent_generic_path; args} ->
-      let args = Pla.map_sep Pla.commaspace print_exp args in
+      let args = Pla.map_sep Pla.commaspace (print_exp ~locs) args in
       let path = print_path parent_generic_path in
       let inst = match instance with None -> Pla.unit | Some i -> Pla.string (i ^ ":") in
       {%pla|<#inst#><#path#>@companion:<#companion_name#s>(<#args#>)|}
@@ -303,7 +301,7 @@ let rec print_exp (e : exp) =
       in
       {%pla|<#intrinsic_name#s>('<#type_param#s>)|}
 
-let rec print_lexp (e : lexp) =
+let rec print_lexp ?(locs = false) (e : lexp) =
   (fun es ->
     let with_type =
       if print_exp_types then
@@ -311,7 +309,7 @@ let rec print_lexp (e : lexp) =
         {%pla|(<#es#> : <#t#>)|}
       else es
     in
-    if !print_exp_locs then
+    if locs then
       let loc = print_loc e.loc in
       {%pla|<#with_type#><#loc#>|}
     else with_type )
@@ -322,17 +320,17 @@ let rec print_lexp (e : lexp) =
   | LId s ->
       Pla.string s
   | LMember (e, m) ->
-      let e = print_lexp e in
+      let e = (print_lexp ~locs) e in
       {%pla|<#e#>.<#m#s>|}
   | LIndex {e; index} ->
-      let e = print_lexp e in
-      let index = print_exp index in
+      let e = (print_lexp ~locs) e in
+      let index = (print_exp ~locs) index in
       {%pla|<#e#>[<#index#>]|}
   | LTuple l ->
-      let l = Pla.map_sep Pla.commaspace print_lexp l in
+      let l = Pla.map_sep Pla.commaspace (print_lexp ~locs) l in
       {%pla|(<#l#>)|}
 
-let rec print_dexp (e : dexp) =
+let rec print_dexp ?(locs = false) (e : dexp) =
   let t = print_type_ ~detailed:true e.t in
   let base =
     match e.d with
@@ -343,58 +341,58 @@ let rec print_dexp (e : dexp) =
     | DId (id, Some dim) ->
         {%pla|<#id#s>[<#dim#i>] : <#t#>|}
     | DTuple l ->
-        let l = Pla.map_sep Pla.commaspace print_dexp l in
+        let l = Pla.map_sep Pla.commaspace (print_dexp ~locs) l in
         {%pla|(<#l#>) : <#t#>|}
   in
-  if !print_exp_locs then
+  if locs then
     let loc = print_loc e.loc in
     {%pla|<#base#><#loc#>|}
   else base
 
-let rec print_stmt s =
+let rec print_stmt ?(locs = false) s =
   let base =
     match s.s with
     | StmtVal lhs ->
-        let lhs = print_dexp lhs in
+        let lhs = (print_dexp ~locs) lhs in
         {%pla|val <#lhs#>;|}
     | StmtMem (lhs, tags) ->
         let tags = Ptags.print_tags tags in
-        let lhs = print_dexp lhs in
+        let lhs = (print_dexp ~locs) lhs in
         {%pla|mem <#lhs#><#tags#>;|}
     | StmtBind (lhs, rhs) ->
-        let lhs = print_lexp lhs in
-        let rhs = print_exp rhs in
+        let lhs = (print_lexp ~locs) lhs in
+        let rhs = (print_exp ~locs) rhs in
         {%pla|<#lhs#> = <#rhs#>;|}
     | StmtReturn e ->
-        let e = print_exp e in
+        let e = (print_exp ~locs) e in
         {%pla|return <#e#>;|}
     | StmtIf (cond, then_, None) ->
-        let e = print_exp cond in
-        let then_ = print_stmt then_ in
+        let e = (print_exp ~locs) cond in
+        let then_ = (print_stmt ~locs) then_ in
         {%pla|if (<#e#>) <#then_#>|}
     | StmtIf (cond, then_, Some else_) ->
-        let cond = print_exp cond in
-        let then_ = print_stmt then_ in
-        let else_ = print_stmt else_ in
+        let cond = (print_exp ~locs) cond in
+        let then_ = (print_stmt ~locs) then_ in
+        let else_ = (print_stmt ~locs) else_ in
         {%pla|if (<#cond#>) <#then_#><#>else <#else_#>|}
     | StmtWhile (cond, stmt) ->
-        let cond = print_exp cond in
-        let stmt = print_stmt stmt in
+        let cond = (print_exp ~locs) cond in
+        let stmt = (print_stmt ~locs) stmt in
         {%pla|while (<#cond#>)<#stmt#+>|}
     | StmtBlock stmts ->
-        let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
+        let stmt = Pla.map_sep_all Pla.newline (print_stmt ~locs) stmts in
         {%pla|{<#stmt#+>}|}
   in
-  if !print_exp_locs then
+  if locs then
     let loc = print_loc s.loc in
     {%pla|<#base#><#loc#>|}
   else base
 
-let print_arg (arg : arg) =
+let print_arg ?(locs = false) (arg : arg) =
   let t = print_type_ ~detailed:true arg.t in
   let name = arg.name in
   let base = {%pla|<#name#s> : <#t#>|} in
-  if !print_exp_locs then
+  if locs then
     let loc = print_loc arg.loc in
     {%pla|<#base#><#loc#>|}
   else base
@@ -408,33 +406,33 @@ let fun_kind_to_string (kind : fun_kind) : string =
 let next_kind (kind : fun_kind) : fun_kind =
   match kind with FunKindFun -> FunKindAnd | FunKindAnd -> FunKindAnd | FunKindExternal -> FunKindExternal
 
-let print_body_linkname body_linkname =
+let print_body_linkname ?(locs = false) body_linkname =
   match body_linkname with
   | `Body stmt ->
-      print_stmt stmt
+      (print_stmt ~locs) stmt
   | `LinkName name ->
       {%pla| "<#name#s>"|}
   | `NoLinkName ->
       Pla.unit
 
-let rec print_function_def (kind : fun_kind) (def : function_def) body_linkname =
+let rec print_function_def ?(locs = false) (kind : fun_kind) (def : function_def) body_linkname =
   let kind_str = fun_kind_to_string kind in
   let name = print_path def.name in
-  let args = Pla.map_sep Pla.commaspace print_arg def.args in
+  let args = Pla.map_sep Pla.commaspace (print_arg ~locs) def.args in
   let tags = Ptags.print_tags def.tags in
   let t = print_type_ ~detailed:true (snd def.t) in
-  let body = print_body_linkname body_linkname in
-  let next = print_next_function_def kind def.next in
+  let body = (print_body_linkname ~locs) body_linkname in
+  let next = (print_next_function_def ~locs) kind def.next in
   let def_loc =
-    if !print_exp_locs then
+    if locs then
       let loc = print_loc def.loc in
       {%pla| #def<#loc#>|}
     else Pla.unit
   in
   {%pla|<#kind_str#s> <#name#>(<#args#>) : <#t#><#def_loc#> <#tags#><#body#><#><#next#>|}
 
-and print_next_function_def kind next =
-  match next with None -> Pla.unit | Some (def, body) -> print_function_def (next_kind kind) def (`Body body)
+and print_next_function_def ?(locs = false) kind next =
+  match next with None -> Pla.unit | Some (def, body) -> (print_function_def ~locs) (next_kind kind) def (`Body body)
 
 let print_record_member (name, t, tags, _) =
   let tags = Ptags.print_tags tags in
@@ -443,15 +441,15 @@ let print_record_member (name, t, tags, _) =
 
 let print_enum_member (name, _) = {%pla|<#name#s>|}
 
-let print_top_stmt t =
+let print_top_stmt ?(locs = false) t =
   let base =
     match t.top with
     | TopFunction (def, body) ->
-        print_function_def FunKindFun def (`Body body)
+        (print_function_def ~locs) FunKindFun def (`Body body)
     | TopExternal (def, Some linkname) ->
-        print_function_def FunKindExternal def (`LinkName linkname)
+        (print_function_def ~locs) FunKindExternal def (`LinkName linkname)
     | TopExternal (def, None) ->
-        print_function_def FunKindExternal def `NoLinkName
+        (print_function_def ~locs) FunKindExternal def `NoLinkName
     | TopGenericPlaceholder name ->
         {%pla|(* generic placeholder: <#name#s> *)|}
     | TopAlias {path= p; alias_of} ->
@@ -468,16 +466,16 @@ let print_top_stmt t =
         {%pla|enum <#p#> {<#members#+><#>}<#>|}
     | TopConstant (path, dim, _, e, _) ->
         let path = print_path path in
-        let e = print_exp e in
+        let e = (print_exp ~locs) e in
         let dim = match dim with None -> Pla.unit | Some dim -> {%pla|[<#dim#i>]|} in
         {%pla|constant <#path#><#dim#> = <#e#>|}
   in
-  if !print_exp_locs then
+  if locs then
     let loc = print_loc t.loc in
     {%pla|<#base#> @<#loc#>|}
   else base
 
-let print_prog prog = Pla.map_sep_all Pla.newline print_top_stmt prog
+let print_prog ?(locs = false) prog = Pla.map_sep_all Pla.newline (print_top_stmt ~locs) prog
 
 (* The numbers of the next type and constness variables. The substitution of the inference carries
    it (see Subst), so the variables of a compilation do not depend on the previous ones. *)

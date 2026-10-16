@@ -173,9 +173,7 @@ let driver (args : args) : output list =
               Util.Profile.time "Typechecking" (fun () -> Typechecking.typecheck_and_elaborate args parsed)
             in
             let warnings = warningsOutput env in
-            if args.dtyped then
-              let () = Typed.print_exp_locs := args.dlocs in
-              warnings @ [Typed (Pla.print (Typed.print_prog stmts))]
+            if args.dtyped then warnings @ [Typed (Pla.print (Typed.print_prog ~locs:args.dlocs stmts))]
             else if args.dtoprog then
               let _, prog = Toprog.convert args env stmts in
               warnings @ [Prog (Pla.print (Prog.Print.print_prog prog))]

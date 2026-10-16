@@ -25,15 +25,6 @@
 open Prog
 open Util
 
-let index_tick = ref 0
-
-let resetTick () = index_tick := 0
-
-let getTick () =
-  let n = !index_tick in
-  let () = incr index_tick in
-  n
-
 let rec getInitRHS (t : type_) =
   match t with
   | {t= TEmptyType; _} ->
@@ -163,55 +154,57 @@ type cstyle = NewObject | RefObject
 
 (** Creates an initialization statement. If init_value is Some, uses that custom value
     instead of the default for the type. For primitive types, uses the custom value directly.
-    For composite types, the custom init value is ignored. *)
-let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) (init_value : exp option) =
+    For composite types, the custom init value is ignored. [tick] numbers the variables it
+    declares, and the number that follows them is returned. *)
+let rec initStatement (cstyle : cstyle) (tick : int) lhs rhs (t : type_) (init_value : exp option) : int * stmt =
   match (init_value, t) with
   (* If a custom init value is provided and the type is a simple type, use it *)
   | Some custom_rhs, {t= TInt | TInt16 | TReal | TFix16 | TString | TBool; loc; _} ->
-      {s= StmtBind (lhs, custom_rhs); loc}
+      (tick, {s= StmtBind (lhs, custom_rhs); loc})
   (* Default initialization for types without custom init value *)
   | None, {t= TEmptyType; loc; _} ->
       let rhs = getInitRHS t in
-      {s= StmtBind (lhs, rhs); loc}
+      (tick, {s= StmtBind (lhs, rhs); loc})
   | None, {t= TVoid _; loc; _} ->
       let rhs = getInitRHS t in
-      {s= StmtBind (lhs, rhs); loc}
+      (tick, {s= StmtBind (lhs, rhs); loc})
   | None, {t= TInt; loc; _} ->
       let rhs = getInitRHS t in
-      {s= StmtBind (lhs, rhs); loc}
+      (tick, {s= StmtBind (lhs, rhs); loc})
   | None, {t= TInt16; loc; _} ->
       let rhs = getInitRHS t in
-      {s= StmtBind (lhs, rhs); loc}
+      (tick, {s= StmtBind (lhs, rhs); loc})
   | None, {t= TReal; loc; _} ->
       let rhs = getInitRHS t in
-      {s= StmtBind (lhs, rhs); loc}
+      (tick, {s= StmtBind (lhs, rhs); loc})
   | None, {t= TFix16; loc; _} ->
       let rhs = getInitRHS t in
-      {s= StmtBind (lhs, rhs); loc}
+      (tick, {s= StmtBind (lhs, rhs); loc})
   | None, {t= TString; loc; _} ->
       let rhs = getInitRHS t in
-      {s= StmtBind (lhs, rhs); loc}
+      (tick, {s= StmtBind (lhs, rhs); loc})
   | None, {t= TBool; loc; _} ->
       let rhs = getInitRHS t in
-      {s= StmtBind (lhs, rhs); loc}
+      (tick, {s= StmtBind (lhs, rhs); loc})
   | _, {t= TTuple _; _} ->
       failwith "tuples"
   | _, {t= TStruct {path; _}; loc; _} when cstyle = RefObject ->
       let rhs = {e= ECall {path= path ^ "_init"; args= [rhs]}; t; loc} in
-      {s= StmtBind ({l= LWild; loc; t= C.void_t}, rhs); loc}
+      (tick, {s= StmtBind ({l= LWild; loc; t= C.void_t}, rhs); loc})
   | _, {t= TStruct {path; _}; loc; _} ->
       let rhs = {e= ECall {path= path ^ "_alloc"; args= []}; t; loc} in
-      {s= StmtBind (lhs, rhs); loc}
+      (tick, {s= StmtBind (lhs, rhs); loc})
   | _, {t= TArray (Some size, subt); loc; _} when cstyle = RefObject ->
-      let i = "i_" ^ string_of_int (getTick ()) in
+      let i = "i_" ^ string_of_int tick in
+      let tick = tick + 1 in
       let int_t = C.int_t in
       let index = {e= EId i; t= int_t; loc} in
       let one = {e= EInt 1; t= int_t; loc} in
       let cond = {e= EOp (OpLt, index, {e= EInt size; t= int_t; loc}); t= C.bool_t; loc} in
-      let bind =
+      let tick, bind =
         let lhs = {l= LIndex {e= lhs; index}; t= subt; loc} in
         let rhs = {e= EIndex {e= rhs; index}; t= subt; loc} in
-        initStatement cstyle lhs rhs subt None
+        initStatement cstyle tick lhs rhs subt None
       in
       let plus_one = {e= EOp (OpAdd, index, one); t= int_t; loc} in
       let incr = {s= StmtBind ({l= LId i; t= int_t; loc}, plus_one); loc} in
@@ -219,20 +212,22 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) (init_value : exp op
       let loop = {s= StmtWhile (cond, body); loc} in
       let decl = {s= StmtDecl ({d= DId (i, None); t= int_t; loc}, None); loc} in
       let init = {s= StmtBind ({l= LId i; t= int_t; loc}, {e= EInt 0; t= int_t; loc}); loc} in
-      {s= StmtBlock [decl; init; loop]; loc}
+      (tick, {s= StmtBlock [decl; init; loop]; loc})
   | _, {t= TArray (Some size, subt); loc; _} ->
-      let i = "i_" ^ string_of_int (getTick ()) in
+      let i = "i_" ^ string_of_int tick in
+      let tick = tick + 1 in
       let int_t = C.int_t in
       let index = {e= EId i; t= int_t; loc} in
       let one = {e= EInt 1; t= int_t; loc} in
       let cond = {e= EOp (OpLt, index, {e= EInt size; t= int_t; loc}); t= C.bool_t; loc} in
-      let temp = "temp_" ^ string_of_int (getTick ()) in
+      let temp = "temp_" ^ string_of_int tick in
+      let tick = tick + 1 in
       let rhs_temp = {e= EId temp; t; loc} in
       let lhs_temp = {l= LId temp; t; loc} in
-      let bind =
+      let tick, bind =
         let lhs = {l= LIndex {e= lhs_temp; index}; t= subt; loc} in
         let rhs = {e= EIndex {e= rhs_temp; index}; t= subt; loc} in
-        initStatement cstyle lhs rhs subt None
+        initStatement cstyle tick lhs rhs subt None
       in
       let plus_one = {e= EOp (OpAdd, index, one); t= int_t; loc} in
       let incr = {s= StmtBind ({l= LId i; t= int_t; loc}, plus_one); loc} in
@@ -242,17 +237,17 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) (init_value : exp op
       let decl_array = {s= StmtDecl ({d= DId (temp, None); t; loc}, None); loc} in
       let init = {s= StmtBind ({l= LId i; t= int_t; loc}, {e= EInt 0; t= int_t; loc}); loc} in
       let transfer = {s= StmtBind (lhs, rhs_temp); loc} in
-      {s= StmtBlock [decl_array; decl; init; loop; transfer]; loc}
+      (tick, {s= StmtBlock [decl_array; decl; init; loop; transfer]; loc})
   | _, {t= TArray (None, _); _} ->
       failwith "initStatement: Array without size"
   | _, {t= TList _; loc; _} ->
       (* Lists are initialized as empty - use EEmptyValue with list type *)
       let rhs = {e= EEmptyValue; t; loc} in
-      {s= StmtBind (lhs, rhs); loc}
+      (tick, {s= StmtBind (lhs, rhs); loc})
   (* Catch remaining cases with custom init value for unsupported types *)
   | Some _, {loc; _} ->
       let rhs = getInitRHS t in
-      {s= StmtBind (lhs, rhs); loc}
+      (tick, {s= StmtBind (lhs, rhs); loc})
 
 let customInitializerCall (custom_initializers : string Util.Maps.Map.t) name ectx void_type loc =
   match Util.Maps.Map.find_opt name custom_initializers with
@@ -281,7 +276,6 @@ let initializerType (iargs : Args.args) =
       RefObject
 
 let createInitFunction custom_initializers (iargs : Args.args) stmt =
-  let () = resetTick () in
   let cstyle = initializerType iargs in
   match stmt with
   (* Generation for c-style code using references *)
@@ -291,14 +285,14 @@ let createInitFunction custom_initializers (iargs : Args.args) stmt =
       let void_type = C.void_t in
       let lctx = {l= LId "_ctx"; t= this_type; loc} in
       let ectx = {e= EId "_ctx"; t= this_type; loc} in
-      let stmts =
-        CCList.map
-          (fun (var, (t : type_), tags, _) ->
+      let _, stmts =
+        CCList.fold_left_map
+          (fun tick (var, (t : type_), tags, _) ->
             let init_value = getInitValueFromTags tags t in
             let lhs = {l= LMember (lctx, var); t; loc= t.loc} in
             let rhs = {e= EMember (ectx, var); t; loc= t.loc} in
-            initStatement cstyle lhs rhs t init_value )
-          struct_t.members
+            initStatement cstyle tick lhs rhs t init_value )
+          0 struct_t.members
       in
       let custom_initializer = customInitializerCall custom_initializers struct_t.path ectx void_type loc in
       let body = {s= StmtBlock (stmts @ custom_initializer); loc} in
@@ -321,14 +315,14 @@ let createInitFunction custom_initializers (iargs : Args.args) stmt =
       let void_type = C.void_t in
       let lctx = {l= LId "_ctx"; t= this_type; loc} in
       let ectx = {e= EId "_ctx"; t= this_type; loc} in
-      let stmts =
-        CCList.map
-          (fun (var, (t : type_), tags, _) ->
+      let _, stmts =
+        CCList.fold_left_map
+          (fun tick (var, (t : type_), tags, _) ->
             let init_value = getInitValueFromTags tags t in
             let lhs = {l= LMember (lctx, var); t; loc= t.loc} in
             let rhs = {e= EMember (ectx, var); t; loc= t.loc} in
-            initStatement cstyle lhs rhs t init_value )
-          struct_t.members
+            initStatement cstyle tick lhs rhs t init_value )
+          0 struct_t.members
       in
       let custom_initializer = customInitializerCall custom_initializers struct_t.path ectx void_type loc in
       let new_ctx = {s= StmtDecl ({d= DId ("_ctx", None); t= this_type; loc}, None); loc} in
