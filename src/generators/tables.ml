@@ -109,6 +109,24 @@ let rec fitDataOrder1 data index acc0 acc1 =
     let c0, c1 = Fitting.lagrange2 (0.0, snd p1) (1.0, snd p2) in
     fitDataOrder1 data (index - 1) (c0 :: acc0) (c1 :: acc1)
 
+(* Real order-1 tables are evaluated as c0 + (x - center) * c1 instead, with each cell's line
+   rewritten on the input centred on the table. That skips converting the cell back to a float
+   to compute u, which on a single-issue FPU such as the Cortex-M4's is a third of the lookup.
+   Centring keeps the cancellation in c0 bounded by the half-width of the table times its
+   slope, so a table far from zero loses no more precision than one around it. *)
+let centerCoefficientsOrder1 ~cells acc0 acc1 =
+  let half = float_of_int cells /. 2.0 in
+  let rec loop cell acc0 acc1 =
+    match (acc0, acc1) with
+    | c0 :: rest0, c1 :: rest1 ->
+        let offset = half -. float_of_int cell in
+        let c0', c1' = loop (cell + 1) rest0 rest1 in
+        ((c0 +. (c1 *. offset)) :: c0', c1 :: c1')
+    | _ ->
+        ([], [])
+  in
+  loop 0 acc0 acc1
+
 let rec fitDataOrder2 data index acc0 acc1 acc2 =
   if index < 0 then (acc0, acc1, acc2)
   else
@@ -186,7 +204,7 @@ let calculateIntIntTables loc iprog ~display name (int_type : type_) min max =
   in
   [makeIntTableDecl loc name "table" int_type data]
 
-let calculateTablesOrder1 loc iprog ~display name size min max precision =
+let calculateTablesOrder1 loc iprog ~display ~centered name size min max precision =
   let map x x0 x1 y0 y1 = ((x -. x0) *. (y1 -. y0) /. (x1 -. x0)) +. y0 in
   let map_x x = map x 0. (float_of_int size) min max in
   let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
@@ -198,6 +216,13 @@ let calculateTablesOrder1 loc iprog ~display name size min max precision =
         (x, y) )
   in
   let acc0, acc1 = fitDataOrder1 data (size - 1) [] [] in
+  let acc0, acc1 =
+    if centered then
+      let scale = float_of_int size /. (max -. min) in
+      let acc0, acc1 = centerCoefficientsOrder1 ~cells:size acc0 acc1 in
+      (acc0, CCList.map (fun c1 -> c1 *. scale) acc1)
+    else (acc0, acc1)
+  in
   (* One guard point holding the value at [max]: without bound checks an input of exactly [max]
      selects cell [size], which must return the endpoint instead of reading past the fitted
      cells. *)
@@ -336,6 +361,26 @@ let makeNewBody1 bound_check fname ~locals ~cells ~points in_precision t min max
   let return = C.sreturn (C.eadd (getCoeff 0) (C.emul u (getCoeff 1))) in
   C.sblock (index_stmts @ [return])
 
+(* The centred form of the real order-1 tables (see centerCoefficientsOrder1). With bound_check
+   only the cell number is clamped, an integer clip, and not the input: the builtin float clip
+   costs more than the rest of the lookup on FPUs without a min/max instruction. Past the edges
+   the result therefore continues the line of the edge cell instead of holding the endpoint. *)
+let makeNewBody1Centered bound_check fname ~locals ~cells ~points t min max input =
+  let stride = 2 in
+  let getCoeff = makeGetCoeff fname ~index:locals.index ~stride ~size:points t in
+  let scale = float_of_int cells /. (max -. min) in
+  let center = (min +. max) /. 2.0 in
+  let scaled = makeMul t (makeSub t input min) scale in
+  let cell_expr = C.ecall (getCastIndexFunction t) [scaled] C.int_t in
+  let cell_expr = if bound_check then C.ecall "clip" [cell_expr; C.eint 0; C.eint (cells - 1)] C.int_t else cell_expr in
+  let cell = C.eid locals.cell C.int_t in
+  let offset = makeSub t input center in
+  let return = C.sreturn (C.eadd (getCoeff 0) (C.emul offset (getCoeff 1))) in
+  C.sblock
+    ( C.sdecl_bind locals.cell cell_expr C.int_t
+    @ C.sdecl_bind locals.index (C.emul cell (C.eint stride)) C.int_t
+    @ [return] )
+
 let makeNewBody1Fixed bound_check fname ~locals ~cells ~points in_precision t min max input =
   let stride = 2 in
   let getCoeff = makeGetCoeff fname ~index:locals.index ~stride ~size:points t in
@@ -461,9 +506,17 @@ let makeTable iprog (def : function_def) =
           in
           let raw = generateRawAccessFunctions loc def.name ~stride:2 ~size:points out_precision in
           result @ raw @ [{top= TopFunction (def, new_body); loc}]
+      | Some (Int 1), {t= TReal; _}, {t= TReal; _} ->
+          let points = size + 1 in
+          let result = calculateTablesOrder1 loc iprog ~display ~centered:true def.name size min max out_precision in
+          let new_body =
+            makeNewBody1Centered bound_check def.name ~locals ~cells:size ~points out_precision min max var
+          in
+          let raw = generateRawAccessFunctions loc def.name ~stride:2 ~size:points out_precision in
+          result @ raw @ [{top= TopFunction (def, new_body); loc}]
       | Some (Int 1), _, _ ->
           let points = size + 1 in
-          let result = calculateTablesOrder1 loc iprog ~display def.name size min max out_precision in
+          let result = calculateTablesOrder1 loc iprog ~display ~centered:false def.name size min max out_precision in
           let new_body =
             makeNewBody1 bound_check def.name ~locals ~cells:size ~points in_precision out_precision min max var
           in

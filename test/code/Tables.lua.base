@@ -38,11 +38,9 @@ function Tables_sineTable2_raw_c1(index)
 end
 
 function Tables_sineTable2(x)
-   local value = (((x) > (1.0) and (1.0) or ((x) < (0.0) and (0.0) or (x))) * 32.0)
-   local cell = clipValue(floor(value), 0, 31)
-   local u = (value - (cell))
+   local cell = clipValue(floor((x * 32.0)), 0, 31)
    local index = (cell * 2)
-   return (Tables_sineTable2_c[(index) + 1] + (u * Tables_sineTable2_c[((index + 1)) + 1]))
+   return (Tables_sineTable2_c[(index) + 1] + ((x - 0.5) * Tables_sineTable2_c[((index + 1)) + 1]))
 end
 
 Tables_sineTable3_c = {};
