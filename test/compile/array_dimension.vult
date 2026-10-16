@@ -19,5 +19,5 @@ fun main() {
   val x = [ 1.0, 2.0 ];
   val y = [ 1.0, 2.0, 3.0 ];
   val z = total(x) + total(y);
-  val k = sum(x, y);
+  val _k = sum(x, y);
 }

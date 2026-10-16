@@ -325,7 +325,7 @@ this.Ahr_noteOn = function (_ctx, note, velocity, channel) {
 this.Ahr_noteOff = function (_ctx, note, channel) {
 };
 
-this.Ahr_controlChange = function (_ctx, control, value, channel) {
+this.Ahr_controlChange = function (_ctx, control, value, _channel) {
    if ((control == (1|0))) {
       _ctx.knob1 = (0.007874 * (value));
    }

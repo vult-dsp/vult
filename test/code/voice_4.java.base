@@ -1307,7 +1307,7 @@ private void Adsr_noteOn(Adsr_process_type _ctx, int note, int velocity, int cha
 private void Adsr_noteOff(Adsr_process_type _ctx, int note, int channel) {
 }
 
-private void Adsr_controlChange(Adsr_process_type _ctx, int control, int value, int channel) {
+private void Adsr_controlChange(Adsr_process_type _ctx, int control, int value, int _channel) {
    if ((control == 1)) {
       _ctx.knob1 = (0.007874f * (float)(value));
    }
@@ -1329,7 +1329,7 @@ private void Adsr_default(Adsr_process_type _ctx) {
    _ctx.knob4 = 0.5f;
 }
 
-private float Voice_4_process(Voice_4_process_type _ctx, float cv, float vel, float gate) {
+private float Voice_4_process(Voice_4_process_type _ctx, float cv, float _vel, float gate) {
    float lfo = Lfo_process(_ctx.inst_1d695, _ctx.lfo_rate, _ctx.lfo_shape, (gate * _ctx.lfo_reset));
    float mod_pw = (lfo * _ctx.lfo_pw);
    float mod_cv = (lfo * _ctx.lfo_cv);
@@ -1350,7 +1350,7 @@ private void Voice_4_noteOn(Voice_4_process_type _ctx, int note, int velocity, i
 private void Voice_4_noteOff(Voice_4_process_type _ctx, int note, int channel) {
 }
 
-private void Voice_4_controlChange(Voice_4_process_type _ctx, int control, int value, int channel) {
+private void Voice_4_controlChange(Voice_4_process_type _ctx, int control, int value, int _channel) {
    if ((control == 30)) {
       _ctx.level1 = (0.007874f * (float)(value));
    }

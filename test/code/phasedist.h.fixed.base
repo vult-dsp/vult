@@ -93,14 +93,14 @@ fix16_t Phasedist_phasor(Phasedist_phasor_type& _ctx, fix16_t pitch, bool reset)
 
 fix16_t Phasedist_process(Phasedist_process_type& _ctx, fix16_t input);
 
-static_inline void Phasedist_noteOn(Phasedist_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
+static_inline void Phasedist_noteOn(Phasedist_process_type& _ctx, int32_t note, int32_t _velocity, int32_t _channel) {
    _ctx.pitch = int_to_fix(note);
 }
 
 static_inline void Phasedist_noteOff(Phasedist_process_type& _ctx, int32_t note, int32_t channel) {
 }
 
-static_inline void Phasedist_controlChange(Phasedist_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+static_inline void Phasedist_controlChange(Phasedist_process_type& _ctx, int32_t control, int32_t value, int32_t _channel) {
    if (control == 30) {
       _ctx.volume = fix_mul(0x204 /* 0.007874 */, int_to_fix(value));
    }

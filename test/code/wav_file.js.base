@@ -49,7 +49,7 @@ this.Wav_file_index = function (_ctx) {
    return _ctx.i;
 };
 
-this.Wav_file_osc_wave = function (_ctx, cv) {
+this.Wav_file_osc_wave = function (_ctx, _cv) {
    return this.Wav_file_ext_wave((0|0), this.Wav_file_index(_ctx.inst_1e19a));
 };
 

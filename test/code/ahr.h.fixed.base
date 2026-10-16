@@ -252,7 +252,7 @@ static_inline void Ahr_noteOn(Ahr_process_type& _ctx, int32_t note, int32_t velo
 static_inline void Ahr_noteOff(Ahr_process_type& _ctx, int32_t note, int32_t channel) {
 }
 
-void Ahr_controlChange(Ahr_process_type& _ctx, int32_t control, int32_t value, int32_t channel);
+void Ahr_controlChange(Ahr_process_type& _ctx, int32_t control, int32_t value, int32_t _channel);
 
 static_inline void Ahr_default(Ahr_process_type& _ctx) {
    _ctx.knob1 = 0x0 /* 0.000000 */;

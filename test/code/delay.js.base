@@ -284,7 +284,7 @@ this.Delay_mono_isGateOn = function (_ctx) {
    return (_ctx.count > (0|0));
 };
 
-this.Delay_process = function (_ctx, input) {
+this.Delay_process = function (_ctx, _input) {
    var gate = this.Delay_mono_isGateOn(_ctx.notes);
    var lfo_val = (this.Delay_lfo(_ctx.inst_16101, _ctx.lfo_rate, gate) * _ctx.lfo_amt);
    var o1 = this.Delay_phd_osc(_ctx.inst_2c401, _ctx.pitch, (lfo_val + _ctx.detune));
@@ -294,15 +294,15 @@ this.Delay_process = function (_ctx, input) {
    return (0.5 * ((delay_out + osc_out) * _ctx.volume));
 };
 
-this.Delay_noteOn = function (_ctx, note, velocity, channel) {
+this.Delay_noteOn = function (_ctx, note, _velocity, _channel) {
    _ctx.pitch = (this.Delay_mono_noteOn(_ctx.notes, note));
 };
 
-this.Delay_noteOff = function (_ctx, note, channel) {
+this.Delay_noteOff = function (_ctx, note, _channel) {
    _ctx.pitch = (this.Delay_mono_noteOff(_ctx.notes, note));
 };
 
-this.Delay_controlChange = function (_ctx, control, value, channel) {
+this.Delay_controlChange = function (_ctx, control, value, _channel) {
    if ((control == (30|0))) {
       _ctx.volume = (0.007874 * value);
    }

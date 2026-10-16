@@ -947,7 +947,7 @@ def Adsr_noteOn(_ctx, note, velocity, channel):
 def Adsr_noteOff(_ctx, note, channel):
    pass
 
-def Adsr_controlChange(_ctx, control, value, channel):
+def Adsr_controlChange(_ctx, control, value, _channel):
    if (control == 1):
       _ctx.knob1 = (0.007874 * float(value))
    if (control == 2):
@@ -965,7 +965,7 @@ def Adsr_default(_ctx):
    _ctx.knob4 = 0.5
 
 
-def Voice_4_process(_ctx, cv, vel, gate):
+def Voice_4_process(_ctx, cv, _vel, gate):
    lfo = Lfo_process(_ctx.inst_1d695, _ctx.lfo_rate, _ctx.lfo_shape, (gate * _ctx.lfo_reset))
    mod_pw = (lfo * _ctx.lfo_pw)
    mod_cv = (lfo * _ctx.lfo_cv)
@@ -986,7 +986,7 @@ def Voice_4_noteOn(_ctx, note, velocity, channel):
 def Voice_4_noteOff(_ctx, note, channel):
    pass
 
-def Voice_4_controlChange(_ctx, control, value, channel):
+def Voice_4_controlChange(_ctx, control, value, _channel):
    if (control == 30):
       _ctx.level1 = (0.007874 * float(value))
    if (control == 31):

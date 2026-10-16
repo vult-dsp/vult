@@ -135,14 +135,14 @@ function Phasedist_process(_ctx, input)
    return (comp * (sine * Phasedist_smooth(_ctx.inst_475e9, _ctx.volume)))
 end
 
-function Phasedist_noteOn(_ctx, note, velocity, channel)
+function Phasedist_noteOn(_ctx, note, _velocity, _channel)
    _ctx.pitch = Float32(note)
 end
 
 function Phasedist_noteOff(_ctx, note, channel)
 end
 
-function Phasedist_controlChange(_ctx, control, value, channel)
+function Phasedist_controlChange(_ctx, control, value, _channel)
    if (control == Int32(30))
       _ctx.volume = (Float32(0.007874) * Float32(value))
    end

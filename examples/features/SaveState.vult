@@ -21,8 +21,8 @@ fun main() {
   mem str = "" @[save];
   mem p1 : point @[save];
   mem p2 : point;
-  val count1 = c1:counter();
-  val count2 = counter();
+  val _count1 = c1:counter();
+  val _count2 = counter();
   val _ = nosave();
   mem point_array : array(point, 3);
 }

@@ -137,13 +137,13 @@ float Synth1_phasor(Synth1_phasor_type& _ctx, float pitch, bool reset);
 
 float Synth1_lfo(Synth1_lfo_type& _ctx, float f, int32_t gate);
 
-float Synth1_process(Synth1_process_type& _ctx, float input);
+float Synth1_process(Synth1_process_type& _ctx, float _input);
 
-void Synth1_noteOn(Synth1_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel);
+void Synth1_noteOn(Synth1_process_type& _ctx, int32_t note, int32_t _velocity, int32_t _channel);
 
-void Synth1_noteOff(Synth1_process_type& _ctx, int32_t note, int32_t channel);
+void Synth1_noteOff(Synth1_process_type& _ctx, int32_t note, int32_t _channel);
 
-void Synth1_controlChange(Synth1_process_type& _ctx, int32_t control, float value, int32_t channel);
+void Synth1_controlChange(Synth1_process_type& _ctx, int32_t control, float value, int32_t _channel);
 
 void Synth1_default(Synth1_process_type& _ctx);
 

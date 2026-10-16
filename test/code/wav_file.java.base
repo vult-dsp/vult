@@ -100,7 +100,7 @@ private int Wav_file_index(Wav_file_index_type _ctx) {
    return _ctx.i;
 }
 
-private float Wav_file_osc_wave(Wav_file_osc_wave_type _ctx, float cv) {
+private float Wav_file_osc_wave(Wav_file_osc_wave_type _ctx, float _cv) {
    return Wav_file_ext_wave(0, Wav_file_index(_ctx.inst_1e19a));
 }
 

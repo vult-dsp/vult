@@ -320,7 +320,7 @@ fix16_t Adsr_do(Adsr_do_type& _ctx, fix16_t gate, fix16_t a, fix16_t d, fix16_t 
    return fix_mul(Util_smooth(_ctx.inst_295a0, _ctx.scale), fix_clip((_ctx.out >> 10), 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */));
 }
 
-void Adsr_controlChange(Adsr_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+void Adsr_controlChange(Adsr_process_type& _ctx, int32_t control, int32_t value, int32_t _channel) {
    if (control == 1) {
       _ctx.knob1 = fix_mul(0x204 /* 0.007874 */, int_to_fix(value));
    }
@@ -335,7 +335,7 @@ void Adsr_controlChange(Adsr_process_type& _ctx, int32_t control, int32_t value,
    }
 }
 
-fix16_t Voice_4_process(Voice_4_process_type& _ctx, fix16_t cv, fix16_t vel, fix16_t gate) {
+fix16_t Voice_4_process(Voice_4_process_type& _ctx, fix16_t cv, fix16_t _vel, fix16_t gate) {
    fix16_t lfo = Lfo_process(_ctx.inst_1d695, _ctx.lfo_rate, _ctx.lfo_shape, fix_mul(gate, _ctx.lfo_reset));
    fix16_t mod_pw = fix_mul(lfo, _ctx.lfo_pw);
    fix16_t mod_cv = fix_mul(lfo, _ctx.lfo_cv);
@@ -350,7 +350,7 @@ fix16_t Voice_4_process(Voice_4_process_type& _ctx, fix16_t cv, fix16_t vel, fix
    return fix_mul(env, f);
 }
 
-void Voice_4_controlChange(Voice_4_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+void Voice_4_controlChange(Voice_4_process_type& _ctx, int32_t control, int32_t value, int32_t _channel) {
    if (control == 30) {
       _ctx.level1 = fix_mul(0x204 /* 0.007874 */, int_to_fix(value));
    }

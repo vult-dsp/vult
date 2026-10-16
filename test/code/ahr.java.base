@@ -467,7 +467,7 @@ private void Ahr_noteOn(Ahr_process_type _ctx, int note, int velocity, int chann
 private void Ahr_noteOff(Ahr_process_type _ctx, int note, int channel) {
 }
 
-private void Ahr_controlChange(Ahr_process_type _ctx, int control, int value, int channel) {
+private void Ahr_controlChange(Ahr_process_type _ctx, int control, int value, int _channel) {
    if ((control == 1)) {
       _ctx.knob1 = (0.007874f * (float)(value));
    }

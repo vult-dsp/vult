@@ -5,7 +5,7 @@ fun index() {
    return i;
 }
 
-fun osc_wave(cv:real) {
+fun osc_wave(_cv:real) {
    return ext_wave(0,index());
 }
 

@@ -1127,7 +1127,7 @@ end
 function Adsr_noteOff(_ctx, note, channel)
 end
 
-function Adsr_controlChange(_ctx, control, value, channel)
+function Adsr_controlChange(_ctx, control, value, _channel)
    if (control == Int32(1))
       _ctx.knob1 = (Float32(0.007874) * Float32(value))
    end
@@ -1149,7 +1149,7 @@ function Adsr_default(_ctx)
    _ctx.knob4 = Float32(0.5)
 end
 
-function Voice_4_process(_ctx, cv, vel, gate)
+function Voice_4_process(_ctx, cv, _vel, gate)
    lfo = Lfo_process(_ctx.inst_1d695, _ctx.lfo_rate, _ctx.lfo_shape, (gate * _ctx.lfo_reset))
    mod_pw = (lfo * _ctx.lfo_pw)
    mod_cv = (lfo * _ctx.lfo_cv)
@@ -1170,7 +1170,7 @@ end
 function Voice_4_noteOff(_ctx, note, channel)
 end
 
-function Voice_4_controlChange(_ctx, control, value, channel)
+function Voice_4_controlChange(_ctx, control, value, _channel)
    if (control == Int32(30))
       _ctx.level1 = (Float32(0.007874) * Float32(value))
    end

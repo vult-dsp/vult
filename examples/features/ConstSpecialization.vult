@@ -87,7 +87,7 @@ fun test_accumulate_nonspec(s : real, x : real) : real {
 // Constant parameter with type generic
 // =============================================================================
 
-fun scale_typed('factor : int, x : 't) : 't {
+fun scale_typed('_factor : int, x : 't) : 't {
    mem last : 't;
    last = x;
    return x;
@@ -163,17 +163,17 @@ fun process_matrix(m : array(real, 4)) {
 // =============================================================================
 
 fun main() {
-   val r1 = test_specialized_5();
-   val r2 = test_specialized_100();
-   val r3 = test_nonspec(50);
-   val r4 = test_weighted_spec();
-   val r5 = test_weighted_nonspec(0.5);
-   val r6 = test_interleaved_spec();
-   val r7 = test_interleaved_nonspec(1.5);
-   val r8 = test_accumulate_spec();
-   val r9 = test_accumulate_nonspec(3.0, 4.0);
-   val r10 = test_typed_int();
-   val r11 = test_typed_real();
+   val _r1 = test_specialized_5();
+   val _r2 = test_specialized_100();
+   val _r3 = test_nonspec(50);
+   val _r4 = test_weighted_spec();
+   val _r5 = test_weighted_nonspec(0.5);
+   val _r6 = test_interleaved_spec();
+   val _r7 = test_interleaved_nonspec(1.5);
+   val _r8 = test_accumulate_spec();
+   val _r9 = test_accumulate_nonspec(3.0, 4.0);
+   val _r10 = test_typed_int();
+   val _r11 = test_typed_real();
    // Test array mutation with specialized generic functions
    val arr : array(real, 4);
    val inputs : array(real, 2);

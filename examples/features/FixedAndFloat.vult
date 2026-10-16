@@ -6,25 +6,25 @@ fun test1() {
   val int_value = 0;
   val bool_value = false;
   // When performing operations with fixed numbers all the values need to be fixed
-  val result = fixed_value + fix16(real_value) + 0.0x;
+  val _result = fixed_value + fix16(real_value) + 0.0x;
 
   // You can convert back and forth using the builtin functions
-  val from_int = fix16(int_value);
-  val from_real = fix16(real_value);
-  val from_bool = fix16(bool_value);
+  val _from_int = fix16(int_value);
+  val _from_real = fix16(real_value);
+  val _from_bool = fix16(bool_value);
 
-  val to_int = int(fixed_value);
-  val to_real = real(fixed_value);
-  val to_bool = bool(fixed_value);
+  val _to_int = int(fixed_value);
+  val _to_real = real(fixed_value);
+  val _to_bool = bool(fixed_value);
 
   // the following conversions are perfomed at compile time
-  from_int = fix16(0);
-  from_real = fix16(0.0);
-  from_bool = fix16(false);
+  _from_int = fix16(0);
+  _from_real = fix16(0.0);
+  _from_bool = fix16(false);
 
-  to_int = int(0.0x);
-  to_real = real(0.0x);
-  to_bool = bool(0.0x);
+  _to_int = int(0.0x);
+  _to_real = real(0.0x);
+  _to_bool = bool(0.0x);
 }
 
 // NOTES:

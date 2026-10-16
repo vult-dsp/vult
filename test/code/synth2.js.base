@@ -369,7 +369,7 @@ this.Synth2_mono_isGateOn = function (_ctx) {
    return (_ctx.count > (0|0));
 };
 
-this.Synth2_process = function (_ctx, i) {
+this.Synth2_process = function (_ctx, _i) {
    var gate = this.Synth2_mono_isGateOn(_ctx.monoin);
    var lfo1 = (this.Synth2_lfo(_ctx.inst_15fb7, _ctx.lfo_rate, gate) * _ctx.lfo_amt);
    var o1 = this.Synth2_osc(_ctx.inst_2e5b7, _ctx.pitch, (lfo1 + _ctx.pw), _ctx.wave);
@@ -378,15 +378,15 @@ this.Synth2_process = function (_ctx, i) {
    return (output * _ctx.volume);
 };
 
-this.Synth2_noteOn = function (_ctx, note, velocity, channel) {
+this.Synth2_noteOn = function (_ctx, note, _velocity, _channel) {
    _ctx.pitch = (this.Synth2_mono_noteOn(_ctx.monoin, note));
 };
 
-this.Synth2_noteOff = function (_ctx, note, channel) {
+this.Synth2_noteOff = function (_ctx, note, _channel) {
    _ctx.pitch = (this.Synth2_mono_noteOff(_ctx.monoin, note));
 };
 
-this.Synth2_controlChange = function (_ctx, control, value, channel) {
+this.Synth2_controlChange = function (_ctx, control, value, _channel) {
    var value_0_1 = (0.007874 * (value));
    var value_m1_1 = (-1.0 + (2.0 * value_0_1));
    if ((control == (30|0))) {

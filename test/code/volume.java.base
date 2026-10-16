@@ -70,7 +70,7 @@ private void Volume_noteOn(Volume_process_type _ctx, int note, int velocity, int
 private void Volume_noteOff(Volume_process_type _ctx, int note, int channel) {
 }
 
-private void Volume_controlChange(Volume_process_type _ctx, int control, int value, int channel) {
+private void Volume_controlChange(Volume_process_type _ctx, int control, int value, int _channel) {
    if ((control == 30)) {
       _ctx.volume = (0.007874f * (float)(value));
    }

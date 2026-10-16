@@ -23,25 +23,25 @@ and current() {
 
 // Stateless companion, anonymous call
 fun wrapper_stateless() {
-  val unused = choose(1);
+  val _unused = choose(1);
   return marker();
 }
 
 // Stateful companion, anonymous instance
 fun wrapper_stateful() {
-  val unused = accum(3);
+  val _unused = accum(3);
   return current();
 }
 
 // Stateful companion, explicit instance
 fun wrapper_instance() {
-  val unused = i1:accum(20);
+  val _unused = i1:accum(20);
   return i1:current();
 }
 
 // Qualified companion call into another module
 fun wrapper_qualified() {
-  val unused = Cret_lib.pick(1);
+  val _unused = Cret_lib.pick(1);
   return Cret_lib.tag();
 }
 

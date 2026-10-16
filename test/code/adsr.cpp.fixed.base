@@ -54,7 +54,7 @@ fix16_t Adsr_do(Adsr_do_type& _ctx, fix16_t gate, fix16_t a, fix16_t d, fix16_t 
    return fix_mul(Util_smooth(_ctx.inst_295a0, _ctx.scale), fix_clip((_ctx.out >> 10), 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */));
 }
 
-void Adsr_controlChange(Adsr_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+void Adsr_controlChange(Adsr_process_type& _ctx, int32_t control, int32_t value, int32_t _channel) {
    if (control == 1) {
       _ctx.knob1 = fix_mul(0x204 /* 0.007874 */, int_to_fix(value));
    }

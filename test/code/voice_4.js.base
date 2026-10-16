@@ -913,7 +913,7 @@ this.Adsr_noteOn = function (_ctx, note, velocity, channel) {
 this.Adsr_noteOff = function (_ctx, note, channel) {
 };
 
-this.Adsr_controlChange = function (_ctx, control, value, channel) {
+this.Adsr_controlChange = function (_ctx, control, value, _channel) {
    if ((control == (1|0))) {
       _ctx.knob1 = (0.007874 * (value));
    }
@@ -935,7 +935,7 @@ this.Adsr_default = function (_ctx) {
    _ctx.knob4 = 0.5;
 };
 
-this.Voice_4_process = function (_ctx, cv, vel, gate) {
+this.Voice_4_process = function (_ctx, cv, _vel, gate) {
    var lfo = this.Lfo_process(_ctx.inst_1d695, _ctx.lfo_rate, _ctx.lfo_shape, (gate * _ctx.lfo_reset));
    var mod_pw = (lfo * _ctx.lfo_pw);
    var mod_cv = (lfo * _ctx.lfo_cv);
@@ -956,7 +956,7 @@ this.Voice_4_noteOn = function (_ctx, note, velocity, channel) {
 this.Voice_4_noteOff = function (_ctx, note, channel) {
 };
 
-this.Voice_4_controlChange = function (_ctx, control, value, channel) {
+this.Voice_4_controlChange = function (_ctx, control, value, _channel) {
    if ((control == (30|0))) {
       _ctx.level1 = (0.007874 * (value));
    }

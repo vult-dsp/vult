@@ -184,7 +184,7 @@ void Ahr_process(Ahr_process_type& _ctx, float gate) {
    return ;
 }
 
-void Ahr_controlChange(Ahr_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+void Ahr_controlChange(Ahr_process_type& _ctx, int32_t control, int32_t value, int32_t _channel) {
    if (control == 1) {
       _ctx.knob1 = 0.007874f * int_to_float(value);
    }
@@ -209,7 +209,7 @@ float Kick_do(Kick_do_type& _ctx, float gate, float odecay, float pitch, float s
    return noise_env * noise_osc + osc_env * osc_sat;
 }
 
-void Kick_controlChange(Kick_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+void Kick_controlChange(Kick_process_type& _ctx, int32_t control, int32_t value, int32_t _channel) {
    if (control == 30) {
       _ctx.odecay = 0.007874f * int_to_float(value);
    }

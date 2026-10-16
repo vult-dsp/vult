@@ -163,14 +163,14 @@ private float Phasedist_process(Phasedist_process_type _ctx, float input) {
    return (comp * (sine * Phasedist_smooth(_ctx.inst_475e9, _ctx.volume)));
 }
 
-private void Phasedist_noteOn(Phasedist_process_type _ctx, int note, int velocity, int channel) {
+private void Phasedist_noteOn(Phasedist_process_type _ctx, int note, int _velocity, int _channel) {
    _ctx.pitch = (float)(note);
 }
 
 private void Phasedist_noteOff(Phasedist_process_type _ctx, int note, int channel) {
 }
 
-private void Phasedist_controlChange(Phasedist_process_type _ctx, int control, int value, int channel) {
+private void Phasedist_controlChange(Phasedist_process_type _ctx, int control, int value, int _channel) {
    if ((control == 30)) {
       _ctx.volume = (0.007874f * (float)(value));
    }

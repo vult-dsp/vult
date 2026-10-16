@@ -772,7 +772,7 @@ static_inline void Adsr_noteOn(Adsr_process_type& _ctx, int32_t note, int32_t ve
 static_inline void Adsr_noteOff(Adsr_process_type& _ctx, int32_t note, int32_t channel) {
 }
 
-void Adsr_controlChange(Adsr_process_type& _ctx, int32_t control, int32_t value, int32_t channel);
+void Adsr_controlChange(Adsr_process_type& _ctx, int32_t control, int32_t value, int32_t _channel);
 
 static_inline void Adsr_default(Adsr_process_type& _ctx) {
    _ctx.knob1 = 0.0f;
@@ -781,7 +781,7 @@ static_inline void Adsr_default(Adsr_process_type& _ctx) {
    _ctx.knob4 = 0.5f;
 }
 
-float Voice_4_process(Voice_4_process_type& _ctx, float cv, float vel, float gate);
+float Voice_4_process(Voice_4_process_type& _ctx, float cv, float _vel, float gate);
 
 static_inline void Voice_4_noteOn(Voice_4_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
 }
@@ -789,7 +789,7 @@ static_inline void Voice_4_noteOn(Voice_4_process_type& _ctx, int32_t note, int3
 static_inline void Voice_4_noteOff(Voice_4_process_type& _ctx, int32_t note, int32_t channel) {
 }
 
-void Voice_4_controlChange(Voice_4_process_type& _ctx, int32_t control, int32_t value, int32_t channel);
+void Voice_4_controlChange(Voice_4_process_type& _ctx, int32_t control, int32_t value, int32_t _channel);
 
 static_inline void Voice_4_default(Voice_4_process_type& _ctx) {
 }

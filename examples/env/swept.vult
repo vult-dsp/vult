@@ -9,7 +9,6 @@ when 'gate' is triggered.
 
 fun process(gate, start, end, rate) {
    mem out;
-   val a_rate = 1.0 / (100.0 * rate + 0.01);
    val bgate = gate > 0.5;
    out = out + ((end *  1024.0) - out) * rate * 0.004;
    if(Util.edge(bgate))

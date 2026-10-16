@@ -396,7 +396,7 @@ function Delay_mono_isGateOn(_ctx)
    return (_ctx.count > Int32(0))
 end
 
-function Delay_process(_ctx, input)
+function Delay_process(_ctx, _input)
    gate = Delay_mono_isGateOn(_ctx.notes)
    lfo_val = (Delay_lfo(_ctx.inst_16101, _ctx.lfo_rate, gate) * _ctx.lfo_amt)
    o1 = Delay_phd_osc(_ctx.inst_2c401, _ctx.pitch, (lfo_val + _ctx.detune))
@@ -406,15 +406,15 @@ function Delay_process(_ctx, input)
    return (Float32(0.5) * ((delay_out + osc_out) * _ctx.volume))
 end
 
-function Delay_noteOn(_ctx, note, velocity, channel)
+function Delay_noteOn(_ctx, note, _velocity, _channel)
    _ctx.pitch = Float32(Delay_mono_noteOn(_ctx.notes, note))
 end
 
-function Delay_noteOff(_ctx, note, channel)
+function Delay_noteOff(_ctx, note, _channel)
    _ctx.pitch = Float32(Delay_mono_noteOff(_ctx.notes, note))
 end
 
-function Delay_controlChange(_ctx, control, value, channel)
+function Delay_controlChange(_ctx, control, value, _channel)
    if (control == Int32(30))
       _ctx.volume = (Float32(0.007874) * value)
    end

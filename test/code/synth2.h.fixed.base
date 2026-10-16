@@ -252,17 +252,17 @@ static_inline bool Synth2_mono_isGateOn(Synth2_mono_noteOn_type& _ctx) {
    return _ctx.count > 0;
 }
 
-fix16_t Synth2_process(Synth2_process_type& _ctx, fix16_t i);
+fix16_t Synth2_process(Synth2_process_type& _ctx, fix16_t _i);
 
-static_inline void Synth2_noteOn(Synth2_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
+static_inline void Synth2_noteOn(Synth2_process_type& _ctx, int32_t note, int32_t _velocity, int32_t _channel) {
    _ctx.pitch = int_to_fix(Synth2_mono_noteOn(_ctx.monoin, note));
 }
 
-static_inline void Synth2_noteOff(Synth2_process_type& _ctx, int32_t note, int32_t channel) {
+static_inline void Synth2_noteOff(Synth2_process_type& _ctx, int32_t note, int32_t _channel) {
    _ctx.pitch = int_to_fix(Synth2_mono_noteOff(_ctx.monoin, note));
 }
 
-void Synth2_controlChange(Synth2_process_type& _ctx, int32_t control, int32_t value, int32_t channel);
+void Synth2_controlChange(Synth2_process_type& _ctx, int32_t control, int32_t value, int32_t _channel);
 
 
 #endif // SYNTH2_H

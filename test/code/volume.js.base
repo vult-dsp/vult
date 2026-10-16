@@ -42,7 +42,7 @@ this.Volume_noteOn = function (_ctx, note, velocity, channel) {
 this.Volume_noteOff = function (_ctx, note, channel) {
 };
 
-this.Volume_controlChange = function (_ctx, control, value, channel) {
+this.Volume_controlChange = function (_ctx, control, value, _channel) {
    if ((control == (30|0))) {
       _ctx.volume = (0.007874 * (value));
    }

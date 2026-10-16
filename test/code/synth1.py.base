@@ -175,7 +175,7 @@ def Synth1_lfo(_ctx, f, gate):
    return (-0.5 + math.sin((6.283185 * _ctx.phase)))
 
 
-def Synth1_process(_ctx, input):
+def Synth1_process(_ctx, _input):
    lfo_val = (Synth1_lfo(_ctx.inst_17d3d, _ctx.lfo_rate, _ctx.gate) * _ctx.lfo_amt)
    phase1 = Synth1_phasor(_ctx.inst_2863d, _ctx.pitch, False)
    comp = (1.0 + (-phase1))
@@ -191,7 +191,7 @@ def Synth1_process(_ctx, input):
    return (comp * (sine * (Synth1_smooth(_ctx.inst_5dc3d, _ctx.volume) * Synth1_smooth(_ctx.inst_6dc3d, gate_value))))
 
 
-def Synth1_noteOn(_ctx, note, velocity, channel):
+def Synth1_noteOn(_ctx, note, _velocity, _channel):
    if (_ctx.count == 0):
       _ctx.n1 = note
       _ctx.pitch = float(note)
@@ -219,7 +219,7 @@ def Synth1_noteOn(_ctx, note, velocity, channel):
       _ctx.gate = 0
 
 
-def Synth1_noteOff(_ctx, note, channel):
+def Synth1_noteOff(_ctx, note, _channel):
    found = False
    if (note == _ctx.n1):
       _ctx.n1 = _ctx.n2
@@ -257,7 +257,7 @@ def Synth1_noteOff(_ctx, note, channel):
       _ctx.pitch = float(_ctx.n4)
 
 
-def Synth1_controlChange(_ctx, control, value, channel):
+def Synth1_controlChange(_ctx, control, value, _channel):
    if (control == 30):
       _ctx.volume = (0.007874 * value)
    if (control == 31):

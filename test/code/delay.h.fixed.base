@@ -190,17 +190,17 @@ static_inline bool Delay_mono_isGateOn(Delay_mono_noteOn_type& _ctx) {
    return _ctx.count > 0;
 }
 
-fix16_t Delay_process(Delay_process_type& _ctx, fix16_t input);
+fix16_t Delay_process(Delay_process_type& _ctx, fix16_t _input);
 
-static_inline void Delay_noteOn(Delay_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
+static_inline void Delay_noteOn(Delay_process_type& _ctx, int32_t note, int32_t _velocity, int32_t _channel) {
    _ctx.pitch = int_to_fix(Delay_mono_noteOn(_ctx.notes, note));
 }
 
-static_inline void Delay_noteOff(Delay_process_type& _ctx, int32_t note, int32_t channel) {
+static_inline void Delay_noteOff(Delay_process_type& _ctx, int32_t note, int32_t _channel) {
    _ctx.pitch = int_to_fix(Delay_mono_noteOff(_ctx.notes, note));
 }
 
-void Delay_controlChange(Delay_process_type& _ctx, int32_t control, fix16_t value, int32_t channel);
+void Delay_controlChange(Delay_process_type& _ctx, int32_t control, fix16_t value, int32_t _channel);
 
 void Delay_default(Delay_process_type& _ctx);
 

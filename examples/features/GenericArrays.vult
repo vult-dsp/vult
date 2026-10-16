@@ -15,8 +15,8 @@ fun test1() {
   val data2 = [ 1.0, 2.0, 3.0, 4.0 ];
 
   // Now both can be called with the same function
-  val result1 = sum(data1);
-  val result2 = sum(data2);
+  val _result1 = sum(data1);
+  val _result2 = sum(data2);
 
 }
 

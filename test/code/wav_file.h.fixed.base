@@ -69,7 +69,7 @@ static_inline int32_t Wav_file_index(Wav_file_index_type& _ctx) {
    return _ctx.i;
 }
 
-static_inline fix16_t Wav_file_osc_wave(Wav_file_osc_wave_type& _ctx, fix16_t cv) {
+static_inline fix16_t Wav_file_osc_wave(Wav_file_osc_wave_type& _ctx, fix16_t _cv) {
    return Wav_file_ext_wave(0, Wav_file_index(_ctx.inst_1e19a));
 }
 

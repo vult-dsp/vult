@@ -515,7 +515,7 @@ function Synth2_mono_isGateOn(_ctx)
    return (_ctx.count > Int32(0))
 end
 
-function Synth2_process(_ctx, i)
+function Synth2_process(_ctx, _i)
    gate = Synth2_mono_isGateOn(_ctx.monoin)
    lfo1 = (Synth2_lfo(_ctx.inst_15fb7, _ctx.lfo_rate, gate) * _ctx.lfo_amt)
    o1 = Synth2_osc(_ctx.inst_2e5b7, _ctx.pitch, (lfo1 + _ctx.pw), _ctx.wave)
@@ -524,15 +524,15 @@ function Synth2_process(_ctx, i)
    return (output * _ctx.volume)
 end
 
-function Synth2_noteOn(_ctx, note, velocity, channel)
+function Synth2_noteOn(_ctx, note, _velocity, _channel)
    _ctx.pitch = Float32(Synth2_mono_noteOn(_ctx.monoin, note))
 end
 
-function Synth2_noteOff(_ctx, note, channel)
+function Synth2_noteOff(_ctx, note, _channel)
    _ctx.pitch = Float32(Synth2_mono_noteOff(_ctx.monoin, note))
 end
 
-function Synth2_controlChange(_ctx, control, value, channel)
+function Synth2_controlChange(_ctx, control, value, _channel)
    value_0_1 = (Float32(0.007874) * Float32(value))
    value_m1_1 = (Float32(-1.0) + (Float32(2.0) * value_0_1))
    if (control == Int32(30))

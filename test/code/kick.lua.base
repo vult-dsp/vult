@@ -615,7 +615,7 @@ end
 function Ahr_noteOff(_ctx, note, channel)
 end
 
-function Ahr_controlChange(_ctx, control, value, channel)
+function Ahr_controlChange(_ctx, control, value, _channel)
    if (control == 1) then
       _ctx.knob1 = (0.007874 * (value))
    end
@@ -656,7 +656,7 @@ end
 function Kick_noteOff(_ctx, note, channel)
 end
 
-function Kick_controlChange(_ctx, control, value, channel)
+function Kick_controlChange(_ctx, control, value, _channel)
    if (control == 30) then
       _ctx.odecay = (0.007874 * (value))
    end

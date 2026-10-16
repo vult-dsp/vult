@@ -44,7 +44,7 @@ fun process(input:real){
 }
 
 // Called when a note On is received
-and noteOn(note:int,velocity:int,channel:int){
+and noteOn(note:int,_velocity:int,_channel:int){
     mem pitch = real(note);
 }
 
@@ -53,7 +53,7 @@ and noteOff(note:int,channel:int){
 }
 
 // Called when a control changes
-and controlChange(control:int,value:int,channel:int){
+and controlChange(control:int,value:int,_channel:int){
    mem volume;
    mem detune;
    // Control 30 defines the volume

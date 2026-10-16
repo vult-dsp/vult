@@ -202,7 +202,7 @@ int32_t Synth2_mono_noteOff(Synth2_mono_noteOn_type& _ctx, int32_t n) {
    return _ctx.pre;
 }
 
-fix16_t Synth2_process(Synth2_process_type& _ctx, fix16_t i) {
+fix16_t Synth2_process(Synth2_process_type& _ctx, fix16_t _i) {
    bool gate = Synth2_mono_isGateOn(_ctx.monoin);
    fix16_t lfo1 = fix_mul(Synth2_lfo(_ctx.inst_15fb7, _ctx.lfo_rate, gate), _ctx.lfo_amt);
    fix16_t o1 = Synth2_osc(_ctx.inst_2e5b7, _ctx.pitch, lfo1 + _ctx.pw, _ctx.wave);
@@ -211,7 +211,7 @@ fix16_t Synth2_process(Synth2_process_type& _ctx, fix16_t i) {
    return fix_mul(output, _ctx.volume);
 }
 
-void Synth2_controlChange(Synth2_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+void Synth2_controlChange(Synth2_process_type& _ctx, int32_t control, int32_t value, int32_t _channel) {
    fix16_t value_0_1 = fix_mul(0x204 /* 0.007874 */, int_to_fix(value));
    fix16_t value_m1_1 = -0x10000 /* -1.000000 */ + (value_0_1 << 1);
    if (control == 30) {

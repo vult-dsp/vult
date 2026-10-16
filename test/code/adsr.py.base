@@ -312,7 +312,7 @@ def Adsr_noteOn(_ctx, note, velocity, channel):
 def Adsr_noteOff(_ctx, note, channel):
    pass
 
-def Adsr_controlChange(_ctx, control, value, channel):
+def Adsr_controlChange(_ctx, control, value, _channel):
    if (control == 1):
       _ctx.knob1 = (0.007874 * float(value))
    if (control == 2):

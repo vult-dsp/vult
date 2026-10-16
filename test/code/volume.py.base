@@ -49,7 +49,7 @@ def Volume_noteOn(_ctx, note, velocity, channel):
 def Volume_noteOff(_ctx, note, channel):
    pass
 
-def Volume_controlChange(_ctx, control, value, channel):
+def Volume_controlChange(_ctx, control, value, _channel):
    if (control == 30):
       _ctx.volume = (0.007874 * float(value))
 

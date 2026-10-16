@@ -425,7 +425,7 @@ def Synth2_mono_noteOff(_ctx, n):
 def Synth2_mono_isGateOn(_ctx):
    return (_ctx.count > 0)
 
-def Synth2_process(_ctx, i):
+def Synth2_process(_ctx, _i):
    gate = Synth2_mono_isGateOn(_ctx.monoin)
    lfo1 = (Synth2_lfo(_ctx.inst_15fb7, _ctx.lfo_rate, gate) * _ctx.lfo_amt)
    o1 = Synth2_osc(_ctx.inst_2e5b7, _ctx.pitch, (lfo1 + _ctx.pw), _ctx.wave)
@@ -434,13 +434,13 @@ def Synth2_process(_ctx, i):
    return (output * _ctx.volume)
 
 
-def Synth2_noteOn(_ctx, note, velocity, channel):
+def Synth2_noteOn(_ctx, note, _velocity, _channel):
    _ctx.pitch = float(Synth2_mono_noteOn(_ctx.monoin, note))
 
-def Synth2_noteOff(_ctx, note, channel):
+def Synth2_noteOff(_ctx, note, _channel):
    _ctx.pitch = float(Synth2_mono_noteOff(_ctx.monoin, note))
 
-def Synth2_controlChange(_ctx, control, value, channel):
+def Synth2_controlChange(_ctx, control, value, _channel):
    value_0_1 = (0.007874 * float(value))
    value_m1_1 = (-1.0 + (2.0 * value_0_1))
    if (control == 30):

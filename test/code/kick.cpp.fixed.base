@@ -184,7 +184,7 @@ void Ahr_process(Ahr_process_type& _ctx, fix16_t gate) {
    return ;
 }
 
-void Ahr_controlChange(Ahr_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+void Ahr_controlChange(Ahr_process_type& _ctx, int32_t control, int32_t value, int32_t _channel) {
    if (control == 1) {
       _ctx.knob1 = fix_mul(0x204 /* 0.007874 */, int_to_fix(value));
    }
@@ -209,7 +209,7 @@ fix16_t Kick_do(Kick_do_type& _ctx, fix16_t gate, fix16_t odecay, fix16_t pitch,
    return fix_mul(noise_env, noise_osc) + fix_mul(osc_env, osc_sat);
 }
 
-void Kick_controlChange(Kick_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+void Kick_controlChange(Kick_process_type& _ctx, int32_t control, int32_t value, int32_t _channel) {
    if (control == 30) {
       _ctx.odecay = fix_mul(0x204 /* 0.007874 */, int_to_fix(value));
    }

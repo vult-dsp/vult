@@ -6,7 +6,7 @@ Copyright (c) 2014-2024 Leonardo Laguna Ruiz
 Full voice for a synthesizer containing four oscillators one filter and one LFO
 */
 
-fun process(cv:real, vel:real, gate:real) {
+fun process(cv:real, _vel:real, gate:real) {
    // Oscillator levels
    mem level1, level2, level3, level4;
    // Oscillator PW
@@ -40,7 +40,7 @@ fun process(cv:real, vel:real, gate:real) {
 
 and noteOn(note:int,velocity:int,channel:int){ }
 and noteOff(note:int,channel:int){ }
-and controlChange(control:int,value:int,channel:int) {
+and controlChange(control:int,value:int,_channel:int) {
    if(control == 30) level1 = real(value)/127.0;
    if(control == 31) level2 = real(value)/127.0;
    if(control == 32) level3 = real(value)/127.0;

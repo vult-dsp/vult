@@ -127,7 +127,7 @@ this.Synth1_lfo = function (_ctx, f, gate) {
    return (-0.5 + Math.sin((6.283185 * _ctx.phase)));
 };
 
-this.Synth1_process = function (_ctx, input) {
+this.Synth1_process = function (_ctx, _input) {
    var lfo_val = (this.Synth1_lfo(_ctx.inst_17d3d, _ctx.lfo_rate, _ctx.gate) * _ctx.lfo_amt);
    var phase1 = this.Synth1_phasor(_ctx.inst_2863d, _ctx.pitch, false);
    var comp = (1.0 + (-phase1));
@@ -144,7 +144,7 @@ this.Synth1_process = function (_ctx, input) {
    return (comp * (sine * (this.Synth1_smooth(_ctx.inst_5dc3d, _ctx.volume) * this.Synth1_smooth(_ctx.inst_6dc3d, gate_value))));
 };
 
-this.Synth1_noteOn = function (_ctx, note, velocity, channel) {
+this.Synth1_noteOn = function (_ctx, note, _velocity, _channel) {
    if ((_ctx.count == (0|0))) {
       {
          _ctx.n1 = note;
@@ -182,7 +182,7 @@ this.Synth1_noteOn = function (_ctx, note, velocity, channel) {
    }
 };
 
-this.Synth1_noteOff = function (_ctx, note, channel) {
+this.Synth1_noteOff = function (_ctx, note, _channel) {
    var found = false;
    if ((note == _ctx.n1)) {
       {
@@ -233,7 +233,7 @@ this.Synth1_noteOff = function (_ctx, note, channel) {
    }
 };
 
-this.Synth1_controlChange = function (_ctx, control, value, channel) {
+this.Synth1_controlChange = function (_ctx, control, value, _channel) {
    if ((control == (30|0))) {
       _ctx.volume = (0.007874 * value);
    }

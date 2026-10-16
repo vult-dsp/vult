@@ -630,7 +630,7 @@ def Ahr_noteOn(_ctx, note, velocity, channel):
 def Ahr_noteOff(_ctx, note, channel):
    pass
 
-def Ahr_controlChange(_ctx, control, value, channel):
+def Ahr_controlChange(_ctx, control, value, _channel):
    if (control == 1):
       _ctx.knob1 = (0.007874 * float(value))
    if (control == 2):
@@ -667,7 +667,7 @@ def Kick_noteOn(_ctx, note, velocity, channel):
 def Kick_noteOff(_ctx, note, channel):
    pass
 
-def Kick_controlChange(_ctx, control, value, channel):
+def Kick_controlChange(_ctx, control, value, _channel):
    if (control == 30):
       _ctx.odecay = (0.007874 * float(value))
    if (control == 31):

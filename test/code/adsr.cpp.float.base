@@ -54,7 +54,7 @@ float Adsr_do(Adsr_do_type& _ctx, float gate, float a, float d, float s, float r
    return Util_smooth(_ctx.inst_295a0, _ctx.scale) * float_clip(0.000976f * _ctx.out, 0.0f, 1.0f);
 }
 
-void Adsr_controlChange(Adsr_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+void Adsr_controlChange(Adsr_process_type& _ctx, int32_t control, int32_t value, int32_t _channel) {
    if (control == 1) {
       _ctx.knob1 = 0.007874f * int_to_float(value);
    }

@@ -52,7 +52,7 @@ fun lfo(f,gate){
 }
 
 // Main processing function
-fun process(input:real){
+fun process(_input:real){
    mem volume,detune; // values set in 'controlChange'
    mem n1,n2,n3,n4; // used to handle the notes
    mem count,pitch,gate;
@@ -72,7 +72,7 @@ fun process(input:real){
 }
 
 // Called when a note On is received
-and noteOn(note:int,velocity:int,channel:int){
+and noteOn(note:int,_velocity:int,_channel:int){
    mem n1,n2,n3,n4;
    mem count,pitch,gate;
    // written this way because Vult does not have array support yet.
@@ -85,7 +85,7 @@ and noteOn(note:int,velocity:int,channel:int){
 }
 
 // Called when a note Off is received
-and noteOff(note,channel:int){
+and noteOff(note,_channel:int){
     mem n1,n2,n3,n4;
     mem count,pitch,gate;
     val found = false;
@@ -108,7 +108,7 @@ and noteOff(note,channel:int){
 }
 
 // Called when a control changes
-and controlChange(control,value,channel:int){
+and controlChange(control,value,_channel:int){
    mem volume;
    mem detune;
    mem lfo_rate;

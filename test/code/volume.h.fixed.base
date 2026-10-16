@@ -62,7 +62,7 @@ static_inline void Volume_noteOn(Volume_process_type& _ctx, int32_t note, int32_
 static_inline void Volume_noteOff(Volume_process_type& _ctx, int32_t note, int32_t channel) {
 }
 
-static_inline void Volume_controlChange(Volume_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+static_inline void Volume_controlChange(Volume_process_type& _ctx, int32_t control, int32_t value, int32_t _channel) {
    if (control == 30) {
       _ctx.volume = fix_mul(0x204 /* 0.007874 */, int_to_fix(value));
    }

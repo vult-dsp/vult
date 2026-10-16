@@ -44,7 +44,7 @@ end
 function Volume_noteOff(_ctx, note, channel)
 end
 
-function Volume_controlChange(_ctx, control, value, channel)
+function Volume_controlChange(_ctx, control, value, _channel)
    if (control == 30) then
       _ctx.volume = (0.007874 * (value))
    end

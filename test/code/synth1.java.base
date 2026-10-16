@@ -260,7 +260,7 @@ private float Synth1_lfo(Synth1_lfo_type _ctx, float f, int gate) {
    return (-0.5f + sin((6.283185f * _ctx.phase)));
 }
 
-private float Synth1_process(Synth1_process_type _ctx, float input) {
+private float Synth1_process(Synth1_process_type _ctx, float _input) {
    float lfo_val = (Synth1_lfo(_ctx.inst_17d3d, _ctx.lfo_rate, _ctx.gate) * _ctx.lfo_amt);
    float phase1 = Synth1_phasor(_ctx.inst_2863d, _ctx.pitch, false);
    float comp = (1.0f + (-phase1));
@@ -277,7 +277,7 @@ private float Synth1_process(Synth1_process_type _ctx, float input) {
    return (comp * (sine * (Synth1_smooth(_ctx.inst_5dc3d, _ctx.volume) * Synth1_smooth(_ctx.inst_6dc3d, gate_value))));
 }
 
-private void Synth1_noteOn(Synth1_process_type _ctx, int note, int velocity, int channel) {
+private void Synth1_noteOn(Synth1_process_type _ctx, int note, int _velocity, int _channel) {
    if ((_ctx.count == 0)) {
       {
          _ctx.n1 = note;
@@ -315,7 +315,7 @@ private void Synth1_noteOn(Synth1_process_type _ctx, int note, int velocity, int
    }
 }
 
-private void Synth1_noteOff(Synth1_process_type _ctx, int note, int channel) {
+private void Synth1_noteOff(Synth1_process_type _ctx, int note, int _channel) {
    boolean found = false;
    if ((note == _ctx.n1)) {
       {
@@ -366,7 +366,7 @@ private void Synth1_noteOff(Synth1_process_type _ctx, int note, int channel) {
    }
 }
 
-private void Synth1_controlChange(Synth1_process_type _ctx, int control, float value, int channel) {
+private void Synth1_controlChange(Synth1_process_type _ctx, int control, float value, int _channel) {
    if ((control == 30)) {
       _ctx.volume = (0.007874f * value);
    }

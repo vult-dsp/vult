@@ -251,7 +251,7 @@ static_inline void Adsr_noteOn(Adsr_process_type& _ctx, int32_t note, int32_t ve
 static_inline void Adsr_noteOff(Adsr_process_type& _ctx, int32_t note, int32_t channel) {
 }
 
-void Adsr_controlChange(Adsr_process_type& _ctx, int32_t control, int32_t value, int32_t channel);
+void Adsr_controlChange(Adsr_process_type& _ctx, int32_t control, int32_t value, int32_t _channel);
 
 static_inline void Adsr_default(Adsr_process_type& _ctx) {
    _ctx.knob1 = 0x0 /* 0.000000 */;

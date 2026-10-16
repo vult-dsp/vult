@@ -51,7 +51,7 @@ function Wav_file_index(_ctx)
    return _ctx.i
 end
 
-function Wav_file_osc_wave(_ctx, cv)
+function Wav_file_osc_wave(_ctx, _cv)
    return Wav_file_ext_wave(0, Wav_file_index(_ctx.inst_1e19a))
 end
 
