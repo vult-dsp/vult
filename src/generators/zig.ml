@@ -34,8 +34,8 @@ module Set = Util.Maps.Set
 
 type state =
   { args: Util.Args.args
-  ; mutable ref_params: Set.t (* parameters of the current function passed by pointer *)
-  ; mutable mutated: Set.t (* names reassigned in the current function (need [var]) *)
+  ; ref_params: Set.t (* parameters of the current function passed by pointer *)
+  ; mutated: Set.t (* names reassigned in the current function (need [var]) *)
   ; void_funcs: Set.t (* names of functions returning void; their calls need no [_ =] discard *) }
 
 (* The small runtime prelude. The names defined here must match the ones produced by
@@ -602,8 +602,7 @@ let print_top_stmt (state : state) (t : top_stmt) =
           (fun acc (p : param) -> match p.t.t with TStruct _ | TArray _ -> Set.add p.name acc | _ -> acc)
           Set.empty def.args
       in
-      state.ref_params <- ref_params ;
-      state.mutated <- collect_mutated Set.empty body ;
+      let state = {state with ref_params; mutated= collect_mutated Set.empty body} in
       let direct = collect_direct_assigned Set.empty body in
       let used = collect_used Set.empty body in
       let name = def.name in
