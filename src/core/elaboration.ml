@@ -230,33 +230,40 @@ let rec rename_companion_chain (suffix : string) (def : Syntax.function_def) : S
 
 (* ========== Instantiation State ========== *)
 
-(* State for tracking instantiated generic functions during post-processing *)
+module StrMap = Util.Maps.Map
+
+(* State for tracking instantiated generic functions during post-processing. It is threaded
+   through the elaboration together with the environment. *)
 type instantiation_state =
-  { instantiated: (string, Typed.function_def * Typed.stmt) Hashtbl.t
-  ; mutable pending_functions: (string * string * Typed.function_def * Typed.stmt) list
-  ; functions_needing_context: (string, Typed.type_) Hashtbl.t
-  ; in_progress: (string, bool ref) Hashtbl.t
+  { instantiated: (Typed.function_def * Typed.stmt) StrMap.t (* Structural signature -> specialization *)
+  ; pending_functions: (string * string * Typed.function_def * Typed.stmt) list
+        (* Specializations to emit: module, generic name, definition and body. The newest first. *)
+  ; functions_needing_context: Typed.type_ StrMap.t
+  ; in_progress: bool StrMap.t
         (* Signatures currently being instantiated (for recursive generics). The flag records
            whether a recursive call was emitted before knowing the function needs a context. *)
-  ; call_instance_names: (string, string) Hashtbl.t
+  ; call_instance_names: string StrMap.t
         (* Instance names generated per call site, so re-processing a call reuses the same instance *)
   ; reuse_env_specializations: bool
         (* When elaborating code against an already-elaborated program (e.g. an expression given
            to -eval), specializations that already exist in the environment are reused *)
-  ; name_signatures: (string, string) Hashtbl.t
+  ; name_signatures: string StrMap.t
         (* Emitted specialization name -> structural signature that owns it. The mangled names
            are not injective, so when a structurally different specialization wants a name that
            is already taken, its name is extended with a digest of its structural signature. *)
-  ; mutable pending_generic_calls: Typed.exp list }
+  ; pending_generic_calls: Typed.exp list
+        (* Generic calls found in the function being processed, to resolve companion calls that
+           come before the call to their parent *)
+  }
 
 let create_instantiation_state (reuse_env_specializations : bool) : instantiation_state =
-  { instantiated= Hashtbl.create 16
+  { instantiated= StrMap.empty
   ; pending_functions= []
-  ; functions_needing_context= Hashtbl.create 16
-  ; in_progress= Hashtbl.create 4
-  ; call_instance_names= Hashtbl.create 16
+  ; functions_needing_context= StrMap.empty
+  ; in_progress= StrMap.empty
+  ; call_instance_names= StrMap.empty
   ; reuse_env_specializations
-  ; name_signatures= Hashtbl.create 16
+  ; name_signatures= StrMap.empty
   ; pending_generic_calls= [] }
 
 (* Sentinel stored in [name_signatures] for names that are taken but do not correspond to a
@@ -268,11 +275,11 @@ let foreign_name_sentinel = "!foreign"
 (* Reserve an emitted name for the given structural signature. Two different signatures can
    mangle to the same readable name; the later one gets the name extended with a digest of
    its signature (see [Util.Names.disambiguate]). *)
-let claim_specialization_name (state : instantiation_state) (signature : string) (base_name : string) : string =
-  let taken candidate = Hashtbl.find_opt state.name_signatures candidate in
+let claim_specialization_name (state : instantiation_state) (signature : string) (base_name : string) :
+    instantiation_state * string =
+  let taken candidate = StrMap.find_opt candidate state.name_signatures in
   let name = Names.disambiguate ~taken signature base_name in
-  Hashtbl.replace state.name_signatures name signature ;
-  name
+  ({state with name_signatures= StrMap.add name signature state.name_signatures}, name)
 
 let resolveTypeIntrinsicsInStmt = Typed.resolveTypeIntrinsicsInStmt
 
@@ -345,7 +352,7 @@ module Make (T : TYPECHECKER) = struct
      location where the specialization was created. *)
   let rec instantiate_generic_function (iargs : Args.args) (env : env) (state : instantiation_state)
       (generic_func : Typed.generic_function) (signature : string) (specialized_name : string)
-      (params : Typed.call_param list) (loc : Loc.t) : env * (Typed.function_def * Typed.stmt) =
+      (params : Typed.call_param list) (loc : Loc.t) : env * instantiation_state * (Typed.function_def * Typed.stmt) =
     let explicit_args = Typed.callExplicitArgs params in
     let all_constants = CCList.length explicit_args > 0 && CCList.for_all is_constant_literal explicit_args in
     let constant_pairs = constant_param_pairs params in
@@ -416,9 +423,11 @@ module Make (T : TYPECHECKER) = struct
       ; is_root= false
       ; next }
     in
-    Hashtbl.replace state.instantiated signature (make_def None, {s= StmtBlock []; loc}) ;
-    let recursed_without_context = ref false in
-    Hashtbl.replace state.in_progress signature recursed_without_context ;
+    let state =
+      { state with
+        instantiated= StrMap.add signature (make_def None, {s= StmtBlock []; loc}) state.instantiated
+      ; in_progress= StrMap.add signature false state.in_progress }
+    in
     let env, body = stmt_with_type_substitution env type_substitution_map fresh_ret_type generic_func.body in
     let resolved_substitution_map =
       CCList.map (fun (name, t) -> (name, Subst.zonk env.subst t)) type_substitution_map
@@ -432,9 +441,10 @@ module Make (T : TYPECHECKER) = struct
     let combined_body = match body with [single] -> single | stmts -> {s= StmtBlock stmts; loc= generic_func.loc} in
     (* Process nested generic calls while still inside the specialized function so instances
        created by them are stored in this function's context *)
-    let () = prescan_generic_calls_in_stmt iargs env state combined_body in
-    let env, processed_body = process_stmt_instantiation iargs env state combined_body in
-    Hashtbl.remove state.in_progress signature ;
+    let state = prescan_generic_calls_in_stmt state combined_body in
+    let env, state, processed_body = process_stmt_instantiation iargs env state combined_body in
+    let recursed_without_context = StrMap.get_or signature state.in_progress ~default:false in
+    let state = {state with in_progress= StrMap.remove signature state.in_progress} in
     let env = Env.reportUnusedArguments env in
     let env = Env.exitFunction env in
     (* Companion functions are instantiated once per specialization with unique names so each
@@ -448,12 +458,12 @@ module Make (T : TYPECHECKER) = struct
           let renamed = rename_companion_chain suffix syntax_next in
           function_def_opt iargs env (Some renamed)
     in
-    let env, next = process_companion_bodies iargs env state next in
+    let env, state, next = process_companion_bodies iargs env state next in
     let specialized_def = make_def next in
     let env, specialized_def = insertContextArgument env specialized_def in
     let env = Env.exitContext env in
     let () =
-      if !recursed_without_context then
+      if recursed_without_context then
         match specialized_def.args with
         | {name; _} :: _ when String.equal name context_name ->
             Error.raiseError
@@ -465,102 +475,91 @@ module Make (T : TYPECHECKER) = struct
         | _ ->
             ()
     in
-    (env, (specialized_def, processed_body))
+    (env, state, (specialized_def, processed_body))
 
   (* Process the bodies of companion functions so generic calls inside them are instantiated.
      Instances created by them are stored in the context shared with the parent specialization. *)
   and process_companion_bodies (iargs : Args.args) (env : env) (state : instantiation_state)
-      (next : (Typed.function_def * Typed.stmt) option) : env * (Typed.function_def * Typed.stmt) option =
+      (next : (Typed.function_def * Typed.stmt) option) :
+      env * instantiation_state * (Typed.function_def * Typed.stmt) option =
     match next with
     | None ->
-        (env, None)
+        (env, state, None)
     | Some (cdef, cbody) ->
         let cenv = Env.reenterFunction env cdef.name in
-        let () = prescan_generic_calls_in_stmt iargs cenv state cbody in
-        let cenv, cbody = process_stmt_instantiation iargs cenv state cbody in
+        let state = prescan_generic_calls_in_stmt state cbody in
+        let cenv, state, cbody = process_stmt_instantiation iargs cenv state cbody in
         let env = Env.restoreLocation env cenv in
-        let env, cnext = process_companion_bodies iargs env state cdef.next in
-        (env, Some ({cdef with next= cnext}, cbody))
+        let env, state, cnext = process_companion_bodies iargs env state cdef.next in
+        (env, state, Some ({cdef with next= cnext}, cbody))
 
   (* ========== Prescan for Generic Calls ========== *)
 
-  and prescan_generic_calls_in_stmt (iargs : Args.args) (env : env) (state : instantiation_state) (stmt : Typed.stmt) :
-      unit =
+  and prescan_generic_calls_in_stmt (state : instantiation_state) (stmt : Typed.stmt) : instantiation_state =
     match stmt.s with
-    | StmtVal _ ->
-        ()
+    | StmtVal _ | StmtMem _ ->
+        state
     | StmtReturn e ->
-        prescan_generic_calls_in_exp iargs env state e
+        prescan_generic_calls_in_exp state e
     | StmtBind (lhs, e) ->
-        prescan_generic_calls_in_lexp iargs env state lhs ;
-        prescan_generic_calls_in_exp iargs env state e
+        let state = prescan_generic_calls_in_lexp state lhs in
+        prescan_generic_calls_in_exp state e
     | StmtIf (cond, then_s, else_opt) ->
-        prescan_generic_calls_in_exp iargs env state cond ;
-        prescan_generic_calls_in_stmt iargs env state then_s ;
-        Option.iter (prescan_generic_calls_in_stmt iargs env state) else_opt
+        let state = prescan_generic_calls_in_exp state cond in
+        let state = prescan_generic_calls_in_stmt state then_s in
+        Option.fold ~none:state ~some:(prescan_generic_calls_in_stmt state) else_opt
     | StmtWhile (cond, body) ->
-        prescan_generic_calls_in_exp iargs env state cond ;
-        prescan_generic_calls_in_stmt iargs env state body
+        let state = prescan_generic_calls_in_exp state cond in
+        prescan_generic_calls_in_stmt state body
     | StmtBlock stmts ->
-        CCList.iter (prescan_generic_calls_in_stmt iargs env state) stmts
-    | StmtMem _ ->
-        ()
+        CCList.fold_left prescan_generic_calls_in_stmt state stmts
 
-  and prescan_generic_calls_in_lexp (iargs : Args.args) (env : env) (state : instantiation_state) (l : Typed.lexp) :
-      unit =
+  and prescan_generic_calls_in_lexp (state : instantiation_state) (l : Typed.lexp) : instantiation_state =
     match l.l with
     | LWild | LId _ ->
-        ()
+        state
     | LMember (le, _) ->
-        prescan_generic_calls_in_lexp iargs env state le
+        prescan_generic_calls_in_lexp state le
     | LIndex {e= le; index} ->
-        prescan_generic_calls_in_lexp iargs env state le ;
-        prescan_generic_calls_in_exp iargs env state index
+        let state = prescan_generic_calls_in_lexp state le in
+        prescan_generic_calls_in_exp state index
     | LTuple elems ->
-        CCList.iter (prescan_generic_calls_in_lexp iargs env state) elems
+        CCList.fold_left prescan_generic_calls_in_lexp state elems
 
-  and prescan_generic_calls_in_exp (iargs : Args.args) (env : env) (state : instantiation_state) (e : Typed.exp) : unit
-      =
+  and prescan_generic_calls_in_exp (state : instantiation_state) (e : Typed.exp) : instantiation_state =
+    let prescan_list state l = CCList.fold_left prescan_generic_calls_in_exp state l in
     match e.e with
     | EGenCall {params; _} ->
-        state.pending_generic_calls <- e :: state.pending_generic_calls ;
-        CCList.iter (prescan_generic_calls_in_exp iargs env state) (Typed.callArgs params) ;
-        CCList.iter (prescan_generic_calls_in_exp iargs env state) (Typed.callExplicitArgs params)
-    | ECall {args; _} ->
-        CCList.iter (prescan_generic_calls_in_exp iargs env state) args
+        let state = {state with pending_generic_calls= e :: state.pending_generic_calls} in
+        let state = prescan_list state (Typed.callArgs params) in
+        prescan_list state (Typed.callExplicitArgs params)
+    | ECall {args; _} | EGenCompanionCall {args; _} ->
+        prescan_list state args
     | EIf {cond; then_; else_} ->
-        prescan_generic_calls_in_exp iargs env state cond ;
-        prescan_generic_calls_in_exp iargs env state then_ ;
-        prescan_generic_calls_in_exp iargs env state else_
+        prescan_list state [cond; then_; else_]
     | EOp (_, lhs, rhs) ->
-        prescan_generic_calls_in_exp iargs env state lhs ;
-        prescan_generic_calls_in_exp iargs env state rhs
-    | EUnOp (_, arg) ->
-        prescan_generic_calls_in_exp iargs env state arg
+        prescan_list state [lhs; rhs]
+    | EUnOp (_, arg) | EMember (arg, _) ->
+        prescan_generic_calls_in_exp state arg
     | EIndex {e= inner; index} ->
-        prescan_generic_calls_in_exp iargs env state inner ;
-        prescan_generic_calls_in_exp iargs env state index
+        prescan_list state [inner; index]
     | EArray elems | ETuple elems ->
-        CCList.iter (prescan_generic_calls_in_exp iargs env state) elems
-    | EMember (inner, _) ->
-        prescan_generic_calls_in_exp iargs env state inner
+        prescan_list state elems
     | ERecord {elems; _} ->
-        CCList.iter (fun (_, v) -> prescan_generic_calls_in_exp iargs env state v) elems
-    | EGenCompanionCall {args; _} ->
-        CCList.iter (prescan_generic_calls_in_exp iargs env state) args
+        prescan_list state (CCList.map snd elems)
     | EId _ | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EConst _ | ETypeIntrinsic _ | EEnum _ ->
-        ()
+        state
 
   (* ========== Expression and Statement Processing ========== *)
 
   (* Names an instance of [callee] stored in the current function. A call site that was already
      processed reuses the name it got before. *)
   and anonymous_instance_name (env : env) (state : instantiation_state) (callee : string) (ctx_t : type_) (loc : Loc.t)
-      : env * string =
+      : env * instantiation_state * string =
     let site = callSiteKey env loc in
-    match Hashtbl.find_opt state.call_instance_names site with
+    match StrMap.find_opt site state.call_instance_names with
     | Some name ->
-        (Env.addVar env name ctx_t Env.LocalInst loc, name)
+        (Env.addVar env name ctx_t Env.LocalInst loc, state, name)
     | None ->
         let number =
           Printf.sprintf "%.2x%.2x"
@@ -574,17 +573,23 @@ module Make (T : TYPECHECKER) = struct
         in
         let env, name = generateName env in
         let env = Env.addVar env name ctx_t Env.LocalInst loc in
-        Hashtbl.add state.call_instance_names site name ;
-        (env, name)
+        let state = {state with call_instance_names= StrMap.add site name state.call_instance_names} in
+        (env, state, name)
 
   and process_exp_list (iargs : Args.args) (env : env) (state : instantiation_state) (l : Typed.exp list) :
-      env * Typed.exp list =
-    CCList.fold_left_map (fun env e -> process_exp_instantiation iargs env state e) env l
+      env * instantiation_state * Typed.exp list =
+    let process (env, state) e =
+      let env, state, e = process_exp_instantiation iargs env state e in
+      ((env, state), e)
+    in
+    let (env, state), l = CCList.fold_left_map process (env, state) l in
+    (env, state, l)
 
-  (* The specialization of the generic function for a call: an existing one or a new one *)
+  (* The specialization of the generic function for a call: an existing one or a new one. When
+     the specialization is being instantiated (a recursive call), its signature is returned. *)
   and find_or_instantiate (iargs : Args.args) (env : env) (state : instantiation_state)
       (generic_func : Typed.generic_function) (generic_path : path) (params : Typed.call_param list) (loc : Loc.t) :
-      env * Typed.function_def * bool ref option =
+      env * instantiation_state * Typed.function_def * string option =
     let resolved_params = CCList.map (Subst.zonkCallParam env.subst) params in
     let args = Typed.callArgs resolved_params in
     let explicit_args = Typed.callExplicitArgs resolved_params in
@@ -604,9 +609,10 @@ module Make (T : TYPECHECKER) = struct
     let signature =
       build_structural_signature owner_module generic_func.name resolved_arg_types explicit_args all_constants
     in
-    match Hashtbl.find_opt state.instantiated signature with
+    match StrMap.find_opt signature state.instantiated with
     | Some (def, _) ->
-        (env, def, Hashtbl.find_opt state.in_progress signature)
+        let in_progress = if StrMap.mem signature state.in_progress then Some signature else None in
+        (env, state, def, in_progress)
     | None -> (
         let env_for_instantiation =
           match generic_module with Some module_name -> Env.enterModule env module_name | None -> env
@@ -622,7 +628,7 @@ module Make (T : TYPECHECKER) = struct
            names are not injective, so it could be a different specialization that
            happens to share the name. In that case the name is marked as taken and a
            fresh specialization (with a disambiguated name) is created instead. *)
-        let existing =
+        let state, existing =
           match existing with
           | Some f ->
               let expected = expected_specialization_arg_types resolved_params all_constants in
@@ -634,13 +640,14 @@ module Make (T : TYPECHECKER) = struct
                     []
               in
               let same_key a b = String.equal (type_to_structural_key a) (type_to_structural_key b) in
-              if CCList.length expected = CCList.length found && CCList.for_all2 same_key expected found then Some f
-              else (
-                if not (Hashtbl.mem state.name_signatures base_name) then
-                  Hashtbl.add state.name_signatures base_name foreign_name_sentinel ;
-                None )
+              if CCList.length expected = CCList.length found && CCList.for_all2 same_key expected found then
+                (state, Some f)
+              else if StrMap.mem base_name state.name_signatures then (state, None)
+              else
+                let name_signatures = StrMap.add base_name foreign_name_sentinel state.name_signatures in
+                ({state with name_signatures}, None)
           | None ->
-              None
+              (state, None)
         in
         match existing with
         | Some f ->
@@ -663,11 +670,13 @@ module Make (T : TYPECHECKER) = struct
               ; is_root= false
               ; next= None }
             in
-            Hashtbl.replace state.instantiated signature (def, {s= StmtBlock []; loc}) ;
-            (env, def, None)
+            let state =
+              {state with instantiated= StrMap.add signature (def, {s= StmtBlock []; loc}) state.instantiated}
+            in
+            (env, state, def, None)
         | None ->
-            let specialized_name = claim_specialization_name state signature base_name in
-            let instantiated_env, (def, processed_body) =
+            let state, specialized_name = claim_specialization_name state signature base_name in
+            let instantiated_env, state, (def, processed_body) =
               instantiate_generic_function iargs env_for_instantiation state generic_func signature specialized_name
                 params loc
             in
@@ -684,13 +693,15 @@ module Make (T : TYPECHECKER) = struct
                     let m = Env.getCurrentModule env in
                     m.name )
             in
-            Hashtbl.replace state.instantiated signature (def, processed_body) ;
-            state.pending_functions <-
-              (target_module, generic_func.name, def, processed_body) :: state.pending_functions ;
-            (env, def, None) )
+            let state =
+              { state with
+                instantiated= StrMap.add signature (def, processed_body) state.instantiated
+              ; pending_functions= (target_module, generic_func.name, def, processed_body) :: state.pending_functions }
+            in
+            (env, state, def, None) )
 
   and process_exp_instantiation (iargs : Args.args) (env : env) (state : instantiation_state) (e : Typed.exp) :
-      env * Typed.exp =
+      env * instantiation_state * Typed.exp =
     let loc = e.loc in
     match e.e with
     | EGenCall {instance; generic_path; params} -> (
@@ -701,33 +712,36 @@ module Make (T : TYPECHECKER) = struct
         | Some generic_func ->
             let explicit_args = Typed.callExplicitArgs params in
             let all_constants = CCList.length explicit_args > 0 && CCList.for_all is_constant_literal explicit_args in
-            let env, specialized_def, in_progress =
+            let env, state, specialized_def, in_progress =
               find_or_instantiate iargs env state generic_func generic_path params loc
             in
             (* The regular arguments are processed before the explicit generic ones: processing
                can instantiate nested generics and create instances, whose names follow that order *)
-            let process env value = process_exp_instantiation iargs env state value in
-            let env, processed_params =
+            let process (env, state) value =
+              let env, state, value = process_exp_instantiation iargs env state value in
+              ((env, state), value)
+            in
+            let (env, state), processed_params =
               CCList.fold_left_map
-                (fun env param ->
+                (fun env_state param ->
                   match param with
                   | Typed.CallArg {arg; value} ->
-                      let env, value = process env value in
-                      (env, Typed.CallArg {arg; value})
+                      let env_state, value = process env_state value in
+                      (env_state, Typed.CallArg {arg; value})
                   | Typed.CallGeneric _ ->
-                      (env, param) )
-                env params
+                      (env_state, param) )
+                (env, state) params
             in
-            let env, processed_params =
+            let (env, state), processed_params =
               CCList.fold_left_map
-                (fun env param ->
+                (fun env_state param ->
                   match param with
                   | Typed.CallGeneric {param; value} ->
-                      let env, value = process env value in
-                      (env, Typed.CallGeneric {param; value})
+                      let env_state, value = process env_state value in
+                      (env_state, Typed.CallGeneric {param; value})
                   | Typed.CallArg _ ->
-                      (env, param) )
-                env processed_params
+                      (env_state, param) )
+                (env, state) processed_params
             in
             (* The regular arguments and, unless they are inlined in the specialized body, the
                constant arguments, in declaration order *)
@@ -750,24 +764,24 @@ module Make (T : TYPECHECKER) = struct
                   args
             in
             let env = propagateVariability env loc (Some specialized_non_ctx_args) processed_args in
-            let env, final_args =
+            let env, state, final_args =
               match in_progress with
-              | Some flag -> (
+              | Some signature -> (
                   (* Recursive call to a specialization that is being instantiated right now.
                      When it is a direct self-call and the function has state, the context is
                      passed through unchanged (same instance). *)
                   let current_f = Env.getCurrentFunction env in
                   match Env.activeContextArgument env current_f with
                   | Some {arg_t; _} when Syntax.compare_path current_f.path specialized_def.name = 0 ->
-                      (env, {e= EId context_name; t= arg_t; loc} :: processed_args)
+                      (env, state, {e= EId context_name; t= arg_t; loc} :: processed_args)
                   | Some _ | None ->
-                      flag := true ;
-                      (env, processed_args) )
+                      let state = {state with in_progress= StrMap.add signature true state.in_progress} in
+                      (env, state, processed_args) )
               | None -> (
                 match specialized_def.args with
                 | {name; t= ctx_t; _} :: _ when String.equal name context_name ->
                     let current_ctx_t = (Env.currentContextArgument env loc).arg_t in
-                    let env, inst_name =
+                    let env, state, inst_name =
                       match instance with
                       | Some user_inst_name ->
                           let () =
@@ -780,19 +794,19 @@ module Make (T : TYPECHECKER) = struct
                           (* addVar unifies the context types when the instance already exists,
                              reporting an error if the same instance is used with an incompatible
                              specialization *)
-                          (Env.addVar env user_inst_name ctx_t Env.LocalInst loc, user_inst_name)
+                          (Env.addVar env user_inst_name ctx_t Env.LocalInst loc, state, user_inst_name)
                       | None ->
                           anonymous_instance_name env state (pathString specialized_def.name) ctx_t loc
                     in
                     let ctx_e = {e= EId context_name; t= current_ctx_t; loc} in
                     let inst_e = {e= EMember (ctx_e, inst_name); t= ctx_t; loc} in
-                    (env, inst_e :: processed_args)
+                    (env, state, inst_e :: processed_args)
                 | _ ->
-                    (env, processed_args) )
+                    (env, state, processed_args) )
             in
-            (env, {e= ECall {instance= None; path= specialized_def.name; args= final_args}; t= e.t; loc}) )
+            (env, state, {e= ECall {instance= None; path= specialized_def.name; args= final_args}; t= e.t; loc}) )
     | ECall {instance; path; args} ->
-        let env, processed_args = process_exp_list iargs env state args in
+        let env, state, processed_args = process_exp_list iargs env state args in
         let env =
           match Env.tryLookFunctionCall env path with
           | env, Some f ->
@@ -808,52 +822,47 @@ module Make (T : TYPECHECKER) = struct
               env
         in
         let func_path_str = pathString path in
-        let env, final_args =
-          match Hashtbl.find_opt state.functions_needing_context func_path_str with
+        let env, state, final_args =
+          match StrMap.find_opt func_path_str state.functions_needing_context with
           | Some ctx_t ->
               let current_ctx_t = (Env.currentContextArgument env loc).arg_t in
-              let env, inst_name = anonymous_instance_name env state func_path_str ctx_t loc in
+              let env, state, inst_name = anonymous_instance_name env state func_path_str ctx_t loc in
               let ctx_e = {e= EId context_name; t= current_ctx_t; loc} in
               let inst_e = {e= EMember (ctx_e, inst_name); t= ctx_t; loc} in
-              (env, inst_e :: processed_args)
+              (env, state, inst_e :: processed_args)
           | None ->
-              (env, processed_args)
+              (env, state, processed_args)
         in
-        (env, {e with e= ECall {instance; path; args= final_args}})
+        (env, state, {e with e= ECall {instance; path; args= final_args}})
     | EOp (op, e1, e2) ->
-        let env, e1 = process_exp_instantiation iargs env state e1 in
-        let env, e2 = process_exp_instantiation iargs env state e2 in
-        (env, {e with e= EOp (op, e1, e2)})
+        let env, state, e1 = process_exp_instantiation iargs env state e1 in
+        let env, state, e2 = process_exp_instantiation iargs env state e2 in
+        (env, state, {e with e= EOp (op, e1, e2)})
     | EUnOp (op, e1) ->
-        let env, e1 = process_exp_instantiation iargs env state e1 in
-        (env, {e with e= EUnOp (op, e1)})
+        let env, state, e1 = process_exp_instantiation iargs env state e1 in
+        (env, state, {e with e= EUnOp (op, e1)})
     | EIf {cond; then_; else_} ->
-        let env, cond = process_exp_instantiation iargs env state cond in
-        let env, then_ = process_exp_instantiation iargs env state then_ in
-        let env, else_ = process_exp_instantiation iargs env state else_ in
-        (env, {e with e= EIf {cond; then_; else_}})
+        let env, state, cond = process_exp_instantiation iargs env state cond in
+        let env, state, then_ = process_exp_instantiation iargs env state then_ in
+        let env, state, else_ = process_exp_instantiation iargs env state else_ in
+        (env, state, {e with e= EIf {cond; then_; else_}})
     | EIndex {e= arr; index} ->
-        let env, arr = process_exp_instantiation iargs env state arr in
-        let env, index = process_exp_instantiation iargs env state index in
-        (env, {e with e= EIndex {e= arr; index}})
+        let env, state, arr = process_exp_instantiation iargs env state arr in
+        let env, state, index = process_exp_instantiation iargs env state index in
+        (env, state, {e with e= EIndex {e= arr; index}})
     | EArray elems ->
-        let env, elems = process_exp_list iargs env state elems in
-        (env, {e with e= EArray elems})
+        let env, state, elems = process_exp_list iargs env state elems in
+        (env, state, {e with e= EArray elems})
     | ETuple elems ->
-        let env, elems = process_exp_list iargs env state elems in
-        (env, {e with e= ETuple elems})
+        let env, state, elems = process_exp_list iargs env state elems in
+        (env, state, {e with e= ETuple elems})
     | EMember (e1, m) ->
-        let env, e1 = process_exp_instantiation iargs env state e1 in
-        (env, {e with e= EMember (e1, m)})
+        let env, state, e1 = process_exp_instantiation iargs env state e1 in
+        (env, state, {e with e= EMember (e1, m)})
     | ERecord {elems} ->
-        let env, elems =
-          CCList.fold_left_map
-            (fun env (n, v) ->
-              let env, v = process_exp_instantiation iargs env state v in
-              (env, (n, v)) )
-            env elems
-        in
-        (env, {e with e= ERecord {elems}})
+        let names, values = CCList.split elems in
+        let env, state, values = process_exp_list iargs env state values in
+        (env, state, {e with e= ERecord {elems= CCList.combine names values}})
     | EGenCompanionCall {instance; companion_name; parent_generic_path; args} ->
         process_companion_call iargs env state e instance companion_name parent_generic_path args
     | ETypeIntrinsic {intrinsic; type_param} ->
@@ -865,11 +874,11 @@ module Make (T : TYPECHECKER) = struct
              intrinsic_name type_param )
           e.loc
     | EUnit | EBool _ | EInt _ | EReal _ | EFixed _ | EString _ | EId _ | EConst _ | EEnum _ ->
-        (env, e)
+        (env, state, e)
 
   and process_companion_call (iargs : Args.args) (env : env) (state : instantiation_state) (e : Typed.exp)
       (instance : string option) (companion_name : string) (parent_generic_path : path) (args : Typed.exp list) :
-      env * Typed.exp =
+      env * instantiation_state * Typed.exp =
     let loc = e.loc in
     match Env.lookupGeneric env parent_generic_path with
     | None ->
@@ -896,7 +905,7 @@ module Make (T : TYPECHECKER) = struct
           in
           loop def.next
         in
-        let collect_candidates () =
+        let collect_candidates (state : instantiation_state) =
           CCList.filter_map
             (fun (candidate_module, gen_name, (def : Typed.function_def), _body) ->
               if String.equal candidate_module parent_module && String.equal gen_name parent_name then
@@ -904,8 +913,8 @@ module Make (T : TYPECHECKER) = struct
               else None )
             state.pending_functions
         in
-        let candidates = collect_candidates () in
-        let env, candidates =
+        let candidates = collect_candidates state in
+        let env, state, candidates =
           if CCList.is_empty candidates then
             (* The companion may be called before the parent: instantiate the parent call
                found during the prescan of this function. The pending call must refer to the
@@ -924,11 +933,11 @@ module Make (T : TYPECHECKER) = struct
                 state.pending_generic_calls
             with
             | Some parent_call ->
-                let env, _ = process_exp_instantiation iargs env state parent_call in
-                (env, collect_candidates ())
+                let env, state, _ = process_exp_instantiation iargs env state parent_call in
+                (env, state, collect_candidates state)
             | None ->
-                (env, [])
-          else (env, candidates)
+                (env, state, [])
+          else (env, state, candidates)
         in
         match candidates with
         | [] ->
@@ -939,7 +948,7 @@ module Make (T : TYPECHECKER) = struct
                  companion_name parent_name )
               loc
         | ((_, (first_companion_def, _)) as first_candidate) :: _ ->
-            let env, processed_args = process_exp_list iargs env state args in
+            let env, state, processed_args = process_exp_list iargs env state args in
             let companion_has_ctx =
               match first_companion_def.args with
               | {name; _} :: _ when String.equal name context_name ->
@@ -1054,126 +1063,143 @@ module Make (T : TYPECHECKER) = struct
               | _ ->
                   (env, processed_args)
             in
-            (env, {e= ECall {instance= None; path= companion_def.name; args= final_args}; t= e.t; loc}) )
+            (env, state, {e= ECall {instance= None; path= companion_def.name; args= final_args}; t= e.t; loc}) )
 
   and process_lexp_instantiation (iargs : Args.args) (env : env) (state : instantiation_state) (l : Typed.lexp) :
-      env * Typed.lexp =
+      env * instantiation_state * Typed.lexp =
     match l.l with
     | LWild | LId _ ->
-        (env, l)
+        (env, state, l)
     | LMember (le, m) ->
-        let env, le = process_lexp_instantiation iargs env state le in
-        (env, {l with l= LMember (le, m)})
+        let env, state, le = process_lexp_instantiation iargs env state le in
+        (env, state, {l with l= LMember (le, m)})
     | LIndex {e= le; index} ->
-        let env, le = process_lexp_instantiation iargs env state le in
-        let env, index = process_exp_instantiation iargs env state index in
-        (env, {l with l= LIndex {e= le; index}})
+        let env, state, le = process_lexp_instantiation iargs env state le in
+        let env, state, index = process_exp_instantiation iargs env state index in
+        (env, state, {l with l= LIndex {e= le; index}})
     | LTuple elems ->
-        let env, elems = CCList.fold_left_map (fun env le -> process_lexp_instantiation iargs env state le) env elems in
-        (env, {l with l= LTuple elems})
+        let process (env, state) le =
+          let env, state, le = process_lexp_instantiation iargs env state le in
+          ((env, state), le)
+        in
+        let (env, state), elems = CCList.fold_left_map process (env, state) elems in
+        (env, state, {l with l= LTuple elems})
 
   and process_stmt_instantiation (iargs : Args.args) (env : env) (state : instantiation_state) (s : Typed.stmt) :
-      env * Typed.stmt =
+      env * instantiation_state * Typed.stmt =
     match s.s with
     | StmtVal _ | StmtMem _ ->
-        (env, s)
+        (env, state, s)
     | StmtBind (lhs, rhs) ->
-        let env, lhs = process_lexp_instantiation iargs env state lhs in
-        let env, rhs = process_exp_instantiation iargs env state rhs in
-        (env, {s with s= StmtBind (lhs, rhs)})
+        let env, state, lhs = process_lexp_instantiation iargs env state lhs in
+        let env, state, rhs = process_exp_instantiation iargs env state rhs in
+        (env, state, {s with s= StmtBind (lhs, rhs)})
     | StmtReturn e ->
-        let env, e = process_exp_instantiation iargs env state e in
-        (env, {s with s= StmtReturn e})
+        let env, state, e = process_exp_instantiation iargs env state e in
+        (env, state, {s with s= StmtReturn e})
     | StmtIf (cond, then_, else_opt) ->
-        let env, cond = process_exp_instantiation iargs env state cond in
-        let env, then_ = process_stmt_instantiation iargs env state then_ in
-        let env, else_opt =
+        let env, state, cond = process_exp_instantiation iargs env state cond in
+        let env, state, then_ = process_stmt_instantiation iargs env state then_ in
+        let env, state, else_opt =
           match else_opt with
           | None ->
-              (env, None)
+              (env, state, None)
           | Some else_ ->
-              let env, else_ = process_stmt_instantiation iargs env state else_ in
-              (env, Some else_)
+              let env, state, else_ = process_stmt_instantiation iargs env state else_ in
+              (env, state, Some else_)
         in
-        (env, {s with s= StmtIf (cond, then_, else_opt)})
+        (env, state, {s with s= StmtIf (cond, then_, else_opt)})
     | StmtWhile (cond, body) ->
-        let env, cond = process_exp_instantiation iargs env state cond in
-        let env, body = process_stmt_instantiation iargs env state body in
-        (env, {s with s= StmtWhile (cond, body)})
+        let env, state, cond = process_exp_instantiation iargs env state cond in
+        let env, state, body = process_stmt_instantiation iargs env state body in
+        (env, state, {s with s= StmtWhile (cond, body)})
     | StmtBlock stmts ->
-        let env, stmts = CCList.fold_left_map (fun env s -> process_stmt_instantiation iargs env state s) env stmts in
-        (env, {s with s= StmtBlock stmts})
+        let process (env, state) s =
+          let env, state, s = process_stmt_instantiation iargs env state s in
+          ((env, state), s)
+        in
+        let (env, state), stmts = CCList.fold_left_map process (env, state) stmts in
+        (env, state, {s with s= StmtBlock stmts})
 
   (* ========== Function Definition Processing ========== *)
 
   let rec process_function_def (iargs : Args.args) (env : env) (state : instantiation_state) (def : Typed.function_def)
-      (body : Typed.stmt) : env * (Typed.function_def * Typed.stmt) =
+      (body : Typed.stmt) : env * instantiation_state * (Typed.function_def * Typed.stmt) =
     let fenv = Env.reenterFunction env def.name in
     (* Pending generic calls are per-function: they are only used to resolve companion calls
        that happen before the parent call within the same function *)
-    let () = state.pending_generic_calls <- [] in
-    let () = prescan_generic_calls_in_stmt iargs fenv state body in
-    let fenv, body = process_stmt_instantiation iargs fenv state body in
+    let state = prescan_generic_calls_in_stmt {state with pending_generic_calls= []} body in
+    let fenv, state, body = process_stmt_instantiation iargs fenv state body in
     let had_ctx_before =
       match def.args with {name; _} :: _ when String.equal name context_name -> true | _ -> false
     in
     let fenv, def = insertContextArgument fenv def in
-    let () =
-      if not had_ctx_before then
-        match def.args with
-        | {name; t= ctx_t; _} :: _ when String.equal name context_name ->
-            let func_path_str = pathString def.name in
-            Hashtbl.replace state.functions_needing_context func_path_str ctx_t
-        | _ ->
-            ()
+    let state =
+      match def.args with
+      | {name; t= ctx_t; _} :: _ when (not had_ctx_before) && String.equal name context_name ->
+          let func_path_str = pathString def.name in
+          {state with functions_needing_context= StrMap.add func_path_str ctx_t state.functions_needing_context}
+      | _ ->
+          state
     in
-    let fenv, next =
+    let fenv, state, next =
       match def.next with
       | None ->
-          (fenv, None)
+          (fenv, state, None)
       | Some (next_def, next_body) ->
-          let fenv, next = process_function_def iargs fenv state next_def next_body in
-          (fenv, Some next)
+          let fenv, state, next = process_function_def iargs fenv state next_def next_body in
+          (fenv, state, Some next)
     in
-    (Env.restoreLocation env fenv, ({def with next}, body))
+    (Env.restoreLocation env fenv, state, ({def with next}, body))
 
   (* ========== Top-Level Processing ========== *)
 
   let process_top_stmt_instantiation (iargs : Args.args) (env : env) (state : instantiation_state) (t : Typed.top_stmt)
-      : env * Typed.top_stmt =
+      : env * instantiation_state * Typed.top_stmt =
     match t.top with
     | TopFunction (def, body) ->
-        let env, (def, body) = process_function_def iargs env state def body in
-        (env, {t with top= TopFunction (def, body)})
+        let env, state, (def, body) = process_function_def iargs env state def body in
+        (env, state, {t with top= TopFunction (def, body)})
     | TopGenericPlaceholder _ | TopExternal _ | TopType _ | TopEnum _ | TopConstant _ | TopAlias _ ->
-        (env, t)
+        (env, state, t)
 
   let transform_module_generics (iargs : Args.args) (env : env) (state : instantiation_state)
-      (stmts : Typed.top_stmt list) : env * Typed.top_stmt list =
+      (stmts : Typed.top_stmt list) : env * instantiation_state * Typed.top_stmt list =
     (* The statements are in source order, so callees are processed before their callers:
        functions that gain a context argument during elaboration are registered before any
        call to them is processed, allowing the context requirement to propagate through
        call chains of any depth in a single pass. *)
-    CCList.fold_left_map (fun env t -> process_top_stmt_instantiation iargs env state t) env stmts
+    let process (env, state) t =
+      let env, state, t = process_top_stmt_instantiation iargs env state t in
+      ((env, state), t)
+    in
+    let (env, state), stmts = CCList.fold_left_map process (env, state) stmts in
+    (env, state, stmts)
 
-  let replace_placeholders_in_module (state : instantiation_state) (module_name : string) (stmts : Typed.top_stmt list)
-      : Typed.top_stmt list =
-    CCList.flat_map
-      (fun (stmt : Typed.top_stmt) ->
-        match stmt.top with
-        | TopGenericPlaceholder generic_name ->
-            let for_this_generic, remaining =
-              CCList.partition
-                (fun (m, gname, _, _) -> String.equal m module_name && String.equal gname generic_name)
-                state.pending_functions
-            in
-            state.pending_functions <- remaining ;
+  (* Replaces the placeholders of the module by the specializations of their generic functions.
+     Returns the specializations that are left. *)
+  let replace_placeholders_in_module (pending : (string * string * Typed.function_def * Typed.stmt) list)
+      (module_name : string) (stmts : Typed.top_stmt list) :
+      (string * string * Typed.function_def * Typed.stmt) list * Typed.top_stmt list =
+    let replace pending (stmt : Typed.top_stmt) =
+      match stmt.top with
+      | TopGenericPlaceholder generic_name ->
+          let for_this_generic, remaining =
+            CCList.partition
+              (fun (m, gname, _, _) -> String.equal m module_name && String.equal gname generic_name)
+              pending
+          in
+          let specializations =
             CCList.map
-              (fun (_, _, def, body) -> {top= TopFunction (def, body); loc= def.loc})
+              (fun (_, _, (def : Typed.function_def), body) -> {top= TopFunction (def, body); loc= def.loc})
               (CCList.rev for_this_generic)
-        | _ ->
-            [stmt] )
-      stmts
+          in
+          (remaining, specializations)
+      | _ ->
+          (pending, [stmt])
+    in
+    let pending, stmts = CCList.fold_left_map replace pending stmts in
+    (pending, CCList.flatten stmts)
 
   (* ========== Main Entry Point ========== *)
 
@@ -1191,29 +1217,28 @@ module Make (T : TYPECHECKER) = struct
         top-level statements *)
   let elaborate ?(reuse_existing = false) (iargs : Args.args) (env : env)
       (module_stmts : (string * Typed.top_stmt list) list) : env * Typed.top_stmt list =
-    let instantiation_state = create_instantiation_state reuse_existing in
+    let state = create_instantiation_state reuse_existing in
     (* Pass 1: Transform all EGenCall to ECall across all modules *)
-    let env, transformed_stmts =
-      CCList.fold_left_map
-        (fun env (module_name, stmts) ->
-          let env = Env.enterModule env module_name in
-          let env, stmts = transform_module_generics iargs env instantiation_state stmts in
-          let env = Env.exitModule env in
-          (env, (module_name, stmts)) )
-        env module_stmts
+    let process (env, state) (module_name, stmts) =
+      let env = Env.enterModule env module_name in
+      let env, state, stmts = transform_module_generics iargs env state stmts in
+      let env = Env.exitModule env in
+      ((env, state), (module_name, stmts))
     in
+    let (env, state), transformed_stmts = CCList.fold_left_map process (env, state) module_stmts in
     (* Pass 2: Replace placeholders with specialized functions *)
-    let final_stmts =
-      CCList.flat_map
-        (fun (module_name, stmts) -> replace_placeholders_in_module instantiation_state module_name stmts)
-        transformed_stmts
+    let pending, final_stmts =
+      CCList.fold_left_map
+        (fun pending (module_name, stmts) -> replace_placeholders_in_module pending module_name stmts)
+        state.pending_functions transformed_stmts
     in
+    let final_stmts = CCList.flatten final_stmts in
     (* Specializations whose generic placeholder is not part of these statements (e.g. when
        elaborating an expression against an existing program) are emitted before everything else *)
     let leftover =
       CCList.map
-        (fun (_, _, def, body) -> {top= TopFunction (def, body); loc= def.loc})
-        (CCList.rev instantiation_state.pending_functions)
+        (fun (_, _, (def : Typed.function_def), body) -> {top= TopFunction (def, body); loc= def.loc})
+        (CCList.rev pending)
     in
     (env, leftover @ final_stmts)
 end
