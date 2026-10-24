@@ -1,10 +1,2 @@
-// A local variable that stores an array argument of unknown size.
-fun first(a : array(int)) : int {
-  val b = a;
-  return b[0];
-}
-
-fun main() : int {
-  mem x : array(int, 4);
-  return first(x);
-}
+// External functions cannot take arrays of unknown size, since there is no body to specialize.
+external sum(a : array(real)) : real "sum";

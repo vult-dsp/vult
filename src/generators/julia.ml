@@ -412,25 +412,21 @@ let print_top_stmt (args : Util.Args.args) t =
             "\"\""
         | TStruct {path; _} ->
             path ^ "()"
-        | TArray (size_opt, elem_type) -> (
-          match size_opt with
-          | Some size ->
-              let elem_default =
-                match elem_type.t with
-                | TInt ->
-                    "Int32(0)"
-                | TInt16 ->
-                    "Int16(0)"
-                | TReal ->
-                    "Float32(0.0)"
-                | TBool ->
-                    "false"
-                | _ ->
-                    "nothing"
-              in
-              "fill(" ^ elem_default ^ ", " ^ string_of_int size ^ ")"
-          | None ->
-              "[]" )
+        | TArray (size, elem_type) ->
+            let elem_default =
+              match elem_type.t with
+              | TInt ->
+                  "Int32(0)"
+              | TInt16 ->
+                  "Int16(0)"
+              | TReal ->
+                  "Float32(0.0)"
+              | TBool ->
+                  "false"
+              | _ ->
+                  "nothing"
+            in
+            "fill(" ^ elem_default ^ ", " ^ string_of_int size ^ ")"
         | _ ->
             "nothing"
       in

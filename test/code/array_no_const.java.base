@@ -7,12 +7,52 @@ import vult.com.external.*;
 
 public class Array_no_const {
 
-private void Array_no_const_bar1(float[] a) {
+static float[] initializeArray(float v, int size) {
+    float[] a = new float[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static int[] initializeArray(int v, int size) {
+    int[] a = new int[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+static boolean[] initializeArray(boolean v, int size) {
+    boolean[] a = new boolean[size];
+    Arrays.fill(a, v);
+    return a;
+}
+
+public static class Array_no_const_main_type {
+   public float[] x;
+
+   public Array_no_const_main_type() {
+      this.x = new float[]{0.0f,0.0f,0.0f};
+   }
+   public Array_no_const_main_type(float[] x) {
+      this.x = x;
+   }}private Array_no_const_main_type Array_no_const_main_type_alloc() {
+   int i_0 = 0;
+   float[] temp_1 = initializeArray(0.0f, 3);
+   Array_no_const_main_type _ctx = new Array_no_const_main_type();
+   while ((i_0 < 3)) {
+      {
+         temp_1[i_0] = 0.0f;
+         i_0 = (1 + i_0);
+      }
+   }
+   _ctx.x = temp_1;
+   return _ctx;
+}
+
+private void Array_no_const_bar1_array_of_real_size_3(float[] a) {
    a[0] = 1.0f;
 }
 
 private void Array_no_const_bob1(float[] a) {
-   Array_no_const_bar1(a);
+   Array_no_const_bar1_array_of_real_size_3(a);
 }
 
 private void Array_no_const_bar2(float[] a) {
@@ -23,11 +63,17 @@ private void Array_no_const_bob2(float[] a) {
    Array_no_const_bar2(a);
 }
 
-private void Array_no_const_bar3(float[] a) {
+private void Array_no_const_bar3_array_of_real_size_3(float[] a) {
 }
 
 private void Array_no_const_bob3(float[] a) {
-   Array_no_const_bar3(a);
+   Array_no_const_bar3_array_of_real_size_3(a);
+}
+
+private void Array_no_const_main(Array_no_const_main_type _ctx) {
+   Array_no_const_bob1(_ctx.x);
+   Array_no_const_bob2(_ctx.x);
+   Array_no_const_bob3(_ctx.x);
 }
 
 

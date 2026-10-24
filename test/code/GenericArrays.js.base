@@ -1,7 +1,19 @@
-this.GenericArrays_sum = function (data) {
+this.GenericArrays_sum_array_of_real_size_3 = function (data) {
    var total = 0.0;
    var i__1 = (0|0);
-   while ((i__1 < this.size(data))) {
+   while ((i__1 < (3|0))) {
+      {
+         total = (total + data[i__1]);
+         i__1 = ((1|0) + i__1);
+      }
+   }
+   return total;
+};
+
+this.GenericArrays_sum_array_of_real_size_4 = function (data) {
+   var total = 0.0;
+   var i__1 = (0|0);
+   while ((i__1 < (4|0))) {
       {
          total = (total + data[i__1]);
          i__1 = ((1|0) + i__1);
@@ -13,7 +25,7 @@ this.GenericArrays_sum = function (data) {
 this.GenericArrays_test1 = function () {
    var data1 = [1.0, 2.0, 3.0];
    var data2 = [1.0, 2.0, 3.0, 4.0];
-   this.GenericArrays_sum(data1);
-   this.GenericArrays_sum(data2);
+   this.GenericArrays_sum_array_of_real_size_3(data1);
+   this.GenericArrays_sum_array_of_real_size_4(data2);
 };
 

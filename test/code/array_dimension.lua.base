@@ -1,9 +1,9 @@
 
 
-function Array_dimension_total(data)
+function Array_dimension_total_array_of_real_size_2(data)
    local acc = 0.0
    local i__1 = 0
-   while (i__1 < size(data)) do
+   while (i__1 < 2) do
       do
          acc = (acc + data[(i__1) + 1])
          i__1 = (1 + i__1)
@@ -12,10 +12,22 @@ function Array_dimension_total(data)
    return acc
 end
 
-function Array_dimension_sum(data1, data2)
+function Array_dimension_total_array_of_real_size_3(data)
    local acc = 0.0
    local i__1 = 0
-   while (i__1 < size(data1)) do
+   while (i__1 < 3) do
+      do
+         acc = (acc + data[(i__1) + 1])
+         i__1 = (1 + i__1)
+      end
+   end
+   return acc
+end
+
+function Array_dimension_sum_array_of_real_size_2_array_of_real_size_3(data1, data2)
+   local acc = 0.0
+   local i__1 = 0
+   while (i__1 < 2) do
       do
          acc = (acc + (data1[(i__1) + 1] + data2[(i__1) + 1]))
          i__1 = (1 + i__1)
@@ -27,6 +39,6 @@ end
 function Array_dimension_main()
    local x = {1.0, 2.0}
    local y = {1.0, 2.0, 3.0}
-   Array_dimension_sum(x, y)
+   Array_dimension_sum_array_of_real_size_2_array_of_real_size_3(x, y)
 end
 

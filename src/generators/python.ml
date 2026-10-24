@@ -400,8 +400,8 @@ let print_top_stmt (args : Util.Args.args) (t : top_stmt) =
             "\"\""
         | TStruct {path; _} ->
             path ^ "()"
-        | TArray (size_opt, _) -> (
-          match size_opt with Some size -> Printf.sprintf "[0.0] * %d" size | None -> "[]" )
+        | TArray (size, _) ->
+            Printf.sprintf "[0.0] * %d" size
         | TList _ ->
             "[]"
         | _ ->

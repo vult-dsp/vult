@@ -7,10 +7,22 @@ import vult.com.external.*;
 
 public class GenericArrays {
 
-private float GenericArrays_sum(float[] data) {
+private float GenericArrays_sum_array_of_real_size_3(float[] data) {
    float total = 0.0f;
    int i__1 = 0;
-   while ((i__1 < data.length)) {
+   while ((i__1 < 3)) {
+      {
+         total = (total + data[i__1]);
+         i__1 = (1 + i__1);
+      }
+   }
+   return total;
+}
+
+private float GenericArrays_sum_array_of_real_size_4(float[] data) {
+   float total = 0.0f;
+   int i__1 = 0;
+   while ((i__1 < 4)) {
       {
          total = (total + data[i__1]);
          i__1 = (1 + i__1);
@@ -22,8 +34,8 @@ private float GenericArrays_sum(float[] data) {
 private void GenericArrays_test1() {
    float[] data1 = new float[]{1.0f, 2.0f, 3.0f};
    float[] data2 = new float[]{1.0f, 2.0f, 3.0f, 4.0f};
-   GenericArrays_sum(data1);
-   GenericArrays_sum(data2);
+   GenericArrays_sum_array_of_real_size_3(data1);
+   GenericArrays_sum_array_of_real_size_4(data2);
 }
 
 

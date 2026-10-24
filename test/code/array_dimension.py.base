@@ -1,18 +1,28 @@
 
-def Array_dimension_total(data):
+def Array_dimension_total_array_of_real_size_2(data):
    acc = 0.0
    i__1 = 0
-   while (i__1 < size(data)):
+   while (i__1 < 2):
       acc = (acc + data[i__1])
       i__1 = (1 + i__1)
 
    return acc
 
 
-def Array_dimension_sum(data1, data2):
+def Array_dimension_total_array_of_real_size_3(data):
    acc = 0.0
    i__1 = 0
-   while (i__1 < size(data1)):
+   while (i__1 < 3):
+      acc = (acc + data[i__1])
+      i__1 = (1 + i__1)
+
+   return acc
+
+
+def Array_dimension_sum_array_of_real_size_2_array_of_real_size_3(data1, data2):
+   acc = 0.0
+   i__1 = 0
+   while (i__1 < 2):
       acc = (acc + (data1[i__1] + data2[i__1]))
       i__1 = (1 + i__1)
 
@@ -22,6 +32,6 @@ def Array_dimension_sum(data1, data2):
 def Array_dimension_main():
    x = [1.0, 2.0]
    y = [1.0, 2.0, 3.0]
-   _ = Array_dimension_sum(x, y)
+   _ = Array_dimension_sum_array_of_real_size_2_array_of_real_size_3(x, y)
 
 

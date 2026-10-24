@@ -279,10 +279,6 @@ and unifyTypes (s : t) (t1 : type_) (t2 : type_) : (t, unify_error) result =
         unifyTypes s ret1 ret2
     | TEFunction _, _ | _, TEFunction _ ->
         Error Mismatch
-    (* special case for arrays without dimensions *)
-    | TEComposed ("array", [e1; _]), TEComposed ("array", [e2])
-    | TEComposed ("array", [e1]), TEComposed ("array", [e2; _]) ->
-        unifyTypes s e1 e2
     | TEComposed (n1, e1), TEComposed (n2, e2) when String.equal n1 n2 ->
         unifyList s e1 e2
     | TENoReturn i, _ ->

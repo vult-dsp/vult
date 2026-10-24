@@ -1,8 +1,18 @@
 
-def GenericArrays_sum(data):
+def GenericArrays_sum_array_of_real_size_3(data):
    total = 0.0
    i__1 = 0
-   while (i__1 < size(data)):
+   while (i__1 < 3):
+      total = (total + data[i__1])
+      i__1 = (1 + i__1)
+
+   return total
+
+
+def GenericArrays_sum_array_of_real_size_4(data):
+   total = 0.0
+   i__1 = 0
+   while (i__1 < 4):
       total = (total + data[i__1])
       i__1 = (1 + i__1)
 
@@ -12,7 +22,7 @@ def GenericArrays_sum(data):
 def GenericArrays_test1():
    data1 = [1.0, 2.0, 3.0]
    data2 = [1.0, 2.0, 3.0, 4.0]
-   _ = GenericArrays_sum(data1)
-   _ = GenericArrays_sum(data2)
+   _ = GenericArrays_sum_array_of_real_size_3(data1)
+   _ = GenericArrays_sum_array_of_real_size_4(data2)
 
 

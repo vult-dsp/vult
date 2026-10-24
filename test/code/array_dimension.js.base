@@ -1,7 +1,7 @@
-this.Array_dimension_total = function (data) {
+this.Array_dimension_total_array_of_real_size_2 = function (data) {
    var acc = 0.0;
    var i__1 = (0|0);
-   while ((i__1 < this.size(data))) {
+   while ((i__1 < (2|0))) {
       {
          acc = (acc + data[i__1]);
          i__1 = ((1|0) + i__1);
@@ -10,10 +10,22 @@ this.Array_dimension_total = function (data) {
    return acc;
 };
 
-this.Array_dimension_sum = function (data1, data2) {
+this.Array_dimension_total_array_of_real_size_3 = function (data) {
    var acc = 0.0;
    var i__1 = (0|0);
-   while ((i__1 < this.size(data1))) {
+   while ((i__1 < (3|0))) {
+      {
+         acc = (acc + data[i__1]);
+         i__1 = ((1|0) + i__1);
+      }
+   }
+   return acc;
+};
+
+this.Array_dimension_sum_array_of_real_size_2_array_of_real_size_3 = function (data1, data2) {
+   var acc = 0.0;
+   var i__1 = (0|0);
+   while ((i__1 < (2|0))) {
       {
          acc = (acc + (data1[i__1] + data2[i__1]));
          i__1 = ((1|0) + i__1);
@@ -25,6 +37,6 @@ this.Array_dimension_sum = function (data1, data2) {
 this.Array_dimension_main = function () {
    var x = [1.0, 2.0];
    var y = [1.0, 2.0, 3.0];
-   this.Array_dimension_sum(x, y);
+   this.Array_dimension_sum_array_of_real_size_2_array_of_real_size_3(x, y);
 };
 

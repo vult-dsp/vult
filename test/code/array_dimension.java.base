@@ -7,10 +7,10 @@ import vult.com.external.*;
 
 public class Array_dimension {
 
-private float Array_dimension_total(float[] data) {
+private float Array_dimension_total_array_of_real_size_2(float[] data) {
    float acc = 0.0f;
    int i__1 = 0;
-   while ((i__1 < data.length)) {
+   while ((i__1 < 2)) {
       {
          acc = (acc + data[i__1]);
          i__1 = (1 + i__1);
@@ -19,10 +19,22 @@ private float Array_dimension_total(float[] data) {
    return acc;
 }
 
-private float Array_dimension_sum(float[] data1, float[] data2) {
+private float Array_dimension_total_array_of_real_size_3(float[] data) {
    float acc = 0.0f;
    int i__1 = 0;
-   while ((i__1 < data1.length)) {
+   while ((i__1 < 3)) {
+      {
+         acc = (acc + data[i__1]);
+         i__1 = (1 + i__1);
+      }
+   }
+   return acc;
+}
+
+private float Array_dimension_sum_array_of_real_size_2_array_of_real_size_3(float[] data1, float[] data2) {
+   float acc = 0.0f;
+   int i__1 = 0;
+   while ((i__1 < 2)) {
       {
          acc = (acc + (data1[i__1] + data2[i__1]));
          i__1 = (1 + i__1);
@@ -34,7 +46,7 @@ private float Array_dimension_sum(float[] data1, float[] data2) {
 private void Array_dimension_main() {
    float[] x = new float[]{1.0f, 2.0f};
    float[] y = new float[]{1.0f, 2.0f, 3.0f};
-   Array_dimension_sum(x, y);
+   Array_dimension_sum_array_of_real_size_2_array_of_real_size_3(x, y);
 }
 
 

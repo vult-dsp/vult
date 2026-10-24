@@ -5,15 +5,25 @@
 #include "vultin.hpp"
 #include "array_no_const.tables.h"
 
+typedef struct Array_no_const_main_type {
+   std::array<fix16_t, 3> x;
+} Array_no_const_main_type;
+
 extern void foo(std::array<fix16_t, 3>& a);
-template<std::size_t SIZE_0>
-static_inline void Array_no_const_bar1(std::array<fix16_t, SIZE_0>& a) {
+static_inline void Array_no_const_main_type_init(Array_no_const_main_type& _ctx) {
+   int32_t i_0 = 0;
+   while (i_0 < 3) {
+      _ctx.x[static_cast<uint32_t>(i_0)] = 0x0 /* 0.000000 */;
+      i_0 = 1 + i_0;
+   }
+}
+
+static_inline void Array_no_const_bar1_array_of_real_size_3(std::array<fix16_t, 3>& a) {
    a[static_cast<uint32_t>(0)] = 0x10000 /* 1.000000 */;
 }
 
-template<std::size_t SIZE_0>
-static_inline void Array_no_const_bob1(std::array<fix16_t, SIZE_0>& a) {
-   Array_no_const_bar1(a);
+static_inline void Array_no_const_bob1(std::array<fix16_t, 3>& a) {
+   Array_no_const_bar1_array_of_real_size_3(a);
 }
 
 static_inline void Array_no_const_bar2(std::array<fix16_t, 3>& a) {
@@ -24,13 +34,17 @@ static_inline void Array_no_const_bob2(std::array<fix16_t, 3>& a) {
    Array_no_const_bar2(a);
 }
 
-template<std::size_t SIZE_0>
-static_inline void Array_no_const_bar3(const std::array<fix16_t, SIZE_0>& a) {
+static_inline void Array_no_const_bar3_array_of_real_size_3(const std::array<fix16_t, 3>& a) {
 }
 
-template<std::size_t SIZE_0>
-static_inline void Array_no_const_bob3(const std::array<fix16_t, SIZE_0>& a) {
-   Array_no_const_bar3(a);
+static_inline void Array_no_const_bob3(const std::array<fix16_t, 3>& a) {
+   Array_no_const_bar3_array_of_real_size_3(a);
+}
+
+static_inline void Array_no_const_main(Array_no_const_main_type& _ctx) {
+   Array_no_const_bob1(_ctx.x);
+   Array_no_const_bob2(_ctx.x);
+   Array_no_const_bob3(_ctx.x);
 }
 
 

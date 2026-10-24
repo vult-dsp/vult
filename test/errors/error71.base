@@ -1,4 +1,4 @@
-The size of the array in the variable 'b' is unknown. Please add a type annotation.
-fun first(a : array(int)) : int {
-  val b = a;
-      ^
+The array arguments of an external function need a size. Use 'array(type, size)' format (e.g., 'array(real, 10)')
+// External functions cannot take arrays of unknown size, since there is no body to specialize.
+external sum(a : array(real)) : real "sum";
+                      ^

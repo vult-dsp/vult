@@ -539,15 +539,10 @@ module C = struct
 
   let size ?(loc = Loc.default) n = withConst loc (TESize n)
 
-  (* An array whose size is unknown when [size] is not given. When it is not [fixed], it can also
-     be an array without a size. *)
-  let array ?(fixed = true) ?(loc = Loc.default) ?size (t : type_) (s : supply) : supply * type_ =
+  (* An array whose size is unknown when [size] is not given *)
+  let array ?(loc = Loc.default) ?size (t : type_) (s : supply) : supply * type_ =
     let s, size = match size with Some size -> (s, size) | None -> unbound loc s in
-    let s, a_dim = withConst loc (TEComposed ("array", [t; size])) s in
-    if fixed then (s, a_dim)
-    else
-      let s, a = withConst loc (TEComposed ("array", [t])) s in
-      option loc [a; a_dim] s
+    withConst loc (TEComposed ("array", [t; size])) s
 
   let tuple ?(loc = Loc.default) l = withConst loc (TEComposed ("tuple", l))
 
@@ -556,11 +551,7 @@ module C = struct
   (* Type for indexable collections: arrays and lists *)
   let indexable ?(loc = Loc.default) t (s : supply) : supply * type_ =
     let s, size = unbound loc s in
-    optionOf loc
-      [ withConst loc (TEComposed ("array", [t]))
-      ; withConst loc (TEComposed ("array", [t; size]))
-      ; withConst loc (TEComposed ("list", [t])) ]
-      s
+    optionOf loc [withConst loc (TEComposed ("array", [t; size])); withConst loc (TEComposed ("list", [t]))] s
 
   let freal_type ?(loc = Loc.default) () = optionOf loc [real ~loc; fix16 ~loc]
 
@@ -589,7 +580,7 @@ module C = struct
 
   let array_size (s : supply) : supply * fun_type =
     let s, a = unbound loc s in
-    let s, a_array = array ~fixed:false a s in
+    let s, a_array = array a s in
     signature [known a_array] (int ~loc) s
 
   (* List functions *)

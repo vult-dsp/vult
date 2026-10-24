@@ -1,9 +1,21 @@
 
 
-function GenericArrays_sum(data)
+function GenericArrays_sum_array_of_real_size_3(data)
    local total = 0.0
    local i__1 = 0
-   while (i__1 < size(data)) do
+   while (i__1 < 3) do
+      do
+         total = (total + data[(i__1) + 1])
+         i__1 = (1 + i__1)
+      end
+   end
+   return total
+end
+
+function GenericArrays_sum_array_of_real_size_4(data)
+   local total = 0.0
+   local i__1 = 0
+   while (i__1 < 4) do
       do
          total = (total + data[(i__1) + 1])
          i__1 = (1 + i__1)
@@ -15,7 +27,7 @@ end
 function GenericArrays_test1()
    local data1 = {1.0, 2.0, 3.0}
    local data2 = {1.0, 2.0, 3.0, 4.0}
-   GenericArrays_sum(data1)
-   GenericArrays_sum(data2)
+   GenericArrays_sum_array_of_real_size_3(data1)
+   GenericArrays_sum_array_of_real_size_4(data2)
 end
 

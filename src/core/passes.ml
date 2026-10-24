@@ -664,7 +664,7 @@ module FoldBuiltins = struct
     (* not *)
     | {e= ECall {path= "not"; args= [e1]}; loc; _} ->
         (reapply state, {e with e= EOp (OpEq, e1, {e= EBool false; t= {t= TBool; const= false; loc}; loc})})
-    | {e= ECall {path= "size"; args= [{t= {t= TArray (Some size, _); _}; _}]}; loc; _} ->
+    | {e= ECall {path= "size"; args= [{t= {t= TArray (size, _); _}; _}]}; loc; _} ->
         (reapply state, {e with e= EInt size; loc})
     | {e= ECall {path= "length"; args= [{e= EString str; _}]}; loc; _} ->
         (reapply state, {e with e= EInt (String.length str); loc})

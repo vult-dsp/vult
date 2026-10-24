@@ -363,7 +363,7 @@ let runtime (stmts : prog) =
   (* makeArray is not a call in the program: the printer emits it when it
      initializes an array too large to write as a literal (see getInitValue). *)
   let uses_large_array =
-    Usage.existsType (fun t -> match t.t with TArray (Some size, _) -> size >= 32 | _ -> false) stmts
+    Usage.existsType (fun t -> match t.t with TArray (size, _) -> size >= 32 | _ -> false) stmts
   in
   let needed name = Util.Maps.Set.mem name calls || (name = "makeArray" && uses_large_array) in
   let fragments =
@@ -475,10 +475,7 @@ let rec print_type_ (t : type_) =
       Pla.string "int"
   | TTuple l ->
       Pla.string (tupleName l)
-  | TArray (Some _, t) ->
-      let t = print_type_ t in
-      {%pla|<#t#>[]|}
-  | TArray (None, t) ->
+  | TArray (_, t) ->
       let t = print_type_ t in
       {%pla|<#t#>[]|}
   | TList t ->
@@ -640,7 +637,7 @@ let rec getInitValue (t : type_) =
       Pla.string "\"\""
   | TFix16 ->
       Pla.string "0"
-  | TArray (Some size, elem_t) ->
+  | TArray (size, elem_t) ->
       let elem_init = getInitValue elem_t in
       let elem_type = print_type_ elem_t in
       if size < 32 then

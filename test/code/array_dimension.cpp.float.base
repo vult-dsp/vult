@@ -2,3 +2,33 @@
 
 #include "array_dimension.h"
 
+float Array_dimension_total_array_of_real_size_2(const std::array<float, 2>& data) {
+   float acc = 0.0f;
+   int32_t i__1 = 0;
+   while (i__1 < 2) {
+      acc = acc + data[static_cast<uint32_t>(i__1)];
+      i__1 = 1 + i__1;
+   }
+   return acc;
+}
+
+float Array_dimension_total_array_of_real_size_3(const std::array<float, 3>& data) {
+   float acc = 0.0f;
+   int32_t i__1 = 0;
+   while (i__1 < 3) {
+      acc = acc + data[static_cast<uint32_t>(i__1)];
+      i__1 = 1 + i__1;
+   }
+   return acc;
+}
+
+float Array_dimension_sum_array_of_real_size_2_array_of_real_size_3(const std::array<float, 2>& data1, const std::array<float, 3>& data2) {
+   float acc = 0.0f;
+   int32_t i__1 = 0;
+   while (i__1 < 2) {
+      acc = acc + data1[static_cast<uint32_t>(i__1)] + data2[static_cast<uint32_t>(i__1)];
+      i__1 = 1 + i__1;
+   }
+   return acc;
+}
+

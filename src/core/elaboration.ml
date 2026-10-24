@@ -94,6 +94,28 @@ let callSiteKey (env : env) (loc : Loc.t) : string =
 
 let typeToMangledName = Typed.typeToMangledName
 
+let rec hasUnknownArraySize (t : Typed.type_) : bool =
+  match t.tx with
+  | TEComposed ("array", [elem; {tx= TESize _; _}]) ->
+      hasUnknownArraySize elem
+  | TEComposed ("array", _) ->
+      true
+  | TEComposed (_, l) ->
+      CCList.exists hasUnknownArraySize l
+  | TEId _ | TESize _ | TEUnbound _ | TENoReturn _ | TEOption _ | TEFunction _ ->
+      false
+
+(* Reports at the call an argument whose array size is unknown, since the specialization for it
+   cannot be created. The argument must be resolved. *)
+let checkArraySizeKnown (generic_name : string) (arg : Typed.exp) : unit =
+  if hasUnknownArraySize arg.t then
+    Error.raiseError
+      (Printf.sprintf
+         "The size of this array could not be inferred, so '%s' cannot be specialized for it. Please add a type \
+          annotation."
+         generic_name )
+      arg.loc
+
 (* ========== Constant Literal Handling ========== *)
 
 (* Check if a typed expression is a compile-time constant literal *)
@@ -594,6 +616,7 @@ module Make (T : TYPECHECKER) = struct
     let args = Typed.callArgs resolved_params in
     let explicit_args = Typed.callExplicitArgs resolved_params in
     let resolved_arg_types = CCList.map (fun (a : Typed.exp) -> a.t) args in
+    CCList.iter (checkArraySizeKnown generic_func.name) args ;
     let has_explicit = CCList.length explicit_args > 0 in
     let all_constants = has_explicit && CCList.for_all is_constant_literal explicit_args in
     let base_name =
@@ -756,6 +779,9 @@ module Make (T : TYPECHECKER) = struct
                       None )
                 processed_params
             in
+            (* A generic function without a declared return type leaves the type of the call open
+               until the specialization infers it *)
+            let env = unifyRaise env loc e.t (snd specialized_def.t) in
             let specialized_non_ctx_args =
               match specialized_def.args with
               | {name; _} :: rest when String.equal name context_name ->

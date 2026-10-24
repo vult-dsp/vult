@@ -227,12 +227,9 @@ let rec print_type (state : state) (t : type_) =
       Pla.string "[]const u8"
   | TEmptyType ->
       Pla.string "*anyopaque"
-  | TArray (Some dim, t) ->
+  | TArray (dim, t) ->
       let t = print_type state t in
       {%pla|[<#dim#i>]<#t#>|}
-  | TArray (None, t) ->
-      let t = print_type state t in
-      {%pla|[]<#t#>|}
   | TStruct {path; _} ->
       Pla.string path
   | TTuple l ->
@@ -583,12 +580,9 @@ let print_param_named (state : state) (name : string) (p : param) =
   match p.t.t with
   | TStruct {path; _} ->
       {%pla|<#name#s>: *<#path#s>|}
-  | TArray (Some dim, elem) ->
+  | TArray (dim, elem) ->
       let elem = print_type state elem in
       {%pla|<#name#s>: *[<#dim#i>]<#elem#>|}
-  | TArray (None, elem) ->
-      let elem = print_type state elem in
-      {%pla|<#name#s>: []<#elem#>|}
   | _ ->
       let t = print_type state p.t in
       {%pla|<#name#s>: <#t#>|}

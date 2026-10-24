@@ -45,7 +45,7 @@ let rec getInitRHS (t : type_) =
       C.ebool ~loc false
   | {t= TStruct {path; _}; loc; _} ->
       C.ecall ~loc (path ^ "_init") [] t
-  | {t= TArray (Some size, at); loc; _} ->
+  | {t= TArray (size, at); loc; _} ->
       let v = getInitRHS at in
       let elems = CCList.init size (fun _ -> v) in
       C.earray ~loc elems t
@@ -194,7 +194,7 @@ let rec initStatement (cstyle : cstyle) (tick : int) lhs rhs (t : type_) (init_v
   | _, {t= TStruct {path; _}; loc; _} ->
       let rhs = {e= ECall {path= path ^ "_alloc"; args= []}; t; loc} in
       (tick, {s= StmtBind (lhs, rhs); loc})
-  | _, {t= TArray (Some size, subt); loc; _} when cstyle = RefObject ->
+  | _, {t= TArray (size, subt); loc; _} when cstyle = RefObject ->
       let i = "i_" ^ string_of_int tick in
       let tick = tick + 1 in
       let int_t = C.int_t in
@@ -213,7 +213,7 @@ let rec initStatement (cstyle : cstyle) (tick : int) lhs rhs (t : type_) (init_v
       let decl = {s= StmtDecl ({d= DId (i, None); t= int_t; loc}, None); loc} in
       let init = {s= StmtBind ({l= LId i; t= int_t; loc}, {e= EInt 0; t= int_t; loc}); loc} in
       (tick, {s= StmtBlock [decl; init; loop]; loc})
-  | _, {t= TArray (Some size, subt); loc; _} ->
+  | _, {t= TArray (size, subt); loc; _} ->
       let i = "i_" ^ string_of_int tick in
       let tick = tick + 1 in
       let int_t = C.int_t in
@@ -238,8 +238,6 @@ let rec initStatement (cstyle : cstyle) (tick : int) lhs rhs (t : type_) (init_v
       let init = {s= StmtBind ({l= LId i; t= int_t; loc}, {e= EInt 0; t= int_t; loc}); loc} in
       let transfer = {s= StmtBind (lhs, rhs_temp); loc} in
       (tick, {s= StmtBlock [decl_array; decl; init; loop; transfer]; loc})
-  | _, {t= TArray (None, _); _} ->
-      failwith "initStatement: Array without size"
   | _, {t= TList _; loc; _} ->
       (* Lists are initialized as empty - use EEmptyValue with list type *)
       let rhs = {e= EEmptyValue; t; loc} in

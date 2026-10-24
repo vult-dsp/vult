@@ -1,4 +1,4 @@
-The size of the array in the mem variable 'a' is unknown. Please add a type annotation.
-fun f(x : array(real)) {
-  mem a = x;
-      ^
+The size of this array could not be inferred, so 'first' cannot be specialized for it. Please add a type annotation.
+fun caller(x) : real {
+  return first(x);
+               ^

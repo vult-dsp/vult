@@ -1,5 +1,8 @@
-// A mem variable that stores an array argument of unknown size.
-fun f(x : array(real)) {
-  mem a = x;
+// A call to a function with an argument of unknown size, where the size of the passed array cannot be inferred.
+fun first(a : array(real)) : real {
   return a[0];
+}
+
+fun caller(x) : real {
+  return first(x);
 }

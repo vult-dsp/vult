@@ -242,9 +242,7 @@ let classifySavedMember (struct_path : string) (name : string) (t : type_) (loc 
       saved (Struct path)
   | TVoid _ | TEmptyType ->
       None
-  | TArray (None, _) ->
-      reject "the size of the array is not known"
-  | TArray (Some size, elem_t) -> (
+  | TArray (size, elem_t) -> (
     match elementOf elem_t with
     | Some elem ->
         saved (FixedArray {size; elem; elem_t})
@@ -689,7 +687,7 @@ let createTypeDescriptor n_types table (stmt : top_stmt) =
         let index = C.eid "index" C.int_t in
         let lindex = C.lid "index" C.int_t in
         let buffer = C.eid "buffer" buffer_type in
-        let string_array_type n : type_ = {t= TArray (Some n, string_type); loc; const= true} in
+        let string_array_type n : type_ = {t= TArray (n, string_type); loc; const= true} in
         let members =
           CCList.filter_map
             (fun (name, (_t : type_), tags, loc) ->

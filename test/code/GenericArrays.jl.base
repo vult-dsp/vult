@@ -1,10 +1,22 @@
 
 # High-performance Vult Runtime for Julia with typed arrays
 
-function GenericArrays_sum(data)
+function GenericArrays_sum_array_of_real_size_3(data)
    total = Float32(0.0)
    i__1 = Int32(0)
-   while (i__1 < length(data))
+   while (i__1 < Int32(3))
+      begin
+         total = (total + @inbounds data[i__1 + 1])
+         i__1 = (Int32(1) + i__1)
+      end
+   end
+   return total
+end
+
+function GenericArrays_sum_array_of_real_size_4(data)
+   total = Float32(0.0)
+   i__1 = Int32(0)
+   while (i__1 < Int32(4))
       begin
          total = (total + @inbounds data[i__1 + 1])
          i__1 = (Int32(1) + i__1)
@@ -16,7 +28,7 @@ end
 function GenericArrays_test1()
    data1 = [Float32(1.0), Float32(2.0), Float32(3.0)]
    data2 = [Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0)]
-   GenericArrays_sum(data1)
-   GenericArrays_sum(data2)
+   GenericArrays_sum_array_of_real_size_3(data1)
+   GenericArrays_sum_array_of_real_size_4(data2)
 end
 

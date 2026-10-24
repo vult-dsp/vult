@@ -1,11 +1,54 @@
 
+-- LuaJIT detection
+local isLuaJIT = type(jit) == "table" and jit.version
 
-function Array_no_const_bar1(a)
+
+-- Numeric arrays use FFI storage under LuaJIT, tables everywhere else.
+local initializeArray
+if isLuaJIT then
+    local ffi = require("ffi")
+    function initializeArray(v, n)
+        if type(v) == "number" then
+            -- One-based, so element zero is unused. This is cdata, not a
+            -- table: indexing works, '#' and pairs() do not.
+            local a = ffi.new("double[?]", n + 1)
+            for i = 1, n do a[i] = v end
+            return a
+        else
+            local a = {}
+            for i = 1, n do a[i] = v end
+            return a
+        end
+    end
+else
+    function initializeArray(v, n)
+        local a = {}
+        for i = 1, n do a[i] = v end
+        return a
+    end
+end
+
+
+function Array_no_const_main_type_alloc()
+   local i_0 = 0
+   local temp_1 = initializeArray(0.0, 3)
+   local _ctx = {};
+   while (i_0 < 3) do
+      do
+         temp_1[i_0 + 1] = 0.0
+         i_0 = (1 + i_0)
+      end
+   end
+   _ctx.x = temp_1
+   return _ctx
+end
+
+function Array_no_const_bar1_array_of_real_size_3(a)
    a[1] = 1.0
 end
 
 function Array_no_const_bob1(a)
-   Array_no_const_bar1(a)
+   Array_no_const_bar1_array_of_real_size_3(a)
 end
 
 function Array_no_const_bar2(a)
@@ -16,10 +59,16 @@ function Array_no_const_bob2(a)
    Array_no_const_bar2(a)
 end
 
-function Array_no_const_bar3(a)
+function Array_no_const_bar3_array_of_real_size_3(a)
 end
 
 function Array_no_const_bob3(a)
-   Array_no_const_bar3(a)
+   Array_no_const_bar3_array_of_real_size_3(a)
+end
+
+function Array_no_const_main(_ctx)
+   Array_no_const_bob1(_ctx.x)
+   Array_no_const_bob2(_ctx.x)
+   Array_no_const_bob3(_ctx.x)
 end
 

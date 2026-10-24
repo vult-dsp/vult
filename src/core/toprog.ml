@@ -69,17 +69,9 @@ let getDim (t : Typed.type_) =
       Error.raiseError "The size of the array could not be inferred. Please add a type annotation." t.loc
 
 (* Struct members live in memory and are initialized and copied as a whole, which is not
-   possible for tuples or arrays whose size is unknown. *)
+   possible for tuples. *)
 let checkMemberType ((name, (t : type_), _, loc) : string * type_ * Ptags.tags * Loc.t) : unit =
-  match t.t with
-  | TTuple _ ->
-      Error.raiseError ("The mem variable '" ^ name ^ "' cannot hold a tuple.") loc
-  | TArray (None, _) ->
-      Error.raiseError
-        ("The size of the array in the mem variable '" ^ name ^ "' is unknown. Please add a type annotation.")
-        loc
-  | _ ->
-      ()
+  match t.t with TTuple _ -> Error.raiseError ("The mem variable '" ^ name ^ "' cannot hold a tuple.") loc | _ -> ()
 
 let rec type_ ?(const = false) (env : env) (state : state) (t : Typed.type_) =
   let const = const || Typed.isTypeConst t in
@@ -138,10 +130,7 @@ let rec type_ ?(const = false) (env : env) (state : state) (t : Typed.type_) =
   | T.TEComposed ("array", [t; dim]) ->
       let state, t = type_ ~const env state t in
       let dim = getDim dim in
-      (state, {t= TArray (Some dim, t); const; loc})
-  | T.TEComposed ("array", [t]) ->
-      let state, t = type_ ~const env state t in
-      (state, {t= TArray (None, t); const; loc})
+      (state, {t= TArray (dim, t); const; loc})
   | T.TEComposed ("tuple", elems) ->
       let state, elems = list (type_ ~const) env state elems in
       (state, {t= TTuple elems; const; loc})
@@ -348,15 +337,6 @@ let rec lexp (env : env) (state : state) (e : Typed.lexp) =
 
 let dexp (env : env) (state : state) id dims t loc =
   let state, t = type_ env state t in
-  let () =
-    match t.t with
-    | TArray (None, _) ->
-        Error.raiseError
-          ("The size of the array in the variable '" ^ id ^ "' is unknown. Please add a type annotation.")
-          loc
-    | _ ->
-        ()
-  in
   match (id, dims) with
   | id, None ->
       (state, {d= DId (id, None); t; loc})

@@ -130,12 +130,9 @@ let rec print_type_ state (t : type_) =
   | TTuple l ->
       let l = Pla.map_sep Pla.commaspace (print_type_ state) l in
       {%pla|std::tuple<<#l#>>|}
-  | TArray (Some dim, t) ->
+  | TArray (dim, t) ->
       let t = print_type_ state t in
       {%pla|std::array<<#t#>, <#dim#i>>|}
-  | TArray (None, t) ->
-      let t = print_type_ state t in
-      {%pla|std::array<<#t#>>|}
   | TList t ->
       let t = print_type_ state t in
       {%pla|std::vector<<#t#>>|}
@@ -367,18 +364,12 @@ let print_member state (n, (t : type_), _, _) =
   | _ ->
       {%pla|<#type_str#> <#n#s>;|}
 
-let print_arg state i ({name; t; const; _} : param) =
+let print_arg state ({name; t; const; _} : param) =
   let const = if const then Pla.string "const " else Pla.unit in
   match t.t with
-  | TArray (Some dim, ({t= TStruct _; _} as sub)) ->
+  | TArray (dim, sub) ->
       let sub = print_type_ state sub in
       {%pla|<#const#>std::array<<#sub#>, <#dim#i>>& <#name#s>|}
-  | TArray (Some dim, sub) ->
-      let sub = print_type_ state sub in
-      {%pla|<#const#>std::array<<#sub#>, <#dim#i>>& <#name#s>|}
-  | TArray (None, sub) ->
-      let sub = print_type_ state sub in
-      {%pla|<#const#>std::array<<#sub#>, SIZE_<#i#i>>& <#name#s>|}
   | TStruct {path; _} ->
       let path = addPrefix state path in
       {%pla|<#const#><#path#s>& <#name#s>|}
@@ -388,14 +379,10 @@ let print_arg state i ({name; t; const; _} : param) =
 
 let print_decl state (n, (t : type_)) =
   match t.t with
-  | TArray (Some dim, ({t= TStruct _; _} as sub)) ->
+  | TArray (dim, sub) ->
       let sub = print_type_ state sub in
-      {%pla|std::array<<#sub#>, <#dim#i>> &<#n#s>|}
-  | TArray (Some dim, sub) ->
-      let sub = print_type_ state sub in
-      {%pla|std::array<<#sub#>, <#dim#i>> &<#n#s>|}
-  | TArray (None, _) ->
-      failwith "Cpp.print_decl: array without dimensions"
+      let const = if t.const then Pla.string "const " else Pla.unit in
+      {%pla|<#const#>std::array<<#sub#>, <#dim#i>> &<#n#s>|}
   | TStruct {path; _} ->
       if t.const then {%pla|const <#path#s> &<#n#s>|} else {%pla|<#path#s> &<#n#s>|}
   | _ ->
@@ -404,14 +391,9 @@ let print_decl state (n, (t : type_)) =
 
 let print_decl_alloc state (n, (t : type_)) =
   match t.t with
-  | TArray (Some dim, ({t= TStruct _; _} as sub)) ->
+  | TArray (dim, sub) ->
       let sub = print_type_ state sub in
       {%pla|std::array<<#sub#>, <#dim#i>> <#n#s>|}
-  | TArray (Some dim, sub) ->
-      let sub = print_type_ state sub in
-      {%pla|std::array<<#sub#>, <#dim#i>> <#n#s>|}
-  | TArray (None, _) ->
-      failwith "Cpp.print_decl_alloc: array without dimensions"
   | TStruct {path; _} ->
       if t.const then {%pla|const <#path#s> <#n#s>|} else {%pla|<#path#s> <#n#s>|}
   | _ ->
@@ -510,52 +492,35 @@ and print_block state body =
       let stmt = print_stmt state body in
       {%pla|{<#stmt#+><#>}|}
 
-let isTemplate (args : param list) =
-  CCList.exists (fun (a : param) -> match a.t with {t= TArray (None, _); _} -> true | _ -> false) args
-
 let print_function_def state (def : function_def) =
   let name = Pla.string (addPrefix state def.name) in
-  let args = CCList.mapi (print_arg state) def.args |> Pla.join_sep Pla.commaspace in
-  let template_args =
-    def.args
-    |> CCList.mapi (fun i (arg : param) ->
-        match arg.t with {t= TArray (None, _); _} -> Some ("std::size_t SIZE_" ^ string_of_int i) | _ -> None )
-    |> CCList.filter_map (fun v -> v)
-  in
-  let template_decl =
-    match template_args with
-    | [] ->
-        Pla.unit
-    | _ ->
-        let args = Pla.map_sep Pla.commaspace Pla.string template_args in
-        {%pla|template<<#args#>><#>|}
-  in
+  let args = Pla.map_sep Pla.commaspace (print_arg state) def.args in
   let ret = print_type_ state (snd def.t) in
-  (template_decl, {%pla|<#ret#> <#name#>(<#args#>)|})
+  {%pla|<#ret#> <#name#>(<#args#>)|}
 
 let print_top_stmt state ~allow_inline (target : target) t =
   match (t.top, target) with
   | TopFunction (def, body), Header ->
-      let inline = (allow_inline && isSmall [body]) || isTemplate def.args in
-      let template, def = print_function_def state def in
+      let inline = allow_inline && isSmall [body] in
+      let def = print_function_def state def in
       if inline then
         let body = print_block state body in
-        {%pla|<#template#>static_inline <#def#> <#body#><#><#>|}
+        {%pla|static_inline <#def#> <#body#><#><#>|}
       else {%pla|<#def#>;<#><#>|}
   | TopFunction (def, body), Implementation ->
-      let inline = (allow_inline && isSmall [body]) || isTemplate def.args in
+      let inline = allow_inline && isSmall [body] in
       if inline then Pla.unit
       else
-        let template, def = print_function_def state def in
+        let def = print_function_def state def in
         let body = print_block state body in
-        {%pla|<#template#><#def#> <#body#><#><#>|}
+        {%pla|<#def#> <#body#><#><#>|}
   | TopFunction _, _ ->
       Pla.unit
   | TopExternal (def, None), Header ->
-      let template, def = print_function_def state def in
-      {%pla|<#template#>extern <#def#>;<#>|}
+      let def = print_function_def state def in
+      {%pla|extern <#def#>;<#>|}
   | TopExternal (def, Some link_name), Header ->
-      let args = CCList.mapi (print_arg state) def.args |> Pla.join_sep Pla.commaspace in
+      let args = Pla.map_sep Pla.commaspace (print_arg state) def.args in
       let ret = print_type_ state (snd def.t) in
       {%pla|extern <#ret#> <#link_name#s>(<#args#>);<#>|}
   | TopExternal _, _ ->

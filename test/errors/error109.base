@@ -1,0 +1,4 @@
+This expression has type 'bool' but 'real' was expected
+fun first(a : array(real)) : real {
+  return a[0] + true;
+                ^^^^

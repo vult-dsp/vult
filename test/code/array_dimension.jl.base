@@ -1,10 +1,10 @@
 
 # High-performance Vult Runtime for Julia with typed arrays
 
-function Array_dimension_total(data)
+function Array_dimension_total_array_of_real_size_2(data)
    acc = Float32(0.0)
    i__1 = Int32(0)
-   while (i__1 < length(data))
+   while (i__1 < Int32(2))
       begin
          acc = (acc + @inbounds data[i__1 + 1])
          i__1 = (Int32(1) + i__1)
@@ -13,10 +13,22 @@ function Array_dimension_total(data)
    return acc
 end
 
-function Array_dimension_sum(data1, data2)
+function Array_dimension_total_array_of_real_size_3(data)
    acc = Float32(0.0)
    i__1 = Int32(0)
-   while (i__1 < length(data1))
+   while (i__1 < Int32(3))
+      begin
+         acc = (acc + @inbounds data[i__1 + 1])
+         i__1 = (Int32(1) + i__1)
+      end
+   end
+   return acc
+end
+
+function Array_dimension_sum_array_of_real_size_2_array_of_real_size_3(data1, data2)
+   acc = Float32(0.0)
+   i__1 = Int32(0)
+   while (i__1 < Int32(2))
       begin
          acc = (acc + (@inbounds data1[i__1 + 1] + @inbounds data2[i__1 + 1]))
          i__1 = (Int32(1) + i__1)
@@ -28,6 +40,6 @@ end
 function Array_dimension_main()
    x = [Float32(1.0), Float32(2.0)]
    y = [Float32(1.0), Float32(2.0), Float32(3.0)]
-   Array_dimension_sum(x, y)
+   Array_dimension_sum_array_of_real_size_2_array_of_real_size_3(x, y)
 end
 

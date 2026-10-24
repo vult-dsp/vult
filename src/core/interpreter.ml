@@ -320,7 +320,7 @@ let rec defaultValue (typ : type_) : dvalue =
       DBool false
   | TString ->
       DString ""
-  | TArray (Some size, elem_type) ->
+  | TArray (size, elem_type) ->
       DArray (Array.init size (fun _ -> defaultValue elem_type))
   | TStruct descr ->
       DStruct (Array.of_list (CCList.map (fun (_, typ, _, _) -> defaultValue typ) descr.members))
@@ -328,8 +328,6 @@ let rec defaultValue (typ : type_) : dvalue =
       DArray (Array.of_list (CCList.map defaultValue types))
   | TEmptyType ->
       DVoid
-  | TArray (None, _) ->
-      error "Cannot create default value for unsized array"
   | TList _ ->
       DList (ref [])
 

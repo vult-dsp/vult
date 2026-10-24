@@ -23,3 +23,10 @@ fun bar3(a:array(real)) {
 fun bob3(a) {
   bar3(a);
 }
+
+fun main() {
+  mem x : array(real, 3);
+  bob1(x);
+  bob2(x);
+  bob3(x);
+}

@@ -1,12 +1,35 @@
 
 # High-performance Vult Runtime for Julia with typed arrays
 
-function Array_no_const_bar1(a)
+mutable struct Array_no_const_main_type
+       x::Vector{Float32}
+end
+
+# Default constructor for Array_no_const_main_type
+function Array_no_const_main_type()
+    return Array_no_const_main_type(fill(Float32(0.0), 3))
+end
+
+function Array_no_const_main_type_alloc()
+   i_0 = Int32(0)
+   temp_1 = fill(Float32(0.0), Int32(3))
+   _ctx = Array_no_const_main_type()
+   while (i_0 < Int32(3))
+      begin
+         @inbounds temp_1[i_0 + 1] = Float32(0.0)
+         i_0 = (Int32(1) + i_0)
+      end
+   end
+   _ctx.x = temp_1
+   return _ctx
+end
+
+function Array_no_const_bar1_array_of_real_size_3(a)
    @inbounds a[1] = Float32(1.0)
 end
 
 function Array_no_const_bob1(a)
-   Array_no_const_bar1(a)
+   Array_no_const_bar1_array_of_real_size_3(a)
 end
 
 function Array_no_const_bar2(a)
@@ -17,10 +40,16 @@ function Array_no_const_bob2(a)
    Array_no_const_bar2(a)
 end
 
-function Array_no_const_bar3(a)
+function Array_no_const_bar3_array_of_real_size_3(a)
 end
 
 function Array_no_const_bob3(a)
-   Array_no_const_bar3(a)
+   Array_no_const_bar3_array_of_real_size_3(a)
+end
+
+function Array_no_const_main(_ctx)
+   Array_no_const_bob1(_ctx.x)
+   Array_no_const_bob2(_ctx.x)
+   Array_no_const_bob3(_ctx.x)
 end
 

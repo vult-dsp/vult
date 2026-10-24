@@ -1,0 +1,4 @@
+// The body of a function with arguments of unknown size is checked even when it is never called.
+fun first(a : array(real)) : real {
+  return a[0] + true;
+}

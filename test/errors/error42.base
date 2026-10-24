@@ -1,4 +1,4 @@
-None of the following types: real, fix16, matches with any of the following types array(real), array(real, _). 
-  val x;
+This expression has type 'array(real, _)' but '(real|fix16)' was expected
   x[0] = 1.0;
-   ^
+  val y = tanh(x);
+               ^

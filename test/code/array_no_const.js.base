@@ -1,9 +1,26 @@
-this.Array_no_const_bar1 = function (a) {
+
+// Runtime functions
+this.initializeArray = function(v, size){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
+this.Array_no_const_main_type_alloc = function () {
+   var i_0 = (0|0);
+   var temp_1 = this.initializeArray(0.0, (3|0));
+   var _ctx = {};
+   while ((i_0 < (3|0))) {
+      {
+         temp_1[i_0] = 0.0;
+         i_0 = ((1|0) + i_0);
+      }
+   }
+   _ctx.x = temp_1;
+   return _ctx;
+};
+
+this.Array_no_const_bar1_array_of_real_size_3 = function (a) {
    a[0] = 1.0;
 };
 
 this.Array_no_const_bob1 = function (a) {
-   this.Array_no_const_bar1(a);
+   this.Array_no_const_bar1_array_of_real_size_3(a);
 };
 
 this.Array_no_const_bar2 = function (a) {
@@ -14,10 +31,16 @@ this.Array_no_const_bob2 = function (a) {
    this.Array_no_const_bar2(a);
 };
 
-this.Array_no_const_bar3 = function (a) {
+this.Array_no_const_bar3_array_of_real_size_3 = function (a) {
 };
 
 this.Array_no_const_bob3 = function (a) {
-   this.Array_no_const_bar3(a);
+   this.Array_no_const_bar3_array_of_real_size_3(a);
+};
+
+this.Array_no_const_main = function (_ctx) {
+   this.Array_no_const_bob1(_ctx.x);
+   this.Array_no_const_bob2(_ctx.x);
+   this.Array_no_const_bob3(_ctx.x);
 };
 

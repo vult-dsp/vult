@@ -5,22 +5,15 @@
 #include "vultin.hpp"
 #include "GenericArrays.tables.h"
 
-template<std::size_t SIZE_0>
-static_inline float GenericArrays_sum(const std::array<float, SIZE_0>& data) {
-   float total = 0.0f;
-   int32_t i__1 = 0;
-   while (i__1 < static_cast<int32_t>(data.size())) {
-      total = total + data[static_cast<uint32_t>(i__1)];
-      i__1 = 1 + i__1;
-   }
-   return total;
-}
+float GenericArrays_sum_array_of_real_size_3(const std::array<float, 3>& data);
+
+float GenericArrays_sum_array_of_real_size_4(const std::array<float, 4>& data);
 
 static_inline void GenericArrays_test1() {
    std::array<float, 3> data1 = { 1.0f, 2.0f, 3.0f };
    std::array<float, 4> data2 = { 1.0f, 2.0f, 3.0f, 4.0f };
-   GenericArrays_sum(data1);
-   GenericArrays_sum(data2);
+   GenericArrays_sum_array_of_real_size_3(data1);
+   GenericArrays_sum_array_of_real_size_4(data2);
 }
 
 

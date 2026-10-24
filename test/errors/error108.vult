@@ -1,0 +1,4 @@
+// Only the arguments of a function can be arrays of unknown size.
+fun copy(a : array(real)) : array(real) {
+  return a;
+}

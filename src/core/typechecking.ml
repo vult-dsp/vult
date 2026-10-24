@@ -188,6 +188,11 @@ let unifyExpRaise ?(bind = false) (env : env) (expected : type_) (e : exp) : env
   let elem_locs = match e.e with ETuple elems -> CCList.map (fun (e : exp) -> e.loc) elems | _ -> [] in
   unifyRaise ~bind ~elem_locs env e.loc expected e.t
 
+(* Only the arguments of a function can be arrays without size, and they are given one before
+   their types are converted *)
+let raiseMissingArraySize (loc : Loc.t) =
+  Error.raiseError "Array type declaration missing size. Use 'array(type, size)' format (e.g., 'array(real, 10)')" loc
+
 (* Convert a type with a mapping from generic parameter names to their unbound types *)
 let rec type_in_m_with_generic_mapping (env : env) (generic_type_map : (string * type_) list) (t : Syntax.type_) :
     env * type_ =
@@ -223,6 +228,8 @@ let rec type_in_m_with_generic_mapping (env : env) (generic_type_map : (string *
           Error.raiseError msg loc
       in
       Env.fresh env (C.size ~loc n)
+  | {t= STComposed ("array", [_]); loc} ->
+      raiseMissingArraySize loc
   | {t= STComposed (name, l); loc} ->
       let env, l = CCList.fold_left_map (fun env t -> type_in_m_with_generic_mapping env generic_type_map t) env l in
       Env.fresh env (C.withConst loc (TEComposed (name, l)))
@@ -241,14 +248,6 @@ let type_in_m_with_generics (env : env) (generic_params : string list) (t : Synt
   type_in_m_with_generic_mapping env generic_type_map t
 
 let type_in_m (env : env) (t : Syntax.type_) : env * type_ = type_in_m_with_generics env [] t
-
-let checkArrayDimensions (env : env) (t : type_) =
-  match (resolve env t).tx with
-  | TEComposed ("array", [_]) ->
-      Error.raiseError "Array type declaration missing size. Use 'array(type, size)' format (e.g., 'array(real, 10)')"
-        t.loc
-  | _ ->
-      ()
 
 (* The type is converted outside the context, and the environment continues with the variables it
    created *)
@@ -942,7 +941,7 @@ and lexp ?(const = false) (env : env) (e : Syntax.lexp) : env * lexp =
       let env, index = exp env index in
       let env, t = Env.fresh env (C.unbound loc) in
       let env = unifyFreshRaise env index.loc (C.int ~loc) index.t in
-      let env = unifyFreshRaise env e.loc (C.array ~fixed:false ~loc t) e.t in
+      let env = unifyFreshRaise env e.loc (C.array ~loc t) e.t in
       (env, {l= LIndex {e; index}; t; loc})
   | {l= SLMember (e, m); loc} -> (
       let env = countPartialWrite env e in
@@ -1012,7 +1011,6 @@ and dexp (env : env) (e : Syntax.dexp) (kind : Env.local_kind) : env * dexp =
   | {d= SDTyped (e, t); _} ->
       let env, e = dexp env e kind in
       let env, t = type_in_f env t in
-      checkArrayDimensions env t ;
       let env = unifyRaise ~bind:true env e.loc t e.t in
       (env, e)
   | {d= SDId (name, dims); loc} ->
@@ -1160,7 +1158,6 @@ let rec stmt_with_type_substitution (env : env) (type_substitution_map : (string
     | {Syntax.d= Syntax.SDTyped (e, t); _} ->
         let env, e = dexp_with_substitution env e kind in
         let env, t = type_in_m_with_substitution env type_substitution_map t in
-        checkArrayDimensions env t ;
         let env = unifyRaise ~bind:true env e.loc t e.t in
         (env, e)
     | {Syntax.d= Syntax.SDId (name, dims); loc} ->
@@ -1212,6 +1209,8 @@ and type_in_m_with_substitution (env : env) (type_substitution_map : (string * t
           Error.raiseError msg loc
       in
       Env.fresh env (C.size ~loc n)
+  | {t= STComposed ("array", [_]); loc} ->
+      raiseMissingArraySize loc
   | {t= STComposed (name, l); loc} ->
       let env, l = CCList.fold_left_map (fun env t -> type_in_m_with_substitution env type_substitution_map t) env l in
       Env.fresh env (C.withConst loc (TEComposed (name, l)))
@@ -1238,7 +1237,6 @@ and stmt_with_generics (env : env) (generic_params : string list) (return : type
     | {Syntax.d= Syntax.SDTyped (e, t); _} ->
         let env, e = dexp_generic env e kind in
         let env, t = type_in_m_with_generics env generic_params t in
-        checkArrayDimensions env t ;
         let env = unifyRaise ~bind:true env e.loc t e.t in
         (env, e)
     | {Syntax.d= Syntax.SDId (name, dims); loc} ->
@@ -1556,7 +1554,6 @@ let rec top_dexp (env : env) (d : Syntax.dexp) =
   | {d= SDTyped (e, t); _} ->
       let env, e = top_dexp env e in
       let env, t = type_in_m env t in
-      checkArrayDimensions env t ;
       let env = unifyRaise ~bind:true env e.loc t e.t in
       (env, e)
   | {d= SDWild; loc} ->
@@ -1675,10 +1672,93 @@ let create_generic_function (env : env) (def : Syntax.function_def) : env * Type
 
 let has_generic_params (def : Syntax.function_def) : bool = not (CCList.is_empty def.generic_params)
 
+(* Arguments declared as arrays without size, like [array(real)], make the function generic on the
+   size of each of them, so every call instantiates a specialization for the sizes it passes. *)
+
+(* Replaces the size of each unsized array in the type with [size n loc], where [n] counts the
+   unsized arrays found so far *)
+let rec sizeUnsizedArrays (size : int -> Loc.t -> Syntax.type_) (n : int) (t : Syntax.type_) : int * Syntax.type_ =
+  match t.t with
+  | STComposed ("array", [elem]) ->
+      let n, elem = sizeUnsizedArrays size n elem in
+      (n + 1, {t with t= STComposed ("array", [elem; size n t.loc])})
+  | STComposed (name, l) ->
+      let n, l = CCList.fold_left_map (sizeUnsizedArrays size) n l in
+      (n, {t with t= STComposed (name, l)})
+  | STUnbound | STSize _ | STId _ | STGenericType _ ->
+      (n, t)
+
+(* Sizes the unsized arrays in the arguments of the function. Returns how many were found. The
+   parser puts the same arguments, in the same order, in [args] and in the [SlotArg]s of [params], so
+   numbering both lists independently gives every argument the same size in both. *)
+let sizeArgs (size : int -> Loc.t -> Syntax.type_) (def : Syntax.function_def) : int * Syntax.function_def =
+  let sizeArg n ((name, t, loc) : Syntax.arg) : int * Syntax.arg =
+    match t with
+    | None ->
+        (n, (name, None, loc))
+    | Some t ->
+        let n, t = sizeUnsizedArrays size n t in
+        (n, (name, Some t, loc))
+  in
+  let sizeParam n = function
+    | Syntax.SlotArg arg ->
+        let n, arg = sizeArg n arg in
+        (n, Syntax.SlotArg arg)
+    | Syntax.SlotGeneric _ as slot ->
+        (n, slot)
+  in
+  let count, args = CCList.fold_left_map sizeArg 0 def.args in
+  let _, params = CCList.fold_left_map sizeParam 0 def.params in
+  (count, {def with args; params})
+
+(* The function with the unknown sizes left to inference. Used to check the body of a function
+   that is otherwise only typechecked when a call instantiates it. *)
+let rec withInferredArraySizes (def : Syntax.function_def) : Syntax.function_def =
+  let _, def = sizeArgs (fun _ loc -> {t= STUnbound; loc}) def in
+  {def with next= Option.map withInferredArraySizes def.next}
+
+(* The '#' cannot appear in an identifier, so the names do not collide with the ones in the code *)
+let arraySizeParamName (n : int) : string = "size#" ^ string_of_int n
+
+(* The function generic on the unknown sizes of its arguments. The companion functions, which have
+   no generic parameters of their own, leave their sizes to inference. *)
+let withGenericArraySizes (def : Syntax.function_def) : Syntax.function_def =
+  let count, def = sizeArgs (fun n loc -> {t= STGenericType (arraySizeParamName n); loc}) def in
+  let size_params = CCList.init count (fun n -> Syntax.GParamType (arraySizeParamName n)) in
+  let next = Option.map withInferredArraySizes def.next in
+  {def with generic_params= def.generic_params @ size_params; next}
+
+let hasUnsizedArrayArgs (def : Syntax.function_def) : bool =
+  let count, _ = sizeArgs (fun _ loc -> {t= STUnbound; loc}) def in
+  count > 0
+
+(* An external function has no body to specialize, so its arrays need a size. Reports the first
+   array without one. *)
+let rejectUnsizedExternalArgs (def : Syntax.ext_def) : unit =
+  let reject _ loc =
+    Error.raiseError
+      "The array arguments of an external function need a size. Use 'array(type, size)' format (e.g., 'array(real, \
+       10)')"
+      loc
+  in
+  let check ((_, t, _) : Syntax.arg) = Option.iter (fun t -> ignore (sizeUnsizedArrays reject 0 t)) t in
+  CCList.iter check def.args
+
+(* Typechecks the function as a regular one, with the unknown sizes left to inference, so the errors
+   and warnings of its body are reported even when no call instantiates it. Only the warnings are
+   kept: the specializations are typechecked again when instantiated. *)
+let checkSizeGenericBody (iargs : Args.args) (env : env) (def : Syntax.function_def) : env =
+  let checked = Env.createContextForFunction env def.name def.loc in
+  let checked, _ = function_def iargs checked (withInferredArraySizes def) in
+  {env with warnings= checked.warnings}
+
 let rec top_stmt (iargs : Args.args) (env : env) (s : Syntax.top_stmt) : env * top_stmt list =
   match s with
   | {top= STopError; _} ->
       failwith "Parser error"
+  | {top= STopFunction def; loc} when hasUnsizedArrayArgs def ->
+      let env = if has_generic_params def then env else checkSizeGenericBody iargs env def in
+      top_stmt iargs env {top= STopFunction (withGenericArraySizes def); loc}
   | {top= STopFunction def; loc} when has_generic_params def ->
       (* Store generic function and emit placeholder to mark where specializations go *)
       let env, generic_func = create_generic_function env def in
@@ -1692,6 +1772,7 @@ let rec top_stmt (iargs : Args.args) (env : env) (s : Syntax.top_stmt) : env * t
       (* Generic function instantiation is now handled in toprog.ml when processing EGenCall *)
       (env, [{top= TopFunction (def, body); loc= def.loc}])
   | {top= STopExternal (def, link_name); _} ->
+      rejectUnsizedExternalArgs def ;
       let env = Env.createContextForExternal env in
       let env, def = ext_function iargs env def in
       let env = Env.exitContext env in
