@@ -1,0 +1,24 @@
+
+
+-- Math functions
+local modf = math.modf
+
+-- Core runtime functions
+function int16(x)           local int_part,_ = math.modf(x) return math.max(-32768, math.min(32767, int_part)) end
+
+function Bool_casts_toInt(b)
+   return ((b) and 1 or 0)
+end
+
+function Bool_casts_toInt16(b)
+   return ((b) and 1 or 0)
+end
+
+function Bool_casts_toReal(b)
+   return ((b) and 1 or 0)
+end
+
+function Bool_casts_toFix(b)
+   return fix16(b)
+end
+

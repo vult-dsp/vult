@@ -89,6 +89,8 @@ static_inline fix16_t bool_to_fix(bool a) { return a ? float_to_fix(1.0) : float
 
 static_inline int float_to_int(float a) { return (int)a; }
 
+static_inline int bool_to_int(bool a) { return a ? 1 : 0; }
+
 static_inline fix16_t int_to_fix(int a) {
   if (a > 32767) return FIX16_MAX;
   if (a < -32768) return FIX16_MIN;

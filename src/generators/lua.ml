@@ -340,6 +340,10 @@ let rec print_exp e =
         {%pla|1e-18|}
     | None, "pi", [] ->
         {%pla|3.1415926535897932384|}
+    | None, ("int" | "int16" | "real"), [({t= {t= TBool; _}; _} as x)] ->
+        (* Lua booleans are not numbers: math.modf rejects them and they do not coerce *)
+        let x = print_exp x in
+        {%pla|((<#x#>) and 1 or 0)|}
     | None, "real", [x] ->
         let x = print_exp x in
         {%pla|(<#x#>)|}

@@ -404,6 +404,7 @@ let all_files =
   ; "../test/compile/multi_iter.vult"
   ; "../test/compile/array_no_const.vult"
   ; "../test/compile/record_init.vult"
+  ; "../test/compile/bool_casts.vult"
   ; "../test/interpreter/companion_return_infer.vult"
   ; "../test/interpreter/spec_name_collision.vult"
   ; "../test/interpreter/tuple_variables.vult"

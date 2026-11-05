@@ -197,6 +197,8 @@ module Cpp = struct
         Some "fix_to_int"
     | "int", [TInt16], _ ->
         Some "int16_to_int"
+    | "int", [TBool], _ ->
+        Some "bool_to_int"
     | "int16", [TInt], _ ->
         Some "int_to_int16"
     | "int16", [TReal], _ ->
@@ -340,6 +342,8 @@ module Java = struct
         Some "bool_to_fix"
     | "real", [TBool], TReal ->
         Some "bool_to_float"
+    | "int", [TBool], _ ->
+        Some "bool_to_int"
     (* Conversions into and out of fix16. Without these the printer falls back to the plain
        Java casts in java.ml, which drop the 16-bit scaling: a "real" cast into fix16 emits
        "(float)(x)" and does not even compile, and "int"/"real" casts of a fix16 value compile
@@ -848,6 +852,8 @@ module Zig = struct
         Some "float_to_int"
     | "int", [TInt16], _ ->
         Some "int16_to_int"
+    | "int", [TBool], _ ->
+        Some "bool_to_int"
     | "int16", [TInt], _ ->
         Some "int_to_int16"
     | "int16", [TReal], _ ->

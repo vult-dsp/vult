@@ -1,0 +1,19 @@
+
+# High-performance Vult Runtime for Julia with typed arrays
+
+function Bool_casts_toInt(b)
+   return trunc(Int32, b)
+end
+
+function Bool_casts_toInt16(b)
+   return trunc(Int16, b)
+end
+
+function Bool_casts_toReal(b)
+   return Float32(b)
+end
+
+function Bool_casts_toFix(b)
+   return fix16(b)
+end
+

@@ -82,6 +82,11 @@ static float bool_to_float(boolean x) {
     return x ? 1.0f : 0.0f;
 }
 |})
+  ; (["bool_to_int"], {%pla|
+static int bool_to_int(boolean x) {
+    return x ? 1 : 0;
+}
+|})
   ; (["float_to_int"], {%pla|
 static int float_to_int(float x) {
     return (int)x;
@@ -95,6 +100,10 @@ static short int16(int x) {
 
 static short int16(float x) {
     return (short)Math.max(-32768, Math.min(32767, (int)x));
+}
+
+static short int16(boolean x) {
+    return (short)(x ? 1 : 0);
 }
 |}
     )

@@ -167,6 +167,9 @@ inline fn int_to_bool(a: i32) bool {
 inline fn float_to_bool(a: f32) bool {
     return a != 0.0;
 }
+inline fn bool_to_int(a: bool) i32 {
+    return if (a) 1 else 0;
+}
 inline fn bool_to_float(a: bool) f32 {
     return if (a) 1.0 else 0.0;
 }

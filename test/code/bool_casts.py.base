@@ -1,0 +1,13 @@
+
+def Bool_casts_toInt(b):
+   return int(b)
+
+def Bool_casts_toInt16(b):
+   return int16(b)
+
+def Bool_casts_toReal(b):
+   return float(b)
+
+def Bool_casts_toFix(b):
+   return fix16(b)
+

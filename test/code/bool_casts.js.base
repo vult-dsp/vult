@@ -1,0 +1,16 @@
+this.Bool_casts_toInt = function (b) {
+   return ((b)|0);
+};
+
+this.Bool_casts_toInt16 = function (b) {
+   return this.int16(b);
+};
+
+this.Bool_casts_toReal = function (b) {
+   return (b);
+};
+
+this.Bool_casts_toFix = function (b) {
+   return this.fix16(b);
+};
+

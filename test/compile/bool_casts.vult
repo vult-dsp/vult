@@ -1,0 +1,16 @@
+// Casts from bool to every numeric type. Each backend needs an explicit conversion.
+fun toInt(b:bool) : int {
+   return int(b);
+}
+
+fun toInt16(b:bool) : int16 {
+   return int16(b);
+}
+
+fun toReal(b:bool) : real {
+   return real(b);
+}
+
+fun toFix(b:bool) : fix16 {
+   return fix16(b);
+}
